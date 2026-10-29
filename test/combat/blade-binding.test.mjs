@@ -14,10 +14,8 @@ import {
   BLADE_OWNER_FLAG, BLADE_BY_FLAG, BLADE_WEAPON_FLAG
 } from "../../module/rules/blade-binding.mjs";
 import {
-  resolveBladeBindingSuccess, releaseBinding, bladeBindingButtonHtml, BLADE_BINDING_CARD_FLAG, BLADE_BINDING_CONTEST
+  resolveBladeBindingSuccess, releaseBinding, bladeBindingButtonHtml, BLADE_BINDING_CONTEST
 } from "../../module/combat/blade-binding.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
 import { RELAY_TARGET_FLAGS } from "../../module/combat/gm-relay.mjs";
 
 const KEY = "meleeCore.core.bladeBinding";
@@ -62,10 +60,8 @@ describe("данные и реестры", () => {
     const keys = (doc.flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries).map(e => e.capabilityKey);
     expect(keys).toContain(KEY);
   });
-  it("флаг цепляющего гаснет с началом его Хода; указатели разрешены релею; ключ карточки в белом списке", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(BLADE_OWNER_FLAG);
+  it("указатели Сцепления разрешены релею", () => {
     expect(RELAY_TARGET_FLAGS).toEqual(expect.arrayContaining([BLADE_BY_FLAG, BLADE_WEAPON_FLAG]));
-    expect(CARD_ONCE_FLAGS).toContain(BLADE_BINDING_CARD_FLAG);
   });
   it("встречный тест — S vs S, одна характеристика", () => {
     expect(BLADE_BINDING_CONTEST.defaultChar).toBe("s");

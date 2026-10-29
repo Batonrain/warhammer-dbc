@@ -7,7 +7,7 @@
 // хвост тоже разошёлся: с суммы 43 там стояли числа Подъёма.
 
 import { describe, it, expect } from "vitest";
-import { carryRow, _calcMaxCarry } from "../../module/helpers/utils.mjs";
+import { carryRow } from "../../module/helpers/utils.mjs";
 
 describe("таблица Максимального Веса", () => {
   it("строки книги воспроизводятся целиком", () => {
@@ -32,11 +32,6 @@ describe("таблица Максимального Веса", () => {
   it("за краями таблицы берутся крайние строки", () => {
     expect(carryRow(-5)).toEqual(carryRow(0));
     expect(carryRow(999)).toEqual(carryRow(45));
-  });
-
-  it("_calcMaxCarry — это столбец Ношения", () => {
-    expect(_calcMaxCarry(16)).toBe(675);
-    expect(_calcMaxCarry(0)).toBe(0.9);
   });
 
   it("Подъём вдвое, Толкание вчетверо от Ношения — там, где так в книге", () => {

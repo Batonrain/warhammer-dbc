@@ -11,25 +11,25 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  hasRancor, rancorRiskCapBonus, leadershipTalentRules,
-  hasBravado, bravadoRiskLevel,
-  hasCamaraderie, camaraderieStartCohesion, CAMARADERIE_MIN_COHESION,
-  hasDutyAboveAll, dutyAboveAllBlocks, CONFLICT_COHESION_LABEL,
-  hasEloquence, linguisticsBestRank, eloquenceCommandBonus, eloquenceRiskCapBonus,
-  hasIronDiscipline, commandersOf,
-  hasFrontlineCommander, frontlineCommanderDistanceOk, frontlineCommanderMeleeFree,
-  hasProtege, protegeFavoriteUuid, protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
-  hasRadiantPresence, anyRadiantPresenceHolderExists, radiantPresenceBonus,
-  hasIntoTheJawsOfHell, anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive,
-  hasAirOfAuthority, commandTargetLimit, commandCapacity,
-  hasLivingLegend, livingLegendCommandBonus,
-  hasWarChant, warChantSinging, WAR_CHANT_FLAG,
+  rancorRiskCapBonus, leadershipTalentRules,
+  bravadoRiskLevel,
+  camaraderieStartCohesion, CAMARADERIE_MIN_COHESION,
+  dutyAboveAllBlocks, CONFLICT_COHESION_LABEL,
+  linguisticsBestRank, eloquenceCommandBonus, eloquenceRiskCapBonus,
+  commandersOf,
+  frontlineCommanderDistanceOk, frontlineCommanderMeleeFree,
+  protegeFavoriteUuid, protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
+  anyRadiantPresenceHolderExists, radiantPresenceBonus,
+  anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive,
+  commandTargetLimit, commandCapacity,
+  livingLegendCommandBonus,
+  warChantSinging, WAR_CHANT_FLAG,
   warChantSingAlongActive, WAR_CHANT_SING_ALONG_FLAG, warChantIntimidateBonus, warChantSingAlongBonus,
-  hasRally, rallyAvailable,
-  hasBringItDown, bringItDownAccuracyPenalty, bringItDownMaxStacks, bringItDownStacksFor,
+  rallyAvailable,
+  bringItDownAccuracyPenalty, bringItDownMaxStacks, bringItDownStacksFor,
   BRING_IT_DOWN_PENALTY_PER_STACK,
-  hasFieldExecution, fieldExecutionEligible,
-  hasBackToBack, backToBackGrantCap
+  fieldExecutionEligible,
+  backToBackGrantCap
 } from "../../module/rules/leadership-talents.mjs";
 import { raceTarget } from "../../module/rules/talent-targets.mjs";
 
@@ -51,18 +51,6 @@ function identityPair(worldUuid, tokenUuid) {
 const orkTarget = raceTarget("ork", "Орк");
 const orkActor = { system: { race: "ork" } };
 const eldarActor = { system: { race: "eldar" } };
-
-describe("hasRancor", () => {
-  it("по любой половине двуязычного имени", () => {
-    expect(hasRancor(actorWith(rancorTalent()))).toBe(true);
-    expect(hasRancor(actorWith(rancorTalent("Rancor")))).toBe(true);
-    expect(hasRancor(actorWith(rancorTalent("Злопамятность")))).toBe(true);
-  });
-  it("без Таланта — false", () => {
-    expect(hasRancor(actorWith())).toBe(false);
-    expect(hasRancor(actorWith(hatredTalent([orkTarget])))).toBe(false);
-  });
-});
 
 describe("leadershipTalentRules (источник \"leadershipTalents\")", () => {
   it("пусто без Rancor, даже если цель Ненависти совпала", () => {
@@ -112,11 +100,6 @@ describe("rancorRiskCapBonus", () => {
 });
 
 describe("Bravado/Бравада: воспринимаемый уровень Риска +1, если он не 1", () => {
-  it("hasBravado — по любой половине имени", () => {
-    expect(hasBravado(actorWith(talentOf("Bravado / Бравада")))).toBe(true);
-    expect(hasBravado(actorWith(talentOf("Бравада")))).toBe(true);
-    expect(hasBravado(actorWith())).toBe(false);
-  });
   it("без Таланта — уровень не меняется", () => {
     expect(bravadoRiskLevel(3, actorWith())).toBe(3);
   });
@@ -170,11 +153,6 @@ describe("Eloquence/Красноречие: +5 за шаг Linguistics, +1 к р
     system: { groupSkills: { linguistics: [{ specKey: "low-gothic", rank }] } }
   });
 
-  it("hasEloquence — по любой половине имени", () => {
-    expect(hasEloquence({ items: [talentOf("Eloquence")] })).toBe(true);
-    expect(hasEloquence({ items: [talentOf("Красноречие")] })).toBe(true);
-    expect(hasEloquence({ items: [] })).toBe(false);
-  });
   it("linguisticsBestRank — максимум среди специализаций, 0 без них", () => {
     expect(linguisticsBestRank(groupSkills("trained"))).toBe(10);
     expect(linguisticsBestRank({ system: {} })).toBe(0);
@@ -208,11 +186,6 @@ describe("Eloquence/Красноречие: +5 за шаг Linguistics, +1 к р
 describe("Iron Discipline/Железная Дисциплина: переброс Морали подчинённым", () => {
   const squad = (uuid, posts, members = []) => ({ type: "squad", uuid, system: { posts, members } });
   const actor = (uuid, items = []) => ({ uuid, items });
-
-  it("hasIronDiscipline — по любой половине имени", () => {
-    expect(hasIronDiscipline(actor("a1", [talentOf("Iron Discipline")]))).toBe(true);
-    expect(hasIronDiscipline(actor("a1", [talentOf("Железная Дисциплина")]))).toBe(true);
-  });
 
   it("commandersOf — эффективный командующий (Командир??Лидер) и Координатор, кроме самого actor", () => {
     const sub  = actor("sub");
@@ -274,12 +247,6 @@ describe("Frontline Commander/Фронтовой Командир: дистан�
     expect(frontlineCommanderDistanceOk(5, [null])).toBe(false);
   });
 
-  it("hasFrontlineCommander — по любой половине имени", () => {
-    expect(hasFrontlineCommander({ items: [talentOf("Frontline Commander")] })).toBe(true);
-    expect(hasFrontlineCommander({ items: [talentOf("Фронтовой Командир")] })).toBe(true);
-    expect(hasFrontlineCommander({ items: [] })).toBe(false);
-  });
-
   describe("frontlineCommanderMeleeFree — геометрия сцены", () => {
     const token = (x, y, disposition = 1) => {
       const t = { document: { x, y, width: 1, height: 1, rotation: 0, disposition } };
@@ -319,12 +286,6 @@ describe("Frontline Commander/Фронтовой Командир: дистан�
 describe("Protege/Протеже: свободное действие любимчику, −30 остальным", () => {
   const protege = (flags = {}) => ({ items: [talentOf("Protege / Протеже")], flags: { "warhammer-dbc": flags },
     getFlag: (_s, k) => flags[k] });
-
-  it("hasProtege — по любой половине имени", () => {
-    expect(hasProtege({ items: [talentOf("Protege")] })).toBe(true);
-    expect(hasProtege({ items: [talentOf("Протеже")] })).toBe(true);
-    expect(hasProtege({ items: [] })).toBe(false);
-  });
 
   it("protegeFavoriteUuid — null, пока не выбран", () => {
     expect(protegeFavoriteUuid(protege())).toBeNull();
@@ -371,12 +332,6 @@ describe("Protege/Протеже: свободное действие любим
 });
 
 describe("Air of Authority/Аура Власти — лимит целей Command/Intimidate", () => {
-  it("hasAirOfAuthority — по любой половине имени", () => {
-    expect(hasAirOfAuthority({ items: [talentOf("Air of Authority")] })).toBe(true);
-    expect(hasAirOfAuthority({ items: [talentOf("Аура Власти")] })).toBe(true);
-    expect(hasAirOfAuthority({ items: [] })).toBe(false);
-  });
-
   it("commandTargetLimit — F.b×2 без Таланта, F.b×20 с ним", () => {
     const actor = (bonus, talents = []) => ({ items: talents, system: { characteristics: { fel: { bonus } } } });
     expect(commandTargetLimit(actor(3))).toBe(6);
@@ -405,12 +360,6 @@ describe("Air of Authority/Аура Власти — лимит целей Comma
 });
 
 describe("Radiant Presence/Блистательное Присутствие — галочка диалога, не скан сцены", () => {
-  it("hasRadiantPresence — по любой половине имени", () => {
-    expect(hasRadiantPresence({ items: [talentOf("Radiant Presence")] })).toBe(true);
-    expect(hasRadiantPresence({ items: [talentOf("Блистательное Присутствие")] })).toBe(true);
-    expect(hasRadiantPresence({ items: [] })).toBe(false);
-  });
-
   it("anyRadiantPresenceHolderExists — хоть один носитель в списке", () => {
     expect(anyRadiantPresenceHolderExists([{ items: [talentOf("Radiant Presence")] }, { items: [] }])).toBe(true);
     expect(anyRadiantPresenceHolderExists([{ items: [] }])).toBe(false);
@@ -436,12 +385,6 @@ describe("Radiant Presence/Блистательное Присутствие —
 });
 
 describe("Into the Jaws of Hell/В Самое Пекло: галочка диалога, не скан сцены", () => {
-  it("hasIntoTheJawsOfHell — по любой половине имени", () => {
-    expect(hasIntoTheJawsOfHell({ items: [talentOf("Into the Jaws of Hell")] })).toBe(true);
-    expect(hasIntoTheJawsOfHell({ items: [talentOf("В Самое Пекло")] })).toBe(true);
-    expect(hasIntoTheJawsOfHell({ items: [] })).toBe(false);
-  });
-
   it("anyIntoTheJawsOfHellHolderExists — хоть один носитель в списке", () => {
     expect(anyIntoTheJawsOfHellHolderExists([{ items: [talentOf("В Самое Пекло")] }])).toBe(true);
     expect(anyIntoTheJawsOfHellHolderExists([{ items: [] }])).toBe(false);
@@ -458,12 +401,6 @@ describe("Into the Jaws of Hell/В Самое Пекло: галочка диа�
 describe("Living Legend/Живая Легенда: Inf вместо F", () => {
   const actorWithInf = (inf, fel, items = []) => ({
     items, system: { characteristics: { inf: { total: inf }, fel: { total: fel } } }
-  });
-
-  it("hasLivingLegend — по любой половине имени", () => {
-    expect(hasLivingLegend({ items: [talentOf("Living Legend")] })).toBe(true);
-    expect(hasLivingLegend({ items: [talentOf("Живая Легенда")] })).toBe(true);
-    expect(hasLivingLegend({ items: [] })).toBe(false);
   });
 
   it("0 без Таланта", () => {
@@ -497,11 +434,6 @@ describe("War Chant/Боевая Песнь: переброс Морали (Ли
     uuid, items: [], flags: { "warhammer-dbc": flags }, getFlag: (_s, k) => flags[k]
   });
   const squad = (uuid, posts, members = []) => ({ type: "squad", uuid, system: { posts, members } });
-
-  it("hasWarChant — по любой половине имени", () => {
-    expect(hasWarChant({ items: [talentOf("War Chant")] })).toBe(true);
-    expect(hasWarChant({ items: [talentOf("Боевая Песнь")] })).toBe(true);
-  });
 
   it("warChantSinging — требует и Таланта, и флага", () => {
     expect(warChantSinging(leader("l1"))).toBe(false);
@@ -601,12 +533,6 @@ describe("War Chant/Боевая Песнь: переброс Морали (Ли
 });
 
 describe("Rally/Сплотить: доступность", () => {
-  it("hasRally — по любой половине имени", () => {
-    expect(hasRally({ items: [talentOf("Rally")] })).toBe(true);
-    expect(hasRally({ items: [talentOf("Сплотить")] })).toBe(true);
-    expect(hasRally({ items: [] })).toBe(false);
-  });
-
   it("rallyAvailable — Талант и Риск 3+", () => {
     const leaderDoc = { items: [talentOf("Rally / Сплотить")] };
     expect(rallyAvailable(leaderDoc, 3)).toBe(true);
@@ -621,12 +547,6 @@ describe("Rally/Сплотить: доступность", () => {
 });
 
 describe("Bring It Down!/Валите Это!: срез бонуса попадания на кубы урона", () => {
-  it("hasBringItDown — по любой половине имени", () => {
-    expect(hasBringItDown({ items: [talentOf("Bring It Down!")] })).toBe(true);
-    expect(hasBringItDown({ items: [talentOf("Валите Это!")] })).toBe(true);
-    expect(hasBringItDown({ items: [] })).toBe(false);
-  });
-
   it("bringItDownAccuracyPenalty — 0 вне Общей Команды на Атаки или без стеков", () => {
     expect(bringItDownAccuracyPenalty({ active: true, key: "inspire", testKind: "attack", bringItDownStacks: 2 })).toBe(0);
     expect(bringItDownAccuracyPenalty({ active: true, key: "general", testKind: "evasion", bringItDownStacks: 2 })).toBe(0);
@@ -684,12 +604,6 @@ describe("Bring It Down!/Валите Это!: срез бонуса попад�
 });
 
 describe("Field Execution/Полевая Казнь: опознание и eligibility", () => {
-  it("hasFieldExecution — по любой половине имени", () => {
-    expect(hasFieldExecution({ items: [talentOf("Field Execution")] })).toBe(true);
-    expect(hasFieldExecution({ items: [talentOf("Полевая Казнь")] })).toBe(true);
-    expect(hasFieldExecution({ items: [] })).toBe(false);
-  });
-
   it("fieldExecutionEligible — Шок или Подавление, не любое другое состояние", () => {
     expect(fieldExecutionEligible({ system: { conditions: { shocked: true } } })).toBe(true);
     expect(fieldExecutionEligible({ system: { conditions: { pinned: true } } })).toBe(true);
@@ -700,12 +614,6 @@ describe("Field Execution/Полевая Казнь: опознание и eligi
 });
 
 describe("Back to Back/Спиной к Спине: опознание и лимит получателей", () => {
-  it("hasBackToBack — по любой половине имени", () => {
-    expect(hasBackToBack({ items: [talentOf("Back to Back")] })).toBe(true);
-    expect(hasBackToBack({ items: [talentOf("Спиной к Спине")] })).toBe(true);
-    expect(hasBackToBack({ items: [] })).toBe(false);
-  });
-
   it("backToBackGrantCap — ½F.b, округление вверх", () => {
     expect(backToBackGrantCap({ system: { characteristics: { fel: { bonus: 4 } } } })).toBe(2);
     expect(backToBackGrantCap({ system: { characteristics: { fel: { bonus: 5 } } } })).toBe(3);

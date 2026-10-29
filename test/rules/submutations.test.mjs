@@ -18,7 +18,7 @@ import { parseSubmutations, hasSubmutations, subShiftLimit, submutationByRoll,
          multiRollCount, multiRollResults }
   from "../../module/rules/submutations.mjs";
 import { MUTATIONS, MUTATION_LIBRARY } from "../../module/constants/mutations.mjs";
-import { opposedGod, areGodsHostile, CHAOS_PATRONS } from "../../module/constants/chaos-patron.mjs";
+import { areGodsHostile, CHAOS_PATRONS } from "../../module/constants/chaos-patron.mjs";
 
 const ROOT = path.join(fileURLToPath(new URL("../..", import.meta.url)), "packs-src", "mutations");
 
@@ -95,6 +95,51 @@ describe("разбор таблицы субмутаций", () => {
   });
 });
 
+describe("записи Конструктора, гейтованные строкой субмутации", () => {
+  /** Все записи Механики документа, включая вложенные подгруппы (kind:"group" → entry.group). */
+  const entriesOf = doc => {
+    const out = [];
+    const walk = group => {
+      for (const e of group?.entries ?? []) {
+        out.push(e);
+        if (e.kind === "group" && e.group) walk(e.group);
+      }
+    };
+    for (const g of doc.flags?.["warhammer-dbc"]?.mechanics ?? []) walk(g);
+    return out;
+  };
+  const gated = packMutations().map(doc => ({
+    doc, entries: entriesOf(doc).filter(e => (e.when?.submutations ?? []).length)
+  })).filter(x => x.entries.length);
+
+  it("гейтованных записей не стало меньше (храповик: 19 мутаций, 133 записи)", () => {
+    // Снятый с записи гейт молча включает её всем носителям — метка-сторож ниже
+    // этого не видит. Порог поднимают вместе с новыми записями, снижают — с причиной.
+    expect(gated.length).toBeGreaterThanOrEqual(19);
+    expect(gated.flatMap(x => x.entries).length).toBeGreaterThanOrEqual(133);
+  });
+
+  it("каждая метка when.submutations есть в таблице своей мутации", () => {
+    // Опечатка в метке («О» вместо «0», «2–3» вместо «2-3») не падает нигде:
+    // запись просто никогда не включится.
+    const bad = [];
+    for (const { doc, entries } of gated) {
+      const labels = new Set(parseSubmutations(doc.system?.benefit || "").entries.map(e => e.label));
+      for (const e of entries) for (const l of e.when.submutations) if (!labels.has(l)) bad.push(`${doc.name}: «${l}» (${e.id})`);
+    }
+    expect(bad, "метки нет в таблице субмутаций — запись никогда не включится").toEqual([]);
+  });
+
+  it("у таких записей нет гейта по Покровителю — только строка субмутации", () => {
+    // Решение владельца 26.09.2026 «по книге» (стр. 440): цвет Бога у строки —
+    // право его последователей выбрать её, а не условие эффекта; враждебного
+    // Бога отсекает сам бросок (isSubBlocked).
+    const bad = gated.flatMap(({ doc, entries }) => entries
+      .filter(e => (e.when.patronGod ?? []).length).map(e => `${doc.name}: ${e.id}`));
+    expect(bad).toEqual([]);
+  });
+});
+
 describe("сдвиг результата на ⅓Inf.b", () => {
   it("округляется вниз", () => {
     expect(subShiftLimit(0)).toBe(0);
@@ -136,19 +181,19 @@ describe("строка по броску", () => {
 
 describe("извечные соперники", () => {
   it("Боги враждебны парами и взаимно", () => {
-    expect(opposedGod("khorne")).toBe("slaanesh");
-    expect(opposedGod("slaanesh")).toBe("khorne");
-    expect(opposedGod("tzeentch")).toBe("nurgle");
-    expect(opposedGod("nurgle")).toBe("tzeentch");
+    expect(areGodsHostile("khorne", "slaanesh")).toBe(true);
+    expect(areGodsHostile("slaanesh", "khorne")).toBe(true);
+    expect(areGodsHostile("tzeentch", "nurgle")).toBe(true);
+    expect(areGodsHostile("nurgle", "tzeentch")).toBe(true);
     expect(areGodsHostile("khorne", "nurgle")).toBe(false);
   });
 
   it("Неделимый не враждебен никому, и пара есть у каждого из четырёх", () => {
-    expect(opposedGod("undivided")).toBe("");
     expect(areGodsHostile("undivided", "khorne")).toBe(false);
     for (const p of CHAOS_PATRONS) {
       if (p.key === "undivided") continue;
-      expect(areGodsHostile(p.key, opposedGod(p.key)), p.key).toBe(true);
+      const rivals = CHAOS_PATRONS.filter(q => areGodsHostile(p.key, q.key)).map(q => q.key);
+      expect(rivals, p.key).toHaveLength(1);
     }
   });
 });

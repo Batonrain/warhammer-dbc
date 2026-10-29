@@ -3,8 +3,9 @@
 // Дубли в паке talents (сверка «Склонности», 04.10.2026): Savant Immaterial,
 // Atramentar и Hellbound лежали и в корне пака, и в папке своего Элитного
 // Архетипа. Архетипы выдавали корневую копию — без признака «Элитный», с другим
-// написанием имени. Тест ловит этот класс целиком: одно имя — одна запись, и
-// каждая ссылка архетипа на Талант указывает на существующую запись.
+// написанием имени. Тест ловит этот класс целиком: одно имя — одна запись.
+// Что ссылки архетипов на Таланты живые, проверяет общий
+// test/tools/mechanics-source-names.test.mjs (все sourceUuid всех паков).
 
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
@@ -32,17 +33,6 @@ describe("пак talents: целостность", () => {
     for (const t of talents) seen.set(t.name, (seen.get(t.name) || 0) + 1);
     const dup = [...seen].filter(([, n]) => n > 1).map(([name]) => name);
     expect(dup).toEqual([]);
-  });
-
-  it("ссылки Элитных Архетипов на Таланты ведут на существующие записи", () => {
-    const ids = new Set(talents.map(t => t._id));
-    const dead = [];
-    for (const p of jsonFiles(join(ROOT, "packs-src/elite-archetypes"))) {
-      const text = readFileSync(p, "utf8");
-      for (const m of text.matchAll(/Compendium\.warhammer-dbc\.talents\.Item\.([A-Za-z0-9]{16})/g))
-        if (!ids.has(m[1])) dead.push(`${p.split(/[\/]/).pop()} → ${m[1]}`);
-    }
-    expect(dead).toEqual([]);
   });
 });
 

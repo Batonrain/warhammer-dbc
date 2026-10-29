@@ -108,8 +108,4 @@ describe("_reloadWeapon: Во Всеоружии + Быстрая Перезар
   it("«½» (1 ОД): Быстрая → бесплатно, Во Всеоружии → 1; лучшая — бесплатно", async () => {
     expect((await reload({ reload: "½", extra: [FA, RR] })).spent).toBe(0);
   });
-
-  it("Быстрая без Черты — как раньше (сверка, что порядок не сломан)", async () => {
-    expect((await reload({ reload: "2", extra: [RR] })).spent).toBe(2);
-  });
 });

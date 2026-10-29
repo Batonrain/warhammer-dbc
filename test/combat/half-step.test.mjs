@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
-import { declareHalfStep, actorHasHalfStep } from "../../module/combat/movement-actions.mjs";
+import { declareHalfStep } from "../../module/combat/movement-actions.mjs";
 import { recoilRemaining } from "../../module/combat/recoil-pool.mjs";
 
 const flush = () => new Promise(r => setTimeout(r, 0));
@@ -36,15 +36,6 @@ const halfStepTalent = { id: "t1", type: "talent", name: "Half-Step / Полуш
 beforeEach(() => {
   resetCaptured();
   globalThis.game.combat = undefined;
-});
-
-describe("actorHasHalfStep", () => {
-  it("без Таланта — false", () => {
-    expect(actorHasHalfStep(fakeActor())).toBe(false);
-  });
-  it("с Талантом — true", () => {
-    expect(actorHasHalfStep(fakeActor({ items: [halfStepTalent] }))).toBe(true);
-  });
 });
 
 describe("declareHalfStep: гейты до диалога", () => {

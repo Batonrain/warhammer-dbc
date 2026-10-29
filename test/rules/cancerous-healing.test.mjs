@@ -5,20 +5,8 @@
 // цели, чат, ActiveEffect, флаг вклада) — module/apps/cancerous-healing.mjs.
 
 import { describe, it, expect } from "vitest";
-import { isCancerousHealingItem, cancerousHealingGrant, cancerousHealingShrinkAfterHeal,
+import { cancerousHealingGrant, cancerousHealingShrinkAfterHeal,
          cancerousHealingPenaltyValue } from "../../module/rules/cancerous-healing.mjs";
-
-describe("isCancerousHealingItem", () => {
-  it("узнаёт Мутацию по книжному двуязычному имени", () => {
-    expect(isCancerousHealingItem({ type: "mutation", name: "Cancerous Healing / Раковое Исцеление" })).toBe(true);
-  });
-
-  it("не путает с другой Мутацией или предметом другого типа", () => {
-    expect(isCancerousHealingItem({ type: "mutation", name: "Flayed / Освежёванный" })).toBe(false);
-    expect(isCancerousHealingItem({ type: "talent", name: "Cancerous Healing" })).toBe(false);
-    expect(isCancerousHealingItem(null)).toBe(false);
-  });
-});
 
 describe("cancerousHealingGrant: аблатив = недостающим Ранам, свой вклад заменяется целиком", () => {
   it("с нуля — доля = недостающим Ранам, ablativeMax двигается вместе", () => {

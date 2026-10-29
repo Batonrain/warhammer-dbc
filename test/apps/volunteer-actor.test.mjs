@@ -14,7 +14,7 @@ import {
   captureWithMimicWire, cutMimicWire, startMimicWireSurgery,
   checkMimicWireSurgery, confirmMimicWireExtraction
 } from "../../module/apps/volunteer-actor.mjs";
-import { isControlled, controllerUuidOf } from "../../module/rules/actor-control.mjs";
+import { controllerUuidOf } from "../../module/rules/actor-control.mjs";
 import { MIMIC_WIRE_SURGERY_FLAG } from "../../module/rules/volunteer-actor.mjs";
 
 function flaggedActor(overrides = {}) {
@@ -63,7 +63,6 @@ describe("captureWithMimicWire", () => {
     expect(upd["system.conditions.mimicWire"]).toBe(true);
     expect(upd["system.conditions.mimicWireBlocksPowers"]).toBe(true);
 
-    expect(isControlled(target)).toBe(true);
     expect(controllerUuidOf(target)).toBe("Actor.attacker");
     expect(requestControlOwnership).toHaveBeenCalledWith(target, attacker);
 
@@ -95,7 +94,7 @@ describe("cutMimicWire", () => {
 
     await cutMimicWire(target);
 
-    expect(isControlled(target)).toBe(false);
+    expect(controllerUuidOf(target)).toBeNull();
     expect(target.getFlag("warhammer-dbc", MIMIC_WIRE_SURGERY_FLAG)).toBeUndefined();
     expect(target.updates.at(-1)["system.conditions.mimicWire"]).toBe(false);
     expect(requestRevokeControlOwnership).toHaveBeenCalled();
@@ -142,7 +141,7 @@ describe("confirmMimicWireExtraction", () => {
 
     await confirmMimicWireExtraction(target);
 
-    expect(isControlled(target)).toBe(false);
+    expect(controllerUuidOf(target)).toBeNull();
     expect(target.updates.at(-1)["system.conditions.mimicWire"]).toBe(false);
     expect(requestRevokeControlOwnership).toHaveBeenCalled();
     const card = captured.chat.at(-1).content;

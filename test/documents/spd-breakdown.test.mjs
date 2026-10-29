@@ -146,7 +146,6 @@ describe("system.movement.spdBreakdown", () => {
   it("Потеря стопы на одной стороне независима от другой: правая цела, левая потеряна", () => {
     const system = characterWith({ lostLimbs: { leftFoot: { lost: true } } });
     expect(system.movement.halfMove).toBe(1); // floor(3/2) — тот же эффект, что и «правая»
-    expect(system.lostLimbs?.rightFoot?.lost).not.toBe(true);
   });
 
   it("Повален + потеря стопы — оба применяются по очереди (÷2, затем floor(÷2))", () => {

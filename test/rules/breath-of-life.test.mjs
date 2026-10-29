@@ -5,32 +5,11 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  isBreathOfLifeItem, woundsFullyHealed, breathOfLifeAvailable,
-  breathOfLifeSelfWounds, revivedCorpseUpdate, BREATH_OF_LIFE
+  woundsFullyHealed, breathOfLifeAvailable,
+  breathOfLifeSelfWounds, revivedCorpseUpdate
 } from "../../module/rules/breath-of-life.mjs";
 
 const sys = (value, max = 12, critical = 0) => ({ wounds: { value, max, critical } });
-
-function giftItem({ type = "mutation", key = BREATH_OF_LIFE, name = "Х" } = {}) {
-  return {
-    type, name,
-    flags: { "warhammer-dbc": { mechanics: key
-      ? [{ id: "g", operator: "AND", entries: [{ id: "e", kind: "capability", capabilityKey: key }] }]
-      : [] } }
-  };
-}
-
-describe("isBreathOfLifeItem", () => {
-  it("опознаёт по ключу Возможности", () => {
-    expect(isBreathOfLifeItem(giftItem())).toBe(true);
-  });
-  it("опознаёт по билингвальному имени без записи Механики", () => {
-    expect(isBreathOfLifeItem(giftItem({ key: null, name: "Breath of Life / Дыхание Жизни" }))).toBe(true);
-  });
-  it("тот же ключ на предмете другого типа — не он", () => {
-    expect(isBreathOfLifeItem(giftItem({ type: "talent" }))).toBe(false);
-  });
-});
 
 describe("woundsFullyHealed", () => {
   it("Раны на максимуме без отрицательных — вылечен", () => {

@@ -42,8 +42,6 @@ import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 
-export { isBloodFlameItem, isBloodFlameActive };
-
 /**
  * Рукопашное оружие актора, наносящее урон R — годится для Кровавого Пламени.
  *

@@ -60,11 +60,6 @@ export function pruneDevourerStreaks(all, today) {
 /** Секунд в игровых сутках — «1 день»/«9 дней подряд» книги считаются по «Календарю». */
 export const DAY = 86400;
 
-/** Номер календарного дня (целый) для данного worldTime. */
-export function dayNumber(worldTime) {
-  return Math.floor(Number(worldTime) / DAY);
-}
-
 /**
  * Записи временной кражи, чей срок истёк к этому тику worldTime —
  * вызывающая сторона (hooks.mjs) откатывает обе стороны и убирает запись.

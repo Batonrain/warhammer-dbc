@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  hasDeterminationToFight, determinationToFightReduction,
+  determinationToFightReduction,
   snapshotStanceForRoundStart, determinationToFightWsReduction, determinationToFightParryBonus,
   determinationToFightApBonus
 } from "../../module/rules/determination-to-fight.mjs";
@@ -26,15 +26,6 @@ function flaggedActor({ tier = "dying", wpBonus = 4, wsBonus = 3, meleeStance = 
     setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; }
   };
 }
-
-describe("hasDeterminationToFight", () => {
-  it("находит по билингвальному имени", () => {
-    expect(hasDeterminationToFight(actorWith("dying", 4, "Determination To Fight / Решительность Сражаться"))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasDeterminationToFight(actorWith("dying", 4, "Dodge"))).toBe(false);
-  });
-});
 
 describe("determinationToFightReduction", () => {
   it("Талант + dying — WP.b", () => {

@@ -10,13 +10,12 @@ import { describe, it, expect } from "vitest";
 import { actorFor } from "../support/combat-fixtures.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 import {
-  reaperTriggered, reaperBonusLeft, REAPER_BONUS_FLAG, reaperMeasure, freeMeleeFlags, freeAttackLockProblem, tenacityOffered, hasMeleeTalent, MELEE_TALENTS, REAPER_CHAIN_FLAG
+  reaperTriggered, reaperBonusLeft, REAPER_BONUS_FLAG, reaperMeasure, freeMeleeFlags, freeAttackLockProblem, tenacityOffered, hasMeleeTalent, MELEE_TALENTS
 } from "../../module/rules/melee-talents.mjs";
 import {
   showOffMaxTargets, showOffPickTargets, showOffFreeAttackWon, SHOW_OFF_FREE_ATTACK_MARGIN
 } from "../../module/rules/show-off.mjs";
 import { commandSuppression, commandSuppressedNow, commandSuppressionExpired } from "../../module/rules/command-suppression.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
 
 const byKey = key => ({
   id: "k-" + key, name: "ИСПОРЧЕННОЕ ИМЯ", type: "talent", system: {},
@@ -31,9 +30,6 @@ describe("данные пака", () => {
   it("Жнец и Рисовка несут запись Конструктора с ключом возможности", () => {
     expect(caps("KtbKaBaWpAGr9ulj")).toContain(MELEE_TALENTS.reaper.key);
     expect(caps("eGGyH6i9CZ26emZs")).toContain(MELEE_TALENTS.showOff.key);
-  });
-  it("служебные флаги Хода внесены в реестр", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(REAPER_CHAIN_FLAG);
   });
 });
 

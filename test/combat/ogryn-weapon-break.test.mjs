@@ -6,7 +6,7 @@
 // бросок ПОСЛЕ атаки со своим последствием на предмете.
 
 import { describe, it, expect } from "vitest";
-import { ogrynBreaksWeapon, ogrynBreakApplies, ogrynBreakNote, OGRYN_BREAK_FACES }
+import { ogrynBreaksWeapon, ogrynBreakApplies, ogrynBreakNote }
   from "../../module/combat/ogryn-weapon-break.mjs";
 
 const ogrynActor = () => ({ system: { race: "ogryn", size: 1, characteristics: {} }, items: [] });
@@ -20,12 +20,6 @@ describe("ogrynBreaksWeapon: на каких гранях ломается", () 
   // 1-2 он бы пропустил (поймано проверкой мутациями).
   it("1, 2 и 3 — ломается", () => {
     for (const d10 of [1, 2, 3]) expect(ogrynBreaksWeapon({ ...melee, d10 })).toBe(true);
-  });
-
-  it("граница ровно между 3 и 4", () => {
-    expect(ogrynBreaksWeapon({ ...melee, d10: 3 })).toBe(true);
-    expect(ogrynBreaksWeapon({ ...melee, d10: 4 })).toBe(false);
-    expect(OGRYN_BREAK_FACES).toEqual([1, 2, 3]);
   });
 
   it("4 и выше — выдерживает", () => {

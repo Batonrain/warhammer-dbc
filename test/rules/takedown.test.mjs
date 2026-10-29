@@ -44,18 +44,6 @@ function lyingActor({ prone = true, flag = false } = {}) {
   };
 }
 
-describe("Вырубание: опознание Таланта", () => {
-  it("по имени (двуязычному)", () => {
-    expect(hasTakedown(bearer("Takedown / Вырубание"))).toBe(true);
-    expect(hasTakedown(bearer("Disarm / Обезоруживание"))).toBe(false);
-  });
-  it("Ещё Не Всё опознаётся по имени и не путается с Вырубанием", () => {
-    expect(hasThatsNotAll(bearer("That's Not All / Ещё Не Всё"))).toBe(true);
-    expect(hasThatsNotAll(bearer("Takedown / Вырубание"))).toBe(false);
-    expect(hasTakedown(bearer("That's Not All / Ещё Не Всё"))).toBe(false);
-  });
-});
-
 describe("Вырубание: приём Оглушить без ограничений", () => {
   it("без Таланта окно форсирует прицел в Голову, с Талантом — не форсирует", () => {
     expect(stunForcedAim(bearer())).toBe("head");

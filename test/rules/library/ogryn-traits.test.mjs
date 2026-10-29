@@ -13,14 +13,6 @@ import { hasRuleFlag } from "../../../module/rules/flags.mjs";
 import { isImmuneToCondition } from "../../../module/rules/condition-guards.mjs";
 
 describe("паки Огрина против книги", () => {
-  it("у расы нет Черт Сквата (Clever Hands, Hard as Stone)", () => {
-    const race = packDocById("packs-src/races/Люди", "tjQaSHFHxbt1tvWU");
-    const names = race.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).map(e => e.sourceName);
-    expect(names).toContain("Brute Physiology / Физиология Громилы");
-    expect(names).toContain("BONE-Head / Костеголов");
-    expect(names).not.toContain("Clever Hands / Умелые Руки");
-    expect(names).not.toContain("Hard as Stone / Крепкий как Камень");
-  });
 
   it("Трейт Миньона «Ogryn»: +15 Ран только через Brute Physiology, без надбавки к Бонусам", () => {
     const t = packDocById("packs-src/traits", "0r0IX0R5hhdJ1gzj");

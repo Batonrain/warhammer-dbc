@@ -62,6 +62,12 @@ function packScriptEntries() {
 describe("packs-src: записи kind:\"script\" и «При выдаче»", () => {
   const all = packScriptEntries();
 
+  it("у каждой записи есть код и подпись — пустая кнопка или пустой скрипт не проходят", () => {
+    expect(all.length).toBeGreaterThan(50);
+    const bad = all.filter(({ entry }) => !String(entry.code ?? "").trim() || !String(entry.label ?? "").trim());
+    expect(bad.map(b => `${b.file}: «${b.entry.label ?? ""}»`)).toEqual([]);
+  });
+
   it("запись с ценой, частотой или триггером — кнопка, при выдаче не срабатывает", () => {
     const bad = all.filter(({ entry }) =>
       entry.scriptOnGrant && (entry.capabilityCostPool || entry.scriptThrottleUnit || entry.scriptTrigger));

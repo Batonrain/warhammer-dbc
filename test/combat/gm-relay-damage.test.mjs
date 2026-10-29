@@ -14,7 +14,6 @@ vi.mock("../../module/combat/damage.mjs", () => ({
 
 const { applyTargetWriteRelay } = await import("../../module/combat/gm-relay.mjs");
 
-const NS = "warhammer-dbc";
 const REQUESTER = { id: "u-req", isGM: false };
 const dmg = (over = {}) => ({
   rawDamage: 9, penetration: 0, damageType: "impact", hitLocation: "Торс", melee: true,
@@ -76,6 +75,5 @@ describe("стыковка", () => {
   it("флаг партнёра, по которому релей определяет Борьбу, — тот же, что пишет Захват", async () => {
     const { PARTNER_FLAG } = await import("../../module/combat/grapple.mjs");
     expect(PARTNER_FLAG).toBe("grapplePartnerUuid");
-    expect(NS).toBe("warhammer-dbc");
   });
 });

@@ -173,6 +173,22 @@ describe("пересборка эффектов Конструктора", () =>
     expect(item.effects).toEqual([]);
   });
 
+  // Живые запросы: эти записи читаются прямо с предмета в момент атаки/щита/
+  // тика (combat/attack.mjs, combat/damage.mjs). Синтетический эффект на
+  // акторе им не нужен и задвоил бы правило.
+  it("живые виды (attackProp, shieldSubtype, shieldVsCondition, shieldArmorGate) эффектов не заводят", async () => {
+    const item = itemDoc({ type: "forcefield", mechanics: [andGroup(
+      { id: "e1", kind: "attackProp", apScope: "unarmed", apKey: "shocking", apRating: "", apRating2: "" },
+      { id: "e2", kind: "shieldSubtype", shieldSubtypeMode: "exclude", shieldSubtypeKey: "crushing" },
+      { id: "e3", kind: "shieldVsCondition", shieldVsConditionKey: "burning" },
+      { id: "e4", kind: "shieldArmorGate" }
+    )] });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toEqual([]);
+  });
+
   it("вложенная И-подгруппа тоже пересобирается", async () => {
     const item = itemDoc({ mechanics: [andGroup(
       { id: "g2", kind: "group", group: andGroup(charEntry("e1", "t", 2)) })] });

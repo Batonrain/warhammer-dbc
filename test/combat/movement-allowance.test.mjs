@@ -19,7 +19,7 @@ import { resolvePressSuccess } from "../../module/combat/feint-press.mjs";
 import {
   MOVE_ALLOWANCE_FLAG, PATH_LIMIT_OFF_FLAG, readAllowance
 } from "../../module/rules/movement-path.mjs";
-import { turnStartFlagClears, TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
+import { turnStartFlagClears } from "../../module/rules/turn-flags.mjs";
 
 const NS = "warhammer-dbc";
 const talent = name => ({ id: `t-${name}`, type: "talent", name });
@@ -79,7 +79,6 @@ describe("grantMoveAllowance", () => {
   });
 
   it("флаг входит в реестр меток Хода и гасится в начале следующего Хода", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(MOVE_ALLOWANCE_FLAG);
     const a = fighter();
     a.flags = { [NS]: { [MOVE_ALLOWANCE_FLAG]: { total: 4, entries: [] } } };
     expect(turnStartFlagClears(a)).toEqual({ [`flags.${NS}.-=${MOVE_ALLOWANCE_FLAG}`]: null });

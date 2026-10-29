@@ -62,11 +62,6 @@ export function isBraced(actor, weapon) {
 // wdbc-x1nz.2.71) — отдаём ему эту проверку, см. weapon-profiles.mjs.
 registerBraceCheck(isBraced);
 
-/** Снять Закрепление явно (например, когда игрок сам решает его прекратить). */
-export async function clearBrace(actor) {
-  if (actor?.getFlag?.(NS, FLAG_KEY)) await actor.unsetFlag(NS, FLAG_KEY);
-}
-
 /**
  * «Закрепление»: Полудействие (1 ОД). Только тяжёлое оружие (weaponClass
  * "heavy") — лёгкому/среднему книга Закрепления не предлагает вовсе.

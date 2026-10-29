@@ -6,12 +6,11 @@
 // — на ВСЕХ бывших противников, когда они пытаются Натиском достать стрелка.
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { coveringFireWeapon, offerCoveringFire, applyCoveringFireMarks, coveringFireShootersFor,
   coveringFireChargeCheck, activateCoveringFire } from "../../module/combat/covering-fire.mjs";
-import { coveringFireSuppressionMod, COVERING_FIRE_OFFER_FLAG, COVERING_FIRE_MARKS_FLAG,
-  COVERING_FIRE_PENALTY } from "../../module/rules/gunner-talents.mjs";
+import { COVERING_FIRE_OFFER_FLAG, COVERING_FIRE_MARKS_FLAG } from "../../module/rules/gunner-talents.mjs";
 import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
 
 const COVER = { key: "rangedCore.core.coveringFire", name: "Covering Fire / Прикрывающий Огонь" };
@@ -106,12 +105,6 @@ describe("метки Подавления: на ВСЕХ бывших проти
     expect(Object.values(a.store[`warhammer-dbc.${COVERING_FIRE_MARKS_FLAG}`]).map(m => m.mod)).toEqual([0, 0]);
   });
 
-  it("модификатор и штраф", () => {
-    expect(coveringFireSuppressionMod("semi")).toBe(10);
-    expect(coveringFireSuppressionMod("full")).toBe(0);
-    expect(COVERING_FIRE_PENALTY).toBe(-20);
-  });
-
   it("без предложения метки не появляются", async () => {
     const a = who([rifle(), byName(COVER.name)]);
     await applyCoveringFireMarks(a, "semi");
@@ -174,7 +167,7 @@ describe("окно атаки и кнопка", () => {
     expect(captured.warnings.some(w => w.includes("Прикрывающий Огонь"))).toBe(true);
   });
 
-  it("окно: только Короткая/Длинная очередь и строка штрафа −20 в разборе", () => {
+  it("окно: только Короткая/Длинная очередь", () => {
     const w = rifle({ rof_single: 1 });
     const a = who([w, byName(COVER.name)]);
     showAttackDialog(a, w, { freeShot: "coveringFire" });
@@ -183,5 +176,22 @@ describe("окно атаки и кнопка", () => {
     expect(html).toContain('value="full"');
     expect(html).not.toContain('value="single"');
     expect(html).not.toContain('value="suppression"');
+  });
+
+  it("штраф −20 входит в порог броска (рядом обычная Короткая очередь тем же оружием)", async () => {
+    const threshold = async opts => {
+      resetCaptured();
+      const w = rifle({ rof_single: 1 });
+      const a = who([w, byName(COVER.name)]);
+      a.store[`warhammer-dbc.${COVERING_FIRE_OFFER_FLAG}`] = [{ tokenUuid: "Scene.s.Token.f1", actorUuid: "Actor.f1", name: "Враг 1" }];
+      const p = showAttackDialog(a, w, opts);
+      captured.dice = Array.from({ length: 20 }, () => 5);
+      await captured.press("roll", fakeForm({ "#atk-char": "bs", "#atk-modifier": "0", "#atk-aim": "",
+        "input[name='atk-rof']:checked": { value: "semi", dataset: { bonus: "0" } } }));
+      await p;
+      return Number((captured.chat.find(m => m.content.includes("Порог"))?.content ?? "")
+        .match(/<label>Порог<\/label><b>(-?\d+)<\/b>/)?.[1]);
+    };
+    expect(await threshold({}) - await threshold({ freeShot: "coveringFire" })).toBe(20);
   });
 });

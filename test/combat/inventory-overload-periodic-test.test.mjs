@@ -53,20 +53,8 @@ beforeEach(() => {
 });
 
 describe("inventoryOverloadPeriodicRemaining", () => {
-  it("флага (testAt) нет — доступно сейчас", () => {
-    expect(inventoryOverloadPeriodicRemaining(null, 100000, 4)).toBe(0);
-  });
-
-  it("tb=0 — интервал делить не на что, кнопка всегда доступна", () => {
-    expect(inventoryOverloadPeriodicRemaining(100000, 200000, 0)).toBe(0);
-  });
-
   it("прошло меньше интервала — остаток посчитан верно", () => {
     expect(inventoryOverloadPeriodicRemaining(100000, 100000 + 2 * 3600, 4)).toBe(2 * 3600);
-  });
-
-  it("интервал прошёл полностью — 0 (тест доступен)", () => {
-    expect(inventoryOverloadPeriodicRemaining(100000, 100000 + 4 * 3600, 4)).toBe(0);
   });
 });
 

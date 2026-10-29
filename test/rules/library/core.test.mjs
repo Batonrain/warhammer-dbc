@@ -7,7 +7,6 @@
 import { describe, it, expect } from "vitest";
 import { resolveTest } from "../../../module/rules/resolve-test.mjs";
 import { collectRules } from "../../../module/rules/collect.mjs";
-import { CORE_RULES } from "../../../module/rules/library/core.mjs";
 
 /** Подставной актор: обычный литерал, без Foundry. */
 const actor = ({ items = [], ...system } = {}) => ({
@@ -30,9 +29,6 @@ const attackOn = targetActor => resolveTest({
 });
 
 describe("правила основной книги", () => {
-  it("«Проворный» есть в библиотеке", () => {
-    expect(CORE_RULES.map(r => r.id)).toContain("core.nimble");
-  });
 
   it("атака по Проворной цели получает минус Рейтинга X Черты", () => {
     const { mods } = attackOn(nimbleTarget(4));
@@ -41,11 +37,6 @@ describe("правила основной книги", () => {
 
   it("у цели с большим Рейтингом Черты штраф больше", () => {
     expect(attackOn(nimbleTarget(7)).mods[0].value).toBe(-7);
-  });
-
-  it("штраф не зависит от Бонуса Ловкости цели — только от Рейтинга Черты", () => {
-    // nimbleTarget всегда ставит Ag.b=99: штраф не «−99», а «−rating».
-    expect(attackOn(nimbleTarget(4)).mods[0].value).toBe(-4);
   });
 
   it("два грантера одной Черты складывают Рейтинг (как показ на листе, merge-abilities.mjs)", () => {

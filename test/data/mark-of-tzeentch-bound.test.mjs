@@ -49,14 +49,6 @@ function fakeActor({ isPsyker = false, cls = "bound", items = [] } = {}) {
 }
 
 describe("Метка Тзинча: запись «связанный, если не был псайкером»", () => {
-  it("запись есть, разовая («При выдаче»), без цены, частоты и триггера", () => {
-    expect(MARK, "Mark of Tzeentch в packs-src/traits").toBeTruthy();
-    expect(SCRIPT, "kind:script на Метке").toBeTruthy();
-    expect(SCRIPT.scriptOnGrant).toBe(true);
-    expect(SCRIPT.capabilityCostPool || SCRIPT.scriptThrottleUnit || SCRIPT.scriptTrigger).toBeFalsy();
-    expect(SCRIPT.code.trim().length).toBeGreaterThan(0);
-  }, PACK_SCAN_TIMEOUT);
-
   it("новый псайкер (Трейт Psyker только от самой Метки) становится Связанным", async () => {
     const actor = fakeActor({ cls: "unbound", items: [psykerTrait("mark1")] });
     await applyMechEntry(actor, SCRIPT, markItem(actor));

@@ -575,7 +575,7 @@ export async function activateSoulboundLegacyBonus(item, { psychic = false } = {
  * Живёт здесь, а не в rules/legacy-weapon.mjs: rules/hands.mjs транзитивно
  * тянет rules/sources.mjs (через flags.mjs → collect.mjs), а sources.mjs сам
  * импортирует rules/legacy-weapon.mjs — импорт hands.mjs ОТТУДА замкнул бы
- * цикл, на котором зависает vitest (test/rules/scaffold.test.mjs). apps/ —
+ * цикл, на котором зависает vitest (любой тест, грузящий rules/). apps/ —
  * вне этого графа.
  */
 export function legacyHatredShieldArms(weapon) {

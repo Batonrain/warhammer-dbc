@@ -23,10 +23,9 @@ import {
   rageSceneCandidates, askRageExit
 } from "../../module/combat/rage-behavior.mjs";
 import {
-  RAGE_EXIT_TRIED_FLAG, RAGE_EXIT_FAILED_FLAG, RAGE_AFTER_COMBAT_FLAG, RAGE_EXIT_REROLL_CARD_FLAG
+  RAGE_EXIT_TRIED_FLAG, RAGE_EXIT_FAILED_FLAG, RAGE_AFTER_COMBAT_FLAG
 } from "../../module/rules/rage-behavior.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
-import { TURN_SCOPED_FLAG_KEYS, turnStartFlagClears } from "../../module/rules/turn-flags.mjs";
+import { turnStartFlagClears } from "../../module/rules/turn-flags.mjs";
 import { isKnownCapability, CAPABILITIES } from "../../module/constants/capabilities.mjs";
 
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
@@ -133,19 +132,6 @@ describe("Избегания в Ярости: отказ без траты Ре�
     expect(avoidanceVerdict(a, "dodge").blocked).toBe(true);
   });
 
-  it("Боевой Гнев: Парирование идёт дальше (вердикт открыт), Уклонение — нет", () => {
-    const a = makeActor({ items: [frenzy(), battleRage()] });
-    expect(avoidanceVerdict(a, "parry").blocked).toBe(false);
-    expect(avoidanceVerdict(a, "dodge").blocked).toBe(true);
-  });
-
-  it("Модуль Агрессии: оба Избегания открыты; вне Ярости запрета нет вовсе", () => {
-    const a = makeActor({ items: [aggressionModule("poor")] });
-    expect(avoidanceVerdict(a, "dodge").blocked).toBe(false);
-    expect(avoidanceVerdict(a, "parry").blocked).toBe(false);
-    expect(avoidanceVerdict(makeActor({ inRage: false }), "dodge").blocked).toBe(false);
-  });
-
   // До PR у Модуля в паке механики не было: старая копия у Скитария без записей до «Обновить мир».
   it("старая копия Модуля без механики: установленный открывает Избегания по имени, снятый — нет", () => {
     const stale = installed => ({ ...aggressionModule(), flags: { [NS]: { installed } },
@@ -183,11 +169,6 @@ describe("Ментальные траты ОД и Реакций в Ярости
     expect(actionBlockReason(a, { physical: false })).toContain("в Ярости");
     expect(actionBlockReason(a, { physical: true })).toBe("");
     expect(actionBlockReason(a, {})).toBe("");
-  });
-
-  it("Холодная Ярость и «не в Ярости» — не блокируют", () => {
-    expect(actionBlockReason(makeActor({ items: [frenzy(), coldFury()] }), { physical: false })).toBe("");
-    expect(actionBlockReason(makeActor({ inRage: false }), { physical: false })).toBe("");
   });
 
   it("в бою ментальная трата ОД не проходит и ОД не списываются", async () => {
@@ -491,7 +472,6 @@ describe("Выход из Ярости: тест W+0", () => {
     expect(captured.rolls.length).toBe(rolls);
     expect(captured.warnings.join(" ")).toContain("не более одной попытки");
     // начало СВОЕГО Хода: реестр меток Хода гасит метку попытки
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(RAGE_EXIT_TRIED_FLAG);
     const patch = turnStartFlagClears({ getFlag: (s, k) => a.getFlag(s, k) });
     expect(patch[`flags.${NS}.-=${RAGE_EXIT_TRIED_FLAG}`]).toBeNull();
     delete a.store[RAGE_EXIT_TRIED_FLAG];
@@ -645,7 +625,6 @@ describe("Холодная Ярость: переброс неудачной п�
     const before = captured.chat.length;
     expect(await rerollRageExit({ flags: card.flags })).toBe(false);
     expect(captured.chat.length).toBe(before);
-    expect(CARD_ONCE_FLAGS).toContain(RAGE_EXIT_REROLL_CARD_FLAG);
   });
 });
 

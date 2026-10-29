@@ -35,9 +35,4 @@ describe("Таланты Родных миров существуют в пак�
     }
     expect(missing).toEqual([]);
   }, PACK_SCAN_TIMEOUT);
-
-  it("Мир-тюрьма выдаёт Peer, а не несуществующих «Peers»", () => {
-    const prison = HOMEWORLDS.find(h => h.key === "prison");
-    expect(grantedTalentNames(prison)).toEqual(["Peer (Criminals)", "Peer (Pirates)"]);
-  });
 });

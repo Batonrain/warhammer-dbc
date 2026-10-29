@@ -146,24 +146,47 @@ describe("стыковка: ретрансляция отметки ГМу", () 
   });
 
   it("каждый ключ, переданный в cardOnceUsed/markCardOnce/runCardOnce, есть в белом списке", () => {
-    const files = fs.readdirSync(path.join(ROOT, "module"), { withFileTypes: true, recursive: true })
+    // Ключ — литерал на месте вызова, строковая константа (своя или
+    // импортированная: `HAMSTRING_CARD_FLAG`) или поле таблицы (`F.neverDieUsed`).
+    // Без констант сторож видел бы меньше половины ключей: их заводят именно
+    // там, где одна отметка нужна и кнопке, и обработчику.
+    const texts = fs.readdirSync(path.join(ROOT, "module"), { withFileTypes: true, recursive: true })
       .filter(e => !e.isDirectory() && e.name.endsWith(".mjs"))
-      .map(e => path.join(e.parentPath ?? e.path, e.name));
-    const keys = new Set();
-    for (const f of files) {
-      for (const m of fs.readFileSync(f, "utf8").matchAll(/(?:cardOnceUsed|markCardOnce|runCardOnce)\([^,]+,\s*"([^"]+)"/g)) {
-        keys.add(m[1]);
+      .map(e => fs.readFileSync(path.join(e.parentPath ?? e.path, e.name), "utf8"));
+    const exported = new Map();
+    const fields = new Map(); // поле → значения
+    for (const t of texts) {
+      for (const m of t.matchAll(/export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*"([^"]*)"/g)) exported.set(m[1], m[2]);
+      for (const m of t.matchAll(/([A-Za-z_$][\w$]*):\s*"([^"]*)"/g)) (fields.get(m[1]) ?? fields.set(m[1], new Set()).get(m[1])).add(m[2]);
+    }
+    const keys = new Map(); // ключ → как записан
+    const unresolved = new Set();
+    for (const t of texts) {
+      const own = new Map([...t.matchAll(/const\s+([A-Za-z_$][\w$]*)\s*=\s*"([^"]*)"/g)].map(m => [m[1], m[2]]));
+      for (const m of t.matchAll(/(?<!function\s)(?:cardOnceUsed|markCardOnce|runCardOnce)\([^,()]+,\s*("[^"]+"|[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)?)/g)) {
+        const arg = m[1];
+        const field = arg.includes(".") ? [...(fields.get(arg.split(".")[1]) ?? [])] : [];
+        const key = arg.startsWith("\"") ? arg.slice(1, -1)
+          : own.get(arg) ?? exported.get(arg) ?? (field.length === 1 ? field[0] : undefined);
+        if (key !== undefined) keys.set(key, arg);
+        else unresolved.add(arg);
       }
     }
-    expect(keys.size).toBeGreaterThan(0);
-    for (const k of keys) expect(CARD_ONCE_FLAGS).toContain(k);
+    // Ключ, собранный в рантайме, сторож не видит. Здесь только известные такие
+    // места (общая обёртка card-once.mjs, строки Снайпера Ужаса, onceKey кнопок
+    // hooks.mjs, цена окна атаки); новое имя — разберите или впишите с причиной.
+    // Сюда же попадёт поле таблицы, у которого в module/ появилось второе значение.
+    expect([...unresolved].sort()).toEqual(["key", "onceKey", "pay.cardKey", "rowKey"]);
+    // Порог ловит сузившийся разбор: сторож, видящий меньше ключей, зелёный.
+    expect(keys.size).toBeGreaterThanOrEqual(40);
+    expect([...keys.values()]).toEqual(expect.arrayContaining(["HAMSTRING_CARD_FLAG", "F.neverDieUsed", "\"grenadierReduceUsed\""]));
+    const missing = [...keys].filter(([k]) => !CARD_ONCE_FLAGS.includes(k)).map(([k, arg]) => `${k} (${arg})`);
+    expect(missing, "ключ отметки карточки не в белом списке — ГМ не сможет пометить чужую карточку").toEqual([]);
   });
 });
 
 describe("стыковка: Гренадер и Снайпер Ужаса — раз на карточку флагом сообщения (Sahara pyromaniac-20 п.2)", () => {
-  it("ключи кнопок Гренадера и строк Снайпера Ужаса есть в белом списке сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain("grenadierReduceUsed");
-    expect(CARD_ONCE_FLAGS).toContain("grenadierRerollUsed");
+  it("ключи строк Снайпера Ужаса есть в белом списке сокета (собираются в рантайме — сторож выше их не видит)", () => {
     for (let i = 0; i < 20; i++) expect(CARD_ONCE_FLAGS).toContain(`terrorSuppress${i}`);
   });
 

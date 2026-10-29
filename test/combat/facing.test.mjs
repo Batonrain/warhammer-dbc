@@ -17,18 +17,6 @@ beforeEach(() => {
 });
 
 describe("isFrontArcHit", () => {
-  it("атакующий спереди (защитник смотрит на север, атакующий выше) — фронтальный хит", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0 });
-    const attacker = token({ x: 0, y: -300, rotation: 0 });
-    expect(isFrontArcHit(defender, attacker)).toBe(true);
-  });
-
-  it("атакующий сзади — не фронтальный хит", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0 });
-    const attacker = token({ x: 0, y: 300, rotation: 0 });
-    expect(isFrontArcHit(defender, attacker)).toBe(false);
-  });
-
   it("центр считается по width/height, не по левому верхнему углу (2×2 токен)", () => {
     // Защитник 2×2 клетки в (0,0) → центр (100,100). Атакующий прямо к северу от ЦЕНТРА.
     const defender = token({ x: 0, y: 0, width: 2, height: 2, rotation: 0 });

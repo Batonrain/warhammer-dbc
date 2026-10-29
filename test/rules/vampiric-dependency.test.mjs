@@ -1,7 +1,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { isVampiricDependencyItem, vampiricLastSatisfied, vampiricMonthsSince, vampiricTestRequired,
+import { vampiricLastSatisfied, vampiricMonthsSince, vampiricTestRequired,
          vampiricTestPenalty, satisfyVampiricDependency, VAMPIRIC_TIME_FLAG } from "../../module/rules/vampiric-dependency.mjs";
 
 const DAY = 86400;
@@ -16,21 +16,6 @@ function fakeItem({ type = "mutation", name = "Vampiric Dependency / Вампи�
     setFlag: async (ns, key, value) => { store[key] = value; }
   };
 }
-
-describe("isVampiricDependencyItem", () => {
-  it("совпадает по двуязычному имени", () => {
-    expect(isVampiricDependencyItem(fakeItem())).toBe(true);
-  });
-  it("совпадает по английской половине", () => {
-    expect(isVampiricDependencyItem(fakeItem({ name: "Vampiric Dependency" }))).toBe(true);
-  });
-  it("Addiction — другая мутация, false", () => {
-    expect(isVampiricDependencyItem(fakeItem({ name: "Addiction / Зависимость" }))).toBe(false);
-  });
-  it("другой тип предмета — false", () => {
-    expect(isVampiricDependencyItem(fakeItem({ type: "trait" }))).toBe(false);
-  });
-});
 
 describe("vampiricLastSatisfied / vampiricMonthsSince", () => {
   it("флаг не стоял — null / 0 месяцев", () => {

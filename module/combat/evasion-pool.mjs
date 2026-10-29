@@ -134,26 +134,9 @@ async function spendFromPool(defender, attackerUuid, amount) {
 }
 
 /**
- * Voltagheist Blast (wdbc-16ss, Элитный архетип Электрожрец, стр. — домашнее
- * правило): «цели могут потратить 2 оставшихся Успеха Уклонения на Отскок» —
- * та же валюта, что и остальной банк, но не на негацию попаданий (см.
- * performPoolSpend ниже), а как разовый пропуск в showRecoilDialog/
- * performRecoil (module/combat/recoil.mjs, см. performPoolRecoil там).
- * Списывает cost Успехов и возвращает true, если получилось; false — банк
- * пуст/устарел/не хватает на cost, вызывающая сторона ничего не тратит.
- */
-export async function spendPoolForRecoil(defender, attackerUuid, cost = 2) {
-  const entry = getEvasionPool(defender, attackerUuid);
-  if (!entry || entry.successes < cost) return false;
-  await spendFromPool(defender, attackerUuid, cost);
-  return true;
-}
-
-/**
- * Списание N банковских Успехов на что угодно ЕЩЁ, кроме готовых двух выше
- * (негация попаданий/Отскок) — ровно тот же примитив (getEvasionPool +
- * spendFromPool), названный по своему поводу, а не по имени первого
- * потребителя. Сейчас это ответный удар безоружного (unarmed-combat.mjs);
+ * Списание N банковских Успехов на что угодно, кроме негации попаданий (та —
+ * performPoolSpend ниже): пропуск в Отскок Voltagheist Blast (wdbc-16ss,
+ * recoil.mjs::performPoolRecoil) и ответный удар безоружного (unarmed-combat.mjs).
  * Захват отсюда ушёл в performPoolSpend с ценой по parryMod (wdbc-t3c3t.6).
  * Возвращает true, если получилось; false —
  * банк пуст/устарел/не хватает на cost, вызывающая сторона ничего не тратит.

@@ -6,7 +6,7 @@
 // injection — сам модуль ничего не импортирует из apps/, см. его шапку).
 
 import { describe, it, expect } from "vitest";
-import { setMutationsSuppressed, anyMutationSuppressed } from "../../module/rules/mutation-suppression.mjs";
+import { setMutationsSuppressed } from "../../module/rules/mutation-suppression.mjs";
 
 function mutationItem(id, { suppressed = false } = {}) {
   const flags = { suppressed };
@@ -111,21 +111,5 @@ describe("setMutationsSuppressed", () => {
     const source = mutationItem("pureForm");
     const fns = spySyncFns();
     expect(await setMutationsSuppressed(source, true, fns)).toEqual([]);
-  });
-});
-
-describe("anyMutationSuppressed", () => {
-  it("true, если хоть одна Мутация подавлена", () => {
-    const actor = actorWith([mutationItem("m1"), mutationItem("m2", { suppressed: true })]);
-    expect(anyMutationSuppressed(actor)).toBe(true);
-  });
-
-  it("false, если ни одна не подавлена", () => {
-    const actor = actorWith([mutationItem("m1"), mutationItem("m2")]);
-    expect(anyMutationSuppressed(actor)).toBe(false);
-  });
-
-  it("нет актора — false, не падает", () => {
-    expect(anyMutationSuppressed(null)).toBe(false);
   });
 });

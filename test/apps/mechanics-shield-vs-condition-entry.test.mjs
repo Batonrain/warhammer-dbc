@@ -12,7 +12,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { describeMechEntry, DURABLE_MECH_KINDS } from "../../module/apps/mechanics.mjs";
+import { describeMechEntry } from "../../module/apps/mechanics.mjs";
 
 const entry = (key) => ({ id: "e1", kind: "shieldVsCondition", shieldVsConditionKey: key });
 
@@ -24,11 +24,5 @@ describe("describeMechEntry — kind:shieldVsCondition", () => {
 
   it("состояние не выбрано — «не задано»", () => {
     expect(describeMechEntry(entry(""))).toBe("Щит: против тика Состояния (не задано)");
-  });
-});
-
-describe("shieldVsCondition не участвует в DURABLE_MECH_KINDS", () => {
-  it("не создаёт синтетический ActiveEffect на акторе — живой запрос, читается напрямую с предмета (wdbc-5knb)", () => {
-    expect(DURABLE_MECH_KINDS.has("shieldVsCondition")).toBe(false);
   });
 });

@@ -147,6 +147,3 @@ export const MANDATORY_BY_GROUP = Object.entries(MINION_TRAITS)
   .flatMap(([name, def]) => Object.entries(def.groups)
     .filter(([, v]) => v === "required")
     .map(([group]) => ({ group, name })));
-
-/** Тралл-Вирд считает максимум и требование по своей паре, а не по группе. */
-export const THRALL_WYRD = { name: "Thrall-Wyrd", masterChar: "wp", reqSkill: "Forbidden Lore (Psykers)" };

@@ -31,7 +31,7 @@ import { isCapabilityAvailable, markCapabilityUsed } from "./cooldown.mjs";
 // getHeldHand) отсюда — тот транзитивно тянет rules/flags.mjs →
 // rules/collect.mjs → rules/sources.mjs, а sources.mjs сам импортирует ЭТОТ
 // модуль (registerRuleSource на legacyWrathRules и т.д. ниже) — замкнёт
-// цикл, на котором зависает vitest (test/rules/scaffold.test.mjs, не падает
+// цикл, на котором зависает vitest (любой тест, грузящий rules/, не падает
 // в обычном Node). legacyHatredShieldArms поэтому живёт в apps/legacy-
 // weapon.mjs, не здесь.
 
@@ -1043,7 +1043,7 @@ export const LEGACY_HATRED_SHIELD_FLAG = "legacyHatredShield";
 // импортирует ЭТОТ модуль (registerRuleSource на legacyWrathRules и т.д.
 // выше). Импорт hands.mjs отсюда замкнул бы sources.mjs → legacy-weapon.mjs →
 // hands.mjs → … → sources.mjs в цикл, на котором зависает vitest (не Node
-// напрямую — молча вешает test/rules/scaffold.test.mjs). apps/ — не часть
+// напрямую — молча вешает любой тест, грузящий rules/). apps/ — не часть
 // этого графа, там тот же импорт безопасен.
 
 /** AP-бонус Щита Ненависти для этой зоны поглощения — 0, если флага нет или зона им не покрыта. */

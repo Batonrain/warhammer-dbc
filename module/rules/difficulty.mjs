@@ -27,8 +27,3 @@ export const DIFFICULTY_STEPS = [
 
 /** Шаг по умолчанию — центр таблицы, «без модификатора сложности». */
 export const DEFAULT_DIFFICULTY = 0;
-
-/** Значение есть в таблице? Диалог не должен предустанавливать шаг, которого нет. */
-export function isKnownDifficulty(value) {
-  return DIFFICULTY_STEPS.some(s => s.value === Number(value));
-}

@@ -29,11 +29,6 @@ export function effectiveFocusDisciplines(actor) {
   return Array.from(new Set([...ownFocusDisciplines(actor), ...grantedFocusDisciplines(actor)]));
 }
 
-/** Есть ли у актора Фокус дисциплины `key` (свой или дарованный). */
-export function hasFocusDiscipline(actor, key) {
-  return !!key && effectiveFocusDisciplines(actor).includes(key);
-}
-
 // ════════════════════════════════════════════════════════════════════════
 //  Качество предмета-Психофокуса (Psy Focus / Психофокус, core.json стр.243)
 //  — это НЕ «Фокус Дисциплины» выше, а вещь в руке/на теле, ради которой

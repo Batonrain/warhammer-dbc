@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  isUnseenBeggarItem, betterThanPoorEquipped, unseenBeggarGateOk, UNSEEN_BEGGAR
+  betterThanPoorEquipped, unseenBeggarGateOk, UNSEEN_BEGGAR
 } from "../../module/rules/unseen-beggar.mjs";
 
 const gear = (type, quality, equipped, name = type) => ({ type, name, system: { quality, equipped } });
@@ -15,15 +15,6 @@ function giftItem({ type = "mutation", key = UNSEEN_BEGGAR, name = "Х" } = {}) 
     ? [{ id: "g", operator: "AND", entries: [{ id: "e", kind: "capability", capabilityKey: key }] }]
     : [] } } };
 }
-
-describe("isUnseenBeggarItem", () => {
-  it("опознаёт по ключу Возможности", () => {
-    expect(isUnseenBeggarItem(giftItem())).toBe(true);
-  });
-  it("опознаёт по билингвальному имени", () => {
-    expect(isUnseenBeggarItem(giftItem({ key: null, name: "Unseen Beggar / Незримый Нищий" }))).toBe(true);
-  });
-});
 
 describe("betterThanPoorEquipped", () => {
   it("всё надетое Poor.Q — препятствий нет", () => {

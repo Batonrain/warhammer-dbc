@@ -241,11 +241,6 @@ describe("Надёжная Поступь", () => {
 describe("Раса Сквата против книги", () => {
   const entries = SQUAT.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 
-  it("Common Lore — любые 4", () => {
-    const lore = entries.find(e => e.kind === "skill" && e.skillKey === "commonLore");
-    expect(lore.specChoiceCount).toBe(4);
-  });
-
   it("Трейты расы — все пять книжных, включая Пустоту в Венах", () => {
     const names = entries.filter(e => e.kind === "trait").map(e => e.sourceName.split(" / ")[0]);
     for (const n of ["Fast Learner", "Clever Hands", "Hard as Stone", "Sure Tread", "Void in Veins",

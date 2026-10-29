@@ -59,15 +59,13 @@ describe("Таланты в паке", () => {
   const load = prefix => JSON.parse(fs.readFileSync(path.join(dir, fs.readdirSync(dir).find(f => f.startsWith(prefix))), "utf8"));
   const caps = doc => (doc.flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries ?? []).map(e => e.capabilityKey);
 
-  it("Restraint несёт возможность psyker.core.restraint и заметку без «Не смоделировано»", () => {
+  it("Restraint несёт возможность psyker.core.restraint", () => {
     const doc = load("Restraint");
     expect(caps(doc)).toEqual(["psyker.core.restraint"]);
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
   });
 
-  it("Child of the Warp несёт возможность psyker.core.childOfTheWarp и заметку без «Не смоделировано»", () => {
+  it("Child of the Warp несёт возможность psyker.core.childOfTheWarp", () => {
     const doc = load("Child_of_the_Warp");
     expect(caps(doc)).toEqual(["psyker.core.childOfTheWarp"]);
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
   });
 });

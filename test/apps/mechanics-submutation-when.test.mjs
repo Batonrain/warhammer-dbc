@@ -94,10 +94,6 @@ beforeEach(() => {
 });
 
 describe("entryWhenOk — гейт по субмутации, чистая функция", () => {
-  it("без when — да, всем", () => {
-    expect(entryWhenOk(null, { when: null }, { system: {} })).toBe(true);
-  });
-
   it("пустой список строк — да, всем", () => {
     expect(entryWhenOk(null, { when: when([]) }, { system: { submutation: { label: "4" } } })).toBe(true);
   });

@@ -5,7 +5,7 @@
 // проще раннего пересказа находки. module/combat/middle-of-the-hunt.mjs.
 
 import { describe, it, expect } from "vitest";
-import { hasMiddleOfTheHunt, processMiddleOfTheHuntRoundStart } from "../../module/combat/middle-of-the-hunt.mjs";
+import { processMiddleOfTheHuntRoundStart } from "../../module/combat/middle-of-the-hunt.mjs";
 
 const actorWith = (...names) => ({
   items: names.map(name => ({ type: "talent", name }))
@@ -21,15 +21,6 @@ function combatant(actor, initiative = 10) {
   };
   return c;
 }
-
-describe("hasMiddleOfTheHunt", () => {
-  it("находит Талант по билингвальному имени", () => {
-    expect(hasMiddleOfTheHunt(actorWith("The Middle of the Hunt / Середина Охоты"))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasMiddleOfTheHunt(actorWith("Dodge"))).toBe(false);
-  });
-});
 
 describe("processMiddleOfTheHuntRoundStart", () => {
   it("раунд 3: владелец Таланта получает +10 к Инициативе", async () => {

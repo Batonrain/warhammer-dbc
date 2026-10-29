@@ -7,7 +7,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
-import { ownFocusDisciplines, grantedFocusDisciplines, effectiveFocusDisciplines, hasFocusDiscipline }
+import { ownFocusDisciplines, grantedFocusDisciplines, effectiveFocusDisciplines }
   from "../../module/rules/psy-focus.mjs";
 import { PERFECT_SORCERER_CAPABILITY, PERFECT_SORCERER_FOCUS_DISCIPLINES }
   from "../../module/rules/perfect-sorcerer.mjs";
@@ -31,7 +31,7 @@ describe("ownFocusDisciplines", () => {
   });
 });
 
-describe("grantedFocusDisciplines / effectiveFocusDisciplines / hasFocusDiscipline", () => {
+describe("grantedFocusDisciplines / effectiveFocusDisciplines", () => {
   const saved = getRuleSources();
   afterEach(() => {
     clearRuleSources();
@@ -52,9 +52,6 @@ describe("grantedFocusDisciplines / effectiveFocusDisciplines / hasFocusDiscipli
     const effective = effectiveFocusDisciplines(actor);
     expect(effective).toContain("pyromancy");
     for (const key of PERFECT_SORCERER_FOCUS_DISCIPLINES) expect(effective).toContain(key);
-    expect(hasFocusDiscipline(actor, "sorcery")).toBe(true);
-    expect(hasFocusDiscipline(actor, "daemonology")).toBe(true);
-    expect(hasFocusDiscipline(actor, "highSorcery")).toBe(true);
   });
 
   it("пересечение своего выбора и дарованного не дублируется", () => {
@@ -62,11 +59,5 @@ describe("grantedFocusDisciplines / effectiveFocusDisciplines / hasFocusDiscipli
     const actor = { system: { psyker: { focusDisciplines: ["telekinesis"] } } };
     grantPerfectSorcererTo(actor);
     expect(effectiveFocusDisciplines(actor).filter(k => k === "telekinesis")).toEqual(["telekinesis"]);
-  });
-
-  it("дисциплина вне списков — нет Фокуса", () => {
-    clearRuleSources();
-    const actor = { system: { psyker: { focusDisciplines: ["telekinesis"] } } };
-    expect(hasFocusDiscipline(actor, "thaumaturgy")).toBe(false);
   });
 });

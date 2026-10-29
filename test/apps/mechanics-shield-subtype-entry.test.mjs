@@ -11,7 +11,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { describeMechEntry, DURABLE_MECH_KINDS } from "../../module/apps/mechanics.mjs";
+import { describeMechEntry } from "../../module/apps/mechanics.mjs";
 
 const entry = (mode, key, ratingMax) =>
   ({ id: "e1", kind: "shieldSubtype", shieldSubtypeMode: mode, shieldSubtypeKey: key, shieldSubtypeRatingMax: ratingMax });
@@ -27,11 +27,5 @@ describe("describeMechEntry — kind:shieldSubtype", () => {
 
   it("подвид не выбран — «не задано»", () => {
     expect(describeMechEntry(entry("exclude", ""))).toBe("Щит: подвид урона (не задано)");
-  });
-});
-
-describe("shieldSubtype не участвует в DURABLE_MECH_KINDS", () => {
-  it("не создаёт синтетический ActiveEffect на акторе — читается напрямую с предмета (wdbc-q0q8)", () => {
-    expect(DURABLE_MECH_KINDS.has("shieldSubtype")).toBe(false);
   });
 });

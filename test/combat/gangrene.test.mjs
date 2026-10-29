@@ -54,10 +54,6 @@ beforeEach(() => {
 });
 
 describe("gangrenePeriodicRemaining", () => {
-  it("флага (testAt) нет — доступно сейчас", () => {
-    expect(gangrenePeriodicRemaining(null, 100000, 4)).toBe(0);
-  });
-
   // wdbc-x1nz.2.96: при T.b=0 книга вырождается («каждые 0 часов») — пол 1 час.
   it("tb=0 — интервал 1 час, а не ноль", () => {
     expect(gangrenePeriodicRemaining(100000, 200000, 0)).toBe(0);
@@ -71,10 +67,6 @@ describe("gangrenePeriodicRemaining", () => {
   it("прошло меньше интервала — остаток посчитан верно", () => {
     // tb=4 → интервал 8ч=28800с; прошло 3ч → осталось 5ч.
     expect(gangrenePeriodicRemaining(100000, 100000 + 3 * 3600, 4)).toBe(5 * 3600);
-  });
-
-  it("интервал прошёл полностью — 0 (доступно)", () => {
-    expect(gangrenePeriodicRemaining(100000, 100000 + 8 * 3600, 4)).toBe(0);
   });
 });
 

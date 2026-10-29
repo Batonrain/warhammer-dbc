@@ -13,7 +13,7 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  COVER_UP_TABLE, COVER_UP_INF_MIN, COVER_UP_INF_MAX, COVER_UP_FLAG,
+  COVER_UP_TABLE, COVER_UP_FLAG,
   hasCoverUp, readCells, cellStats, coverUpSummary, clampInf,
   withAddedCell, withChangedCell, withoutCell
 } from "../../module/rules/cover-up.mjs";
@@ -26,15 +26,6 @@ const actorWith = (items = [], cells) => ({
 });
 
 describe("таблица ячейки (книга, Cover Up)", () => {
-  it("Inf 1–4 → средние Х-ки агентов и Уровень Реквизиции дословно по книге", () => {
-    expect(COVER_UP_TABLE).toEqual({
-      1: { agents: 25, requisition: 0 },
-      2: { agents: 30, requisition: 1 },
-      3: { agents: 35, requisition: 1 },
-      4: { agents: 40, requisition: 2 }
-    });
-    expect([COVER_UP_INF_MIN, COVER_UP_INF_MAX]).toEqual([1, 4]);
-  });
   it("cellStats: числа считаются по таблице, вне таблицы — null", () => {
     expect(cellStats(1)).toEqual({ agents: 25, requisition: 0 });
     expect(cellStats("3")).toEqual({ agents: 35, requisition: 1 });

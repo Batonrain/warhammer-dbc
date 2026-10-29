@@ -23,7 +23,6 @@ import {
 import { rollShockDeath } from "../../module/combat/shock-death.mjs";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
 import { processConditionTurnEnd } from "../../module/combat/condition-ticks.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 
 const ch =total => ({ total, bonus: Math.floor(total / 10) });
 const talentItem = name => ({ type: "talent", name, system: {}, flags: {}, getFlag: () => undefined });
@@ -254,11 +253,6 @@ describe("кнопки Талантов Критического Эффекта:
     expect(critTalentsHtml(hero({ talents: [ND] }), { level: 3 })).not.toContain("wh-final-push-btn");
   });
 
-  it("флаги карточки в белом списке сокета ГМа", () => {
-    for (const k of ["finalPushUsed", "neverDieUsed", "painIllusionUsed", "finalPushApplied"])
-      expect(CARD_ONCE_FLAGS).toContain(k);
-
-  });
 });
 
 describe("карточка урона: кнопки появляются сами", () => {

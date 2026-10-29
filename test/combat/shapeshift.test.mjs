@@ -9,7 +9,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { shapeshiftStep, SHAPESHIFT_STEPS, SHAPESHIFT_MOD } from "../../module/rules/shapeshifter.mjs";
+import { shapeshiftStep, SHAPESHIFT_STEPS } from "../../module/rules/shapeshifter.mjs";
 import { useShapeshift } from "../../module/combat/shapeshift.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 
@@ -33,10 +33,6 @@ beforeEach(resetCaptured);
 afterEach(() => { globalThis.game.combat = null; });
 
 describe("таблица Полиморфина (rules/shapeshifter.mjs)", () => {
-  it("порог теста — A+20 (книга: женский вариант)", () => {
-    expect(SHAPESHIFT_MOD).toBe(20);
-  });
-
   it("строка таблицы — по наибольшему достигнутому порогу Успехов: 1, 2, 3, 4, 5, 7", () => {
     expect(SHAPESHIFT_STEPS.map(s => s.min)).toEqual([1, 2, 3, 4, 5, 7]);
     expect(shapeshiftStep(0)).toBeNull();

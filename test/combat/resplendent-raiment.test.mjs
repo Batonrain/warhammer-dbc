@@ -8,14 +8,14 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { hasResplendentRaiment, resplendentUnit, resplendentRaimentAvailable, applyResplendentRaiment }
+import { resplendentUnit, resplendentRaimentAvailable, applyResplendentRaiment }
   from "../../module/combat/resplendent-raiment.mjs";
 
-function champion({ hasGift = true, fate = 2 } = {}) {
+function champion({ fate = 2 } = {}) {
   const flags = {};
   const data = {
     name: "Чемпион", uuid: "Actor.champion",
-    items: hasGift ? [{ type: "mutation", name: "Resplendent Raiment / Блистательные Одеяния" }] : [],
+    items: [{ type: "mutation", name: "Resplendent Raiment / Блистательные Одеяния" }],
     system: { fate: { value: fate, max: 5 } },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; }
@@ -40,13 +40,6 @@ function bystander(id, wpTotal = 40) {
 function token(id, actor) { return { id, actor }; }
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
-
-describe("hasResplendentRaiment", () => {
-  it("определяет владение Даром (kind:mutation)", () => {
-    expect(hasResplendentRaiment(champion({ hasGift: true }))).toBe(true);
-    expect(hasResplendentRaiment(champion({ hasGift: false }))).toBe(false);
-  });
-});
 
 describe("resplendentUnit", () => {
   it("в бою — battle, вне боя — scene", () => {

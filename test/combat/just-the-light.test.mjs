@@ -5,7 +5,7 @@
 // следующего Хода. module/combat/just-the-light.mjs.
 
 import { describe, it, expect } from "vitest";
-import { hasJustTheLight, processJustTheLightTurnEnd, justTheLightReduction } from "../../module/combat/just-the-light.mjs";
+import { processJustTheLightTurnEnd, justTheLightReduction } from "../../module/combat/just-the-light.mjs";
 
 function actorWith({ names = [], moved = false, ap = 0, agBonus = 0, type = "character", justTheLightActive = false } = {}) {
   const flags = { "warhammer-dbc.movedThisTurn": moved || undefined, "warhammer-dbc.justTheLightActive": justTheLightActive || undefined };
@@ -18,15 +18,6 @@ function actorWith({ names = [], moved = false, ap = 0, agBonus = 0, type = "cha
   };
   return a;
 }
-
-describe("hasJustTheLight", () => {
-  it("находит Талант по билингвальному имени", () => {
-    expect(hasJustTheLight(actorWith({ names: ["Just the Light / Лишь Свет"] }))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasJustTheLight(actorWith({ names: ["Dodge"] }))).toBe(false);
-  });
-});
 
 describe("processJustTheLightTurnEnd", () => {
   it("двигался и дожёг ОД до 0 — ставит флаг щита", async () => {

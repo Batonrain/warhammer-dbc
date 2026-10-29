@@ -30,6 +30,8 @@ const integral = (weaponClass, flag = null) => ({
 });
 const asIntegral = { isIntegralAttack: item => item.name === "Кислотный Плевок" };
 
+// Строка урона сверяется точно: «+S.b» в ней — прошлая ошибка живой проверки (Сила прибавлялась
+// дважды: combat/attack.mjs::flatBonus добавляет её сам).
 describe("improvisedMeleeProfile: таблица книги стр. 40 (wdbc-bs0q, сверка wdbc-x1nz.2)", () => {
   it("пистолет бьёт как Булава — 1d5−2, досягаемость 1 м", () => {
     const p = improvisedMeleeProfile(gun("pistol"));
@@ -218,30 +220,6 @@ describe("attackIsMelee: окно и бросок обязаны решать о
   it("пустые входы не роняют расчёт", () => {
     expect(attackIsMelee(undefined, undefined)).toBe(false);
     expect(attackIsMelee({}, {})).toBe(false);
-  });
-});
-
-// ── Бонус Силы в строку урона НЕ пишется (найдено живой проверкой) ────────
-//
-// Книга пишет ИТОГ («1d5-3+S.b»), а система записывает урон рукопашного БЕЗ
-// бонуса Силы и прибавляет его сама (combat/attack.mjs::flatBonus). Первая
-// версия профиля несла «+S.b» в строке — и Сила прибавлялась ДВАЖДЫ: при S.b=3
-// выходило 1d10-3+3+3 вместо 1d10-3+3, то есть удар прикладом бил вдвое
-// сильнее положенного по бонусу Силы.
-describe("бонус Силы: в строке урона его быть не должно", () => {
-  it("ни у одного класса оружия в строке нет S.b", () => {
-    // "thrown" сюда не входит — у него нет улучшенного профиля вовсе
-    // (wdbc-x1nz.2.58, см. describe выше).
-    for (const cls of ["pistol", "basic", "heavy", "launcher", "stationary"]) {
-      const p = improvisedMeleeProfile(gun(cls));
-      expect(p.damage, cls).not.toMatch(/S\.?b/i);
-    }
-  });
-
-  it("строка урона — только кубик и плоская поправка, как у рукопашных паков", () => {
-    // У меча в паке «1d10+2», у профиля «Посох» — «2d10+4»: ни у одного нет
-    // «+S.b». Форма обязана совпадать, иначе движок посчитает иначе.
-    expect(improvisedMeleeProfile(gun("basic")).damage).toMatch(/^\d+d\d+[+-]\d+$/);
   });
 });
 

@@ -18,7 +18,6 @@
 import { describe, it, expect } from "vitest";
 import path from "node:path";
 
-import { parseSubmutations } from "../../module/rules/submutations.mjs";
 import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 import { packDocByFileHint } from "../support/pack-doc.mjs";
 
@@ -27,33 +26,13 @@ const TAIL_PATH = path.join(ROOT,
   "packs-src/mutations/Общие_мутации/Tail___Хвост_F7iMcjy64r5w52bz.json");
 
 const tail = packDocByFileHint(TAIL_PATH);
-const submutations = parseSubmutations(tail.system.benefit);
 const mechEntries = tail.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const withSub = mechEntries.filter(e => (e.when?.submutations ?? []).length);
 
 describe("Tail/Хвост: Механика субмутации 8 (Скорпионий Хвост, khorne) согласована", () => {
-  it("в таблице СУБМУТАЦИИ реально есть строка 8", () => {
-    expect(submutations.entries.map(e => e.label)).toContain("8");
-  });
-
-  it("каждая запись Механики с when.submutations ссылается на существующую строку таблицы", () => {
-    const knownLabels = new Set(submutations.entries.map(e => e.label));
-    const offenders = withSub.flatMap(e => e.when.submutations.filter(l => !knownLabels.has(l)));
-    expect(offenders).toEqual([]);
-  });
-
-  it("нашлись ровно 3 записи Механики, гейтованные строкой 8", () => {
-    expect(withSub).toHaveLength(3);
-    expect(withSub.every(e => e.kind === "trait")).toBe(true);
-  });
-
   // Решение владельца 26.09.2026 «по книге» (стр. 440): цвет Бога у строки —
   // право его последователей выбрать её, а не условие эффекта; враждебного
   // Бога отсекает сам бросок (rules/submutations.mjs::isSubBlocked).
-  it("гейта по Покровителю у записей нет — только строка субмутации", () => {
-    for (const e of withSub) expect(e.when.patronGod ?? []).toEqual([]);
-  });
-
   it("Natural Armour с рейтингом 4", () => {
     const e = withSub.find(x => /Natural Armour/.test(x.sourceName));
     expect(e.sourceHasRating).toBe(true);

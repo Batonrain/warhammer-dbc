@@ -8,24 +8,21 @@
 //
 // Поэтому актор здесь собирается из НАСТОЯЩЕГО документа пака, у которого
 // снята механика — ровно как старая копия у персонажа.
+//
+// Ключи не перечисляются руками: их собирает разбор module/ — все вызовы
+// hasTalentCapability и все таблицы { key, name }, по которым код опознаёт
+// Талант (MELEE_TALENTS, TAKEDOWN…). Для строки таблицы договор тот же:
+// Талант пака несёт ключ и носит имя из таблицы, иначе копия без ключа молчит.
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { hasTalentCapability } from "../../module/rules/ability-by-key.mjs";
-import { FEARLESS_CAP, FIREMAN_CAP, JADED_CAP, IDOLATER_CAP } from "../../module/rules/courage-talents.mjs";
-import {
-  FIELD_SURGEON_CAP, RADICAL_TREATMENT_CAP, FAST_STITCHES_CAP, RESTITCHING_CAP, COUNCILIUM_CAP,
-  REANIMATE_CAP, POISONER_CAP, SURGICAL_PRECISION_CAP, HOOK_UP_CAP, TORTURER_CAP
-} from "../../module/rules/medic-talents.mjs";
-import { SPRAYER_CAPABILITY } from "../../module/combat/defense.mjs";
+import { itemHasName } from "../../module/rules/predicates.mjs";
+import { FEARLESS_CAP } from "../../module/rules/courage-talents.mjs";
 import { BLACK_MANTLE_KEY } from "../../module/rules/radiation-scene.mjs";
-import { MEMORY_THIEF_CAP } from "../../module/rules/omophagea.mjs";
 import { TEMPERED_COCOON_CAP, TASTE_THE_SOUL_CAP, situationalRules } from "../../module/rules/situational.mjs";
-import { UNHOLY_DEVOTION_CAP } from "../../module/rules/unholy-devotion.mjs";
-import { SENSE_OF_BALANCE } from "../../module/combat/walker.mjs";
-import { BALEARIC_CAPABILITY } from "../../module/rules/throwing-talents.mjs";
 import { minionLoyalty, minionCapacity } from "../../module/rules/minion-build.mjs";
 import {
   isForesightItem, isBladeJugglerItem, isWarCryItem
@@ -58,20 +55,105 @@ const packTalentWith = (() => {
 const staleCopy = key => ({ ...packTalentWith(key), _id: undefined, id: "stale", flags: {} });
 const actorWith = (...items) => ({ type: "character", system: { characteristics: {} }, items });
 
-const KEYS = {
-  FEARLESS_CAP, FIREMAN_CAP, JADED_CAP, IDOLATER_CAP,
-  FIELD_SURGEON_CAP, RADICAL_TREATMENT_CAP, FAST_STITCHES_CAP, RESTITCHING_CAP, COUNCILIUM_CAP,
-  REANIMATE_CAP, POISONER_CAP, SURGICAL_PRECISION_CAP, HOOK_UP_CAP, TORTURER_CAP,
-  SPRAYER_CAPABILITY, BLACK_MANTLE_KEY, MEMORY_THIEF_CAP, TEMPERED_COCOON_CAP, TASTE_THE_SOUL_CAP,
-  UNHOLY_DEVOTION_CAP, SENSE_OF_BALANCE, BALEARIC_CAPABILITY,
-  LET_IT_FLOW: "geneseed.core.letItFlow",
-  LORD_OF_CHAOS: "minion.core.lordOfChaos",
-  ANCIENT_WARRIOR: "arsenal.core.ancientWarrior"
+/** Исходники module/ — путь и текст. */
+const MODULE_SOURCES = fs.readdirSync(path.join(ROOT, "module"), { recursive: true })
+  .filter(f => String(f).endsWith(".mjs"))
+  .map(f => ({ rel: `module/${String(f).split(path.sep).join("/")}`, text: fs.readFileSync(path.join(ROOT, "module", f), "utf8") }));
+
+const STRING_CONST = /const\s+([A-Za-z_$][\w$]*)\s*=\s*"([^"]*)"/g;
+
+/**
+ * Ключи всех вызовов hasTalentCapability(actor, КЛЮЧ) в module/ — литерал или
+ * строковая константа (своя или экспортированная другим модулем). Список
+ * собирается из кода, а не руками: новый читатель попадает под проверку сам.
+ */
+function talentCapabilityKeys() {
+  const exported = new Map();
+  for (const { text } of MODULE_SOURCES)
+    for (const m of text.matchAll(/export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*"([^"]*)"/g)) exported.set(m[1], m[2]);
+  const keys = new Map(); // ключ → файл первого читателя
+  const unresolved = [];
+  for (const { rel, text } of MODULE_SOURCES) {
+    const own = new Map([...text.matchAll(STRING_CONST)].map(m => [m[1], m[2]]));
+    for (const m of text.matchAll(/(?<!function\s)hasTalentCapability\([^,()]+,\s*("[^"]*"|[A-Za-z_$][\w$]*)\s*\)/g)) {
+      const key = m[1].startsWith("\"") ? m[1].slice(1, -1) : own.get(m[1]) ?? exported.get(m[1]);
+      if (key) { if (!keys.has(key)) keys.set(key, rel); } else unresolved.push(`${rel}: ${m[1]}`);
+    }
+  }
+  return { keys, unresolved };
+}
+
+/**
+ * Строки таблиц `{ key: "ключ", name: "Имя" }` (MELEE_TALENTS, TAKEDOWN…) в
+ * модулях, которые опознают Талант по `t.name` — через hasAbility или
+ * itemHasName. Имя — запасной путь для копии без ключа, ключ — основной.
+ */
+function tableRows() {
+  const rows = [];
+  for (const { rel, text } of MODULE_SOURCES) {
+    if (!/(?:hasAbility|itemHasName)\([^)]*\.name\b/.test(text)) continue;
+    for (const m of text.matchAll(/\{\s*key:\s*"([^"]*)",\s*name:\s*"([^"]+)"/g)) rows.push({ key: m[1], name: m[2], rel });
+  }
+  return rows;
+}
+
+/**
+ * Строки таблиц, у которых в паке нет Таланта-носителя ключа, — и почему это
+ * законно. Закрытый список: новая строка без носителя роняет тест.
+ */
+const TABLE_ROWS_WITHOUT_CARRIER = {
+  // Громыхатель механизирован записью kind:"reroll" (wdbc-u0by), а строку
+  // RESILIENCE_TALENTS.thumper код не опрашивает вовсе.
+  "resilience.core.thumper": "механизирован kind:\"reroll\" (wdbc-u0by), строку таблицы никто не опрашивает"
 };
 
+const { keys: KEYS, unresolved: UNRESOLVED } = talentCapabilityKeys();
+// Читатели другой формы — имя передано в вызове, а не взято из реестра:
+// itemIs(i, "talent", BLACK_MANTLE_KEY, "Black Mantle") и
+// actorHasCapability(actor, TASTE_THE_SOUL_CAP, "Taste the Soul").
+KEYS.set(BLACK_MANTLE_KEY, "module/apps/black-mantle.mjs");
+KEYS.set(TASTE_THE_SOUL_CAP, "module/rules/situational.mjs");
+const TABLE_ROWS = tableRows();
+
+describe("разбор кода находит всех читателей", () => {
+  it("hasTalentCapability: каждый ключ распознан, ключей не меньше 26", () => {
+    // Порог ловит сузившийся разбор: сторож, проверяющий меньше ключей, зелёный.
+    expect(UNRESOLVED, "ключ в вызове не литерал и не строковая константа — научите разбор").toEqual([]);
+    expect(KEYS.size).toBeGreaterThanOrEqual(26);
+    expect([...KEYS.keys()]).toEqual(expect.arrayContaining(["geneseed.core.letItFlow", FEARLESS_CAP]));
+  });
+
+  it("таблицы {key, name}: не меньше 150 строк из 20 модулей", () => {
+    expect(TABLE_ROWS.length).toBeGreaterThanOrEqual(150);
+    expect(new Set(TABLE_ROWS.map(r => r.rel)).size).toBeGreaterThanOrEqual(20);
+    expect(TABLE_ROWS.map(r => r.key)).toEqual(expect.arrayContaining(["meleeCore.core.savior", "meleeCore.core.takedown"]));
+  });
+});
+
+describe("таблицы {key, name}: Талант пака несёт ключ и носит это имя", () => {
+  it("у каждой строки есть Талант-носитель ключа с тем же именем", () => {
+    const bad = [];
+    for (const { key, name, rel } of TABLE_ROWS) {
+      if (key in TABLE_ROWS_WITHOUT_CARRIER) continue;
+      let doc = null;
+      try { doc = packTalentWith(key); } catch { /* нет носителя */ }
+      if (!doc) bad.push(`${key} («${name}», ${rel}) — в паке Талантов нет носителя`);
+      else if (!itemHasName(doc, name)) bad.push(`${key} — носитель «${doc.name}», а таблица ${rel} зовёт его «${name}»`);
+    }
+    expect(bad, "ключ ушёл с Таланта пака или имя разошлось: копия без ключа не опознается").toEqual([]);
+  });
+
+  it("строка-исключение без носителя всё ещё без носителя", () => {
+    const stale = Object.keys(TABLE_ROWS_WITHOUT_CARRIER).filter(key => {
+      try { return !!packTalentWith(key); } catch { return false; }
+    });
+    expect(stale, "у ключа появился носитель — уберите строку из TABLE_ROWS_WITHOUT_CARRIER").toEqual([]);
+  });
+});
+
 describe("hasTalentCapability: Талант опознаётся и у копии без ключа", () => {
-  for (const [name, key] of Object.entries(KEYS)) {
-    it(`${name} (${key}) — по имени из пака`, () => {
+  for (const [key, rel] of KEYS) {
+    it(`${key} (${rel}) — по имени из пака`, () => {
       expect(hasTalentCapability(actorWith(staleCopy(key)), key)).toBe(true);
     });
   }
@@ -92,11 +174,11 @@ describe("читатели, знавшие только ключ, у копии 
   });
 
   it("Древний Воин: +10 Лояльности Миньону-Астартес", () => {
-    expect(minionLoyalty(master([staleCopy(KEYS.ANCIENT_WARRIOR)]), "human", { astartes: true })).toBe(50);
+    expect(minionLoyalty(master([staleCopy("arsenal.core.ancientWarrior")]), "human", { astartes: true })).toBe(50);
   });
 
   it("Лорд Хаоса: +50% к числу Миньонов", () => {
-    expect(minionCapacity(master([staleCopy(KEYS.LORD_OF_CHAOS)]), ["human"])).toBe(6);
+    expect(minionCapacity(master([staleCopy("minion.core.lordOfChaos")]), ["human"])).toBe(6);
   });
 
   it("Закалённый Кокон: +10 на тест против жара", () => {

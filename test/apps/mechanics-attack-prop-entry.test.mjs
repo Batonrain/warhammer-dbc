@@ -12,7 +12,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { describeMechEntry, DURABLE_MECH_KINDS } from "../../module/apps/mechanics.mjs";
+import { describeMechEntry } from "../../module/apps/mechanics.mjs";
 
 const entry = (over = {}) => ({ id: "e1", kind: "attackProp", apScope: "unarmed", apKey: "", apRating: "", apRating2: "", ...over });
 
@@ -38,11 +38,5 @@ describe("describeMechEntry — kind:attackProp", () => {
   it("рукопашная область", () => {
     expect(describeMechEntry(entry({ apScope: "melee", apKey: "tearing" })))
       .toBe("Свойство атаки: Рукопашные атаки — Рвущее");
-  });
-});
-
-describe("attackProp не участвует в DURABLE_MECH_KINDS", () => {
-  it("не создаёт синтетический ActiveEffect на акторе — живой запрос, читается прямо в момент атаки (wdbc-rmrm9)", () => {
-    expect(DURABLE_MECH_KINDS.has("attackProp")).toBe(false);
   });
 });

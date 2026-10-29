@@ -11,7 +11,7 @@ import { actorFor } from "../support/combat-fixtures.mjs";
 import { _doPinDown, _resolveTakeoverSuccess, GRAPPLE_HANDS_FLAG } from "../../module/combat/grapple.mjs";
 import { pinDownPenaltyValue, pinDownHoldOf, PIN_DOWN_FLAG } from "../../module/rules/pugilist-talents.mjs";
 import { situationalRules } from "../../module/rules/situational.mjs";
-import { TURN_SCOPED_FLAG_KEYS, turnStartFlagClears } from "../../module/rules/turn-flags.mjs";
+import { turnStartFlagClears } from "../../module/rules/turn-flags.mjs";
 
 const PIN = { id: "pd", name: "Pin Down / Прижать", type: "talent", system: {} };
 const NS = "warhammer-dbc";
@@ -113,10 +113,6 @@ describe("штраф цели в situationalRules; сброс метки Ход�
     foe._flags.grapplePartnerUuid = "Actor.me";
     globalThis.fromUuidSync = () => null;
     expect(situationalRules(foe, { kind: "attack" }).find(r => r.id === "situational.pinDown")).toBeUndefined();
-  });
-
-  it("метка снимается в начале Хода прижимающего (в реестре Ход-флагов)", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(PIN_DOWN_FLAG);
   });
 
   it("нулевая метка (штраф 0) тоже снимается в начале Хода — иначе «раз в Ход» висит до конца Захвата", () => {

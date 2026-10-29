@@ -65,15 +65,6 @@ afterEach(() => {
   globalThis.game.combat = undefined;
 });
 
-describe("Дары Нургла, партия 1 — обе несут ровно одну валидную kind:\"script\" запись", () => {
-  it.each(Object.keys(FILES))("%s", key => {
-    const { entry } = scriptEntryOf(loadDoc(key));
-    expect(entry).toBeTruthy();
-    expect(entry.code?.trim()).not.toBe("");
-    expect(entry.label?.trim()).not.toBe("");
-  });
-});
-
 describe("destructiveSwarm — раз за бой, бесплатно", () => {
   it("гейтится боем (game.combat.id), не пулом", async () => {
     globalThis.game.combat = { id: "battle-1", round: 1 };

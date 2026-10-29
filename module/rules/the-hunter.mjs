@@ -26,19 +26,12 @@
 
 import { tokenDocDistance } from "../regions/auras.mjs";
 import { isTokenInSight } from "./vision-target.mjs";
-import { itemIs } from "./item-marker.mjs";
 
-const NAME = "The Hunter";
 export const HOUND_NAME = "Гончая Плоти";
 // На Акторе Гончей — {championUuid, itemId}: кто именно её призвал (Дар и
 // его владелец), нужно только для точечной проверки «эта Гончая — ЧЬЯ»
 // (кнопка возврата в Варп после подтверждения смерти жертвы).
 export const HUNTER_HOUND_FLAG = "hunterHoundOf";
-
-/** Это предмет-Дар «The Hunter / Загонщик»? */
-export function isTheHunterItem(item) {
-  return itemIs(item, "mutation", "gift.khorne.theHunter", NAME);
-}
 
 /**
  * Псайкеры сцены, видимые чемпиону — ближайший первым (стр. 453-460:

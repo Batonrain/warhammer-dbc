@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateName, cultureForRace, nameCultures, nameCultureLabel, RACE_TO_NAME_CULTURE }
+import { generateName, cultureForRace, RACE_TO_NAME_CULTURE }
   from "../../module/rules/name-generator.mjs";
 import { NAME_LISTS } from "../../module/constants/name-lists.mjs";
 
@@ -46,7 +46,7 @@ describe("generateName", () => {
   });
 
   it("никогда не возвращает пустую строку", () => {
-    for (const culture of nameCultures()) {
+    for (const culture of Object.keys(NAME_LISTS)) {
       for (const gender of ["male", "female", "other", undefined]) {
         expect(generateName(culture, gender)).toBeTruthy();
       }
@@ -85,20 +85,5 @@ describe("cultureForRace", () => {
     for (const culture of Object.values(RACE_TO_NAME_CULTURE)) {
       expect(NAME_LISTS[culture]).toBeTruthy();
     }
-  });
-});
-
-describe("nameCultures / nameCultureLabel", () => {
-  it("перечисляет все ключи NAME_LISTS", () => {
-    expect(nameCultures().sort()).toEqual(Object.keys(NAME_LISTS).sort());
-  });
-
-  it("подпись культуры совпадает с её label", () => {
-    expect(nameCultureLabel("imperial")).toBe(NAME_LISTS.imperial.label);
-    expect(nameCultureLabel("aeldari")).toBe(NAME_LISTS.aeldari.label);
-  });
-
-  it("неизвестная культура — ключ как есть", () => {
-    expect(nameCultureLabel("орк")).toBe("орк");
   });
 });

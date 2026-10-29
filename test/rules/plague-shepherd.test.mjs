@@ -6,21 +6,9 @@
 // module/sheets/squad-sheet.mjs (_applyPlagueShepherd), не здесь.
 
 import { describe, it, expect } from "vitest";
-import { isPlagueShepherdItem, hasPlagueShepherd, plagueShepherdGrant, plagueShepherdShrinkToFit,
+import { plagueShepherdGrant, plagueShepherdShrinkToFit,
          isInfected, plagueShepherdFreeCommandActive }
   from "../../module/rules/plague-shepherd.mjs";
-
-describe("isPlagueShepherdItem / hasPlagueShepherd", () => {
-  it("узнаёт Мутацию по книжному двуязычному имени", () => {
-    expect(isPlagueShepherdItem({ type: "mutation", name: "Plague Shepherd / Чумной Пастырь" })).toBe(true);
-  });
-  it("hasPlagueShepherd сканирует items актора", () => {
-    const actor = { items: [{ type: "mutation", name: "Plague Shepherd / Чумной Пастырь" }] };
-    expect(hasPlagueShepherd(actor)).toBe(true);
-    expect(hasPlagueShepherd({ items: [] })).toBe(false);
-    expect(hasPlagueShepherd(null)).toBe(false);
-  });
-});
 
 describe("plagueShepherdGrant: не складывается с прошлой командой", () => {
   it("с нуля — просто ставит Успехи, ablativeMax двигается вместе", () => {

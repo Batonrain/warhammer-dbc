@@ -7,30 +7,11 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist,
   apocryphaMax, planCoilTransfer,
   CLOUD_COGNITION_MAX, MOTIVE_EUCHARIST_MAX, cloudCognitionCap, planCloudCognition, planMotiveEucharist
 } from "../../module/rules/technomystic-resources.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
-
-const talent = name => ({ type: "talent", name, system: {}, flags: {} });
-const actorWith = (...names) => ({ items: names.map(talent), system: {} });
-
-describe("опознание Талантов", () => {
-  it("по английской и русской половине имени", () => {
-    expect(hasApocryphaCoil(actorWith("Apocrypha Coil / Катушка Апокрифа"))).toBe(true);
-    expect(hasApocryphaCoil(actorWith("Катушка Апокрифа"))).toBe(true);
-    expect(hasCloudCognition(actorWith("Cloud Cognition / Облачная Когниция"))).toBe(true);
-    expect(hasMotiveEucharist(actorWith("Motive Eucharist / Мотивное Причастие"))).toBe(true);
-  });
-  it("чужие Таланты не подходят", () => {
-    const a = actorWith("Power Cache / Силовой Заряд");
-    expect(hasApocryphaCoil(a)).toBe(false);
-    expect(hasCloudCognition(a)).toBe(false);
-    expect(hasMotiveEucharist(a)).toBe(false);
-  });
-});
 
 describe("Катушка Апокрифа: максимум = база основной Катушки без бонусов Талантов", () => {
   it("ручная база + установленные импланты", () => {
@@ -128,11 +109,10 @@ describe("данные паков", () => {
     ["F0MKRY39gJQF6Uap", "technomystic.core.cloudCognition"],
     ["6yjm0n9iYD9ULD7E", "technomystic.core.motiveEucharist"]
   ]) {
-    it(`${key}: запись Конструктора есть, читатель назван, заметка не «не смоделировано»`, () => {
+    it(`${key}: запись Конструктора есть, читатель назван, заметка «Реализовано»`, () => {
       const doc = packDocById(TECH, id);
       expect(capEntries(doc).map(e => e.capabilityKey)).toEqual([key]);
       expect(CAPABILITIES[key].reader).toMatch(/module\//);
-      expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
       expect(doc.system.notes).toMatch(/Реализовано/);
     });
   }

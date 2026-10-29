@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickAttachSlot, slotOf, routeTouchesSystem, routeKnowledgeMod } from "../../module/rules/warp-route.mjs";
+import { pickAttachSlot, slotOf, routeKnowledgeMod } from "../../module/rules/warp-route.mjs";
 
 describe("warp-route: привязка маршрута к системе", () => {
   it("оба конца пусты — занимает системAUuid", () => {
@@ -25,11 +25,6 @@ describe("warp-route: привязка маршрута к системе", () =
   it("slotOf находит занятый конец, иначе null", () => {
     expect(slotOf({ systemAUuid: "Actor.x", systemBUuid: "" }, "Actor.x")).toBe("systemAUuid");
     expect(slotOf({ systemAUuid: "Actor.other", systemBUuid: "" }, "Actor.x")).toBeNull();
-  });
-
-  it("routeTouchesSystem — true только если один из концов совпал", () => {
-    expect(routeTouchesSystem({ systemAUuid: "Actor.x" }, "Actor.x")).toBe(true);
-    expect(routeTouchesSystem({ systemAUuid: "Actor.other" }, "Actor.x")).toBe(false);
   });
 });
 

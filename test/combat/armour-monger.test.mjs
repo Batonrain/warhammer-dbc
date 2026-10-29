@@ -8,7 +8,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { resetCaptured } from "../support/foundry-stub.mjs";
 import { toggleArmourMonger, armourMongerClock, armourMongerOn, hasArmourMonger, sweepStaleArmourMonger } from "../../module/combat/armour-monger.mjs";
-import { CONDITION_CLOCK_HANDLERS, sweepConditionClock } from "../../module/combat/condition-clock.mjs";
+import { sweepConditionClock } from "../../module/combat/condition-clock.mjs";
 import { fatigueChangeFields } from "../../module/sheets/tabs/conditions.mjs";
 
 const DAY = 86400;
@@ -60,10 +60,6 @@ describe("Бронник: тумблер", () => {
 });
 
 describe("Бронник: сброс в полночь по Календарю", () => {
-  it("в списке часов Состояний есть обработчик armourMonger", () => {
-    expect(CONDITION_CLOCK_HANDLERS.some(h => h.id === "armourMonger")).toBe(true);
-  });
-
   it("метка прошлых суток снимается, сегодняшняя остаётся", async () => {
     const a = makeActor();
     await a.setFlag("warhammer-dbc", "armourMonger", { day: 10 });

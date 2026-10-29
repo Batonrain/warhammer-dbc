@@ -81,11 +81,60 @@ describe("сторож: сброс Хода не гасит флаги по им
   });
 });
 
+// Сторож связи «реестр ↔ код» по образцу test/combat/card-once.test.mjs.
+// Раньше каждая метка Хода проверялась отдельным `toContain` в своём файле
+// (дюжина копий); здесь — все разом. Ловятся три поломки, каждая молчаливая:
+// метка в коде переименована, а реестр гасит старое имя (метка висит вечно);
+// строку реестра удалили; новую метку «…ThisTurn» завели, а в реестр не вписали.
+describe("сторож: метки Хода в коде и в реестре сходятся", () => {
+  const CODE = fs.readdirSync(path.join(ROOT, "module"), { recursive: true })
+    .filter(f => String(f).endsWith(".mjs") && !String(f).endsWith("turn-flags.mjs"))
+    .map(f => fs.readFileSync(path.join(ROOT, "module", f), "utf8"))
+    .join("\n");
+
+  /** Метки «…ThisTurn», которые снимает свой код, а не общий сброс, — и почему. */
+  const OWN_CLEAR = {
+    attackedThisTurn: "перекладывается в attackedPrevTurn (rules/turn-flags.mjs::turnStartAttackCarryOver), а не гасится",
+    bladeJugglerUsedThisTurn: "гасит rules/rogue-talents.mjs::clearBladeJuggler в начале Хода носителя",
+    blindsideUsedThisTurn: "гасит rules/unseen-talents.mjs::clearBlindsideUse в начале Хода носителя"
+  };
+
+  it("каждую метку реестра код где-то называет — имя не разошлось", () => {
+    // Литерал в кавычках: значение константы, setFlag(NS, "…") или путь «flags.warhammer-dbc.…».
+    const orphans = TURN_SCOPED_FLAG_KEYS.filter(k => !new RegExp(`["'\`.]${k}["'\`]`).test(CODE));
+    expect(orphans, "реестр гасит метку, которую код больше так не зовёт — переименуйте строку реестра").toEqual([]);
+  });
+
+  it("реестр не сжимается молча: не меньше 59 строк", () => {
+    // Удалённая строка — метка, которая больше не гаснет. Порог снижается
+    // только вместе с объяснением, куда делась метка.
+    expect(TURN_SCOPED_FLAG_KEYS.length).toBeGreaterThanOrEqual(59);
+  });
+
+  it("каждая метка «…ThisTurn» в коде есть в реестре, кроме снимаемых своим кодом", () => {
+    const named = new Set([...CODE.matchAll(/["'`]([a-z]\w*ThisTurn)["'`]/g)].map(m => m[1]));
+    expect(named.size).toBeGreaterThan(10);
+    const missing = [...named].filter(k => !TURN_SCOPED_FLAG_KEYS.includes(k) && !Object.hasOwn(OWN_CLEAR, k));
+    expect(missing, "метка «этого Хода» не гаснет в начале следующего — впишите её в TURN_SCOPED_FLAGS").toEqual([]);
+  });
+
+  it("метки без суффикса «ThisTurn» — в реестре", () => {
+    // Сторож суффикса выше их не видит; раньше каждую стерёг свой файл.
+    const NON_SUFFIX = ["bladeBindingOwner", COUNTENANCE_FLAG, "fastWeavingAp", "firedBracedHeavy",
+      "meleeDamageAppliedMsg", "pinDownHold", "rageExitTried", "reaperInitialTarget", "warpLockActive"];
+    expect(TURN_SCOPED_FLAG_KEYS).toEqual(expect.arrayContaining(NON_SUFFIX));
+  });
+
+  it("исключение OWN_CLEAR не устарело", () => {
+    const stale = Object.keys(OWN_CLEAR).filter(k => TURN_SCOPED_FLAG_KEYS.includes(k) || !CODE.includes(`"${k}"`));
+    expect(stale).toEqual([]);
+  });
+});
+
 // wdbc-4umq (4): «Лик <Бога>» — рейтинг Страха 3 «до начала своего следующего
 // Хода» (книга), а метка не снималась никогда.
 describe("Лик Бога: метка Страха гаснет в начале следующего своего Хода", () => {
   it("countenanceOfGods — в реестре и гасится сбросом", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(COUNTENANCE_FLAG);
     const upd = turnStartFlagClears(actorWithFlags([COUNTENANCE_FLAG]));
     expect(Object.keys(upd)).toEqual([`flags.warhammer-dbc.-=${COUNTENANCE_FLAG}`]);
   });

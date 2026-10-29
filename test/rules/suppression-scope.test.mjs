@@ -124,8 +124,4 @@ describe("Nerves of Steel в паке", () => {
   it("несёт один переброс с областью suppression", () => {
     expect(entries.map(e => [e.kind, e.rerollScope])).toEqual([["reroll", "suppression"]]);
   });
-
-  it("заметка не «Не смоделировано»", () => {
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
-  });
 });

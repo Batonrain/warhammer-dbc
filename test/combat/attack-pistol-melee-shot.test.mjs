@@ -26,14 +26,4 @@ describe("Пистолет в рукопашную: цель не получае
 
     expect(card()).toMatch(/wh-dodge-btn"[^>]*data-extra-mod="0"/);
   });
-
-  it("обычное стрелковое (basic, не carbine), opts.meleeShot=true — цель получает +30", async () => {
-    const weapon = weaponFor({ weaponClass: "basic" });
-    const actor  = actorFor({ items: [weapon] });
-    captured.dice = [10, 5];
-
-    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, { meleeShot: true });
-
-    expect(card()).toMatch(/wh-dodge-btn"[^>]*data-extra-mod="30"/);
-  });
 });

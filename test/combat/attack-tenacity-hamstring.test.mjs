@@ -11,9 +11,7 @@ import { actorFor, weaponFor, setTargets, char } from "../support/combat-fixture
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
 import { tenacityOffered, tenacityAvailable, tenacityNeedsConfirm, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "../../module/rules/melee-talents.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
-import { TENACITY_CARD_FLAG, confirmTenacityRepeat } from "../../module/combat/tenacity.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
+import { confirmTenacityRepeat } from "../../module/combat/tenacity.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 
 const card = () => captured.chat.at(-1)?.content ?? "";
@@ -45,10 +43,6 @@ describe("данные пака", () => {
     const doc = packDocById("packs-src/talents/Рукопашные", "QMoBdgPHVGHNyuS7");
     const keys = (doc.flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries).map(e => e.capabilityKey);
     expect(keys).toContain(TENACITY.key);
-  });
-  it("служебные ключи зарегистрированы", () => {
-    expect(CARD_ONCE_FLAGS).toContain(TENACITY_CARD_FLAG);
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(MELEE_DAMAGE_DEALT_FLAG);
   });
 });
 
@@ -205,10 +199,6 @@ describe("Упорство: подтверждение, если урон по �
     expect(await confirmTenacityRepeat({ hit: true, damageApplied: true })).toBe(true);
     expect(captured.dialog).toBeNull();
   });
-  it("служебный ключ «урон применён» в реестре Хода", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(MELEE_DAMAGE_APPLIED_FLAG);
-  });
-
   describe("метка «урон по этой карточке применён»", () => {
     let registry; let prevFromUuid;
     beforeEach(() => { registry = {}; prevFromUuid = globalThis.fromUuid; globalThis.fromUuid = async u => registry[u] ?? null; });

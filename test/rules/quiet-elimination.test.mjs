@@ -10,22 +10,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
-import { hasQuietElimination, isQuietEliminationWeapon } from "../../module/rules/quiet-elimination.mjs";
-
-function actorWith(items) { return { items }; }
-function trait(name) { return { id: "t1", type: "trait", name }; }
-
-describe("hasQuietElimination", () => {
-  it("находит по русскому имени", () => {
-    expect(hasQuietElimination(actorWith([trait("Тихое Устранение")]))).toBe(true);
-  });
-  it("находит по английскому имени", () => {
-    expect(hasQuietElimination(actorWith([trait("Quiet Elimination")]))).toBe(true);
-  });
-  it("нет предмета — false", () => {
-    expect(hasQuietElimination(actorWith([]))).toBe(false);
-  });
-});
+import { isQuietEliminationWeapon } from "../../module/rules/quiet-elimination.mjs";
 
 describe("isQuietEliminationWeapon", () => {
   it("нож (meleeCategory Нож) — да", () => {

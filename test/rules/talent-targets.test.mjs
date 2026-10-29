@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, sameTarget,
-  addTarget, removeTargetAt, targetLabel, factionRefs, targetMatches, anyTargetMatches,
+  addTarget, removeTargetAt, targetLabel, targetMatches, anyTargetMatches,
   TARGET_FEATURES, patronTarget, actorPatronKey, PATRON_ANY
 } from "../../module/rules/talent-targets.mjs";
 import { indexFactions } from "../../module/rules/factions.mjs";
@@ -245,14 +245,5 @@ describe("targetLabel", () => {
     expect(targetLabel(factionTarget(faction("chaos", "Хаос")))).toBe("Хаос");
     expect(targetLabel(actorTypeTarget("vehicle", "Техника"))).toBe("Техника");
     expect(targetLabel(allTarget())).toBe("Все!");
-  });
-});
-
-describe("factionRefs", () => {
-  it("берёт только фракции — дерево про остальные виды ничего не знает", () => {
-    const list = [
-      factionTarget(faction("chaos")), actorTypeTarget("vehicle"), allTarget()
-    ];
-    expect(factionRefs(list)).toEqual(["chaos"]);
   });
 });

@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
-  hasLordOfExodites, unnaturalFHint, clearMoraleConditions,
+  unnaturalFHint, clearMoraleConditions,
   exoditeSquadmatesOf, rallyExoditeSquad, applyLordOfExoditesFailPenalty
 } from "../../module/combat/lord-of-exodites.mjs";
 
@@ -38,17 +38,6 @@ function makeActor(overrides = {}) {
 }
 
 beforeEach(resetCaptured);
-
-describe("hasLordOfExodites", () => {
-  it("находит Черту по английской половине двуязычного имени", () => {
-    expect(hasLordOfExodites(makeActor({ items: [LORD_TRAIT] }))).toBe(true);
-  });
-  it("без Черты — false, без падения на пустом/несуществующем items", () => {
-    expect(hasLordOfExodites(makeActor({ items: [] }))).toBe(false);
-    expect(hasLordOfExodites({})).toBe(false);
-    expect(hasLordOfExodites(null)).toBe(false);
-  });
-});
 
 describe("unnaturalFHint", () => {
   it("находит величину из ActiveEffect предмета с «Unnatural» в имени, правящего fel.bonusFx", () => {

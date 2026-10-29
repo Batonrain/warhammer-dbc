@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  isTentacleItem, isTentacleShiftItem, tentacleIsHandForm, tentacleBonusSuppressed,
+  isTentacleShiftItem, tentacleIsHandForm, tentacleBonusSuppressed,
   TENTACLE_HAND_FORM_FLAG
 } from "../../module/rules/tentacle-hand-form.mjs";
 
@@ -17,18 +17,6 @@ function tentacleItem({ subLabel = "9", handForm = false } = {}) {
     flags: { "warhammer-dbc": handForm ? { [TENTACLE_HAND_FORM_FLAG]: true } : {} }
   };
 }
-
-describe("isTentacleItem", () => {
-  it("узнаёт Щупальце по половине билингвального имени", () => {
-    expect(isTentacleItem(tentacleItem())).toBe(true);
-  });
-  it("не путает с другой Мутацией", () => {
-    expect(isTentacleItem({ type: "mutation", name: "Tail / Хвост" })).toBe(false);
-  });
-  it("не путает с оружием того же имени", () => {
-    expect(isTentacleItem({ type: "weapon", name: "Tentacle / Щупальце" })).toBe(false);
-  });
-});
 
 describe("isTentacleShiftItem", () => {
   it("строка 9 «Изменчивое» — форма руки доступна", () => {

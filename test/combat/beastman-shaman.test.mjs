@@ -436,9 +436,13 @@ describe("Bone-Rune Etching", () => {
   it("доступна с Талантом, не требует троттлинга/боя", () => {
     expect(boneRuneEtchingAvailable(shamanWithTalent("Bone-Rune Etching / Костяная Рунопись"))).toBe(true);
   });
-  it("showBoneRuneEtchingText не бросает без god-ветки", async () => {
+  it("showBoneRuneEtchingText без god-ветки — карточка с общим текстом руны, без строки Бога", async () => {
     const a = shamanWithTalent("Bone-Rune Etching / Костяная Рунопись");
-    await expect(showBoneRuneEtchingText(a)).resolves.toBeUndefined();
+    await showBoneRuneEtchingText(a);
+    const html = captured.chat.at(-1)?.content ?? "";
+    expect(html).toContain("Костяная Рунопись");
+    expect(html).toContain("Шаман постиг искусство");
+    expect(html).not.toMatch(/<b>[^<]*(Кхорн|Нургл|Слаанеш|Тзинч)/);
   });
 });
 

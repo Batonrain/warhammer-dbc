@@ -10,7 +10,6 @@
 
 import { describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
-import { packDocuments } from "../support/pack-docs.mjs";
 import { RACES } from "../../module/constants/races.mjs";
 
 const RACE = packDocById("packs-src/races/Люди", "e2xIC6AzLAzO50uz");
@@ -30,13 +29,6 @@ describe("Йигори: Черты расы = книга", () => {
     const names = traitEntries.map(e => english(e.sourceName));
     for (const n of ["The Quick and The Dead", "New Men", "Angel Hunters", "Pack Consciousness", "Pheromone Glands"])
       expect(names, n).toContain(n);
-  });
-
-  it("каждая запись ведёт к существующей Черте пака с тем же именем", () => {
-    const byId = new Map(packDocuments("traits", "trait").map(({ doc }) => [doc._id, doc]));
-    for (const e of traitEntries) {
-      expect(byId.get(e.sourceUuid.split(".").pop())?.name, e.sourceName).toBe(e.sourceName);
-    }
   });
 
   it("снаряжение — дословно книга, резерв-константы с ним согласны", () => {

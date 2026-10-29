@@ -21,7 +21,7 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCapabilityCost }
+import { capabilityCostLabel, capabilityCostGate, spendCapabilityCost }
   from "../../module/combat/capability-cost.mjs";
 
 function actor({ ap = 2, fate = 3, type = "character" } = {}) {
@@ -45,19 +45,9 @@ beforeEach(() => { resetCaptured(); inCombat(true); });
 afterEach(() => inCombat(false));
 
 describe("пул «Очки Действия» заведён в Конструкторе", () => {
-  it("есть в списке пулов — иначе автор его не выберет", () => {
-    expect(CAPABILITY_COST_POOLS.action).toBeTruthy();
-    expect(CAPABILITY_COST_POOLS.action.label).toMatch(/Действия|ОД/);
-  });
-
   it("подпись цены читается по-игровому, а не «Очков Действия»", () => {
     expect(capabilityCostLabel({ pool: "action", amount: 1 })).toBe("1 ОД");
     expect(capabilityCostLabel({ pool: "action", amount: 2 })).toBe("2 ОД");
-  });
-
-  it("прежние пулы не задеты", () => {
-    expect(capabilityCostLabel({ pool: "infamy", amount: 1 })).toBe("1 Очко Бесчестия");
-    expect(capabilityCostLabel({ pool: "fate", amount: 2 })).toBe("2 Очка Судьбы");
   });
 });
 

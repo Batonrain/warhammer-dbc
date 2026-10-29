@@ -47,11 +47,6 @@ export function focusedWrathApplies(actor, { isMelee, targetActor } = {}) {
   return hated.length > 0 && anyTargetMatches(hated, { targetActor });
 }
 
-/** Сколько даёт «Усиление» за Очко к рукопашной атаке по цели: 20 с Талантом на Ненавистной цели, иначе 10. */
-export function boostBonusFor(actor, ctx) {
-  return focusedWrathApplies(actor, ctx) ? FOCUSED_WRATH_BOOST : FATE_BONUS;
-}
-
 /** Успехов «Атаки Ненависти»: Inf.b (минимум 1) с Талантом на Ненавистной цели, иначе 1. */
 export function hateAttackDegrees(actor, ctx) {
   if (!focusedWrathApplies(actor, ctx)) return 1;

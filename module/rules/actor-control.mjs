@@ -50,11 +50,6 @@ export function isControlExpired(control, ctx = {}) {
   return isTempGrantExpired(control, ctx);
 }
 
-/** Контролируется ли actor кем-то ПРЯМО СЕЙЧАС (истёкший контроль не считается). */
-export function isControlled(actor, ctx = {}) {
-  return !isControlExpired(controlOf(actor), ctx);
-}
-
 /** UUID контролирующего актора — null, если контроль истёк/отсутствует. */
 export function controllerUuidOf(actor, ctx = {}) {
   const control = controlOf(actor);

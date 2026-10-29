@@ -12,10 +12,8 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-
 import { packDocById } from "../support/pack-doc.mjs";
 import { applyRadHit } from "../../module/combat/radiation.mjs";
-import { isImmuneToCondition } from "../../module/rules/condition-guards.mjs";
 
 const DAEMONIC_ID = "brwXUX5nKFR5tOjG";
 
@@ -49,11 +47,6 @@ beforeEach(() => {
 
 describe("Черта Daemonic (X) из пака — иммунитет к радиации", () => {
   const daemonic = () => asItem(packDocById("packs-src/traits", DAEMONIC_ID));
-
-  it("в данных Черты есть запись иммунитета к Состоянию «Радиация»", () => {
-    const actor = makeActor([daemonic()]);
-    expect(isImmuneToCondition(actor, "radiation")).toBe(true);
-  });
 
   it("попадание Rad по носителю Черты: ни броска, ни урона в T, в чате — иммунитет", async () => {
     const actor = makeActor([daemonic()]);

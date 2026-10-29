@@ -60,16 +60,6 @@ export function commandBlockReason(actor) {
 }
 
 /**
- * Доходит ли конкретное преимущество Присутствия до этого актора. `actor`
- * необязателен (старые вызовы по одному типу): с ним учитываются Оглох/Без
- * сознания (commandBlockReason) — Присутствие тоже эффект Командования.
- */
-export function receivesPresence(actorType, benefitKey, actor = null) {
-  if (commandBlockReason(actor)) return false;
-  return presenceBenefitsFor(actorType).includes(benefitKey);
-}
-
-/**
  * Доходят ли до актора Короткие и Детальные Команды.
  *
  * До Орды — нет: «не получает эффектов Командования, кроме эффектов 1 и 3

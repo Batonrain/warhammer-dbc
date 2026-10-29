@@ -32,26 +32,6 @@ export function findMemberSquad(actorUuid) {
   return game.actors.find(a => a.type === "squad" && squadRoleOf(a, actorUuid) !== null) || null;
 }
 
-/**
- * Актор-Командир Отряда, в котором состоит данный актор — null, если актор
- * не в Отряде, в Отряде нет назначенного Командира, или Командир САМ и есть
- * этот актор (нет смысла быть «своим собственным Командиром» для находок
- * вида Adjutant/Voice of God, которым нужен ИМЕННО кто-то другой).
- */
-export function commanderOf(actor) {
-  const squad = findMemberSquad(actor?.uuid);
-  const uuid = squad?.system?.posts?.commander?.uuid;
-  if (!uuid || uuid === actor?.uuid) return null;
-  // Тот же приём разрешения uuid → актор, что squad-sheet.mjs:176 (пост может
-  // ссылаться на Токен — тогда нужен именно .actor, не сам документ Токена).
-  try {
-    const doc = fromUuidSync(uuid);
-    return doc?.actor ?? doc ?? null;
-  } catch {
-    return null;
-  }
-}
-
 /** Присутствие с выбранным ключом активно у этого командного узла (Отряд/сбродный Командир). */
 function presenceGrants(commandNode, key) {
   return !!commandNode?.active && commandNode?.benefit === key;

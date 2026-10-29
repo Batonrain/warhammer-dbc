@@ -8,7 +8,7 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import {
-  isHandOfKhorneItem, handOfKhorneItemOf, handOfKhorneHand,
+  handOfKhorneItemOf, handOfKhorneHand,
   isHandOfKhorneWeapon, handOfKhorneStrengthMultiplier,
   handOfKhorneAttackSizeBonus, handOfKhorneBlocksRangedAttack, HAND_FLAG
 } from "../../module/rules/hand-of-khorne.mjs";
@@ -42,15 +42,7 @@ function actorWithGift(hand) {
   return actor;
 }
 
-describe("isHandOfKhorneItem / handOfKhorneItemOf / handOfKhorneHand", () => {
-  it("опознаёт Дар по имени", () => {
-    expect(isHandOfKhorneItem(giftItem())).toBe(true);
-  });
-
-  it("другой предмет — false", () => {
-    expect(isHandOfKhorneItem({ type: "mutation", name: "Blood Flame / Кровавое Пламя", flags: {} })).toBe(false);
-  });
-
+describe("handOfKhorneItemOf / handOfKhorneHand", () => {
   it("Дара нет на акторе — handOfKhorneHand null", () => {
     expect(handOfKhorneHand({ items: [] })).toBeNull();
   });

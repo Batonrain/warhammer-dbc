@@ -11,7 +11,6 @@ import {
   LORD_OF_SLOTH_CAPABILITY
 } from "../../module/sheets/tabs/drugs.mjs";
 import { computeWoundHealing } from "../../module/sheets/tabs/wounds.mjs";
-import { woundLossUpdates } from "../../module/rules/wounds.mjs";
 import { packDocuments } from "../support/pack-docs.mjs";
 
 function drug({ id = "drug-1", name = "Пыльца", system = null } = {}) {
@@ -219,16 +218,6 @@ describe("drug special effects", () => {
     }, 5)).toEqual({
       "system.wounds.value": 6,
       "system.wounds.critical": 0
-    });
-  });
-
-  it("woundLossUpdates переносит переполнение в критический урон и сбрасывает First Aid", () => {
-    expect(woundLossUpdates({
-      wounds: { value: 2, max: 10, critical: 1, firstAidUsed: true }
-    }, 5)).toEqual({
-      "system.wounds.value": 0,
-      "system.wounds.critical": 4,
-      "system.wounds.firstAidUsed": false
     });
   });
 

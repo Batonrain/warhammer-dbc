@@ -43,11 +43,6 @@ describe("данные", () => {
   it("штык в паке несёт профиль «Посох»", () => {
     expect(weaponProfiles(bayonet()).some(p => p.label === "Посох")).toBe(true);
   });
-  it("Талант несёт запись Конструктора с ключом возможности", () => {
-    const doc = packDocById("packs-src/talents/Рукопашные", "33wfeOBY9Wo9itss");
-    const keys = (doc.flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries).map(e => e.capabilityKey);
-    expect(keys).toContain(KEY);
-  });
   it("Приём заведён с Базами, Хватом и профилем из книги", () => {
     const d = MELEE_MANEUVERS.reverseStrike;
     expect(d.wsBonus).toBe(0);

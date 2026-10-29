@@ -14,7 +14,7 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  NODE_TYPES, NODE_PACKS, nodeTypeOf, isShipNode, requisitionPlan, requisitionSummaryLines,
+  NODE_TYPES, NODE_PACKS, nodeTypeOf, requisitionPlan, requisitionSummaryLines,
   requisitionModifier, rarityMod, qualityMod
 } from "../../module/rules/requisition.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
@@ -94,16 +94,6 @@ describe("классификация настоящих компонентов p
     const wTypes = new Set(weapons.map(w => w.system.weapon.wType));
     for (const t of ["macrobattery", "lance", "torpedo", "bay", "nova"]) expect(wTypes.has(t), t).toBe(true);
     expect(weapons.every(w => nodeTypeOf(w) === "weapon")).toBe(true);
-  }, PACK_SCAN_TIMEOUT);
-
-  it("isShipNode: компонент — да; корпус и груз из того же пака — нет", () => {
-    expect(components().every(isShipNode)).toBe(true);
-    const hulls = packDocuments("ship-components", "shipHull").map(d => d.doc);
-    const cargo = packDocuments("ship-components", "cargo").map(d => d.doc);
-    expect(hulls.length).toBeGreaterThan(50);
-    expect(cargo.length).toBeGreaterThan(5);
-    expect([...hulls, ...cargo].some(isShipNode)).toBe(false);
-    expect(isShipNode(null)).toBe(false);
   }, PACK_SCAN_TIMEOUT);
 
   it("NODE_PACKS — пак компонентов, и он есть в system.json", () => {

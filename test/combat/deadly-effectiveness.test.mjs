@@ -8,7 +8,7 @@ import "../support/foundry-stub.mjs";
 import { resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
-  hasDeadlyEffectiveness, deadlyEffectivenessGate, triggerDeadlyEffectiveness
+  deadlyEffectivenessGate, triggerDeadlyEffectiveness
 } from "../../module/combat/deadly-effectiveness.mjs";
 
 const setActiveCombat = combat => { globalThis.game.combat = combat ? { started: true, ...combat } : undefined; };
@@ -30,15 +30,6 @@ function actorWith({ names = [], ap = 0, type = "character" } = {}) {
 
 beforeEach(() => { resetCaptured(); setActiveCombat(null); });
 afterEach(() => { globalThis.game.combat = undefined; });
-
-describe("hasDeadlyEffectiveness", () => {
-  it("находит Талант по билингвальному имени", () => {
-    expect(hasDeadlyEffectiveness(actorWith({ names: ["Deadly Effectiveness / Смертоносная Эффективность"] }))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasDeadlyEffectiveness(actorWith({ names: ["Dodge"] }))).toBe(false);
-  });
-});
 
 describe("triggerDeadlyEffectiveness", () => {
   it("в бою, есть Талант, ещё не использовано — +2 ОД, помечает раунд использованным", async () => {

@@ -8,7 +8,6 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { sweepLimbLossGangrene } from "../../module/combat/limb-loss.mjs";
-import { lostSideFields, clearStumpTimerFields } from "../../module/rules/limb-loss.mjs";
 
 // scheduleLimbLossGangreneFields/clearLimbLossGangreneFields (по типу конечности,
 // без стороны) удалены — с wdbc-x1nz.2.100 таймер обрубка заводится/снимается
@@ -92,19 +91,5 @@ describe("sweepLimbLossGangrene", () => {
     expect(actor.system.lostLimbs.rightHand.gangreneAt).toBe(0);
     expect(actor.system.lostLimbs.leftHand.gangreneAt).toBe(5000);
     expect(captured.chat).toHaveLength(1);
-  });
-});
-
-// Сама Foundry-функция lostSideFields/clearStumpTimerFields — чистая логика,
-// проверена без заглушки в test/rules/limb-loss.test.mjs; здесь достаточно
-// убедиться, что sweep читает и пишет ровно тот путь, который они производят.
-describe("lostSideFields / clearStumpTimerFields — путь, который читает sweep", () => {
-  it("lostSideFields с timer даёт тот же путь, что видит sweepLimbLossGangrene", () => {
-    expect(lostSideFields("lostHands", "right", { timer: true, worldTime: 1000, tb: 3 }))
-      .toEqual({ "system.lostLimbs.rightHand.lost": true, "system.lostLimbs.rightHand.gangreneAt": 1000 + 3 * 86400, "system.lostLimbs.rightHand.mutation": false });
-  });
-
-  it("clearStumpTimerFields снимает ровно то поле, что обнуляет sweep", () => {
-    expect(clearStumpTimerFields("lostLegs", "left")).toEqual({ "system.lostLimbs.leftLeg.gangreneAt": 0 });
   });
 });

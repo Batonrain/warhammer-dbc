@@ -3,15 +3,15 @@
 // Зависимость (мутация «Addiction», wdbc-5inv/wdbc-1rno) — module/rules/addiction.mjs.
 // Штраф −10 к тестам Навыков читается через общий конвейер (resolve-test.mjs,
 // scope "anySkill"), здесь проверяются только сами примитивы: поиск
-// предметов-носителей (по capabilityKey — addictionItems, и по имени —
-// isAddictionItem, нужен apps/addiction.mjs для кнопки на листе Мутации), счёт
-// суток, статус-строка, «Удовлетворить».
+// предметов-носителей (addictionItems), счёт суток, статус-строка,
+// «Удовлетворить». Опознание самого предмета (isAddictionItem = itemIs) —
+// общий тест test/rules/item-marker.test.mjs и item-markers-in-packs.test.mjs.
 
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
 import {
-  ADDICTION_CAPABILITY, isAddictionItem, addictionItems, addictionDaysSince, isAddictionUnsatisfied,
+  ADDICTION_CAPABILITY, addictionItems, addictionDaysSince, isAddictionUnsatisfied,
   addictionStatusLabel, addictionSubstanceLabel, addictionPenaltyRules,
   satisfyAddiction, setAddictionSubstance
 } from "../../module/rules/addiction.mjs";
@@ -41,33 +41,6 @@ function makeItem({ lastSatisfied = null, substance = "", submutationName = "", 
   };
   return item;
 }
-
-describe("isAddictionItem", () => {
-  it("совпадает по двуязычному имени, регистронезависимо", () => {
-    expect(isAddictionItem(makeItem({ name: "Addiction / Зависимость" }))).toBe(true);
-    expect(isAddictionItem(makeItem({ name: "addiction / зависимость" }))).toBe(true);
-  });
-  it("совпадает по одной английской половине", () => {
-    expect(isAddictionItem(makeItem({ name: "Addiction" }))).toBe(true);
-  });
-  it("другой тип предмета — false", () => {
-    expect(isAddictionItem({ ...makeItem({}), type: "trait" })).toBe(false);
-  });
-  it("ключ сильнее имени: переименованная Мутация всё1 равно опознаётся", () => {
-    // Раньше здесь ожидался false — опознание шло только по имени.
-    // Теперь решает ключ на самом предмете (wdbc-wdlw), и это и есть цель:
-    // переименование в компендиуме больше не выключает механику.
-    expect(isAddictionItem(makeItem({ name: "Совсем другое имя" }))).toBe(true);
-  });
-  it("ни ключа, ни имени — false", () => {
-    const other = makeItem({ name: "Vampiric Dependency / Вампирическая Зависимость" });
-    other.flags = {};
-    expect(isAddictionItem(other)).toBe(false);
-  });
-  it("нет предмета — false", () => {
-    expect(isAddictionItem(null)).toBe(false);
-  });
-});
 
 describe("addictionItems", () => {
   it("находит мутацию по capabilityKey mutation.addiction", () => {

@@ -360,12 +360,6 @@ export function moveDegreeFromPath(total, halfMove) {
   return t <= half + PATH_EPS ? "half" : "full";
 }
 
-/** Дальше ли пройдено, чем обычный Бег (SPD×6) — «дальний» Бег Спринта. */
-export function exceedsNormalRun(total, run) {
-  const r = finite(run);
-  return r > 0 && finite(total) > r + PATH_EPS;
-}
-
 // ── Тексты ──────────────────────────────────────────────────────────────────
 
 /** 3 → «3», 4.5 → «4,5»; шум дробей сетки обрезан до десятых. */

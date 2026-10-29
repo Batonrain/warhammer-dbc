@@ -10,7 +10,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { apocryphaTransfer, coilCharge, cloudCognition, motiveEucharist } from "../../module/sheets/tabs/tech.mjs";
 import { checkTargetWrite, performTargetWrite, writeToTarget } from "../../module/combat/gm-relay.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
 
 const talent = name => ({ id: name, type: "talent", name, system: {}, flags: {}, getFlag: () => undefined });
 const APOC = "Apocrypha Coil / Катушка Апокрифа";
@@ -396,12 +395,5 @@ describe("ГМ-релей: grantCognition / grantEnergy", () => {
     expect(await writeToTarget(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD))).toBe(true);
     expect(t.system.cognition.value).toBe(3);
     expect(captured.socket).toHaveLength(0);
-  });
-});
-
-describe("метки Хода гаснут сами", () => {
-  it("cloudCognitionThisTurn, motiveEucharistThisTurn и cloudCognitionReceived есть в реестре сроков", () => {
-    for (const k of ["cloudCognitionThisTurn", "motiveEucharistThisTurn", "cloudCognitionReceived"])
-      expect(TURN_SCOPED_FLAG_KEYS).toContain(k);
   });
 });

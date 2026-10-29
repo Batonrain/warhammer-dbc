@@ -5,16 +5,7 @@
 // (−5 максимум Ран) — обычная запись Конструктора kind:"wounds", не здесь.
 
 import { describe, it, expect } from "vitest";
-import { isFlayedItem, flayedGrant, flayedShrinkToFit, flayedVisualNote } from "../../module/rules/flayed.mjs";
-
-describe("isFlayedItem", () => {
-  it("узнаёт Мутацию по книжному двуязычному имени", () => {
-    expect(isFlayedItem({ type: "mutation", name: "Flayed / Освежёванный" })).toBe(true);
-  });
-  it("не путает с другой Мутацией", () => {
-    expect(isFlayedItem({ type: "mutation", name: "Cancerous Healing / Раковое Исцеление" })).toBe(false);
-  });
-});
+import { flayedGrant, flayedShrinkToFit, flayedVisualNote } from "../../module/rules/flayed.mjs";
 
 describe("flayedGrant: 3+Размер донора, потолок 3×Cor.b, своя доля копится отдельно", () => {
   it("копится с нуля, ablativeMax двигается вместе", () => {

@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { oddSuccesses, surgicalThreshold } from "../../module/rules/surgical-precision.mjs";
 import { runSurgicalPrecision, surgicalPrecisionButtonHtml, SURGICAL_CARD_FLAG } from "../../module/combat/surgical-precision.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 const DEFAULT_SOURCES = getRuleSources();
@@ -96,7 +95,6 @@ describe("runSurgicalPrecision", () => {
     await run(message, dom(message));
     expect(message.updates).toContainEqual({ "flags.warhammer-dbc.damageBoosts.0.damage": 12 });
     expect(message.getFlag("warhammer-dbc", SURGICAL_CARD_FLAG)).toBe(true);
-    expect(CARD_ONCE_FLAGS).toContain(SURGICAL_CARD_FLAG);
 
     const rolled = captured.rolls.length;
     captured.nextRoll = 5;

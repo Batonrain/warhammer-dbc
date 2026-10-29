@@ -7,7 +7,6 @@
 
 import { describe, it, expect } from "vitest";
 import { hasRuleFlag } from "../../../module/rules/flags.mjs";
-import { SLAANESH_RULES, PATRON_RULES } from "../../../module/rules/library/patronage.mjs";
 
 const actor = (patronGod) => ({ system: { patronGod }, items: [] });
 
@@ -22,9 +21,5 @@ describe("dreadWail.immune — по Покровительству Бога", ()
     expect(hasRuleFlag(actor("tzeentch"), "dreadWail.immune")).toBe(false);
     expect(hasRuleFlag(actor("undivided"), "dreadWail.immune")).toBe(false);
     expect(hasRuleFlag(actor(""), "dreadWail.immune")).toBe(false);
-  });
-
-  it("PATRON_RULES.slaanesh — тот же массив, что SLAANESH_RULES", () => {
-    expect(PATRON_RULES.slaanesh).toBe(SLAANESH_RULES);
   });
 });

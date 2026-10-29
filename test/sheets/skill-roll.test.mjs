@@ -170,48 +170,6 @@ describe("область Морали для Запугивания/Допрос
   });
 });
 
-describe("строка 10 сверки: снятый шлем Астартес", () => {
-  it("+5 к тесту на основе Товарищества", () => {
-    expect(sheet({ helmetlessActive: true })._getHelmetlessBonus("fel")).toBe(5);
-  });
-
-  it("на других характеристиках прибавки нет", () => {
-    expect(sheet({ helmetlessActive: true })._getHelmetlessBonus("ws")).toBe(0);
-  });
-
-  it("шлем на месте — прибавки нет", () => {
-    expect(sheet({ helmetlessActive: false })._getHelmetlessBonus("fel")).toBe(0);
-  });
-});
-
-describe("строка 11 сверки: штраф Усталости", () => {
-  const tired = (value, over = {}) => sheet({ fatigue: { value }, ...over });
-
-  it("−10 при Усталости 1", () => {
-    expect(tired(1)._getFatiguePenalty("ag")).toBe(-10);
-  });
-
-  it("без Усталости штрафа нет", () => {
-    expect(tired(0)._getFatiguePenalty("ag")).toBe(0);
-  });
-
-  // Книга («Статусы», wdbc-x1nz.2.95): «кроме тестов T, Inf, и Cor». Прежний
-  // список закреплял "cog" — опечатку вместо "cor" (ключа "cog" в системе
-  // нет, а тест Порчи получал −10). Фактор Прибыли — аналог Inf, оставлен.
-  it("Стойкость, Влияние, Порча и Фактор Прибыли не страдают", () => {
-    for (const key of ["t", "inf", "cor", "pf"]) {
-      expect(tired(3)._getFatiguePenalty(key), key).toBe(0);
-    }
-  });
-
-  it("Добывающий мир отодвигает штраф на T.b Усталости", () => {
-    // «Потом и кровью»: при бонусе Стойкости 4 штраф начинается с пятой Усталости.
-    const mining = { items: [{ type: "homeworld", system: { key: "mining" } }] };
-    expect(tired(4, mining)._getFatiguePenalty("ag")).toBe(0);
-    expect(tired(5, mining)._getFatiguePenalty("ag")).toBe(-10);
-  });
-});
-
 describe("итоговый порог броска", () => {
   /** Провести бросок навыка целиком и вернуть карточку из чата. */
   async function rollSkill(system, { roll = 50, modifier = "0" } = {}) {

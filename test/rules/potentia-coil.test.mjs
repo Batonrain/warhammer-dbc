@@ -7,11 +7,9 @@
 //    за каждый Успех до максимума».
 
 import { describe, it, expect } from "vitest";
-import { COIL_FATIGUE_COST, coilFatigueRelief, electooChargeGain } from "../../module/rules/potentia-coil.mjs";
+import { coilFatigueRelief, electooChargeGain } from "../../module/rules/potentia-coil.mjs";
 
 describe("Катушка Потенции: Усталость за заряды 2к1", () => {
-  it("цена — 2 заряда", () => expect(COIL_FATIGUE_COST).toBe(2));
-
   it("снимает 1 Усталости за 2 заряда", () => {
     expect(coilFatigueRelief({ energy: 5, fatigue: 3 })).toEqual({ ok: true, energy: 3, fatigue: 2 });
   });

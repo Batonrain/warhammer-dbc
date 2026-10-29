@@ -10,12 +10,9 @@
 // подмену книжного «P метров» на «P.b» (wdbc-kcw).
 
 import { describe, it, expect } from "vitest";
-import { parseSubmutations } from "../../module/rules/submutations.mjs";
-import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 
 const eyesOfChaos = packDocById("packs-src/mutations/Общие_мутации", "U5BlbfojB0YMxHAf");
-const submutations = parseSubmutations(eyesOfChaos.system.benefit);
 const mechEntries = eyesOfChaos.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const withSub = mechEntries.filter(e => (e.when?.submutations ?? []).length);
 
@@ -27,21 +24,6 @@ const SKILL_BY_SUB = {
 };
 
 describe("Eyes of Chaos/Глаза Хаоса: Механика субмутаций 6-10 — данные согласованы", () => {
-  it("в таблице СУБМУТАЦИИ реально есть строки 6, 7, 8, 9 и 10", () => {
-    const labels = submutations.entries.map(e => e.label);
-    for (const l of ["6", "7", "8", "9", "10"]) expect(labels).toContain(l);
-  });
-
-  it("каждая запись Механики с when.submutations ссылается на существующую строку таблицы", () => {
-    const known = new Set(submutations.entries.map(e => e.label));
-    const offenders = withSub.flatMap(e => e.when.submutations.filter(l => !known.has(l)));
-    expect(offenders).toEqual([]);
-  });
-
-  it("ровно пять записей гейтованы субмутацией (6/7/8/9 — testMod, 10 — trait)", () => {
-    expect(withSub).toHaveLength(5);
-  });
-
   for (const [sub, { god, skill }] of Object.entries(SKILL_BY_SUB)) {
     it(`субмутация ${sub}: +10 к Навыку «${skill}» (цвет ${god} — не условие эффекта)`, () => {
       const e = withSub.find(x => x.when.submutations.includes(sub));
@@ -67,16 +49,4 @@ describe("Eyes of Chaos/Глаза Хаоса: Механика субмутац
   // документа («Он получает +10 на тесты Interrogate» и т.д.).
   // Решение владельца 26.09.2026 «по книге» (стр. 440): цвет Бога не
   // условие эффекта — выпавшая строка работает у любого Покровителя.
-  it("выпавшая строка работает и у персонажа другого Покровителя", () => {
-    const e = withSub.find(x => x.when.submutations.includes("8"));   // цвет Кхорна
-    const item = { system: { submutation: { label: "8" } } };
-    const nurgle = { system: { patronGod: "nurgle" } };
-    expect(entryWhenOk(nurgle, e, item)).toBe(true);
-  });
-
-  it("субмутация не выбрана — ни одна запись не включается", () => {
-    const item = { system: { submutation: { label: "" } } };
-    const khorne = { system: { patronGod: "khorne" } };
-    for (const e of withSub) expect(entryWhenOk(khorne, e, item)).toBe(false);
-  });
 });

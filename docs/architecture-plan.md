@@ -235,7 +235,8 @@ module/rules/
 [rules-format.md](rules-format.md) жила в одном месте с кодом.
 
 **Готово, когда:** папка создана, файлы импортируются друг из друга без ошибок,
-`npm run lint` чистый. Проверяется тестом `test/rules/scaffold.test.mjs`.
+`npm run lint` чистый. Проверяется тестами `test/module-parses.test.mjs` и
+`test/rules/source-registry-acyclic.test.mjs`.
 
 ### 1.2. Реестр предикатов ✅
 
@@ -505,7 +506,7 @@ Foundry, и фазы 1–3 стало бы нечем проверять.
 без шлема, персонаж с усталостью.
 
 Девять строк из одиннадцати проверяются без Foundry
-([test/rules/stage-2-parity.test.mjs](../test/rules/stage-2-parity.test.mjs)):
+([test/rules/match-context.test.mjs](../test/rules/match-context.test.mjs)):
 отбор Особенностей, отбор предметных `rollMods` и вклад правил.
 
 Оставшиеся две — снятый шлем Астартес и Усталость — считаются методами листа
@@ -1878,9 +1879,7 @@ V2, Foundry перестал бы звать у них и `getData`, и `activat
 [test/apps/race-library.test.mjs](../test/apps/race-library.test.mjs) (откат
 на константы, пока пак не прочитан), [races-apply.test.mjs](../test/apps/races-apply.test.mjs)
 (носитель с флагом, `chars` только в пустые поля, повтор не задваивает,
-чужая субраса отвергается), [races-to-pack.test.mjs](../test/tools/races-to-pack.test.mjs)
-(генератор: 34 записи, состав Черт совпал с константами по именам и
-рейтингам) и [race-picker.test.mjs](../test/sheets/race-picker.test.mjs)
+чужая субраса отвергается) и [race-picker.test.mjs](../test/sheets/race-picker.test.mjs)
 (слоты и действия листа). Сквозной тест на числах — Астартес после применения
 расы по-прежнему получает +4 к Силе, +4 к Стойкости и Размер 1, но теперь эти
 числа приходят из Черт по ссылке, а не из константы.

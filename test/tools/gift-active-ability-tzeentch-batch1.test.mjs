@@ -72,15 +72,6 @@ afterEach(() => {
   globalThis.game.combat = undefined;
 });
 
-describe("Дары Тзинча, партия 1 — все 8 несут ровно одну валидную kind:\"script\" запись", () => {
-  it.each(Object.keys(IDS))("%s", key => {
-    const { entry } = scriptEntryOf(loadDoc(key));
-    expect(entry).toBeTruthy();
-    expect(entry.code?.trim()).not.toBe("");
-    expect(entry.label?.trim()).not.toBe("");
-  });
-});
-
 describe("cauldronOfFlesh / pathchanger — цена 1 Очко Бесчестия, без троттлинга", () => {
   it.each(["cauldronOfFlesh", "pathchanger"])("%s: списывает при успехе, гейтится при нуле", async key => {
     const okActor = actorFor({ value: 1, max: 4 });

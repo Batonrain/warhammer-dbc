@@ -224,11 +224,6 @@ export function openFearDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
 }
 
-/** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без диалога — прежнее поведение для программных вызовов. */
-export async function rollTrauma(actor) {
-  return _executeTraumaRoll(actor);
-}
-
 /**
  * Диалог перед тестом Ментальной Травмы. Раньше при пустом списке галочек
  * правил кнопка катала сразу — спрашивать было не о чем; теперь есть ещё Вид

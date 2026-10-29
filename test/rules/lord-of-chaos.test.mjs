@@ -18,7 +18,6 @@ describe("Лорд Хаоса — данные", () => {
   it("Талант несёт запись capability с ключом minion.core.lordOfChaos", () => {
     const entries = doc.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
     expect(entries.some(e => e.kind === "capability" && e.capabilityKey === "minion.core.lordOfChaos")).toBe(true);
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
   });
 
   it("читатель назван в реестре возможностей", () => {

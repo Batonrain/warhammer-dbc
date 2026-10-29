@@ -44,10 +44,6 @@ describe("источник opposedTarget (Уравнитель, wdbc-1rno)", () 
     ] }] } } }]
   });
 
-  it("зарегистрирован", () => {
-    expect(getRuleSources().some(([k]) => k === "opposedTarget")).toBe(true);
-  });
-
   it("вызывается с (actor, ctx) и достаёт правило с targetActor", () => {
     const attacker = { system: { characteristics: { ws: char(55) } } };
     const rules = source("opposedTarget")(attacker, { targetActor: equalizerHolder(40), char: "ws" });
@@ -69,10 +65,6 @@ describe("источник psychicSustainTarget (wdbc-lmd2)", () => {
   });
 
   afterEach(() => { delete globalThis.game; });
-
-  it("зарегистрирован", () => {
-    expect(getRuleSources().some(([k]) => k === "psychicSustainTarget")).toBe(true);
-  });
 
   it("вне игры (нет game.actors) — источник пуст", () => {
     expect(source("psychicSustainTarget")({ uuid: "Actor.me" })).toEqual([]);
@@ -159,10 +151,6 @@ describe("источник prophetOfGallerpox (wdbc-1rno.1)", () => {
   };
   const vehicleToken = (id, infected) =>
     ({ id, actor: { type: "vehicle", system: { gallerpoxInfected: infected } } });
-
-  it("зарегистрирован", () => {
-    expect(getRuleSources().some(([k]) => k === "prophetOfGallerpox")).toBe(true);
-  });
 
   it("нет активного токена/сцены — источник пуст", () => {
     expect(source("prophetOfGallerpox")({ system: {} })).toEqual([]);

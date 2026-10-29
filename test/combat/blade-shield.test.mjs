@@ -12,10 +12,9 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
 
-import { canParryPsychic, psychicParryOutcome, hasBladeShield, psychicParryTool,
+import { canParryPsychic, psychicParryOutcome,
          BLADE_SHIELD_CAPABILITY, PSYCHIC_PARRY_TOOL_CAPABILITY,
          PSYCHIC_PARRY_WEAK_CAPABILITY } from "../../module/combat/blade-shield.mjs";
-import { isKnownCapability } from "../../module/constants/capabilities.mjs";
 
 const withCapability = (key, extra = {}) => ({
   flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
@@ -83,19 +82,6 @@ describe("canParryPsychic: условие из двух половин (wdbc-bwf
   });
 });
 
-describe("hasBladeShield / psychicParryTool по отдельности", () => {
-  it("Талант виден на акторе", () => {
-    expect(hasBladeShield(actor([talent]))).toBe(true);
-    expect(hasBladeShield(actor([]))).toBe(false);
-  });
-
-  it("инструмент ищется среди занимающих руки", () => {
-    const blade = tool("Ведьмин Клинок", [PSYCHIC_PARRY_TOOL_CAPABILITY]);
-    expect(psychicParryTool(actor([plainSword, blade]))?.name).toBe("Ведьмин Клинок");
-    expect(psychicParryTool(actor([plainSword]))).toBeNull();
-  });
-});
-
 describe("psychicParryOutcome: что даёт успех (wdbc-bwf9)", () => {
   it("провал не отменяет и не ослабляет ничего", () => {
     expect(psychicParryOutcome(false, 3, false, 5)).toEqual({ negated: false, ePRLeft: 5, drop: 0 });
@@ -111,12 +97,5 @@ describe("psychicParryOutcome: что даёт успех (wdbc-bwf9)", () => {
 
   it("Poor.Q, дожавший эPR до нуля, всё-таки отменяет силу", () => {
     expect(psychicParryOutcome(true, 4, true, 3)).toEqual({ negated: true, ePRLeft: 0, drop: 3 });
-  });
-});
-
-describe("имена возможностей значатся в реестре", () => {
-  it("оба новых имени известны Конструктору", () => {
-    expect(isKnownCapability(PSYCHIC_PARRY_TOOL_CAPABILITY)).toBe(true);
-    expect(isKnownCapability(PSYCHIC_PARRY_WEAK_CAPABILITY)).toBe(true);
   });
 });

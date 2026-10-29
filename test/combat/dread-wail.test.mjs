@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
-  hasDreadWail, dreadWailMax, dreadWailAvailable, isSonicWeapon, dreadWailWeaponBonus,
+  dreadWailMax, dreadWailAvailable, isSonicWeapon, dreadWailWeaponBonus,
   applyDreadWailWeaponBuff, clearDreadWailWeaponBuff, applyDreadWailWave, WAVE_EFFECTS
 } from "../../module/combat/dread-wail.mjs";
 
@@ -59,11 +59,7 @@ function scene(tokens) { return { grid, tokens: { contents: tokens } }; }
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
 
-describe("hasDreadWail / dreadWailMax", () => {
-  it("определяет владение Чертой", () => {
-    expect(hasDreadWail(noiseMarine({ hasTrait: true }))).toBe(true);
-    expect(hasDreadWail(noiseMarine({ hasTrait: false }))).toBe(false);
-  });
+describe("dreadWailMax", () => {
   it("без Sweet Cacophony — лимит 1 независимо от Cor.b", () => {
     expect(dreadWailMax(noiseMarine({ hasCacophony: false, corBonus: 5 }))).toBe(1);
   });
@@ -146,7 +142,6 @@ describe("applyDreadWailWave", () => {
     await applyDreadWailWave(caster, casterToken, "stunned");
 
     expect(inRange.system.conditions.stunned).toBe(true);
-    expect(slaanesh.getFlag).toBeDefined();
     expect(slaanesh.system.conditions.stunned).toBeUndefined();
     expect(farAway.system.conditions.stunned).toBeUndefined();
   });

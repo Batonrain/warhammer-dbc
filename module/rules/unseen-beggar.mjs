@@ -21,18 +21,10 @@
 //  Ненадетое в рюкзаке тоже не считается — на вид оно не влияет.
 // ════════════════════════════════════════════════════════════════════════
 
-import { itemIs } from "./item-marker.mjs";
-
 export const UNSEEN_BEGGAR = "gift.nurgle.unseenBeggar";
-const NAME = "Unseen Beggar";
 
 /** Типы предметов, чьё Качество видно снаружи и потому считается «снаряжением». */
 export const GEAR_TYPES_WITH_QUALITY = ["armor", "weapon", "gear", "forcefield"];
-
-/** Это Дар Нургла «Незримый Нищий»? */
-export function isUnseenBeggarItem(item) {
-  return itemIs(item, "mutation", UNSEEN_BEGGAR, NAME);
-}
 
 /**
  * Надетое снаряжение Качеством ЛУЧШЕ Poor.Q — то, что мешает наложить чары.

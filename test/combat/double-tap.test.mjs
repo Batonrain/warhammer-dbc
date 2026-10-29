@@ -48,11 +48,6 @@ describe("Двойной Выстрел в карточке атаки", () => {
     expect(card()).toContain("Двойной Выстрел");
   });
 
-  it("по имени (Талант без записи Конструктора): то же", async () => {
-    await burst([byName(TAP.name)]);
-    expect(locations()).toEqual(["Торс", "Голова"]);
-  });
-
   it("галочка не стоит — Талант ничего не меняет", async () => {
     await burst([byName(TAP.name)], { opts: {} });
     expect(locations().length).toBeGreaterThan(2);

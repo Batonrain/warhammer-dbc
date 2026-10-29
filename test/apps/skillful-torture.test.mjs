@@ -1,7 +1,7 @@
 // test/apps/skillful-torture.test.mjs
 //
 // module/apps/skillful-torture.mjs (wdbc-sk8s) — helper-функции Skillful
-// Torture/Искусная Пытка: isDrukhari, interrogateIntTotal, extraTiers,
+// Torture/Искусная Пытка: interrogateIntTotal, extraTiers,
 // drukhariNearby, grantTortureBenefit, tortureBenefitAvailable/
 // markTortureBenefitUsed. Сам диалог (showSkillfulTortureDialog) не
 // юнит-тестируется — то же соглашение проекта, что у attack-dialog.mjs/
@@ -11,18 +11,18 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import {
-  isDrukhari, interrogateIntTotal, extraTiers, drukhariNearby,
-  grantTortureBenefit, tortureBenefitAvailable, markTortureBenefitUsed, hasSkillfulTorture
+  interrogateIntTotal, extraTiers, drukhariNearby,
+  grantTortureBenefit, tortureBenefitAvailable, markTortureBenefitUsed
 } from "../../module/apps/skillful-torture.mjs";
 
-function actor({ race = "human", ynnariPast = "", harlequinPast = "", intTotal = 30, wpBonus = 4,
-  interrogateRank = "trained", fateVal = 0, fateMax = 10, charDamage = {}, talent = false } = {}) {
+function actor({ race = "human", intTotal = 30, wpBonus = 4,
+  interrogateRank = "trained", fateVal = 0, fateMax = 10, charDamage = {} } = {}) {
   const flags = {};
   const data = {
     name: "Тестовый",
-    items: talent ? [{ type: "talent", name: "Skillful Torture / Искусная Пытка" }] : [],
+    items: [],
     system: {
-      race, ynnariPast, harlequinPast,
+      race,
       characteristics: {
         int: { total: intTotal }, wp: { bonus: wpBonus, total: wpBonus * 10 + 5 },
         ws: {}, bs: {}, s: {}, t: {}, ag: {}, per: {}, fel: {}
@@ -46,31 +46,6 @@ function actor({ race = "human", ynnariPast = "", harlequinPast = "", intTotal =
 }
 
 afterEach(() => { globalThis.game.combat = undefined; delete globalThis.canvas; });
-
-describe("hasSkillfulTorture", () => {
-  it("определяет владение Талантом", () => {
-    expect(hasSkillfulTorture(actor({ talent: true }))).toBe(true);
-    expect(hasSkillfulTorture(actor({ talent: false }))).toBe(false);
-  });
-});
-
-describe("isDrukhari", () => {
-  it("раса drukhari — друкхари", () => {
-    expect(isDrukhari(actor({ race: "drukhari" }))).toBe(true);
-  });
-  it("не-друкхари раса без Прошлого — не друкхари", () => {
-    expect(isDrukhari(actor({ race: "human" }))).toBe(false);
-  });
-  it("Иннари с Прошлым drukhari — друкхари", () => {
-    expect(isDrukhari(actor({ race: "ynnari", ynnariPast: "drukhari" }))).toBe(true);
-  });
-  it("Арлекин с Прошлым drukhari — друкхари", () => {
-    expect(isDrukhari(actor({ race: "harlequin", harlequinPast: "drukhari" }))).toBe(true);
-  });
-  it("Иннари с другим Прошлым — не друкхари", () => {
-    expect(isDrukhari(actor({ race: "ynnari", ynnariPast: "aeldari" }))).toBe(false);
-  });
-});
 
 describe("interrogateIntTotal", () => {
   it("Int.total + бонус ранга Навыка (НЕ Воля по умолчанию)", () => {

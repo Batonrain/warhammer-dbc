@@ -4,7 +4,7 @@
 // полудвижения в свой Ход» → +1 ОД в конце Хода. module/combat/snapshot.mjs.
 
 import { describe, it, expect } from "vitest";
-import { hasSnapshot, processSnapshotTurnEnd } from "../../module/combat/snapshot.mjs";
+import { processSnapshotTurnEnd } from "../../module/combat/snapshot.mjs";
 
 function actorWith({ names = [], degree = undefined, ap = 2, type = "character" } = {}) {
   const flags = { "warhammer-dbc.moveDegreeThisTurn": degree };
@@ -19,15 +19,6 @@ function actorWith({ names = [], degree = undefined, ap = 2, type = "character" 
   };
   return a;
 }
-
-describe("hasSnapshot", () => {
-  it("находит Талант по билингвальному имени", () => {
-    expect(hasSnapshot(actorWith({ names: ["Snapshot / Выстрел Навскидку"] }))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasSnapshot(actorWith({ names: ["Dodge"] }))).toBe(false);
-  });
-});
 
 describe("processSnapshotTurnEnd", () => {
   it("не двигался вовсе — +1 ОД", async () => {

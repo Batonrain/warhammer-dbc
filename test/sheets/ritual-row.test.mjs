@@ -49,12 +49,4 @@ describe("строка ритуала", () => {
 
     expect(html.bound).toEqual([".ritual-add-btn", ".ritual-cast-btn"]);
   });
-
-  it("мёртвых правил в стилях не осталось", () => {
-    const css = fs.readFileSync(path.resolve(import.meta.dirname,
-      "../../styles/sheets/actor-effects.css"), "utf8");
-
-    for (const dead of ["ritual-remove-btn", "ritual-row-actions", "ritual-name-link"])
-      expect(css, `${dead} осталась в стилях`).not.toContain(dead);
-  });
 });

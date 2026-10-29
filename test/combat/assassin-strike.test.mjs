@@ -9,7 +9,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  hasAssassinStrike, assassinStrikeAvailable, resolveAssassinStrikeClick,
+  assassinStrikeAvailable, resolveAssassinStrikeClick,
   ASSASSIN_STRIKE_CAPABILITY
 } from "../../module/combat/assassin-strike.mjs";
 
@@ -33,14 +33,6 @@ function fakeActor({ hasTalent = true, acrobatics = 40, flags = {}, uuid = "Acto
 beforeEach(() => {
   resetCaptured();
   globalThis.game.combat = undefined;
-});
-
-describe("hasAssassinStrike", () => {
-  it("определяет владение по имени Таланта", () => {
-    expect(hasAssassinStrike(fakeActor({ hasTalent: true }))).toBe(true);
-    expect(hasAssassinStrike(fakeActor({ hasTalent: false }))).toBe(false);
-    expect(hasAssassinStrike(null)).toBe(false);
-  });
 });
 
 describe("assassinStrikeAvailable", () => {

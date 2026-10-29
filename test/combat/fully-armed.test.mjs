@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  hasFullyArmed, hasCustomGrip, fullyArmedReliabilityBonus, fullyArmedWeight
+  hasCustomGrip, fullyArmedReliabilityBonus, fullyArmedWeight
 } from "../../module/combat/fully-armed.mjs";
 
 function weapon(id, weaponClass, weight = 1.2) {
@@ -28,18 +28,6 @@ function actorWith(items) {
   const list = [...items];
   return { items: list };
 }
-
-describe("hasFullyArmed", () => {
-  it("находит Черту по имени", () => {
-    expect(hasFullyArmed(actorWith([{ type: "trait", name: "Fully Armed / Во Всеоружии" }]))).toBe(true);
-  });
-  it("нет Черты — false", () => {
-    expect(hasFullyArmed(actorWith([{ type: "trait", name: "Dodge" }]))).toBe(false);
-  });
-  it("нет актора — false, не падает", () => {
-    expect(hasFullyArmed(null)).toBe(false);
-  });
-});
 
 describe("hasCustomGrip", () => {
   it("находит установленный мод по русской половине имени (стрелковый вариант)", () => {

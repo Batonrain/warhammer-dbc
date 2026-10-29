@@ -10,8 +10,6 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { _performParry } from "../../module/combat/defense.mjs";
 import { overpowerOffered } from "../../module/rules/berserker-talents.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
-import { OVERPOWER_CARD_FLAG } from "../../module/combat/overpower.mjs";
 
 const talentByKey = key => ({
   id: "t-" + key, name: "ИСПОРЧЕННОЕ ИМЯ", type: "talent", system: {},
@@ -19,7 +17,6 @@ const talentByKey = key => ({
     { id: "e", kind: "capability", capabilityKey: key, label: "" }
   ] }] } }
 });
-const talentByName = name => ({ id: "t-" + name, name, type: "talent", system: {} });
 const KEY = "berserker.core.overpower";
 
 function sword() {
@@ -68,11 +65,6 @@ describe("Пересилить: кнопка на карточке успешн�
     expect(card).toContain('data-defender-uuid="Actor.defender"');
   });
 
-  it("Талант по имени (снимок без записи Конструктора) — то же", async () => {
-    const card = await parry(attacker([talentByName("Overpower / Пересилить")]), "fullatk");
-    expect(card).toContain("wh-overpower-btn");
-  });
-
   it.each(["standard", "charge", ""])("не Полная Атака (База «%s») — кнопки нет", async baseKey => {
     expect(await parry(attacker([talentByKey(KEY)]), baseKey)).not.toContain("wh-overpower-btn");
   });
@@ -96,7 +88,4 @@ describe("Пересилить: чистое условие и белый спи
     expect(overpowerOffered(attacker([]), { baseKey: "fullatk", parried: true })).toBe(false);
   });
 
-  it("ключ отметки карточки есть в белом списке", () => {
-    expect(CARD_ONCE_FLAGS).toContain(OVERPOWER_CARD_FLAG);
-  });
 });

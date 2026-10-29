@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { allPackDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 import { applyDrug } from "../../module/sheets/tabs/drugs.mjs";
 import { drugExpiryClock } from "../../module/combat/drug-expiry.mjs";
-import { CONDITION_CLOCK_HANDLERS, sweepConditionClock } from "../../module/combat/condition-clock.mjs";
+import { sweepConditionClock } from "../../module/combat/condition-clock.mjs";
 
 const SCAB = allPackDocuments("chemistry").map(d => d.doc).find(d => d.name.startsWith("Scab"));
 
@@ -95,10 +95,6 @@ describe("часы Календаря снимают Струп", () => {
     resetCaptured();
     return { item, a };
   };
-
-  it("обработчик зарегистрирован в списке часов Состояний", () => {
-    expect(CONDITION_CLOCK_HANDLERS.map(h => h.id)).toContain("drugExpiry");
-  });
 
   it("за минуту до срока ничего не происходит", async () => {
     const { item, a } = await applied();

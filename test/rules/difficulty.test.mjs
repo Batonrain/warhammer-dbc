@@ -3,7 +3,7 @@
 // Единая таблица Сложности (стр. 26) — чистые данные, без Foundry.
 
 import { describe, it, expect } from "vitest";
-import { DIFFICULTY_STEPS, DEFAULT_DIFFICULTY, isKnownDifficulty } from "../../module/rules/difficulty.mjs";
+import { DIFFICULTY_STEPS, DEFAULT_DIFFICULTY } from "../../module/rules/difficulty.mjs";
 
 describe("DIFFICULTY_STEPS", () => {
   it("одиннадцать шагов от +40 до −60 с шагом 10, как в книге", () => {
@@ -17,11 +17,6 @@ describe("DIFFICULTY_STEPS", () => {
 
   it("значение по умолчанию — центр таблицы, без модификатора", () => {
     expect(DEFAULT_DIFFICULTY).toBe(0);
-    expect(isKnownDifficulty(0)).toBe(true);
-  });
-
-  it("isKnownDifficulty отвергает значение вне таблицы", () => {
-    expect(isKnownDifficulty(15)).toBe(false);
-    expect(isKnownDifficulty(-70)).toBe(false);
+    expect(DIFFICULTY_STEPS.map(s => s.value)).toContain(DEFAULT_DIFFICULTY);
   });
 });

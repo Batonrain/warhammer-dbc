@@ -4,17 +4,8 @@
 // демон-оружием даёт W.b демона аблативных Ран, потолок W.b×2.
 
 import { describe, it, expect } from "vitest";
-import { isBloodShieldItem, isSubduedDaemonWeapon, bloodShieldGrant, bloodShieldLoseAll, bloodShieldShrinkToFit }
+import { isSubduedDaemonWeapon, bloodShieldGrant, bloodShieldLoseAll, bloodShieldShrinkToFit }
   from "../../module/rules/blood-shield.mjs";
-
-describe("isBloodShieldItem", () => {
-  it("узнаёт Талант по книжному двуязычному имени", () => {
-    expect(isBloodShieldItem({ type: "talent", name: "Blood Shield / Кровавый Щит" })).toBe(true);
-  });
-  it("не путает с другим Талантом", () => {
-    expect(isBloodShieldItem({ type: "talent", name: "King's Plate / Латы Короля" })).toBe(false);
-  });
-});
 
 describe("isSubduedDaemonWeapon: RAW-условие «порабощённый демон»", () => {
   it("связан И порабощён — да", () => {

@@ -56,10 +56,3 @@ export function tirelessWarriorHealWounds(system, healAmount) {
   const max = Number(system?.wounds?.max) || 0;
   return Math.min(max, cur + heal);
 }
-
-/** Новое значение system.charDamage[key] после лечения (не выше 0 — не превращается в бонус). */
-export function tirelessWarriorHealCharacteristic(system, key, healAmount) {
-  const heal = Math.max(0, Number(healAmount) || 0);
-  const cur = Number(system?.charDamage?.[key]) || 0;
-  return Math.min(0, cur + heal);
-}

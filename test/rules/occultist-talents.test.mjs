@@ -17,7 +17,6 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import {
-  hasEruditeInfernal, hasInfernalMaster, hasGloriousPurpose, hasRitePuzzler,
   gloriousPurposeBonus, infernalMasterCommandBonus, ritePuzzlerLearnMod,
   occultistTalentRules
 } from "../../module/rules/occultist-talents.mjs";
@@ -28,21 +27,6 @@ const weaponOf = (equipped, bound) => ({
 });
 const daemonTarget = { type: "daemon", system: {} };
 const humanTarget = { type: "character", system: {} };
-
-describe("hasEruditeInfernal/hasInfernalMaster/hasGloriousPurpose/hasRitePuzzler — по любой половине имени", () => {
-  it("находит Талант англ./рус. названием", () => {
-    expect(hasEruditeInfernal({ items: [talentOf("Erudite-Infernal")] })).toBe(true);
-    expect(hasEruditeInfernal({ items: [talentOf("Эрудит-Инфернал")] })).toBe(true);
-    expect(hasInfernalMaster({ items: [talentOf("Infernal Master")] })).toBe(true);
-    expect(hasGloriousPurpose({ items: [talentOf("Славное Назначение")] })).toBe(true);
-    expect(hasRitePuzzler({ items: [talentOf("Rite Puzzler")] })).toBe(true);
-  });
-
-  it("без Таланта — false", () => {
-    expect(hasEruditeInfernal({ items: [] })).toBe(false);
-    expect(hasInfernalMaster(undefined)).toBe(false);
-  });
-});
 
 describe("gloriousPurposeBonus: Inf вместо W/F против демона в демоническом оружии", () => {
   const actor = (inf, wp, fel, items) => ({

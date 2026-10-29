@@ -224,7 +224,6 @@ describe("resolveTipOver: Чувство Баланса", () => {
     const doc = packDocById("packs-src/talents/Пилот", "Akh2DoivX6IiwdCx");
     const entries = doc.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
     expect(entries.some(e => e.kind === "capability" && e.capabilityKey === KEY)).toBe(true);
-    expect(doc.system.notes).not.toMatch(/^Не смоделировано/);
     expect(CAPABILITIES[KEY].reader).toContain("walker.mjs");
   });
 

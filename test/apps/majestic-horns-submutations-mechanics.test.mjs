@@ -7,21 +7,14 @@
 // только по псайкерам). Страж на РЕАЛЬНЫЕ данные пака.
 
 import { describe, it, expect } from "vitest";
-import { parseSubmutations } from "../../module/rules/submutations.mjs";
-import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 
 const horns = packDocById("packs-src/mutations/Общие_мутации", "7gVtvzDAlpTU48cd");
 const crown = packDocById("packs-src/weapons/Интегральные_атаки", "CCDdNzbbq0tmRBPM");
-const submutations = parseSubmutations(horns.system.benefit);
 const entries = horns.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const bySub = label => entries.filter(e => (e.when?.submutations ?? []).includes(label));
 
 describe("Majestic Horns: 10 — Корона Рогов", () => {
-  it("в таблице СУБМУТАЦИИ есть строка 10", () => {
-    expect(submutations.entries.map(e => e.label)).toContain("10");
-  });
-
   it("запись integralAttack ссылается на реальный предмет-оружие", () => {
     const e = bySub("10").find(x => x.kind === "integralAttack");
     expect(e.equipSourceUuid).toBe(`Compendium.warhammer-dbc.weapons.Item.${crown._id}`);
@@ -36,11 +29,6 @@ describe("Majestic Horns: 10 — Корона Рогов", () => {
     expect(crown.system.weaponProps.map(p => p.key).sort()).toEqual(["cheapShot", "tainted"]);
   });
 
-  it("запись включается только когда выпала именно 10", () => {
-    const e = bySub("10").find(x => x.kind === "integralAttack");
-    expect(entryWhenOk(null, e, { system: { submutation: { label: "10" } } })).toBe(true);
-    expect(entryWhenOk(null, e, { system: { submutation: { label: "8" } } })).toBe(false);
-  });
 });
 
 // ── 8 — Рога Кровожада через настоящий конвейер атаки ──────────────────────

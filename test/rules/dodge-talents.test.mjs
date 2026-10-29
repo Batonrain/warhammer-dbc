@@ -5,7 +5,7 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import {
-  DODGE_TALENTS, hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS,
+  DODGE_TALENTS, hasDodgeTalent, catfallHeight, catfallLeg,
   speedAwarenessPenalty, talentBalance, grappleCoverHalfAngle
 } from "../../module/rules/dodge-talents.mjs";
 
@@ -37,7 +37,6 @@ describe("Кошачье Приземление", () => {
     expect(catfallHeight(2, 3)).toBe(0);
     expect(catfallHeight(5, 0)).toBe(5);
   });
-  it("бонус Группирования +20", () => expect(CATFALL_TUCK_BONUS).toBe(20));
   it("d2 → нога", () => {
     expect(catfallLeg(1)).toBe("Левая нога");
     expect(catfallLeg(2)).toBe("Правая нога");

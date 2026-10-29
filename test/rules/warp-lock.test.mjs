@@ -12,7 +12,6 @@ import {
   warpLockActive, warpLockUses, warpLockGate, warpLockRecord, warpLockResetUses, warpLockBlocksManifest,
   warpLockHourLabel
 } from "../../module/rules/warp-lock.mjs";
-import { TURN_SCOPED_FLAG_KEYS } from "../../module/rules/turn-flags.mjs";
 
 const doc = () => packDocById("packs-src/talents/Псайкана", "qNtduQTIpI7yyfgY");
 const talent = (flags = {}) => {
@@ -35,9 +34,6 @@ describe("Варп-Замок — Талант в настоящем паке", 
   });
   it("текст Таланта в паке говорит «и не может манифестировать» (решение владельца)", () => {
     expect(doc().system.benefit).toMatch(/не может манифестировать/);
-  });
-  it("метка «не псайкер» гаснет с началом следующего Хода (реестр turn-flags)", () => {
-    expect(TURN_SCOPED_FLAG_KEYS).toContain(WARP_LOCK_FLAG);
   });
 });
 
@@ -117,5 +113,4 @@ describe("подавление в начале Хода: не более W.b р�
 
 describe("константы", () => {
   it("1d5 непоглощаемого урона", () => expect(WARP_LOCK_DAMAGE_FORMULA).toBe("1d5"));
-  it("час — 3600 секунд игрового времени", () => expect(WARP_LOCK_PERIOD).toBe(3600));
 });

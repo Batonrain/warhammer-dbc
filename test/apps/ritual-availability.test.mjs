@@ -12,7 +12,7 @@
 // «R 0 Дефицит».
 
 import { describe, it, expect } from "vitest";
-import { indexAvailability, matchesFilters, normalizePick } from "../../module/apps/compendium-filters.mjs";
+import { indexAvailability, normalizePick } from "../../module/apps/compendium-filters.mjs";
 import { budgetReady, budgetFits } from "../../module/rules/pick-budget.mjs";
 import { packDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
@@ -42,14 +42,10 @@ describe("indexAvailability: Редкость узла Обозревателя"
 
 describe("Записи для Демонолога: потолок R3 и сумма 11", () => {
   const node = (record) => ({ type: "ritual", availability: indexAvailability({ type: "ritual", system: { record } }) });
+  // Потолок R3 + нижняя граница 1 по Записи — unrated-availability.test.mjs («Ритуал без Записи…»).
   const pick = normalizePick({
     pack: "rituals", filters: { maxAvailability: 3, minAvailability: 1 },
     budget: { mode: "availability", value: 11 }
-  });
-  const allowed = n => matchesFilters(n, pick.filters);
-
-  it("record 4-5 не проходят потолок R3, record 0 (без Записи) не проходит нижнюю границу", () => {
-    expect([0, 1, 2, 3, 4, 5].map(r => allowed(node(r)))).toEqual([false, true, true, true, false, false]);
   });
 
   it("бюджет в Обозревателе — сумма Редкости, не штуки", () => {

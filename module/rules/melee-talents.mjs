@@ -395,8 +395,6 @@ export function stockGripActive(actor, item) {
 
 // ── Странная Техника ────────────────────────────────────────────────────────
 
-export const STRANGE_TECHNIQUE_KEY = MELEE_TALENTS.strangeTechnique.key;
-
 /**
  * Странная Техника / Strange Technique (core.json, Таланты «Рукопашные»): «Он
  * получает дополнительную Реакцию, которую он может потратить только на атаки,

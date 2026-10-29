@@ -9,7 +9,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import {
-  hasBoneSong, isBonesingerMaster, boneSongMax, boneSongAvailable,
+  isBonesingerMaster, boneSongMax, boneSongAvailable,
   boneSongSizeReduction, applyBoneSongSingle, applyBoneSongArea
 } from "../../module/combat/bone-song.mjs";
 
@@ -49,12 +49,7 @@ function scene(tokens) { return { grid, tokens: { contents: tokens } }; }
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
 
-describe("hasBoneSong / isBonesingerMaster / boneSongMax", () => {
-  it("определяет владение Талантом", () => {
-    expect(hasBoneSong(bonesinger({ hasTalent: true }))).toBe(true);
-    expect(hasBoneSong(bonesinger({ hasTalent: false }))).toBe(false);
-  });
-
+describe("isBonesingerMaster / boneSongMax", () => {
   it("Мастер — только grade:master на пути bonesinger", () => {
     expect(isBonesingerMaster(bonesinger({ paths: [{ key: "bonesinger", grade: "master" }] }))).toBe(true);
     expect(isBonesingerMaster(bonesinger({ paths: [{ key: "bonesinger", grade: "next" }] }))).toBe(false);

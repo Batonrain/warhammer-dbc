@@ -8,8 +8,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
-import { takedownKnockdown, takedownSection, applyTakedownRelay, TAKEDOWN_CARD_FLAG } from "../../module/combat/takedown.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
+import { takedownKnockdown, takedownSection, applyTakedownRelay } from "../../module/combat/takedown.mjs";
 import { LEAP_UP_DENIED_FLAG } from "../../module/rules/takedown.mjs";
 import { conditionRemoveFields } from "../../module/sheets/tabs/conditions.mjs";
 
@@ -208,9 +207,6 @@ describe("Нажатие кнопки: цель падает, метка — т�
     expect(target.system.conditions.prone).toBe(true);
   });
 
-  it("ключ отметки карточки внесён в белый список сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain(TAKEDOWN_CARD_FLAG);
-  });
 });
 
 describe("Игрок не владеет целью: правку делает Мастер через сокет", () => {

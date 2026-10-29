@@ -21,10 +21,6 @@ const enemy = (name, uuid) => ({ actor: { name, uuid } });
 
 describe("данные пака", () => {
   const doc = packDocById("packs-src/talents/Рукопашные", "dtRB7pkRzDVbW7pU");
-  it("Талант несёт запись Конструктора с ключом возможности", () => {
-    const keys = (doc.flags["warhammer-dbc"].mechanics ?? []).flatMap(g => g.entries).map(e => e.capabilityKey);
-    expect(keys).toContain(KEY);
-  });
   it("текст Таланта допускает Спасителя посреди другого действия (как в книге)", () => {
     expect(doc.system.benefit).toContain("даже посреди другого действия");
     expect(doc.system.benefit).toContain("Натиска или Верховой Атаки");

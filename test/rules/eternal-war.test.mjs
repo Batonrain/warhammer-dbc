@@ -4,17 +4,8 @@
 // даёт +3×T.b аблативных Ран до конца битвы с ним.
 
 import { describe, it, expect } from "vitest";
-import { isEternalWarItem, eternalWarGrant, eternalWarClear, eternalWarShrinkToFit }
+import { eternalWarGrant, eternalWarClear, eternalWarShrinkToFit }
   from "../../module/rules/eternal-war.mjs";
-
-describe("isEternalWarItem", () => {
-  it("узнаёт Талант по книжному двуязычному имени", () => {
-    expect(isEternalWarItem({ type: "talent", name: "The Eternal War / Вечная Война" })).toBe(true);
-  });
-  it("не путает с другим Талантом", () => {
-    expect(isEternalWarItem({ type: "talent", name: "Sekhmet / Сехмет" })).toBe(false);
-  });
-});
 
 describe("eternalWarGrant: 3×T.b, одноразово (не складывается)", () => {
   it("с нуля", () => {

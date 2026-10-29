@@ -12,8 +12,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, setTargets, char } from "../support/combat-fixtures.mjs";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
-import { startReaperFollow, measureReaperStep, offerReaperAfterKill, REAPER_CARD_FLAG, LAST_DAMAGE_CHARGE_FLAG } from "../../module/combat/reaper-chain.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
+import { startReaperFollow, measureReaperStep, offerReaperAfterKill, LAST_DAMAGE_CHARGE_FLAG } from "../../module/combat/reaper-chain.mjs";
 import { REAPER_CHAIN_FLAG } from "../../module/rules/melee-talents.mjs";
 
 const card = () => captured.chat.at(-1)?.content ?? "";
@@ -26,12 +25,6 @@ beforeEach(() => {
   prevCanvas = globalThis.canvas; prevCombat = game.combat;
 });
 afterEach(() => { globalThis.fromUuid = prevFromUuid; globalThis.canvas = prevCanvas; game.combat = prevCombat; });
-
-describe("служебные ключи", () => {
-  it("отметка карточки внесена в белый список сокета", () => {
-    expect(CARD_ONCE_FLAGS).toContain(REAPER_CARD_FLAG);
-  });
-});
 
 describe("карточка атаки: метка Натиска на кнопке урона", () => {
   async function swing(baseKey) {

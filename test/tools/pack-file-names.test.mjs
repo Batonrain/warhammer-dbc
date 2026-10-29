@@ -10,7 +10,6 @@
 import { describe, it, expect } from "vitest";
 import path from "node:path";
 import { packFileName } from "../../tools/pack-file-name.mjs";
-import { raceDocs } from "../../tools/races-to-pack.mjs";
 import { libraryDocs } from "../../tools/race-traits.mjs";
 
 // Имя файла берём platform-независимо: генераторы строят путь через path.join,
@@ -30,7 +29,7 @@ describe("генераторы именуют файлы правилом рас
   });
 
   it("все документы генераторов названы каноном", () => {
-    const wrong = [...raceDocs(), ...libraryDocs()]
+    const wrong = libraryDocs()
       .filter(({ path, doc }) => stem(path) !== packFileName(doc.name, doc._id))
       .map(({ path }) => stem(path));
 

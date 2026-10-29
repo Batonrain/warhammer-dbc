@@ -7,7 +7,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { activateBloodFlame, isBloodFlameItem } from "../../module/apps/blood-flame.mjs";
+import { activateBloodFlame } from "../../module/apps/blood-flame.mjs";
 import { ACTIVE_FLAG, KILLS_FLAG, ADDED_PROPS_FLAG } from "../../module/rules/blood-flame.mjs";
 
 function fakeWeapon({ id, name = "Цепной топор", weaponClass = "melee", damageType = "rending", weaponProps = [], destroyed = false } = {}) {
@@ -112,11 +112,5 @@ describe("activateBloodFlame", () => {
     await activateBloodFlame(actor, weapon);
     await activateBloodFlame(actor, weapon);
     expect(actor.system.wounds.value).toBe(9); // не 8
-  });
-});
-
-describe("isBloodFlameItem — реэкспорт из apps/", () => {
-  it("работает так же, как rules/blood-flame.mjs", () => {
-    expect(isBloodFlameItem({ type: "mutation", name: "Blood Flame / Кровавое Пламя", flags: {} })).toBe(true);
   });
 });

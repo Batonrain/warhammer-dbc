@@ -6,19 +6,10 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
-import { dayNumber, expiredTheftEntries, devourerPermanentRules, devouredSkillRank, DAY, nextDevourerStreak, pruneDevourerStreaks }
+import { expiredTheftEntries, devourerPermanentRules, devouredSkillRank, nextDevourerStreak, pruneDevourerStreaks }
   from "../../module/rules/devourer-of-knowledge.mjs";
 import { resolveAptitudeOverride } from "../../module/rules/aptitude-overrides.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
-
-describe("dayNumber", () => {
-  it("целочисленный номер суток от worldTime", () => {
-    expect(dayNumber(0)).toBe(0);
-    expect(dayNumber(DAY - 1)).toBe(0);
-    expect(dayNumber(DAY)).toBe(1);
-    expect(dayNumber(DAY * 9 + 100)).toBe(9);
-  });
-});
 
 describe("expiredTheftEntries", () => {
   it("отбирает только записи с истёкшим expiresAt", () => {

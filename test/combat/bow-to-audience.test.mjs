@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
-  hasBowToAudience, bowToAudienceGate, triggerBowToAudience, clearBowToAudienceMark
+  bowToAudienceGate, triggerBowToAudience, clearBowToAudienceMark
 } from "../../module/combat/bow-to-audience.mjs";
 
 function actorWith({ names = [], ap = 3, perBonus = 3, awareness = 60, type = "character" } = {}) {
@@ -37,15 +37,6 @@ const setTargets = (...tokens) => { globalThis.game.user.targets = new Set(token
 
 beforeEach(() => { resetCaptured(); globalThis.game.user.targets = new Set(); globalThis.game.combat = { started: true }; });
 afterEach(() => { globalThis.game.user.targets = new Set(); globalThis.game.combat = undefined; });
-
-describe("hasBowToAudience", () => {
-  it("находит Талант по билингвальному имени", () => {
-    expect(hasBowToAudience(actorWith({ names: ["Bow to the Audience / Поклон Публике"] }))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasBowToAudience(actorWith({ names: ["Dodge"] }))).toBe(false);
-  });
-});
 
 describe("triggerBowToAudience", () => {
   it("нет Таланта — null, ничего не тратит", async () => {

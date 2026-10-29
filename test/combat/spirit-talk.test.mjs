@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
-  hasSpiritTalk, spiritTalkDuration, spiritTalkRadius, spiritTalkGate,
+  spiritTalkDuration, spiritTalkRadius, spiritTalkGate,
   applySpiritTalkPossession, processSpiritTalkRoundStart, triggerSpiritTalk
 } from "../../module/combat/spirit-talk.mjs";
 import { getPsychicVessel, setPsychicVessel } from "../../module/rules/psychic-vessel.mjs";
@@ -89,15 +89,6 @@ beforeEach(() => {
 afterEach(() => {
   globalThis.game.user.targets = new Set();
   globalThis.game.combat = undefined;
-});
-
-describe("hasSpiritTalk", () => {
-  it("находит Талант по билингвальному имени", () => {
-    expect(hasSpiritTalk(actorWith({ names: ["Spirit Talk / Духовный Разговор"] }))).toBe(true);
-  });
-  it("нет Таланта — false", () => {
-    expect(hasSpiritTalk(actorWith({ names: ["Dodge"] }))).toBe(false);
-  });
 });
 
 describe("spiritTalkDuration", () => {

@@ -10,16 +10,16 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import {
-  hasSongOfSwiftness, songOfSwiftnessMax, songOfSwiftnessAvailable, songOfSwiftnessBonus,
+  songOfSwiftnessMax, songOfSwiftnessAvailable, songOfSwiftnessBonus,
   applySongOfSwiftnessSingle, applySongOfSwiftnessArea, clearSongOfSwiftnessBuffs
 } from "../../module/combat/song-of-swiftness.mjs";
 
 const grid = { size: 100, distance: 2 };
 let nextId = 1;
 
-function bonesinger({ hasTalent = true, felBonus = 4, paths = [] } = {}) {
+function bonesinger({ felBonus = 4, paths = [] } = {}) {
   const flags = {};
-  const items = hasTalent ? [{ type: "talent", name: "Song of Swiftness / Песня Стремительности" }] : [];
+  const items = [{ type: "talent", name: "Song of Swiftness / Песня Стремительности" }];
   return {
     name: "Певец", items, system: { characteristics: { fel: { bonus: felBonus } }, paths },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
@@ -59,11 +59,7 @@ function scene(tokens) { return { grid, tokens: { contents: tokens } }; }
 
 afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
 
-describe("hasSongOfSwiftness / songOfSwiftnessMax", () => {
-  it("определяет владение Талантом", () => {
-    expect(hasSongOfSwiftness(bonesinger({ hasTalent: true }))).toBe(true);
-    expect(hasSongOfSwiftness(bonesinger({ hasTalent: false }))).toBe(false);
-  });
+describe("songOfSwiftnessMax", () => {
   it("лимит сессии — фиксированный 3, не зависит от F.b", () => {
     expect(songOfSwiftnessMax()).toBe(3);
   });

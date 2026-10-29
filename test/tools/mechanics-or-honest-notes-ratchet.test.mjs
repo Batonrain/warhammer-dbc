@@ -27,6 +27,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
 
@@ -123,5 +124,74 @@ describe("храповик: текст правила несёт механик�
         expect(offenders.length).toBeLessThanOrEqual(max);
       });
     }
+  });
+});
+
+// ── Обратная сторона: заметка не врёт «Не смоделировано» ─────────────────
+//
+// Механизировали предмет — а в notes осталась шаблонная заметка марафона
+// «Не смоделировано: …». Игрок и ГМ читают её и считают руками то, что
+// система уже считает сама. Раньше это проверялось поштучно в дюжине файлов;
+// здесь — по всем пакам разом.
+//
+// «Механизирован» — несёт хоть одну живую запись Конструктора: любого вида,
+// кроме Возможности-заглушки (ключ без читателя в реестре — это и есть
+// честная пометка «не сделано»). Предметы, которые код опознаёт только по
+// имени, без записей Конструктора, сюда не попадают.
+
+/** Запись, которая что-то делает в игре: не Возможность без читателя. */
+const isLiveEntry = e => e?.kind !== "capability" || !!String(CAPABILITIES[e.capabilityKey]?.reader ?? "").trim();
+
+const TEMPLATE = "шаблонная заметка марафона wdbc-3x86 осталась после механизации — переписать notes";
+const PART = "заметка называет немоделированную часть, механизирована другая";
+
+/**
+ * Известные расхождения по _id документа — закрытый список, может только
+ * уменьшаться. Новый механизированный предмет с «Не смоделировано» в начале
+ * заметки роняет тест (аудит тестов, фаза B, 29.10.2026).
+ */
+const NOT_MODELED_KNOWN = {
+  A34iRtn8achMLDS4: `Hexagrammatic Seals — ${PART}`,
+  gMwXqMxrGdNxPZek: `Animus Speculum — ${PART}`,
+  PYS8JH2TKgmGAvqq: `Photo-Visor — ${PART}`,
+  fecdf8u22rkLuGCW: `Spy Mask — ${PART}`,
+  Fs55j6DOpRRGuR8J: `Choir of Poxes — ${TEMPLATE}`,
+  GeTunm1THYfmJL1b: `Umbral Form — ${TEMPLATE}`,
+  OMrgsJjGCUF6OEVk: `Dancing Among The Fire — ${TEMPLATE}`,
+  "25aXMVI2JipSNQLC": `Fast And Swift — ${TEMPLATE}`,
+  EuAJLSf02w7IqXT3: `Bow to the Audience — ${TEMPLATE}`,
+  xYh1tw1CM3bb6obP: `Bow to the Audience (Аребенниан) — ${TEMPLATE}`,
+  MsLFBQG5B8lU7GAO: `Just the Light — ${TEMPLATE}`,
+  NuWQuzTXqfcU2Aba: `Just the Light (Аребенниан) — ${TEMPLATE}`,
+  Mexd0ysxxzLhPQ8N: `Enjoyment — ${TEMPLATE}`,
+  czktMMUEO2fstALH: `Spirit Talk — ${TEMPLATE}`,
+  efMh8mo7eR9FWBnl: `Volunteer Actor — ${TEMPLATE}`,
+  RGF7Tt4NtAAoHHNF: `Deadly Effectiveness — ${TEMPLATE}`,
+  WmyB1UycelmxWLia: `Gun Arm — ${TEMPLATE}`,
+  "7HZcZyigkPuJDzTN": `Battle Sage — ${TEMPLATE}`
+};
+
+describe("механизированный предмет не называет себя «Не смоделировано»", () => {
+  const all = walk(PACKS_SRC)
+    .filter(f => !path.relative(PACKS_SRC, f).startsWith("books"))
+    .map(f => ({ rel: path.relative(PACKS_SRC, f), doc: JSON.parse(fs.readFileSync(f, "utf8")) }));
+  const mechanized = all.filter(({ doc }) =>
+    (doc.flags?.["warhammer-dbc"]?.mechanics ?? []).some(g => (g.entries ?? []).some(isLiveEntry)));
+  const claimsNotModeled = mechanized.filter(({ doc }) => /^Не смоделировано/.test(String(doc.system?.notes ?? "")));
+
+  it("механизированных предметов найдено много — проверка не пуста", () => {
+    expect(mechanized.length).toBeGreaterThan(1000);
+  });
+
+  it("ни один, кроме известных, не говорит в notes «Не смоделировано»", () => {
+    const fresh = claimsNotModeled.filter(({ doc }) => !Object.hasOwn(NOT_MODELED_KNOWN, doc._id))
+      .map(({ rel, doc }) => `${rel}: «${String(doc.system.notes).slice(0, 80)}»`);
+    expect(fresh, "предмет механизирован, а заметка говорит «Не смоделировано» — перепишите notes").toEqual([]);
+  });
+
+  it("известное расхождение исправлено — строку убрать", () => {
+    const still = new Set(claimsNotModeled.map(({ doc }) => doc._id));
+    const fixed = Object.keys(NOT_MODELED_KNOWN).filter(id => !still.has(id));
+    expect(fixed, "заметку уже переписали — уберите _id из NOT_MODELED_KNOWN").toEqual([]);
   });
 });

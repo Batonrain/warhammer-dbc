@@ -8,8 +8,6 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
-import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
-import { CLEAVE_CARD_FLAG } from "../../module/combat/cleave.mjs";
 
 const ch = total => ({ total, bonus: Math.floor(total / 10) });
 const talentItem = name => ({ type: "talent", name, system: {}, flags: {}, getFlag: () => undefined });
@@ -100,7 +98,4 @@ describe("Разрубить: кнопка в карточке урона", () =
     expect(chatText()).not.toContain("wh-cleave-btn");
   });
 
-  it("ключ отметки карточки есть в белом списке card-once", () => {
-    expect(CARD_ONCE_FLAGS).toContain(CLEAVE_CARD_FLAG);
-  });
 });

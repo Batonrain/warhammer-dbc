@@ -8,7 +8,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import {
   uselessCount, pickSide, uselessApplyFields, uselessClockStep, uselessRoundTick,
-  settableSides, setLimbOutcome, sideToAmputate, clearSideFields, uselessHint,
+  settableSides, setLimbOutcome, clearSideFields, uselessHint,
   NO_AID_GANGRENE_CHANCE, FAILED_SET_GANGRENE_CHANCE
 } from "../../module/rules/useless-limbs.mjs";
 import { parseCritEffectPills } from "../../module/combat/crit-effect-parser.mjs";
@@ -126,14 +126,6 @@ describe("фиксация (Medicae+0)", () => {
 
   it("T.b 0 — одна попытка всё равно есть", () => {
     expect(setLimbOutcome(untreated(), "leftArm", { success: false, tb: 0 }).result).toBe("permanent");
-  });
-
-  it("ампутация снимает сперва перманентную", () => {
-    const sys = blank();
-    sys.uselessLimbs.rightLeg = { state: "untreated" };
-    sys.uselessLimbs.leftLeg = { state: "permanent" };
-    expect(sideToAmputate(sys, "leg")).toBe("leftLeg");
-    expect(sideToAmputate(blank(), "leg")).toBeNull();
   });
 });
 
