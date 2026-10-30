@@ -39,7 +39,11 @@ describe("единая точка наложения подключена к и�
     // Подрезать Сухожилья (Талант «Рукопашных», 3-8dc5): победа во встречном тесте сбивает с ног — Стена спрашивается.
     "module/combat/hamstring.mjs": 'statusApplyFields(target, "prone"',
     // Пинок с Разворота (Пугилист, 3-eddb): отброс дальше ¼A.b — чужое падение, Стена должна спрашиваться.
-    "module/combat/roundhouse.mjs": 'statusApplyFields(target, "prone"'
+    "module/combat/roundhouse.mjs": 'statusApplyFields(target, "prone"',
+    // Тяжёлый Хук (Пугилист, 3-eddb): проигрыш во встречном S+0 vs S+0 сбивает с ног — Стена спрашивается.
+    "module/combat/pugilist-strikes.mjs": 'statusApplyFields(target, "prone"',
+    // Поколотить (Талант Метания, 3-8318): Провал S-теста от тяжёлого метательного сбивает с ног — Стена спрашивается.
+    "module/combat/clobber.mjs": 'statusApplyFields(target, "prone"'
   };
   for (const [file, needle] of Object.entries(WIRED)) {
     it(`${file} спрашивает единую точку`, () => expect(read(file)).toContain(needle));
@@ -62,9 +66,9 @@ describe("единая точка наложения подключена к и�
     };
     walk("module");
     expect(users.sort()).toEqual([
-      "module/combat/bulldoze.mjs", "module/combat/crit-effect-parser.mjs", "module/combat/damage.mjs",
+      "module/combat/bulldoze.mjs", "module/combat/clobber.mjs", "module/combat/crit-effect-parser.mjs", "module/combat/damage.mjs",
       "module/combat/dread-wail.mjs", "module/combat/grapple.mjs", "module/combat/hamstring.mjs", "module/combat/knockdown.mjs",
-      "module/combat/mount.mjs", "module/combat/roundhouse.mjs", "module/combat/takedown.mjs", "module/hooks.mjs",
+      "module/combat/mount.mjs", "module/combat/pugilist-strikes.mjs", "module/combat/roundhouse.mjs", "module/combat/takedown.mjs", "module/hooks.mjs",
       "module/rules/on-target-fail.mjs"
     ].sort());
   });

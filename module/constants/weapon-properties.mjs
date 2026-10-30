@@ -430,7 +430,7 @@ export const WEAPON_PROPERTIES = {
 
   maximal: {
     key: "maximal", label: "Максимальное", en: "Maximal", rating: false, cat: "ranged",
-    desc: "Может быть активировано на максимальном режиме: +10 Rng, +1d10 урона, +2 Pen, получает Blast(2) и Recharge, удвоенный расход боеприпасов.",
+    desc: "Может быть активировано на максимальном режиме: +10 Rng, +1d10 урона, +2 Pen, +2 к радиусу свойства Blast (если оно у оружия есть) и свойство Recharge, удвоенный расход боеприпасов.",
     reminder: "⚡ Максимальное: усиленный режим (+урон/Pen/Rng, Recharge)",
     auto: { maximal: true }
   },

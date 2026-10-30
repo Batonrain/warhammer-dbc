@@ -21,7 +21,7 @@ import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.
 
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { hasRuneMagic }                          from "../rules/sigillite-runes.mjs";
-import { hasTrophyPoints }                       from "../rules/trophy-points.mjs";
+import { hasTrophyPoints, hasTrophiesOfJudgement, hasMarkedPrey } from "../rules/trophy-points.mjs";
 import { ignoresWeight }                         from "../rules/encumbrance.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -464,6 +464,10 @@ export function characterContext(actor) {
   context.hasSigilliteRunes = hasRuneMagic(actor);
   // Очки Трофеев (Мастер Казней, Sahara task-bbe1) — ячейка шапки только носителю.
   context.hasTrophyPoints = hasTrophyPoints(actor);
+  // Кнопки ячейки: ⚖ Трофеи Приговора (возврат Очка, решает ГМ) и 🎯 Отмеченная Добыча (combat/marked-prey.mjs).
+  context.hasTrophiesOfJudgement = hasTrophiesOfJudgement(actor);
+  context.hasMarkedPrey = hasMarkedPrey(actor);
+  context.markedPreyName = context.hasMarkedPrey ? (actor.getFlag?.("warhammer-dbc", "markedPrey")?.name ?? "") : "";
   // Фактор Прибыли (Вольный Торговец): бонус = ФП ÷ 10 (как у характеристик)
   context.profitFactorBonus = Math.floor((Number(system.aspirations?.profitFactor) || 0) / 10);
   // Иннари: выбор «Прошлого» (бывшей расы) и её бонусы + Черты Иннари.

@@ -43,8 +43,9 @@ import { masteryCrit, MASTERY_CRIT_LINE } from "./mastery.mjs";
  * сам статически импортирует этот файл, а он — чистый конвейер.
  */
 const FAIL_DEGREE_HANDLERS = {
+  // Возвращает { html, undo } — откат кладётся в outcome.failUndo (rules/fail-undo.mjs, task-e30b).
   infernalWillShock: async (actor, info) =>
-    (await import("../combat/fear.mjs")).rollInfernalWillShock(actor, info)
+    (await import("../combat/fear.mjs")).rollInfernalWillShockDetailed(actor, info)
 };
 
 /**
@@ -82,7 +83,11 @@ const FAIL_DEGREE_HANDLERS = {
  *   что у одноимённого параметра testOutcome.
  * @returns {Promise<{eff:number, success:boolean, deg:number, crit:object,
  *   critLine:string, kindLabel:?string, combinedLine:string,
- *   combinedAssistCount:?number, extendedLine:string, opposedLine:string}>}
+ *   combinedAssistCount:?number, extendedLine:string, opposedLine:string,
+ *   failUndo:?object}>}
+ *   failUndo — откат последствий провала, наложенных этим броском (Шок
+ *   Инфернальной Воли, Ступор Гипно-Шрамов; rules/fail-undo.mjs), null — нечего
+ *   откатывать; вызывающий кладёт его во флаг карточки (cardFailUndo).
  *   combinedAssistCount — null, если тест не Комбинированный или у второго
  *   столбца нет своих Ассистентов; иначе assistCount ТОГО столбца, чей Предел
  *   реально используется (ниже) — им и нужно заменить внешний assistCount
@@ -248,9 +253,14 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // автоуспехе тоже, чего книга и требует («бросать d100 даже для тестов I,
   // которые он проходит автоматически»). Обвязка — динамическим импортом:
   // combat/replicant.mjs тянет лист Состояний, а этот файл — чистый конвейер.
+  // failUndo (task-e30b): что наложено сразу при броске — карточка хранит это, чтобы снять, если провал потом
+  // засчитают успехом (rules/fail-undo.mjs).
+  const failUndo = {};
   if (hypnoScarsStun(crit, ctx, hasRuleFlag(actor, HYPNO_SCARS))) {
     const { applyHypnoScarsStun } = await import("../combat/replicant.mjs");
-    critLine += await applyHypnoScarsStun(actor);
+    const stun = await applyHypnoScarsStun(actor);
+    critLine += stun.html;
+    if (stun.undo) failUndo.hypno = stun.undo;
   }
   // Сверхъестественная Характеристика (стр. 26, wdbc-y9i8): +1 Успех за
   // каждые полные 2 рейтинга Unnatural — но ТОЛЬКО на Успехе, и только по
@@ -305,7 +315,13 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     const run = FAIL_DEGREE_HANDLERS[t.handler];
     if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
     try {
-      critLine += (await run(actor, { deg: baseDeg, ctx: ctx ?? {}, trigger: t })) ?? "";
+      const res = await run(actor, { deg: baseDeg, ctx: ctx ?? {}, trigger: t });
+      // Последствие возвращает строку карточки либо { html, undo } (откат — в failUndo под именем обработчика).
+      if (typeof res === "string") critLine += res;
+      else if (res) {
+        critLine += res.html ?? "";
+        if (res.undo) failUndo[t.handler] = res.undo;
+      }
     } catch (e) {
       console.error(`Warhammer DBC | Ошибка последствия «${t.id}»:`, e);
     }
@@ -370,6 +386,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // со степенью, отдельного поля они не знают (как autoFailLine в critLine).
   return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, scriptTriggers: resolved.scriptTriggers ?? [],
            critLine, kindLabel, combinedLine, combinedAssistCount,
+           failUndo: Object.keys(failUndo).length ? failUndo : null,
            personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
            degCap, degCapLine };
 }

@@ -18,7 +18,7 @@ import { commandReachFor, presenceNumber, moraleLostReach } from "../rules/comma
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { GENERAL_COMMAND_KINDS, generalKindLabel, detailSpentOf } from "../rules/command-effects.mjs";
-import { issueStamp, declareFocusFire, applyBraveryNow, grantTacticTalent, removeTacticGrants, TACTIC_TALENTS, packOf } from "../combat/command-state.mjs";
+import { issueStamp, declareFocusFire, applyBraveryNow, grantTacticTalent, removeTacticGrants, TACTIC_TALENTS, packOf, squadChantOf } from "../combat/command-state.mjs";
 import { hasPlagueShepherd, plagueShepherdGrant, plagueShepherdFreeCommandActive } from "../rules/plague-shepherd.mjs";
 import { hasActionEconomy, apCostForActionType, spendActionPoints, apSpendGate, spendReaction } from "../combat/action-economy.mjs";
 import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
@@ -401,7 +401,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // без Командира — combat/command-state.mjs::packOf.
     context.pack             = packOf(this.actor);
     // «Тройка» — Концентрация огня (эффект 2) при активном Присутствии; у стаи — всегда.
-    context.focusActive      = (context.presenceActive && sys.presence?.benefit === "focus") || !!context.pack;
+    // Боевая Песнь поющего Командира/Лидера раздаёт те же три эффекта (чип «Песня»).
+    context.chant            = squadChantOf(this.actor);
+    context.focusActive      = (context.presenceActive && sys.presence?.benefit === "focus") || !!context.pack || !!context.chant;
     // Координатор не раздаёт Командное Присутствие — предупреждаем, если он один.
     context.presenceBlocked  = !commander.filled && !leader.filled && coordinator.filled;
 

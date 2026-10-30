@@ -81,6 +81,26 @@ describe("capabilityPoolValue / capabilityPoolMax", () => {
     expect(capabilityPoolMax(actor)).toBe(4);
   });
 
+  it("Хаосит — максимум Inf.b со сдвигом infamyMaxMod, как на листе (task-4e9e)", () => {
+    // Наследник/Эльданар/Избранный Судьбой сдвигают максимум Бесчестия на лист и HUD
+    // через actorInfamyMax; карточка траты обязана показывать то же число.
+    const up = actorFor({
+      alignment: "heretic", infamyMaxMod: 1,
+      fate: { value: 4, max: 99 },     // у Хаосита fate.max не читается
+      characteristics: { inf: { bonus: 4 } }
+    });
+    expect(capabilityPoolMax(up)).toBe(5);
+    const down = actorFor({
+      alignment: "heretic", infamyMaxMod: -1,
+      characteristics: { inf: { bonus: 4 } }
+    });
+    expect(capabilityPoolMax(down)).toBe(3);
+    // не Хаосит: сдвиг игнорируется, берётся fate.max
+    const other = actorFor({ alignment: "loyal", infamyMaxMod: 1, fate: { value: 1, max: 3 },
+      characteristics: { inf: { bonus: 4 } } });
+    expect(capabilityPoolMax(other)).toBe(3);
+  });
+
   it("отрицательные/отсутствующие значения — 0, не NaN", () => {
     const actor = actorFor({ fate: {} });
     expect(capabilityPoolValue(actor)).toBe(0);

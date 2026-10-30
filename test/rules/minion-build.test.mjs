@@ -344,6 +344,45 @@ describe("готовый Миньон", () => {
     expect(minionLoyalty(master({ wp: 35 }), "daemon")).toBe(35);
   });
 
+  // Air of Authority / Аура Власти (leadership-talents.mjs, Sahara air-of-authority-10):
+  // «Его Миньоны-люди также получают +10 Лояльности» — вторая половина Таланта
+  // (первая — лимит целей Command F.b×20 — подключена давно). Опознание по
+  // имени Таланта, как у Infernal Master выше, и только для группы human.
+  const withAirOfAuthority = base => ({
+    ...base,
+    items: [{ id: "aa", type: "talent", name: "Air of Authority / Аура Власти", system: {} }]
+  });
+
+  it("Air of Authority: +10 Лояльности Миньонам-людям", () => {
+    const m = withAirOfAuthority(master({ fel: 42 }));
+    expect(minionLoyalty(m, "human")).toBe(52);
+  });
+
+  it("Air of Authority: только людям — зверь, машина и демон без бонуса", () => {
+    const m = withAirOfAuthority(master({ fel: 42, per: 30, int: 35, wp: 33 }));
+    expect(minionLoyalty(m, "beast")).toBe(30);
+    expect(minionLoyalty(m, "machine")).toBe(35);
+    expect(minionLoyalty(m, "daemon")).toBe(33);
+  });
+
+  it("Air of Authority: опознаётся и по одной половине двуязычного имени", () => {
+    const m = { ...master({ fel: 42 }), items: [{ id: "aa", type: "talent", name: "Аура Власти", system: {} }] };
+    expect(minionLoyalty(m, "human")).toBe(52);
+  });
+
+  it("Air of Authority: без Таланта — поведение не меняется", () => {
+    expect(minionLoyalty(master({ fel: 42 }), "human")).toBe(42);
+  });
+
+  it("Air of Authority складывается с Beloved Leader (оба безусловные +10)", () => {
+    const base = master({ fel: 42 });
+    const both = { ...base, items: [
+      ...withAirOfAuthority(base).items,
+      ...withTalent("minion.core.belovedLeader", base).items
+    ] };
+    expect(minionLoyalty(both, "human")).toBe(62);
+  });
+
   it("речь: молчание при низкой Общительности, команды — при низком Интеллекте", () => {
     expect(speechNote({ fel: 5, int: 30 })).toMatch(/говорить не может/i);
     expect(speechNote({ fel: 20, int: 5 })).toMatch(/только команды/i);

@@ -238,6 +238,7 @@ export const PREDICATES = {
 | `psychicPower` | сопротивление психосиле (`ctx.psychicThreat` без `ctx.soulBurn`): Бастион Железной Воли; Выжигание Души сюда не входит, оно ставит `soulBurn` |
 | `psychicMind` | сопротивление психосиле по Воле (`ctx.psychicThreat` и `ctx.char = wp`): Непреклонный («влияющие на разум», решение владельца 25.10.2026, шире книги) |
 | `psychicDirect` | сопротивление психосиле, кроме Непрямых (`ctx.psychicThreat` без `ctx.psychicIndirect`; Выжигание Души входит): Солипсизм |
+| `psychicDetect` | засекание проявления психосилы (Awareness) и распознание психосилы (Forbidden Lore (Psykers)): `ctx.psychicDetect`, который игрок включает галочкой «Засекаю проявление / распознаю психосилу» в окне теста (видна носителю Ведьмоискателя на Awareness и Forbidden Lore с Псайкерами; система не знает, для чего бросается навык). Ведьмоискатель |
 | `interrogation` | сопротивление допросу (`ctx.interrogation`): встречный тест Воли жертвы в диалоге пытки (`apps/torture.mjs`), Ортопрокси |
 | `disease` | тест заражения болезнью (`ctx.diseaseTest`): кнопка «Заражение» на болезни (`combat/disease-infection.mjs`), Порог T±N из `system.vectorTests`; Преимущество Крепкого как Камень и Живучести Сплайса — `rules/squat-traits.mjs::diseaseResistReroll` |
 | `requisition` | тест «достать снаряжение» (`ctx.requisition`): окно реквизиции (`apps/requisition.mjs`) идёт по Inf (или F у Сети Контактов); свой флаг, а не `char:inf` — иначе подхватился бы любой тест Влияния. «+N к Реквизиции» записью Конструктора `testMod` с областью «Реквизиция» |

@@ -221,14 +221,6 @@
 }
 .warhammer-dbc .bc-surgeon-btn:hover .bc-surgeon-ic { animation: bcSurgSpin 2.4s linear infinite; }
 @keyframes bcSurgSpin { to { transform: rotate(360deg); } }
-.warhammer-dbc .bc-sex-toggle {
-  width: 18px; height: 18px; margin-left: 8px; padding: 0; line-height: 1;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: rgba(77,255,176,0.08); border: 1px solid var(--bc-line);
-  border-radius: 3px; color: var(--bc-teal); cursor: pointer; font-size: 1em;
-  transition: all 0.12s;
-}
-.warhammer-dbc .bc-sex-toggle:hover { border-color: var(--bc-teal); box-shadow: 0 0 6px -1px var(--bc-teal); color: #eafff4; }
 
 .warhammer-dbc .bc-figure-stage { position: relative; padding: 6px 0; min-height: 300px; }
 

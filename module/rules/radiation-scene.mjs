@@ -17,6 +17,7 @@ import { itemHasName } from "./predicates.mjs";
 import { itemIs } from "./item-marker.mjs";
 import { isImplantActive } from "./item-gates.mjs";
 import { SECONDS_PER_ROUND } from "./condition-duration.mjs";
+import { legionRadiation } from "../constants/legions.mjs";
 
 /** Флаг актора: укрытие, в котором он сейчас (ГМ ставит в окне «Окружение»). */
 export const RAD_SHELTER_FLAG = "radShelter";
@@ -87,20 +88,39 @@ function blackMantleSwitchedOn(actor) {
 }
 
 /**
+ * Доступен ли актору Талант «Чёрная Мантия»: XIX легиону (Гвардия Ворона и все её
+ * ордены, в т.ч. Кархародоны) — нет (решение владельца 30.10.2026). Меланохром там
+ * защиты не даёт, усиливать нечего; Талант не включается и не действует, даже если
+ * флаг режима остался на нём. Поле rad.blackMantle:false — constants/legions.mjs.
+ */
+export function blackMantleAvailable(actor) {
+  return legionRadiation(actor?.system?.geneSeed?.legion, actor?.system?.geneSeed?.chapter).blackMantle !== false;
+}
+
+/**
  * Режим Меланохрома: null — импланта нет (или не установлен), "base" — обычный
  * (защита −1), "enhanced" — усиленный Чёрной Мантией (защита −2 вместо −1 и
  * −1 к урону Rad). Усиливать можно только работающий Меланохром, поэтому режим
  * без импланта не существует, сколько бы раз ни щёлкнули тумблер на Таланте.
  *
- * НЕ моделируются исключения книги (стр. 486, таблица возрастов): в возрасте
- * 31–35 лет Меланохром «не работает», у Кархародонов он защиты не даёт
- * (constants/legions.mjs) — их выставляет мастер, сняв имплант или Талант.
+ * У XIX легиона Мантия недоступна (blackMantleAvailable): режим там всегда "base",
+ * а «Меланохром не даёт защиты от радиации» гасится в radProtectionOf строкой защиты.
+ *
+ * НЕ моделируется таблица возрастов Псевдо-Астартес (стр. 486): «31–35 лет:
+ * Меланохром и Мукраноид не работают» — это ВОЗРАСТ АСПИРАНТА ПРИ ИМПЛАНТАЦИИ
+ * взрослого человека (эффекты складываются с ростом возраста), а не нынешний
+ * bio.age; поля «возраст имплантации» в схеме нет — отдельный тикет.
  */
 export function melanochromeMode(actor) {
   // Копия импланта без записи (до «Обновить мир») — по имени, но только установленная.
   if (!hasRuleFlag(actor, MELANOCHROME_KEY)
     && !items(actor).some(i => i?.type === "implant" && itemHasName(i, "Melanochrome") && isImplantActive(i))) return null;
-  return blackMantleSwitchedOn(actor) ? "enhanced" : "base";
+  return blackMantleSwitchedOn(actor) && blackMantleAvailable(actor) ? "enhanced" : "base";
+}
+
+/** Установлен ли работающий Мукраноид (по имени: записи Конструктора на нём нет, возможности под него не заводились). */
+function mucranoidInstalled(actor) {
+  return items(actor).some(i => i?.type === "implant" && itemHasName(i, "Mucranoid") && isImplantActive(i));
 }
 
 /**
@@ -133,8 +153,22 @@ export function radProtectionOf(actor, shelterKey = "") {
   // Меланохром — отдельная строка таблицы книги, складывается с бронёй и укрытием.
   // Усиленный режим Чёрной Мантии ЗАМЕНЯЕТ −1 на −2 (итог −2, не −3).
   const melanochrome = melanochromeMode(actor);
+  const legionRad = legionRadiation(actor?.system?.geneSeed?.legion, actor?.system?.geneSeed?.chapter);
+  // XIX легион: Чёрная Мантия недоступна (решение владельца 30.10.2026), мода "enhanced" там не бывает —
+  // см. melanochromeMode; ниже у него только базовая ветка с нулём.
   if (melanochrome === "enhanced") { total += 2; parts.push("Меланохром, усиленный режим −2"); }
-  else if (melanochrome === "base") { total += 1; parts.push("Меланохром −1"); }
+  else if (melanochrome === "base") {
+    // XIX легион: «Меланохром … Не дает защиты от радиации». Строка остаётся в
+    // списке, чтобы игрок видел причину нуля, а не искал пропавший −1.
+    if (legionRad.melanochromeProtects === false) parts.push("Меланохром: геносемя легиона защиты не даёт");
+    else { total += 1; parts.push("Меланохром −1"); }
+  }
+  // Саламандры и их ордены: Мукраноид — «+1 защиты от радиации». Нужен работающий
+  // (установленный) имплант; от Меланохрома не зависит.
+  if (legionRad.mucranoidProtect && mucranoidInstalled(actor)) {
+    total += legionRad.mucranoidProtect;
+    parts.push(`Мукраноид −${legionRad.mucranoidProtect}`);
+  }
   if (shelter.protect) { total += shelter.protect; parts.push(`${shelter.label} −${shelter.protect}`); }
   return { immune: false, total, parts };
 }

@@ -39,6 +39,7 @@ import { isInRage, RAGE_TEST_PENALTY, RAGE_NO_BS_PENALTY } from "../../rules/rag
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
+import { sightEffectsOf } from "../../rules/sight-effects.mjs";
 import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
 import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
 import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
@@ -590,17 +591,18 @@ export function situationalMods(v) {
     // Штыковая Атака (Талант, rules/run-and-gun.mjs): выстрел «как в упор, +30 за расстояние, несмотря
     // на то что персонаж связан в ближнем бою» — контакт Баз бонус не обнуляет, строка отмечена сама.
     // id читает форма (f.pointBlank): Выпуск Батареи не штрафует выстрел в упор (rules/batpack-dump.mjs).
-    { id: "atk-point-blank", label: "Дистанция в упор",
+    { id: "atk-point-blank", band: "pointBlank", label: "Дистанция в упор",
       value: (!pointBlankForced && !!measured?.contact && measured.contact !== "none") ? 0 : 30,
       autoCheck: bandKey === "pointBlank" || pointBlankForced,
       note: pointBlankForced ? "Штыковая Атака: как выстрел в упор, +30 несмотря на связанность"
         : (!!measured?.contact && measured.contact !== "none")
           ? "стрельба в ближнем бою — как боевая дистанция (стр. 40)"
           : bandNote("pointBlank") },
-    { label: "Короткая дистанция",      value:  10, autoCheck: bandKey === "short",      note: bandNote("short") },
-    { label: "Боевая дистанция",        value:   0, autoCheck: bandKey === "combat",     note: bandNote("combat") },
-    { label: "Дальняя дистанция",       value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
-    { label: "Экстремальная дистанция", value: -30, autoCheck: bandKey === "extreme",    note: bandNote("extreme") },
+    // band — ключ полосы для окна: Максимальный режим (+10 Rng) пересчитывает автоотметку (attack/dialog.mjs::syncMaximalRange).
+    { label: "Короткая дистанция",      band: "short",   value:  10, autoCheck: bandKey === "short",      note: bandNote("short") },
+    { label: "Боевая дистанция",        band: "combat",  value:   0, autoCheck: bandKey === "combat",     note: bandNote("combat") },
+    { label: "Дальняя дистанция",       band: "long",    value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
+    { label: "Экстремальная дистанция", band: "extreme", value: -30, autoCheck: bandKey === "extreme",    note: bandNote("extreme") },
     // Беспомощная цель, выстрел в упор/в рукопашной: как рукопашная — авто-
     // успех и удвоенный урон, а не просто +30 (см. targetHelpless выше).
     // wdbc-x1nz.2.88 п.2: отмечается сама по той же замеренной дистанции, что
@@ -694,9 +696,12 @@ export function situationalMods(v) {
     const aiming = actor?.system?.aiming;
     const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
       ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
-    const predictor = !!aiming && aiming !== "none" && weapon
-      && getActiveMods(actor, weapon, { profile: weaponProfile }).some(m => !!m.system?.effects?.aimIgnoresRunning);
-    const why = tracking ? "Прицел на Упреждение" : predictor ? "Предсказатель Движения" : null;
+    // Предсказатель Движения или Омни-Прицел (rules/sight-effects.mjs): подпись — имя самого прицела.
+    const predictor = (!!aiming && aiming !== "none" && weapon)
+      ? getActiveMods(actor, weapon, { profile: weaponProfile }).find(m => !!sightEffectsOf(m).aimIgnoresRunning)
+      : null;
+    const why = tracking ? "Прицел на Упреждение"
+      : predictor ? (String(predictor.name ?? "").split("/").pop().trim() || "Предсказатель Движения") : null;
     const row = why && specificMods.find(m => m.label === "Низкая высота цели" && !m.immune);
     if (row) { row.value = 0; row.immune = true; row.note = `снято: ${why}`; }
   }

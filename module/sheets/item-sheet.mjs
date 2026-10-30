@@ -2098,7 +2098,8 @@ export class WarhammerItemSheet
 
     // ── Талант «Чёрная Мантия»: усиленный режим Меланохрома (3-b530) ───────
     on(".black-mantle-cb", "change", async ev => {
-      await setBlackMantleOn(this.item, ev.currentTarget.checked);
+      // Отказ (не хватило ОД) — вернуть галочку в то положение, что в флаге.
+      if (!(await setBlackMantleOn(this.item, ev.currentTarget.checked))) this.render(false);
     });
 
     // ── Действия Талантов (3-b530): Предусмотрительность и др. ─────────────

@@ -135,6 +135,25 @@ describe("состав под Присутствием", () => {
   });
 });
 
+describe("лимит и «Тройка» на вкладке Социум", () => {
+  it("значок лимита у командира с Дрессировкой — P.b, а не F.b×2", () => {
+    const boss = commander({ cmd: { training: true } });
+    boss.system.characteristics = { fel: { bonus: 4 }, per: { bonus: 3 } };
+    expect(commandContext(boss).commandTargetLimit).toBe(3);
+    boss.system.command.training = false;
+    expect(commandContext(boss).commandTargetLimit).toBe(8);
+  });
+
+  it("«Тройка» есть, когда командир поёт Боевую Песнь, даже без выбора эффекта 2", () => {
+    const boss = commander();
+    expect(commandContext(boss).focusSelected).toBe(false);
+    boss.items = [{ type: "talent", name: "War Chant / Боевая Песнь", system: {} }];
+    boss.flags = { warChantSinging: true };
+    boss.getFlag = (_ns, k) => boss.flags[k];
+    expect(commandContext(boss).focusSelected).toBe(true);
+  });
+});
+
 describe("что панель показывает про подчинённых", () => {
   it("у Орды помечает, что Команды до неё не доходят", () => {
     const horde = follower({ name: "Толпа", type: "horde",

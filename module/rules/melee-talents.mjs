@@ -253,7 +253,7 @@ export function reaperMeasure({ charge, halfMove, walked, initialToNext, attacke
  * @returns {{noAp:boolean, uncounted:boolean, skipChargeGate:boolean}}
  */
 export function freeMeleeFlags(opts) {
-  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault);
+  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault || opts?.kneeStrike || opts?.executionFollow);
   return { noAp: free, uncounted: free, skipChargeGate: free };
 }
 
@@ -277,6 +277,14 @@ export function freeAttackLockProblem(opts, { baseKey, maneuverKey }) {
   if (opts?.furiousAssault) {
     if (baseKey !== "fullatk") return "Яростный Штурм: ещё одна атака — с Базой Полная Атака";
     if (maneuverKey !== (opts.technique || "standard")) return "Яростный Штурм: ещё одна атака — с тем же Приёмом";
+  }
+  if (opts?.kneeStrike) {
+    if (baseKey !== "standard") return "Удар с Колена: пинок — Стандартная База";
+    if (maneuverKey !== "standard") return "Удар с Колена: пинок — Обычная Атака (без Приёма)";
+  }
+  if (opts?.executionFollow) {
+    if (opts.forceBase && baseKey !== opts.forceBase) return "Казнь: дополнительная атака идёт с той же Базой, что и первая";
+    if (maneuverKey !== "standard") return "Казнь: дополнительная атака — Обычная Атака (без Приёма)";
   }
   if (opts?.reaperFollow && baseKey !== "charge") return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
   return "";

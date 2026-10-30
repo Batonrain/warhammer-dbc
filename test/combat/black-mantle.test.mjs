@@ -6,7 +6,11 @@
 //   • Талант Black Mantle: за полудействие усиленный режим — защита −2 ВМЕСТО −1
 //     (итог −2, не −3) и «любой урон в T от радиации» −1 до минимума 1
 //     (combat/radiation.mjs::radDamageToCreature). Тики фона дают ровно 1 — не меняются.
-//   • Исключения книги (возраст 31–35 лет, Кархародоны) сознательно не моделируются.
+//   • Переключение режима стоит полудействие (1 ОД; setBlackMantleOn).
+//   • Исключение XIX легиона (Меланохром без защиты; Кархародоны — его орден) и
+//     Мукраноид +1 у XVIII — по полю геносемени актора, constants/legions.mjs.
+//   • Таблица возрастов Псевдо-Астартес (31–35 лет) НЕ моделируется: это возраст
+//     при имплантации, а такого поля в схеме нет.
 
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
@@ -188,6 +192,193 @@ describe("урон Rad(X) в T: Чёрная Мантия −1 до миниму
   });
 });
 
+// ── Исключения Геносемени по легиону (корбук, «Геносемя», описания легионов) ──
+// XIX (Гвардия Ворона и все её ордены — «Как у Гвардии Ворона», Призраки Смерти и
+// Кархародоны повторяют строку явно): «Меланохром … Не дает защиты от радиации».
+// XVIII (Саламандры, Чёрные Драконы; Штормовые Великаны — «Как у Саламандр»):
+// «Мукраноид – … +1 защиты от радиации».
+describe("легионы: Меланохром не защищает у XIX, Мукраноид +1 у XVIII", () => {
+  const mucranoid = (installed = true) => doc("implant", "16. Мукраноид / Mucranoid", { installed, mechanics: [] });
+  const marine = (legion, chapter, ...items) => ({ items, system: { geneSeed: { legion, chapter } } });
+
+  it.each([["XIX", ""], ["XIX", "carcharodons"], ["XIX", "deathspectres"], ["XIX", "ashenclaws"]])(
+    "%s/%s: работающий Меланохром защиты не даёт, причина видна в строках", (legion, chapter) => {
+      grant(MELANOCHROME_KEY);
+      const p = radProtectionOf(marine(legion, chapter, melanochrome()), "");
+      expect(p.total).toBe(0);
+      expect(p.parts.join(" ")).toMatch(/Меланохром/);
+      expect(p.parts.join(" ")).not.toMatch(/−1/);
+    });
+
+  it("у других легионов Меланохром −1 как был; без выбранного легиона — тоже", () => {
+    grant(MELANOCHROME_KEY);
+    expect(radProtectionOf(marine("IX", "", melanochrome()), "").total).toBe(1);
+    expect(radProtectionOf(marine("", "", melanochrome()), "").total).toBe(1);
+    expect(radProtectionOf({ items: [melanochrome()] }, "").total).toBe(1);
+  });
+
+  it("укрытие и броня у XIX по-прежнему работают (отключён только Меланохром)", () => {
+    grant(MELANOCHROME_KEY);
+    const armour = { type: "armor", name: "Power", system: { armorType: "power", equipped: true, properties: [] } };
+    expect(radProtectionOf(marine("XIX", "carcharodons", armour, melanochrome()), "tin").total).toBe(3 + 1);
+  });
+
+  it.each([["XVIII", ""], ["XVIII", "blackdragons"], ["XVIII", "stormgiants"]])(
+    "%s/%s: установленный Мукраноид даёт ещё −1 к защите, складывается с Меланохромом", (legion, chapter) => {
+      grant(MELANOCHROME_KEY);
+      const p = radProtectionOf(marine(legion, chapter, melanochrome(), mucranoid()), "");
+      expect(p.total).toBe(2);
+      expect(p.parts.join(" ")).toMatch(/Мукраноид/);
+    });
+
+  it("Мукраноид без самого импланта (снят/не установлен) или у другого легиона защиты не даёт", () => {
+    grant(MELANOCHROME_KEY);
+    expect(radProtectionOf(marine("XVIII", "", melanochrome(), mucranoid(false)), "").total).toBe(1);
+    expect(radProtectionOf(marine("XVIII", "", melanochrome()), "").total).toBe(1);
+    expect(radProtectionOf(marine("IX", "", melanochrome(), mucranoid()), "").total).toBe(1);
+  });
+
+  it("Мукраноид +1 не зависит от Меланохрома (отдельная строка легиона)", () => {
+    expect(radProtectionOf(marine("XVIII", "", mucranoid()), "").total).toBe(1);
+  });
+
+  // Решение владельца 30.10.2026: Талант «Чёрная Мантия» для XIX легиона (Гвардия Ворона и все её
+  // ордены) НЕДОСТУПЕН — усиливать нечего, Меланохром там защиты не даёт. Усиленный режим не
+  // включается и не действует, даже если флаг остался на Таланте (легион выбрали позже, смена легиона).
+  describe("Чёрная Мантия недоступна XIX легиону", () => {
+    const XIX = [["XIX", ""], ["XIX", "carcharodons"], ["XIX", "deathspectres"], ["XIX", "ashenclaws"]];
+
+    it.each(XIX)("%s/%s: включённый флаг режима не действует — режим базовый, защита 0, строка про геносемя", (legion, chapter) => {
+      grant(MELANOCHROME_KEY, BLACK_MANTLE_KEY);
+      const a = marine(legion, chapter, melanochrome(), mantle({ on: true }));
+      expect(melanochromeMode(a)).toBe("base");
+      const p = radProtectionOf(a, "");
+      expect(p.total).toBe(0);
+      expect(p.parts.join(" ")).not.toMatch(/усиленный/);
+      expect(p.parts.join(" ")).toMatch(/геносемя легиона защиты не даёт/);
+    });
+
+    it.each(XIX)("%s/%s: урон Rad Мантия не уменьшает", (legion, chapter) => {
+      grant(MELANOCHROME_KEY, BLACK_MANTLE_KEY);
+      const a = marine(legion, chapter, melanochrome(), mantle({ on: true }));
+      expect(radDamageAfterMelanochrome(a, 5)).toBe(5);
+    });
+
+    it("урон Rad по бойцу XIX с включённым флагом Мантии ложится целиком (через applyRadHit)", async () => {
+      grant(MELANOCHROME_KEY, BLACK_MANTLE_KEY);
+      const items = [melanochrome(), mantle({ on: true })];
+      const actor = {
+        uuid: "Actor.xix", name: "Ворон", type: "character", isOwner: true, items,
+        system: { characteristics: { t: { total: 60 } }, charLoss: { t: 0 }, charLossAt: {}, conditions: {}, geneSeed: { legion: "XIX", chapter: "" } },
+        getFlag: () => undefined, setFlag: async () => {},
+        update: async data => { if ("system.charLoss.t" in data) actor.system.charLoss.t = data["system.charLoss.t"]; }
+      };
+      captured.dice = [4];
+      await applyRadHit(actor, { formula: "1d5", label: "Рад" });
+      expect(actor.system.charLoss.t).toBe(4);
+    });
+
+    it("контроль: у другого легиона (IX) тот же набор даёт усиленный режим −2", () => {
+      grant(MELANOCHROME_KEY, BLACK_MANTLE_KEY);
+      const a = marine("IX", "", melanochrome(), mantle({ on: true }));
+      expect(melanochromeMode(a)).toBe("enhanced");
+      expect(radProtectionOf(a, "").total).toBe(2);
+      expect(radDamageAfterMelanochrome(a, 5)).toBe(4);
+    });
+
+    it("реестр возможностей больше не держит «ОТКРЫТО» про XIX и называет недоступность", () => {
+      expect(CAPABILITIES[BLACK_MANTLE_KEY].reader).not.toContain("ОТКРЫТО");
+      expect(CAPABILITIES[BLACK_MANTLE_KEY].label).toMatch(/XIX/);
+    });
+  });
+});
+
+describe("Чёрная Мантия: переключение режима стоит полудействие (1 ОД)", () => {
+  const inCombat = on => { globalThis.game.combat = on ? { started: true } : null; };
+  /** Талант на акторе: setFlag пишет в общий флаг-словарь, getFlag читает его же. */
+  function owned({ ap = 2, on = false, name = "Black Mantle / Чёрная Мантия", legion = "" } = {}) {
+    const flags = on ? { [BLACK_MANTLE_ON_FLAG]: true } : {};
+    const updates = [];
+    const actor = {
+      type: "character", name: "Десантник",
+      system: { actionPoints: { value: ap, max: 2 }, characteristics: {}, geneSeed: { legion, chapter: "" } },
+      update: async patch => { updates.push(patch); }
+    };
+    const item = {
+      type: "talent", name, system: {}, parent: actor,
+      flags: { [NS]: { mechanics: [capEntry(BLACK_MANTLE_KEY)] } },
+      getFlag: (_s, k) => (k === "mechanics" ? item.flags[NS].mechanics : flags[k]),
+      setFlag: async (_s, k, v) => { flags[k] = v; }
+    };
+    return { actor, item, flags, updates };
+  }
+
+  it("в бою: включение списывает 1 ОД и пишет флаг", async () => {
+    inCombat(true);
+    const t = owned({ ap: 2 });
+    expect(await setBlackMantleOn(t.item, true)).toBe(true);
+    expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBe(true);
+    expect(t.updates).toEqual([{ "system.actionPoints.value": 1 }]);
+  });
+
+  it("в бою: выключение тоже стоит полудействие («или вывести его из этого режима»)", async () => {
+    inCombat(true);
+    const t = owned({ ap: 2, on: true });
+    expect(await setBlackMantleOn(t.item, false)).toBe(true);
+    expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBe(false);
+    expect(t.updates).toEqual([{ "system.actionPoints.value": 1 }]);
+  });
+
+  it("в бою без ОД: режим не меняется, ОД не уходят в минус", async () => {
+    inCombat(true);
+    const t = owned({ ap: 0 });
+    expect(await setBlackMantleOn(t.item, true)).toBe(false);
+    expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBeUndefined();
+    expect(t.updates).toEqual([]);
+  });
+
+  it("то же состояние (включено → включить) ничего не стоит и не пишет", async () => {
+    inCombat(true);
+    const t = owned({ ap: 2, on: true });
+    expect(await setBlackMantleOn(t.item, true)).toBe(true);
+    expect(t.updates).toEqual([]);
+  });
+
+  it("вне боя ОД не тратятся (экономика действий вне боя не считается), режим переключается", async () => {
+    inCombat(false);
+    const t = owned({ ap: 0 });
+    expect(await setBlackMantleOn(t.item, true)).toBe(true);
+    expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBe(true);
+    expect(t.updates).toEqual([]);
+  });
+
+  it("XIX легион: включить нельзя — флаг не пишется, ОД не уходят, игроку объяснено", async () => {
+    inCombat(true);
+    const t = owned({ ap: 2, legion: "XIX" });
+    expect(await setBlackMantleOn(t.item, true)).toBe(false);
+    expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBeUndefined();
+    expect(t.updates).toEqual([]);
+    expect(captured.warnings.join(" ")).toMatch(/XIX|Гвардии Ворона/);
+  });
+
+  it("XIX легион: выключить оставшийся флаг можно — и бесплатно (режим всё равно не действовал)", async () => {
+    inCombat(true);
+    const t = owned({ ap: 2, on: true, legion: "XIX" });
+    expect(await setBlackMantleOn(t.item, false)).toBe(true);
+    expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBe(false);
+    expect(t.updates).toEqual([]);
+  });
+
+  it("не Мантия: ничего не списывается, не пишется, ответ false", async () => {
+    inCombat(true);
+    const t = owned({ ap: 2, name: "Другой / Other" });
+    t.item.flags[NS].mechanics = [];
+    expect(await setBlackMantleOn(t.item, true)).toBe(false);
+    expect(t.updates).toEqual([]);
+    expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBeUndefined();
+  });
+});
+
 describe("тумблер на листе Таланта", () => {
   it("панель есть у Чёрной Мантии на акторе и несёт флажок; у чужого Таланта и вне актора пусто", () => {
     const m = mantle({ on: true });
@@ -198,6 +389,18 @@ describe("тумблер на листе Таланта", () => {
     expect(blackMantleHtml(mantle(), { id: "a" })).not.toContain("checked");
     expect(blackMantleHtml(mantle(), null)).toBe("");
     expect(blackMantleHtml(doc("talent", "Другой", { mechanics: [] }), { id: "a" })).toBe("");
+  });
+
+  it("у XIX легиона панель говорит «недоступен» и тумблер заблокирован", () => {
+    const m = mantle({ on: true });
+    m.id = "T1";
+    const html = blackMantleHtml(m, { id: "a", system: { geneSeed: { legion: "XIX", chapter: "carcharodons" } } });
+    expect(html).toContain("black-mantle-cb");
+    expect(html).toMatch(/disabled/);
+    expect(html).not.toContain("checked");
+    expect(html).toMatch(/недоступ/i);
+    // у остальных легионов тумблер живой
+    expect(blackMantleHtml(m, { id: "a", system: { geneSeed: { legion: "IX", chapter: "" } } })).not.toMatch(/disabled/);
   });
 
   it("setBlackMantleOn пишет флаг только на Мантии", async () => {

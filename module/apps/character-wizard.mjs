@@ -297,6 +297,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     // Бюджетные покупки (Психосилы/Техночудеса) коллектор не перехватывает,
     // остаются отдельным окном (Обозреватель компендиумов).
     this.pendingMechChoices = [];
+    this.pendingAspirationChoices = [];
     this._confirmingArchetype = false;
     this._isClosing = false;
     // Этап 5: выбор текстового снаряжения (arch.gear/race.gear и т.п.) —
@@ -762,16 +763,19 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    * change дропдауна (activateAspirationListeners общая с листом актора —
    * см. её вызов в _onRender), поэтому строка резолвится СРАЗУ по
    * ответу в форме, без ожидания «Далее» — в отличие от _mechCollector выше.
-   * Одна строка максимум: у Стремления либо нет Механики с выбором вовсе,
-   * либо один простой ИЛИ («Fel+5 или Per+5») — второй вопрос подряд для
-   * того же Стремления книгой не встречается.
+   * На одно Стремление — одна строка (у него либо нет Механики с выбором вовсе,
+   * либо один простой ИЛИ — «Fel+5 или Per+5»). Но игрок может выбрать второе
+   * Стремление с ИЛИ-бонусом, не ответив на первую строку, — поэтому вопросы
+   * стоят в ОЧЕРЕДИ (`pendingAspirationChoices`), а не в одном поле: прежнее
+   * поле затирал второй вопрос, и промис первого висел вечно, Механика первого
+   * Стремления молча не применялась (task-30f8). На экране — голова очереди.
    */
   _mechCollectorImmediate() {
     const push = (row) => this._isClosing
       ? Promise.resolve(row.type === "spec" && row.need > 1 ? [] : null)
       : new Promise(resolve => {
           row.resolve = resolve;
-          this.pendingAspirationChoice = row;
+          (this.pendingAspirationChoices ??= []).push(row);
           this.render(false);
         });
     return {
@@ -787,11 +791,15 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     };
   }
 
+  /** Вопрос Стремления, который сейчас на экране, — голова очереди (null, если очередь пуста). */
+  get pendingAspirationChoice() {
+    return this.pendingAspirationChoices?.[0] ?? null;
+  }
+
   /** Отвечает на строку _mechCollectorImmediate — резолвит сразу, «Далее» ждать не нужно. */
   _resolveAspirationChoice(pending) {
-    const row = this.pendingAspirationChoice;
+    const row = this.pendingAspirationChoices?.shift();
     if (!row) return;
-    this.pendingAspirationChoice = null;
     const skipValue = row.type === "spec" && row.need > 1 ? [] : null;
     const value = (!pending || pending.kind === "skip") ? skipValue : pending.value;
     row.resolve(value);
@@ -2482,6 +2490,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   async close(options) {
     this._isClosing = true;
     for (const row of this.pendingMechChoices.splice(0)) row.resolve(row.type === "spec" && row.need > 1 ? [] : null);
+    // Очередь вопросов Стремлений (task-30f8) — то же: висячие промисы не оставляем.
+    for (const row of (this.pendingAspirationChoices ?? []).splice(0)) row.resolve(row.type === "spec" && row.need > 1 ? [] : null);
     for (const { hook, id } of this._factionHookIds.splice(0)) Hooks.off(hook, id);
     if (_wizards.get(this.actorId) === this) _wizards.delete(this.actorId);
     return super.close?.(options);

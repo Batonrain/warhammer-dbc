@@ -1086,7 +1086,11 @@ export function prepareCharacterDerived(actor, system) {
     // не трогаем — она посчитана как «ёмкость при 1G», штраф/бонус
     // гравитации применяется к текущему весу снаряжения, а не к ней.
     const envScene = actor.token?.parent ?? canvas?.scene ?? game.scenes?.current ?? null;
-    const gravity  = envScene ? (Number(readEnvForScene(envScene).gravity) || 1) : 1;
+    // 0 G (невесомость) — честный ноль, не «нет данных»: прежнее `|| 1` превращало
+    // его в 1 G, и вес снаряжения оставался полным (0-g-1-g-rules-character-mjs-992).
+    // Подставляем 1 G только когда число не читается вовсе.
+    const rawGravity = envScene ? Number(readEnvForScene(envScene).gravity) : 1;
+    const gravity  = Number.isFinite(rawGravity) ? rawGravity : 1;
     system.encumbrance.gravity          = gravity;
     system.encumbrance.effectiveCurrent = Math.round(totalWeight * gravity * 100) / 100;
 

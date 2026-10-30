@@ -70,6 +70,21 @@ const ERUDITE_INFERNAL_NAMES = ["Erudite-Infernal", "Эрудит-Инферна
 const INFERNAL_MASTER_NAMES  = ["Infernal Master", "Инфернальный Владыка"];
 const GLORIOUS_PURPOSE_NAMES = ["Glorious Purpose", "Славное Назначение"];
 const RITE_PUZZLER_NAMES     = ["Rite Puzzler", "Разгадыватель Ритуалов"];
+// Ассистенты ритуала (Sahara fallbacks-instructor): список акторов, потолок
+// запасных и снижение требований — module/rules/ritual-assistants.mjs, здесь
+// только включатели.
+const FALLBACKS_NAMES        = ["Fallbacks", "Запасные Планы"];
+const INSTRUCTOR_NAMES       = ["Instructor", "Инструктор"];
+
+/** Fallbacks / Запасные Планы: вовлекать в ритуал запасных ассистентов. */
+export function hasFallbacks(actor) {
+  return hasOccultistTalent(actor, FALLBACKS_NAMES);
+}
+
+/** Instructor / Инструктор: 8 часов подготовки снижают требования к ассистентам. */
+export function hasInstructor(actor) {
+  return hasOccultistTalent(actor, INSTRUCTOR_NAMES);
+}
 
 export function hasEruditeInfernal(actor) {
   return hasOccultistTalent(actor, ERUDITE_INFERNAL_NAMES);

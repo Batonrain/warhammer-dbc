@@ -33,6 +33,7 @@ import { improvisedMeleeProfile, IMPROVISED_MELEE_LABEL } from "./weapon-profile
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
 import { unarmedLosesPrimitive } from "../rules/pugilist-talents.mjs";
+import { talentDamageBonus } from "../rules/damage-talents.mjs";
 
 /** «+20 на Парирование безоружных атак» вооружённому. */
 export const ARMED_VS_UNARMED_PARRY_BONUS = 20;
@@ -127,12 +128,17 @@ export function parryWeaponFor(actor, { attackerUnarmed = false } = {}) {
  * Формула урона «попадания оружием с S.b атакующего» — общая для трёх
  * случаев правила. `weapon` — чьё оружие бьёт, `sbActor` — чей S.b.
  * Модификаторы S.b (Могучее/Сдержанное) — свойства бьющего оружия.
+ * `wielder` — чьё оружие бьёт: его Крушащий Удар (+½WS.b «ко всему своему
+ * рукопашному урону», rules/damage-talents.mjs) входит в формулу, как в обычной
+ * атаке; S.b при этом берётся у sbActor.
  */
-export function strikeDamageFormula(weapon, sbActor, corruptionBonus = 0) {
+export function strikeDamageFormula(weapon, sbActor, corruptionBonus = 0, wielder = null) {
   const wp = aggregateAuto(resolveWeaponProps(weapon));
   const sb = Number(sbActor?.system?.characteristics?.s?.bonus) || 0;
+  const talents = wielder
+    ? talentDamageBonus(wielder, { isMelee: true, chars: wielder.system?.characteristics, wp }).flat : 0;
   return damageFormulaFor({
-    damage: weapon?.system?.damage, flatBonus: meleeStrengthBonus({ sb, wp }),
+    damage: weapon?.system?.damage, flatBonus: meleeStrengthBonus({ sb, wp }) + talents,
     chars: sbActor?.system?.characteristics ?? {}, corruptionBonus, wp, isMelee: true
   });
 }
@@ -143,7 +149,7 @@ export function strikeDamageFormula(weapon, sbActor, corruptionBonus = 0) {
  */
 export async function rollStrikeOn(target, { weapon, sbActor, location, source, corruptionBonus = 0, wielder = null }) {
   const wp = aggregateAuto(resolveWeaponProps(weapon));
-  const roll = await new Roll(strikeDamageFormula(weapon, sbActor, corruptionBonus)).evaluate();
+  const roll = await new Roll(strikeDamageFormula(weapon, sbActor, corruptionBonus, wielder)).evaluate();
   // Безоружный Мастер (стр. 62): безоружные атаки теряют Primitive — и когда кулак
   // бьёт Ответным ударом / в ответ на Силовое поле, а не только основной атакой
   // (attack.mjs). sbActor здесь — не обязательно хозяин оружия (Ответный удар бьёт

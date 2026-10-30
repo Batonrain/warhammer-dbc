@@ -24,7 +24,7 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { degreesOfSuccess } from "../../constants/craft.mjs";
 import { hasLordOfExodites, unnaturalFHint, clearMoraleConditions, rallyExoditeSquad } from "../../combat/lord-of-exodites.mjs";
-import { commandTargetLimit, hasAirOfAuthority } from "../../rules/leadership-talents.mjs";
+import { commandTargetLimit, hasAirOfAuthority, warChantSinging } from "../../rules/leadership-talents.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, outcomeHtml, rollStatLine } from "../../helpers/test-card.mjs";
 import { GENERAL_COMMAND_KINDS, generalKindLabel, detailSpentOf, trainingSuccessCap } from "../../rules/command-effects.mjs";
@@ -122,8 +122,9 @@ export function commandContext(actor) {
     presenceActive: !!cmd.presence?.active,
     training: !!cmd.training,
     trainingCap: trainingCapOf(actor),
-    // Кнопка «Тройка» — когда выбрана Концентрация огня (эффект 2).
-    focusSelected: benefit === "focus" && !!cmd.presence?.active,
+    // Кнопка «Тройка» — когда выбрана Концентрация огня (эффект 2) либо командир
+    // поёт Боевую Песнь (она раздаёт все три эффекта сразу, без выбора).
+    focusSelected: (benefit === "focus" && !!cmd.presence?.active) || warChantSinging(actor),
     shortCommands: SHORT_COMMANDS.map(c => ({ ...c, selected: c.key === (cmd.shortCommand?.key || "inspire") })),
     shortActive:   !!cmd.shortCommand?.active,
     shortSuccesses: Number(cmd.shortCommand?.successes) || 0,
@@ -143,7 +144,7 @@ export function commandContext(actor) {
     exoditeLord: hasLordOfExodites(actor),
     exoditeGroupLimit: Number(actor.system?.characteristics?.fel?.bonus) || 0,
     // Лимит целей Command/Intimidate «на подчинённых» (rules/leadership-
-    // talents.mjs::commandTargetLimit) — F.b×2, F.b×20 с Air of Authority.
+    // talents.mjs::commandTargetLimit) — F.b×2, F.b×20 с Air of Authority, P.b с Дрессировкой.
     commandTargetLimit: commandTargetLimit(actor),
     hasAirOfAuthority: hasAirOfAuthority(actor)
   };

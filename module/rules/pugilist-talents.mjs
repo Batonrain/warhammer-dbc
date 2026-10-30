@@ -33,7 +33,10 @@ export const PUGILIST_TALENTS = {
   jockey:        { key: "pugilist.core.jockey",        name: "Jockey" },
   thunderCharge: { key: "pugilist.core.thunderCharge", name: "Thunder Charge" },
   unarmedMaster: { key: "pugilist.core.unarmedMaster", name: "Unarmed Master" },
-  whack:         { key: "pugilist.core.whack",         name: "Whack" }
+  whack:         { key: "pugilist.core.whack",         name: "Whack" },
+  haymaker:      { key: "pugilist.core.haymaker",      name: "Haymaker" },
+  goadingStrike: { key: "pugilist.core.goadingStrike", name: "Goading Strike" },
+  kneeStrike:    { key: "pugilist.core.kneeStrike",    name: "Knee Strike" }
 };
 
 /** Несёт ли актор запись Конструктора kind:"capability" с этим ключом (общий помощник Талантов по имени ИЛИ ключу). */
@@ -213,4 +216,95 @@ export function wrestlerDodgeReroll(actor, technique) {
 /** «его Захват нельзя Парировать»: приём Захват у мастера. */
 export function grappleUnparryable(actor, technique) {
   return technique === "grapple" && hasPugilistTalent(actor, "unarmedMaster");
+}
+
+// ── Кулак: Тяжёлый Хук и Направляющий Удар ───────────────────────────────────
+
+/**
+ * «Атака кулаком» — рукопашное оружие категории «Кулаки» (Кулак, Латная Перчатка и т.п.). Щупальца в паке тоже
+ * «Кулаки» по категории, но кулаками не являются (тот же отсев, что у fistBalanceBonus).
+ */
+export function isFistWeapon(weapon) {
+  if (!weapon || String(weapon.system?.meleeCategory ?? "") !== "Кулаки") return false;
+  return !/Щуп/.test(String(weapon.system?.grips ?? ""));
+}
+
+/** Метка Хода: носитель отказался от атаки второй рукой (Тяжёлый Хук) — «в этот Ход». Гаснет с началом его следующего Хода. */
+export const HAYMAKER_FORFEIT_FLAG = "haymakerHandForfeit";
+
+/** Показывать ли галочку «Тяжёлый Хук»: Талант и атака кулаком. */
+export function haymakerOffered(actor, weapon) {
+  return isFistWeapon(weapon) && hasPugilistTalent(actor, "haymaker");
+}
+
+/**
+ * Тяжёлый Хук / Haymaker (core.json, стр. 62): «Он может при совершении атаки кулаком (до броска на попадание)
+ * выбрать отказаться от атаки еще одной рукой в этот Ход, чтобы дать этой атаке +½ T.b Dmg (окр. ▼)...»
+ * replay — переброс той же атаки: отказ от руки уже заплачен, эффект остаётся.
+ */
+export function haymakerApplies(actor, { weapon, isMelee, toggles, replay = false }) {
+  if (!isMelee || !haymakerOffered(actor, weapon)) return false;
+  return replay || !!toggles?.haymaker;
+}
+
+/** +½T.b Dmg, округление вниз (книга: «окр. ▼»). */
+export function haymakerDamageBonus(actor) {
+  const tb = Math.max(0, Number(actor?.system?.characteristics?.t?.bonus) || 0);
+  return Math.floor(tb / 2);
+}
+
+/**
+ * «Отказаться от атаки еще одной рукой в этот Ход»: вторая рука здесь — «Обе руки» окна атаки
+ * (sheets/attack/dialog.mjs, пара рук = одно действие). Хук вместе с «Обе руки» не выбирается, а после Хука в
+ * этом Ходу «Обе руки» закрыты (метка HAYMAKER_FORFEIT_FLAG). Возвращает причину отказа или пустую строку.
+ */
+export function haymakerBlocksSecondHand(actor, { toggles, dual }) {
+  if (!dual) return "";
+  if (toggles?.haymaker && hasPugilistTalent(actor, "haymaker")) {
+    return "Тяжёлый Хук и «Обе руки» одновременно не выбираются — Хук как раз отказ от второй руки";
+  }
+  const spent = actor?.getFlag?.(NS, HAYMAKER_FORFEIT_FLAG);
+  if (spent) return "в этом Ходу персонаж отказался от атаки второй рукой (Тяжёлый Хук) — «Обе руки» недоступны";
+  return "";
+}
+
+/** Штраф Направляющего Удара к атаке кулаком (книга: «штраф –20»). */
+export const GOADING_STRIKE_PENALTY = -20;
+
+/** Показывать ли галочку «Направляющий Удар»: Талант и атака кулаком. */
+export function goadingStrikeOffered(actor, weapon) {
+  return isFistWeapon(weapon) && hasPugilistTalent(actor, "goadingStrike");
+}
+
+/** Выбран ли Направляющий Удар для этой атаки (штраф и свободное Давление по Успеху). */
+export function goadingStrikeApplies(actor, { weapon, isMelee, toggles }) {
+  return !!isMelee && !!toggles?.goadingStrike && goadingStrikeOffered(actor, weapon);
+}
+
+/** Штраф к порогу атаки: −20, если Направляющий Удар выбран; иначе 0. */
+export function goadingStrikePenalty(actor, ctx) {
+  return goadingStrikeApplies(actor, ctx) ? GOADING_STRIKE_PENALTY : 0;
+}
+
+// ── Удар с Колена ───────────────────────────────────────────────────────────
+
+/** Счётчик ударов ногой в этом Ходу («ногой, которой он еще не атаковал»); гаснет с началом Хода. */
+export const LEG_ATTACKS_FLAG = "legAttacksThisTurn";
+
+/** Сколько ног ещё не атаковали в этом Ходу: ног две (четыре у Четвероногого) минус уже сделанные удары ногой. */
+export function legsFree(actor) {
+  const used = Math.max(0, Number(actor?.getFlag?.(NS, LEG_ATTACKS_FLAG)) || 0);
+  return Math.max(0, flyingKickLegs(actor) - used);
+}
+
+/** «Взял цель в Захват как минимум 2-мя руками». */
+export function kneeStrikeHandsOk(hands) {
+  return (Number(hands) || 0) >= 2;
+}
+
+/** Победа в тесте Захвата на столько Успехов даёт право бить в голову с Concussive (0). */
+export const KNEE_STRIKE_HEAD_MARGIN = 5;
+
+export function kneeStrikeHeadOffered(margin) {
+  return (Number(margin) || 0) >= KNEE_STRIKE_HEAD_MARGIN;
 }

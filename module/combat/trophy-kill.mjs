@@ -12,9 +12,13 @@
 //  клик ГМа (hooks.mjs, .wh-trophy-btn) → диалог → awardTrophy пишет очки в убийцу. Пишет ГМ, у него
 //  есть права на любого актора, поэтому ГМ-релей (gm-relay.mjs) не нужен; игрок карточку не решает.
 //  Раз на карточку — runCardOnce (card-once.mjs, флаг trophyAwarded).
+//
+//  Трофеи Приговора (Sahara fear-2, 30.10.2026): носителю Таланта на той же карточке — вторая кнопка «Приговор
+//  исполнен» (restoreJudgementTrophy), она же — кнопкой ⚖ в шапке листа для перерывов между миссиями. Решает ГМ.
+//  Для Казни и Отмеченной Добычи тут же живёт диалог «достойна ли цель» (trophyWorthyDecision).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasTrophyPoints, hasTrophiesOfTriumph, trophyAwardAmount, trophyMax, trophyValue } from "../rules/trophy-points.mjs";
+import { hasTrophyPoints, hasTrophiesOfTriumph, hasTrophiesOfJudgement, trophyAwardAmount, trophyMax, trophyValue, actorInf } from "../rules/trophy-points.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -22,8 +26,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 /** Ключ отметки на карточке (белый список сокета — card-once.mjs::CARD_ONCE_FLAGS). */
 export const TROPHY_CARD_FLAG = "trophyAwarded";
 
-/** Inf цели — характеристика «Влияние» (system.characteristics.inf). */
-const infOf = actor => Number(actor?.system?.characteristics?.inf?.total) || 0;
+const infOf = actorInf;
 
 /** HTML кнопки «Трофей» на карточке. */
 export function trophyButtonHtml({ killerUuid, victimName = "", victimInf = 0 }) {
@@ -50,7 +53,9 @@ export async function offerTrophyAfterKill(victim, weapon) {
     title: `Трофей — ${esc(victim?.name ?? "цель")} убит(а)`,
     lines: [
       `<div class="roll-threshold">${esc(killer.name)}: достойна ли цель трофея (офицер, чемпион, чудовище) — решает ГМ.</div>`,
-      trophyButtonHtml({ killerUuid: killer.uuid, victimName: victim?.name ?? "", victimInf: infOf(victim) })
+      trophyButtonHtml({ killerUuid: killer.uuid, victimName: victim?.name ?? "", victimInf: infOf(victim) }),
+      // Трофеи Приговора: если убитый — казнённый по приговору член банды, ГМ возвращает Очко второй кнопкой.
+      ...(hasTrophiesOfJudgement(killer) ? [judgementButtonHtml({ killerUuid: killer.uuid })] : [])
     ]
   }, { sound: false });
   return true;
@@ -78,6 +83,33 @@ export async function trophyKillDecision({ amount = 1, inf = 0, victimName = "",
 }
 
 /**
+ * Диалог «достойна ли цель трофея» для Казни и Отмеченной Добычи (Мастер Казней). Решает ГМ — система не знает,
+ * офицер ли это, чемпион или чудовище. Для Казни число дополнительных атак зависит от Inf цели, а у не-Хаоситов
+ * берётся «аналог» (книга) — поэтому Inf в диалоге правится.
+ * @param {{title?:string, intro?:string, victimName?:string, inf?:number, askInf?:boolean, okLabel?:string}} o
+ * @returns {Promise<?{inf:number}>} null — не достойна / окно закрыто
+ */
+export async function trophyWorthyDecision({ title = "Достойна трофея?", intro = "", victimName = "", inf = 0, askInf = false, okLabel = "Достойна" } = {}) {
+  const infField = askInf
+    ? `<div class="form-group" style="margin:6px;"><label for="trophy-worthy-inf">Inf цели (или аналог для не-Хаоситов)</label>`
+      + `<input id="trophy-worthy-inf" name="inf" type="number" min="0" value="${Number(inf) || 0}"/></div>`
+    : "";
+  const choice = await foundry.applications.api.DialogV2.wait({
+    window: { title },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content: `<p style="margin:4px 6px;">${intro ? `${esc(intro)}<br>` : ""}`
+      + `<b>${esc(victimName || "цель")}</b> — достойна ли цель трофея (офицер, чемпион, чудовище)? Решает ГМ.</p>${infField}`,
+    rejectClose: false,
+    buttons: [
+      { action: "ok", label: okLabel, default: true,
+        callback: (event, button) => ({ inf: Number(button.form?.querySelector?.("#trophy-worthy-inf")?.value ?? inf) || 0 }) },
+      { action: "no", label: "Не достойна", callback: () => null }
+    ]
+  });
+  return choice && typeof choice === "object" ? choice : null;
+}
+
+/**
  * Начислить убийце Очки Трофеев за убитую цель после решения ГМа.
  * @param {Actor} killer
  * @param {{inf?:number, victimName?:string, decide?:(info:object)=>Promise<boolean>}} o
@@ -96,4 +128,62 @@ export async function awardTrophy(killer, { inf = 0, victimName = "", decide = t
   const next = Math.min(max, cur + amount);
   await killer.update({ "system.trophyPoints.value": next });
   return { awarded: true, amount, added: next - cur };
+}
+
+// ── Трофеи Приговора (Талант): возврат Очка за исполненный приговор ─────────────
+
+/** Ключ отметки на карточке (белый список сокета — card-once.mjs::CARD_ONCE_FLAGS). */
+export const JUDGEMENT_CARD_FLAG = "trophyJudgementUsed";
+
+/** HTML кнопки «Приговор исполнен» на карточке убийства (hooks.mjs, .wh-trophy-judgement-btn). */
+export function judgementButtonHtml({ killerUuid }) {
+  return `<div class="roll-defense-section">
+    <button class="wh-trophy-judgement-btn" type="button" data-killer-uuid="${esc(killerUuid)}"
+      title="Трофеи Приговора: если убитый — член банды (не раб и не слуга), нарушивший её законы, вина определена честно, приговор к смерти вынесен и исполнен — ГМ возвращает 1 Очко Трофеев.">
+      ${rollIcon("skull")}Приговор исполнен (+1 Очко)
+    </button>
+  </div>`;
+}
+
+/**
+ * Диалог ГМа: честно ли определена вина, приговор вынесен и исполнен. Книга: «член своей банды (но не раб или слуга),
+ * нарушивший ее законы и уставы» — это проверяет ГМ, система не знает ни банды, ни законов.
+ * @returns {Promise<boolean>}
+ */
+export async function judgementDecision({ killerName = "" } = {}) {
+  const choice = await foundry.applications.api.DialogV2.wait({
+    window: { title: "Трофеи Приговора" },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content: `<p style="margin:4px 6px;"><b>${esc(killerName || "Мастер Казней")}</b>: вернуть 1 Очко Трофеев за приговор?<br>`
+      + `Вина члена банды (не раба и не слуги), нарушившего её законы и уставы, определена честно, приговор к смерти вынесен и приведён в исполнение.</p>`,
+    rejectClose: false,
+    buttons: [
+      { action: "ok", label: "Вернуть Очко", default: true, callback: () => "ok" },
+      { action: "no", label: "Нет", callback: () => "no" }
+    ]
+  });
+  return choice === "ok";
+}
+
+/**
+ * Вернуть носителю Трофеев Приговора одно Очко (решает ГМ: и сам приговор, и «перерыв между миссиями»).
+ * @param {Actor} actor
+ * @param {{decide?:(info:object)=>Promise<boolean>}} o  decide — решение ГМа (по умолчанию диалог judgementDecision)
+ * @returns {Promise<{restored:boolean, added?:number, reason?:string}>}
+ */
+export async function restoreJudgementTrophy(actor, { decide = judgementDecision } = {}) {
+  if (!actor || !hasTrophiesOfJudgement(actor)) return { restored: false, reason: "noTalent" };
+  if (!globalThis.game?.user?.isGM) return { restored: false, reason: "notGM" };
+  const max = trophyMax(actor);
+  const cur = trophyValue(actor);
+  if (cur >= max) return { restored: false, reason: "full" };
+  if (!(await decide({ killerName: actor.name }))) return { restored: false, reason: "declined" };
+  const next = cur + 1;
+  await actor.update({ "system.trophyPoints.value": next });
+  await postTestCard(actor, {
+    icon: rollIcon("skull", "#c9a24a"),
+    title: `Трофеи Приговора — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Приговор исполнен: +1 Очко Трофеев (${next}/${max}).</div>`]
+  }, { sound: false });
+  return { restored: true, added: 1 };
 }
