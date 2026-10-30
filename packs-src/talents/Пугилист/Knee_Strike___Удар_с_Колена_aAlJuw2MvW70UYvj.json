@@ -5,7 +5,7 @@
   "folder": "Puh1trK0GC8FNKqr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Автоматизировано (pugilist.core.kneeStrike): на карточке Захвата кнопка «Удар с Колена в торс» (и «в голову, Оглушающее (0)» при победе на 5+ Успехов). При нажатии проверяются 2+ руки в Борьбе (число рук задаётся в окне Борьбы), свободная нога (счётчик ударов ногой за Ход, 2 ноги, 4 у Quadruped) и профиль «Kick / Пинок»; открывается окно атаки пинком — Стандартная База и Приём, без ОД и Лимита Атак, попадание автоматическое (1 Успех), место Торс/Голова, в голову Concussive (0). Захват в системе начинается одной рукой, поэтому «2+ руками» проверяется при нажатии, а не в момент взятия. Код: combat/pugilist-strikes.mjs, combat/grapple.mjs, combat/attack.mjs, sheets/attack/dialog.mjs.",
     "benefit": "Успешно взяв цель в Захват 2+ руками, персонаж может немедленно нанести автоматическое попадание ногой, которой ещё не атаковал, профилем безоружного пинка. На 5+ Успехов во взятии в Захват — в голову вместо торса со свойством Concussive (0).",
     "tier": 3,
     "requirement": "S 35, Athletics+10",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "nybI3xf9GdPATbSY",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "er28PJvBHiVpYMip",
+              "capabilityKey": "pugilist.core.kneeStrike",
+              "label": "Удар с Колена: Захват 2+ руками — авто-попадание пинком ещё не бившей ногой; 5+ Успехов — в голову, Concussive (0)",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -5,7 +5,7 @@
   "folder": "Puh1trK0GC8FNKqr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Автоматизировано (pugilist.core.haymaker): в окне атаки кулаком галочка «Тяжёлый Хук» — +½T.b (окр. вниз) к Dmg; отказ от второй руки: «Обе руки» не выбираются вместе с Хуком и закрыты до начала следующего Хода. После применения урона по цели (попадание не отбито Избеганием) в карточке урона кнопка встречного теста S+0 vs S+0 (раз на атаку); проигравшая цель — Ничком (Стена учтена). Код: rules/pugilist-talents.mjs, combat/attack.mjs, combat/damage.mjs, combat/pugilist-strikes.mjs, sheets/attack/*. Допущения: «ещё одна рука» = пара «Обе руки» окна (в системе один Бросок = одна Атака в Ход); «кулак» = рукопашное категории «Кулаки» без щупалец; победа бьющего в S vs S = цель Сбита с ног.",
     "benefit": "При атаке кулаком (до броска) персонаж может отказаться от атаки второй рукой в этот Ход, чтобы дать атаке +½ T.b Dmg; при попадании цель проходит S+0 vs S+0 или Сбивается с ног.",
     "tier": 2,
     "requirement": "S 40, T 40",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "UsJHxxsMAwIkvJEE",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "AiUALPyzcCO0Ktsl",
+              "capabilityKey": "pugilist.core.haymaker",
+              "label": "Тяжёлый Хук: кулак с отказом от второй руки — +½T.b Dmg и встречный S+0 vs S+0, иначе Ничком",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {
