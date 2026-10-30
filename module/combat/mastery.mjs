@@ -23,6 +23,7 @@ import { actorInfamyPath, actorInfamyValue, spendFromInfamyPool } from "../apps/
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { masteryAutoSuccessOffer } from "../rules/mastery.mjs";
 import { runCardOnce } from "./card-once.mjs";
+import { revertCardFailure, failUndoLineHtml } from "./fear.mjs";
 import { _degWord } from "../helpers/utils.mjs";
 
 /** Есть ли чем платить: обычный пул или временный запас. */
@@ -53,10 +54,12 @@ export async function masteryAutoSuccessOnCard(actor, skillTest, message) {
   return runCardOnce(message, "masteryAutoSuccessUsed", async () => {
     if (!masteryHasPoint(actor)) { ui.notifications?.warn(`${actor.name}: нет Очков Бесчестия.`); return false; }
     if (!(await spendOne(actor))) return false;
+    // Автоуспех на проваленном тесте — наложенный им Шок/Ступор снимается (task-e30b).
+    const reverted = await revertCardFailure(message);
     await postTestCard(actor, {
       icon: rollIcon("spark", "#4dffa6"),
       title: `Мастерство — ${esc(actor.name)}`,
-      lines: [`<div class="roll-threshold">Тест «${esc(skillTest.label || "Навык")}» проходит автоматически (поправки не хуже +0). Осталось Очков: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>.</div>`],
+      lines: [`<div class="roll-threshold">Тест «${esc(skillTest.label || "Навык")}» проходит автоматически (поправки не хуже +0). Осталось Очков: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>.</div>`, failUndoLineHtml(reverted)],
       outcome: `<span class="roll-success">Успех — ${offer.deg} ${_degWord(offer.deg)} (Бонус Характеристики; потрачено Очко Бесчестия)</span>`
     }, { sound: false, speaker: message.speaker });
     return true;

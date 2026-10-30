@@ -542,6 +542,7 @@
           <span class="{{#unless mountControl.trained}}mount-warn{{/unless}}">{{mountControl.label}} {{mountControl.value}}</span>
         </div>
         <div class="mount-stat"><label>Стрельба с седла</label><span>{{mountRanged}}</span></div>
+        {{#if mountRangedLightNote}}<div class="mount-stat"><label>Пистолет/винтовка</label><span title="{{mountRangedLightNote}}">{{mountRangedLight}}</span></div>{{/if}}
         {{#if mountPassengerMod}}<div class="mount-stat"><label>Пассажир: физ. тесты</label><span title="Штраф на все атаки и тесты Навыков на Ловкость/Силу; считается сам. Рысь снимает.">{{mountPassengerMod}}</span></div>{{/if}}
         <div class="mount-stat"><label>Маневрирование</label><span>{{mountManoeuvre}}</span></div>
         <div class="mount-stat"><label>Руки заняты</label><span title="{{mountHands.reason}}">{{mountHands.hands}}</span></div>

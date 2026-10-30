@@ -204,25 +204,50 @@ export function sameValue(a, b) {
   return false;
 }
 
-/** Индекс документов пака: по uuid и по "type::имя" (для отката по имени). */
+/**
+ * Метка «под этим именем в паке лежат РАЗНЫЕ документы» — имя ничего не решает
+ * (task-8d6a; то же правило, что module/migrations/pack-source.mjs::AMBIGUOUS).
+ * Граната «Rad / Рад» (2d10) и ракета «Rad / Ракета: Рад» (4d10) обе отзываются
+ * на «rad»: раньше побеждал последний попавшийся, и копия с именем просто «Rad»
+ * без uuid источника сверялась с чужими числами.
+ */
+const AMBIGUOUS = Symbol("ambiguous");
+
+/** Что в документе важно для сверки: поля system, Механика, эффекты. */
+const packAnswer = doc => ({ system: doc?.system ?? {}, mech: mechanicsOf(doc), effects: effectsOf(doc) });
+
+/**
+ * Индекс документов пака: по uuid и по "type::имя" (для отката по имени).
+ * Ключ имени, под которым лежат документы с РАЗНЫМ содержимым, помечается
+ * неоднозначным; одинаковое содержимое (одна запись в двух паках) не мешает.
+ */
 export function buildPackIndex(docs) {
   const byUuid = new Map();
   const byTypeName = new Map();
   for (const doc of docs) {
     if (!doc?.uuid) continue;
     byUuid.set(doc.uuid, doc);
-    for (const key of nameKeys(doc.name)) byTypeName.set(`${doc.type}::${key}`, doc);
+    for (const k of nameKeys(doc.name)) {
+      const key = `${doc.type}::${k}`;
+      const prev = byTypeName.get(key);
+      if (prev === undefined) byTypeName.set(key, doc);
+      else if (prev !== AMBIGUOUS && !sameValue(packAnswer(prev), packAnswer(doc))) byTypeName.set(key, AMBIGUOUS);
+    }
   }
   return { byUuid, byTypeName };
 }
 
-/** Документ пака для предмета актёра: сперва compendiumSource, затем имя того же типа. */
+/**
+ * Документ пака для предмета актёра: сперва compendiumSource, затем имя того же
+ * типа (целиком, потом половинами). Неоднозначный ключ пропускается — решить
+ * может другая половина; не решила никто — null («Без соответствия в паке»).
+ */
 export function matchPackSource(item, index) {
   const src = item._stats?.compendiumSource;
   if (src && index.byUuid.has(src)) return index.byUuid.get(src);
   for (const key of nameKeys(item.name)) {
     const doc = index.byTypeName.get(`${item.type}::${key}`);
-    if (doc) return doc;
+    if (doc && doc !== AMBIGUOUS) return doc;
   }
   return null;
 }

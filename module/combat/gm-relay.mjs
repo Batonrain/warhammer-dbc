@@ -67,7 +67,7 @@ export const TARGET_WRITE_ACTION = "targetActorWrite";
 /** Флаги Захвата/Жокея, которые разрешено писать в цель (имена — grapple.mjs, jockey.mjs; сверяет тест). */
 export const RELAY_TARGET_FLAGS = Object.freeze([
   "grapplePartnerUuid", "grappleRole", "grappleHands", "grappleHeldHands", "grappleTail",
-  "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold",
+  "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold", "vastGrappleSize",
   "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner"
 ]);
 /** Состояния, которые можно наложить/снять на цель из этих приёмов. */

@@ -27,7 +27,9 @@
 //  выводятся ниоткуда — их подпись и собирается.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { resolveCharCat, resolveSkillCat } from "../constants/advancement.mjs";
+import { resolveCharCat, resolveSkillCat, aptitudeCat, ALIGN_LABEL } from "../constants/advancement.mjs";
+import { effectivePricingMode, talentPatronCat, talentGodKeyOf, isEliteTalent } from "../constants/patronage.mjs";
+import { CHAOS_PATRONS }                   from "../constants/chaos-patron.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { cultureCat, resolveCultureFx }    from "../constants/legions.mjs";
 import { isFriendlySpecialty }             from "./friendly-specialties.mjs";
@@ -133,4 +135,52 @@ function describe(kind, align, labels) {
   // у него своя.
   const head  = kind === "book" ? `${word} по книге` : `${word} независимо от Склонностей`;
   return { kind, align, labels: clean, text: `${head}${from}` };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ПОДСКАЗКА ЦЕНЫ ТАЛАНТА В ОКНЕ ПОКУПКИ (task-bd8d)
+//  Категория цены Таланта (resolveTalentCat) зависит от режима цены персонажа,
+//  а подпись «почему» была зашита на один режим — Склонности — и при
+//  Покровительстве объясняла цену не той причиной. Здесь подпись берёт ту же
+//  развилку режимов, что и расчёт: порядок «извне заданная категория → режим»
+//  совпадает с talentCostXP/resolveTalentCat.
+// ════════════════════════════════════════════════════════════════════════════
+
+const godLabel = key => CHAOS_PATRONS.find(p => p.key === key)?.label ?? "Неделимый";
+const lc = cat => (ALIGN_LABEL[cat] || cat).toLowerCase();
+
+/**
+ * Причина категории цены Таланта — текст для подсказки «Дружественная — …».
+ *
+ * @param {Actor}  actor
+ * @param {object} doc      документ Таланта из компендиума
+ * @param {Set}    charApts Склонности персонажа (charAptitudeSet)
+ * @param {object} [opts]
+ * @param {string|null} [opts.forced] категория, заданная расой/субрасой/культурой
+ *        легиона (item-picker.mjs::talentCategory) — она перебивает любой режим
+ * @returns {string}
+ */
+export function talentPriceReason(actor, doc, charApts, { forced = null } = {}) {
+  if (forced) return "категория задана расой или культурой легиона независимо от Склонностей и Покровительства";
+
+  const itemApts = [...new Set((doc?.system?.aptitudes || []).filter(Boolean))];
+  const matches  = itemApts.filter(a => charApts.has(a)).length;
+  const elite    = isEliteTalent(doc?.name, doc?.system?.specialization);
+  const mode     = effectivePricingMode(actor);
+
+  const aptText = elite
+    ? "Таланты Элитных Архетипов нейтральны по Склонностям (стр. 24)"
+    : `совпадений склонностей: ${matches}`;
+  if (mode === "aptitude") return aptText;
+
+  const patron = actor?.system?.patronGod || "";
+  const patronCat = talentPatronCat(doc?.name, patron);
+  const patronText = elite
+    ? "Таланты Элитных Архетипов не привязаны к Богу"
+    : `Бог Таланта — ${godLabel(talentGodKeyOf(doc?.name))}, ${patron ? `Покровитель — ${godLabel(patron)}` : "без Покровителя"}`;
+  if (mode === "patronage") return `Покровительство: ${patronText}`;
+
+  // Смешанная: каждая половина даёт свою категорию, итог — их сочетание (mixedCat).
+  const aptCat = elite ? "neutral" : aptitudeCat(charApts, itemApts);
+  return `Смешанная система: по склонностям — ${lc(aptCat)} (${aptText}); по Покровительству — ${lc(patronCat)} (${patronText})`;
 }

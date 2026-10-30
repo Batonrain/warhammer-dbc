@@ -7,7 +7,8 @@ import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
-import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack } from "./combat/fear.mjs";
+import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack, revertCardFailure, failUndoLineHtml } from "./combat/fear.mjs";
+import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG } from "./rules/fail-undo.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
@@ -56,6 +57,8 @@ import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerC
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { resolveTankHunterClick, clearTankHunterMemory } from "./combat/tank-hunter.mjs";
 import { resolveTerrorSniperClick, terrorSuppressOnCard, terrorSuppressKey } from "./combat/terror-sniper.mjs";
+import { resolveClobberClick, CLOBBER_CARD_FLAG } from "./combat/clobber.mjs";
+import { laserDotNoticeOnCard, laserSpotKey } from "./combat/laser-sight.mjs";
 import { pyromaniacCoverPenalty, torrentPlacementProblem } from "./rules/flamer-talents.mjs";
 import { coverApForToken } from "./combat/cover.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
@@ -183,15 +186,20 @@ import { maybeAutoReleaseGrapple, grappleReleaseTriggered } from "./combat/grapp
 import { weaponProfiles, attackIsMelee } from "./combat/weapon-profiles.mjs";
 // Огневая Точка (Хавок) и Хирургия Легиона (Апотекарий) — пункты меню Очков карточки.
 import { firePointFreeReroll, firePointActivatesOnPaidReroll } from "./rules/fire-point.mjs";
+import { firstHandHitNow, tyranthikosRecalcPlan } from "./rules/dual-wield-talents.mjs";
 import { CLEAVE_CARD_FLAG, CLEAVE_PENALTY } from "./combat/cleave.mjs";
 import { REAPER_CARD_FLAG, startReaperFollow } from "./combat/reaper-chain.mjs";
-import { TROPHY_CARD_FLAG, awardTrophy } from "./combat/trophy-kill.mjs";
+import { TROPHY_CARD_FLAG, JUDGEMENT_CARD_FLAG, awardTrophy, restoreJudgementTrophy } from "./combat/trophy-kill.mjs";
+import { EXECUTION_CARD_FLAG, startExecutionFollow } from "./combat/execution.mjs";
+import { FINAL_EXECUTION_FEAR_CARD_FLAG, grantFinalExecutionFear } from "./combat/final-execution.mjs";
 import { SHOW_OFF_CARD_FLAG } from "./combat/show-off.mjs";
 import { HAMSTRING_CARD_FLAG, startHamstring } from "./combat/hamstring.mjs";
 import { TENACITY_CARD_FLAG, confirmTenacityRepeat } from "./combat/tenacity.mjs";
 import { BLADE_BINDING_CARD_FLAG, startBladeBinding } from "./combat/blade-binding.mjs";
 import { OVERPOWER_CARD_FLAG, startOverpower } from "./combat/overpower.mjs";
 import { FURIOUS_ASSAULT_CARD_FLAG } from "./combat/furious-assault.mjs";
+import { ONE_WILL_GO_DOWN_CARD_FLAG } from "./combat/one-will-go-down.mjs";
+import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./combat/pugilist-strikes.mjs";
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
@@ -799,6 +807,63 @@ export function registerHooks() {
       });
     });
 
+    // Трофеи Приговора (Талант Мастера Казней, combat/trophy-kill.mjs): если убитый — член банды, казнённый по
+    // приговору, ГМ возвращает убийце 1 Очко Трофеев. Только ГМ (вина и «не раб» — его суждение); раз на карточку.
+    html.querySelectorAll(".wh-trophy-judgement-btn").forEach(btn => {
+      if (cardOnceUsed(message, JUDGEMENT_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (!game.user.isGM) return ui.notifications.warn("⚠️ Трофеи Приговора возвращает ГМ — приговор оценивает он.");
+        const killer = await fromUuid(el.dataset.killerUuid || "").catch(() => null);
+        if (!killer) return ui.notifications.warn("⚠️ Убийца не найден.");
+        let outcome = null;
+        await runCardOnce(message, JUDGEMENT_CARD_FLAG, async () => {
+          outcome = await restoreJudgementTrophy(killer);
+          return !!outcome.restored;
+        }, "Приговор с этой карточки уже засчитан.");
+        if (outcome?.restored) el.disabled = true;
+        else if (outcome?.reason === "full") ui.notifications.warn("⚠️ Пул Очков Трофеев уже полон (максимум P.b).");
+      });
+    });
+
+    // Казнь (Черта Мастера Казней, combat/execution.mjs): цель жива после атаки двуручным оружием — ещё атака той
+    // же Базой и Обычной Атакой, свободное действие. На новой серии ГМ решает «достойна ли цель» (диалог), по Inf
+    // цели считается число атак. Отметка карточки и шаг серии — «Бросок!» окна (payOnRoll): закрытое окно ничего не съедает.
+    html.querySelectorAll(".wh-execution-btn").forEach(btn => {
+      if (cardOnceUsed(message, EXECUTION_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const weapon = await fromUuid(el.dataset.weaponUuid || "").catch(() => null);
+        if (!attacker || !weapon) return ui.notifications.warn("⚠️ Атакующий или его оружие не найдены.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Казнь проводит владелец атакующего (или ГМ).");
+        if (cardOnceUsed(message, EXECUTION_CARD_FLAG)) return ui.notifications.warn("Казнь с этой карточки уже использована.");
+        await startExecutionFollow(attacker, weapon, {
+          targetUuid: el.dataset.targetUuid || "", targetTokenUuid: el.dataset.targetTokenUuid || "",
+          baseKey: el.dataset.base || "", messageId: message.id
+        });
+      });
+    });
+
+    // Окончательная Казнь (combat/final-execution.mjs): убийство добычи дарит убийце Страх (2) на 1 Раунд. Обычно Трейт
+    // выдаётся сам при констатации смерти; эта кнопка — когда констатировал тот, кто убийцей не владеет (не ГМ):
+    // выдаёт ГМ или владелец убийцы, раз на карточку.
+    html.querySelectorAll(".wh-fe-fear-btn").forEach(btn => {
+      if (cardOnceUsed(message, FINAL_EXECUTION_FEAR_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const killer = await fromUuid(el.dataset.killerUuid || "").catch(() => null);
+        if (!killer) return ui.notifications.warn("⚠️ Убийца не найден.");
+        if (!game.user.isGM && !killer.isOwner) return ui.notifications.warn("⚠️ Страх (2) выдаёт ГМ или владелец убийцы.");
+        const done = await runCardOnce(message, FINAL_EXECUTION_FEAR_CARD_FLAG, () => grantFinalExecutionFear(killer),
+          "Страх (2) с этой карточки уже выдан.");
+        if (done) el.disabled = true;
+      });
+    });
+
     // Рисовка (Талант «Рукопашных», combat/show-off.mjs): победа на 5+ Успехов — свободная базовая атака по этой
     // цели. Не считается атакой (ни ОД, ни лимита Атак — techniqueOpts.showOffFree); цель берётся на токен сцены,
     // старые цели сбрасываются. Раз на карточку — отметка «Бросок!» окна (payOnRoll).
@@ -910,6 +975,92 @@ export function registerHooks() {
           forceBase: "fullatk", furiousAssault: true, ...(technique ? { technique } : {}),
           payOnRoll: { label: "Яростный Штурм", cardId: message.id, cardKey: FURIOUS_ASSAULT_CARD_FLAG, reaction: true }
         });
+      });
+    });
+
+    // Тяжёлый Хук (Талант Пугилиста, combat/pugilist-strikes.mjs): кнопка карточки урона — встречный тест S+0 vs S+0,
+    // проигравшая цель Ничком. Раз на ИСХОДНУЮ карточку атаки (несколько карточек урона одного удара — одна проверка);
+    // отметка ставится в момент броска, «Отмена» диалога её не съедает.
+    html.querySelectorAll(".wh-haymaker-btn").forEach(btn => {
+      const srcId = btn.dataset.sourceMessageId || "";
+      const source = srcId ? game.messages?.get(srcId) : null;
+      const onceMsg = source ?? message;
+      if (cardOnceUsed(onceMsg, HAYMAKER_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const attacker = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        if (!attacker) return ui.notifications.warn("⚠️ Боксёр карточки не найден.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Тяжёлый Хук проводит владелец персонажа (или ГМ).");
+        if (cardOnceUsed(onceMsg, HAYMAKER_CARD_FLAG)) return ui.notifications.warn("Тяжёлый Хук с этой атаки уже проведён.");
+        const { startHaymaker } = await import("./combat/pugilist-strikes.mjs");
+        await startHaymaker(attacker, el.dataset.targetUuid || "", {
+          claim: () => runCardOnce(onceMsg, HAYMAKER_CARD_FLAG, async () => true, "Тяжёлый Хук с этой атаки уже проведён.")
+        });
+      });
+    });
+
+    // Направляющий Удар (Талант Пугилиста): свободное Давление после Успеха удара кулаком. Раз на карточку.
+    html.querySelectorAll(".wh-goading-btn").forEach(btn => {
+      if (cardOnceUsed(message, GOADING_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        if (!actor) return ui.notifications.warn("⚠️ Боксёр карточки не найден.");
+        if (!actor.isOwner) return ui.notifications.warn("⚠️ Давление проводит владелец персонажа (или ГМ).");
+        if (cardOnceUsed(message, GOADING_CARD_FLAG)) return ui.notifications.warn("Давление с этой карточки уже проведено.");
+        const { startGoadingPress } = await import("./combat/pugilist-strikes.mjs");
+        await startGoadingPress(actor, el.dataset.targetUuid || "", {
+          claim: () => runCardOnce(message, GOADING_CARD_FLAG, async () => true, "Давление с этой карточки уже проведено.")
+        });
+      });
+    });
+
+    // Удар с Колена (Талант Пугилиста): авто-попадание пинком по захваченному; руки, нога и профиль — startKneeStrike.
+    // Торс и голова — один удар на карточку (общая отметка снимается броском окна, payOnRoll).
+    html.querySelectorAll(".wh-knee-strike-btn").forEach(btn => {
+      if (cardOnceUsed(message, KNEE_STRIKE_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid || "").catch(() => null);
+        if (!actor) return ui.notifications.warn("⚠️ Борец карточки не найден.");
+        if (!actor.isOwner) return ui.notifications.warn("⚠️ Удар с Колена проводит владелец персонажа (или ГМ).");
+        if (cardOnceUsed(message, KNEE_STRIKE_CARD_FLAG)) return ui.notifications.warn("Удар с Колена с этой карточки уже нанесён.");
+        const { startKneeStrike } = await import("./combat/pugilist-strikes.mjs");
+        await startKneeStrike(actor, { head: el.dataset.head === "1", messageId: message.id });
+      });
+    });
+
+    // Один Из Нас Падёт (Талант Берсерка, combat/one-will-go-down.mjs): итог удара с карточки атаки — убил/вывел
+    // из строя (1 Усталости) или нет (T.b+W.b и потеря сознания). Раз на карточку; если урон по цели уже применён и
+    // вывел её из строя, карточка урона засчитала итог сама (damage.mjs) и кнопка погашена.
+    html.querySelectorAll(".wh-owgd-btn").forEach(btn => {
+      // Переброшенная карточка заменена новой со своей кнопкой — итог подводится на актуальной (иначе два итога).
+      if (cardOnceUsed(message, ONE_WILL_GO_DOWN_CARD_FLAG) || cardOnceUsed(message, "attackRerolled")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const attacker = await fromUuid(ev.currentTarget.dataset.attackerUuid || "").catch(() => null);
+        if (!attacker) return ui.notifications.warn("⚠️ Носитель Таланта не найден.");
+        if (cardOnceUsed(message, "attackRerolled")) return ui.notifications.warn("Эта атака переброшена — подведите итог на новой карточке.");
+        if (!attacker.isOwner) return ui.notifications.warn("⚠️ Итог Таланта подводит владелец персонажа (или ГМ).");
+        if (cardOnceUsed(message, ONE_WILL_GO_DOWN_CARD_FLAG)) return ui.notifications.warn("Итог Один Из Нас Падёт с этой карточки уже подведён.");
+        const choice = await foundry.applications.api.DialogV2.wait({
+          window: { title: "Один Из Нас Падёт — итог удара" },
+          classes: ["warhammer-dbc", "wh-holo"],
+          content: `<p style="margin:4px 6px;">Атака убила или вывела врага из строя?</p>`,
+          rejectClose: false,
+          buttons: [
+            { action: "felled", label: "Да — 1 Усталости", default: true, callback: () => "felled" },
+            { action: "failed", label: "Нет / промах — T.b+W.b Усталости", callback: () => "failed" }
+          ]
+        });
+        if (!choice) return;
+        const { settleOneWillGoDown } = await import("./combat/one-will-go-down.mjs");
+        await runCardOnce(message, ONE_WILL_GO_DOWN_CARD_FLAG,
+          async () => { await settleOneWillGoDown(attacker, { felled: choice === "felled" }); return true; },
+          "Итог Один Из Нас Падёт с этой карточки уже подведён.");
       });
     });
 
@@ -1602,6 +1753,46 @@ export function registerHooks() {
       });
     });
 
+    // Тирантикос (rules/dual-wield-talents.mjs): первую руку пары перебросили (Очко Судьбы, +10, Огневая Точка)
+    // уже после броска второй — «Пересчитать» сверяет карточку второй руки с ПОСЛЕДНЕЙ карточкой первой и, если
+    // условие «попали обе» изменилось, переигрывает ЭТУ ЖЕ карточку (updateMessageId, тот же rv): +2d10 появляются
+    // или снимаются, урон этой карточки бросается заново — как у сдвига места попадания. Только владелец атакующего.
+    html.querySelectorAll(".roll-tyranthikos").forEach(section => {
+      const atkForVis = message.flags?.["warhammer-dbc"]?.attack;
+      const owner = atkForVis && game.actors?.get(atkForVis.actorId)?.isOwner;
+      if (!owner) section.remove();
+    });
+    html.querySelectorAll(".wh-tyranthikos-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const atk = message.flags?.["warhammer-dbc"]?.attack;
+        if (!atk) return;
+        const atkActor = game.actors?.get(atk.actorId);
+        if (!atkActor?.isOwner) {
+          return ui.notifications.warn("Пересчитать Тирантикос может только сам атакующий (или ГМ).");
+        }
+        const atkItem = atkActor.items?.get(atk.itemId);
+        if (!atkItem) return;
+        const firstHit = firstHandHitNow(game.messages?.contents ?? game.messages, atk.opts?.dualPairId);
+        if (firstHit == null) {
+          return ui.notifications.warn("Карточка первой руки этой пары не найдена в чате — Тирантикос не пересчитать, решите вручную.");
+        }
+        const plan = tyranthikosRecalcPlan({
+          eligible: Number(atk.opts?.tyranthikosEligible) || 0,
+          applied: Number(atk.tyranthikosApplied) || 0, firstHit });
+        if (!plan.change) {
+          return ui.notifications.info(firstHit
+            ? "Тирантикос: первая рука попала — +2d10 уже на этой карточке, пересчёт не нужен."
+            : "Тирантикос: первая рука не попала — +2d10 не положены, пересчёт не нужен.");
+        }
+        await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold, atk.rofMode, atk.aimTarget,
+          { ...(atk.opts || {}), forcedRoll: atk.rv, skipAmmo: true, updateMessageId: message.id });
+        ui.notifications.info(plan.dice
+          ? `Тирантикос: первая рука попала — вторая получила +${plan.dice}d10 (урон карточки брошен заново).`
+          : "Тирантикос: первая рука не попала — +2d10 сняты (урон карточки брошен заново).");
+      });
+    });
+
     // Горжет (стр. 228, wdbc-8b5): защищающийся (владелец цели — выбранный
     // токен, или ГМ) может попытаться перенести случайное попадание в голову
     // в Торс броском 1d10. Правит ЭТУ ЖЕ карточку (updateMessageId), как и
@@ -1853,7 +2044,17 @@ export function registerHooks() {
       });
     });
 
-    // Бесплатные выстрелы Талантов Стрелка (Стрельба от Бедра, Огонь с Вытягивания): кнопка в чате
+    // Бросок на Бегу (Талант Метания, 3-8318): тест Acrobatics−10 → свободный бросок (combat/running-throw.mjs).
+    html.querySelectorAll(".wh-running-throw-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { resolveRunningThrowClick } = await import("./combat/running-throw.mjs");
+        if (await resolveRunningThrowClick(el.dataset.actorUuid)) el.disabled = true;
+      });
+    });
+
+    // Бесплатные выстрелы Талантов Стрелка (Стрельба от Бедра, Огонь с Вытягиванием): кнопка в чате
     // открывает обычное окно атаки в режиме «без ОД» (combat/free-shot.mjs).
     html.querySelectorAll(".wh-free-shot-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -1963,6 +2164,12 @@ export function registerHooks() {
           hamstring:       ds.hamstring === "1",
           // Жнец (combat/reaper-chain.mjs): удар с Базой «Натиск» — карточка урона предложит продолжить к следующей цели.
           chargeBase:      ds.chargeBase === "1",
+          // Окончательная Казнь (combat/final-execution.mjs): удар вооружённым Талантом — убийство даёт Страх (2) на 1 Раунд.
+          finalExecution:  ds.finalExecution === "1",
+          // Один Из Нас Падёт (combat/one-will-go-down.mjs): цель выведена из строя — карточка урона засчитает 1 Усталости.
+          oneWillGoDown:   ds.owgd === "1",
+          // Тяжёлый Хук (combat/pugilist-strikes.mjs): после применения урона — кнопка встречного теста S+0 vs S+0.
+          haymaker:        ds.haymaker === "1",
           // Карточка, с которой пришёл урон: к ней привязывается итог
           // пробития брони для кнопок Rad/Toxic той же карточки (wdbc-x1nz.2.79).
           sourceMessageId: message?.id ?? ""
@@ -3200,6 +3407,18 @@ export function registerHooks() {
       });
     });
 
+    // Поколотить (Талант Метания, 3-8318): S+0 цели со штрафом по весу снаряда, Провал — Ничком (combat/clobber.mjs).
+    html.querySelectorAll(".wh-clobber-btn").forEach(btn => {
+      if (cardOnceUsed(message, CLOBBER_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const done = await resolveClobberClick(ds.attackerUuid, ds.targetUuid, ds.mod, message);
+        if (done) el.disabled = true;
+      });
+    });
+
     // Снайпер Ужаса (Талант Стрелка, 3-5fbf): Intimidate(BS)+0 → Подавление врагов в радиусе (combat/terror-sniper.mjs).
     html.querySelectorAll(".wh-terror-sniper-btn").forEach(btn => {
       if (cardOnceUsed(message, "terrorSniperRolled")) btn.disabled = true;
@@ -3220,6 +3439,21 @@ export function registerHooks() {
         const knows = !!el.closest(".wh-terror-row")?.querySelector(".wh-terror-knows-cb")?.checked;
         el.disabled = true;
         const done = await terrorSuppressOnCard(message, rowIndex, el.dataset.actorUuid, el.dataset.attackerUuid, knows);
+        if (!done) el.disabled = false;
+      });
+    });
+
+    // Лазерный Прицел (Основная книга, «Прицелы»): точку лазера могут заметить — Awareness−10 каждого врага
+    // (combat/laser-sight.mjs). Строки — на шёпоте ГМу, который уходит сам после атаки; жмёт ГМ.
+    html.querySelectorAll(".wh-laser-notice-btn").forEach((btn, rowIndex) => {
+      const rowKey = laserSpotKey(rowIndex);
+      if (rowKey && cardOnceUsed(message, rowKey)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const knows = !!el.closest(".wh-laser-row")?.querySelector(".wh-laser-knows-cb")?.checked;
+        el.disabled = true;
+        const done = await laserDotNoticeOnCard(message, rowIndex, el.dataset.actorUuid, el.dataset.attackerUuid, knows);
         if (!done) el.disabled = false;
       });
     });
@@ -4109,6 +4343,20 @@ function _attachFateContextMenu(message, html) {
           : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`)
         : "";
 
+      // Последствия провала исходной карточки (Шок Инфернальной Воли, Ступор Гипно-Шрамов; task-e30b): переброс
+      // стал успехом — снимаются; провалился снова — остаются, а откат переезжает на новую карточку (исходную
+      // помечаем, чтобы не откатить дважды). Переброс идёт мимо общего исхода, поэтому НОВЫЙ Шок за 4+ Провала
+      // здесь не бросается — это записано в label mutation.infernalWill (constants/capabilities.mjs).
+      const prevFailUndo = failUndoOf(message);
+      let failUndoLine = "";
+      let carriedFailUndo = null;
+      const failPlan = rerollFailUndoPlan({ prevFailUndo, hit, settled: cardOnceUsed(message, FAIL_UNDO_SETTLED_FLAG) });
+      if (failPlan.revert) failUndoLine = failUndoLineHtml(await revertCardFailure(message));
+      else if (failPlan.carry) {
+        carriedFailUndo = prevFailUndo;
+        await revertCardFailure(message, { keep: true });
+      }
+
       // Blessed Fits/Благословенные Припадки (Общие Мутации, wdbc-1rno):
       // переброшенный тест ВСЁ РАВНО провален (hit===false, не null — тест
       // без распознанного Порога это условие не проверяет вовсе) — Оглушение
@@ -4140,6 +4388,7 @@ function _attachFateContextMenu(message, html) {
           </div>`,
           rollStatLine({ threshold, rv }),
           blessedFitsLine,
+          failUndoLine,
           koaBtn
         ],
         outcome: outcomeSpan
@@ -4147,9 +4396,10 @@ function _attachFateContextMenu(message, html) {
         // тест того же Навыка, и «+10» с неё (меню Очков) должно его узнать
         // (Знания Веков, wdbc-1rno.23). Исход — уже переброшенный.
       }, { rolls: [newRoll], speaker: message.speaker,
-        flags: (skillTest || bhTest) ? { "warhammer-dbc": {
+        flags: (skillTest || bhTest || carriedFailUndo) ? { "warhammer-dbc": {
           ...(skillTest ? { skillTest: { ...skillTest, success: hit ?? !!skillTest.success, deg: deg ?? skillTest.deg } } : {}),
-          ...(bhTest ? { [BEYOND_HUMAN_FLAG]: bhTest } : {})
+          ...(bhTest ? { [BEYOND_HUMAN_FLAG]: bhTest } : {}),
+          ...(carriedFailUndo ? { failUndo: carriedFailUndo } : {})
         } } : null });
 
       ui.notifications.info(
@@ -4274,6 +4524,10 @@ function _attachFateContextMenu(message, html) {
       const bonus1 = await spendBonusPoint();
       if (!bonus1) return;
 
+      // +10 вытянуло провал в успех — снимаются последствия этого провала (Шок и т.п., task-e30b).
+      const bonusUndoLine = (outcome.success && failUndoOf(message))
+        ? failUndoLineHtml(await revertCardFailure(message)) : "";
+
       const outcomeSpan = outcome.success
         ? `<span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`
         : `<span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`;
@@ -4297,6 +4551,7 @@ function _attachFateContextMenu(message, html) {
             <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
           </div>`,
           `<div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>`,
+          bonusUndoLine,
           koaBtn
         ],
         outcome: outcomeSpan
@@ -4974,13 +5229,21 @@ function _attachFateContextMenu(message, html) {
   // другое поле того же актора не дёрнёт recalc). userId-гвард — тот же приём,
   // что и выше: настройка мировая, применить пересчёт должен только тот, кто
   // её сменил, а не каждый подключённый клиент разом.
-  Hooks.on("updateSetting", async (setting, changes, options, userId) => {
+  //
+  // createSetting нужен отдельно (pricing-mode-createsetting): пока настройку в
+  // мире ни разу не меняли, документа Setting нет вовсе, и ПЕРВОЕ сохранение —
+  // это создание, а не обновление. Без него первое переключение системы цен
+  // (новый мир → «Склонности») не пересчитывало купленное. Сигнатуры хуков
+  // разные: update — (doc, changes, options, userId), create — (doc, options, userId).
+  const _recalcOnPricingSetting = async (setting, userId) => {
     if (setting.key !== "warhammer-dbc.advancePricingMode") return;
     if (game.user.id !== userId) return;
     for (const actor of game.actors) {
       if (actor.type === "character") await recalcAllAdvanceCosts(actor);
     }
-  });
+  };
+  Hooks.on("updateSetting", (setting, changes, options, userId) => _recalcOnPricingSetting(setting, userId));
+  Hooks.on("createSetting", (setting, options, userId) => _recalcOnPricingSetting(setting, userId));
   // Хук стреляет у всех, кто в игре, — авто-диалог теста-развилки (S+0/
   // Athletics(S)+10, стр. 233) должен всплыть только у того, кто саму броню
   // отключил (userId), иначе окно выбора получат все клиенты разом.

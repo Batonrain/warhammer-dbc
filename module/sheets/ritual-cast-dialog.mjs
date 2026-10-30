@@ -28,8 +28,43 @@ import { esc } from "../helpers/utils.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { ritualVeilGate, ritualVeilMessage } from "../rules/veil-steps.mjs";
 import { DARK_SEER_FLAG, darkSeerPaths } from "../rules/dark-seer.mjs";
+import {
+  ROLE_PRIMARY, ROLE_RESERVE, INSTRUCTOR_PREP_HOURS, ritualAssistantRejection, addAssistant,
+  removeAssistant, setAssistantRole, setAssistantSacrificed
+} from "../rules/ritual-assistants.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
+
+/**
+ * Строки списка ассистентов (rows — d.assistantRows из ritualThreshold:
+ * оценённые, с ok/failed). Негодному жертва не предлагается и причина написана
+ * прямо в строке — он исключён из броска. «Запасным» — только при Запасных
+ * Планах; «в основные» у негодного запасного заблокирована.
+ */
+export function assistantRowsHtml(rows, { fallbacks = false } = {}) {
+  return (rows || []).map(r => {
+    const u = esc(r.uuid);
+    const reserve = r.role === ROLE_RESERVE;
+    const badge = r.ok
+      ? `<span class="wv-rit-abadge ok">годен</span>`
+      : `<span class="wv-rit-abadge bad" title="Исключён из броска">не годен</span>`;
+    const why = r.ok ? "" : `<div class="wv-rit-awhy">${(r.failed || []).map(esc).join("; ")}</div>`;
+    const sac = (!reserve && r.ok)
+      ? `<label class="wv-rit-cb" title="Принесён в жертву в конце ритуала: +10 к Порогу (стр. 393-425)">
+           <input type="checkbox" data-sac="${u}" ${r.sacrificed ? "checked" : ""}/> в жертву</label>` : "";
+    const toReserve = (!reserve && fallbacks)
+      ? `<button type="button" data-act="reserve" data-uuid="${u}" title="Запасной ассистент (Запасные Планы): бонуса не даёт">→ запасной</button>` : "";
+    const toPrimary = reserve
+      ? `<button type="button" data-act="primary" data-uuid="${u}" ${r.ok ? "" : "disabled"} title="Запасной заменяет выбывшего основного">→ основной</button>` : "";
+    return `<div class="wv-rit-arow ${r.ok ? "" : "blocked"}">
+      <span class="wv-rit-aname">${esc(r.name)}</span>
+      <span class="wv-rit-arole">${reserve ? "запасной" : "основной"}</span>
+      ${badge}${sac}${toReserve}${toPrimary}
+      <button type="button" data-act="remove" data-uuid="${u}" title="Убрать (выбыл)">✕</button>
+      ${why}
+    </div>`;
+  }).join("");
+}
 
 /** Ситуативные модификаторы, вписанные игроком в форму. `paths` — из ritualPathOptions. */
 function readRitualForm(form, paths) {
@@ -52,7 +87,11 @@ function readRitualForm(form, paths) {
     skillValue: path.skillValue, testChar: path.testChar, gmMod: path.gmMod,
     // Ведун Тьмы (rules/dark-seer.mjs): путь-двойник на I↔W — без Преимущества.
     darkSeerSwap: !!path.darkSeerSwap,
+    // Безымянные ассистенты числом (толпа без листов); именованные — список
+    // assistantList из замыкания диалога, добавляется вызывающим.
     assistants, assistSacrificed,
+    // «8 часов подготовки» Таланта Инструктор — каждый раз заново (книга).
+    instructorPrepared: !!el("#rit-instructor")?.checked,
     curseFam: el("#rit-curse-fam")?.value || "close",
     psyker: !!el("#rit-psyker")?.checked,
     psykerBonus: Math.max(0, parseInt(el("#rit-psyker-bonus")?.value) || 0),
@@ -235,6 +274,29 @@ export async function showRitualCastDialog(actor, item) {
         <div class="wv-form-note">${esc(f.note)}</div></div>`).join("")}
     </div>` : "";
 
+  // Ассистенты — список акторов с ролями (rules/ritual-assistants.mjs). Список
+  // живёт в замыкании диалога: это выбор на ОДИН бросок, не состояние листа.
+  // Требования к ним (assistReq) проверяются по каждому: негодный исключён из
+  // броска. Числовые поля ниже — безымянные ассистенты без листа (толпа рабов),
+  // они ничем не проверяются и работают как раньше.
+  let assistantList = [];
+  let lastD = d0;
+  const assistBlock = hasAssists ? `
+    <div class="wv-block">
+      <div class="wv-block-title">Ассистенты (${assistMin}–${assistMax})</div>
+      <div id="rit-assist-drop" class="wv-rit-assist-drop">Перетащите сюда актора-ассистента</div>
+      <div id="rit-assist-list" class="wv-rit-assist-list"></div>
+      <div class="wv-hint" id="rit-assist-count"></div>
+      ${d0.instructor ? `<label class="wv-rit-cb wv-rit-instr" title="Талант «Инструктор»: ${INSTRUCTOR_PREP_HOURS} часов подготовки снижают требования к ассистентам на 1 ранг нужных Навыков (убирая требование на +0). Нужна каждый раз.">
+        <input type="checkbox" id="rit-instructor"/> Инструктор: ${INSTRUCTOR_PREP_HOURS} ч подготовки (требования на ранг ниже)</label>` : ""}
+      <div class="wv-rit-row">
+        <label class="wv-rit-lbl" title="Ассистенты без листа персонажа: требования к ним не проверяются">Безымянных</label>
+        <input type="number" id="rit-assistants" class="wv-rit-xs" value="0" min="0"/>
+        <label class="wv-rit-lbl" title="Сколько безымянных принесены в жертву в конце ритуала (стр. 393-425: +10 за каждого) — не больше их числа">Жертва</label>
+        <input type="number" id="rit-assist-sac" class="wv-rit-xs" value="0" min="0" max="0"/>
+      </div>
+    </div>` : "";
+
   const reqWarnHtml = d0.reqOk ? "" : `<div class="wv-rit-unmet">
     <b>Требования не выполнены:</b>${d0.reqFailed.map(f => `<div>${esc(f)}</div>`).join("")}</div>`;
 
@@ -264,16 +326,13 @@ export async function showRitualCastDialog(actor, item) {
             ${reqWarnHtml}
             ${veilWarnHtml}
             <div class="wv-rit-row">
-              ${hasAssists ? `<label class="wv-rit-lbl">Ассистенты (${assistMin}–${assistMax})</label>
-              <input type="number" id="rit-assistants" class="wv-rit-xs" value="0" min="0"/>
-              <label class="wv-rit-lbl" title="Сколько из присутствующих принесены в жертву в конце ритуала (стр. 393-425: +10 за каждого) — не больше числа ассистентов">Жертва</label>
-              <input type="number" id="rit-assist-sac" class="wv-rit-xs" value="0" min="0" max="0"/>` : ""}
               <label class="wv-rit-cb" title="Псайкер-Ритуалист: +2×PR к тесту, но такой же бонус к броскам провала.">
                 <input type="checkbox" id="rit-psyker"/> Псайкер
               </label>
               <input type="number" id="rit-psyker-bonus" class="wv-rit-xs" value="0" min="0" max="${d0.prMax}" title="До +2×PR = +${d0.prMax}"/>
             </div>
           </div>
+          ${assistBlock}
           ${extraBlock}
           ${summonBlock}
           ${demonBlock}
@@ -310,7 +369,7 @@ export async function showRitualCastDialog(actor, item) {
       {
         action: "cast", icon: "fas fa-hand-sparkles", label: "Провести", default: true,
         callback: async (event, button) => {
-          const R = { ...base, ...readRitualForm(button.form, paths) };
+          const R = { ...base, ...readRitualForm(button.form, paths), assistantList };
           await castRitual(R, actor, { item });
           return true;
         }
@@ -339,9 +398,21 @@ export async function showRitualCastDialog(actor, item) {
         sacEl.max = String(max);
         if ((parseInt(sacEl.value) || 0) > max) sacEl.value = String(max);
       });
+      const dropEl = form.querySelector("#rit-assist-drop");
+      const listEl = form.querySelector("#rit-assist-list");
+      const countEl = form.querySelector("#rit-assist-count");
       const update = () => {
-        const R = { ...base, ...readRitualForm(form, paths) };
+        const R = { ...base, ...readRitualForm(form, paths), assistantList };
         const d = ritualThreshold(R, actor, item);
+        lastD = d;
+        if (listEl) listEl.innerHTML = assistantRowsHtml(d.assistantRows, { fallbacks: d.fallbacks });
+        if (countEl) {
+          const t = d.assistantTally;
+          const anon = Math.max(0, R.assistants || 0);
+          countEl.textContent = `Участвуют: ${t.primary + anon} (нужно ${assistMin}–${assistMax})`
+            + (d.fallbacks ? ` · запасных: ${t.reserve}/${d.reserveMax}` : "")
+            + (t.blocked ? ` · не годны (исключены): ${t.blocked}` : "");
+        }
         display.textContent = d.threshold;
         rowsEl.innerHTML = breakdownRows(d.rows);
         if (gmModEl) gmModEl.textContent = sgn(R.gmMod || 0);
@@ -359,8 +430,63 @@ export async function showRitualCastDialog(actor, item) {
           pill.classList.toggle("auto", d.summonAuto.includes(cb.dataset.summon));
         });
       };
+      // Ассистенты-акторы: дроп, смена роли, жертва, выбытие. Правила — в
+      // rules/ritual-assistants.mjs; здесь только перевод событий в вызовы и
+      // показ причины отказа. Состояние меняется ДО update(), и update зовётся
+      // явно: событие change от чекбокса всплывёт к форме позже и лишь повторит расчёт.
+      const rowOf = uuid => lastD.assistantRows.find(r => r.uuid === uuid);
+      if (dropEl) {
+        dropEl.addEventListener("dragover", ev => { ev.preventDefault(); dropEl.classList.add("over"); });
+        dropEl.addEventListener("dragleave", () => dropEl.classList.remove("over"));
+        dropEl.addEventListener("drop", async ev => {
+          ev.preventDefault();
+          dropEl.classList.remove("over");
+          let data = null;
+          try { data = JSON.parse(ev.dataTransfer.getData("text/plain")); } catch { /* не наш дроп */ }
+          if (!data || (data.type !== "Actor" && data.type !== "Token")) return;
+          const uuid = data.uuid
+            || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
+            || (data.type === "Token" && data.sceneId && data.tokenId
+                  ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
+          if (!uuid) return;
+          const doc = await fromUuid(uuid).catch(() => null);
+          const candidate = doc?.actor ?? doc;
+          const why = ritualAssistantRejection(candidate, { ritualist: actor, list: assistantList });
+          if (why) { ui.notifications?.warn(why); return; }
+          assistantList = addAssistant(assistantList, candidate);
+          update();
+        });
+      }
+      if (listEl) {
+        listEl.addEventListener("click", ev => {
+          const btn = ev.target.closest?.("[data-act]");
+          if (!btn || btn.disabled) return;
+          const { act, uuid } = btn.dataset;
+          if (act === "remove") {
+            assistantList = removeAssistant(assistantList, uuid);
+          } else {
+            const res = setAssistantRole(assistantList, uuid,
+              act === "reserve" ? ROLE_RESERVE : ROLE_PRIMARY,
+              { fallbacks: lastD.fallbacks, reserveMax: lastD.reserveMax, qualifies: !!rowOf(uuid)?.ok });
+            if (!res.ok) { ui.notifications?.warn(res.why); return; }
+            assistantList = res.list;
+          }
+          update();
+        });
+        // Именно "input", не "change": клик по чекбоксу шлёт input, затем change, а input
+        // всплывает к форме, чей update() перерисовывает список — к приходу change
+        // старый чекбокс уже оторван и до этого слушателя событие не дойдёт.
+        // Внутренний узел получает input раньше формы, состояние обновляется до перерисовки.
+        listEl.addEventListener("input", ev => {
+          const uuid = ev.target?.dataset?.sac;
+          if (uuid == null) return;
+          assistantList = setAssistantSacrificed(assistantList, uuid, !!ev.target.checked);
+          update();
+        });
+      }
       form.addEventListener("change", update);
       form.addEventListener("input", update);
+      update();
     }
   });
 }

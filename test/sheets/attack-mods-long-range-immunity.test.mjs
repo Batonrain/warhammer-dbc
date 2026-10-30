@@ -136,6 +136,16 @@ describe("Низкая высота цели: гасители", () => {
     const mp = { ...scope("Motion Predictor / Предсказатель Движения"), system: { installedOn: "w1", effects: { aimIgnoresRunning: true } } };
     expect(low(actorWith([mp], "none")).value).toBe(-10);
     expect(low(actorWith([mp], "full")).value).toBe(0);
+    expect(low(actorWith([mp], "full")).note).toBe("снято: Предсказатель Движения");
+  });
+
+  // task-e683: Омни-Прицел «комбинирует эффекты всех остальных прицелов» — своих полей в моде нет.
+  it("Омни-Прицел — как Предсказатель: только при Прицеливании, подпись — имя Омни", () => {
+    const omni = scope("Omni-Sight / Омни-Прицел");
+    expect(low(actorWith([omni], "none")).value).toBe(-10);
+    const row = low(actorWith([omni], "half"));
+    expect(row).toEqual(expect.objectContaining({ value: 0, immune: true }));
+    expect(row.note).toBe("снято: Омни-Прицел");
   });
 });
 

@@ -82,6 +82,8 @@ export const TURN_SCOPED_FLAGS = {
   hipShootingPending: "Стрельба от Бедра (Талант Стрелка, 3-5fbf): Полное Движение объявлено, одиночный выстрел в этом Ходу ещё не сделан (combat/movement-actions.mjs::declareFullMove, rules/gunner-talents.mjs::HIP_SHOOTING_FLAG)",
   runAndGunPending: "Стрельба на Бегу (Талант Стрелка, 3-5fbf): Натиск объявлен, свободный выстрел ещё не сделан (combat/movement-actions.mjs::declareCharge, rules/run-and-gun.mjs)",
   chargeChecked: "Натиск (Прикрывающий Огонь и Стрельба на Бегу, Sahara covering-fire-hip-shooting): «<id боя>:<раунд>» — проверка Натиска в этом Раунде уже сделана, второй путь (HUD-кнопка или окно атаки) её не повторяет (combat/free-shot.mjs::chargeAttackGate, rules/run-and-gun.mjs)",
+  runningThrowUsed: "Бросок на Бегу (Талант Метания, 3-8318): тест Acrobatics−10 в этом Ходу уже проходили — «раз в Ход» (combat/running-throw.mjs)",
+  runningThrowPending: "Бросок на Бегу (Талант Метания, 3-8318): тест удался, свободный бросок метательным ещё не сделан (combat/running-throw.mjs, combat/free-shot.mjs)",
   runAndGunFired:"Стрельба на Бегу (Талант Стрелка, 3-5fbf): id оружия, из которого стреляли на Натиске и не сложили — им нельзя стрелять в рукопашной до конца Хода (снимается Сложить, combat/free-shot.mjs)",
   bayonetChargePending: "Штыковая Атака (Талант Рукопашных, 3-8dc5): попала Приёмом, свободный выстрел в упор ещё не сделан (rules/run-and-gun.mjs)",
   tankHunterThisTurn: "Охотник на Танки (Талант Стрелка, 3-5fbf): опознавать модель техники можно раз в Ход (combat/tank-hunter.mjs)",
@@ -102,6 +104,8 @@ export const TURN_SCOPED_FLAGS = {
   meleeDamageAppliedMsg: "Упорство (Талант Рукопашных, 3-8dc5): id карточки, по которой урон уже применён к цели (любой исход) — повтор Упорства не переспрашивает «урон ещё не применён» (rules/melee-talents.mjs::MELEE_DAMAGE_APPLIED_FLAG, combat/tenacity.mjs)",
   reaperInitialTarget: "Жнец (Талант Рукопашных, 3-8dc5): uuid токена начальной цели цепочки Натиска — от него меряется Полудвижение следующих целей (rules/melee-talents.mjs::REAPER_CHAIN_FLAG, combat/reaper-chain.mjs)",
   rageExitTried: "Ярость (Frenzy, Sahara focused-wrath-20-bs п.2): «не более одной попытки выйти из Ярости в Ход» — метка попытки гаснет с началом СВОЕГО Хода; вне боя «Ход» — 6 с игрового времени (rules/rage-behavior.mjs::rageExitAttemptAllowed, combat/rage-behavior.mjs::attemptRageExit)",
+  haymakerHandForfeit: "Тяжёлый Хук (Талант Пугилиста, стр. 62, 3-eddb): «отказаться от атаки еще одной рукой в этот Ход» — «Обе руки» окна атаки закрыты до начала следующего Хода (rules/pugilist-talents.mjs::HAYMAKER_FORFEIT_FLAG)",
+  legAttacksThisTurn: "Удар с Колена (Талант Пугилиста, стр. 62, 3-eddb): сколько ударов ногой уже было в этом Ходу — «ногой, которой он еще не атаковал» (rules/pugilist-talents.mjs::LEG_ATTACKS_FLAG, combat/attack.mjs)",
   pinDownHold: "Прижать (Талант Пугилиста, стр. 62, 3-eddb): штраф цели на физические действия и отмена +20 за Борьбу по прижимающему — до начала СЛЕДУЮЩЕГО Хода прижимающего; заодно метка «раз в Ход» (combat/grapple-talents.mjs, rules/situational.mjs)"
 };
 

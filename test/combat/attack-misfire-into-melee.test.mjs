@@ -172,3 +172,50 @@ describe("Очередь по цели в рукопашной: половина
     expect(card()).not.toContain("рикошет");
   });
 });
+
+// Target Selection / Выбор Целей (3-5fbf): «его промахи никогда не попадают в союзников
+// (но могут в других врагов)» — союзники стрелка выпадают из списка получателей рикошета.
+describe("Выбор Целей: рикошет не достаётся союзникам стрелка", () => {
+  const TS = { type: "talent", name: "Target Selection / Выбор Целей", system: {} };
+
+  function scene({ withTalent, neighbours }) {
+    const weapon = weaponFor({ weaponClass: "basic", damage: "1d10", rof_single: 1 });
+    const shooterActor = actorFor({ items: withTalent ? [weapon, TS] : [weapon] });
+    shooterActor.uuid = "Actor.shooter";
+    const shooterToken = tokenAt({ actor: shooterActor, x: 50, y: 50, disposition: FRIENDLY });
+    const targetToken = tokenAt({ actor: { name: "Цель", type: "character", uuid: "Actor.target" }, x: 0, y: 0, disposition: HOSTILE });
+    const others = neighbours.map(n => tokenAt({ actor: { name: n.name, type: "character", uuid: `Actor.${n.name}`,
+      items: n.melee ? [{ type: "weapon", system: { equipped: true, weaponClass: "melee" } }] : [] }, x: 0, y: 0, disposition: n.disposition }));
+    globalThis.canvas.tokens.placeables = [shooterToken, targetToken, ...others];
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([targetToken]) };
+    globalThis.fromUuid = async uuid => (uuid === "Actor.shooter" ? shooterActor : null);
+    return { weapon, shooterActor };
+  }
+
+  // Запирает цель (враг цели с рукопашным оружием) — Friendly-токен: для HOSTILE-цели он враг.
+  const lockerNeighbour = { name: "Запирающий", disposition: FRIENDLY, melee: true };
+
+  it("без Таланта союзник стрелка может получить рикошет (как в книге)", async () => {
+    const { weapon, shooterActor } = scene({ withTalent: false, neighbours: [lockerNeighbour] });
+    captured.dice = [50, 10, 32, 7];
+    await _executeAttackRoll(shooterActor, weapon, "bs", 45, "single", null, {});
+    expect(card()).toContain("data-force-target=\"Actor.Запирающий\"");
+  });
+
+  it("с Талантом союзник стрелка рикошет не получает — промах уходит в никуда", async () => {
+    const { weapon, shooterActor } = scene({ withTalent: true, neighbours: [lockerNeighbour] });
+    captured.dice = [50, 10, 32, 7];
+    await _executeAttackRoll(shooterActor, weapon, "bs", 45, "single", null, {});
+    expect(card()).not.toContain("Запирающий");
+    expect(card()).not.toContain("рикошет");
+  });
+
+  it("с Талантом рикошет достаётся врагу стрелка, а не его союзнику", async () => {
+    const { weapon, shooterActor } = scene({ withTalent: true, neighbours: [
+      lockerNeighbour, { name: "Другой враг", disposition: HOSTILE, melee: false }] });
+    captured.dice = [50, 10, 32, 7];
+    await _executeAttackRoll(shooterActor, weapon, "bs", 45, "single", null, {});
+    expect(card()).toContain("data-force-target=\"Actor.Другой враг\"");
+    expect(card()).not.toContain("data-force-target=\"Actor.Запирающий\"");
+  });
+});

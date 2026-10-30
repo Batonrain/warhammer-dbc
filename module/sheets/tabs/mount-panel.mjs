@@ -22,6 +22,7 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES,
          hasTalent, passengerTestMod} from "../../rules/mount.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
+import { unstablePlatformPenalty } from "../../rules/damage-talents.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
 /** Лимит атак Лезвиями в Ход по рангу Навыка управления (стр. 478). */
@@ -66,6 +67,10 @@ export function mountPanelContext(actor, actors = []) {
   const skid       = skidInfo(speedKey, actor, mount, { passengers, traits });
   const possessed  = isPossessed(mount);
   const init       = pairInitiative(actor, mount, { sync: !!state.sync, possessed });
+  const rangedBase = mountRangedPenalty(speedKey, mount, { rider: actor, actors });
+  // Драгун / Мастер-Драгун (rules/damage-talents.mjs): штраф нестабильной платформы меньше или снят — но только для
+  // пистолетов и винтовок; окно атаки считает по классу оружия, а панель показывает общее число, поэтому рядом — вторая цифра.
+  const lightGun   = unstablePlatformPenalty(actor, { weaponClass: "pistol", base: rangedBase });
 
   return {
     mountAvailable: true,
@@ -94,7 +99,9 @@ export function mountPanelContext(actor, actors = []) {
     // Штраф стрельбы показывается для ОБЫЧНОГО оружия: интегрированное и
     // турель в Коляске считаются от своего оружия, а не от седла, и подставлять
     // их в общую строку значило бы обещать скидку всему арсеналу.
-    mountRanged: mountRangedPenalty(speedKey, mount, { rider: actor, actors }),
+    mountRanged: rangedBase,
+    mountRangedLight: lightGun.note ? lightGun.value : null,
+    mountRangedLightNote: lightGun.note,
     // Штраф самого пассажира на все физические действия (стр. 477); Рысь снимает (0 не показываем).
     mountPassengerMod: state.role === "passenger"
       ? passengerTestMod(actor, { kind: "attack" }, { actors }) : 0,

@@ -12,6 +12,14 @@ function L(num, name, o) {
     curse:    o.curse    || "Нет проклятья.",
     curseChoices: o.curseChoices || null,
     effects:  o.effects  || null,   // авто-эффекты Геносемени (charBonuses/sizeMod/…)
+    // Отличия Геносемени в радиационной защите (rules/radiation-scene.mjs):
+    // melanochromeProtects:false — «Меланохром … не дает защиты от радиации»,
+    // mucranoidProtect:N — «Мукраноид … +N защиты от радиации»,
+    // blackMantle:false — Талант «Чёрная Мантия» этому легиону недоступен. Отдельное поле,
+    // а не effects: effects идёт в числовые бонусы Черты Геносемени (races.mjs) и
+    // у ордена ЗАМЕЩАЕТ эффекты легиона целиком, а ордены наследуют эти строки
+    // («Как у Гвардии Ворона / Саламандр») — см. legionRadiation().
+    rad:      o.rad      || null,
     // Машинная культура: что она делает дружественным/враждебным и что выдаёт.
     // Имена Навыков и Талантов — как в библиотеках (англ. часть достаточно).
     // «группа:Имя» в talents означает всю группу талантов целиком.
@@ -26,6 +34,7 @@ function C(id, name, o) {
     curse:    o.curse    || "Нет проклятья.",
     curseChoices: o.curseChoices || null,
     effects:  o.effects  || null,
+    rad:      o.rad      || null,   // см. L(): свои отличия ордена поверх легиона
     cult:     o.cult     || null };
 }
 
@@ -648,6 +657,9 @@ export const LEGIONS = [
     ] }),
 
   L("XVIII", "Саламандры", {
+    // Мукраноид +1 защиты от радиации — и у орденов: Чёрные Драконы повторяют строку
+    // («ещё +20 против жара, +1 защиты от радиации…»), Штормовые Великаны — «Как у Саламандр».
+    rad: { mucranoidProtect: 1 },
     geneseed: "Бископея — +10 S/Т, −10 A, +30% веса. Каталептический Узел — −2 Инициатива. Оккулоб — тепловидение. Меланохром — угольно-чёрная кожа, нужны добавки в диету. Мукраноид — +20 против жара, +1 от радиации, +4 поглощения E(Fl).",
     culture: "«Кредо Прометея» — группа «Огнемётчик» дружественна, «Скорость» враждебна. Linguistics (Nocturnal), Trade (Armourer, Weaponsmith)+10, Hatred (Eldar). +Качество старта/реквизиции ×3 (броня/оружие); 3 модификации R3−; полный набор систем силовой брони.",
     curse: "«Милосердие» — видя убийство/пытку небойцов, W+30 или обязан вмешаться; самому убить/пытать таких — W−30. Не реагирует на насилие против ксеносов/аблюдей/Астартес/мутантов." ,
@@ -683,7 +695,12 @@ export const LEGIONS = [
     ] }),
 
   L("XIX", "Гвардия Ворона", {
-    geneseed: "Оккулоб — чёрные радужки. Меланохром — бледная кожа, чёрные волосы. Мукраноид и Железа Бетчера не работают.",
+    // «Меланохром … Не дает защиты от радиации» — книга пишет это у самой Гвардии,
+    // Призраков Смерти и Кархародонов; остальные ордены — «Как у Гвардии Ворона».
+    // blackMantle:false — Талант «Чёрная Мантия» (усиленный режим Меланохрома) недоступен: усиливать нечего
+    // (решение владельца 30.10.2026), см. rules/radiation-scene.mjs::blackMantleAvailable.
+    rad: { melanochromeProtects: false, blackMantle: false },
+    geneseed: "Оккулоб — чёрные радужки. Меланохром — бледная кожа, чёрные волосы; защиты от радиации не даёт. Мукраноид и Железа Бетчера не работают.",
     culture: "«Незримые Клинки» — Stealth, Acrobatics и Lightning Reflexes, Leap Up, Reposition, Catfall, Step Aside, Assassin Strike, Savage дружественны; Charm, Inquiry и Iron Jaw, Armour-Monger, Hunker Down, Tireless, True Grit, Frenzy, Fearless враждебны. Stealth (или +10), Rapid Reaction, Double Team.",
     curse: "«Пепельная Слепота» — смерть товарища → W+10; провал: обязан атаковать убийцу столько Ходов, сколько было степеней Провала; столько же дней не может отдавать и получать Команды и получает −30 на социальные. Крит-провал — перманентно. Талант «Теневой Родич».",
     chapters: [
@@ -695,7 +712,7 @@ export const LEGIONS = [
                 hostileSkills: ["Charm"], hostileTalents: ["Scanning Advance", "Hunker Down", "Gatekeeper", "Covering Fire", "Marksman", "Radiant Presence"],
                 grantSkills: ["Deceive", "Linguistics (Battle Cant)"], grantTalents: ["Leap Up", "Target Selection"] } }),
       C("deathspectres", "Призраки Смерти", {
-        geneseed: "Как у Гвардии Ворона. Меланохром — белая просвечивающая кожа, белые волосы. Сус-ан Мембрана — раз/сутки исцеляет 2×СУ Ран (в конце след. Хода; засекается как Биомантия). Прогеноиды — 80% несовместимости вне евгенической программы.",
+        geneseed: "Как у Гвардии Ворона. Меланохром — белая просвечивающая кожа, белые волосы; защиты от радиации не даёт. Сус-ан Мембрана — раз/сутки исцеляет 2×СУ Ран (в конце след. Хода; засекается как Биомантия). Прогеноиды — 80% несовместимости вне евгенической программы.",
         culture: "«За Гранью Смерти» — Intimidate и Combat Sense, Never Die, Pain Is An Illusion, Hero’s Sleep, Mind Killer дружественны; Inquiry и True Grit, Crushing Blow, Frenzy, Deadeye Shot, Sharpshooter, Frontline Commander враждебны. Forbidden Lore (Psykers)+10, Resistance (Psychic Powers), Don’t Trust Your Eyes, Strong Minded.",
         curse: "«Пепельная Слепота» — как у Гвардии Ворона." ,
         // susAnHeal — читает module/apps/sus-an-heal.mjs::isDeathSpectre() вместо
@@ -751,6 +768,17 @@ export function getLegion(id) { return LEGIONS.find(l => l.id === id) || null; }
 export function getChapter(legionId, chapterId) {
   const lg = getLegion(legionId);
   return lg ? (lg.chapters.find(c => c.id === chapterId) || null) : null;
+}
+/**
+ * Отличия Геносемени в радиационной защите: поле `rad` ордена поверх поля
+ * легиона (ордены без своего `rad` наследуют строку легиона — книга пишет им
+ * «Как у …»). Пустой объект — отличий нет.
+ */
+export function legionRadiation(legionId, chapterId) {
+  const lg = getLegion(legionId);
+  if (!lg) return {};
+  const ch = chapterId ? getChapter(legionId, chapterId) : null;
+  return { ...(lg.rad ?? {}), ...(ch?.rad ?? {}) };
 }
 export function buildLegionOptions(selectedId) {
   let html = `<option value="">— не выбран —</option>`;

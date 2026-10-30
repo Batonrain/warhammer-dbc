@@ -54,14 +54,50 @@ function applyPatch(item, patch) {
 }
 
 describe("Пак: у кого Рад и с каким рейтингом", () => {
-  it("12 предметов с рейтингом-формулой, ровно 1d5/1d10/2d10/4d10", () => {
-    expect(RAD_DOCS).toHaveLength(12);
-    expect(new Set(RAD_DOCS.map(radRatingOf))).toEqual(new Set(["1d5", "1d10", "2d10", "4d10"]));
+  // 12 → 15 (rad-x): Гамма Пистолет (Rad 1d10+5, core.json), Спаренный Рад
+  // Очиститель и Ракетная Батарея Карахнос (Rad 1d10, machines.json) получили
+  // само свойство — раньше Рад стоял у них только текстом в special.
+  it("15 предметов с рейтингом-формулой, ровно 1d5/1d10/1d10+5/2d10/4d10", () => {
+    expect(RAD_DOCS).toHaveLength(15);
+    expect(new Set(RAD_DOCS.map(radRatingOf))).toEqual(new Set(["1d5", "1d10", "1d10+5", "2d10", "4d10"]));
   }, PACK_SCAN_TIMEOUT);
 });
 
+// rad-x: Рад стоял только текстом в special — у ствола не было свойства, и
+// облучение не срабатывало вовсе. Значения — по книгам (core.json, стр. 188-198;
+// machines.json — таблицы орудий техники).
+describe("Рад проставлен там, где в книге он есть, а в паке был только текстом", () => {
+  const props = en => {
+    const d = DOCS.find(x => x.name.split("/")[0].trim() === en);
+    expect(d, en).toBeTruthy();
+    return d.system.weaponProps;
+  };
+
+  it("Gamma Pistol: Corrosive (14), Reliable, Rad (1d10+5), Tearing", () => {
+    expect(props("Gamma Pistol")).toEqual([
+      { key: "corrosive", rating: 14 }, { key: "rad", rating: "1d10+5" },
+      { key: "reliable" }, { key: "tearing" }
+    ]);
+  });
+
+  it("Gamma Pistol: поле special больше не обрезано посреди строки", () => {
+    const d = DOCS.find(x => x.name.startsWith("Gamma Pistol"));
+    expect(d.system.special).toBe("Rad: 1d10+5");
+  });
+
+  it.each(["Twin Rad Cleanser", "Karachnos Missile Battery"])("%s: Rad (1d10)", en => {
+    const rad = props(en).filter(p => p.key === "rad");
+    expect(rad).toEqual([{ key: "rad", rating: "1d10" }]);
+  });
+
+  it("свойства Twin Rad Cleanser и Karachnos не потеряны при вставке Рад", () => {
+    expect(props("Twin Rad Cleanser").map(p => p.key)).toEqual(["felling", "rad", "spray", "twinLinked"]);
+    expect(props("Karachnos Missile Battery").map(p => p.key)).toEqual(["arcing", "blast", "flush", "rad", "tearing", "toxic"]);
+  });
+});
+
 describe("Копия, выданная до правки пака", () => {
-  it("каждая из 12 копий (по uuid источника) получает рейтинг своей записи пака", () => {
+  it("каждая из 15 копий (по uuid источника) получает рейтинг своей записи пака", () => {
     for (const doc of RAD_DOCS) {
       const item = staleCopy(doc);
       const patch = radRatingPatch(item, INDEX);

@@ -71,7 +71,7 @@ export function runAndGunLockReason(actor, item, { isMelee, inMelee }) {
 }
 
 /** Бесплатные выстрелы Талантов, не запирающие «Без прицела» (остальные — не Избирательные). */
-export const freeShotLocksAim = kind => !!kind && kind !== "coveringFire" && kind !== "bayonetCharge";
+export const freeShotLocksAim = kind => !!kind && kind !== "coveringFire" && kind !== "bayonetCharge" && kind !== "runningThrow";
 
 /** Бесплатный выстрел считается Атакой Хода (лимит Атак): только обычная атака и Стрельба от Бедра. */
 export const freeShotCountsAsAttack = kind => !kind || kind === "hipShooting";
@@ -80,5 +80,7 @@ export const freeShotCountsAsAttack = kind => !kind || kind === "hipShooting";
 export function freeShotRofModes(kind) {
   if (kind === "coveringFire") return ["semi", "full"];
   if (kind === "runAndGun" || kind === "bayonetCharge") return ["single", "semi", "full"];
+  // Бросок на Бегу (rules/throwing-talents.mjs): одиночный бросок; «full» есть только у метательного с Залповым Броском.
+  if (kind === "runningThrow") return ["single", "full"];
   return ["single"];
 }

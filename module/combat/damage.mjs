@@ -41,9 +41,12 @@ import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { takedownSection } from "./takedown.mjs";
 import { cleaveSection } from "./cleave.mjs";
+import { settleOneWillGoDownOnFelled } from "./one-will-go-down.mjs";
+import { haymakerSection } from "./pugilist-strikes.mjs";
 import { vampireSection } from "./psychic-vampire.mjs";
 import { hamstringSection } from "./hamstring.mjs";
 import { markLastChargeHit } from "./reaper-chain.mjs";
+import { markLastFinalExecutionHit } from "./final-execution.mjs";
 import { markMeleeDamageDealt, markMeleeDamageApplied } from "./tenacity.mjs";
 import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
@@ -873,7 +876,10 @@ export async function applyDamageToActor(actor, damageData) {
     negWoundsBonus = 0, // Пробивной Удар (rules/gunner-talents.mjs): +N к урону, если Раны уйдут в минус
     hamstring = false,   // Подрезать Сухожилья (combat/hamstring.mjs): метка атаки — Избирательная в Ногу, не Быстрая/Молниеносная
     chargeBase = false,  // Жнец (combat/reaper-chain.mjs): удар проведён с Базой «Натиск»
+    finalExecution = false, // Окончательная Казнь (combat/final-execution.mjs): удар с вооружённым Талантом
     cleaveChild = false, // Разрубить (combat/cleave.mjs): это сама дополнительная атака Таланта — новых не порождает
+    oneWillGoDown = false, // Один Из Нас Падёт (combat/one-will-go-down.mjs): цель выведена из строя → 1 Усталости атакующему
+    haymaker = false,    // Тяжёлый Хук (combat/pugilist-strikes.mjs): попавшая цель проходит S+0 vs S+0 или Ничком — кнопка в карточке
     ignoreSubtypeImmunity = false, // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
     sourceMessageId = "" // карточка атаки, с которой пришёл урон — к ней привязан итог пробития (wdbc-x1nz.2.79)
   } = damageData;
@@ -1436,6 +1442,8 @@ export async function applyDamageToActor(actor, damageData) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
     // Жнец (combat/reaper-chain.mjs): был ли это рукопашный Натиск — решит setDeceased, когда смерть констатируют.
     await markLastChargeHit(actor, { melee, chargeBase, attackerUuid, targetTokenUuid: _targetTokenUuid(actor) });
+    // Окончательная Казнь: убийство в этом же Раунде даст убийце Страх (2) — решит setDeceased.
+    await markLastFinalExecutionHit(actor, { melee, finalExecution, attackerUuid });
   }
 
   // Обескровливание (wdbc-x1nz.2.92): без сознания от него — «пока он не
@@ -1769,6 +1777,13 @@ export async function applyDamageToActor(actor, damageData) {
     woundsBefore: currentWounds, woundsAfter: newWounds, targetName: actor.name
   });
 
+  // Один Из Нас Падёт: удар вывел цель из строя (Раны были > 0, стали ≤ 0 — как у Разрубить) — цена Таланта 1 Усталости
+  // засчитывается сама, если атакующего этот клиент может менять; иначе остаётся кнопка на карточке атаки.
+  // Тяжёлый Хук: «если цель получила попадание» — урон применён; встречный тест S+0 vs S+0, иначе Ничком (цель уже лежит — нечего).
+  const haymakerBtn = (haymaker && melee) ? haymakerSection({ attackerUuid, targetActor: actor, sourceMessageId }) : "";
+  const owgdNote = (oneWillGoDown && attackerUuid && (Number(currentWounds) || 0) > 0 && (Number(newWounds) || 0) <= 0)
+    ? await settleOneWillGoDownOnFelled({ attackerUuid, sourceMessageId }) : "";
+
   // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): психическая атака вывела цель из строя —
   // кнопка «поглотить душу» (W+0, лечение 1d5 Ран или вся Усталость, доза «наркотика»).
   const vampireBtn = await vampireSection({
@@ -1817,6 +1832,8 @@ export async function applyDamageToActor(actor, damageData) {
       throughShotBtn,
       takedownBtn,
       cleaveBtn,
+      owgdNote,
+      haymakerBtn,
       vampireBtn,
       hamstringBtn,
       reaperSection,

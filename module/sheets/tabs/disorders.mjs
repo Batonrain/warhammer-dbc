@@ -28,8 +28,10 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { fearIgnore } from "../../rules/fear-ignore.mjs";
 import { hasTalentCapability } from "../../rules/ability-by-key.mjs";
 import { JADED_CAP } from "../../rules/courage-talents.mjs";
+import { INFERNAL_FAMILIARITY_CAP } from "../../rules/defiance-talents.mjs";
 import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../../rules/leadership-talents.mjs";
 import { RAGE_FEAR_CAPABILITY, rageFearRating, isRageFearSource, relationByDisposition } from "../../rules/warp-touched.mjs";
 
@@ -205,7 +207,18 @@ export function openFearDialog(actor) {
         getBaseEff: () => {
           const ratingKey = html.find("#fear-rating").val();
           const type = html.find("#fear-type").val();
-          const r = FEAR_RATINGS[ratingKey] || FEAR_RATINGS[1];
+          // Рейтинг — через fearIgnore, как у самого броска (combat/fear.mjs): Стальное
+          // Сердце снижает его на 1, а «Нельзя игнорировать» это снижение снимает
+          // (task-ab3f). Иначе игрок видел Порог по настоящему рейтингу, а в чате
+          // получал другой.
+          const ignore = fearIgnore({
+            rating: ratingKey,
+            steelHeart: hasRuleFlag(actor, "mutation.heartOfSteel"),
+            // Инфернальное Знакомство — только против демона (галочка «Демон»), как у самого броска.
+            infernal: !!root.querySelector("#fear-prop-demon")?.checked && hasTalentCapability(actor, INFERNAL_FAMILIARITY_CAP),
+            unignorable: !!root.querySelector("#fear-prop-unignorable")?.checked
+          });
+          const r = FEAR_RATINGS[ignore.rating] || FEAR_RATINGS[1];
           const ratingMod = type === "important" ? r.important : r.normal;
           const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(root);
           const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
@@ -218,7 +231,7 @@ export function openFearDialog(actor) {
             + autoTestMods(actor, { kind: "skill", char, morale: true, fearTest: true, targetActor, radiantPresence }).total;
         }
       });
-      root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, #fear-prop-radiant, .rule-mod").forEach(el =>
+      root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, #fear-prop-demon, #fear-prop-radiant, #fear-prop-unignorable, .rule-mod").forEach(el =>
         el.addEventListener("change", updateAutoOutcomeNote));
     }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);

@@ -5,7 +5,7 @@
   "folder": "Puh1trK0GC8FNKqr",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Автоматизировано (pugilist.core.goadingStrike): в окне атаки кулаком галочка «Направляющий Удар» — штраф −20 строкой порога; при Успехе по броску на карточке атаки (до Избегания цели, поэтому «даже если цель Избежала») кнопка свободного Давления против цели (WS vs WS, без ОД, раз на карточку). Отход цели на Успехи метров — как у обычного Давления, токен двигают вручную. Код: rules/pugilist-talents.mjs, combat/pugilist-strikes.mjs, combat/attack.mjs, sheets/attack-dialog.mjs.",
     "benefit": "Совершая атаку кулаком, персонаж может дать ей −20, чтобы при Успехе (даже при Избегании) сразу провести против цели Давление за свободное действие.",
     "tier": 2,
     "requirement": "WS 45",
@@ -38,7 +38,31 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "uAmiI0ixKZLr5dAz",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "Zf68CG6wgyouCJUt",
+              "capabilityKey": "pugilist.core.goadingStrike",
+              "label": "Направляющий Удар: кулак с −20 — при Успехе свободное Давление, даже если цель Избежит",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

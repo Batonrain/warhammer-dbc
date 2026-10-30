@@ -14,18 +14,12 @@ import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
 import { offerReaperAfterKill } from "../../combat/reaper-chain.mjs";
 import { offerTrophyAfterKill } from "../../combat/trophy-kill.mjs";
+import { offerFinalExecutionFearAfterKill } from "../../combat/final-execution.mjs";
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
 import { registerLegacyDreadfulKill } from "../../combat/legacy-weapon-kill-credit.mjs";
 import { registerVengeanceKill } from "../../combat/vengeance.mjs";
 import { registerLegacySlaughterKill } from "../../rules/legacy-weapon.mjs";
 import { takeSerum, rollLifespan } from "../../combat/replicant.mjs";
-
-/** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
-export async function toggleBodyType(actor, current) {
-  const next = current === "female" ? "male" : "female";
-  await actor.setFlag("warhammer-dbc", "bodyType", next);
-  return next;
-}
 
 /** Стадия Голода/Жажды/Сна — целое 0…3, за границы не выходит. */
 export async function setVital(actor, key, value) {
@@ -101,6 +95,8 @@ export async function setDeceased(actor, deceased) {
     await offerReaperAfterKill(actor, weapon);
     // Трофей (Мастер Казней, combat/trophy-kill.mjs): убийца-носитель Очков Трофеев — карточка с кнопкой «Трофей», решает ГМ.
     await offerTrophyAfterKill(actor, weapon);
+    // Окончательная Казнь (combat/final-execution.mjs): убила добычу — убийце Страх (2) на 1 Раунд.
+    await offerFinalExecutionFearAfterKill(actor);
   }
 }
 
@@ -169,11 +165,6 @@ function attachImplantTooltips(figPanel) {
 }
 
 export function activateBodyListeners(root, actor, { openSurgeonWindow = openSurgeon } = {}) {
-  on(root, ".bc-sex-toggle", "click", async ev => {
-    ev.preventDefault();
-    await toggleBodyType(actor, ev.currentTarget.dataset.bodytype || "male");
-  });
-
   on(root, ".bc-surgeon-btn", "click", ev => {
     ev.preventDefault();
     openSurgeonWindow(actor);

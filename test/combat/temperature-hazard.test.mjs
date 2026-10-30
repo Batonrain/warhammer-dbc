@@ -168,4 +168,48 @@ describe("rollTempHazardTest", () => {
       expect(actor.getFlag("warhammer-dbc", "tempHazardTestAt")).toBeUndefined();
     });
   });
+
+  // Burning Body / Пылающее Тело (wdbc-1rno.16): «Персонаж получает иммунитет к
+  // экстремальным температурам и эффектам Горения» — и жара, и холод; тест
+  // Жары/Холода ему не нужен, как и носителю Бриза.
+  describe("Пылающее Тело/Burning Body (wdbc-1rno.16) — иммунитет к экстремальным температурам", () => {
+    const saved = getRuleSources();
+    afterEach(() => {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    });
+    const grantBurning = actor => {
+      clearRuleSources();
+      registerRuleSource("test", a => a === actor
+        ? [{ id: "test.burningBody", when: {}, effects: [{ kind: "grantFlag", target: "mutation.burningBody" }] }]
+        : []);
+    };
+
+    it.each([["жара", 65], ["холод", -40]])("носитель: %s — тест не катается, усталости нет, таймер не заводится", async (_n, temp) => {
+      globalThis.game.scenes.current = { getFlag: () => ({ temp }) };
+      const actor = makeActor({ t: 10 });
+      grantBurning(actor);
+      const infos = [], orig = globalThis.ui.notifications.info;
+      globalThis.ui.notifications.info = m => infos.push(String(m));
+
+      try { await rollTempHazardTest(actor); } finally { globalThis.ui.notifications.info = orig; }
+
+      expect(captured.chat).toHaveLength(0);
+      expect(actor.system.fatigue.value).toBe(0);
+      expect(actor.getFlag("warhammer-dbc", "tempHazardTestAt")).toBeUndefined();
+      expect(infos.join(" ")).toMatch(/Пылающее Тело/);
+    });
+
+    it("у остальных тот же тест катается как обычно (иммунитет не течёт на других)", async () => {
+      globalThis.game.scenes.current = { getFlag: () => ({ temp: 65 }) };
+      const owner = makeActor();
+      const other = makeActor({ t: 90 });
+      grantBurning(owner);
+      captured.nextRoll = 50;
+
+      await rollTempHazardTest(other);
+
+      expect(captured.chat).toHaveLength(1);
+    });
+  });
 });

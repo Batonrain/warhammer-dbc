@@ -246,6 +246,10 @@ export function effectAppliesTo(target, ctx) {
   // или выжигания души» — психическая угроза, но не Непрямая сила
   // (ctx.psychicIndirect ставит hooks.mjs для делегированного теста).
   if (scope === "psychicdirect") return ctx.psychicThreat === true && ctx.psychicIndirect !== true;
+  // Засекание/распознание психосилы (Ведьмоискатель): ctx.psychicDetect ставит
+  // окно броска Awareness / Forbidden Lore (Psykers) по галочке игрока —
+  // система не знает, зачем бросают навык (sheets/actor-sheet.mjs).
+  if (scope === "psychicdetect") return ctx.psychicDetect === true;
   // Сопротивление допросу (Ортопрокси): встречный тест Воли жертвы в диалоге
   // пытки/допроса (apps/torture.mjs ставит ctx.interrogation).
   if (scope === "interrogation") return ctx.interrogation === true;

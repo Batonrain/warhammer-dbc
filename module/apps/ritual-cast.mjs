@@ -37,7 +37,9 @@ import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasDominator, isOwnArmiger } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
-import { hasEruditeInfernal } from "../rules/occultist-talents.mjs";
+import { hasEruditeInfernal, hasFallbacks, hasInstructor } from "../rules/occultist-talents.mjs";
+import { evaluateAssistants, tallyAssistants, reserveVictims, maxReserveAssistants }
+  from "../rules/ritual-assistants.mjs";
 import { DARK_SEER_FLAG, darkSeerAdvantage } from "../rules/dark-seer.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -93,7 +95,14 @@ export function newRitualState(actor, item, buildSkills = buildRitualSkills) {
   return {
     name: item?.name || "", type: "summon",
     skillValue: "", testChar: "", gmMod: 0,
+    // assistants/assistSacrificed — БЕЗЫМЯННЫЕ ассистенты числом (консоль «Завеса
+    // и Мистика», толпа рабов без листов). Именованные — assistantList
+    // (rules/ritual-assistants.mjs): {uuid, name, role, sacrificed, actor}; на
+    // Порог оба источника ложатся вместе. instructorPrepared — «8 часов
+    // подготовки» Таланта Инструктор, не переносится между бросками (книга:
+    // «требуется каждый раз»).
     assistants: 0, assistSacrificed: 0, assistBonus: 10,
+    assistantList: [], instructorPrepared: false,
     summon: {}, curseFam: "close", curseSymp: {},
     numerology: {}, numMod: 0, psyker: false, psykerBonus: 0,
     aversionPerFail: 5, extraMods: [], extraSel: {},
@@ -128,7 +137,17 @@ export function ritualThreshold(R, actor, item) {
   // Бонус даёт не число присутствующих ассистентов, а число ПРИНЕСЁННЫХ В
   // ЖЕРТВУ (стр. 393-425: «+10 за каждого ассистента, которого в конце
   // ритуала принесли в жертву») — не больше, чем их вообще участвовало.
-  const sacrificed = Math.min(Math.max(0, R.assistSacrificed || 0), R.assistants || 0);
+  // Именованные ассистенты оцениваются по assistReq предмета: негодный исключён
+  // из броска целиком (решение владельца 19.10.2026), запасной бонуса не даёт
+  // (книга, Fallbacks). Отметка подготовки действует только у носителя Таланта.
+  const fallbacks = hasFallbacks(actor);
+  const instructor = hasInstructor(actor);
+  const assistantRows = evaluateAssistants(R.assistantList,
+    item ? getItemRequirements(item, "assistReq") : [],
+    { check: checkRequirements, instructorPrepared: instructor && !!R.instructorPrepared });
+  const assistantTally = tallyAssistants(assistantRows);
+  const sacrificed = Math.min(Math.max(0, R.assistSacrificed || 0), R.assistants || 0)
+    + assistantTally.sacrificed;
   const assistTotal = sacrificed * (R.assistBonus || 0);
   // Метка/Покровительство бога демона считаются по листу, если бог назван.
   // Авто-строка только ДОБАВЛЯЕТ: Метку из источника, которого система пока
@@ -198,6 +217,9 @@ export function ritualThreshold(R, actor, item) {
   return {
     isCurse, isSummonLike, testChar,
     rows, threshold, thresholdSigned: sgn(threshold), prMax,
+    // Ассистенты-акторы для диалога и для перехвата провала (Запасные Планы).
+    assistantRows, assistantTally, fallbacks, instructor,
+    reserveMax: fallbacks ? maxReserveAssistants(actor) : 0,
     // Какие строки Призыва реально сработали и какие из них поставила система
     // сама — диалогу, чтобы подсветить пилюли, а не повторять у себя правило
     // «покровительство, но не метку» вторым экземпляром.
@@ -228,6 +250,35 @@ export async function confirmVeilTooThick(gate, ritualName) {
     content: `<p>${esc(ritualVeilMessage(gate, ritualName))}</p><p>Продолжить?</p>`,
     rejectClose: false
   });
+}
+
+/**
+ * Запасные Планы на провале ритуала (дефолтный fallbackChoiceFn): «главный
+ * ритуалист может убить одного из запасных ассистентов и проигнорировать срыв
+ * или провести тест на ритуал еще раз уже в следующий Ход (это не считается как
+ * переброс)». Спрашивается ДО розыгрыша цены ошибки: Отвращение Варпа двигает
+ * Завесу сразу, откатить это после публикации карточки нельзя.
+ * @returns {Promise<{mode:"ignore"|"retry", victimUuid:string}|null>} null — не убивать.
+ */
+export async function chooseFallbackSacrifice({ actor, victims, ritualName }) {
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title: "Запасные Планы" },
+    content: `<p>Ритуал «${esc(ritualName)}» провален. <b>${esc(actor.name)}</b> может убить одного запасного
+        ассистента, чтобы проигнорировать срыв <i>или</i> провести тест ещё раз в следующий Ход (не переброс).
+        В любом случае цена ошибки (Отвращение Варпа, Феномен) не применяется.</p>
+      <div class="form-group"><label>Кого</label>
+        <select name="victim">${victims.map(v => `<option value="${esc(v.uuid)}">${esc(v.name)}</option>`).join("")}</select>
+      </div>`,
+    rejectClose: false,
+    buttons: [
+      { action: "ignore", label: "Проигнорировать срыв", default: true,
+        callback: (ev, button) => ({ mode: "ignore", victimUuid: button.form.elements.victim.value }) },
+      { action: "retry", label: "Повторить в следующий Ход",
+        callback: (ev, button) => ({ mode: "retry", victimUuid: button.form.elements.victim.value }) },
+      { action: "skip", label: "Не убивать", callback: () => null }
+    ]
+  });
+  return result && typeof result === "object" ? result : null;
 }
 
 /**
@@ -312,7 +363,8 @@ export async function castRitual(R, actor, {
   item = null, confirmUnmet = confirmUnmetRequirements, veilShiftFn = defaultVeilShiftFn,
   spawnDemonFn = defaultSpawnDemonFn, bindWeaponFn = defaultBindArmigerWeaponFn,
   bindMountFn = defaultBindDemonMountFn, isOwnArmigerFn = isOwnArmiger,
-  veilGateFn = ritualVeilGate, confirmVeil = confirmVeilTooThick
+  veilGateFn = ritualVeilGate, confirmVeil = confirmVeilTooThick,
+  fallbackChoiceFn = chooseFallbackSacrifice
 } = {}) {
   if (!actor) { ui.notifications?.warn("Ритуал: не выбран Ритуалист."); return null; }
   const veilGate = veilGateFn(item, actor);
@@ -371,7 +423,28 @@ export async function castRitual(R, actor, {
   // её видно не было.
   const breakdown = [...d.rows.map(r => `${r.label}: ${r.signed}`), ...ruleMods.parts].join(" · ");
 
-  const failHtml = success ? "" : await ritualFailure(R, Math.abs(deg), d.prMax, allRolls, veilShiftFn);
+  // Запасные Планы: жертва запасного гасит цену ошибки в ОБОИХ исходах — и «проигнорировать срыв»,
+  // и «повторить в следующий Ход» (решение владельца 30.10.2026, Sahara fallbacks-instructor; прежнее
+  // допущение «повтор цену не снимает» отменено): повтор — вторая попытка, а не расплата за первую.
+  // Срыв от внешних факторов (раздел «Срыв Ритуала») в системе не моделируется —
+  // перехватывается только провал на броске закрепления.
+  let fallbackHtml = "";
+  let ignoreFailure = false;
+  if (!success && d.fallbacks) {
+    const victims = reserveVictims(d.assistantRows);
+    if (victims.length) {
+      const choice = await fallbackChoiceFn({ actor, victims, ritualName: R.name || item?.name || typeLabel });
+      const victim = victims.find(v => v.uuid === choice?.victimUuid);
+      if (victim && (choice.mode === "ignore" || choice.mode === "retry")) {
+        ignoreFailure = true;
+        fallbackHtml = `<div class="roll-threshold" style="font-size:0.85em;"><b>Запасные Планы:</b> ${esc(victim.name)} принесён в жертву — ${choice.mode === "ignore"
+          ? "срыв проигнорирован, цена ошибки не применяется."
+          : "ритуал можно провести ещё раз в следующий Ход (не считается перебросом); цена ошибки не применяется."}</div>`;
+      }
+    }
+  }
+  const failHtml = success ? ""
+    : fallbackHtml + (ignoreFailure ? "" : await ritualFailure(R, Math.abs(deg), d.prMax, allRolls, veilShiftFn));
   const condHtml = success ? conditionPillsHtml(item) : "";
   // Токен демона — только движковый тип "summon" (действительно материализует
   // НОВОГО демона; Владычество/Связывание/Врата действуют на уже имеющегося

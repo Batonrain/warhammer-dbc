@@ -18,7 +18,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import {
   gloriousPurposeBonus, infernalMasterCommandBonus, ritePuzzlerLearnMod,
-  occultistTalentRules
+  occultistTalentRules, hasFallbacks, hasInstructor
 } from "../../module/rules/occultist-talents.mjs";
 
 const talentOf = (name) => ({ type: "talent", name, system: {} });
@@ -123,6 +123,31 @@ describe("ritePuzzlerLearnMod: I−20, или I+0 если присутство�
 
   it("+0 (0), если присутствовал", () => {
     expect(ritePuzzlerLearnMod({ items: [talentOf("Разгадыватель Ритуалов")] }, true)).toBe(0);
+  });
+});
+
+// Fallbacks / Instructor (Sahara fallbacks-instructor): включатели ассистентов
+// ритуала — список ассистентов и бейджи годности живут в
+// rules/ritual-assistants.mjs, сюда только «есть ли Талант».
+describe("hasFallbacks / hasInstructor: опознаются по имени Таланта", () => {
+  it("по английской и русской половине имени", () => {
+    expect(hasFallbacks({ items: [talentOf("Fallbacks / Запасные Планы")] })).toBe(true);
+    expect(hasFallbacks({ items: [talentOf("Запасные Планы")] })).toBe(true);
+    expect(hasInstructor({ items: [talentOf("Instructor / Инструктор")] })).toBe(true);
+    expect(hasInstructor({ items: [talentOf("Инструктор")] })).toBe(true);
+  });
+
+  it("один Талант не включает другой, пустой актор — нет", () => {
+    expect(hasFallbacks({ items: [talentOf("Instructor / Инструктор")] })).toBe(false);
+    expect(hasInstructor({ items: [talentOf("Fallbacks / Запасные Планы")] })).toBe(false);
+    expect(hasFallbacks({ items: [] })).toBe(false);
+    expect(hasInstructor(null)).toBe(false);
+  });
+
+  // Trade (Instructor) — Навык, не Талант: предмет другого типа с тем же
+  // словом в имени Талантом Инструктор не считается.
+  it("предмет не-Талант с таким именем не считается", () => {
+    expect(hasInstructor({ items: [{ type: "gear", name: "Instructor", system: {} }] })).toBe(false);
   });
 });
 

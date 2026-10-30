@@ -157,6 +157,7 @@ import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
 import { migrateStringListRestore } from "./module/migrations/string-list-restore.mjs";
 import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
 import { migrateRadRating } from "./module/migrations/rad-rating.mjs";
+import { migrateDaemonicRadiation } from "./module/migrations/daemonic-radiation.mjs";
 import { migrateAdvancePricing } from "./module/migrations/advance-pricing-baseline.mjs";
 import { migrateRetinalDisplayMark } from "./module/migrations/retinal-display-mark.mjs";
 import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-fields.mjs";
@@ -498,6 +499,7 @@ Hooks.once("init", () => {
     "implantAvailabilityTokensVersion",
     "contentSyncBaselineTokensVersion",
     "radRatingTokensVersion",
+    "daemonicRadiationTokensVersion",
     "retinalDisplayMarkTokensVersion",
     "drugAddictionFieldsTokensVersion",
     "diseaseActiveTokensVersion",
@@ -659,6 +661,12 @@ Hooks.once("init", () => {
   // Версия простановки рейтинга Рад (X) радиевому оружию, выданному до
   // правки пака 02.10.2026 (одноразовая, rad-x-956a)
   game.settings.register("warhammer-dbc", "radRatingVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия дописывания иммунитетов к радиации, ядам и болезням копиям Черты
+  // Daemonic на акторах (одноразовая, daemonic-46e0; сейчас 2 — яды и болезни)
+  game.settings.register("warhammer-dbc", "daemonicRadiationVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1213,7 +1221,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1457,6 +1465,24 @@ Hooks.once("ready", async () => {
   await runMigrationGate({
     key: "radRatingVersion", tokensKey: "radRatingTokensVersion", label: "Рейтинг Рад (X)",
     full: () => migrateRadRating(), tokensOnly: () => migrateRadRating({ tokensOnly: true })
+  });
+});
+
+// ── Одноразовое дописывание: иммунитеты к радиации, ядам и болезням у копий
+// Черты Daemonic на акторах (демоны Бестиария и снимки Черты до правки пака) —
+// книга: «иммунен к ядам, болезням и радиации» (daemonic-46e0,
+// daemonic-force-sanctified-warp-weapon) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDaemonicRadiation()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна (дописывает группу только при отсутствии иммунитета), проход
+  // по несвязанным токенам повторять безопасно.
+  await runMigrationGate({
+    // Версия 2: к радиации (v1) добавлены яды и болезни (daemonic-force-sanctified-warp-weapon
+    // п.1–2) — миры, где v1 уже отработала, догоняют недостающие группы.
+    key: "daemonicRadiationVersion", tokensKey: "daemonicRadiationTokensVersion", version: 2, tokensVersion: 2,
+    label: "Иммунитеты Daemonic к радиации, ядам и болезням",
+    full: () => migrateDaemonicRadiation(), tokensOnly: () => migrateDaemonicRadiation({ tokensOnly: true })
   });
 });
 

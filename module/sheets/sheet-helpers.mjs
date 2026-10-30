@@ -735,6 +735,7 @@ function buildGetDataUncached(actor) {
       groupLabel:  WEAPON_MOD_GROUPS[cat]?.[i.system.modGroup] ?? "",
       weight:      i.system.weight ?? 0,
       quality:     i.system.quality || "common",
+      stored:      !!i.system.stored,
       benefit:     i.system.description || "",
       installedOn: i.system.installedOn || ""
     };
@@ -748,6 +749,7 @@ function buildGetDataUncached(actor) {
       powerSystem: cat === "powerSystem",
       activatable: !!i.system.activatable,
       active:      !!i.system.active,
+      stored:      !!i.system.stored,
       benefit:     i.system.description || "",
       installedOn: i.system.installedOn || ""
     };

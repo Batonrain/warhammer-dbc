@@ -146,7 +146,13 @@ const ALLOWED = {
   // попадает в withReader вовсе — строка-исключение ему не нужна.
   "occultist.core.eruditeInfernal": "включается по имени Таланта (Erudite-Infernal) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
   "occultist.core.infernalMaster": "включается по имени Таланта (Infernal Master) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
-  "occultist.core.gloriousPurpose": "включается по имени Таланта (Glorious Purpose) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт"
+  "occultist.core.gloriousPurpose": "включается по имени Таланта (Glorious Purpose) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
+  // Fallbacks / Instructor (Sahara fallbacks-instructor, 30.10.2026): тот же
+  // приём — hasFallbacks/hasInstructor читают имя Таланта через
+  // hasOccultistTalent и массивы имён; включают список ассистентов-акторов
+  // в диалоге ритуала (rules/ritual-assistants.mjs).
+  "occultist.core.fallbacks": "включается по имени Таланта (Fallbacks) через модульный массив имён в occultist-talents.mjs::hasFallbacks — анализатор такую форму не распознаёт",
+  "occultist.core.instructor": "включается по имени Таланта (Instructor) через модульный массив имён в occultist-talents.mjs::hasInstructor — анализатор такую форму не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {
