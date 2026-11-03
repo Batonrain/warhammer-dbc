@@ -77,6 +77,7 @@ export const TURN_SCOPED_FLAGS = {
   sprintFatigueDue: "Спринт (Талант Скорости): второй Ход подряд дальнего Бега — +1 Усталости в конце Хода (combat/movement-actions.mjs::applySprintTurnEnd); здесь страховка на случай пропущенного конца Хода",
   hunkerDown: "Залегание (Талант Стойкости): AP укрытия ×2, выглядывающим частям — обычное AP, до начала следующего Хода (combat/hunker-down.mjs)",
   legacyHatredShield: "Щит Ненависти, Оружие Наследия (wdbc-1rno.35, vigilant 9-9, стр. 427): временный AP-щит руки(рук) и торса — держится до начала следующего своего Хода, не тратится отдельным попаданием",
+  dirgeOfDespair: "Песнь Отчаянья (Талант Шумового Десантника, Sahara 1-54b9): звуковое оружие получает Concussive (3) и урон 0 «до начала следующего Хода» (combat/noise-marine.mjs, combat/attack.mjs)",
   coveringFireOffer: "Прикрывающий Огонь (Талант Стрелка, 3-5fbf): враги из контакта на момент Выхода из Боя — кому можно дать очередь (combat/covering-fire.mjs)",
   coveringFireMarks: "Прикрывающий Огонь (Талант Стрелка, 3-5fbf): метки Подавления +10/+0 для Натиска бывших противников — враги ходят до следующего Хода стрелка (combat/covering-fire.mjs)",
   hipShootingPending: "Стрельба от Бедра (Талант Стрелка, 3-5fbf): Полное Движение объявлено, одиночный выстрел в этом Ходу ещё не сделан (combat/movement-actions.mjs::declareFullMove, rules/gunner-talents.mjs::HIP_SHOOTING_FLAG)",

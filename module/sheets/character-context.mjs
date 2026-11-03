@@ -87,6 +87,8 @@ import { possessionContext }                     from "./tabs/possession.mjs";
 import { hasSkillfulTorture }                    from "../apps/skillful-torture.mjs";
 import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
+import { hasDirgeOfDespair, dirgeActive, hasWallOfDiscord, hasSingForMe } from "../combat/noise-marine.mjs";
+import { hasDistilledTorment }                  from "../combat/distilled-torment.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
@@ -543,6 +545,12 @@ export function characterContext(actor) {
   context.hasAvatarOfSlaughter = hasAvatarOfSlaughter(actor);
   // Кнопка «Грозный Вопль» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
   context.hasDreadWail = hasDreadWail(actor);
+  // Шумовой Десантник (Sahara 1-54b9): кнопки вкладки БОЙ — только владельцам Талантов.
+  context.hasDirgeOfDespair = hasDirgeOfDespair(actor);
+  context.dirgeActive = dirgeActive(actor);
+  context.hasWallOfDiscord = hasWallOfDiscord(actor);
+  context.hasSingForMe = hasSingForMe(actor);
+  context.hasDistilledTorment = hasDistilledTorment(actor);
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
   // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.

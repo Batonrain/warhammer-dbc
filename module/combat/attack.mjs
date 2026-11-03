@@ -73,6 +73,7 @@ import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { ironGardenRating, ironGardenQuality }        from "../rules/iron-garden.mjs";
 import { hasHussar }                                  from "./sabre-second-attack.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
+import { dirgeAffects, DIRGE_CONCUSSIVE }              from "./noise-marine.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
 import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
 import { adroitDegreeBonus } from "../rules/adroit.mjs";
@@ -453,6 +454,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const own = _mergedEntries.find(x => x.key === "concussive");
     if (own) own.rating = Math.max(Number(own.rating) || 0, hammerBlow.concussive);
     else _mergedEntries.push({ key: "concussive", rating: hammerBlow.concussive });
+  }
+  // Песнь Отчаянья (Талант Шумового Десантника, combat/noise-marine.mjs): до начала следующего Хода звуковое оружие
+  // получает Concussive (3), а урон падает до нуля.
+  const dirgeOn = dirgeAffects(actor, item);
+  if (dirgeOn) {
+    const own = _mergedEntries.find(x => x.key === "concussive");
+    if (own) own.rating = Math.max(Number(own.rating) || 0, DIRGE_CONCUSSIVE);
+    else _mergedEntries.push({ key: "concussive", rating: DIRGE_CONCUSSIVE });
   }
   // Обратный Удар (MELEE_MANEUVERS.reverseStrike): вторая атака профилем посоха получает Concussive(0),
   // если у оружия нет его с более высоким рейтингом.
@@ -1568,6 +1577,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     haymakerOn ? `🥊 Тяжёлый Хук: отказ от второй руки в этот Ход — +${haymakerBonus} Dmg (½T.b, уже в сумме). Если цель получит попадание — встречный тест S+0 vs S+0 (кнопка в карточке урона), иначе Ничком.` : "",
     (goadingOn && hit) ? "🥊 Направляющий Удар: штраф −20 уже в пороге; Успех — кнопка свободного Давления ниже (даже если цель Избежит удара)." : "",
     owgdOn ? `💢 Один Из Нас Падёт: Полная Атака по Ненавистной цели — Dmg ×2 до Поглощения (уже в сумме).${owgdHand ? ` Носитель получает ${owgdHand.roll.total} непоглощаемого R Dmg в руку (Раны ${owgdHand.loss.currentWounds} → ${owgdHand.loss.newWounds}).` : " Урон в руку за эту атаку уже списан."} Усталость — по итогу удара: кнопка «Подвести итог» на карточке (или карточка урона, если цель выведена из строя).` : "",
+    dirgeOn ? "🎼 Песнь Отчаянья: урон звукового оружия уменьшен до 0, свойство Оглушающее (3) до начала следующего Хода." : "",
     sabotageOn ? `🔧 Саботаж: удар по оружию цели «${sabotageWeapon.name}» — урона существу нет.` : ""
   ].filter(Boolean).join("<br>");
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
@@ -1584,6 +1594,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // же актора — psychic.mjs/tech.mjs/counter-attack.mjs/horde-sheet.mjs
   // (тоже зовут applyDamageDiceMods, но отдельными формулами вне attack.mjs).
   if (actor.getFlag?.("warhammer-dbc", SUNDERING_COPY_FLAG)) dmgFormula = sunderingDamageFormula(dmgFormula);
+  if (dirgeOn) dmgFormula = "0";
 
   // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
   // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
@@ -1706,6 +1717,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         msPenalty = 3 * i;
         total = Math.max(0, total - msPenalty);
       }
+      if (dirgeOn) total = 0;
       // Беспомощная цель: весь урон попадания ×2 ДО Поглощения (которое
       // применяется позже, отдельно, когда урон принимают по кнопке карточки).
       // Ку де Гра (rules/rogue-talents.mjs::coupDeGraceActive): «как если бы цель была Беспомощной» — тот же ×2.

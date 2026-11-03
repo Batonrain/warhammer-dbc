@@ -36,6 +36,7 @@ import { hasPugilistTalent, rollingWithPunchesBonus } from "../rules/pugilist-ta
 import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN_FLAG } from "../rules/resilience-talents.mjs";
 import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
+import { painIsPleasureOnDamage } from "./noise-marine.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
 import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
@@ -1418,6 +1419,10 @@ export async function applyDamageToActor(actor, damageData) {
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
 
+  // Боль Это Наслаждение (Талант Шумового Десантника, combat/noise-marine.mjs): непоглощённый урон снимает
+  // 1 Усталости и даёт +10 на все тесты до конца следующего Хода (макс. +30).
+  const painNote = await painIsPleasureOnDamage(actor, netDamage);
+
   // Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): «Каждый раз,
   // когда персонаж получает E(El), он восстанавливает 1d10 ран» — решение
   // владельца 26.09.2026: после попадания E(El), нанёсшего урон.
@@ -1622,6 +1627,7 @@ export async function applyDamageToActor(actor, damageData) {
 
   if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);
   if (electricRegenNote) propEffectNotes.push(electricRegenNote);
+  if (painNote) propEffectNotes.push(painNote);
   // Странная Неуязвимость (wdbc-1rno.24) — здесь, а не в propNotes: те видны
   // только у обычного поглощения, а срезанный урон от Варп-Оружия тоже
   // должен объясняться в карточке.

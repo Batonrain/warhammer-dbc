@@ -14,6 +14,7 @@ import { isRuleUsageUsed, markRuleUsageUsed,
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { hardenedSoulDice, hasResilienceTalent, snakeEaterHalve } from "./rules/resilience-talents.mjs";
 import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/hellish-resilience.mjs";
+import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marine.mjs";
 import { offerStatusResist } from "./combat/status-resist.mjs";
 import { useFinalPush, useNeverDie, usePainIllusion, finalPushTurnEnd, finalPushCombatEnd,
          applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
@@ -4677,6 +4678,8 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Адская Живучесть (Талант Стойкости): бонус «до конца Хода» не переживает бой.
     await clearHellishResilience(combat);
+    // Боль Это Наслаждение: бонус «до конца Хода» не переживает бой.
+    await clearPainIsPleasure(combat);
     // Охотник на Танки: опознанные модели техники — «до конца боя».
     await clearTankHunterMemory(combat);
     // Последний Рывок: отложенное, не дожившее до конца Хода, не пропадает молча.
@@ -5024,6 +5027,8 @@ function _attachFateContextMenu(message, html) {
         // Адская Живучесть (Талант Стойкости): бонус «до конца своего следующего
         // Хода» — счётчик концов Хода носителя убывает, на нуле эффект снимается.
         await hellishResilienceTurnEnd(prevActor);
+        // Боль Это Наслаждение (Талант Шумового Десантника): бонус «до конца своего следующего Хода».
+        await painIsPleasureTurnEnd(prevActor);
         // Последний Рывок (Талант Стойкости): отложенные Критические Эффекты — напоминанием
         // в конце Хода носителя.
         await finalPushTurnEnd(prevActor);

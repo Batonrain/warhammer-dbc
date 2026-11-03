@@ -5392,23 +5392,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Шумовой_Десантник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.shumovoyDesantnik.dirgeOfDespair": {
     label: "Оружие издаёт протяжный низкий вопль грядущих пыток. До начала следующего Хода может дать своему звуковому оружию свойство Concussive(3),",
-    source: "Dirge of Despair / Песнь Отчаянья", reader: ""
+    source: "Dirge of Despair / Песнь Отчаянья", reader: "module/combat/noise-marine.mjs::toggleDirgeOfDespair/dirgeAffects, module/combat/attack.mjs (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.distilledTorment": {
     label: "Убив звуковым оружием обладающее душой существо, может потратить Реакцию, чтобы обратить его плоть в сверкающую пыль.",
-    source: "Distilled Torment / Дистиллированная Мука", reader: ""
+    source: "Distilled Torment / Дистиллированная Мука", reader: "module/combat/distilled-torment.mjs (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.nectarOfTheGods": {
     label: "Развил ультимативную зависимость и сопротивляемость к стимуляторам. Иммунен к пост-эффектам наркотиков.",
-    source: "Nectar Of The Gods / Нектар Богов", reader: ""
+    source: "Nectar Of The Gods / Нектар Богов", reader: "module/combat/noise-marine.mjs::nectarOfTheGodsOnDose, module/sheets/tabs/drugs.mjs (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.painIsPleasure": {
     label: "Прикосновение лезвия или пули вызывает всплеск экстаза. Получив не поглощённый урон, снимает 1 Усталости и получает +10 на все тесты до конц…",
-    source: "Pain Is Pleasure / Боль Это Наслаждение", reader: ""
+    source: "Pain Is Pleasure / Боль Это Наслаждение", reader: "module/combat/noise-marine.mjs::painIsPleasureOnDamage, module/rules/noise-marine.mjs (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.singForMe": {
     label: "Крики боли — музыка для персонажа. Может потратить 15 минут на пытку беспомощной или сдавшейся жертвы (Interrogate+0 vs W+0).",
-    source: "Sing For Me! / Спой Мне!", reader: ""
+    source: "Sing For Me! / Спой Мне!", reader: "module/combat/noise-marine.mjs::resolveSingForMe (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.sweetCacophony": {
     label: "Звуковые усилители на броне пропитываются его душевной порчей. Может использовать Грозный Вопль до Cor.b раз за бой, а не только один раз.",
@@ -5416,7 +5416,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.wallOfDiscord": {
     label: "За полудействие может потратить Очко Бесчестия, чтобы выпустить стену хаотического звука в радиусе Cor.b×2 м.",
-    source: "Wall of Discord / Стена Диссонанса", reader: ""
+    source: "Wall of Discord / Стена Диссонанса", reader: "module/combat/noise-marine.mjs::applyWallOfDiscord (Sahara 1-54b9)"
   },
   // ── Элитные_архетипы\Электрожрец — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.elektrozhrets.conduitMarch": {
@@ -7013,7 +7013,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.shumovoyDesantnik.intoxicatingUproar": {
     label: "Шумовой Десантник слышит каждый щелчок и выстрел на поле боя, опьянён шумами смерти. Получает +20 на все тесты слуха и не может быть застигн…",
-    source: "Intoxicating Uproar / Пьянящий Рёв", reader: ""
+    source: "Intoxicating Uproar / Пьянящий Рёв", reader: "module/rules/noise-marine.mjs::noiseMarineRules + Механика Черты (Sahara 1-54b9)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Электрожрец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": {
@@ -8217,6 +8217,36 @@ export const CAPABILITIES = {
     label: "Покоритель: своя механика подчинения",
     source: "Dominator / Покоритель (packs-src/talents/Оккультист)",
     reader: "module/rules/dominator.mjs hasDominator()"
+  },
+  "ability.dirgeOfDespair": {
+    label: "Песнь Отчаянья: до начала следующего Хода звуковое оружие получает Оглушающее (3) и урон 0",
+    source: "Dirge of Despair / Песнь Отчаянья (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/noise-marine.mjs hasDirgeOfDespair()"
+  },
+  "ability.distilledTorment": {
+    label: "Дистиллированная Мука: убитого звуковым оружием за Реакцию обратить в пыль и сделать дозу наркотика",
+    source: "Distilled Torment / Дистиллированная Мука (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/distilled-torment.mjs hasDistilledTorment()"
+  },
+  "ability.nectarOfTheGods": {
+    label: "Нектар Богов: иммунитет к пост-эффектам наркотиков; зависим только от последнего принятого",
+    source: "Nectar Of The Gods / Нектар Богов (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/noise-marine.mjs hasNectarOfTheGods()"
+  },
+  "ability.painIsPleasure": {
+    label: "Боль Это Наслаждение: непоглощённый урон снимает 1 Усталости и даёт +10 на все тесты до конца следующего Хода (макс. +30)",
+    source: "Pain Is Pleasure / Боль Это Наслаждение (packs-src/talents/Элитные_архетипы)",
+    reader: "module/rules/noise-marine.mjs hasPainIsPleasure(), module/combat/noise-marine.mjs::painIsPleasureOnDamage"
+  },
+  "ability.singForMe": {
+    label: "Спой Мне!: 15 минут пытки беспомощной жертвы, Interrogate+0 против W+0; награда — Очко Бесчестия и снятие Усталости",
+    source: "Sing For Me! / Спой Мне! (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/noise-marine.mjs hasSingForMe(), module/combat/gm-relay.mjs (singForMeDamage/singForMeBoon)"
+  },
+  "ability.wallOfDiscord": {
+    label: "Стена Диссонанса: за полудействие и Очко Бесчестия сбить с ног и отбросить врагов в радиусе Cor.b×2 м",
+    source: "Wall of Discord / Стена Диссонанса (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/noise-marine.mjs hasWallOfDiscord(), module/combat/gm-relay.mjs (wallPush)"
   },
   "ability.dreadWail": {
     label: "Грозный Вопль: раз за бой за Очко Бесчестия усилить звуковое оружие брони",

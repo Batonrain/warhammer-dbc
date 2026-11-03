@@ -30,6 +30,10 @@
 //      ГМ сам пересчитывает по данным цели (свободное место, потолок ½I.b за Раунд,
 //      Апокрифа цели); нужен соответствующий Талант у инициатора, а для ⚙ — цель,
 //      подключённая к Ноосфере. Расстояние и согласие цели ведёт стол.
+//    • singForMeDamage / singForMeBoon / wallPush — Шумовой Десантник (Sahara 1-54b9): «Спой Мне!»
+//      (2d10 непоглощаемого R урона жертве; +1 Очко Бесчестия и снятие Усталости палачу и наблюдателям —
+//      поклонникам Слаанеш) и Стена Диссонанса (отброс токена цели; дальность ограничена Cor.b×3 м
+//      инициатора, сверяет ГМ). Нужен соответствующий Талант у инициатора.
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -37,6 +41,7 @@
 //  оставляет игрока в Захвате в одиночку.
 // ════════════════════════════════════════════════════════════════════════
 
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasInspireWrath, inspiredHatredData, HATRED_PACK_ID } from "../rules/inspire-wrath.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
@@ -142,6 +147,29 @@ export function checkTargetWrite(op, ctx = {}) {
   if (op.kind === "dreadWailFear") {
     if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "dreadWailFear: лишние поля" };
     if (!hasAbility(ctx.initiator, "ability.dreadWail", "Dread Wail", "trait")) return { ok: false, reason: "у инициатора нет Dread Wail" };
+    return { ok: true };
+  }
+
+  // Спой Мне! (Шумовой Десантник): урон — одно целое 2…20 (2d10), награда — без полезной нагрузки и только палачу
+  // или поклоннику Слаанеш; Стена Диссонанса: токен и точка, дальность сверяет ГМ при исполнении.
+  if (op.kind === "singForMeDamage") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "amount")) return { ok: false, reason: "singForMeDamage: лишние поля" };
+    if (!Number.isInteger(op.amount) || op.amount < 2 || op.amount > 20) return { ok: false, reason: "singForMeDamage: урон вне 2…20" };
+    if (!hasAbility(ctx.initiator, "ability.singForMe", "Sing For Me!", "talent")) return { ok: false, reason: "у инициатора нет Sing For Me" };
+    return { ok: true };
+  }
+  if (op.kind === "singForMeBoon") {
+    if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "singForMeBoon: лишние поля" };
+    if (!hasAbility(ctx.initiator, "ability.singForMe", "Sing For Me!", "talent")) return { ok: false, reason: "у инициатора нет Sing For Me" };
+    const self = ctx.target && ctx.initiator && ctx.target.uuid === ctx.initiator.uuid;
+    if (!self && !hasRuleFlag(ctx.target, "dreadWail.immune")) return { ok: false, reason: "получатель не поклонник Слаанеш" };
+    return { ok: true };
+  }
+  if (op.kind === "wallPush") {
+    if (Object.keys(op).some(k => !["kind", "tokenUuid", "x", "y"].includes(k))) return { ok: false, reason: "wallPush: лишние поля" };
+    if (typeof op.tokenUuid !== "string" || op.tokenUuid.length > 200) return { ok: false, reason: "wallPush: нет токена" };
+    if (!Number.isFinite(op.x) || !Number.isFinite(op.y)) return { ok: false, reason: "wallPush: точка вне числа" };
+    if (!hasAbility(ctx.initiator, "ability.wallOfDiscord", "Wall of Discord", "talent")) return { ok: false, reason: "у инициатора нет Wall of Discord" };
     return { ok: true };
   }
 
@@ -253,6 +281,10 @@ export async function performTargetWrite(target, op, initiator = null) {
       "system.energy.value": (Number(en.value) || 0) + plan.toMain,
       ...(plan.toApoc ? { "system.apocryphaEnergy.value": (Number(ap.value) || 0) + plan.toApoc } : {})
     });
+  }
+  if (op.kind === "singForMeDamage" || op.kind === "singForMeBoon" || op.kind === "wallPush") {
+    const { performNoiseMarineWrite } = await import("./noise-marine.mjs");
+    return performNoiseMarineWrite(target, op, initiator);
   }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");

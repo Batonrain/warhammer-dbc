@@ -243,6 +243,8 @@ export const PREDICATES = {
 | `disease` | тест заражения болезнью (`ctx.diseaseTest`): кнопка «Заражение» на болезни (`combat/disease-infection.mjs`), Порог T±N из `system.vectorTests`; Преимущество Крепкого как Камень и Живучести Сплайса — `rules/squat-traits.mjs::diseaseResistReroll` |
 | `requisition` | тест «достать снаряжение» (`ctx.requisition`): окно реквизиции (`apps/requisition.mjs`) идёт по Inf (или F у Сети Контактов); свой флаг, а не `char:inf` — иначе подхватился бы любой тест Влияния. «+N к Реквизиции» записью Конструктора `testMod` с областью «Реквизиция» |
 | `vacuum` | тест вакуума (`ctx.vacuumTest`): начало Хода без пустотной брони на сцене с флагом «вакуум» (`combat/vacuum.mjs`), T+0 или Trade (Voidfarer)(T)+10; Преимущество Сквата — `vacuumResistReroll` |
+| `fear` | только тест Страха (`ctx.fearTest`, `combat/fear.mjs`) — не Запугивание, Пытки и Подавление, которые тоже тесты Морали (`morale`): Пьянящий Рёв Шумового Десантника (`rules/noise-marine.mjs`) |
+| `suppression` | только тест на Подавление (`ctx.suppressionTest`, `rules/morale-test.mjs`): Стальные Нервы, Пьянящий Рёв |
 
 Области манифестации, появившиеся на шаге 5.4:
 

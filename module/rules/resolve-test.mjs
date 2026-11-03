@@ -181,6 +181,9 @@ export function effectAppliesTo(target, ctx) {
   // НЕ «suppression»: ctx.suppression в rules/match-context.mjs — «Подавление
   // Травм и Расстройств» (Мир-сад/Мир удовольствий), другая механика.
   if (scope === "suppression") return ctx.suppressionTest === true;
+  // Только тест Страха (combat/fear.mjs ставит ctx.fearTest) — не Запугивание, Пытки и Подавление, которые
+  // «morale» тоже ловит: Пьянящий Рёв Шумового Десантника (Sahara 1-54b9) называет «тесты Страха» отдельно.
+  if (scope === "fear") return ctx.fearTest === true;
   // Встречный тест демона против Экзорцизма/Чистой Демонологии (Локус Цепей,
   // wdbc-smc, daemon-sheet.mjs::_rollVsExorcism) — узкий вид теста, а не любой
   // "opposed": книга даёт бонус именно этому конкретному тесту, не всем

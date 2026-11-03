@@ -33,6 +33,8 @@ import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
 import { attemptRageExit } from "../../combat/rage-behavior.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
 import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
+import { toggleDirgeOfDespair, applyWallOfDiscord, showSingForMeDialog } from "../../combat/noise-marine.mjs";
+import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
@@ -200,6 +202,21 @@ export function activateCombatListeners(root, actor) {
       return ui.notifications.warn("Грозный Вопль уже использован максимум раз в этом бою.");
     }
     await showDreadWailDialog(actor);
+  });
+
+  // ── Шумовой Десантник (Sahara 1-54b9, module/combat/noise-marine.mjs) ─────
+  on(root, ".dirge-of-despair-btn", "click", async () => {
+    await toggleDirgeOfDespair(actor);
+  });
+  on(root, ".wall-of-discord-btn", "click", async () => {
+    const token = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+    await applyWallOfDiscord(actor, token);
+  });
+  on(root, ".sing-for-me-btn", "click", async () => {
+    await showSingForMeDialog(actor);
+  });
+  on(root, ".distilled-torment-btn", "click", async () => {
+    await showDistilledTormentDialog(actor);
   });
 
   // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──

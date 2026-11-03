@@ -387,6 +387,18 @@
     {{#if hasDreadWail}}
     <button type="button" class="technique-btn dread-wail-btn" style="margin-top:6px;" title="Грозный Вопль — усиление звукового оружия ИЛИ звуковая волна AoE"><span class="tech-name">📢 Грозный Вопль</span></button>
     {{/if}}
+    {{#if hasDirgeOfDespair}}
+    <button type="button" class="technique-btn dirge-of-despair-btn{{#if dirgeActive}} active{{/if}}" style="margin-top:6px;" title="Песнь Отчаянья — до начала следующего Хода звуковое оружие получает Оглушающее (3), но его урон падает до 0 (повторное нажатие выключает)"><span class="tech-name">🎼 Песнь Отчаянья{{#if dirgeActive}} ✓{{/if}}</span></button>
+    {{/if}}
+    {{#if hasWallOfDiscord}}
+    <button type="button" class="technique-btn wall-of-discord-btn" style="margin-top:6px;" title="Стена Диссонанса — полудействие и Очко Бесчестия; враги в радиусе Cor.b×2 м проходят S−30, провал — Ничком и отброс на Cor.b×3 м"><span class="tech-name">🔊 Стена Диссонанса</span></button>
+    {{/if}}
+    {{#if hasSingForMe}}
+    <button type="button" class="technique-btn sing-for-me-btn" style="margin-top:6px;" title="Спой Мне! — наведите таргет (T) на беспомощную или сдавшуюся жертву; 15 минут пытки, Interrogate+0 против W+0"><span class="tech-name">🎶 Спой Мне!</span></button>
+    {{/if}}
+    {{#if hasDistilledTorment}}
+    <button type="button" class="technique-btn distilled-torment-btn" style="margin-top:6px;" title="Дистиллированная Мука — после убийства звуковым оружием за Реакцию обратить плоть в пыль и сделать из неё дозу наркотика"><span class="tech-name">✨ Дистиллированная Мука</span></button>
+    {{/if}}
     {{#if hasResplendentRaiment}}
     <button type="button" class="technique-btn resplendent-raiment-btn" style="margin-top:6px;" title="Блистательные Одеяния — раз за бой/сцену, тратит 1 Очко Бесчестия"><span class="tech-name">👑 Блистательные Одеяния</span></button>
     {{/if}}

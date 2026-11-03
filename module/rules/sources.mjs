@@ -51,6 +51,7 @@ import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { healMistrustRules } from "./warp-touched.mjs";
 import { woundAuraRules } from "./wound-in-reality.mjs";
+import { noiseMarineRules } from "./noise-marine.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -364,6 +365,10 @@ registerRuleSource("psychicSustainTarget", a => psychicSustainTargetRules(a));
 // Аура Раны в Реальности (Талант Псайканы, пачка I2): −5 Пси-чутьё и +10 Варп-Нестабильность за каждую
 // бесплатную силу псайкера для каждого, на ком лежит метка ауры (rules/wound-in-reality.mjs).
 registerRuleSource("woundAura", a => woundAuraRules(a));
+
+// Шумовой Десантник (Sahara 1-54b9): Пьянящий Рёв (+2 за каждого другого участника боя на T/Страх/Подавление)
+// и Боль Это Наслаждение (+10 за уровень на все тесты) — rules/noise-marine.mjs.
+registerRuleSource("noiseMarine", a => noiseMarineRules(a));
 
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];
