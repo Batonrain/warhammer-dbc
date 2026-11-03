@@ -46,7 +46,7 @@ import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation, ironMountTest, clearDragonKnight } from "./combat/mount.mjs";
-import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
+import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity, isDiceRating, resolveLingerRounds } from "./combat/weapon-properties.mjs";
 import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
 import { conditionApplyFields, setFatigue } from "./sheets/tabs/conditions.mjs";
 import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
@@ -2348,8 +2348,22 @@ export function registerHooks() {
         const isCone = ds.shape === "cone";
         const shape = isCone ? sprayConeShape(meters, px) : blastCircleShape(meters, px);
 
-        const rounds = parseInt(ds.linger || "0") || 0;
-        if (rounds > 0) {
+        // Linger (X) — X раундов числом либо кубиком («1d5», Дары Одержимого
+        // «Демоническое Дыхание»/«Демоническая Артиллерия»): кубик бросается
+        // один раз, здесь, и виден в чате — игроку не нужно помнить, сколько выпало.
+        const lingerSpec = String(ds.linger || "").trim();
+        const lingerOn = isDiceRating(lingerSpec) || (parseInt(lingerSpec) || 0) > 0;
+        const rollLingerDice = async formula => {
+          const lingerRoll = new Roll(formula);
+          await lingerRoll.evaluate();
+          await lingerRoll.toMessage({
+            speaker: ChatMessage.getSpeaker?.() ?? {},
+            flavor: `☁️ Остаётся (${formula}) — сколько раундов держится зона «${ds.weaponName || "оружия"}»`
+          });
+          return lingerRoll.total;
+        };
+        const rounds = (lingerOn && game.combat) ? await resolveLingerRounds(lingerSpec, rollLingerDice) : 0;
+        if (lingerOn) {
           if (!game.combat) return ui.notifications.warn("⚠️ Зона «Остаётся» отсчитывает раунды боя — начните бой.");
           const damageData = {
             rawDamage:    parseInt(ds.damage      || "0"),

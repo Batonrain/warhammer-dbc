@@ -164,7 +164,7 @@ registerRuleSource("opposedTarget", (a, ctx) => opposedTargetRerollRules(a, ctx,
 //
 // Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — раньше был здесь отдельным
 // источником "avatarOfSlaughter" со статичным when (читает метку на самом
-// акторе, rules/predicates.mjs::avatarOfSlaughterOffTarget, без cross-actor
+// акторе, rules/predicates.mjs::avatarOfSlaughterOnBerserker, без cross-actor
 // обхода). Перенесён в library/core.mjs → источник "core" (wdbc-shr,
 // находка 1): отдельный источник ради одного статического правила не нужен,
 // когда "core" уже отдаёт такие оптом.

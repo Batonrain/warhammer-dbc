@@ -1,0 +1,2567 @@
+{
+  "name": "Rubric Golem / Голем Рубрики",
+  "type": "character",
+  "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+  "folder": "zg31LDFTBGm8ynuJ",
+  "system": {
+    "bodyType": "other",
+    "race": "",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "heretic",
+    "patronGod": "tzeentch",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 30,
+      "max": 30,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 1
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 90,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 40,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 40,
+        "bonus": 4,
+        "cost": 0
+      },
+      "bs": {
+        "base": 50,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 50,
+        "bonus": 5,
+        "cost": 0
+      },
+      "s": {
+        "base": 60,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 60,
+        "bonus": 6,
+        "cost": 0
+      },
+      "t": {
+        "base": 55,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 55,
+        "bonus": 5,
+        "cost": 0
+      },
+      "ag": {
+        "base": 30,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 30,
+        "bonus": 3,
+        "cost": 0
+      },
+      "int": {
+        "base": 20,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 20,
+        "bonus": 2,
+        "cost": 0
+      },
+      "per": {
+        "base": 42,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 42,
+        "bonus": 4,
+        "cost": 0
+      },
+      "wp": {
+        "base": 50,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 50,
+        "bonus": 5,
+        "cost": 0
+      },
+      "fel": {
+        "base": 5,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 5,
+        "bonus": 0,
+        "cost": 0
+      },
+      "inf": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 10
+      },
+      "athletics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 40
+      },
+      "awareness": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 42
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 30
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 60
+      },
+      "logic": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 40
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 10
+      },
+      "survival": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 22
+      },
+      "techUse": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [
+        {
+          "specialty": "Low Gothic",
+          "rank": "knows",
+          "char": "int",
+          "total": 20,
+          "cost": 0
+        }
+      ],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "max": 0
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p>Голем Рубрики — средний Миньон-демон Колдуна Рубрики (Трейт Golem Master), Лояльность фиксирована 30 и не меняется Талантами. Броня Силовая 8/10/8/8, Щит 1-50 (Ч/К), Погл. 18/20/18/18 (T.b 10). Вооружение — Л. Болтер и любое оружие, которым Колдун вооружает Голема.</p><p><b>Rubricae:</b> не может говорить, совершать Бег, не получает Порчу; когда Раны опускаются ниже 0, рассыпается грудой пустых доспехов.</p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    },
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Колдун Рубрики»)"
+  },
+  "items": [
+    {
+      "name": "Fanatic / Фанатик",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "С радостью гибнет за соратника: когда союзник получает попадание (после бросков на его Избегание, но до урона), может потратить Реакцию, чтобы передвинуться на дистанцию до полудвижения, и если это позволяет встать на пути атаки — получает это попадание и урон от него вместо союзника.",
+        "notes": "«Может перехватить атаку по союзнику» — новая триггерная реакция (Reaction), не пассивный модификатор; нет готового каркаса «перенаправить атаку на себя» геометрически (движение, «встал на пути атаки»). Сам перенос урона технически не нужен отдельным кодом: кнопка «Применить урон» (module/combat/attack-card.mjs) резолвит цель из выделенного на сцене токена в момент клика — выделить носителя Fanatic вместо исходной цели даёт тот же эффект, решение стола, как и без кода. Временная раздача этого Трейта командиром — см. Back to Back/Спиной к Спине, module/combat/fanatic-redirect.mjs::grantFanaticTrait (19.10.2026, bd wdbc-3w7lo).",
+        "benefit": "Может перехватить атаку по союзнику.",
+        "source": "вера/природа",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "9KXBgEpQLtVePvFL",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.9KXBgEpQLtVePvFL"
+    },
+    {
+      "name": "From Beyond / Не От Мира Сего",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Разум чужд человеку: автоматически проходит тесты на Страх, Подавление и Панику; иммунен к психосилам, влияющим на разум (Телепатия из подгрупп Мезмеризма/Иллюзионизма, отдельные психосилы Тзинча и Слаанеш), если сам не пожелает, чтобы они на него подействовали.",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
+        "benefit": "Иммунитет Страх/Подавление/Паника и ментальным психосилам.",
+        "source": "Варп/ксенос",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "zBvCQL8u0k2psRVP",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.zBvCQL8u0k2psRVP"
+    },
+    {
+      "name": "Stuff of Nightmares / Существо из Кошмаров",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Иммунитет к Усталости (кроме от своих действий), ядам/болезням/радиации/экстремальным температурам/вакууму, к Кровотечению и Обескровливанию. Не может быть Оглушён, не стареет, игнорирует Критические Эффекты кроме смерти.",
+        "notes": "Механизировано частично: иммунитет к болезням (rules/disease-immunity.mjs) и к вакууму/Взрывной Декомпрессии (rules/vacuum.mjs) читаются с Трейта по ключу trait.stuffOfNightmares (или по названию — копии на демонах бестиария). Остальное (Усталость, яды, радиация, температуры, Кровотечение/Обескровливание, Оглушение, возраст, Критэффекты) — текстом, каждое — отдельная подсистема.",
+        "benefit": "Иммунитет к Усталости/ядам/болезням/радиации/экстрим.температурам/вакууму/Кровотечению/Обескровливанию; не может быть Оглушён; не стареет; игнорирует Критэффекты кроме смерти.",
+        "source": "Варп",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "orlwpOGkxfEeLQBh",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "SoNghtmrGrp00001",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "SoNghtmrEnt00001",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "trait.stuffOfNightmares",
+                  "label": "Stuff of Nightmares: иммунитет к болезням и вакууму"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.orlwpOGkxfEeLQBh"
+    },
+    {
+      "name": "Regeneration / Регенерация (4)",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Тело залечивает раны на глазах. Если ранен, в начале каждого Хода может пройти тест T+0 и восстановить X Ран; может пропустить все действия в этом Ходу, чтобы пройти тест автоматически. Также восстанавливает потерянные органы и конечности — часы или дни, в зависимости от рейтинга и размера органа. Не может иметь бионику/кибернетику Качеством ниже Good.Q — тело отторгает их, отращивая потерянный орган обратно.",
+        "notes": "Было без автопрохода теста при пропуске действий и без восстановления органов/запрета низкокачественной бионики — дополнено по книге (сверка гл.3 Трейтов). Активный тест T+0 в начале Хода → +X Ран при успехе — повторяющийся ход-триггерный тест с условным результатом, не пассивный модификатор; нет kind под «тест каждый ход с условным эффектом». Восстановление органов и запрет бионики ниже Good.Q тоже не читаются кодом.",
+        "benefit": "В начале Хода тест T+0 → +X Ран.",
+        "source": "биология/Варп",
+        "hasRating": true,
+        "rating": 4,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "xFkUZtKJ3DW4dNI8",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.xFkUZtKJ3DW4dNI8"
+    },
+    {
+      "name": "Size (1) / Размер (1)",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Персонаж заметно крупнее обычного человека (общая механика Size(X), см. родовой шаблон «Size / Размер (X)»). Влияет на SPD, заметность и попадания по нему.",
+        "notes": "",
+        "benefit": "Размер: +1 (крупнее человека).",
+        "source": "раса/размер",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 1,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "zpSRpulXtJfpySmn",
+      "effects": [
+        {
+          "name": "Hulking / Громила (Размер) (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.sizeMod",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "JfKVDGfJqdCxYH5P",
+          "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": 1786121962366,
+            "modifiedTime": 1786121962366,
+            "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!iFNQWM17E1eZRbOB.zpSRpulXtJfpySmn.JfKVDGfJqdCxYH5P"
+        }
+      ],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.zpSRpulXtJfpySmn"
+    },
+    {
+      "name": "Shield of Rubric / Щит Рубрики",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "Тот же класс, что Sorcerous Barrier — активный щит-купол с диапазоном рейтинга, новая механика без готового канала.",
+        "benefit": "Рубрика одарила персонажа мистической защитой, отражающей вражеские болты и клинки. Даёт не перегружающий чародейский щит-купол с рейтингом 1-50.",
+        "source": "Элитный архетип: Колдун Рубрики",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Колдун Рубрики»)"
+      },
+      "_id": "20BaLI15IyO89jEH",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.20BaLI15IyO89jEH"
+    },
+    {
+      "name": "Rubricae / Рубрикант",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: запреты (не говорит, не Бегает, не получает Порчу) и распад доспеха при Ранах ниже 0 — оговорки без числового канала; ведутся вручную.",
+        "benefit": "Не может говорить, совершать Бег и не получает Порчу. Когда его Раны опускаются ниже 0, он рассыпается грудой пустых доспехов.",
+        "source": "Элитный архетип: Колдун Рубрики (Голем Рубрики)",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Колдун Рубрики»)"
+      },
+      "_id": "z09e4Yt0xsrK0hQp",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.z09e4Yt0xsrK0hQp"
+    },
+    {
+      "name": "Unnatural S (4)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Сверхъестественная Сила: +4 к S.b.",
+        "source": "демон",
+        "hasRating": true,
+        "rating": 4,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [
+            {
+              "stat": "s",
+              "value": 4
+            }
+          ],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "2on6qSksGCFnyf81",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.2on6qSksGCFnyf81"
+    },
+    {
+      "name": "Unnatural T (5)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Сверхъестественная Стойкость: +5 к T.b.",
+        "source": "демон",
+        "hasRating": true,
+        "rating": 5,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [
+            {
+              "stat": "t",
+              "value": 5
+            }
+          ],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "uQommCptQq5nudnc",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.uQommCptQq5nudnc"
+    },
+    {
+      "name": "Ambidextrous / Амбидекстр",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "МЕХАНИЗИРОВАНО 07.09.2026 (wdbc-3jlm): запись «Возможность» (dualWield.core.ambidextrous). Читает module/rules/dual-wield.mjs — штраф парной атаки и «наибольшее действие из двух»; окно атаки показывает галочку «Обе руки» и отдельную строку штрафа в разборе порога. Прежняя заметка «Не смоделировано» относилась ко времени, когда механизма не существовало.",
+        "benefit": "Персонаж не получает штраф −20 за использование оружия в неосновной руке и уменьшает штраф за парное оружие на 10.",
+        "tier": 1,
+        "requirement": "A 30",
+        "aptitudes": [
+          "general",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "BhBBmVe46ZOomzcs",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "ambidextrous1",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "ambidextrousE",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "dualWield.core.ambidextrous",
+                  "label": "Нет штрафа за неосновную руку, парный штраф −10"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.BhBBmVe46ZOomzcs"
+    },
+    {
+      "name": "Bolter Drill / Болтерная Муштра",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "Реализовано: capabilityKey weaponsmith.core.bolterDrill — module/combat/attack.mjs::bolterDrillBonus добавляет +1 Успех попаданию Болт-оружием (bs, weaponType:\"bolt\").",
+        "benefit": "Успешные тесты персонажа на стрельбу Болт оружием получают +1 Успех.",
+        "tier": 3,
+        "requirement": "Weapon Training (Bolt)",
+        "aptitudes": [
+          "bs",
+          "offence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Нургл",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "DlGDKLAPjo1PebCU",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "ikKjxqQ5GK9m1Vw3",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "nTKrA1nqQfqBd9jR",
+                  "kind": "capability",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "weaponsmith.core.bolterDrill",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.DlGDKLAPjo1PebCU"
+    },
+    {
+      "name": "Bulging Biceps / Бугрящиеся Мышцы",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж не получает штрафов за стрельбу из тяжёлого оружия без Закрепления.",
+        "tier": 2,
+        "requirement": "S 45",
+        "aptitudes": [
+          "s",
+          "offence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Нургл",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "tdj1xrVhxDkfaNXB",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "mechanics": [
+            {
+              "id": "BbcpGrpBicepsAuto1",
+              "operator": "AND",
+              "entries": [
+                {
+                  "kind": "capability",
+                  "id": "BbcpEntryBiceps001",
+                  "capabilityKey": "rangedCore.core.bulgingBiceps",
+                  "label": "Бугрящиеся Мышцы: без штрафа тяжёлого оружия без Закрепления",
+                  "capabilityMode": "",
+                  "capabilityAptScope": "",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ],
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.tdj1xrVhxDkfaNXB"
+    },
+    {
+      "name": "Crack Shot / Пробивной Удар",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "Реализовано: capabilityKey rangedCore.core.crackShot — module/combat/attack.mjs (wp.negWoundsBonus ← module/rules/gunner-talents.mjs::crackShotBonus) и module/combat/damage.mjs (negativeWoundsBonus): если непоглощённый урон стрелковой атаки больше текущих Ран цели, к урону прибавляется +2 (идёт в Критические). Тот же примитив (data-neg-wounds-bonus / negWoundsBonus) годится Калечащему Удару.",
+        "benefit": "Когда стрелковая атака персонажа наносит Отрицательные Раны, она получает +2 к Dmg.",
+        "tier": 2,
+        "requirement": "BS 50",
+        "aptitudes": [
+          "bs",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Тзинч",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "tbrU8L94rqrcXnny",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "nYAXt57FoORW494H",
+              "operator": "AND",
+              "entries": [
+                {
+                  "kind": "capability",
+                  "id": "cwGWvRl9SvU7hOtO",
+                  "capabilityKey": "rangedCore.core.crackShot",
+                  "label": "Пробивной Удар: +2 к урону, если стрелковая атака уводит Раны цели в минус",
+                  "capabilityMode": "",
+                  "capabilityAptScope": "",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.tbrU8L94rqrcXnny"
+    },
+    {
+      "name": "Deadeye Shot / В Яблочко",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "Реализовано: capabilityKey rangedCore.core.deadeyeShot — штраф Избирательной стрелковой атаки меньше на 10 (module/sheets/attack-dialog.mjs, aimTargets ← module/rules/gunner-talents.mjs::selectiveAimReduction) и штраф за Размер цели ниже 0 меньше на 10 (правило core.deadeyeSize, module/rules/library/core.mjs, предикат targetSizeMax). Выше нуля штраф не поднимается.",
+        "benefit": "Персонаж уменьшает штраф на стрелковые атаки за Избирательные атаки или Размер цели ниже 0 на 10.",
+        "tier": 1,
+        "requirement": "BS 30",
+        "aptitudes": [
+          "bs",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Тзинч",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "OojEWBCiAuIDhM1B",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "8VpESLAnUfQF4Kft",
+              "operator": "AND",
+              "entries": [
+                {
+                  "kind": "capability",
+                  "id": "yHwLnLsdwYz1rVSk",
+                  "capabilityKey": "rangedCore.core.deadeyeShot",
+                  "label": "В Яблочко: штраф Избирательных стрелковых атак и малого Размера цели меньше на 10",
+                  "capabilityMode": "",
+                  "capabilityAptScope": "",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.OojEWBCiAuIDhM1B"
+    },
+    {
+      "name": "Legion Weapon Training / Тренировка Легиона",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж считается имеющим все специализации Талантов Melee Training и Weapon Training.",
+        "tier": 1,
+        "requirement": "Космодесантник",
+        "aptitudes": [
+          "ws",
+          "bs"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "DQoaX95fsFAGbgzA",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "84muKSU2Vui9NjZK",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "9pSWrd7lzt5hQuTM",
+                  "kind": "capability",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "weapon.trained.legion",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.DQoaX95fsFAGbgzA"
+    },
+    {
+      "name": "Rapid Reload / Быстрая Перезарядка",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "МЕХАНИЗИРОВАНО (сверка главы 3, решение владельца 17.10.2026): ОД перезарядки делятся пополам вниз — «½» (1 ОД) → бесплатно, «1» (2 ОД) → 1 ОД, «2» (4 ОД) → 2 ОД (combat/reload.mjs, rules/speed-talents.mjs::rapidReloadApCost); на карточке перезарядки строка «Быстрая Перезарядка». Перезарядки без числа ОД («–», «†», «¼», N×M) и так бесплатны. НЕ покрыто: «пустой магазин выбрасывается под ноги» — в системе нет предметов на земле; скидка Fully Armed (−1 ОД) подключена в combat/reload.mjs, с Rapid Reload они не складываются — берётся лучшая (24.10.2026).",
+        "benefit": "Персонаж провёл долгие часы, отрабатывая упражнения с оружием, и может перезаряжать его на раз-два. Время перезарядки любого оружия снижается в два раза (окр.▼). Если оружие можно было перезарядить полудействием, персонаж перезаряжает его свободным действием. При быстрой перезарядке пустой магазин выбрасывается под ноги.",
+        "tier": 1,
+        "requirement": "Нет",
+        "aptitudes": [
+          "ag",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Слаанеш",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "Rzp5n6ie1enblAY0",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "vTDNAFNsyqbBw0Tx",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "XMit1ZMcBiffzAC8",
+                  "kind": "capability",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "ccDamage": "1d5",
+                  "ccPen": 0,
+                  "ccDamageType": "rending",
+                  "ccTearing": false,
+                  "ccOnMiss": true,
+                  "ccOnUnarmedOrGrapple": true,
+                  "ccLabel": "",
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "speed.core.rapidReload",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "capabilityMode": "flag",
+                  "capabilityAptScope": "skill",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "condKey": "",
+                  "condMode": "apply",
+                  "condLevel": "1",
+                  "condMitigate": "ignore",
+                  "condDurationValue": "1",
+                  "condDurationUnit": "",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipPrRequiredDelta": 0,
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "1",
+                  "auraAffects": "allies",
+                  "auraIncludesSelf": false,
+                  "auraImmuneTraits": "",
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 1,
+                  "scriptTrigger": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.Rzp5n6ie1enblAY0"
+    },
+    {
+      "name": "Scanning Advance / Сканирующее Продвижение",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "Реализовано (wdbc-1rno.27/.37): отдельный HUD-пункт «Сканирующее Продвижение» (2 ОД целиком) — отмечает Полудвижение и объявляет Караул с потолком сектора 90° вместо 45° — rules/overwatch.mjs, combat/overwatch.mjs. Интерпретация (не проверена отдельно): расширенный сектор даёт только эта совмещённая декларация, обычный Караул без движения остаётся 45°. Сам перевод токена не автоматизирован.",
+        "benefit": "Персонаж может провести Полудвижение и Караул как одно полное действие, а его сектор обстрела в Карауле увеличивается до 90°.",
+        "tier": 2,
+        "requirement": "BS 40, P 50",
+        "aptitudes": [
+          "per",
+          "offence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Нургл",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "x2CI7C7sL63Y6gBz",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "0wScanAdvGroup001",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "0wScanAdvEntry001",
+                  "kind": "capability",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "rangedCore.core.scanningAdvance",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 0,
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "1",
+                  "auraAffects": "allies",
+                  "auraIncludesSelf": false,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  },
+                  "capabilityMode": "flag",
+                  "capabilityAptScope": "skill",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "equipPrRequiredDelta": 0,
+                  "auraImmuneTraits": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 0
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.x2CI7C7sL63Y6gBz"
+    },
+    {
+      "name": "Target Selection / Выбор Целей",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "РЕАЛИЗОВАНО (3-5fbf): capabilityKey rangedCore.core.targetSelection. (1) module/sheets/attack/mods.mjs (situationalMods): штраф −20 «Цель связана в рукопашной (с другим персонажем)» снят с подписью. (2) module/rules/target-selection.mjs::misfireCandidates ← module/combat/attack.mjs (misfireHits): рикошет промаха по цели, связанной в рукопашной, выбирает получателя только среди врагов и нейтралов стрелка — его союзники и он сам из списка выпадают; если никого не осталось, промах ни в кого не попадает. «Союзник» — как в auras.mjs: оба токена Hostile или оба Friendly (Neutral/Secret никому не союзники). НЕ тронуто: штраф «Стрельба в рукопашную» (стрелок сам в контакте с целью) — книга говорит только о целях, связанных с кем-то другим.",
+        "benefit": "Персонаж может стрелять в цели, связанные в ближнем бою, без штрафов, а его промахи никогда не попадают в союзников (но могут в других врагов).",
+        "tier": 3,
+        "requirement": "BS 50",
+        "aptitudes": [
+          "bs",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "LQRG51uTN7ihBHXV",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "QeILGz8j75cJYogs",
+              "operator": "AND",
+              "entries": [
+                {
+                  "kind": "capability",
+                  "id": "RmAxe6zd4A5AZjR9",
+                  "capabilityKey": "rangedCore.core.targetSelection",
+                  "label": "Выбор Целей: стрельба по связанным в рукопашной без штрафа",
+                  "capabilityMode": "",
+                  "capabilityAptScope": "",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.LQRG51uTN7ihBHXV"
+    },
+    {
+      "name": "Tireless / Неутомимый",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "МЕХАНИЗИРОВАНО (сверка главы 3, решение владельца 18.10.2026): штраф Усталости −10 не действует на тесты по характеристикам WS, BS, S, T, A и на атаки (в окне атаки галочка «Усталость» не ставится); остаётся на I, P, W, F (в т.ч. психосилы). Книга говорит о действиях «не типа Ментальное», но типа у тестов в системе нет — граница проведена по характеристике теста [допущение владельца] (rules/situational.mjs::fatiguePenalty/attackFatigueApplies, rules/resilience-talents.mjs, возможность resilience.core.tireless).",
+        "benefit": "Тело персонажа устойчиво к истощению. Он не получает штраф −10 от Усталости на действия, не имеющие типа Ментальное.",
+        "tier": 2,
+        "requirement": "T 45",
+        "aptitudes": [
+          "t",
+          "defence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Нургл",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "Z7NA7x5OvWB029VW",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "TyqnDILKLVxzgBsX",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "5LclWZPl9MhANBBQ",
+                  "kind": "capability",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "ccDamage": "1d5",
+                  "ccPen": 0,
+                  "ccDamageType": "rending",
+                  "ccTearing": false,
+                  "ccOnMiss": true,
+                  "ccOnUnarmedOrGrapple": true,
+                  "ccLabel": "",
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "resilience.core.tireless",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "capabilityMode": "flag",
+                  "capabilityAptScope": "skill",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "condKey": "",
+                  "condMode": "apply",
+                  "condLevel": "1",
+                  "condMitigate": "ignore",
+                  "condDurationValue": "1",
+                  "condDurationUnit": "",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipPrRequiredDelta": 0,
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "1",
+                  "auraAffects": "allies",
+                  "auraIncludesSelf": false,
+                  "auraImmuneTraits": "",
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "Неутомимый: нет штрафа Усталости −10 на тесты WS, BS, S, T, A и на атаки",
+                  "code": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 1,
+                  "scriptTrigger": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.Z7NA7x5OvWB029VW"
+    },
+    {
+      "name": "Unarmed Warrior / Безоружный Воин",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж улучшает свои профили безоружных атак и все d5 в уроне Кулаков на d10. Вооружённый противник не получает бонуса на парирование его безоружных атак и не наносит урон удачным парированием.",
+        "tier": 1,
+        "requirement": "WS 35, A 35",
+        "aptitudes": [
+          "s",
+          "offence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Кхорн",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "Z4FZQAsMTblnQzP7",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "T3vQ7bXaqzR2mNsK",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "Wm4H9cLpXtY7jVfB",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "unarmed.warriorProfile",
+                  "label": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.Z4FZQAsMTblnQzP7"
+    },
+    {
+      "name": "Mk VII Aquila / Мк VII Аквила",
+      "type": "armor",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "power",
+        "stacks": false,
+        "maxAgility": 100,
+        "equipped": true,
+        "head": 8,
+        "body": 10,
+        "leftArm": 8,
+        "rightArm": 8,
+        "leftLeg": 8,
+        "rightLeg": 8,
+        "quality": "common",
+        "availability": 3,
+        "weight": 180,
+        "properties": [],
+        "strengthBonus": 20,
+        "wpBonus": 0,
+        "special": "Финальная модель Ереси: системы Mk IV + упрощённое производство, мономолекулярные заклёпки. Основная модель Лоялистов в 41-м тыс.; у Хаоса — с грабежом/трофеями, заменяет Mk V.",
+        "isRig": true,
+        "rig": {
+          "comfort": "normal",
+          "backSlot": false,
+          "slots": [
+            {
+              "size": "1x1",
+              "count": 2,
+              "note": "пояс спереди, слева"
+            },
+            {
+              "size": "1x1",
+              "count": 2,
+              "note": "пояс спереди, слева",
+              "variants": [
+                {
+                  "key": "holster",
+                  "label": "кобура",
+                  "size": "2x1"
+                }
+              ]
+            },
+            {
+              "size": "1x1",
+              "count": 2,
+              "note": "пояс спереди, справа"
+            },
+            {
+              "size": "1x1",
+              "count": 2,
+              "note": "пояс спереди, справа",
+              "variants": [
+                {
+                  "key": "holster",
+                  "label": "кобура",
+                  "size": "2x1"
+                }
+              ]
+            }
+          ],
+          "magLocks": [
+            {
+              "size": "4x1",
+              "count": 2,
+              "note": "бёдра"
+            },
+            {
+              "size": "3x1",
+              "count": 2,
+              "note": "бока кирасы"
+            },
+            {
+              "size": "2x1",
+              "count": 2,
+              "note": "голени спереди",
+              "awkward": true
+            },
+            {
+              "size": "2x1",
+              "count": 2,
+              "note": "голени сзади",
+              "awkward": "veryAwkward"
+            },
+            {
+              "size": "1x1",
+              "count": 2,
+              "note": "предплечья",
+              "variants": [
+                {
+                  "key": "shield",
+                  "label": "щит",
+                  "size": "3x3"
+                }
+              ]
+            },
+            {
+              "size": "4x1",
+              "count": 1,
+              "note": "пояс сзади",
+              "awkward": true
+            },
+            {
+              "size": "5x3",
+              "count": 1,
+              "note": "ранец сзади",
+              "awkward": "veryAwkward"
+            }
+          ]
+        },
+        "bookSource": "DoomBC — Основная книга, IV. Арсенал («Силовая броня», стр. 234)"
+      },
+      "_id": "RCRp08Mh3Jb9aOsg",
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "mechanics": [
+            {
+              "id": "rgEALjHYyOBMOKsrai",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "reEALjHYyOBMOKsrai",
+                  "kind": "capability",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "device.retinalDisplay",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 0,
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "1",
+                  "auraAffects": "allies",
+                  "auraIncludesSelf": false,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  },
+                  "capabilityMode": "flag",
+                  "capabilityAptScope": "skill",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "equipPrRequiredDelta": 0,
+                  "auraImmuneTraits": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 0
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.RCRp08Mh3Jb9aOsg"
+    }
+  ],
+  "prototypeToken": {
+    "name": "Rubric Golem / Голем Рубрики",
+    "displayName": 30,
+    "actorLink": true,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "_id": "iFNQWM17E1eZRbOB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1793719010572,
+    "modifiedTime": 1793719010572,
+    "lastModifiedBy": null
+  },
+  "_key": "!actors!iFNQWM17E1eZRbOB"
+}

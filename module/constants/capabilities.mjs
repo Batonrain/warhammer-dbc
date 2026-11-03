@@ -4398,7 +4398,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gerold.tipOfTheSpear": {
     label: "На острие атаки вдохновляет боевых братьев личным примером. Попав по противнику хотя бы одной атакой ближнего боя,",
-    source: "Tip Of The Spear / Остриё Копья", reader: ""
+    source: "Tip Of The Spear / Острие Копья", reader: ""
   },
   "elite.elitnyeArhetipy.gerold.villainousHonour": {
     label: "Может выжать из побед наибольшее влияние на соратников. Убив вражеского чемпиона, знаменосца или лорда (убив,",
@@ -4840,7 +4840,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.lordDiskordant.hellbound": {
     label: "Сделки с Кузницей Душ дают доступ к продвинутым ритуалам связывания демона с машиной. Может за смену работы отметить машину доп.",
-    source: "Hellbound / Адсвязанный", reader: ""
+    source: "Hellbound / Адосвязанный", reader: ""
   },
   "elite.elitnyeArhetipy.lordDiskordant.stalkersmith": {
     label: "Даже лишённый скакуна легко его заменит за счёт рутин создания оболочки и ритуала вселения. Делает тесты Крафта оболочки Адского Сталкера,",
@@ -4973,7 +4973,7 @@ export const CAPABILITIES = {
     source: "Lightning Fingers / Молниеносные Пальцы", reader: ""
   },
   "elite.elitnyeArhetipy.moritat.loneWarrior": {
-    label: "Полагается только на себя. Когда в пределах 15м нет ни одного дружественного персонажа, не получает преимуществ дружественных психосил,",
+    label: "Полагается только на себя. Когда в пределах 15м нет ни одного дружественного персонажа, не получает преимуществ дружественных психосил и не находится в секторе обстрела дружественного Караула,",
     source: "Lone Warrior / Одинокий Воин", reader: ""
   },
   "elite.elitnyeArhetipy.moritat.mortido": {
@@ -5790,10 +5790,6 @@ export const CAPABILITIES = {
     source: "Lying Speech Of A Liar / Лживые Речи Лжеца",
     reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс в диалоге теста)"
   },
-  "trait.malagraCortex": {
-    label: "Утраивает Успехи во встречных тестах на сопротивление Техночудесам Ноотеургии и Аниматеургии, удваивает Успехи на сопротивление психосилам,",
-    source: "Malagra Cortex / Кортекс Малагры", reader: ""
-  },
   "trait.maneuverable": {
     label: "+20 на тесты поворотов и Заноса.",
     source: "Maneuverable / Манёвренный", reader: ""
@@ -6465,7 +6461,7 @@ export const CAPABILITIES = {
     source: "Delegate / Делегат", reader: ""
   },
   "trait.elitnyeArhetipy.gerold.livingBanner": {
-    label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 и Charm(F)+10 и восстановить одно ранее потраче…",
+    label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 или Charm(F)+10 и восстановить одно ранее потраче…",
     source: "Living Banner / Живой Стяг", reader: ""
   },
   "trait.elitnyeArhetipy.gerold.noblesseOblige": {
@@ -6608,10 +6604,6 @@ export const CAPABILITIES = {
     label: "Владеют невероятно эффективными техниками гипноза. Получают уникальный Навык Гипно-Программирование(W)+0 и могут развивать его как обычный Н…",
     source: "Hypno-Programming / Гипно-Программирование", reader: ""
   },
-  "trait.elitnyeArhetipy.kognite.riteOfEightSpecks": {
-    label: "Силы Когнитэ исходят из сделок с Разрушительными Силами, требующих подпитки свежими жертвами. Каждую неделю получает видение,",
-    source: "Rite of Eight Specks / Ритуал Восьми Спиц", reader: ""
-  },
   "trait.elitnyeArhetipy.kognite.veilOfLies": {
     label: "Гипноиндоктринация превращает разум в многослойный лабиринт из сконструированных личностей, в сердце которого скрыто ядро настоящих мыслей.",
     source: "Veil of Lies / Вуаль Лжи", reader: ""
@@ -6641,6 +6633,10 @@ export const CAPABILITIES = {
   "trait.elitnyeArhetipy.koldunRubriki.shieldOfRubric": {
     label: "Рубрика одарила персонажа мистической защитой, отражающей вражеские болты и клинки. Даёт не перегружающий чародейский щит-купол с рейтингом…",
     source: "Shield of Rubric / Щит Рубрики", reader: ""
+  },
+  "trait.elitnyeArhetipy.koldunRubriki.rubricae": {
+    label: "Голем Рубрики не может говорить, совершать Бег и не получает Порчу; при Ранах ниже 0 рассыпается грудой пустых доспехов.",
+    source: "Rubricae / Рубрикант", reader: ""
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Король_Червей — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.korolChervey.handOfPlenty": {

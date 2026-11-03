@@ -14,7 +14,12 @@
 //  предмета показывает диалог выбора, и применяется только ОДНА запись.
 //
 //  Виды записи (entry.kind):
-//    corruption: { op:"add"|"subtract", corruptionValue }
+//    corruption: { op:"add"|"subtract", corruptionValue,
+//                  corruptionCap?, corruptionIfBelow?, corruptionElse? }
+//      Необязательные поля (rules/corruption-entry.mjs): «не выше N»
+//      (corruptionCap — Одержимый: +3d5, но не выше Cor 90) и «если Порчи
+//      меньше N» (corruptionIfBelow; при Порче ≥ N бросается corruptionElse,
+//      пусто — ничего). Пусто — прежнее поведение.
 //      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.corruption.value (хранимое
 //      состояние, не производное — как .advance/.supernatural у
 //      характеристик, ActiveEffect тут не подходит). corruptionValue —
@@ -441,6 +446,7 @@ import { masteryTargets, masteryTarget, masteryAptitudes, masteryLabel } from ".
 import { statAtLeast, itemsNamed, rankAtLeast } from "../rules/req-atom.mjs";
 import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
+import { planCorruption, capCorruptionGain, corruptionLimitsSuffix } from "../rules/corruption-entry.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
 import { hasSubmutations }                     from "../rules/submutations.mjs";
 import { rollSubmutation, chooseSubmutation }  from "./submutations.mjs";
@@ -980,6 +986,8 @@ export function blankMechEntry(kind = "characteristic") {
     group: kind === "group" ? blankMechGroup("AND") : null,
     // corruption (op — общее поле с characteristic)
     corruptionValue: "1",
+    // необязательные: «не выше N», «только если Порча < N», «иначе» (corruption-entry.mjs)
+    corruptionCap: "", corruptionIfBelow: "", corruptionElse: "",
     // wounds (op — общее поле)
     woundsValue: "1",
     // cohesion (op — общее поле)
@@ -1161,7 +1169,7 @@ export function describeMechEntry(entry) {
     case "corruption": {
       if (entry.corruptionValue === "" || entry.corruptionValue == null) return "Порча: (не задано)";
       const sign = OP_SIGN[entry.op] ?? "+";
-      return `Порча: ${sign}${entry.corruptionValue}`;
+      return `Порча: ${sign}${entry.corruptionValue}${corruptionLimitsSuffix(entry)}`;
     }
     case "wounds": {
       if (entry.woundsValue === "" || entry.woundsValue == null) return "Раны: (не задано)";
@@ -2092,7 +2100,11 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   }
 
   if (entry.kind === "corruption") {
-    const formula = String(entry.corruptionValue || "0").trim();
+    const cur = Number(actor.system.corruption?.value) || 0;
+    // «Если Порчи меньше N» (corruptionIfBelow): при Порче ≥ N бросается
+    // «иначе» (пусто — запись ничего не даёт); без условия — основная формула.
+    const { formula, branch } = planCorruption(entry, cur);
+    if (!formula) return;
     let total = 0, roll = null;
     try {
       roll = await new Roll(formula).evaluate();
@@ -2100,8 +2112,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     } catch (e) {
       total = Number(formula) || 0;
     }
-    const signed = entry.op === "subtract" ? -total : total;
-    const cur = Number(actor.system.corruption?.value) || 0;
+    const rolled = entry.op === "subtract" ? -total : total;
+    // «Не выше N» (corruptionCap): прибавка урезается до предела.
+    const signed = capCorruptionGain(entry, cur, rolled);
     await actor.update({ "system.corruption.value": Math.max(0, cur + signed) });
     // {pool, amount} — тот же формат, что раньше писали скрипт-шаблоны «± Очки
     // пула»: общий откат в Hooks.on("deleteItem", ...) читает его сам, без
@@ -2109,9 +2122,10 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     await sourceItem.setFlag(FLAG, "poolApplied", { pool: "corruption", amount: signed });
     // Бросок XdY — в чат, для прозрачности (флэт-число просто применяется тихо).
     if (roll && /d\s*\d/i.test(formula)) {
+      const note = signed !== rolled ? ` (выпало ${rolled >= 0 ? "+" : ""}${rolled}, предел Cor ${Number(entry.corruptionCap)})` : "";
       await roll.toMessage({
         speaker: ChatMessage.getSpeaker({ actor }),
-        flavor: `${sourceItem.name}: Порча ${signed >= 0 ? "+" : ""}${signed}`
+        flavor: `${sourceItem.name}: Порча ${signed >= 0 ? "+" : ""}${signed}${note}${branch === "else" ? " (Порча уже не меньше порога)" : ""}`
       });
     }
     return;
@@ -3637,7 +3651,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "corruption") {
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-corruption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
-      <input type="text" class="mech-corruption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionValue ?? "")}" placeholder="напр. 5 или 2d10" ${dis}/>`;
+      <input type="text" class="mech-corruption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionValue ?? "")}" placeholder="напр. 5 или 2d10" ${dis}/>
+      <input type="text" class="mech-corruption-cap" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionCap ?? "")}" placeholder="не выше Cor" title="Предел: итоговая Порча не поднимется выше этого числа (Одержимый: 90). Пусто — без предела." ${dis}/>
+      <input type="text" class="mech-corruption-below" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionIfBelow ?? "")}" placeholder="если Порча &lt;" title="Условие: основная формула бросается, только если текущая Порча меньше этого числа. Пусто — всегда." ${dis}/>
+      <input type="text" class="mech-corruption-else" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionElse ?? "")}" placeholder="иначе (напр. 1d5)" title="Что получить, если Порча уже не меньше порога. Пусто — ничего." ${dis}/>`;
   }
 
   if (ent.kind === "wounds") {

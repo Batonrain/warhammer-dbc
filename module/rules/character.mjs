@@ -48,7 +48,7 @@ import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { trophyMax } from "./trophy-points.mjs";
 import { spliceExtraAdaptations, fastLearnerWithAdaptations } from "./splice-adaptations.mjs";
-import { itemHasName, giftNamesOf } from "./predicates.mjs";
+import { itemHasName, giftNamesOf, canManifestPossession } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { rageCharBonus, woundedBeastBonus } from "./rage.mjs";
@@ -394,7 +394,11 @@ export function prepareCharacterDerived(actor, system) {
     // Всё вливается в общий конвейер трейтов — снимается автоматически при
     // заключении демона. Синхронизировано с Cor и составом Даров на акторе.
     system.possessionActive = null;
-    if (system.possessed && system.possession?.manifested && system.alignment === "heretic") {
+    // Дар «Гигант»: +10 к максимуму Ран (читает блок wounds.maxMods ниже).
+    let possessionGiantWounds = 0;
+    // Мировоззрение не проверяется: Архетип Одержимого — «Раса: Любая», книга
+    // (DoomBC 129-132) Проявление «еретиком» не ограничивает.
+    if (canManifestPossession(actor) && system.possession?.manifested) {
       const cor  = system.corruption?.value ?? 0;
       const corB = Math.floor(cor / 10);
       const prof = manifestProfile(cor);
@@ -407,7 +411,10 @@ export function prepareCharacterDerived(actor, system) {
       // Активные Дары (предметы-таланты «… / Дар: X») с числовыми эффектами
       const giftNames = giftNamesOf(actor);
       if (giftNames.has("Панцирь"))               { traitArmourAll += corB; applied.push(`Панцирь: Natural Armour ${corB}`); }
-      if (giftNames.has("Гигант"))                { traitSizeMod += 1; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер, +10 S"); }
+      // Книга: «+1 к Размеру, +10 S и +10 к максимуму и текущему количеству Ран,
+      // но это увеличение Размера не даёт обычный бонус +1 к SPD» — поэтому
+      // Размер идёт в traitSizeModNoSpd, а не в traitSizeMod (тот двигает SPD).
+      if (giftNames.has("Гигант"))                { traitSizeModNoSpd += 1; possessionGiantWounds = 10; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер (без +1 SPD), +10 S, +10 Ран"); }
       if (giftNames.has("Демоническая Скорость")) { const a = Math.floor(corB / 2); traitCharBonus.ag = (traitCharBonus.ag || 0) + a; applied.push(`Демон. Скорость: Unnatural A +${a}`); }
       system.possessionActive = { prof, corB, applied };
     }
@@ -818,6 +825,8 @@ export function prepareCharacterDerived(actor, system) {
         // Крепкое Телосложение (глава 3, rules/resilience-talents.mjs): +1 Рана
         // за каждую копию Таланта, потолок T.b (+2 не-Космодесантнику).
         ...soundConstitutionWoundsMods(actor, tb),
+        // Дар Одержимого «Гигант»: +10 к максимуму Ран, пока демон проявлен.
+        ...(possessionGiantWounds ? [{ label: "Дар «Гигант» (Одержимый)", value: possessionGiantWounds }] : []),
         // Отвращение к Порядку (Зверолюд): −2 Раны за каждую бионику/кибернетику (выше).
         ...(system.orderRejection?.wounds ? [{ label: "Отвращение к Порядку", value: system.orderRejection.wounds }] : [])
       ];

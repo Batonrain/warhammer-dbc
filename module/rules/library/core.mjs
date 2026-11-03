@@ -168,7 +168,7 @@ export const CORE_RULES = [
     // Кхорна, wdbc-sk8s) — раньше жила своим отдельным источником
     // "avatarOfSlaughter" (rules/sources.mjs), хотя когда-то была
     // зарегистрирована совсем как "core" — статичное when, читающее метку
-    // на самом акторе (rules/predicates.mjs::avatarOfSlaughterOffTarget),
+    // на самом акторе (rules/predicates.mjs::avatarOfSlaughterOnBerserker),
     // без cross-actor обхода. Перенесена сюда (wdbc-shr, находка 1): нет
     // причины заводить отдельный источник ради одного статического правила,
     // когда основная книга уже отдаёт такие через "core" оптом. Покрывает
@@ -176,9 +176,9 @@ export const CORE_RULES = [
     // combat/techniques.mjs) используют другой вид теста, не покрытый
     // effectAppliesTo, оставлено открытым пробелом.
     id: "avatarOfSlaughter.penalty",
-    label: "Аватар Резни: не тот противник",
-    when: { avatarOfSlaughterOffTarget: true },
-    effects: [{ kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует не Берсерка" }]
+    label: "Аватар Резни: атака на Берсерка",
+    when: { avatarOfSlaughterOnBerserker: true },
+    effects: [{ kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует Берсерка" }]
   },
   // Умелые Руки (Скват) — галочки тонкой работы с отбором по Черте, отдельным
   // файлом: library/squat.mjs.

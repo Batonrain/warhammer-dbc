@@ -743,7 +743,12 @@
         "effects": {
           "charBonusStat": "",
           "charBonusValue": 0,
-          "charBonuses": [],
+          "charBonuses": [
+            {
+              "stat": "t",
+              "value": 3
+            }
+          ],
           "charValueBonuses": [],
           "armourAll": 0,
           "fearRating": 0,

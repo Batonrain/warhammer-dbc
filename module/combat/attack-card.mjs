@@ -22,6 +22,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { isCompressibleLocation, normalizeCompressibleLocation } from "../rules/compression.mjs";
 import { testCardHtml, statLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { arcExtraAttrs } from "../rules/arc-extra.mjs";
+import { hasLinger } from "./weapon-properties.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
 const signed = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -116,7 +117,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // в зоне следующие data-linger ходов стрелка. lingerDrift (Y, второй
   // рейтинг свойства) — на сколько метров зона дрейфует каждый такой ход
   // по розе смещения (0 — не дрейфует).
-  const lingerAttrs = (wp.lingerRating > 0 && hits.length) ? `
+  const lingerAttrs = (hasLinger(wp) && hits.length) ? `
       data-linger="${wp.lingerRating}"
       data-linger-drift="${wp.lingerDrift ?? 0}"
       data-damage="${hits[0].total}"
@@ -158,7 +159,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // Region на всю атаку, Распыление — один конус, не «попадание» в этом
   // смысле вовсе), их это НЕ касается — там по-прежнему одна кнопка.
   const perHitBlastTemplates = wp.blastRating > 0 && !wp.spray
-    && !(wp.lingerRating > 0) && !(wp.shrinkTemplate > 0) && hits.length > 1;
+    && !hasLinger(wp) && !(wp.shrinkTemplate > 0) && hits.length > 1;
   // Поток (rules/flamer-talents.mjs): вместо конуса Распыления — круг Blast(Rng/5+1); data-torrent-max —
   // предел размещения (2×Rng), его проверяет обработчик кнопки (hooks.mjs) вместе с прямой видимостью.
   const torrentOn = !!torrent && !!wp.spray;
@@ -171,7 +172,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       data-item-uuid="${itemUuid}"${lingerAttrs}${gravitonAttrs}${pyromaniac ? ` data-pyromaniac="1" data-attacker="${actorName}"` : ""}>
       🎯 ${torrentOn
         ? `Поток: разместить шаблон Blast(${torrent.radius} м) — до ${torrent.maxDistance} м, в прямой видимости — и отметить цели`
-        : wp.lingerRating > 0
+        : hasLinger(wp)
         ? `Разместить зону «Остаётся» (${wp.lingerRating} раунд.) и отметить цели`
         : wp.shrinkTemplate > 0
           ? "Разместить Гравитонную зону (тает 1м/ход, Ландшафт−30) и отметить цели"

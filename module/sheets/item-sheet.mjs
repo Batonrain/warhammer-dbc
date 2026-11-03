@@ -2340,6 +2340,14 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.corruptionValue = ev.currentTarget.value; saveMech(arr); }
     });
+    // «не выше Cor», «если Порча <», «иначе» — необязательные оговорки Порчи
+    for (const [cls, field] of [["cap", "corruptionCap"], ["below", "corruptionIfBelow"], ["else", "corruptionElse"]]) {
+      on(`.mech-corruption-${cls}`, "change", ev => {
+        const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+        const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+        if (e) { e[field] = ev.currentTarget.value.trim(); saveMech(arr); }
+      });
+    }
     // Раны (kind:"wounds")
     on(".mech-wounds-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));

@@ -58,6 +58,8 @@ import { entryWhenOk } from "./module/rules/mech-when.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
+import { isIroncladArchetypeItem } from "./module/rules/armour-of-the-gods.mjs";
+import { ensureDivinePlateArmour } from "./module/apps/armour-of-the-gods.mjs";
 import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
@@ -84,8 +86,8 @@ import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
 import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
 import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
-import { hasRuleFlag, ruleFlags }     from "./module/rules/flags.mjs";
-import { lockedPatron, enforcedPatron } from "./module/rules/patron-lock.mjs";
+import { hasRuleFlag, ruleFlags, ruleFlagLabels }     from "./module/rules/flags.mjs";
+import { lockedPatron, enforcedPatron, patronLockMessage, PATRON_LOCK_PREFIX } from "./module/rules/patron-lock.mjs";
 import { optionalIntegralEntries, integralEntrySelected, INTEGRAL_CHOSEN_FLAG } from "./module/rules/integral-rating.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
@@ -2429,6 +2431,10 @@ export async function handleItemCreated(item, options, userId) {
   }
 
   await runAutoScripts(item);
+  // Броненосец: Божественные Латы (АР 8/10/8/8) — отдельная броня, выдаётся при
+  // любом появлении архетипа на акторе (покупка, Мутация «Доспехи Богов»,
+  // перетаскивание) — независимо от Механики и её SKIP_MECHANICS_HOOK.
+  if (isIroncladArchetypeItem(item)) await ensureDivinePlateArmour(actor);
   // Носитель расы/субрасы (originGrant стоит — страховка выше его не трогает)
   // уже получил свою Механику СИНХРОННО внутри applyRace/applySubrace
   // (module/apps/races.mjs) — опция SKIP_MECHANICS_HOOK в контексте создания
@@ -2860,7 +2866,7 @@ Hooks.on("preUpdateActor", (doc, changes) => {
   const keep = enforcedPatron(next, locked);
   if (keep === next) return;
   foundry.utils.setProperty(changes, "system.patronGod", keep);
-  ui.notifications?.warn(`${doc.name}: субраса не может потерять покровительство своего Бога — Покровитель оставлен прежним.`);
+  ui.notifications?.warn(patronLockMessage(doc.name, ruleFlagLabels(doc, PATRON_LOCK_PREFIX + locked)));
 });
 
 Hooks.on("preUpdateActor", (doc, changes) => {
