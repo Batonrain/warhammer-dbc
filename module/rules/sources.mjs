@@ -52,6 +52,7 @@ import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { healMistrustRules } from "./warp-touched.mjs";
 import { woundAuraRules } from "./wound-in-reality.mjs";
 import { noiseMarineRules } from "./noise-marine.mjs";
+import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -369,6 +370,10 @@ registerRuleSource("woundAura", a => woundAuraRules(a));
 // Шумовой Десантник (Sahara 1-54b9): Пьянящий Рёв (+2 за каждого другого участника боя на T/Страх/Подавление)
 // и Боль Это Наслаждение (+10 за уровень на все тесты) — rules/noise-marine.mjs.
 registerRuleSource("noiseMarine", a => noiseMarineRules(a));
+
+// Берсерк Кхорна (Sahara 1-54b9): Гвозди Мясника вне Ярости (−10 на социальные тесты и манифестацию) и
+// Закалённое в Крови (оружие нельзя выбить) — rules/khorne-berserker.mjs.
+registerRuleSource("khorneBerserker", a => [...khorneBerserkerRules(a), ...temperedRules(a, globalThis.game?.combat?.id ?? "")]);
 
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];

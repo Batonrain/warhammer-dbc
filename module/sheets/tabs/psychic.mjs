@@ -32,6 +32,7 @@ import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
+import { nailsForcePeril } from "../../rules/khorne-berserker.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
 import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS } from "../../rules/psyker.mjs";
@@ -1411,13 +1412,31 @@ export async function executePsychotest(actor, item, opts) {
     phenSection = `<div class="roll-threshold" style="font-size:0.85em;color:#3a7a3a;">Феномен не вызван.</div>`;
   }
 
+  // Гвозди Мясника (Берсерк Кхорна): «Если он Псайкер, персонаж вызывает Прорыв на каждой успешной манифестации
+  // психосилы» — Прорыв выпадает сам, без Феномена (и в Безопасном режиме тоже).
+  let forcedPeril = false;
+  if (success && !perilTriggered && nailsForcePeril(actor)) {
+    forcedPeril = true;
+    perilTriggered = true;
+    const perilRoll = await new Roll("1d100").evaluate();
+    allRolls.push(perilRoll);
+    const peril = getPeril(perilRoll.total);
+    phenSection += `
+        <div class="psy-peril">
+          <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! Гвозди Мясника (бросок ${perilRoll.total})</div>
+          <div class="psy-peril-name">${peril.label}</div>
+          <div class="psy-peril-text">${peril.text}</div>
+        </div>`;
+    phenSection += warpLockButtonsHtml(actor);
+  }
+
   // ── Варп-Шок: не-Хаоситы получают Порчу при Феномене (1d5 при Прорыве) ──────
   let warpShockSection = "";
   // Сколько Порчи эта карточка добавила (после Взгляда в Бездну; ниже, после записи, сверено с фактом): переброс психотеста Ключевой Силой
   // снимает ровно столько (combat/psyker-pools.mjs::returnWarpShock), а не пересчитывает заново — Порча других
   // источников и прежние ручные правки не трогаются.
   let warpShockApplied = 0;
-  if (phenomena && !NAT.isChaos) {
+  if ((phenomena && !NAT.isChaos) || forcedPeril) {
     let corrAmt = 1;
     if (perilTriggered) {
       const corrRoll = await new Roll("1d5").evaluate();

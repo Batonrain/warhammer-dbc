@@ -75,6 +75,8 @@ import { hasHussar }                                  from "./sabre-second-attac
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { dirgeAffects, DIRGE_CONCUSSIVE }              from "./noise-marine.mjs";
 import { bileSpitPenBonus }                            from "./plague-marine.mjs";
+import { bloodOfferingForAttack, consumeBloodOffering, combatIdOf } from "./khorne-berserker.mjs";
+import { paintItRedApplies, rolledEightOnAnyDie, skullOfferingBonus } from "../rules/khorne-berserker.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
 import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
 import { adroitDegreeBonus } from "../rules/adroit.mjs";
@@ -164,6 +166,8 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
       }
     }
   }
+  // Окрась Всё в Красный (Талант Берсерка Кхорна): «8 на любом кубике урона (даже отброшенном)».
+  if (wp.paintItRed && rolledEightOnAnyDie(dmgRoll)) hasExtreme = true;
   // Маловажные NPC (стр. 34, wdbc-x1nz.2.51): «не могут наносить Экстремальный
   // Урон» без Командного Присутствия «Экстремальный Урон» от своего Отряда/
   // Командира (rules/squad-roles.mjs::minionCanCauseExtremeDamage). Гасится
@@ -464,6 +468,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (own) own.rating = Math.max(Number(own.rating) || 0, DIRGE_CONCUSSIVE);
     else _mergedEntries.push({ key: "concussive", rating: DIRGE_CONCUSSIVE });
   }
+  // Кровавое Подношение (Талант Берсерка Кхорна, combat/khorne-berserker.mjs): следующее попадание оружием, убившим
+  // противника, получает свойство Освящённое (+½Cor.b Dmg добавлено ниже к плоскому бонусу).
+  const bloodOffering = isMelee ? bloodOfferingForAttack(actor, item) : { dmg: 0, sanctified: false };
+  if (bloodOffering.sanctified && !_mergedEntries.some(x => x.key === "sanctified")) _mergedEntries.push({ key: "sanctified", rating: 0 });
   // Обратный Удар (MELEE_MANEUVERS.reverseStrike): вторая атака профилем посоха получает Concussive(0),
   // если у оружия нет его с более высоким рейтингом.
   if (opts.reverseStrikeSecond) {
@@ -497,6 +505,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
   wp.reliabilityScore += modFx.reliabilityMod || 0;
+  // Окрась Всё в Красный (Талант Берсерка Кхорна): 8 на любом кубике урона — Экстремальный Урон (rollExtremeDamage).
+  if (isMelee && paintItRedApplies(actor, item)) wp.paintItRed = true;
   // Облучить (rules/gunsmith-talents.mjs, Sahara 3-9d40): до броска — удвоить Felling Рад-оружия
   // ЛИБО считать пробитие брони для Rad без удвоения AP цели (data-breach-no-double → damage.mjs).
   const toggles = opts.talentToggles ?? {};
@@ -1497,7 +1507,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Ку де Гра (rules/rogue-talents.mjs): ×2 урона по сочленениям/глазам Оглушённой или Лежащей цели.
   const coupDeGrace = hit && coupDeGraceActive({
     actor, weapon: item, gripKey: opts.gripKey, aimValue: aimTarget?.value, targetActor: defenderActor, isMelee });
-  const flatBonus = razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  const skullBonus = skullOfferingBonus(actor, { isMelee, combatId: combatIdOf(actor) });
+  const flatBonus = razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
   // Сварщик (rules/gunsmith-talents.mjs): признак на кнопки «Применить урон» — доп.
@@ -1579,12 +1590,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     haymakerOn ? `🥊 Тяжёлый Хук: отказ от второй руки в этот Ход — +${haymakerBonus} Dmg (½T.b, уже в сумме). Если цель получит попадание — встречный тест S+0 vs S+0 (кнопка в карточке урона), иначе Ничком.` : "",
     (goadingOn && hit) ? "🥊 Направляющий Удар: штраф −20 уже в пороге; Успех — кнопка свободного Давления ниже (даже если цель Избежит удара)." : "",
     owgdOn ? `💢 Один Из Нас Падёт: Полная Атака по Ненавистной цели — Dmg ×2 до Поглощения (уже в сумме).${owgdHand ? ` Носитель получает ${owgdHand.roll.total} непоглощаемого R Dmg в руку (Раны ${owgdHand.loss.currentWounds} → ${owgdHand.loss.newWounds}).` : " Урон в руку за эту атаку уже списан."} Усталость — по итогу удара: кнопка «Подвести итог» на карточке (или карточка урона, если цель выведена из строя).` : "",
+    skullBonus ? `💀 Подношение Черепов: +${skullBonus} Dmg ко всему рукопашному урону до конца боя (уже в сумме).` : "",
+    (hit && bloodOffering.sanctified) ? `🩸 Кровавое Подношение: +${bloodOffering.dmg} Dmg (½Cor.b, уже в сумме) и свойство Освящённое — метка израсходована.` : "",
     bileSpit.pen ? `🧪 Жёлчный Плевок: +${bileSpit.pen} к Pen (1d5, уже в Pen).` : "",
     dirgeOn ? "🎼 Песнь Отчаянья: урон звукового оружия уменьшен до 0, свойство Оглушающее (3) до начала следующего Хода." : "",
     sabotageOn ? `🔧 Саботаж: удар по оружию цели «${sabotageWeapon.name}» — урона существу нет.` : ""
   ].filter(Boolean).join("<br>");
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
   if (soulboundLegacyBonus) await consumeSoulboundLegacyBonus(actor, item, hit);
+  if (bloodOffering.sanctified) await consumeBloodOffering(actor, item, hit);
   let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -1735,7 +1749,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // Кромсающее, второе предложение (wdbc-1rno.35, стр. 427): карточка
       // должна называть РЕАЛЬНО брошенный куб (1d10−2), не «d5» по умолчанию —
       // иначе игрок видит подпись «d5: 7», хотя катался d10.
-      damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty,
+      const shownCrit = (critEffect && wp.paintItRed) ? `${critEffect} <b>Окрась Всё в Красный:</b> Кровотечение.` : critEffect;
+      damageRolls.push({ total, extremeLevel, hasExtreme, critEffect: shownCrit, bonusNote, deflagrateNote, msPenalty,
         baseDieResult, swapDice, skyPredator: skyPredatorOn, successes: deg, cleavingRoll: !!wp.legacyCleavingRollActive,
         sparksDice: sparksOn ? activeDieResults(dmgRoll) : [],
         opportunistFloor: !!wp.legacyOpportunistFloor });

@@ -189,6 +189,9 @@ export function effectAppliesTo(target, ctx) {
   // "opposed": книга даёт бонус именно этому конкретному тесту, не всем
   // встречным тестам подряд.
   if (scope === "vsexorcism") return ctx.kind === "vsExorcism";
+  // Приёмы-Состязания (Повалить, Финт, Давление, Напролом, Обезоружить, действия Борьбы): окно combat/techniques.mjs
+  // ставит ctx.contest. Аватар Резни: «−20 на все атаки и манёвры, направленные на Берсерка».
+  if (scope === "contest") return ctx.contest === true;
   if (scope === "social") return isSocialSkill(ctx.skill);
   // Реквизиция — тест «достать снаряжение» (apps/requisition.mjs): идёт по Inf
   // (или по F у Сети Контактов), поэтому свой ctx-флаг, а не «char:inf» — тот

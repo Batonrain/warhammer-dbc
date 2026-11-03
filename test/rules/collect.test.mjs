@@ -157,6 +157,8 @@ describe("источники по умолчанию", () => {
                 "daemonInevitability", "devourerOfKnowledge", "dreadnought",
                 // drugWithdrawal (wdbc-gyqf2, 25.10.2026) — штраф зависимого наркотика, пока доза просрочена.
                 "drugWithdrawal", "hatred", "homeworld", "items",
+                // khorneBerserker (Берсерк Кхорна, Sahara 1-54b9) — Гвозди Мясника вне Ярости и Закалённое в Крови.
+                "khorneBerserker",
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath",
                 // noiseMarine (Шумовой Десантник, Sahara 1-54b9) — Пьянящий Рёв (+2 за участника боя) и Боль Это Наслаждение (+10 за уровень).

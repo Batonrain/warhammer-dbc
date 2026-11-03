@@ -212,8 +212,8 @@ export async function _showContestDialog(actor, techDef) {
           // как у обычного броска Навыка (actor-sheet.mjs::_rollSkill).
           const side = danceOpt ? { skill: danceOpt.skillKey } : sideFor(charKey);
           const ruleMods = collectTestMods(actor, danceOpt
-            ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey, targetActor: target }
-            : { ...sideContext(side), targetActor: target });
+            ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey, targetActor: target, contest: true }
+            : { ...sideContext(side), targetActor: target, contest: true });
           let eff        = selfVal + mod + ruleMods.total;
           // Таланты Избегания: Освобождение от Пут и Ускользнуть.
           const talentParts = [];

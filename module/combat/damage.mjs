@@ -38,6 +38,8 @@ import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
 import { painIsPleasureOnDamage } from "./noise-marine.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
+import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
+import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
 import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
@@ -1429,6 +1431,8 @@ export async function applyDamageToActor(actor, damageData) {
   // Чумной Десантник (combat/plague-marine.mjs): Жёлчный Плевок / Благословенный Гноем ставят метку
   // «заражение в конце боя» на цель, Ходячая Пустошь носителя заражает поле боя.
   const plagueNote = await plagueMarineOnDamage(actor, damageData, netDamage);
+  // Гвозди Мясника (Берсерк Кхорна, combat/khorne-berserker.mjs): непоглощённый урон — карточка «тест W+10 или Ярость».
+  const nailsNote = await butchersNailsOnDamage(actor, netDamage);
 
   // Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): «Каждый раз,
   // когда персонаж получает E(El), он восстанавливает 1d10 ран» — решение
@@ -1452,6 +1456,8 @@ export async function applyDamageToActor(actor, damageData) {
   // ранении: «последнее» и есть то, от которого умерли.
   if (weaponUuid && netDamage > 0) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
+    // Закалённое в Крови (Берсерк Кхорна): рукопашное R-оружие нанесло урон — до конца боя его не выбить.
+    await temperedOnDamage(attackerUuid, weaponUuid, netDamage);
     // Жнец (combat/reaper-chain.mjs): был ли это рукопашный Натиск — решит setDeceased, когда смерть констатируют.
     await markLastChargeHit(actor, { melee, chargeBase, attackerUuid, targetTokenUuid: _targetTokenUuid(actor) });
     // Окончательная Казнь: убийство в этом же Раунде даст убийце Страх (2) — решит setDeceased.
@@ -1636,6 +1642,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (electricRegenNote) propEffectNotes.push(electricRegenNote);
   if (painNote) propEffectNotes.push(painNote);
   if (plagueNote) propEffectNotes.push(plagueNote);
+  if (nailsNote) propEffectNotes.push(nailsNote);
   // Странная Неуязвимость (wdbc-1rno.24) — здесь, а не в propNotes: те видны
   // только у обычного поглощения, а срезанный урон от Варп-Оружия тоже
   // должен объясняться в карточке.
@@ -1742,6 +1749,10 @@ export async function applyDamageToActor(actor, damageData) {
   // сама книжная строка прямо утверждает смерть цели (не через
   // CONDITIONS_DEF — deathButtonHtml читает flags.warhammer-dbc.deceased).
   const critPills = critEffect ? parseCritEffectPills(critEffect) : [];
+  // Окрась Всё в Красный (Берсерк Кхорна): Критические Эффекты этого оружия всегда наносят Кровотечение.
+  if (critEffect && paintItRedNeedsBleedPill(critPills) && await paintItRedBleeds(attackerUuid, weaponUuid)) {
+    critPills.push({ key: "bleeding", formula: null });
+  }
   const critLine = gotCritical ? `
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>

@@ -373,6 +373,11 @@ export function hatredTargetsOf(actor) {
     if (!itemHasName(item, "Hatred") && !itemHasName(item, "Ненависть")) continue;
     for (const t of item?.system?.targets ?? []) out.push(t);
   }
+  // Гвозди Мясника (Берсерк Кхорна, Sahara 1-54b9): «Находясь в Ярости, он получает Талант Hatred (Все!)».
+  // Ярость — system.inRage (сам файл rules/rage.mjs отсюда не импортируется: он импортирует этот).
+  if (actor?.system?.inRage && (hasNamed(actor, "Butcher's Nails") || holdsCapabilityKey(actor, "ability.butchersNails"))) {
+    out.push({ kind: "all", ref: "", value: "", name: "Все!", img: "" });
+  }
   return out;
 }
 

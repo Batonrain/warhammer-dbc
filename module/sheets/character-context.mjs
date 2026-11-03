@@ -86,6 +86,7 @@ import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
 import { hasSkillfulTorture }                    from "../apps/skillful-torture.mjs";
 import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
+import { hasButchersNails, hasRedStreak }          from "../rules/khorne-berserker.mjs";
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
 import { hasDirgeOfDespair, dirgeActive, hasWallOfDiscord, hasSingForMe } from "../combat/noise-marine.mjs";
 import { hasDistilledTorment }                  from "../combat/distilled-torment.mjs";
@@ -545,6 +546,8 @@ export function characterContext(actor) {
   context.hasSkillfulTorture = hasSkillfulTorture(actor);
   // Кнопка «Аватар Резни» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
   context.hasAvatarOfSlaughter = hasAvatarOfSlaughter(actor);
+  context.hasButchersNails = hasButchersNails(actor);
+  context.hasRedStreak = hasRedStreak(actor);
   // Кнопка «Грозный Вопль» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
   context.hasDreadWail = hasDreadWail(actor);
   // Шумовой Десантник (Sahara 1-54b9): кнопки вкладки БОЙ — только владельцам Талантов.

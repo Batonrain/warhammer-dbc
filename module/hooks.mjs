@@ -17,8 +17,9 @@ import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/helli
 import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marine.mjs";
 import { processMiasmaTurnStart, resolvePlagueMarineCombatEnd, rollAbominableFear, processWastelandRequest } from "./combat/plague-marine.mjs";
 import { offerStatusResist } from "./combat/status-resist.mjs";
-import { useFinalPush, useNeverDie, usePainIllusion, finalPushTurnEnd, finalPushCombatEnd,
+import { useFinalPush, useNeverDie, usePainIllusion, useUnstoppableWrath, finalPushTurnEnd, finalPushCombatEnd,
          applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
+import { rollNailsTest, giveInToNails, claimSkullOffering, khorneTurnEnd, clearKhorneCombat } from "./combat/khorne-berserker.mjs";
 import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.mjs";
 import { rollShockDeath, rollBleedingTest } from "./combat/shock-death.mjs";
 import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
@@ -987,7 +988,7 @@ export function registerHooks() {
         // Цель не сбрасывается: «еще одну атаку» книга ведёт по той же цели (игрок вправе выбрать другую).
         await attacker.sheet._showAttackDialog?.(weapon, {
           forceBase: "fullatk", furiousAssault: true, ...(technique ? { technique } : {}),
-          payOnRoll: { label: "Яростный Штурм", cardId: message.id, cardKey: FURIOUS_ASSAULT_CARD_FLAG, reaction: true }
+          payOnRoll: { label: "Яростный Штурм", cardId: message.id, cardKey: FURIOUS_ASSAULT_CARD_FLAG, reaction: true, furious: true }
         });
       });
     });
@@ -2671,6 +2672,48 @@ export function registerHooks() {
         if (!target) return;
         el.disabled = true;
         if (!(await useNeverDie(target, { message, block: el.closest(".dmg-critical-block") }))) el.disabled = false;
+      });
+    });
+    html.querySelectorAll(".wh-unstoppable-wrath-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const target = await talentActorOf(el);
+        if (!target) return;
+        el.disabled = true;
+        if (!(await useUnstoppableWrath(target, { message, block: el.closest(".dmg-critical-block") }))) el.disabled = false;
+      });
+    });
+    // Гвозди Мясника (Берсерк Кхорна, combat/khorne-berserker.mjs): карточка «тест W+10 или Ярость» — решает владелец, раз на карточку.
+    html.querySelectorAll(".wh-nails-roll-btn, .wh-nails-give-btn").forEach(btn => {
+      if (cardOnceUsed(message, "nailsGateResolved")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const doc = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        const target = doc?.actor ?? doc;
+        if (!target?.isOwner) return ui.notifications.warn("Решить может только владелец персонажа (или ГМ).");
+        const give = el.classList.contains("wh-nails-give-btn");
+        const done = await runCardOnce(message, "nailsGateResolved", async () => {
+          if (give) await giveInToNails(target); else await rollNailsTest(target);
+          return true;
+        }, "Эта карточка Гвоздей Мясника уже решена.");
+        if (done) el.closest(".roll-defense-btns")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+      });
+    });
+    // Подношение Черепов (Талант Берсерка Кхорна): принять — Реакцией или без неё, если удар обезглавил.
+    html.querySelectorAll(".wh-skull-offering-btn").forEach(btn => {
+      if (cardOnceUsed(message, "skullOfferingClaimed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const doc = await fromUuid(el.dataset.killerUuid).catch(() => null);
+        const killer = doc?.actor ?? doc;
+        if (!killer?.isOwner) return ui.notifications.warn("Принять Подношение может владелец убийцы (или ГМ).");
+        const decapitated = el.dataset.decapitated === "1";
+        const done = await runCardOnce(message, "skullOfferingClaimed", () => claimSkullOffering(killer, { decapitated }),
+          "Подношение с этой карточки уже принято.");
+        if (done) el.closest(".roll-defense-btns")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
       });
     });
     html.querySelectorAll(".wh-pain-illusion-btn").forEach(btn => {
@@ -4693,6 +4736,8 @@ function _attachFateContextMenu(message, html) {
     await clearHellishResilience(combat);
     // Боль Это Наслаждение: бонус «до конца Хода» не переживает бой.
     await clearPainIsPleasure(combat);
+    // Берсерк Кхорна: метки боя (Подношение Черепов, Кровавое Подношение, Закалённое в Крови).
+    await clearKhorneCombat(combat);
     // Чумной Десантник: отложенные заражения «в конце боя» (Жёлчный Плевок, Благословенный Гноем), снятие меток боя.
     await resolvePlagueMarineCombatEnd(combat);
     // Охотник на Танки: опознанные модели техники — «до конца боя».
@@ -5049,6 +5094,8 @@ function _attachFateContextMenu(message, html) {
         await hellishResilienceTurnEnd(prevActor);
         // Боль Это Наслаждение (Талант Шумового Десантника): бонус «до конца своего следующего Хода».
         await painIsPleasureTurnEnd(prevActor);
+        // Кровавое Подношение (Берсерк Кхорна): счётчик Ходов без попаданий убывает.
+        await khorneTurnEnd(prevActor);
         // Последний Рывок (Талант Стойкости): отложенные Критические Эффекты — напоминанием
         // в конце Хода носителя.
         await finalPushTurnEnd(prevActor);

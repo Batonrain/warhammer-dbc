@@ -32,6 +32,7 @@ import { showTortureDialog } from "../../apps/torture.mjs";
 import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
 import { attemptRageExit } from "../../combat/rage-behavior.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
+import { provokeNails, useRedStreak } from "../../combat/khorne-berserker.mjs";
 import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { toggleDirgeOfDespair, applyWallOfDiscord, showSingForMeDialog } from "../../combat/noise-marine.mjs";
 import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
@@ -195,6 +196,14 @@ export function activateCombatListeners(root, actor) {
     const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
     if (!target) return ui.notifications.warn("Наведите таргет (T) на видимого противника.");
     await applyAvatarOfSlaughter(actor, target);
+  });
+
+  // ── Берсерк Кхорна (Sahara 1-54b9, module/combat/khorne-berserker.mjs) ─────
+  on(root, ".butchers-nails-btn", "click", async () => {
+    await provokeNails(actor);
+  });
+  on(root, ".red-streak-btn", "click", async () => {
+    await useRedStreak(actor);
   });
 
   // ── Грозный Вопль (wdbc-sk8s, module/combat/dread-wail.mjs) ──────────────

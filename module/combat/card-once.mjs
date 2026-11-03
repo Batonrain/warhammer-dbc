@@ -33,6 +33,10 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "finalPushUsed", "neverDieUsed", "painIllusionUsed", "finalPushApplied",
   // Ключи попыток без итога (runCardOnce с persist:false) флагом не пишутся, но стыковочный тест требует их в списке.
   "finalPushTried", "painTried", "shockDeathRolled",
+  // Неостановимый Гнев (Черта Берсерка Кхорна, combat/crit-talents-actions.mjs): попытка, успех и «Смерть игнорирована этим успехом».
+  "unstoppableWrathTried", "unstoppableWrathUsed", "unstoppableWrathDeath",
+  // Гвозди Мясника (combat/khorne-berserker.mjs): карточка «тест W+10 или Ярость» решена; Подношение Черепов принято.
+  "nailsGateResolved", "skullOfferingClaimed",
   // Вырубание: «сбить с ног» с карточки урона при успешном Оглушении (combat/takedown.mjs).
   "takedownKnockdown",
   // Ключевые Силы (Талант Псайканы, combat/psyker-pools.mjs): бесплатная способность Очка Бесчестия — одна на карточку манифестации.

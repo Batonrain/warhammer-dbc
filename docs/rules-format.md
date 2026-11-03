@@ -245,6 +245,7 @@ export const PREDICATES = {
 | `vacuum` | тест вакуума (`ctx.vacuumTest`): начало Хода без пустотной брони на сцене с флагом «вакуум» (`combat/vacuum.mjs`), T+0 или Trade (Voidfarer)(T)+10; Преимущество Сквата — `vacuumResistReroll` |
 | `fear` | только тест Страха (`ctx.fearTest`, `combat/fear.mjs`) — не Запугивание, Пытки и Подавление, которые тоже тесты Морали (`morale`): Пьянящий Рёв Шумового Десантника (`rules/noise-marine.mjs`) |
 | `suppression` | только тест на Подавление (`ctx.suppressionTest`, `rules/morale-test.mjs`): Стальные Нервы, Пьянящий Рёв |
+| `contest` | приёмы-Состязания (`ctx.contest`, окно `combat/techniques.mjs`: Повалить, Финт, Давление, Напролом, Обезоружить, действия Борьбы) — не атака и не обычный тест навыка: «манёвры» книги. Аватар Резни (`rules/library/core.mjs`) |
 
 Области манифестации, появившиеся на шаге 5.4:
 

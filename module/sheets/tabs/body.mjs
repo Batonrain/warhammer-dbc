@@ -18,6 +18,7 @@ import { offerFinalExecutionFearAfterKill } from "../../combat/final-execution.m
 import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
 import { registerLegacyDreadfulKill } from "../../combat/legacy-weapon-kill-credit.mjs";
 import { registerVengeanceKill } from "../../combat/vengeance.mjs";
+import { registerKhorneKill } from "../../combat/khorne-berserker.mjs";
 import { registerLegacySlaughterKill } from "../../rules/legacy-weapon.mjs";
 import { takeSerum, rollLifespan } from "../../combat/replicant.mjs";
 
@@ -91,6 +92,8 @@ export async function setDeceased(actor, deceased) {
     await registerLegacySlaughterKill(weapon);
     // Месть (Талант Берсерка, combat/vengeance.mjs): убит лидер/чемпион Ненавистных в рукопашной.
     await registerVengeanceKill(actor, weapon);
+    // Кровавое Подношение и Подношение Черепов (Таланты Берсерка Кхорна, combat/khorne-berserker.mjs).
+    await registerKhorneKill(actor, weapon);
     // Жнец (Талант «Рукопашных», combat/reaper-chain.mjs): смерть констатирована после удара Натиском — карточка с кнопкой.
     await offerReaperAfterKill(actor, weapon);
     // Трофей (Мастер Казней, combat/trophy-kill.mjs): убийца-носитель Очков Трофеев — карточка с кнопкой «Трофей», решает ГМ.

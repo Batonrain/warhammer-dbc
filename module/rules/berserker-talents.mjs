@@ -30,6 +30,7 @@
 import { hasAbility } from "./ability-by-key.mjs";
 import { MELEE_BASES } from "../constants/combat.mjs";
 import { PREDICATES } from "./predicates.mjs";
+import { forHeCaresNotBonus } from "./khorne-berserker.mjs";
 
 /** Ключи Возможностей (module/constants/capabilities.mjs) и имена Талантов. */
 export const BERSERKER_TALENTS = Object.freeze({
@@ -69,7 +70,7 @@ export function berserkChargeBonus(actor, baseKey) {
  * расходились.
  */
 export function meleeBaseBonus(actor, baseKey) {
-  return (MELEE_BASES[baseKey]?.wsBonus ?? 0) + berserkChargeBonus(actor, baseKey);
+  return (MELEE_BASES[baseKey]?.wsBonus ?? 0) + berserkChargeBonus(actor, baseKey) + forHeCaresNotBonus(actor, baseKey);
 }
 
 /**

@@ -31,6 +31,8 @@ import { isTokenInSight } from "../rules/vision-target.mjs";
 import { dispelAllSustained } from "./psychic-sustain.mjs";
 import { isEncounterActive } from "./action-economy.mjs";
 import { markFrenzyExited } from "./frenzy.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
+import { hasButchersNails } from "../rules/khorne-berserker.mjs";
 import {
   RAGE_EXIT_TRIED_FLAG, RAGE_EXIT_FAILED_FLAG, RAGE_AFTER_COMBAT_FLAG,
   rageAvoidanceVerdict, rageSocialAutoFail, rageSustainTestNeeded,
@@ -200,7 +202,12 @@ async function leaveRage(actor) {
 
 /** Бросок и карточка попытки (общие для первой попытки и переброса Холодной Ярости). */
 async function rollExit(actor, { base, parts, threshold, rerollOf = false }) {
-  const roll = await new Roll("1d100").evaluate();
+  // Гвозди Мясника: «Помеха на тесты выхода из Ярости» — два броска, худший.
+  const disadvantage = hasButchersNails(actor);
+  const rolls = [await new Roll("1d100").evaluate()];
+  if (disadvantage) rolls.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolls.map(r => r.total), disadvantage ? "keepWorst" : "keepBest");
+  const roll = rolls[picked.index];
   const { success, deg } = testOutcome(roll.total, threshold);
   if (success) await leaveRage(actor);
   else await actor.setFlag(NS, RAGE_EXIT_FAILED_FLAG, true);
@@ -208,6 +215,8 @@ async function rollExit(actor, { base, parts, threshold, rerollOf = false }) {
   await postTestCard(actor, {
     icon: "😡", title: `Выход из Ярости${rerollOf ? " (переброс)" : ""} — ${esc(actor.name)}`, actorUuid: actor.uuid,
     threshold: rollStatLine({ label: "W", base, parts, threshold, rv: roll.total }),
+    rerollNote: disadvantage
+      ? `<div class="roll-defense-note">Помеха (Гвозди Мясника): броски ${rolls.map(r => r.total).join(" и ")} — худший ${roll.total}</div>` : "",
     outcome: success
       ? `<span class="roll-success">Успех — выходит из Ярости</span>`
       : `<span class="roll-failure">Провал (${deg}) — Ярость не отпускает: обязан атаковать других `
@@ -217,7 +226,7 @@ async function rollExit(actor, { base, parts, threshold, rerollOf = false }) {
         title="Холодная Ярость: неудачную попытку выйти из Ярости можно перебросить (раз на карточку).">
         🎲 Перебросить (Холодная Ярость)</button></div></div>`] : []
   }, {
-    rolls: [roll],
+    rolls,
     flags: { [NS]: { rageExit: { actorUuid: actor.uuid, base, parts, threshold, success } } }
   });
   return success;

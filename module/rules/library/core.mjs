@@ -171,14 +171,16 @@ export const CORE_RULES = [
     // на самом акторе (rules/predicates.mjs::avatarOfSlaughterOnBerserker),
     // без cross-actor обхода. Перенесена сюда (wdbc-shr, находка 1): нет
     // причины заводить отдельный источник ради одного статического правила,
-    // когда основная книга уже отдаёт такие через "core" оптом. Покрывает
-    // только «атаки» (ctx.kind==="attack") — «манёвры» (Состязания,
-    // combat/techniques.mjs) используют другой вид теста, не покрытый
-    // effectAppliesTo, оставлено открытым пробелом.
+    // когда основная книга уже отдаёт такие через "core" оптом. Атаки
+    // (ctx.kind==="attack") и «манёвры» (Состязания, combat/techniques.mjs,
+    // область "contest": ctx.contest ставит окно Состязания) — Sahara 1-54b9.
     id: "avatarOfSlaughter.penalty",
     label: "Аватар Резни: атака на Берсерка",
     when: { avatarOfSlaughterOnBerserker: true },
-    effects: [{ kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует Берсерка" }]
+    effects: [
+      { kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует Берсерка" },
+      { kind: "rollBonus", target: "contest", value: -20, label: "Аватар Резни: манёвр против Берсерка" }
+    ]
   },
   // Умелые Руки (Скват) — галочки тонкой работы с отбором по Черте, отдельным
   // файлом: library/squat.mjs.

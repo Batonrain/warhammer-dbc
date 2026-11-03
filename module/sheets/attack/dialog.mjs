@@ -34,6 +34,7 @@ import { isExecutionWeapon } from "../../rules/execution.mjs";
 import { markedPreyAdvantage } from "../../combat/marked-prey.mjs";
 import { markRoundCapabilityUsed, isRoundCapabilityAvailable } from "../../apps/game-session.mjs";
 import { runCardOnce, cardOnceUsed } from "../../combat/card-once.mjs";
+import { canPayFuriousReaction, payFuriousReaction } from "../../combat/khorne-berserker.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
 import { hateAttackDegrees } from "../../rules/focused-wrath.mjs";
@@ -104,7 +105,8 @@ function talentPayProblem(actor, pay) {
   if (pay.roundFlag && !isRoundCapabilityAvailable(actor, pay.roundFlag)) return "уже использовано в этом Раунде.";
   if (pay.cardKey && !game.messages?.get(pay.cardId)) return "карточка исходной атаки не найдена.";
   if (pay.cardKey && cardOnceUsed(game.messages.get(pay.cardId), pay.cardKey)) return "с этой карточки уже использовано.";
-  if (pay.reaction && !canSpendReaction(actor)) return "нет Реакции.";
+  // Яростный Штурм: дополнительная Реакция Ему Не Важно годится только сюда (combat/khorne-berserker.mjs).
+  if (pay.reaction && !(pay.furious ? canPayFuriousReaction(actor) : canSpendReaction(actor))) return "нет Реакции.";
   // Казнь (combat/execution.mjs): серия Раунда — исчерпана ли, не сменилась ли цель, не прошёл ли Раунд.
   if (pay.execution) return executionPayProblem(actor, pay.execution);
   return "";
@@ -116,7 +118,7 @@ async function payTalentAttack(actor, pay) {
   const refuse = text => { ui.notifications.warn(`⚠️ ${pay.label}: ${text}`); return false; };
   if (pay.roundFlag && !isRoundCapabilityAvailable(actor, pay.roundFlag)) return refuse("уже использовано в этом Раунде.");
   const spend = async () => {
-    if (pay.reaction && !(await spendReaction(actor))) return refuse("нет Реакции.");
+    if (pay.reaction && !(await (pay.furious ? payFuriousReaction(actor) : spendReaction(actor)))) return refuse("нет Реакции.");
     if (pay.roundFlag) await markRoundCapabilityUsed(actor, pay.roundFlag);
     // Казнь: шаг серии пишется вместе с отметкой карточки — только по факту броска.
     if (pay.execution && !(await commitExecutionStep(actor, pay.execution))) return refuse("серия Казни уже не позволяет эту атаку.");

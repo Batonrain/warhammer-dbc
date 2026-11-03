@@ -6326,15 +6326,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Берсерк_Кхорна — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.berserkKhorna.avatarOfSlaughter": {
     label: "Раз за бой в конце своего Хода может потратить Очко Бесчестия, чтобы направить кровожадность в одного противника в пределах видимости.",
-    source: "Avatar of Slaughter / Аватар Резни", reader: "module/combat/avatar-of-slaughter.mjs + rules/library/core.mjs::avatarOfSlaughter.penalty (wdbc-sk8s, перенесено wdbc-shr)"
+    source: "Avatar of Slaughter / Аватар Резни", reader: "module/combat/avatar-of-slaughter.mjs + rules/library/core.mjs::avatarOfSlaughter.penalty (wdbc-sk8s, перенесено wdbc-shr); манёвры-Состязания — область contest (rules/resolve-test.mjs, combat/techniques.mjs), Sahara 1-54b9"
   },
   "trait.elitnyeArhetipy.berserkKhorna.butcherSNails": {
     label: "Импланты гложут разум, держа на границе боевого безумия. Может входить в Ярость свободным действием, неограниченное число раз за бой.",
-    source: "Butcher's Nails / Гвозди Мясника", reader: "module/combat/frenzy.mjs::hasButchersNails (wdbc-sk8s)"
+    source: "Butcher's Nails / Гвозди Мясника", reader: "module/combat/frenzy.mjs::hasButchersNails (wdbc-sk8s); см. ability.butchersNails (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.berserkKhorna.unstoppableWrath": {
     label: "Раз за Раунд может пройти тест T+0, чтобы проигнорировать Критические Эффекты ранений, Оглушения,",
-    source: "Unstoppable Wrath / Неостановимый Гнев", reader: ""
+    source: "Unstoppable Wrath / Неостановимый Гнев", reader: "см. ability.unstoppableWrath (Sahara 1-54b9)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Бичеватель — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.bichevatel.bornForHeights": {
@@ -8184,9 +8184,44 @@ export const CAPABILITIES = {
     reader: "module/combat/bow-to-audience.mjs hasBowToAudience()"
   },
   "ability.butchersNails": {
-    label: "Гвозди Мясника: своя механика входа и выхода из Ярости",
+    label: "Гвозди Мясника: вход в Ярость без лимита за бой; в Ярости Hatred (Все!); Помеха на выход из Ярости; вне Ярости −10 на социальные тесты и манифестацию; непоглощённый урон, оскорбление или угроза — тест W+10 или Ярость; у Псайкера Прорыв на каждой успешной манифестации",
     source: "Butcher's Nails / Гвозди Мясника (packs-src/traits/Элитные_архетипы)",
-    reader: "module/combat/frenzy.mjs hasButchersNails()"
+    reader: "module/combat/frenzy.mjs hasButchersNails(); module/rules/khorne-berserker.mjs (источник правил khorneBerserker, nailsForcePeril); module/rules/predicates.mjs::hatredTargetsOf; module/combat/rage-behavior.mjs::rollExit; module/combat/khorne-berserker.mjs (карточка срыва); module/sheets/tabs/psychic.mjs (Прорыв) — Sahara 1-54b9"
+  },
+  "ability.unstoppableWrath": {
+    label: "Неостановимый Гнев: раз в Раунд T+0 — игнорировать Критические Эффекты ранений, Оглушения, Усталости и Смерти (кроме Кровотечения); Смерть — раз за бой",
+    source: "Unstoppable Wrath / Неостановимый Гнев (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/crit-talents-actions.mjs::useUnstoppableWrath, module/combat/crit-talents.mjs (кнопка и гашение), module/rules/khorne-berserker.mjs::wrathKeeps (Sahara 1-54b9)"
+  },
+  "ability.forHeCaresNot": {
+    label: "Ему Не Важно: +20 на Полную Атаку, пока кровоточит; одна доп. Реакция только на Яростный Штурм",
+    source: "For He Cares Not / Ему Не Важно (packs-src/talents/Элитные_архетипы)",
+    reader: "module/rules/khorne-berserker.mjs::forHeCaresNotBonus (через rules/berserker-talents.mjs::meleeBaseBonus), module/combat/khorne-berserker.mjs::payFuriousReaction (sheets/attack/dialog.mjs) — Sahara 1-54b9"
+  },
+  "ability.redStreak": {
+    label: "Красная Полоса: свободное действие — 1 непоглощаемый R урон себе и (по желанию) Кровотечение",
+    source: "Red Streak / Красная Полоса (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/khorne-berserker.mjs::useRedStreak (кнопка вкладки БОЙ) — Sahara 1-54b9"
+  },
+  "ability.paintItRed": {
+    label: "Окрась Всё в Красный: рукопашное R-оружие — Экстремальный Урон от 8 на любом кубике; Критические Эффекты всегда с Кровотечением",
+    source: "Paint It Red / Окрась Всё в Красный (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/attack.mjs::rollExtremeDamage (wp.paintItRed), module/combat/damage.mjs, module/combat/khorne-berserker.mjs::paintItRedBleeds — Sahara 1-54b9"
+  },
+  "ability.temperedInBlood": {
+    label: "Закалённое в Крови: R-оружие, нанёсшее урон, до конца боя нельзя выбить или вырвать (уничтожение и повреждение не моделируются)",
+    source: "Tempered in Blood / Закалённое в Крови (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/khorne-berserker.mjs::temperedOnDamage (damage.mjs), module/rules/khorne-berserker.mjs::temperedRules (источник khorneBerserker → combat.cannotBeDisarmed) — Sahara 1-54b9"
+  },
+  "ability.bloodOffering": {
+    label: "Кровавое Подношение: убив R-оружием, следующее попадание им — +½Cor.b Dmg и Освящённое; метка теряется за Cor.b Ходов без попаданий",
+    source: "Blood Offering / Кровавое Подношение (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/khorne-berserker.mjs::registerKhorneKill, ::bloodOfferingForAttack, ::consumeBloodOffering, ::khorneTurnEnd (module/sheets/tabs/body.mjs, module/combat/attack.mjs, module/hooks.mjs) — Sahara 1-54b9"
+  },
+  "ability.skullOffering": {
+    label: "Подношение Черепов: убив достойного противника в рукопашной, Реакцией обезглавить труп — +2 Dmg ко всему рукопашному урону до конца боя",
+    source: "Skull Offering / Подношение Черепов (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/khorne-berserker.mjs::registerKhorneKill, ::claimSkullOffering, module/rules/khorne-berserker.mjs::skullOfferingBonus (module/combat/attack.mjs) — Sahara 1-54b9"
   },
   "ability.conjureWraith": {
     label: "Вызвать Психокость: Полное действие — создать психокостяной предмет",
