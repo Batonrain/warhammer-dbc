@@ -107,6 +107,8 @@ import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-set
 import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
 import { spawnHunterHound } from "./module/combat/the-hunter.mjs";
+import { spawnGolem, syncRubricShield } from "./module/combat/rubric-sorcerer.mjs";
+import { hasShieldOfRubric } from "./module/rules/rubric-sorcerer.mjs";
 import { spawnSunderingCopies } from "./module/combat/sundering.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
 import { bindDemonMount } from "./module/apps/demon-mount.mjs";
@@ -1056,6 +1058,13 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
         return;
       }
+      if (data.action === "createGolem") {
+        // Голем Рубрики (Повелитель Големов, module/combat/rubric-sorcerer.mjs) — тот же приём, что summonDemon:
+        // Бестиарий скрыт от игрока, актора-Миньона и токен создаёт активный ГМ по плану из диалога игрока.
+        const res = await spawnGolem(data.plan ?? {});
+        if (!res.ok) console.warn("Warhammer DBC | Голем Рубрики:", res.reason);
+        return;
+      }
       if (data.action === "summonHunterHound") {
         // Загонщик/The Hunter (wdbc-1rno, Кхорн) — тот же приём, что
         // summonDemon выше: Бестиарий скрыт от игрока, спавн+метка+синк
@@ -1223,6 +1232,15 @@ Hooks.once("ready", () => {
       }
     } catch (e) { console.warn("Warhammer DBC | seat socket:", e); }
   });
+});
+
+// ── Щит Рубрики у уже существующих Колдунов (идемпотентно, module/combat/rubric-sorcerer.mjs) ──
+Hooks.once("ready", async () => {
+  if (!game.user.isGM || game.users.activeGM?.id !== game.user.id) return;
+  for (const actor of game.actors ?? []) {
+    if (!actor.items?.some(i => i.type === "trait" && hasShieldOfRubric({ items: [i] }))) continue;
+    try { await syncRubricShield(actor); } catch (e) { console.warn("Warhammer DBC | Щит Рубрики:", actor.name, e); }
+  }
 });
 
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────

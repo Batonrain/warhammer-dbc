@@ -414,6 +414,18 @@
     {{#if hasBlessedWithPus}}
     <button type="button" class="technique-btn blessed-touch-btn" style="margin-top:6px;" title="Благословенный Гноем — наведите таргет (T) на того, кто коснулся вас голой кожей: 1d10 C Toxic(0); при непоглощённом уроне в конце боя — T+0 или заражение"><span class="tech-name">🦠 Коснулись кожи</span></button>
     {{/if}}
+    {{#if hasGolemMaster}}
+    <button type="button" class="technique-btn golem-create-btn" style="margin-top:6px;" {{#unless golemStatus.free}}disabled{{/unless}} title="Повелитель Големов — тратит душу, комплект силовой брони и слот Миньона: 9 часов вселения и тест For.Lore(Warp)−10; Голем — средний Миньон-демон с Лояльностью 30. Разбитых Големов: {{golemStatus.fallen}}"><span class="tech-name">🗿 Создать Голема ({{golemStatus.free}}/{{golemStatus.max}} душ)</span></button>
+    {{/if}}
+    {{#if hasNexusOfSouls}}
+    <button type="button" class="technique-btn nexus-bind-btn" style="margin-top:6px;" {{#unless golemStatus.nexusLeft}}disabled{{/unless}} title="Узы Душ — привязать Голема к копии Таланта: он ходит в Инициативу колдуна и служит его Псайбером. Свободных связей: {{golemStatus.nexusLeft}}"><span class="tech-name">🔗 Узы Душ ({{golemStatus.nexusLeft}})</span></button>
+    {{/if}}
+    {{#if hasRebornInDust}}
+    <button type="button" class="technique-btn reborn-in-dust-btn" style="margin-top:6px;" title="Возрождён во Прахе — полное действие, Очко Бесчестия и психотест W−20 в Усиленном режиме: разбитый Голем встаёт с Ранами, равными Успехам, и лежит в Ступоре до начала вашего следующего Хода"><span class="tech-name">♻ Возрождён во Прахе</span></button>
+    {{/if}}
+    {{#if hasInfernalShells}}
+    <button type="button" class="technique-btn infernal-shells-btn" style="margin-top:6px;" title="Инфернальные Снаряды — час резьбы: 24 обычных болта (единица боеприпаса) становятся Инферно-болтами Тзинча"><span class="tech-name">🔩 Инфернальные Снаряды</span></button>
+    {{/if}}
     {{#if hasWalkingWasteland}}
     <button type="button" class="technique-btn walking-wasteland-btn" style="margin-top:6px;" title="Ходячая Пустошь — 1 непоглощаемого R урона себе, чтобы намеренно заразить местность вокруг (квадрат 100×100 м, 7 дней). Сама зона появляется и без кнопки, когда вы получаете непоглощённый урон в бою"><span class="tech-name">🏜 Заразить местность</span></button>
     {{/if}}

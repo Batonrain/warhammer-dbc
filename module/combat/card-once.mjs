@@ -60,6 +60,8 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   // Таланты Пугилиста: свободные действия с карточек Захвата и Пинка (3-eddb) — Швырнуть
   // (Метнуть/Замахнуться — одно действие), обе части Наскока и Пинок с Разворота.
   "slamUsed", "pounceKnockdownUsed", "pounceGrabUsed", "roundhouseUsed",
+  // Колдун Рубрики (combat/rubric-sorcerer.mjs): Психическое Эхо — один Голем с карточки манифестации; карточка Регенерации — тест или автоуспех, одно из двух.
+  "psychicEchoUsed", "regenerationDone",
   // Саботаж (Талант Разбойника, combat/sabotage.mjs): Клин/отключение оружия цели с карточки удара.
   "sabotageApplied",
   // Разрубить (Талант «Рукопашных», combat/cleave.mjs): одна свободная атака с карточки урона.

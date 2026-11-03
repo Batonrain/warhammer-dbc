@@ -4723,23 +4723,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Колдун_Рубрики — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.koldunRubriki.infernalShells": {
     label: "Инферно-болты Тзинча поражают душу и являются ключевым инструментом для резьбы. При наличии минимальных инструментов может потратить 1 час,",
-    source: "Infernal Shells / Инфернальные Снаряды", reader: ""
+    source: "Infernal Shells / Инфернальные Снаряды", reader: "см. ability.infernalShells (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.koldunRubriki.nexusOfSouls": {
     label: "Связь с одним из големов укреплена ритуалами, объединяющими их разумы и души. Голем действует в Инициативу колдуна и является его Псайбером.",
-    source: "Nexus Of Souls / Узы Душ", reader: ""
+    source: "Nexus Of Souls / Узы Душ", reader: "см. ability.nexusOfSouls (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.koldunRubriki.psychicEcho": {
     label: "Сотворив заклинание, направляет энергии сквозь душу голема. Раз в Ход после успешной манифестации психосилы может усилить регенерацию одного…",
-    source: "Psychic Echo / Психическое Эхо", reader: ""
+    source: "Psychic Echo / Психическое Эхо", reader: "см. ability.psychicEcho (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.koldunRubriki.rebornInDust": {
     label: "За полное действие может потратить Очко Бесчестия и пройти психотест W−20 в Усиленном режиме,",
-    source: "Reborn in Dust / Возрождён во Прахе", reader: ""
+    source: "Reborn in Dust / Возрождён во Прахе", reader: "см. ability.rebornInDust (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.koldunRubriki.sekhmet": {
     label: "Освоил вселение душ големов в более продвинутые доспехи. Может создавать големов в Терминаторских Доспехах вместо обычных силовых.",
-    source: "Sekhmet / Сехмет", reader: ""
+    source: "Sekhmet / Сехмет", reader: "см. ability.sekhmet (Sahara 1-54b9)"
   },
   // ── Элитные_архетипы\Король_Червей — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.korolChervey.freeRoamer": {
@@ -5933,7 +5933,8 @@ export const CAPABILITIES = {
   },
   "trait.regeneration": {
     label: "В начале Хода тест T+0 → +X Ран.",
-    source: "Regeneration / Регенерация (X)", reader: ""
+    source: "Regeneration / Регенерация (X)",
+    reader: "module/combat/rubric-sorcerer.mjs::regenerationTurnStart, ::rollRegeneration (карточка в начале Хода раненого: тест T+0 или пропуск действий; органы и бионика — вручную) — Sahara 1-54b9"
   },
   "trait.reliableSoldier": {
     label: "Выбирает по одному типу рукопашного и стрелкового оружия: +2 Dmg, +1 Pen, +1 надёжность.",
@@ -6624,15 +6625,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Колдун_Рубрики — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.koldunRubriki.golemMaster": {
     label: "Имеет 8 душ големов, привязанных к его душе. Может потратить одну (комплект силовой брони, Л. Болтер или любое оружие, слот Миньона),",
-    source: "Golem Master / Повелитель Големов", reader: ""
+    source: "Golem Master / Повелитель Големов", reader: "см. ability.golemMaster (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.koldunRubriki.rubricOfAhriman": {
     label: "Пережил великий ритуал Аримана, не обратившись в прах. Получает Трейт Unnatural Willpower (+2), но эти +2 не увеличивают максимальный PR.",
-    source: "Rubric of Ahriman / Рубрика Аримана", reader: ""
+    source: "Rubric of Ahriman / Рубрика Аримана", reader: "см. ability.rubricOfAhriman (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.koldunRubriki.shieldOfRubric": {
     label: "Рубрика одарила персонажа мистической защитой, отражающей вражеские болты и клинки. Даёт не перегружающий чародейский щит-купол с рейтингом…",
-    source: "Shield of Rubric / Щит Рубрики", reader: ""
+    source: "Shield of Rubric / Щит Рубрики", reader: "см. ability.shieldOfRubric (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.koldunRubriki.rubricae": {
     label: "Голем Рубрики не может говорить, совершать Бег и не получает Порчу; при Ранах ниже 0 рассыпается грудой пустых доспехов.",
@@ -8222,6 +8223,46 @@ export const CAPABILITIES = {
     label: "Подношение Черепов: убив достойного противника в рукопашной, Реакцией обезглавить труп — +2 Dmg ко всему рукопашному урону до конца боя",
     source: "Skull Offering / Подношение Черепов (packs-src/talents/Элитные_архетипы)",
     reader: "module/combat/khorne-berserker.mjs::registerKhorneKill, ::claimSkullOffering, module/rules/khorne-berserker.mjs::skullOfferingBonus (module/combat/attack.mjs) — Sahara 1-54b9"
+  },
+  "ability.rubricOfAhriman": {
+    label: "Рубрика Аримана: два броска на Варп-Прорыв (берётся меньший) и на Мутации; тест W−30 открывает выбор мутации из всей таблицы",
+    source: "Rubric of Ahriman / Рубрика Аримана (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::rollPeril, ::rollChoiceTest (module/sheets/tabs/psychic.mjs, module/combat/calm-warp.mjs, module/sheets/tabs/mutations.mjs::rollMutationOrGift) — Sahara 1-54b9"
+  },
+  "ability.golemMaster": {
+    label: "Повелитель Големов: 8 душ; Голем Рубрики — средний Миньон-демон с фиксированной Лояльностью 30; вселение 9 часов и тест For.Lore(Warp)−10",
+    source: "Golem Master / Повелитель Големов (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::startGolemCreation, ::spawnGolem, module/rules/rubric-sorcerer.mjs::soulsFree, module/rules/minion-build.mjs::minionLoyalty — Sahara 1-54b9"
+  },
+  "ability.shieldOfRubric": {
+    label: "Щит Рубрики: встроенный чародейский щит-купол 1-50 без перегрузки, пока есть Черта",
+    source: "Shield of Rubric / Щит Рубрики (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::syncRubricShield (module/hooks.mjs, createItem/deleteItem) — Sahara 1-54b9"
+  },
+  "ability.infernalShells": {
+    label: "Инфернальные Снаряды: за час 24 болта (единица боеприпаса) переделываются в Инферно-болты Тзинча",
+    source: "Infernal Shells / Инфернальные Снаряды (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::useInfernalShells (кнопка вкладки БОЙ) — Sahara 1-54b9"
+  },
+  "ability.nexusOfSouls": {
+    label: "Узы Душ: связанный Голем действует в Инициативу колдуна и служит его Псайбером (роль Псайбера не автоматизирована)",
+    source: "Nexus Of Souls / Узы Душ (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::bindNexus, ::syncNexusInitiatives (module/hooks.mjs, createCombatant/updateCombatant) — Sahara 1-54b9"
+  },
+  "ability.psychicEcho": {
+    label: "Психическое Эхо: раз в Ход после успешной манифестации Голем автоматически проходит следующий тест Регенерации и лечит вдвое больше",
+    source: "Psychic Echo / Психическое Эхо (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::usePsychicEcho, ::regenerationTurnStart, ::psychicEchoButtonHtml (module/sheets/tabs/psychic.mjs) — Sahara 1-54b9"
+  },
+  "ability.sekhmet": {
+    label: "Сехмет: Голем в Терминаторских Доспехах — +10 WS и S, аблативные Раны брони в Раны, Regeneration 6",
+    source: "Sekhmet / Сехмет (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::buildGolemData, ::startGolemCreation — Sahara 1-54b9"
+  },
+  "ability.rebornInDust": {
+    label: "Возрождён во Прахе: полное действие, Очко Бесчестия и психотест W−20 в Усиленном режиме — разбитый Голем встаёт с Ранами, равными Успехам, в Ступоре",
+    source: "Reborn in Dust / Возрождён во Прахе (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/rubric-sorcerer.mjs::useRebornInDust, ::clearRebornStupor — Sahara 1-54b9"
   },
   "ability.conjureWraith": {
     label: "Вызвать Психокость: Полное действие — создать психокостяной предмет",

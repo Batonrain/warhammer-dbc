@@ -16,6 +16,8 @@ import { hardenedSoulDice, hasResilienceTalent, snakeEaterHalve } from "./rules/
 import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/hellish-resilience.mjs";
 import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marine.mjs";
 import { processMiasmaTurnStart, resolvePlagueMarineCombatEnd, rollAbominableFear, processWastelandRequest } from "./combat/plague-marine.mjs";
+import { syncRubricShield, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
+import { hasShieldOfRubric } from "./rules/rubric-sorcerer.mjs";
 import { offerStatusResist } from "./combat/status-resist.mjs";
 import { useFinalPush, useNeverDie, usePainIllusion, useUnstoppableWrath, finalPushTurnEnd, finalPushCombatEnd,
          applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
@@ -862,6 +864,36 @@ export function registerHooks() {
         if (!target.isOwner) return ui.notifications.warn("⚠️ Тест Страха бросает владелец цели (или ГМ).");
         el.disabled = true;
         await rollAbominableFear(target);
+      });
+    });
+
+    // Регенерация (Трейт Regeneration (X), Голем Рубрики и все с Трейтом): тест T+0 или пропуск действий — раз на карточку.
+    html.querySelectorAll(".wh-regen-btn").forEach(btn => {
+      if (cardOnceUsed(message, "regenerationDone")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const doc = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        const target = doc?.actor ?? doc;
+        if (!target?.isOwner) return ui.notifications.warn("Регенерацию бросает владелец (или ГМ).");
+        const auto = el.dataset.auto === "1";
+        const done = await runCardOnce(message, "regenerationDone", () => rollRegeneration(target, { auto }).then(() => true),
+          "Эта карточка Регенерации уже решена.");
+        if (done) el.closest(".roll-defense-btns")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+      });
+    });
+    // Психическое Эхо (Колдун Рубрики): одного Голема усилить на карточке успешной манифестации.
+    html.querySelectorAll(".wh-psychic-echo-btn").forEach(btn => {
+      if (cardOnceUsed(message, "psychicEchoUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const doc = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        const caster = doc?.actor ?? doc;
+        if (!caster?.isOwner) return ui.notifications.warn("Эхо применяет владелец колдуна (или ГМ).");
+        const done = await runCardOnce(message, "psychicEchoUsed", () => usePsychicEcho(caster),
+          "Эхо с этой карточки уже применено.");
+        if (done) el.disabled = true;
       });
     });
 
@@ -5156,6 +5188,9 @@ function _attachFateContextMenu(message, html) {
       // Заразные Миазмы Чумного Десантника: «в начале его Хода» — урон всем не посвящённым Нурглу в 7 м,
       // по окончании — заражение (combat/plague-marine.mjs).
       await processMiasmaTurnStart(nextCombatant.actor, nextCombatant.token, combat);
+      // Колдун Рубрики: Ступор поднятых Големов снимается в начале Хода колдуна; Регенерация (X) — тест T+0 / Эхо.
+      await clearRebornStupor(nextCombatant.actor);
+      await regenerationTurnStart(nextCombatant.actor);
       // Пожиратель Времени/Devourer of Time (Тзинч, wdbc-1rno): «застигнутые
       // Врасплох теряют полудействие в [обладателя дара] второй Ход» — такт
       // начала именно доп. Хода находки. Жертвы свой Ход к этому моменту
@@ -5355,6 +5390,27 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("updateItem", (item, changes, options, userId) => _armorFieldSync(item, userId));
   Hooks.on("createItem", (item, options, userId) => _armorFieldSync(item, userId));
   Hooks.on("deleteItem", (item, options, userId) => _armorFieldSync(item, userId));
+
+  // Щит Рубрики (Колдун Рубрики, combat/rubric-sorcerer.mjs): Черта даёт встроенный не перегружающийся щит-купол 1-50;
+  // снимается вместе с Чертой. Сверку делает только клиент, внёсший правку.
+  const _rubricShieldSync = (item, userId) => {
+    if (item.type !== "trait" || !item.actor || userId !== game.user?.id) return;
+    if (!hasShieldOfRubric(item.actor) && !item.actor.items.some(i => i.type === "forcefield" && i.getFlag?.("warhammer-dbc", "rubricShield"))) return;
+    return syncRubricShield(item.actor);
+  };
+  Hooks.on("createItem", (item, options, userId) => _rubricShieldSync(item, userId));
+  Hooks.on("deleteItem", (item, options, userId) => _rubricShieldSync(item, userId));
+
+  // Узы Душ: Голем, связанный Талантом, ходит в Инициативу колдуна. Одним активным ГМ.
+  const _nexusSync = combatant => {
+    if (!game.users.activeGM?.isSelf) return;
+    return syncNexusInitiatives(combatant?.parent ?? combatant?.combat ?? null);
+  };
+  Hooks.on("createCombatant", combatant => _nexusSync(combatant));
+  Hooks.on("updateCombatant", (combatant, changes) => {
+    if (changes?.initiative === undefined) return;
+    return _nexusSync(combatant);
+  });
 
   // Узлы корабля (wdbc-qhwb): запоминаем старый system.status ДО применения
   // правки — preUpdate видит документ ещё нетронутым, а options — тот же

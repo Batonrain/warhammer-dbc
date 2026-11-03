@@ -37,6 +37,7 @@ import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { toggleDirgeOfDespair, applyWallOfDiscord, showSingForMeDialog } from "../../combat/noise-marine.mjs";
 import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
 import { activateInfectiousMiasma, startRotsmith, blessedTouch, startWasteland } from "../../combat/plague-marine.mjs";
+import { startGolemCreation, bindNexus, useRebornInDust, useInfernalShells } from "../../combat/rubric-sorcerer.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
@@ -241,6 +242,20 @@ export function activateCombatListeners(root, actor) {
   });
   on(root, ".walking-wasteland-btn", "click", async () => {
     await startWasteland(actor);
+  });
+
+  // ── Колдун Рубрики (Sahara 1-54b9, module/combat/rubric-sorcerer.mjs) ─────
+  on(root, ".golem-create-btn", "click", async () => {
+    await startGolemCreation(actor);
+  });
+  on(root, ".nexus-bind-btn", "click", async () => {
+    await bindNexus(actor);
+  });
+  on(root, ".reborn-in-dust-btn", "click", async () => {
+    await useRebornInDust(actor);
+  });
+  on(root, ".infernal-shells-btn", "click", async () => {
+    await useInfernalShells(actor);
   });
 
   // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──

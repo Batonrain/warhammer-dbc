@@ -2451,6 +2451,52 @@
         "modifiedTime": null
       },
       "_key": "!actors.items!iFNQWM17E1eZRbOB.RCRp08Mh3Jb9aOsg"
+    },
+    {
+      "name": "Shield of Rubric / Щит Рубрики",
+      "type": "forcefield",
+      "folder": null,
+      "system": {
+        "description": "Чародейский щит-купол 1-50 без перегрузки (Черта «Щит Рубрики»).",
+        "notes": "",
+        "shieldNature": "warp",
+        "shieldType": "dome",
+        "ratingMin": 1,
+        "ratingMax": 50,
+        "overloadThreshold": 0,
+        "currentRating": 50,
+        "isSpecialRating": false,
+        "equipped": true,
+        "status": "active",
+        "quality": "common",
+        "availability": 0,
+        "weight": 0,
+        "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Колдун Рубрики»)"
+      },
+      "_id": "v1P9Hy8BfAOFIUZa",
+      "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "rubricShield": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!iFNQWM17E1eZRbOB.v1P9Hy8BfAOFIUZa"
     }
   ],
   "prototypeToken": {

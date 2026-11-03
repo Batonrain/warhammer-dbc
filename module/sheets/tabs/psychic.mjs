@@ -17,6 +17,7 @@ import { focusQualityEffect, focusRollResult } from "../../rules/psy-focus.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES, PSY_ACTIONS, subPathTotals } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
+import { rollPeril, psychicEchoButtonHtml } from "../../combat/rubric-sorcerer.mjs";
 import { calmWarpButtonsHtml } from "../../combat/calm-warp.mjs";
 import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
@@ -1390,12 +1391,11 @@ export async function executePsychotest(actor, item, opts) {
     // Прорыв (если Феномен переходит в Прорыв)
     if (phen.peril) {
       perilTriggered = true;
-      const perilRoll = await new Roll("1d100").evaluate();
-      allRolls.push(perilRoll);
+      const perilRoll = await rollPeril(actor, allRolls);
       const peril = getPeril(perilRoll.total);
       phenSection += `
           <div class="psy-peril">
-            <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! (бросок ${perilRoll.total})</div>
+            <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! (бросок ${perilRoll.total})${perilRoll.note}</div>
             <div class="psy-peril-name">${peril.label}</div>
             <div class="psy-peril-text">${peril.text}</div>
           </div>`;
@@ -1418,12 +1418,11 @@ export async function executePsychotest(actor, item, opts) {
   if (success && !perilTriggered && nailsForcePeril(actor)) {
     forcedPeril = true;
     perilTriggered = true;
-    const perilRoll = await new Roll("1d100").evaluate();
-    allRolls.push(perilRoll);
+    const perilRoll = await rollPeril(actor, allRolls);
     const peril = getPeril(perilRoll.total);
     phenSection += `
         <div class="psy-peril">
-          <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! Гвозди Мясника (бросок ${perilRoll.total})</div>
+          <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! Гвозди Мясника (бросок ${perilRoll.total})${perilRoll.note}</div>
           <div class="psy-peril-name">${peril.label}</div>
           <div class="psy-peril-text">${peril.text}</div>
         </div>`;
@@ -1593,7 +1592,8 @@ export async function executePsychotest(actor, item, opts) {
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
       : `Психотест провален — ${deg} ${_degWord(deg)}`),
     sections: [conversionLine, bluntedSection, resistSection, bladeShieldSection, damageSection, charDamageSection,
-               attackPropsSection, signatureFreeHtml(actor, item, { success, rerollable: signatureRerollable, freeSpent: !!opts.signatureFreeSpent }), phenSection, warpShockSection]
+               attackPropsSection, signatureFreeHtml(actor, item, { success, rerollable: signatureRerollable, freeSpent: !!opts.signatureFreeSpent }), phenSection, warpShockSection,
+               success ? psychicEchoButtonHtml(actor) : ""]
   }, { rolls: allRolls, flags: signatureRerollable
     // Параметры броска — чтобы кнопка «Переброс» с карточки повторила тест с теми же модификаторами.
     // JSON-круг выкидывает функции (onResult и т.п.): во флаге только данные.

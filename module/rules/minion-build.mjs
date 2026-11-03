@@ -24,6 +24,7 @@ import { hasInfernalMaster } from "./occultist-talents.mjs";
 import { hasAirOfAuthority } from "./leadership-talents.mjs";
 import { itemHasName } from "./predicates.mjs";
 import { effectiveMinionGroup } from "./binary-dominion.mjs";
+import { GOLEM_LOYALTY } from "./rubric-sorcerer.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -375,6 +376,8 @@ export function minionCorruption(group) {
  * тот же приём для группы "human".
  */
 export function minionLoyalty(master, group, minion = null) {
+  // Голем Рубрики (Повелитель Големов): «фиксированная Лояльность 30, которая не изменяется никакими Талантами».
+  if (minion?.golem) return GOLEM_LOYALTY;
   const charKey = MINION_GROUPS[group]?.masterChar;
   if (!charKey) return 0;
   let value = num(master?.system?.characteristics?.[charKey]?.total);

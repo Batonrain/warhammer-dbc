@@ -2358,7 +2358,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // необязательно: пустое значение означает «любой тип».
     const amount = (entry.loyaltyOp === "subtract" ? -1 : 1) * (Number(entry.loyaltyValue) || 0);
     const targets = minionsOf(actor, [...(game.actors ?? [])])
-      .filter(m => !entry.loyaltyMinionType || m.system.minionType === entry.loyaltyMinionType);
+      .filter(m => !entry.loyaltyMinionType || m.system.minionType === entry.loyaltyMinionType)
+      .filter(m => !m.getFlag?.(FLAG, "rubricGolem"));
     for (const minion of targets) {
       await minion.update({ "system.loyalty.value": loyaltyAfterChange(minion, amount) });
     }
