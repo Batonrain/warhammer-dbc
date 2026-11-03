@@ -15,6 +15,7 @@ import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { hardenedSoulDice, hasResilienceTalent, snakeEaterHalve } from "./rules/resilience-talents.mjs";
 import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/hellish-resilience.mjs";
 import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marine.mjs";
+import { processMiasmaTurnStart, resolvePlagueMarineCombatEnd, rollAbominableFear, processWastelandRequest } from "./combat/plague-marine.mjs";
 import { offerStatusResist } from "./combat/status-resist.mjs";
 import { useFinalPush, useNeverDie, usePainIllusion, finalPushTurnEnd, finalPushCombatEnd,
          applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
@@ -851,6 +852,18 @@ export function registerHooks() {
     // Окончательная Казнь (combat/final-execution.mjs): убийство добычи дарит убийце Страх (2) на 1 Раунд. Обычно Трейт
     // выдаётся сам при констатации смерти; эта кнопка — когда констатировал тот, кто убийцей не владеет (не ГМ):
     // выдаёт ГМ или владелец убийцы, раз на карточку.
+    html.querySelectorAll(".wh-pm-fear-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const target = await fromUuid(el.dataset.targetUuid || "").then(d => d?.actor ?? d).catch(() => null);
+        if (!target) return ui.notifications.warn("⚠️ Цель Страха не найдена.");
+        if (!target.isOwner) return ui.notifications.warn("⚠️ Тест Страха бросает владелец цели (или ГМ).");
+        el.disabled = true;
+        await rollAbominableFear(target);
+      });
+    });
+
     html.querySelectorAll(".wh-fe-fear-btn").forEach(btn => {
       if (cardOnceUsed(message, FINAL_EXECUTION_FEAR_CARD_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async ev => {
@@ -4680,6 +4693,8 @@ function _attachFateContextMenu(message, html) {
     await clearHellishResilience(combat);
     // Боль Это Наслаждение: бонус «до конца Хода» не переживает бой.
     await clearPainIsPleasure(combat);
+    // Чумной Десантник: отложенные заражения «в конце боя» (Жёлчный Плевок, Благословенный Гноем), снятие меток боя.
+    await resolvePlagueMarineCombatEnd(combat);
     // Охотник на Танки: опознанные модели техники — «до конца боя».
     await clearTankHunterMemory(combat);
     // Последний Рывок: отложенное, не дожившее до конца Хода, не пропадает молча.
@@ -4787,6 +4802,11 @@ function _attachFateContextMenu(message, html) {
       // живым Раундом того же боя, тот же такт, что temp-grant выше.
       if (combatant.actor) await sweepExpiredControl(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
+  });
+  Hooks.on("updateActor", async (actor, changes) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (!changes?.flags?.["warhammer-dbc"]?.wastelandRequest) return;
+    await processWastelandRequest(actor);
   });
   Hooks.on("updateWorldTime", async (worldTime, dt) => {
     if (!game.user.isGM) return;
@@ -5086,6 +5106,9 @@ function _attachFateContextMenu(message, html) {
       // носителя Дара в 3 м — книга бьёт им «в начале своего Хода» жертвы,
       // тот же такт и та же геометрия, что у Стервятника выше.
       await processIrradiatedTurnStart(nextCombatant.actor, nextCombatant.token);
+      // Заразные Миазмы Чумного Десантника: «в начале его Хода» — урон всем не посвящённым Нурглу в 7 м,
+      // по окончании — заражение (combat/plague-marine.mjs).
+      await processMiasmaTurnStart(nextCombatant.actor, nextCombatant.token, combat);
       // Пожиратель Времени/Devourer of Time (Тзинч, wdbc-1rno): «застигнутые
       // Врасплох теряют полудействие в [обладателя дара] второй Ход» — такт
       // начала именно доп. Хода находки. Жертвы свой Ход к этому моменту

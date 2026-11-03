@@ -399,6 +399,18 @@
     {{#if hasDistilledTorment}}
     <button type="button" class="technique-btn distilled-torment-btn" style="margin-top:6px;" title="Дистиллированная Мука — после убийства звуковым оружием за Реакцию обратить плоть в пыль и сделать из неё дозу наркотика"><span class="tech-name">✨ Дистиллированная Мука</span></button>
     {{/if}}
+    {{#if hasInfectiousMiasma}}
+    <button type="button" class="technique-btn infectious-miasma-btn{{#if miasmaStatus.active}} active{{/if}}" style="margin-top:6px;" {{#if miasmaStatus.used}}{{#unless miasmaStatus.active}}disabled{{/unless}}{{/if}} title="Заразные Миазмы — раз за бой, Очко Бесчестия: 1d5+1 Ходов в начале вашего Хода все, кто не посвящён Нурглу, в 7 м получают 1d10 C Toxic(0), игнорирующее негерметичную броню; по окончании выжившие враги — T+0 или заражение вашей болезнью"><span class="tech-name">☣ Заразные Миазмы{{#if miasmaStatus.active}} ({{miasmaStatus.left}}){{/if}}</span></button>
+    {{/if}}
+    {{#if hasRotsmith}}
+    <button type="button" class="technique-btn rotsmith-btn" style="margin-top:6px;" title="Кузнец Гнили — 5 минут: заразить нож или отрубленную голову Гнилью Нургла; через 7 часов игрового времени нож станет чумным ножом, голова — Моровой гранатой"><span class="tech-name">🔪 Кузнец Гнили</span></button>
+    {{/if}}
+    {{#if hasBlessedWithPus}}
+    <button type="button" class="technique-btn blessed-touch-btn" style="margin-top:6px;" title="Благословенный Гноем — наведите таргет (T) на того, кто коснулся вас голой кожей: 1d10 C Toxic(0); при непоглощённом уроне в конце боя — T+0 или заражение"><span class="tech-name">🦠 Коснулись кожи</span></button>
+    {{/if}}
+    {{#if hasWalkingWasteland}}
+    <button type="button" class="technique-btn walking-wasteland-btn" style="margin-top:6px;" title="Ходячая Пустошь — 1 непоглощаемого R урона себе, чтобы намеренно заразить местность вокруг (квадрат 100×100 м, 7 дней). Сама зона появляется и без кнопки, когда вы получаете непоглощённый урон в бою"><span class="tech-name">🏜 Заразить местность</span></button>
+    {{/if}}
     {{#if hasResplendentRaiment}}
     <button type="button" class="technique-btn resplendent-raiment-btn" style="margin-top:6px;" title="Блистательные Одеяния — раз за бой/сцену, тратит 1 Очко Бесчестия"><span class="tech-name">👑 Блистательные Одеяния</span></button>
     {{/if}}

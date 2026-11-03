@@ -5,7 +5,7 @@
   "folder": "Z4NmJddqY7A3SO69",
   "system": {
     "description": "",
-    "notes": "Тот же класс, что Abominable Physiology (root) — иммунитеты + условная реакция на попадание, композит без единого числа.",
+    "notes": "Реализовано (Sahara 1-54b9). Иммунитет — записи Конструктора на этой Черте: poison.immune и иммунитет к Состоянию «Отравление» (Toxic и яды-препараты не действуют), drugs.afterEffectAddictionImmune (ни пост-эффектов, ни зависимости от наркотиков), defence.diseaseCarrier (предметы-болезни у носителя не действуют, но заразиться он может: «может переносить сотни инфекций», откуда берутся болезни для Миазмов и Плевка). Реакция: при попадании по носителю (module/combat/damage.mjs → combat/plague-marine.mjs::abominableOnHit) диалог «потратить Реакцию?», тест T+30; успех — урон от этого противника уменьшается на число Успехов (до Поглощения, на все его попадания до начала следующего Хода носителя; флаг abominableGuard снимает реестр rules/turn-flags.mjs), сведён к 0 — карточка с кнопкой «Тест Страха (1)» противнику. Не смоделировано: «если сам того не пожелает» — отключаемого иммунитета нет (полезные препараты действуют, как у любого персонажа; ядовитые и пост-эффекты — нет).",
     "benefit": "Болезни и паразиты делают его невероятно живучим. Не получает негативных эффектов болезней и ядов (в т.ч. наркотиков), если сам не пожелает. После получения попадания, до броска на урон, может потратить Реакцию и пройти тест T+30, чтобы уменьшить весь урон от этого противника до начала своего следующего Хода на Успехи. Если урон снижен до 0 — получает рейтинг Страха 1 против этого противника до конца боя.",
     "source": "Элитный архетип: Чумной Десантник",
     "hasRating": false,
@@ -34,7 +34,166 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "bq71eCnfRGKO72Ju",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "WsjkbKGIYMDC3uGG",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "poison.immune",
+              "label": "Иммунитет к ядам: Toxic и яды не действуют",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "kQu0STAqJsMfVslF",
+              "kind": "condition",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "minionGroup": "",
+              "minionTier": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "armourLocation": "body",
+              "armourValue": 1,
+              "ignoreTerrainProps": [],
+              "rerollScope": "all",
+              "rerollChar": "ag",
+              "rerollMode": "keepBest",
+              "modScope": "all",
+              "modValueMode": "flat",
+              "modCharBonus": "inf",
+              "rerollWho": "self",
+              "capabilityKey": "",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 0,
+              "capabilityMode": "flag",
+              "capabilityAptScope": "skill",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "fatigueAction": "threshold",
+              "fatigueThresholdChar": "t",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "equipQuality": "common",
+              "equipTalentTier": "",
+              "equipMaxPsyRating": "",
+              "equipImplantCategory": "",
+              "equipPrRequiredDelta": 0,
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1,
+              "loyaltyMinionType": "",
+              "loyaltyOp": "add",
+              "loyaltyValue": 1,
+              "auraRadius": "1",
+              "auraAffects": "allies",
+              "auraIncludesSelf": false,
+              "auraImmuneTraits": "",
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "Иммунитет к ядам: Отравление не накладывается никаким путём",
+              "code": "",
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
+              "when": {
+                "negate": false,
+                "conditions": []
+              },
+              "condKey": "poisoned",
+              "condMode": "immunity",
+              "condLevel": "1",
+              "condMitigate": "ignore",
+              "condDurationValue": "1",
+              "condDurationUnit": ""
+            },
+            {
+              "id": "Jc3uBBZv9cv6BZ0q",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "drugs.afterEffectAddictionImmune",
+              "label": "Иммунитет к пост-эффектам и зависимости от наркотиков",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "cAxLqBvf93QHsgHI",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.diseaseCarrier",
+              "label": "Болезни не действуют на носителя, но он заражается и переносит их",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "BZ4WFTsDwxw1UGMt",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "ability.abominableHitReaction",
+              "label": "После попадания: Реакция и T+30 — урон от этого противника на Успехи меньше до начала следующего Хода",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -278,7 +278,7 @@ export async function _showContestDialog(actor, techDef) {
           const rerollEl = html.find(".rule-reroll-opt:checked");
           const rerollIdx = parseInt(rerollEl?.data?.("idx") ?? "-1");
           const useReroll = rerollIdx >= 0;
-          if (useReroll) await commitRerollUse(actor, rerollEl[0]?.dataset);
+          if (useReroll && !techDef.forcedRerollMode) await commitRerollUse(actor, rerollEl[0]?.dataset);
           const mode = rerollEl?.data?.("mode") || "keepBest";
           // Лишние руки в Захвате (стр. 12, wdbc-x1nz.2.77): «за каждую
           // дополнительную руку он может бросать... дополнительный раз,
@@ -286,9 +286,10 @@ export async function _showContestDialog(actor, techDef) {
           // складывается (оба — «выбрать лучший из нескольких»).
           const extraRolls = Math.max(1, Number(techDef.rollCount) || 1);
           const rolled = [];
-          const nRolls = (useReroll || talentAdvantage) ? Math.max(2, extraRolls) : extraRolls;
+          const forcedMode = techDef.forcedRerollMode || "";
+          const nRolls = forcedMode ? 2 : (useReroll || talentAdvantage) ? Math.max(2, extraRolls) : extraRolls;
           for (let i = 0; i < nRolls; i++) rolled.push(await new Roll("1d100").evaluate());
-          const picked = pickReroll(rolled.map(r => r.total), useReroll ? mode : "keepBest");
+          const picked = pickReroll(rolled.map(r => r.total), forcedMode || (useReroll ? mode : "keepBest"));
           const rv     = picked.value;
           const { success: hit, deg: rolledDeg } = testOutcome(rv, eff);
           // Бой Один На Один / Искусный: +1 Успех к успешному тесту приёма (wdbc-r3379).
@@ -306,7 +307,7 @@ export async function _showContestDialog(actor, techDef) {
             ...ruleMods.parts,
             ...talentParts
           ];
-          const rerollLabel = useReroll ? rr.rerolls?.[rerollIdx]?.label
+          const rerollLabel = forcedMode ? techDef.forcedRerollLabel : useReroll ? rr.rerolls?.[rerollIdx]?.label
             : (extraRolls > 1 ? `Лишние руки в Захвате, лучший из ${extraRolls}` : talentAdvantage);
           const rerollNote = picked.dropped.length
             ? `<div class="roll-defense-note">${rerollLabel || "Переброс"}: отброшено ${picked.dropped.join(", ")}</div>`

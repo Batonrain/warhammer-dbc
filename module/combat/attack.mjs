@@ -74,6 +74,7 @@ import { ironGardenRating, ironGardenQuality }        from "../rules/iron-garden
 import { hasHussar }                                  from "./sabre-second-attack.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { dirgeAffects, DIRGE_CONCUSSIVE }              from "./noise-marine.mjs";
+import { bileSpitPenBonus }                            from "./plague-marine.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
 import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
 import { adroitDegreeBonus } from "../rules/adroit.mjs";
@@ -1284,6 +1285,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Грозный Вопль/Dread Wail (wdbc-sk8s) — усилитель звукового оружия, живёт
   // до начала следующего Хода (module/combat/dread-wail.mjs).
   const dreadWailBonus = dreadWailWeaponBonus(actor, item);
+  const bileSpit = await bileSpitPenBonus(actor, item);
   // Керамит (wdbc-nquc): цель с иммунитетом к Melta не получает удвоение
   // Пробития в упор — attackPenetration остаётся чистой функцией без Foundry,
   // поэтому иммунитет гасится здесь, клоном wp только для этого вызова
@@ -1331,7 +1333,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Охотник на Танки (rules/tank-hunter.mjs): +2×I.b к Pen против опознанной в этом бою модели техники.
   const tankHunter = tankHunterForAttack(actor, { isMelee, targetActor: defenderActor });
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen
   });
 
@@ -1577,6 +1579,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     haymakerOn ? `🥊 Тяжёлый Хук: отказ от второй руки в этот Ход — +${haymakerBonus} Dmg (½T.b, уже в сумме). Если цель получит попадание — встречный тест S+0 vs S+0 (кнопка в карточке урона), иначе Ничком.` : "",
     (goadingOn && hit) ? "🥊 Направляющий Удар: штраф −20 уже в пороге; Успех — кнопка свободного Давления ниже (даже если цель Избежит удара)." : "",
     owgdOn ? `💢 Один Из Нас Падёт: Полная Атака по Ненавистной цели — Dmg ×2 до Поглощения (уже в сумме).${owgdHand ? ` Носитель получает ${owgdHand.roll.total} непоглощаемого R Dmg в руку (Раны ${owgdHand.loss.currentWounds} → ${owgdHand.loss.newWounds}).` : " Урон в руку за эту атаку уже списан."} Усталость — по итогу удара: кнопка «Подвести итог» на карточке (или карточка урона, если цель выведена из строя).` : "",
+    bileSpit.pen ? `🧪 Жёлчный Плевок: +${bileSpit.pen} к Pen (1d5, уже в Pen).` : "",
     dirgeOn ? "🎼 Песнь Отчаянья: урон звукового оружия уменьшен до 0, свойство Оглушающее (3) до начала следующего Хода." : "",
     sabotageOn ? `🔧 Саботаж: удар по оружию цели «${sabotageWeapon.name}» — урона существу нет.` : ""
   ].filter(Boolean).join("<br>");

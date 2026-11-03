@@ -35,6 +35,7 @@ import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat
 import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { toggleDirgeOfDespair, applyWallOfDiscord, showSingForMeDialog } from "../../combat/noise-marine.mjs";
 import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
+import { activateInfectiousMiasma, startRotsmith, blessedTouch, startWasteland } from "../../combat/plague-marine.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
@@ -217,6 +218,20 @@ export function activateCombatListeners(root, actor) {
   });
   on(root, ".distilled-torment-btn", "click", async () => {
     await showDistilledTormentDialog(actor);
+  });
+
+  // ── Чумной Десантник (Sahara 1-54b9, module/combat/plague-marine.mjs) ─────
+  on(root, ".infectious-miasma-btn", "click", async () => {
+    await activateInfectiousMiasma(actor);
+  });
+  on(root, ".rotsmith-btn", "click", async () => {
+    await startRotsmith(actor);
+  });
+  on(root, ".blessed-touch-btn", "click", async () => {
+    await blessedTouch(actor);
+  });
+  on(root, ".walking-wasteland-btn", "click", async () => {
+    await startWasteland(actor);
   });
 
   // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──

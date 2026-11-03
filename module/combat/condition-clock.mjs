@@ -40,6 +40,7 @@ import { sceneRadiationClock } from "./radiation-scene.mjs";
 import { armourMongerClock } from "./armour-monger.mjs";
 import { drugWithdrawalClock } from "./drug-withdrawal.mjs";
 import { drugExpiryClock } from "./drug-expiry.mjs";
+import { rotsmithClock, gloriousRustClock } from "./plague-marine.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -196,6 +197,10 @@ export const CONDITION_CLOCK_HANDLERS = [
   // Бронник (Талант Стойкости): метка «броня обслужена сегодня» гаснет в
   // полночь по Календарю — combat/armour-monger.mjs.
   { id: "armourMonger", run: armourMongerClock },
+  // Чумной Десантник: Кузнец Гнили (нож → чумной нож, голова → Моровая граната через 7 ч) и Славная Ржавчина
+  // (7 дней — Poor.Q, 7 часов Poor.Q — Good.Q) — combat/plague-marine.mjs.
+  { id: "rotsmith", run: rotsmithClock },
+  { id: "gloriousRust", run: gloriousRustClock },
 ];
 
 async function charLossClock(actor, { to }) {

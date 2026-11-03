@@ -2315,6 +2315,7 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     delete data._id;
     const qty = Math.max(1, parseInt(entry.equipQty) || 1);
     if ("quantity" in (data.system || {})) data.system.quantity = qty;
+    if (data.type === "disease") data.system.active = true;
     // «Narthecium (Good.Q)» — качество часть выдачи, а не украшение: от него
     // зависят и Надёжность, и модификаторы. Ставим только там, где поле есть.
     if (entry.equipQuality && entry.equipQuality !== "common"
@@ -2883,6 +2884,7 @@ export async function syncGrantedEquipment(sourceItem) {
     delete data._id;
     const qty = Math.max(1, parseInt(e.equipQty) || 1);
     if ("quantity" in (data.system || {})) data.system.quantity = qty;
+    if (data.type === "disease") data.system.active = true;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id, equipEntryId: e.id } };
     toCreate.push(data);
   }

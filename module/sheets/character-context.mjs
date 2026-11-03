@@ -89,6 +89,8 @@ import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaug
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
 import { hasDirgeOfDespair, dirgeActive, hasWallOfDiscord, hasSingForMe } from "../combat/noise-marine.mjs";
 import { hasDistilledTorment }                  from "../combat/distilled-torment.mjs";
+import { hasInfectiousMiasma, hasRotsmith, hasBlessedWithPus, hasWalkingWasteland } from "../rules/plague-marine.mjs";
+import { infectiousMiasmaStatus }                from "../combat/plague-marine.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
@@ -551,6 +553,11 @@ export function characterContext(actor) {
   context.hasWallOfDiscord = hasWallOfDiscord(actor);
   context.hasSingForMe = hasSingForMe(actor);
   context.hasDistilledTorment = hasDistilledTorment(actor);
+  context.hasInfectiousMiasma = hasInfectiousMiasma(actor);
+  context.miasmaStatus = context.hasInfectiousMiasma ? infectiousMiasmaStatus(actor) : null;
+  context.hasRotsmith = hasRotsmith(actor);
+  context.hasBlessedWithPus = hasBlessedWithPus(actor);
+  context.hasWalkingWasteland = hasWalkingWasteland(actor);
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
   // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.

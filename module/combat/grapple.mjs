@@ -57,6 +57,7 @@ import { grantMoveAllowance } from "../rules/movement-path.mjs";
 import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
 import { hasDodgeTalent, grappleCoverHalfAngle } from "../rules/dodge-talents.mjs";
+import { hasBlessedWithPus } from "../rules/plague-marine.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 import { hasPugilistTalent, pinDownHoldOf, pinDownPenaltyValue, PIN_DOWN_FLAG } from "../rules/pugilist-talents.mjs";
 import { kneeStrikeButtonsHtml } from "./pugilist-strikes.mjs";
@@ -634,6 +635,10 @@ export function tentacleTechDef(actor, techDef) {
  * Захвата), сопротивляется Athletics(S); обе стороны получают свои Щупальце
  * и штраф Размера; Атакующий с лишними руками бросает лучший из N.
  */
+export function blessedWithPusDisadvantage(actor, partner) {
+  return !!partner && hasBlessedWithPus(partner) && !hasBlessedWithPus(actor);
+}
+
 export function grappleTechDef(actor, def) {
   const partner = def.opponent ?? grapplePartner(actor);
   const char = def.defaultChar || "s";
@@ -652,6 +657,8 @@ export function grappleTechDef(actor, def) {
     // Таланты Избегания (глава 3): Освобождение от Пут — штрафы вычитаются,
     // Успехи ×2 (только Выкрутиться); Ускользнуть — +30 или переброс раз в
     // Раунд на любом тесте A в Борьбе (combat/techniques.mjs).
+    forcedRerollMode: blessedWithPusDisadvantage(actor, partner) ? "keepWorst" : "",
+    forcedRerollLabel: "Помеха: Благословенный Гноем",
     escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
     slipAway: char === "ag" && !def.jockey && hasDodgeTalent(actor, "slipAway"),
     resistMods: (opp, me) => grappleTestMods(opp, me),

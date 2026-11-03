@@ -51,7 +51,7 @@ export const DIRGE_CONCUSSIVE = 3;
 export const SING_FOR_ME_DAMAGE = "2d10";
 
 /** Платит одно Очко Бесчестия общей точкой пула (учитывает временные Очки и Пустоту Парии). */
-async function spendInfamyPoint(actor, what) {
+export async function spendInfamyPoint(actor, what) {
   if (!actorHasInfamyPoint(actor)) {
     ui.notifications?.warn(`Нет Очка Бесчестия — ${what} не активирован.`);
     return false;

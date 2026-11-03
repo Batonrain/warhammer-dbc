@@ -893,6 +893,7 @@ uuid инициатора прокинут через `hooks.mjs::"opposedRespon
 effectiveness.mjs`, `death-dance.mjs`, `dodge-advantage.mjs`, `dominator.mjs`,
 `distilled-torment.mjs` (Дистиллированная Мука), `dread-wail.mjs` (+`apps/dread-wail-dialog.mjs`),
 `noise-marine.mjs` (Шумовой Десантник: Боль Это Наслаждение, Песнь Отчаянья, Стена Диссонанса, Спой Мне!, Нектар Богов; чистая часть и Пьянящий Рёв — `rules/noise-marine.mjs`),
+`plague-marine.mjs` (Чумной Десантник: Отвратная Физиология, Заразные Миазмы, Жёлчный Плевок, Благословенный Гноем, Ходячая Пустошь, Кузнец Гнили, Славная Ржавчина, выбор болезни Чумным Садовником; чистая часть — `rules/plague-marine.mjs`, Область заражённой местности — `regions/wasteland-zone.mjs`),
 `electrovigour.mjs`,
 `enjoyment.mjs`, `eternal-warrior.mjs`, `eye-of-challenge.mjs` (Око Вызова),
 `free-attack.mjs`, `fully-armed.mjs`, `gangrene.mjs`, `equipped-melee.mjs`,

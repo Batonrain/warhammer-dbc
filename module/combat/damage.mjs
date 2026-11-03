@@ -37,6 +37,7 @@ import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN
 import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
 import { painIsPleasureOnDamage } from "./noise-marine.mjs";
+import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
 import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
@@ -836,6 +837,9 @@ export async function applyDamageToActor(actor, damageData) {
     damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
   }
 
+  // Отвратная Физиология Чумного Десантника: Реакция + T+30 — урон от этого противника уменьшается на Успехи.
+  damageData = await abominableOnHit(actor, damageData);
+
   const {
     rawDamage,       // число — урон до поглощения
     penetration,     // число — бронепробитие
@@ -1422,6 +1426,9 @@ export async function applyDamageToActor(actor, damageData) {
   // Боль Это Наслаждение (Талант Шумового Десантника, combat/noise-marine.mjs): непоглощённый урон снимает
   // 1 Усталости и даёт +10 на все тесты до конца следующего Хода (макс. +30).
   const painNote = await painIsPleasureOnDamage(actor, netDamage);
+  // Чумной Десантник (combat/plague-marine.mjs): Жёлчный Плевок / Благословенный Гноем ставят метку
+  // «заражение в конце боя» на цель, Ходячая Пустошь носителя заражает поле боя.
+  const plagueNote = await plagueMarineOnDamage(actor, damageData, netDamage);
 
   // Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): «Каждый раз,
   // когда персонаж получает E(El), он восстанавливает 1d10 ран» — решение
@@ -1628,6 +1635,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);
   if (electricRegenNote) propEffectNotes.push(electricRegenNote);
   if (painNote) propEffectNotes.push(painNote);
+  if (plagueNote) propEffectNotes.push(plagueNote);
   // Странная Неуязвимость (wdbc-1rno.24) — здесь, а не в propNotes: те видны
   // только у обычного поглощения, а срезанный урон от Варп-Оружия тоже
   // должен объясняться в карточке.

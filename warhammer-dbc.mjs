@@ -134,6 +134,7 @@ import { onWoundRelevantItemChange, onWoundRelevantActorChange } from "./module/
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { GravitonZoneBehaviorType, GRAVITON_ZONE_TYPE } from "./module/regions/graviton-zone.mjs";
+import { WastelandZoneBehaviorType, WASTELAND_ZONE_TYPE } from "./module/regions/wasteland-zone.mjs";
 import { VortexZoneBehaviorType, VORTEX_ZONE_TYPE } from "./module/regions/vortex-zone.mjs";
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
 import { RunicWeaveZoneBehaviorType, RUNIC_WEAVE_ZONE_TYPE,
@@ -350,6 +351,10 @@ Hooks.once("init", () => {
   CONFIG.RegionBehavior.dataModels[GRAVITON_ZONE_TYPE] = GravitonZoneBehaviorType;
   CONFIG.RegionBehavior.typeLabels[GRAVITON_ZONE_TYPE] = "Гравитонное (усыхание)";
   CONFIG.RegionBehavior.typeIcons[GRAVITON_ZONE_TYPE]  = "fa-solid fa-circle-notch";
+
+  CONFIG.RegionBehavior.dataModels[WASTELAND_ZONE_TYPE] = WastelandZoneBehaviorType;
+  CONFIG.RegionBehavior.typeLabels[WASTELAND_ZONE_TYPE] = "Заражённая местность (Ходячая Пустошь)";
+  CONFIG.RegionBehavior.typeIcons[WASTELAND_ZONE_TYPE]  = "fa-solid fa-biohazard";
 
   // Зона «Укрытие» (wdbc-8k0i, стр. 30-31) — нативный Region Behavior,
   // тот же паттерн, что у Трудного ландшафта.

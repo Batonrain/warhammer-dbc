@@ -5342,27 +5342,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чумной_Десантник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chumnoyDesantnik.bileSpit": {
     label: "Кислота Бетчера проедает решётку респиратора. Может плеваться кислотой, не снимая шлема; плевок +1d5 урона +1 Pen.",
-    source: "Bile Spit / Жёлчный Плевок", reader: ""
+    source: "Bile Spit / Жёлчный Плевок", reader: "module/combat/plague-marine.mjs::bileSpitPenBonus, module/combat/plague-marine.mjs::plagueMarineOnDamage, module/combat/attack.mjs (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.chumnoyDesantnik.blessedWithPus": {
     label: "Густая гниль сочится из пор и трещин брони, покрывая слоем скользкой жижи. Противники получают Помеху на все тесты Захвата против него.",
-    source: "Blessed with Pus / Благословенный Гноем", reader: ""
+    source: "Blessed with Pus / Благословенный Гноем", reader: "module/combat/plague-marine.mjs::blessedTouch, module/combat/plague-marine.mjs::plagueMarineOnDamage (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.chumnoyDesantnik.gloriousRust": {
     label: "Снаряжение выглядит ржавым, но благословение Дедушки укрепляет качественные вещи. Считает все не мистические предметы Poor.Q как Good.",
-    source: "Glorious Rust / Славная Ржавчина", reader: ""
+    source: "Glorious Rust / Славная Ржавчина", reader: "module/combat/plague-marine.mjs::gloriousRustClock (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.chumnoyDesantnik.plagueGardener": {
     label: "Научился лучше контролировать испускаемую заразу. Используя любую способность, вызывающую заражение, может выбрать,",
-    source: "Plague Gardener / Чумной Садовник", reader: ""
+    source: "Plague Gardener / Чумной Садовник", reader: "module/combat/plague-marine.mjs::infectVictims (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.chumnoyDesantnik.rotsmith": {
     label: "Гниль Нургла из трещин брони заражает даже мёртвую плоть и металл. За 5 минут может заразить любой нож или отрубленную голову Гнилью Нургла;",
-    source: "Rotsmith / Кузнец Гнили", reader: ""
+    source: "Rotsmith / Кузнец Гнили", reader: "module/combat/plague-marine.mjs::startRotsmith, module/combat/plague-marine.mjs::rotsmithClock (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.chumnoyDesantnik.walkingWasteland": {
     label: "Кровь и ошмётки некротической плоти оскверняют землю. Получив непоглощённый урон в бою, заражает всё поле боя вокруг (до 1 гектара);",
-    source: "Walking Wasteland / Ходячая Пустошь", reader: ""
+    source: "Walking Wasteland / Ходячая Пустошь", reader: "module/combat/plague-marine.mjs::processWastelandRequest, module/regions/wasteland-zone.mjs (Sahara 1-54b9)"
   },
   // ── Элитные_архетипы\Чумной_Монах — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chumnoyMonah.feverStance": {
@@ -6979,11 +6979,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Чумной_Десантник — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chumnoyDesantnik.abominablePhysiology": {
     label: "Болезни и паразиты делают его невероятно живучим. Не получает негативных эффектов болезней и ядов (в т.ч. наркотиков), если сам не пожелает.",
-    source: "Abominable Physiology / Отвратная Физиология", reader: ""
+    source: "Abominable Physiology / Отвратная Физиология", reader: "module/combat/plague-marine.mjs::abominableOnHit, module/rules/disease-immunity.mjs (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.chumnoyDesantnik.infectiousMiasma": {
     label: "Раз за бой может потратить Очко Бесчестия, выпустив облако демонических мух и трупных газов.",
-    source: "Infectious Miasma / Заразные Миазмы", reader: ""
+    source: "Infectious Miasma / Заразные Миазмы", reader: "module/combat/plague-marine.mjs::activateInfectiousMiasma, module/combat/plague-marine.mjs::processMiasmaTurnStart (Sahara 1-54b9)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Чумной_Монах — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chumnoyMonah.carrionEater": {
@@ -8218,6 +8218,46 @@ export const CAPABILITIES = {
     source: "Dominator / Покоритель (packs-src/talents/Оккультист)",
     reader: "module/rules/dominator.mjs hasDominator()"
   },
+  "ability.abominableHitReaction": {
+    label: "Отвратная Физиология (Чумной Десантник): после попадания, до урона, Реакция и T+30 — весь урон от этого противника уменьшается на Успехи до начала следующего Хода; сведён к нулю — тест Страха (1) противнику",
+    source: "Abominable Physiology / Отвратная Физиология (packs-src/traits/Элитные_архетипы/Чумной_Десантник; не Черта Наги)",
+    reader: "module/combat/plague-marine.mjs::abominableOnHit, module/rules/plague-marine.mjs hasAbominableReaction()"
+  },
+  "ability.infectiousMiasma": {
+    label: "Заразные Миазмы: раз за бой за Очко Бесчестия 1d5+1 Ходов в начале Хода носителя все не посвящённые Нурглу в 7 м получают 1d10 C Toxic(0); выжившие враги — T+0 или заражение",
+    source: "Infectious Miasma / Заразные Миазмы (packs-src/traits/Элитные_архетипы/Чумной_Десантник)",
+    reader: "module/combat/plague-marine.mjs::activateInfectiousMiasma, module/rules/plague-marine.mjs hasInfectiousMiasma()"
+  },
+  "ability.plagueGardener": {
+    label: "Чумной Садовник: любая способность, вызывающая заражение, позволяет выбрать, какой из своих болезней заразить цель",
+    source: "Plague Gardener / Чумной Садовник (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/plague-marine.mjs::infectVictims, module/rules/plague-marine.mjs hasPlagueGardener()"
+  },
+  "ability.rotsmith": {
+    label: "Кузнец Гнили: за 5 минут заразить нож или отрубленную голову; через 7 часов — чумной нож или Моровая граната",
+    source: "Rotsmith / Кузнец Гнили (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/plague-marine.mjs::startRotsmith, module/rules/plague-marine.mjs hasRotsmith()"
+  },
+  "ability.bileSpit": {
+    label: "Жёлчный Плевок: плевок кислотой получает +1d5 к Pen; получивший урон и выживший в конце боя — T+0 или заражение",
+    source: "Bile Spit / Жёлчный Плевок (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/plague-marine.mjs::bileSpitPenBonus, module/rules/plague-marine.mjs hasBileSpit()"
+  },
+  "ability.gloriousRust": {
+    label: "Славная Ржавчина: не мистические предметы Poor.Q, носимые 7+ часов, считаются Good.Q; нормальные, пробывшие 7 дней, становятся Poor.Q",
+    source: "Glorious Rust / Славная Ржавчина (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/plague-marine.mjs::gloriousRustClock, module/rules/plague-marine.mjs hasGloriousRust()"
+  },
+  "ability.blessedWithPus": {
+    label: "Благословенный Гноем: касание голой кожи — 1d10 C Toxic(0) и заражение в конце боя; иммунитет к Горению и Corrosive (записи Черты); Помеха на тесты окна «Борьба» против носителя (module/combat/grapple.mjs::blessedWithPusDisadvantage)",
+    source: "Blessed with Pus / Благословенный Гноем (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/plague-marine.mjs::blessedTouch, module/rules/plague-marine.mjs hasBlessedWithPus()"
+  },
+  "ability.walkingWasteland": {
+    label: "Ходячая Пустошь: непоглощённый урон в бою (или 1 непоглощаемого R урона себе) заражает местность вокруг на 7 дней",
+    source: "Walking Wasteland / Ходячая Пустошь (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/plague-marine.mjs::processWastelandRequest, module/combat/plague-marine.mjs::startWasteland, module/regions/wasteland-zone.mjs, module/rules/plague-marine.mjs hasWalkingWasteland()"
+  },
   "ability.dirgeOfDespair": {
     label: "Песнь Отчаянья: до начала следующего Хода звуковое оружие получает Оглушающее (3) и урон 0",
     source: "Dirge of Despair / Песнь Отчаянья (packs-src/talents/Элитные_архетипы)",
@@ -8433,6 +8473,11 @@ export const CAPABILITIES = {
   // носителя она не активна (isItemActive), и её записи в сбор правил не попадают.
   // Возможность читается напрямую с предметов актора, не через hasRuleFlag —
   // isItemActive зовёт сам сбор правил (приём rules/vision-aids.mjs).
+  "defence.diseaseCarrier": {
+    label: "Носитель болезней: негативные эффекты болезней не действуют (предмет остаётся на листе, записи Конструктора и эффекты выключены), но носитель заражается — болезнь можно подхватить и передать (Чумной Десантник: «может переносить сотни инфекций»)",
+    source: "Abominable Physiology / Отвратная Физиология (Чумной Десантник)",
+    reader: "module/rules/disease-immunity.mjs actorImmuneToDiseaseEffects() — module/apps/effects.mjs isItemActive(); заражение остаётся доступным: actorImmuneToInfection() не считает эту возможность"
+  },
   "defence.diseaseEffectsImmune": {
     label: "Иммунитет к негативным эффектам болезней: предметы-болезни у носителя не действуют (записи Конструктора и эффекты болезни выключены, сам предмет остаётся на листе), и носитель не заражается — кнопка «Заражение» на болезни тест не бросает. Метка Нургла — всегда; Струп — пока препарат принят (основной эффект; срок «1 час» считает Календарь — поле препарата gameMinutes, module/combat/drug-expiry.mjs — или раньше кнопка «Эффект завершён»).",
     source: "Метка Нургла (корбук); Scab / Струп (корбук, стр. 279)",
