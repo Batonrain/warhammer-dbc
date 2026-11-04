@@ -3257,6 +3257,21 @@ export function registerHooks() {
         ui.notifications.info(`Спиной к Спине: бесплатный перехват ${fanatic.name} отмечен использованным в этом Раунде.`);
       });
     });
+    // Спаситель Туманов (Мастер Казней, Sahara 1-54b9): носитель Fanatic, принявший удар, меняется местами с целью.
+    html.querySelectorAll(".wh-mist-savior-swap").forEach(btn => {
+      if (cardOnceUsed(message, "mistSaviorSwapped")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const fanatic = await fromUuid(el.dataset.fanaticUuid || "").catch(() => null);
+        if (!fanatic) return ui.notifications.warn("⚠️ Носитель Fanatic не найден.");
+        if (!fanatic.isOwner) return ui.notifications.warn("Обмен местами делает владелец носителя (или ГМ).");
+        const { fanaticSavior } = await import("./combat/master-of-executions.mjs");
+        const done = await runCardOnce(message, "mistSaviorSwapped", () => fanaticSavior(fanatic, el.dataset.targetTokenUuid),
+          "С этой карточки обмен местами уже сделан.");
+        if (done) el.disabled = true;
+      });
+    });
     // Нечестивая Преданность: Миньон Хозяина пытается принять попадание — A+0
     // (+30 при ≤2 м), раз в Раунд на Миньона (module/combat/unholy-devotion.mjs).
     // Урон на Миньона переносит обычная кнопка «Применить урон» (выделить его токен).

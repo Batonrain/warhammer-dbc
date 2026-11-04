@@ -96,6 +96,7 @@ import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { isMoraleOpposedSkill, resolveTest, isSocialSkill } from "../rules/resolve-test.mjs";
 import { faithfulResistBonus } from "../rules/dark-apostle.mjs";
+import { hunterHindranceApplies } from "../rules/master-of-executions.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readTestKind, readDiceChoice, mergeReroll,
@@ -2440,6 +2441,9 @@ export class WarhammerCharacterSheet
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
     // блоком, а не галочкой среди модификаторов: их не с чем складывать.
     const rr = ruleRerollsHtml(this.actor, rollCtx);
+    // Целеустремлённый Охотник (Мастер Казней, Sahara 1-54b9): Помеха на Command, Charm, Deceive и Inquiry —
+    // в окне стоит заранее (rules/master-of-executions.mjs).
+    const hunterHindrance = hunterHindranceApplies(this.actor, rollCtx.skill);
     // Фракция собеседника без токена-цели (Sahara task-240a): Связи, Хорошая
     // Репутация, Враг и переброс Ненависти работают от rollCtx.socialFaction.
     // Выбор меняет ctx на лету — строки «Состояние» и переброс пересобираются.
@@ -2612,7 +2616,8 @@ export class WarhammerCharacterSheet
               ${aa.html}
             </div>
             <div id="rule-rerolls-slot">${rr.html}</div>
-            ${diceModeHtml()}
+            ${hunterHindrance ? `<div class="roll-dlg-note">Целеустремлённый Охотник: на тесты Command, Charm, Deceive и Inquiry — Помеха (выбрана ниже).</div>` : ""}
+            ${diceModeHtml({ preset: hunterHindrance ? "disadvantage" : "normal" })}
             <div class="roll-dlg-row roll-dlg-subrow">
               <label><input type="checkbox" id="confirm-pick"/> Спросить, если Преимущество/Помеха/Переброс дадут выбор (стр. 26)</label>
             </div>

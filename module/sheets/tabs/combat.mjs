@@ -39,6 +39,7 @@ import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
 import { activateInfectiousMiasma, startRotsmith, blessedTouch, startWasteland } from "../../combat/plague-marine.mjs";
 import { startGolemCreation, bindNexus, useRebornInDust, useInfernalShells } from "../../combat/rubric-sorcerer.mjs";
 import { useTruePrayer, buildMonument, convertNpc, makeFaithful, useLitanyOfChaos, useLayOnHands, useMartyr, useMortalInstrument } from "../../combat/dark-apostle.mjs";
+import { useHuntersSight } from "../../combat/master-of-executions.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
@@ -268,6 +269,9 @@ export function activateCombatListeners(root, actor) {
   on(root, ".apostle-lay-on-hands-btn", "click", async () => { await useLayOnHands(actor); });
   on(root, ".apostle-martyr-btn", "click", async () => { await useMartyr(actor); });
   on(root, ".apostle-mortal-btn", "click", async () => { await useMortalInstrument(actor); });
+
+  // ── Мастер Казней (Sahara 1-54b9, module/combat/master-of-executions.mjs) ───
+  on(root, ".hunter-sight-btn", "click", async () => { await useHuntersSight(actor); });
 
   // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──
   on(root, ".resplendent-raiment-btn", "click", async () => {

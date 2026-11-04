@@ -89,7 +89,6 @@ const ALLOWED = {
   // запасной путь для предметов «даёт Трейт Sonar Sense» (Sonar Visor,
   // импланты), которые его пока не несут.
   "trait.sonarSense":      "включается по имени Черты (Sonar Sense / Сонарное Чувство), ключ Конструктора — запасной путь",
-  "trait.unnaturalSenses": "включается по имени Черты (Unnatural Senses (X)), ключ Конструктора — запасной путь",
 
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат

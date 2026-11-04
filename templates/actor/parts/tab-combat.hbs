@@ -448,6 +448,9 @@
     {{#if hasMortalInstrument}}
     <button type="button" class="technique-btn apostle-mortal-btn" style="margin-top:6px;" {{#unless darkApostle.mortalReady}}disabled{{/unless}} title="Смертный Инструмент — раз в сессию, в смертельной опасности: Очко Бесчестия, Боги отвечают (щит от смертельного удара, мутация, демоны — выбирает ГМ).{{#if darkApostle.mortalShield}} Щит Богов поднят.{{/if}}"><span class="tech-name">⚡ Смертный Инструмент{{#if darkApostle.mortalShield}} (щит){{/if}}</span></button>
     {{/if}}
+    {{#if hasHunterSight}}
+    <button type="button" class="technique-btn hunter-sight-btn" style="margin-top:6px;" title="Взор Охотника — души в зоне Unnatural Senses и их грубая сила по Inf (шёпот вам и ГМу). Достойна ли душа трофея, решает ГМ"><span class="tech-name">👁 Взор Охотника</span></button>
+    {{/if}}
     {{#if hasWalkingWasteland}}
     <button type="button" class="technique-btn walking-wasteland-btn" style="margin-top:6px;" title="Ходячая Пустошь — 1 непоглощаемого R урона себе, чтобы намеренно заразить местность вокруг (квадрат 100×100 м, 7 дней). Сама зона появляется и без кнопки, когда вы получаете непоглощённый урон в бою"><span class="tech-name">🏜 Заразить местность</span></button>
     {{/if}}

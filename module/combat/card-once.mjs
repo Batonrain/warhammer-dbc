@@ -16,7 +16,7 @@
 const NS = "warhammer-dbc";
 
 /** Ключи флагов, которые ГМ ставит по просьбе игрока (белый список сокета). */
-export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
+export const CARD_ONCE_FLAGS = ["mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
   // Трата Очка «Успех» из меню карточки теста (apps/infamy-success.mjs): +Успех дописан в эту карточку.
   "infamySuccessAdded",
   // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).

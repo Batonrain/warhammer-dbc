@@ -332,6 +332,43 @@ export async function rollDisorder(actor, opts = {}) {
 }
 
 /**
+ * Расстройство, названное источником (Мастер Казней, Целеустремлённый Охотник: «Психопатия» на Тяжести 0, не ниже 0):
+ * без броска по таблице. Уже лежащее на листе не дублируется, а получает тот же нижний предел и «неизлечимо».
+ * Выданное помечается источником, как у случайного (смена источника снимает и расстройство).
+ */
+async function grantNamedDisorder(actor, sourceItem, { name, severityMin, incurable, label }) {
+  const entry = DISORDER_LIBRARY.find(d => d.name === name);
+  if (!entry) return { ok: false, reason: `Расстройства «${name}» нет в таблице.` };
+  const floor = severityMin === null || severityMin === undefined ? null : Number(severityMin);
+  const who = label || sourceItem?.name || "";
+  const existing = actor.items.find(i => i.type === "mentalDisorder" && i.name === name);
+  if (existing) {
+    const cur = existing.system?.severityMin;
+    const patch = { "system.incurable": !!incurable };
+    if (floor !== null && (cur === null || cur === undefined || Number(cur) < floor)) patch["system.severityMin"] = floor;
+    await existing.update(patch);
+    return { ok: true, item: existing, existing: true };
+  }
+  const originGrant = sourceItem?.getFlag?.("warhammer-dbc", "originGrant");
+  const flags = { "warhammer-dbc": {
+    ...(sourceItem?.id ? { grantedByItem: sourceItem.id } : {}),
+    ...(originGrant ? { originGrant } : {})
+  } };
+  const item = await createDisorderItem(actor, entry, { system: { severity: 0, severityMin: floor, incurable: !!incurable }, flags });
+  if (!item) return { ok: false, reason: `Расстройство «${name}» уже есть.` };
+  if (sourceItem?.setFlag) await sourceItem.setFlag("warhammer-dbc", "startingDisorderId", item.id);
+  await postTestCard(actor, {
+    icon: rollIcon("dice", "#6fe6ff"), title: `Ментальное Расстройство — ${esc(actor.name)}`,
+    outcome: `<span class="roll-failure">${rollIcon("warn", "#ffb84d")}${esc(name)}</span>`,
+    sections: [
+      `<div class="roll-threshold"><b>${esc(who)}: расстройство на Тяжести 0${floor !== null ? `, не ниже ${floor}` : ""}${incurable ? ", неизлечимо" : ""}.</b></div>`,
+      entry.desc ? `<div class="roll-threshold">${entry.desc}</div>` : ""
+    ]
+  }, { sound: false });
+  return { ok: true, item };
+}
+
+/**
  * Стартовое расстройство от источника (Архетип «Беглый Псайкер»: «начинает
  * игру со случайным ментальным расстройством. Оно неизлечимо и его тяжесть не
  * может опуститься ниже −2»). Зовётся записью Конструктора kind:"script"
@@ -341,8 +378,9 @@ export async function rollDisorder(actor, opts = {}) {
  * смена Архетипа снимает и расстройство.
  * @returns {Promise<{ok:boolean, reason?:string, item?:Item}>}
  */
-export async function grantStartingDisorder(actor, sourceItem, { severityMin = null, incurable = true, label = "" } = {}) {
+export async function grantStartingDisorder(actor, sourceItem, { severityMin = null, incurable = true, label = "", name = "" } = {}) {
   if (!actor) return { ok: false, reason: "Нет актора." };
+  if (name) return grantNamedDisorder(actor, sourceItem, { name, severityMin, incurable, label });
   const prevId = sourceItem?.getFlag?.("warhammer-dbc", "startingDisorderId");
   if (prevId && actor.items.get(prevId)) {
     return { ok: false, reason: `Стартовое расстройство уже выдано: «${actor.items.get(prevId).name}».` };

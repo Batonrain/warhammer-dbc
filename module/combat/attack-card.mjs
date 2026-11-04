@@ -438,6 +438,9 @@ function fanaticInterceptSection(fanaticIntercepts) {
       ${f.freeUse
         ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
         : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
+      ${f.savior && f.targetTokenUuid
+        ? ` Спаситель Туманов: <button type="button" class="wh-mist-savior-swap" data-fanatic-uuid="${f.uuid}" data-target-token-uuid="${f.targetTokenUuid}">Поменяться местами с целью</button>`
+        : ""}
     </div>`).join("");
   return rows;
 }

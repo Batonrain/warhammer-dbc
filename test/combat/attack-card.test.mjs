@@ -623,3 +623,20 @@ describe("Спиной к Спине/Back to Back: показ носителей
     expect(html).not.toContain('data-fanatic-uuid="Actor.f2"');
   });
 });
+
+describe("Спаситель Туманов (Мастер Казней, Sahara 1-54b9): обмен местами после перехвата Fanatic", () => {
+  it("кнопка «Поменяться местами с целью» — только у носителя Таланта, с токеном цели в данных", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Телохранитель", freeUse: true, savior: true, targetTokenUuid: "Scene.s.Token.t9" },
+      { uuid: "Actor.f2", name: "Простой", freeUse: true, savior: false, targetTokenUuid: "Scene.s.Token.t9" }
+    ] });
+    expect(html).toContain('class="wh-mist-savior-swap"');
+    expect(html).toContain('data-fanatic-uuid="Actor.f1" data-target-token-uuid="Scene.s.Token.t9"');
+    expect(html.match(/wh-mist-savior-swap/g)).toHaveLength(1);
+  });
+
+  it("без токена цели кнопки нет", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.f1", name: "Телохранитель", freeUse: true, savior: true, targetTokenUuid: "" }] });
+    expect(html).not.toContain("wh-mist-savior-swap");
+  });
+});

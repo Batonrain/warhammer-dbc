@@ -96,6 +96,7 @@ import { hasGolemMaster, hasInfernalShells, hasRebornInDust, nexusCopies } from 
 import { golemStatus }                           from "../combat/rubric-sorcerer.mjs";
 import { hasHarbingerOfHeresy, hasDarkDevotion, hasTruePrayer, hasLayOnHands, hasLitanyOfChaos, hasMartyr, hasMortalInstrument } from "../rules/dark-apostle.mjs";
 import { darkApostleStatus }                     from "../combat/dark-apostle.mjs";
+import { hasHunterSight }                        from "../rules/master-of-executions.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
@@ -582,6 +583,8 @@ export function characterContext(actor) {
   context.hasDarkApostle = context.hasHarbinger || context.hasDarkDevotion || context.hasTruePrayer || context.hasLayOnHands
     || context.hasLitanyOfChaos || context.hasMartyr || context.hasMortalInstrument;
   context.darkApostle = context.hasDarkApostle ? darkApostleStatus(actor) : null;
+  // Мастер Казней (Sahara 1-54b9, module/combat/master-of-executions.mjs): кнопка Взора Охотника на вкладке БОЙ.
+  context.hasHunterSight = hasHunterSight(actor);
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
   // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.

@@ -37,6 +37,9 @@
 //    • harbingerMark / litanyBlessing / layOnHands / martyrSummon — Тёмный Апостол (Sahara 1-54b9): метка обращения
 //      или Правоверного, Литания Хаоса подчинённому, Порча и мутация по Возложению Рук, демон на месте Мученика.
 //      Нужен соответствующий Талант или Черта у инициатора; предметы, Порчу и демона собирает сам ГМ.
+//    • saviorSwap — Спаситель Туманов (Мастер Казней, Sahara 1-54b9): токен союзника встаёт на прежнее место
+//      инициатора (обмен местами). Нужен Талант Mist Savior у инициатора; ГМ сверяет, что инициатор уже стоит на месте
+//      союзника и что цель переноса не дальше предела (P.b или Полудвижение инициатора).
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -52,6 +55,7 @@ import {
   LAY_ON_HANDS_USAGE
 } from "../rules/dark-apostle.mjs";
 import { isThrottleReady } from "../rules/cooldown.mjs";
+import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { mutationCatalog } from "../constants/mutations.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
@@ -179,6 +183,14 @@ export function checkTargetWrite(op, ctx = {}) {
     if (typeof op.tokenUuid !== "string" || op.tokenUuid.length > 200) return { ok: false, reason: "wallPush: нет токена" };
     if (!Number.isFinite(op.x) || !Number.isFinite(op.y)) return { ok: false, reason: "wallPush: точка вне числа" };
     if (!hasAbility(ctx.initiator, "ability.wallOfDiscord", "Wall of Discord", "talent")) return { ok: false, reason: "у инициатора нет Wall of Discord" };
+    return { ok: true };
+  }
+
+  if (op.kind === "saviorSwap") {
+    if (Object.keys(op).some(k => !["kind", "tokenUuid", "x", "y"].includes(k))) return { ok: false, reason: "saviorSwap: лишние поля" };
+    if (typeof op.tokenUuid !== "string" || op.tokenUuid.length > 200) return { ok: false, reason: "saviorSwap: нет токена" };
+    if (!Number.isFinite(op.x) || !Number.isFinite(op.y)) return { ok: false, reason: "saviorSwap: точка вне числа" };
+    if (!hasMistSavior(ctx.initiator)) return { ok: false, reason: "у инициатора нет Mist Savior" };
     return { ok: true };
   }
 
@@ -330,6 +342,10 @@ export async function performTargetWrite(target, op, initiator = null) {
   if (op.kind === "harbingerMark" || op.kind === "litanyBlessing" || op.kind === "layOnHands" || op.kind === "martyrSummon") {
     const { performDarkApostleWrite } = await import("./dark-apostle.mjs");
     return performDarkApostleWrite(target, op, initiator);
+  }
+  if (op.kind === "saviorSwap") {
+    const { performSaviorSwapWrite } = await import("./master-of-executions.mjs");
+    return performSaviorSwapWrite(target, op, initiator);
   }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");

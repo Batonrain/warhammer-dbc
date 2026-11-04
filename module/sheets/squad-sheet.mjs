@@ -42,6 +42,7 @@ import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
          BRING_IT_DOWN_PENALTY_PER_STACK, warChantSingAlongBonus,
          commandCapacity } from "../rules/leadership-talents.mjs";
 import { backToBackGrantSectionHtml } from "../combat/fanatic-redirect.mjs";
+import { hunterHindranceApplies } from "../rules/master-of-executions.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
          rollD100WithReroll } from "../rules/test-kind-widget.mjs";
@@ -790,7 +791,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // «−30 на устные социальные тесты» Оглохшего…) — в превью Порога тоже.
     const ruleTotalOf = p => this._commandRuleMods(p.uuid).total;
     const rollerOpts = pool.map((p, i) =>
-      `<option value="${p.key}" ${i === 0 ? "selected" : ""} data-base="${p.command ?? -20}" data-rule="${ruleTotalOf(p)}" data-coord="${p.key === "coordinator" ? 1 : 0}">
+      `<option value="${p.key}" ${i === 0 ? "selected" : ""} data-base="${p.command ?? -20}" data-rule="${ruleTotalOf(p)}" data-coord="${p.key === "coordinator" ? 1 : 0}" data-hunter="${hunterHindranceApplies(this._resolve(p.uuid), "command") ? 1 : 0}">
         ${p.label}: ${esc(p.name)} — Command ${p.command ?? "—"}
       </option>`).join("");
 
@@ -828,7 +829,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="sq-total">0</span></div>
       <div class="sq-cmd-risk">Риск ${eRisk.value}${eRisk.bonus ? ` (${eRisk.base} +1 — шлем снят)` : ""} — максимум Успехов: <b id="sq-cap">${capTxt}</b></div>
       ${testKindHtml({ label: title })}
-      ${diceModeHtml()}
+      ${diceModeHtml({ preset: pool[0] && hunterHindranceApplies(this._resolve(pool[0].uuid), "command") ? "disadvantage" : "normal" })}
       <div id="auto-outcome-note" class="roll-dlg-note"></div>
     </div>`;
 
@@ -894,6 +895,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
         };
         roller?.addEventListener("change", ev => {
           baseIn.value = ev.currentTarget.selectedOptions[0]?.dataset.base ?? -20;
+          const hunter = ev.currentTarget.selectedOptions[0]?.dataset.hunter === "1";
+          const pick = form.querySelector(`.dice-mode-opt[value="${hunter ? "disadvantage" : "normal"}"]`);
+          if (pick) pick.checked = true;
           upd();
         });
         [baseIn, modIn].forEach(i => i.addEventListener("input", upd));

@@ -43,6 +43,7 @@ export const TALENT_MOVE_MODES = Object.freeze(["walk", "teleport"]);
  * @property {"walk"|"teleport"} mode
  * @property {object} distance
  * @property {{ap?:number, reactions?:number, trophy?:number}} [cost]
+ * @property {number} [needAp]                   ОД должны быть в запасе, но не списываются (их спишет бросок атаки Натиска)
  * @property {{unit:"round"|"battle"}} [limit]   раз в Раунд / раз за бой
  * @property {number} [onlyRound]                только в этом Раунде боя
  * @property {boolean} [noFreeAttack]            не провоцирует Свободную Атаку (флаг Выхода из Боя)
@@ -96,9 +97,9 @@ export const TALENT_MOVES = Object.freeze([
     capabilityKey: "elite.elitnyeArhetipy.masterKazney.mistLeap",
     moves: [{
       id: "leap", label: "Прыжок-телепорт к добыче (считается Натиском)", mode: "teleport",
-      distance: { unlimited: true }, cost: { ap: 2, trophy: 1 },
-      condition: "Достойная трофея добыча в пределах Unnatural Senses; нужен Трейт Mistwalker.",
-      note: "Очко Трофеев списывается автоматически; встаньте в базовый контакт с добычей; для атаки объявите Базу «Натиск»."
+      distance: { unlimited: true }, cost: { trophy: 1 }, needAp: 2,
+      condition: "Достойная трофея добыча (выцельте её) в пределах Unnatural Senses; нужен Трейт Mistwalker; достойна ли добыча — решает ГМ.",
+      note: "Очко Трофеев списывается само; токен встаёт в базовый контакт с добычей; База «Натиск» выбрана — 2 ОД спишутся на броске атаки."
     }]
   },
   {
@@ -107,8 +108,8 @@ export const TALENT_MOVES = Object.freeze([
     moves: [{
       id: "mist", label: "Облако тумана (телепорт на P.b м)", mode: "teleport",
       distance: { pb: 1 }, cost: {}, limit: { unit: "round" },
-      condition: "Не в терминаторском доспехе и не в экзо-костюме; не дальше ближайшего достойного трофея противника, чем начали.",
-      note: "Выход из Захвата и снятие пут — вручную."
+      condition: "Не в терминаторском доспехе и не в экзо-костюме (система проверяет); не дальше ближайшего достойного трофея противника, чем начали (достойными считаются выцеленные враги и отмеченная добыча).",
+      note: "Выход из Захвата — автоматически; снятие пут — вручную. Со Спасителем Туманов: выцельте союзника — предложат поменяться с ним местами."
     }]
   }
 ]);
@@ -164,7 +165,7 @@ export function talentMoveGate(move, ctx = {}) {
   if (reactions && ctx.inCombat && (Number(ctx.reactions) || 0) < reactions) {
     return { ok: false, reason: `Нужно Реакций: ${reactions}, есть ${Number(ctx.reactions) || 0}.` };
   }
-  const ap = move.cost?.ap ?? 0;
+  const ap = Math.max(move.cost?.ap ?? 0, move.needAp ?? 0);
   if (ap && ctx.inCombat && (Number(ctx.ap) || 0) < ap) {
     return { ok: false, reason: `Нужно ОД: ${ap}, есть ${Number(ctx.ap) || 0}.` };
   }
@@ -185,6 +186,7 @@ export function talentMoveCostLabel(move) {
   if (r) parts.push(r === 1 ? "1 Реакция" : `${r} Реакции`);
   const t = move.cost?.trophy ?? 0;
   if (t) parts.push(t === 1 ? "1 Очко Трофеев" : `${t} Очка Трофеев`);
+  if (move.needAp) parts.push(`Натиск (${move.needAp} ОД на атаке)`);
   return parts.length ? parts.join(" + ") : "бесплатно";
 }
 

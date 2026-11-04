@@ -4886,11 +4886,11 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.masterKazney.mistLeap": {
     label: "За полное действие может потратить очко Трофеев и телепортироваться Трейтом Mistwalker в базовый контакт с достойной трофея добычей в предел…",
-    source: "Mist Leap / Туманный Прыжок", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только Движение): телепорт токена (стены учитываются, бюджет пути не трогается), 2 ОД; Очко Трофеев и базовый контакт с добычей — вручную. module/rules/talent-moves.mjs (таблица: Движение, дистанция, цена, частота) → module/combat/talent-move.mjs::declareTalentMove, ::showTalentMoveDialog — пункт «Движение по Таланту» в меню Движения (module/combat/movement-actions.mjs::movementMenuItems); бюджет пути — module/rules/movement-path.mjs::grantMoveAllowance"
+    source: "Mist Leap / Туманный Прыжок", reader: "см. ability.mistLeap (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.masterKazney.mistSavior": {
     label: "Служащие телохранителями Мастера Казней подменяют собой союзников. Приняв на себя удар Трейтом Fanatic, может поменяться с целью местами,",
-    source: "Mist Savior / Спаситель Туманов", reader: ""
+    source: "Mist Savior / Спаситель Туманов", reader: "см. ability.mistSavior (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.masterKazney.trophiesOfJudgement": {
     label: "Включает доп. ритуалы в обряды трофеев, черпая силу из казней преступивших законы банды. Честно (по мнению ГМа) определив вину члена банды,",
@@ -6716,15 +6716,15 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.masterKazney.hunterSight": {
     label: "Трейт Unnatural Senses отображает способность видеть души жертв. Автоматически распознаёт души существ, достойных трофея,",
-    source: "Hunter Sight / Взор Охотника", reader: ""
+    source: "Hunter Sight / Взор Охотника", reader: "см. ability.hunterSight (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.masterKazney.mistwalker": {
     label: "Раз в Раунд за свободное действие может разбиться на облако тумана и собраться обратно, телепортируясь на P.",
-    source: "Mistwalker / Туманоходец", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1, только Движение): телепорт на P.b м раз в Раунд (стены учитываются, бюджет пути не трогается); выход из Захвата и снятие пут — вручную. module/rules/talent-moves.mjs (таблица: Движение, дистанция, цена, частота) → module/combat/talent-move.mjs::declareTalentMove, ::showTalentMoveDialog — пункт «Движение по Таланту» в меню Движения (module/combat/movement-actions.mjs::movementMenuItems); бюджет пути — module/rules/movement-path.mjs::grantMoveAllowance"
+    source: "Mistwalker / Туманоходец", reader: "см. ability.mistwalker (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.masterKazney.singleMindedHunter": {
     label: "Ритуалы перманентно изменяют разум. Получает ментальное расстройство «Психопатия» на Тяжести 0, и его Тяжесть не может опуститься ниже 0.",
-    source: "Single-Minded Hunter / Целеустремлённый Охотник", reader: ""
+    source: "Single-Minded Hunter / Целеустремлённый Охотник", reader: "см. ability.singleMindedHunter (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.masterKazney.trophyTaker": {
     label: "Убив вражеского офицера, чемпиона или чудовище (по усмотрению ГМа), получает 1 очко Трофеев (макс. P.b).",
@@ -8258,6 +8258,31 @@ export const CAPABILITIES = {
     label: "Смертный Инструмент: раз в сессию, Очко Бесчестия — помощь Богов (мистический щит от смертельного удара, мутация, демоны), ответ выбирает ГМ",
     source: "Mortal Instrument / Смертный Инструмент (packs-src/talents/Элитные_архетипы)",
     reader: "module/combat/dark-apostle.mjs::useMortalInstrument, ::grantMortalShield, ::mortalShieldOnDamage (module/combat/damage.mjs) — Sahara 1-54b9"
+  },
+  "ability.singleMindedHunter": {
+    label: "Целеустремлённый Охотник: Психопатия на Тяжести 0 (не ниже 0) при получении Черты, Помеха на тесты Command, Charm, Deceive и Inquiry",
+    source: "Single-Minded Hunter / Целеустремлённый Охотник (packs-src/traits/Элитные_архетипы)",
+    reader: "module/sheets/tabs/disorders.mjs::grantStartingDisorder (name, скрипт «При выдаче» записи Черты), module/rules/master-of-executions.mjs::hunterHindranceApplies (module/sheets/actor-sheet.mjs::_showSkillRollDialog, module/sheets/squad-sheet.mjs::_commandRoll — Помеха выбрана заранее) — Sahara 1-54b9"
+  },
+  "ability.hunterSight": {
+    label: "Взор Охотника: души в зоне Unnatural Senses и их грубая сила по Inf (шёпот владельцу и ГМу)",
+    source: "Hunter Sight / Взор Охотника (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/master-of-executions.mjs::useHuntersSight, ::huntersSightRows (кнопка вкладки БОЙ), module/rules/master-of-executions.mjs::soulTier, ::unnaturalSensesRange — Sahara 1-54b9"
+  },
+  "ability.mistwalker": {
+    label: "Туманоходец: телепорт на P.b м раз в Раунд, запрет в Терминаторской броне и Экзо-Костюме, «не дальше от достойной цели», выход из Захвата",
+    source: "Mistwalker / Туманоходец (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/master-of-executions.mjs::prepareMistwalker (module/combat/talent-move.mjs::declareTalentMove — пункт «Движение по Таланту»), module/rules/master-of-executions.mjs::wearsTerminatorOrExo, ::mistwalkerAnchorOk; сам телепорт — module/rules/talent-moves.mjs, module/combat/token-teleport.mjs — Sahara 1-54b9"
+  },
+  "ability.mistLeap": {
+    label: "Туманный Прыжок: за Очко Трофеев телепорт в базовый контакт с выцеленной добычей из зоны Unnatural Senses, считается Натиском",
+    source: "Mist Leap / Туманный Прыжок (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/master-of-executions.mjs::prepareMistLeap (module/combat/talent-move.mjs::declareTalentMove), module/rules/master-of-executions.mjs::baseContactPoint, ::unnaturalSensesRange; Очко Трофеев — module/rules/trophy-points.mjs; Натиск — system.meleeBase \"charge\", module/combat/free-shot.mjs::chargeAttackGate — Sahara 1-54b9"
+  },
+  "ability.mistSavior": {
+    label: "Спаситель Туманов: обмен местами с согласным или Беспомощным союзником при телепорте Туманоходца и после перехвата удара Fanatic",
+    source: "Mist Savior / Спаситель Туманов (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/master-of-executions.mjs::prepareMistwalker, ::fanaticSavior, ::sendAllyToSpot, ::performSaviorSwapWrite (module/combat/gm-relay.mjs, запись saviorSwap; кнопка карточки атаки — module/combat/attack-card.mjs::fanaticInterceptSection) — Sahara 1-54b9"
   },
   "ability.rubricOfAhriman": {
     label: "Рубрика Аримана: два броска на Варп-Прорыв (берётся меньший) и на Мутации; тест W−30 открывает выбор мутации из всей таблицы",

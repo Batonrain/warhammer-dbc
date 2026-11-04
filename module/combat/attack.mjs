@@ -28,6 +28,7 @@ import { whackStrike, recordWhackSeen } from "./whack.mjs";
 import { roundhouseButtonHtml, isKickWeapon } from "./roundhouse.mjs";
 import { grappleCoverPartner } from "./grapple.mjs";
 import { fanaticInterceptCandidates, backToBackFreeUseAvailable } from "./fanatic-redirect.mjs";
+import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
@@ -1814,7 +1815,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // стола через обычную кнопку «Применить урон» (выделить токен Фанатика).
   const fanaticIntercepts = hits.length
     ? fanaticInterceptCandidates(targetToken, game.actors ?? [], { excludeUuids: [defenderActor?.uuid] })
-        .map(a => ({ uuid: a.uuid, name: a.name, freeUse: backToBackFreeUseAvailable(a) }))
+        .map(a => ({ uuid: a.uuid, name: a.name, freeUse: backToBackFreeUseAvailable(a),
+          savior: hasMistSavior(a), targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" }))
     : [];
 
   // Нечестивая Преданность/Unholy Devotion (combat/unholy-devotion.mjs):
