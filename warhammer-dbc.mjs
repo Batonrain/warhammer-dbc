@@ -129,6 +129,7 @@ import { initPathLimitHooks } from "./module/combat/path-limit.mjs";
 import { PATH_LIMIT_SETTING, PATH_LIMIT_DEFAULT } from "./module/rules/movement-path.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
 import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
+import { initWarpsmithHooks } from "./module/combat/warpsmith.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
@@ -1686,6 +1687,7 @@ Hooks.once("init", () => initPathLimitHooks());
 Hooks.once("init", () => initSqueezeHooks());
 // BONE-Head (Огрин): вышел из поля Haywire — сбой импланта и Ступор от поля снимаются сами.
 Hooks.once("init", () => initBoneHeadHooks());
+Hooks.once("init", () => initWarpsmithHooks());
 Hooks.once("init", () => initOverwatchHooks());
 // Огневая Точка (Хавок): сдвиг токена / Повален гасят точку (combat/fire-point.mjs).
 Hooks.once("init", () => initFirePointHooks());

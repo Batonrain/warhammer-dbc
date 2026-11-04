@@ -97,6 +97,8 @@ import { golemStatus }                           from "../combat/rubric-sorcerer
 import { hasHarbingerOfHeresy, hasDarkDevotion, hasTruePrayer, hasLayOnHands, hasLitanyOfChaos, hasMartyr, hasMortalInstrument } from "../rules/dark-apostle.mjs";
 import { darkApostleStatus }                     from "../combat/dark-apostle.mjs";
 import { hasHunterSight }                        from "../rules/master-of-executions.mjs";
+import { hasIronCage, hasSigilOfDominion, hasCellOfShame, hasEmpyreanWhip, hasForgeOfOne, hasRunDown, hasWarpsmithAbility } from "../rules/warpsmith.mjs";
+import { warpsmithStatus }                       from "../combat/warpsmith.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
@@ -585,6 +587,13 @@ export function characterContext(actor) {
   context.darkApostle = context.hasDarkApostle ? darkApostleStatus(actor) : null;
   // Мастер Казней (Sahara 1-54b9, module/combat/master-of-executions.mjs): кнопка Взора Охотника на вкладке БОЙ.
   context.hasHunterSight = hasHunterSight(actor);
+  context.hasIronCage = hasIronCage(actor);
+  context.hasSigilOfDominion = hasSigilOfDominion(actor);
+  context.hasCellOfShame = hasCellOfShame(actor);
+  context.hasEmpyreanWhip = hasEmpyreanWhip(actor);
+  context.hasForgeOfOne = hasForgeOfOne(actor);
+  context.hasRunDown = hasRunDown(actor);
+  context.warpsmith = hasWarpsmithAbility(actor) ? warpsmithStatus(actor) : null;
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
   // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.

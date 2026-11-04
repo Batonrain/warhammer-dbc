@@ -56,6 +56,10 @@ import {
 } from "../rules/dark-apostle.mjs";
 import { isThrottleReady } from "../rules/cooldown.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
+import {
+  hasIronCage, hasCellOfShame, hasEmpyreanWhip, hasRunDown, brokenOf, flagSmithIs, isBrokenBySmith, runDownMarkOf, clampRoll,
+  RUN_DOWN_STRUCTURE_MAX, RUN_DOWN_HELPLESS_MAX, RUN_DOWN_WP_MAX
+} from "../rules/warpsmith.mjs";
 import { mutationCatalog } from "../constants/mutations.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
@@ -186,6 +190,44 @@ export function checkTargetWrite(op, ctx = {}) {
     return { ok: true };
   }
 
+  if (op.kind === "warpsmith") {
+    const allowed = { cage: ["action"], cageRelease: ["action"], cell: ["action", "deviceName"], cellFree: ["action"], whip: ["action"],
+      runDown: ["action"], runDownPay: ["action", "structure", "helpless", "wp"] }[op.action];
+    if (!allowed) return { ok: false, reason: `warpsmith: действие вне списка: ${op.action}` };
+    if (Object.keys(op).some(k => k !== "kind" && !allowed.includes(k))) return { ok: false, reason: "warpsmith: лишние поля" };
+    const me = ctx.initiator;
+    const same = flag => flagSmithIs(flag, me, a => new Set([a?.uuid].filter(Boolean)));
+    const mine = target => isBrokenBySmith(target, me, a => new Set([a?.uuid].filter(Boolean)));
+    if (op.action === "cage") return hasIronCage(me) ? { ok: true } : { ok: false, reason: "у инициатора нет Iron Cage" };
+    if (op.action === "cageRelease") {
+      if (!hasIronCage(me)) return { ok: false, reason: "у инициатора нет Iron Cage" };
+      const flag = brokenOf(ctx.target);
+      return flag?.state === "caged" && same(flag) ? { ok: true } : { ok: false, reason: "цель не заарканена инициатором" };
+    }
+    if (op.action === "cell") {
+      if (!hasCellOfShame(me)) return { ok: false, reason: "у инициатора нет Cell of Shame" };
+      if (op.deviceName !== undefined && (typeof op.deviceName !== "string" || op.deviceName.length > 200)) return { ok: false, reason: "cell: имя устройства" };
+      return mine(ctx.target) && !brokenOf(ctx.target)?.cell ? { ok: true } : { ok: false, reason: "цель не Сломлена инициатором или уже в ячейке" };
+    }
+    if (op.action === "cellFree") {
+      if (!hasCellOfShame(me)) return { ok: false, reason: "у инициатора нет Cell of Shame" };
+      return brokenOf(ctx.target)?.cell ? { ok: true } : { ok: false, reason: "цель не в ячейке" };
+    }
+    if (op.action === "whip") {
+      if (!hasEmpyreanWhip(me)) return { ok: false, reason: "у инициатора нет Empyrean Whip" };
+      return mine(ctx.target) ? { ok: true } : { ok: false, reason: "цель не Сломлена инициатором" };
+    }
+    if (op.action === "runDown") {
+      if (!hasRunDown(me)) return { ok: false, reason: "у инициатора нет Run Down" };
+      return mine(ctx.target) ? { ok: true } : { ok: false, reason: "цель не Сломлена инициатором" };
+    }
+    if (!hasRunDown(me)) return { ok: false, reason: "у инициатора нет Run Down" };
+    const mark = runDownMarkOf(ctx.target);
+    if (!mark || !same({ smithUuid: mark.smithUuid, smithUuids: mark.smithUuids })) return { ok: false, reason: "цель не загнана инициатором" };
+    if (clampRoll(op.structure, RUN_DOWN_STRUCTURE_MAX) == null || clampRoll(op.helpless, RUN_DOWN_HELPLESS_MAX) == null
+      || clampRoll(op.wp, RUN_DOWN_WP_MAX) == null) return { ok: false, reason: "runDownPay: число вне потолка" };
+    return { ok: true };
+  }
   if (op.kind === "saviorSwap") {
     if (Object.keys(op).some(k => !["kind", "tokenUuid", "x", "y"].includes(k))) return { ok: false, reason: "saviorSwap: лишние поля" };
     if (typeof op.tokenUuid !== "string" || op.tokenUuid.length > 200) return { ok: false, reason: "saviorSwap: нет токена" };
@@ -342,6 +384,10 @@ export async function performTargetWrite(target, op, initiator = null) {
   if (op.kind === "harbingerMark" || op.kind === "litanyBlessing" || op.kind === "layOnHands" || op.kind === "martyrSummon") {
     const { performDarkApostleWrite } = await import("./dark-apostle.mjs");
     return performDarkApostleWrite(target, op, initiator);
+  }
+  if (op.kind === "warpsmith") {
+    const { performWarpsmithWrite } = await import("./warpsmith.mjs");
+    return performWarpsmithWrite(target, op, initiator);
   }
   if (op.kind === "saviorSwap") {
     const { performSaviorSwapWrite } = await import("./master-of-executions.mjs");

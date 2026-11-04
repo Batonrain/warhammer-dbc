@@ -21,6 +21,7 @@
 
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { gunArmAppliesTo, GUN_ARM_CLASSES } from "./gun-arm.mjs";
+import { isCellDevice } from "./warpsmith.mjs";
 
 export { GUN_ARM_CLASSES };
 
@@ -33,6 +34,7 @@ export { GUN_ARM_CLASSES };
  */
 export function ammoIsFree(item, actor) {
   if (isFusedByHandOfDeath(item)) return true;
+  if (isCellDevice(item)) return true;
   // Без актора спрашивать возможность не у кого: Дар — свойство стрелка, а не
   // предмета (оружие в компендиуме или в боковой панели ничьё).
   if (!actor) return false;

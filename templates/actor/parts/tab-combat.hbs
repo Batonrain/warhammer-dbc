@@ -451,6 +451,24 @@
     {{#if hasHunterSight}}
     <button type="button" class="technique-btn hunter-sight-btn" style="margin-top:6px;" title="Взор Охотника — души в зоне Unnatural Senses и их грубая сила по Inf (шёпот вам и ГМу). Достойна ли душа трофея, решает ГМ"><span class="tech-name">👁 Взор Охотника</span></button>
     {{/if}}
+    {{#if hasIronCage}}
+    <button type="button" class="technique-btn warpsmith-cage-btn" style="margin-top:6px;" title="Железная Клеть — наведите таргет (T) на демона в Истинной Форме не дальше I.b м: полное действие, Tech-Use−10 против W+0. Заарканенный демон парализован, пока вы не сдвинетесь с места; через W.b часов (Календарь) он Сломлен и автоматически проваливает встречные тесты W против вас. Заарканено: {{warpsmith.caged}}, Сломлено: {{warpsmith.broken}}"><span class="tech-name">⛓ Железная Клеть ({{warpsmith.caged}}/{{warpsmith.broken}})</span></button>
+    {{/if}}
+    {{#if hasSigilOfDominion}}
+    <button type="button" class="technique-btn warpsmith-sigil-btn" style="margin-top:6px;" title="Печать Владычества — наведите таргет (T) на Сломленного вами демона: Очко Бесчестия (без бросков) — железная печать, дающая её держателю те же преимущества против этого демона"><span class="tech-name">🔱 Печать Владычества</span></button>
+    {{/if}}
+    {{#if hasCellOfShame}}
+    <button type="button" class="technique-btn warpsmith-cell-btn" style="margin-top:6px;" title="Ячейка Позора — наведите таргет (T) на Сломленного вами демона: 5 Ходов, For.Lore (Daemons)−20; демон навсегда теряет 10 W и 15 Inf, выбранное устройство не требует перезарядки"><span class="tech-name">🔋 Ячейка Позора</span></button>
+    {{/if}}
+    {{#if hasEmpyreanWhip}}
+    <button type="button" class="technique-btn warpsmith-whip-btn" style="margin-top:6px;" {{#unless warpsmith.inCombat}}disabled{{/unless}} title="Эмпирейная Плеть — полное действие, комбинированный тест For.Lore (Daemons)−20 и Command(I)−10: до конца боя Сломленные вами демонические машины в радиусе I м управляются напрямую, как Миньоны"><span class="tech-name">🪢 Эмпирейная Плеть</span></button>
+    {{/if}}
+    {{#if hasForgeOfOne}}
+    <button type="button" class="technique-btn warpsmith-forge-btn" style="margin-top:6px;" title="Кузница Одного — Очко Бесчестия: собрать известный паттерн техники или оболочку демонической машины (R3 и ниже) из обломков за сутки работы"><span class="tech-name">🔨 Кузница Одного</span></button>
+    {{/if}}
+    {{#if hasRunDown}}
+    <button type="button" class="technique-btn warpsmith-rundown-btn" style="margin-top:6px;" {{#unless warpsmith.inCombat}}disabled{{/unless}} title="Загнать — свободное действие раз в Ход, Очко Бесчестия: наведите таргет (T) на Сломленную машину — +30 ко всем Характеристикам и 1 Очко Бесчестия до начала вашего следующего Хода; затем она теряет 3d10 Структуры, Беспомощна 1d5 Раундов, а демон навсегда теряет 1d5 W"><span class="tech-name">🏎 Загнать</span></button>
+    {{/if}}
     {{#if hasWalkingWasteland}}
     <button type="button" class="technique-btn walking-wasteland-btn" style="margin-top:6px;" title="Ходячая Пустошь — 1 непоглощаемого R урона себе, чтобы намеренно заразить местность вокруг (квадрат 100×100 м, 7 дней). Сама зона появляется и без кнопки, когда вы получаете непоглощённый урон в бою"><span class="tech-name">🏜 Заразить местность</span></button>
     {{/if}}

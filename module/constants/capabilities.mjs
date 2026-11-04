@@ -4215,23 +4215,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Варп_Кузнец — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.varpKuznets.cellOfShame": {
     label: "Особо строптивых демонов может обречь на позорную судьбу — быть источником энергии. Потратив 5 Ходов и тест For.Lore(Daemons)−20,",
-    source: "Cell of Shame / Ячейка Позора", reader: ""
+    source: "Cell of Shame / Ячейка Позора", reader: "см. ability.cellOfShame (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.varpKuznets.empyreanWhip": {
     label: "Тёмные Механикум держат демонические машины на коротком поводке, в страхе перед эфирной пыткой.",
-    source: "Empyrean Whip / Эмпирейная Плеть", reader: ""
+    source: "Empyrean Whip / Эмпирейная Плеть", reader: "см. ability.empyreanWhip (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.varpKuznets.forgeOfOne": {
     label: "Поле боя — его кузница. Полагаясь только на встроенные в тело инструменты, может в поле проводить ремонт и создание предметов и машин,",
-    source: "Forge of One / Кузница Одного", reader: ""
+    source: "Forge of One / Кузница Одного", reader: "см. ability.forgeOfOne (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.varpKuznets.runDown": {
     label: "По велению Кузнеца узы впиваются в дух заключённого демона, заставляя вложить частичку сущности в следующий рывок.",
-    source: "Run Down / Загнать", reader: ""
+    source: "Run Down / Загнать", reader: "см. ability.runDown (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.varpKuznets.sigilOfDominion": {
     label: "Может запечатлеть свой образ на железной печати и связать её с духом Сломленного демона.",
-    source: "Sigil of Dominion / Печать Владычества", reader: ""
+    source: "Sigil of Dominion / Печать Владычества", reader: "см. ability.sigilOfDominion (Sahara 1-54b9)"
   },
   // ── Элитные_архетипы\Ведьма — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.vedma.agonizingDance": {
@@ -6375,15 +6375,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Варп_Кузнец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.varpKuznets.ironCage": {
     label: "Техно-арканные инструменты доспеха заарканивают демонов петлями эфирных излучателей и нуль-полей.",
-    source: "Iron Cage / Железная Клеть", reader: ""
+    source: "Iron Cage / Железная Клеть", reader: "см. ability.ironCage (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.varpKuznets.mechanicumImplants": {
     label: "Варп-Кузнец имеет полный комплект имплантов Механикум.",
-    source: "Mechanicum Implants / Импланты Механикум", reader: ""
+    source: "Mechanicum Implants / Импланты Механикум", reader: "см. ability.mechanicumImplants — module/combat/warpsmith.mjs::syncMechanicumImplants (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.varpKuznets.warpforgedPlate": {
     label: "Доспех — больше чем силовая броня. Закалённый в пламени Варпа и эфирной крови демонов, слился с полумеханической плотью и стал новой кожей.",
-    source: "Warpforged Plate / Закалённые Варпом Латы", reader: ""
+    source: "Warpforged Plate / Закалённые Варпом Латы", reader: "см. ability.warpforgedPlate (Sahara 1-54b9)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Ведьма — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.vedma.gladiatorsOfCommoragh": {
@@ -8628,9 +8628,49 @@ export const CAPABILITIES = {
     reader: ""
   },
   "ability.mechanicumImplants": {
-    label: "Импланты Механикум: на листе открывается блок Техножреца",
+    label: "Импланты Механикум: полный комплект имплантов (Электро-Графты, Электу-Индукторы, Респираторный Блок, Кибер-Мантия, Катушка Потенции, Черепные Цепи, Ноосферное Подключение), выдаётся установленным; на листе открывается блок Техножреца",
     source: "Mechanicum Implants / Импланты Механикум (packs-src/traits/Элитные_архетипы)",
-    reader: "module/sheets/character-context.mjs — context.hasMechImplants"
+    reader: "module/sheets/character-context.mjs — context.hasMechImplants; module/combat/warpsmith.mjs::syncMechanicumImplants (хук createItem в module/hooks.mjs) — Sahara 1-54b9"
+  },
+  "ability.warpforgedPlate": {
+    label: "Закалённые Варпом Латы: AP 12 на всех локациях (Черта-броня), регенерация 1 Раны за 20−T.b минут, иммунитет к Кровотечению, ядам, болезням и Бесполезным Конечностям, AP брони против варп-оружия и Горения. Не автоматизировано: «не снять», отсутствие −10 на тонкие манипуляции (в системе штрафа нет), уход только в Апотекарионе",
+    source: "Warpforged Plate / Закалённые Варпом Латы (packs-src/traits/Элитные_архетипы)",
+    reader: "module/rules/character.mjs (AP 12, wdbc-dg6); module/combat/warpsmith.mjs::warpforgedRegenClock (CONDITION_CLOCK_HANDLERS); module/combat/damage.mjs (armor.apVsWarpFull); module/combat/condition-ticks.mjs::warpforgedBurningAp; poison.immune, immunity.disease и записи kind:\"condition\" immunity на Черте — Sahara 1-54b9"
+  },
+  "ability.ironCage": {
+    label: "Железная Клеть: полное действие, Tech-Use−10 против W+0 демона в Истинной Форме не дальше I.b м — демон заарканен, через W.b часов (Календарь) Сломлен: автоматически проваливает встречные тесты W против Кузнеца, Владычество над ним без броска; Кузнец сдвинулся — клеть спадает",
+    source: "Iron Cage / Железная Клеть (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/warpsmith.mjs::useIronCage, ::ironCageClock, ::releaseCagesOnMove, ::performWarpsmithWrite (module/combat/gm-relay.mjs, запись warpsmith); module/rules/warpsmith.mjs::brokenAutoFail (module/sheets/actor-sheet.mjs::_resolveOpposedAuto), ::findBrokenDominionTarget (module/apps/ritual-cast.mjs) — Sahara 1-54b9"
+  },
+  "ability.sigilOfDominion": {
+    label: "Печать Владычества: Очко Бесчестия, без бросков — железная печать, связанная с духом Сломленного демона; её держатель получает против демона те же преимущества, что Кузнец",
+    source: "Sigil of Dominion / Печать Владычества (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/warpsmith.mjs::forgeSigil; module/rules/warpsmith.mjs::holdsSigilFor, ::isBrokenFor — Sahara 1-54b9"
+  },
+  "ability.cellOfShame": {
+    label: "Ячейка Позора: 5 Ходов и For.Lore (Daemons)−20 — Сломленный демон заключён в устройство и навсегда теряет 10 W и 15 Inf; устройство не требует перезарядки, а при его уничтожении демон на свободе (Сломлен, но с волей до Владычества). Не автоматизировано: иммунитет устройства к Haywire, Феномены вместо клина и перегрева",
+    source: "Cell of Shame / Ячейка Позора (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/warpsmith.mjs::useCellOfShame, ::releaseCellDemon (module/hooks.mjs, deleteItem); module/rules/ammo-free.mjs::ammoIsFree (isCellDevice) — Sahara 1-54b9"
+  },
+  "ability.empyreanWhip": {
+    label: "Эмпирейная Плеть: полное действие, комбинированный тест For.Lore (Daemons)−20 и Command(I)−10 — Сломленные демонические машины в радиусе I м до конца боя управляются напрямую, как Миньоны",
+    source: "Empyrean Whip / Эмпирейная Плеть (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/warpsmith.mjs::useEmpyreanWhip, ::clearWhipOnCombatEnd (module/hooks.mjs, deleteCombat), ::performWarpsmithWrite (запись warpsmith, whip) — Sahara 1-54b9"
+  },
+  "ability.forgeOfOne": {
+    label: "Кузница Одного: Очко Бесчестия — собрать известный паттерн техники или оболочку демонической машины (R3 и ниже) из обломков за сутки; запись сборки и карточка. Ремонт в поле без кузницы — без кнопки",
+    source: "Forge of One / Кузница Одного (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/warpsmith.mjs::useForgeOfOne (кнопка вкладки БОЙ) — Sahara 1-54b9"
+  },
+  "ability.runDown": {
+    label: "Загнать: свободное действие раз в Ход, Очко Бесчестия — Сломленной машине +30 ко всем Характеристикам и 1 временное Очко Бесчестия до начала следующего Хода Кузнеца; в начале его Хода машина теряет 3d10 Структуры, Беспомощна 1d5 Раундов, демон теряет 1d5 W навсегда",
+    source: "Run Down / Загнать (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/warpsmith.mjs::useRunDown, ::runDownTurnStart (module/hooks.mjs), ::performWarpsmithWrite (записи runDown, runDownPay) — Sahara 1-54b9"
+  },
+  "warpforged.regeneration": {
+    label: "Регенерация 1 Раны каждые 20−T.b минут (по часам Календаря, пока ранен)",
+    source: "Warpforged Plate / Закалённые Варпом Латы",
+    reader: "module/combat/warpsmith.mjs::warpforgedRegenClock (CONDITION_CLOCK_HANDLERS), module/rules/warpsmith.mjs::regenPlan"
   },
 };
 

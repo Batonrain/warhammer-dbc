@@ -392,6 +392,14 @@ export async function castRitual(R, actor, {
   // Порог с Модификаторами Призыва тут ни при чём — своего демона обязывать
   // себе подчиниться незачем никаким тестом вовсе.
   if (R.type === "dominion" && isOwnArmigerFn(actor, R.demonName)) return castAutoWinDominion(R, actor);
+  if (R.type === "dominion" && R.demonName) {
+    const { findBrokenDominionDemon, confirmDominionOver } = await import("../combat/warpsmith.mjs");
+    const broken = findBrokenDominionDemon(actor, R.demonName);
+    if (broken) {
+      await confirmDominionOver(broken);
+      return castAutoWinDominion(R, actor, { broken: true });
+    }
+  }
   // Общий сбор модификаторов (wdbc-ct65.3): Порог ритуала считался целиком
   // ритуальной арифметикой (ritualThreshold), мимо реестра правил — Усталость
   // Ритуалиста и его Черты в него не попадали.
@@ -563,11 +571,11 @@ async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn, bindMoun
  * этой веткой (они уже проверены в castRitual выше, до этой точки).
  * @returns {Promise<{success:true, deg:1, threshold:null, roll:null}>}
  */
-async function castAutoWinDominion(R, actor) {
+async function castAutoWinDominion(R, actor, { broken = false } = {}) {
   await postTestCard(actor, testCardHtml({
     icon: `${veilIcon("ritual")} `, title: `Ритуал: ${esc(R.name || RITUAL_TYPES_MAP[R.type]?.label || R.type)}`,
     classes: "wh-ritual-card",
-    threshold: `<div class="roll-threshold">${esc(actor.name)} — Владычество над собственным Оруженосцем не требует теста, победа гарантирована.</div>`,
+    threshold: `<div class="roll-threshold">${esc(actor.name)} — ${broken ? "Сломленный демон автоматически проваливает встречный тест W, Владычество над ним без броска" : "Владычество над собственным Оруженосцем не требует теста, победа гарантирована"}.</div>`,
     outcome: outcomeHtml(true, `Владычество подтверждено${R.demonName ? ` — ${esc(R.demonName)}` : ""}`)
   }), { sound: false });
 

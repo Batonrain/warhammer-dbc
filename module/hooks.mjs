@@ -18,6 +18,8 @@ import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marin
 import { processMiasmaTurnStart, resolvePlagueMarineCombatEnd, rollAbominableFear, processWastelandRequest } from "./combat/plague-marine.mjs";
 import { syncRubricShield, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
 import { hasShieldOfRubric } from "./rules/rubric-sorcerer.mjs";
+import { syncMechanicumImplants, releaseCellDemon, clearWhipOnCombatEnd, runDownTurnStart } from "./combat/warpsmith.mjs";
+import { isCellDevice } from "./rules/warpsmith.mjs";
 import { offerStatusResist } from "./combat/status-resist.mjs";
 import { useFinalPush, useNeverDie, usePainIllusion, useUnstoppableWrath, finalPushTurnEnd, finalPushCombatEnd,
          applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
@@ -4826,6 +4828,7 @@ function _attachFateContextMenu(message, html) {
     await clearKhorneCombat(combat);
     // Тёмный Апостол: Литания Хаоса действует «до конца боя» — снять метки и выданные подчинённым Таланты/Трейт.
     await clearLitanyOnCombatEnd();
+    await clearWhipOnCombatEnd();
     // Чумной Десантник: отложенные заражения «в конце боя» (Жёлчный Плевок, Благословенный Гноем), снятие меток боя.
     await resolvePlagueMarineCombatEnd(combat);
     // Охотник на Танки: опознанные модели техники — «до конца боя».
@@ -5247,6 +5250,7 @@ function _attachFateContextMenu(message, html) {
       // Колдун Рубрики: Ступор поднятых Големов снимается в начале Хода колдуна; Регенерация (X) — тест T+0 / Эхо.
       await clearRebornStupor(nextCombatant.actor);
       await regenerationTurnStart(nextCombatant.actor);
+      await runDownTurnStart(nextCombatant.actor);
       // Пожиратель Времени/Devourer of Time (Тзинч, wdbc-1rno): «застигнутые
       // Врасплох теряют полудействие в [обладателя дара] второй Ход» — такт
       // начала именно доп. Хода находки. Жертвы свой Ход к этому моменту
@@ -5456,6 +5460,15 @@ function _attachFateContextMenu(message, html) {
   };
   Hooks.on("createItem", (item, options, userId) => _rubricShieldSync(item, userId));
   Hooks.on("deleteItem", (item, options, userId) => _rubricShieldSync(item, userId));
+
+  Hooks.on("createItem", (item, options, userId) => {
+    if (item.type !== "trait" || !item.actor || userId !== game.user?.id) return;
+    return syncMechanicumImplants(item.actor);
+  });
+  Hooks.on("deleteItem", (item, options, userId) => {
+    if (userId !== game.user?.id || !isCellDevice(item)) return;
+    return releaseCellDemon(item);
+  });
 
   // Узы Душ: Голем, связанный Талантом, ходит в Инициативу колдуна. Одним активным ГМ.
   const _nexusSync = combatant => {

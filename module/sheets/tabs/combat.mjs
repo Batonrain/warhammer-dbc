@@ -38,6 +38,7 @@ import { toggleDirgeOfDespair, applyWallOfDiscord, showSingForMeDialog } from ".
 import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
 import { activateInfectiousMiasma, startRotsmith, blessedTouch, startWasteland } from "../../combat/plague-marine.mjs";
 import { startGolemCreation, bindNexus, useRebornInDust, useInfernalShells } from "../../combat/rubric-sorcerer.mjs";
+import { useIronCage, forgeSigil, useCellOfShame, useEmpyreanWhip, useForgeOfOne, useRunDown } from "../../combat/warpsmith.mjs";
 import { useTruePrayer, buildMonument, convertNpc, makeFaithful, useLitanyOfChaos, useLayOnHands, useMartyr, useMortalInstrument } from "../../combat/dark-apostle.mjs";
 import { useHuntersSight } from "../../combat/master-of-executions.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
@@ -272,6 +273,13 @@ export function activateCombatListeners(root, actor) {
 
   // ── Мастер Казней (Sahara 1-54b9, module/combat/master-of-executions.mjs) ───
   on(root, ".hunter-sight-btn", "click", async () => { await useHuntersSight(actor); });
+
+  on(root, ".warpsmith-cage-btn", "click", async () => { await useIronCage(actor); });
+  on(root, ".warpsmith-sigil-btn", "click", async () => { await forgeSigil(actor); });
+  on(root, ".warpsmith-cell-btn", "click", async () => { await useCellOfShame(actor); });
+  on(root, ".warpsmith-whip-btn", "click", async () => { await useEmpyreanWhip(actor); });
+  on(root, ".warpsmith-forge-btn", "click", async () => { await useForgeOfOne(actor); });
+  on(root, ".warpsmith-rundown-btn", "click", async () => { await useRunDown(actor); });
 
   // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──
   on(root, ".resplendent-raiment-btn", "click", async () => {
