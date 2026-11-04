@@ -77,6 +77,7 @@ import { dirgeAffects, DIRGE_CONCUSSIVE }              from "./noise-marine.mjs"
 import { bileSpitPenBonus }                            from "./plague-marine.mjs";
 import { bloodOfferingForAttack, consumeBloodOffering, combatIdOf } from "./khorne-berserker.mjs";
 import { paintItRedApplies, rolledEightOnAnyDie, skullOfferingBonus } from "../rules/khorne-berserker.mjs";
+import { litanyGivesExtreme, LITANY_EXTREME_THRESHOLD } from "../rules/dark-apostle.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
 import { preciseLegacyDamageBonus, wrathLegacyDamageBonus, legacyWrathEffectiveRof, betrayalLegacyActive, legacyHistoryIs, excessLegacyExtraDeg, bloodLegacyDamageBonus, legacyChangeDamageBonus, takenMutationNames, swiftLegacyRangedDodgePenalty, swiftLegacyMeleeDodgePenalty, dishonorableLegacyActive, distractingLegacyActive, DISTRACTING_LEGACY_FLAG, LEGACY_GUARDIAN_FLAG, earlyDeathLegacyDamageBonus, markEarlyDeathLegacyUsed, adaptiveLegacyMeleeDamageBonus, pendulumLegacyFlagValue, incrementPunisherLegacyStack, soulboundLegacyDamageBonus, consumeSoulboundLegacyBonus, legacyDeadlyTrapEligible, legacyDeadlyTrapDamageDelta, consumeLegacySlaughterBonus, legacySlaughterAmmoReliability, patienceLegacyOverwatchWeapon, consumePatienceLegacyOverwatchPending } from "../rules/legacy-weapon.mjs";
 import { adroitDegreeBonus } from "../rules/adroit.mjs";
@@ -691,6 +692,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     && hasRuleFlag(actor, "rogue.core.knifeFighter")) {
     wp.extremeThreshold = Math.min(wp.extremeThreshold, 9);
   }
+
+  // Литания Хаоса Неделимого (Тёмный Апостол, rules/dark-apostle.mjs): «все атаки подчинённых получают Extreme (9/−1)».
+  if (litanyGivesExtreme(actor)) wp.extremeThreshold = Math.min(wp.extremeThreshold, LITANY_EXTREME_THRESHOLD);
 
   // Quiet Elimination / Тихое Устранение (wdbc-1rno.3, rules/quiet-
   // elimination.mjs): «Если персонаж атакует противника врасплох — +1 куб

@@ -34,6 +34,9 @@
 //      (2d10 непоглощаемого R урона жертве; +1 Очко Бесчестия и снятие Усталости палачу и наблюдателям —
 //      поклонникам Слаанеш) и Стена Диссонанса (отброс токена цели; дальность ограничена Cor.b×3 м
 //      инициатора, сверяет ГМ). Нужен соответствующий Талант у инициатора.
+//    • harbingerMark / litanyBlessing / layOnHands / martyrSummon — Тёмный Апостол (Sahara 1-54b9): метка обращения
+//      или Правоверного, Литания Хаоса подчинённому, Порча и мутация по Возложению Рук, демон на месте Мученика.
+//      Нужен соответствующий Талант или Черта у инициатора; предметы, Порчу и демона собирает сам ГМ.
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -44,6 +47,12 @@
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasInspireWrath, inspiredHatredData, HATRED_PACK_ID } from "../rules/inspire-wrath.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
+import {
+  hasHarbingerOfHeresy, hasLitanyOfChaos, hasLayOnHands, hasMartyr, litanyOptions, isSubordinateOf, isFaithfulOf,
+  LAY_ON_HANDS_USAGE
+} from "../rules/dark-apostle.mjs";
+import { isThrottleReady } from "../rules/cooldown.mjs";
+import { mutationCatalog } from "../constants/mutations.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
 import { hasCloudCognition, hasMotiveEucharist, hasApocryphaCoil, planCloudCognition, planMotiveEucharist,
@@ -173,6 +182,38 @@ export function checkTargetWrite(op, ctx = {}) {
     return { ok: true };
   }
 
+  // Тёмный Апостол (Sahara 1-54b9): метка обращения/Правоверного, Литания, Возложение Рук, Мученик.
+  // Полезная нагрузка — узкая: имя Бога, имя мутации из таблицы, число Порчи, имя демона; предметы и Порчу собирает ГМ сам.
+  if (op.kind === "harbingerMark") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "mark")) return { ok: false, reason: "harbingerMark: лишние поля" };
+    if (op.mark !== "convert" && op.mark !== "faithful") return { ok: false, reason: "harbingerMark: метка вне списка" };
+    if (!hasHarbingerOfHeresy(ctx.initiator)) return { ok: false, reason: "у инициатора нет Harbinger of Heresy" };
+    return { ok: true };
+  }
+  if (op.kind === "litanyBlessing") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "god")) return { ok: false, reason: "litanyBlessing: лишние поля" };
+    if (!hasLitanyOfChaos(ctx.initiator)) return { ok: false, reason: "у инициатора нет Litany of Chaos" };
+    if (!litanyOptions(ctx.initiator).some(g => g.key === op.god)) return { ok: false, reason: "литания этого Бога недоступна инициатору" };
+    if (!isSubordinateOf(ctx.initiator, ctx.target, ctx.allActors ?? [])) return { ok: false, reason: "цель не под Командным Присутствием инициатора" };
+    return { ok: true };
+  }
+  if (op.kind === "layOnHands") {
+    if (Object.keys(op).some(k => !["kind", "corruption", "mutation"].includes(k))) return { ok: false, reason: "layOnHands: лишние поля" };
+    if (!hasLayOnHands(ctx.initiator)) return { ok: false, reason: "у инициатора нет Lay On Hands" };
+    if (!Number.isInteger(op.corruption) || op.corruption < 1 || op.corruption > 100) return { ok: false, reason: "layOnHands: Порча вне 1…100" };
+    if (op.corruption > (Number(ctx.initiator?.system?.corruption?.value) || 0)) return { ok: false, reason: "layOnHands: Порча выше Cor инициатора" };
+    if (typeof op.mutation !== "string" || !mutationCatalog().common.some(m => m.name === op.mutation)) return { ok: false, reason: "layOnHands: мутации нет в общей таблице" };
+    if (!isThrottleReady(ctx.target, LAY_ON_HANDS_USAGE, "month")) return { ok: false, reason: "layOnHands: цель уже благословлена в этом месяце" };
+    return { ok: true };
+  }
+  if (op.kind === "martyrSummon") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "name")) return { ok: false, reason: "martyrSummon: лишние поля" };
+    if (typeof op.name !== "string" || !op.name.trim() || op.name.length > 200) return { ok: false, reason: "martyrSummon: нет имени демона" };
+    if (!hasMartyr(ctx.initiator)) return { ok: false, reason: "у инициатора нет Martyr" };
+    if (!isFaithfulOf(ctx.target, ctx.initiator)) return { ok: false, reason: "цель не Правоверный инициатора" };
+    return { ok: true };
+  }
+
   // Облачная Когниция / Мотивное Причастие: полезная нагрузка — одно целое число; сколько реально
   // дойдёт (место у цели, потолок Раунда, Апокрифа), ГМ пересчитывает по данным цели в performTargetWrite.
   if (op.kind === "grantCognition" || op.kind === "grantEnergy") {
@@ -286,6 +327,10 @@ export async function performTargetWrite(target, op, initiator = null) {
     const { performNoiseMarineWrite } = await import("./noise-marine.mjs");
     return performNoiseMarineWrite(target, op, initiator);
   }
+  if (op.kind === "harbingerMark" || op.kind === "litanyBlessing" || op.kind === "layOnHands" || op.kind === "martyrSummon") {
+    const { performDarkApostleWrite } = await import("./dark-apostle.mjs");
+    return performDarkApostleWrite(target, op, initiator);
+  }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");
     return grantDreadWailFear(target);
@@ -346,7 +391,7 @@ export async function applyTargetWriteRelay(data, requester) {
   // Борьба: цель — партнёр инициатора (флаг на любом из двух), нужно для урона источника «grapple».
   const partners = initiator.getFlag?.(NS, "grapplePartnerUuid") === targetActor.uuid
     || targetActor.getFlag?.(NS, "grapplePartnerUuid") === initiator.uuid;
-  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator, partners, target: targetActor });
+  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator, partners, target: targetActor, allActors: [...(game.actors ?? [])] });
   if (!verdict.ok) {
     console.warn(`Warhammer DBC | ${TARGET_WRITE_ACTION} отклонён: ${verdict.reason}`, data?.op);
     return false;

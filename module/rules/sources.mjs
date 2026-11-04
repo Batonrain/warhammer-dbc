@@ -53,6 +53,7 @@ import { healMistrustRules } from "./warp-touched.mjs";
 import { woundAuraRules } from "./wound-in-reality.mjs";
 import { noiseMarineRules } from "./noise-marine.mjs";
 import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
+import { darkApostleRules } from "./dark-apostle.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -374,6 +375,10 @@ registerRuleSource("noiseMarine", a => noiseMarineRules(a));
 // Берсерк Кхорна (Sahara 1-54b9): Гвозди Мясника вне Ярости (−10 на социальные тесты и манифестацию) и
 // Закалённое в Крови (оружие нельзя выбить) — rules/khorne-berserker.mjs.
 registerRuleSource("khorneBerserker", a => [...khorneBerserkerRules(a), ...temperedRules(a, globalThis.game?.combat?.id ?? "")]);
+
+// Тёмный Апостол (Sahara 1-54b9): литания Слаанеш — +30 на тесты Командования Апостола, пока она действует
+// (rules/dark-apostle.mjs). Остальные литании читают метку на подчинённом (атака, Трудный Ландшафт).
+registerRuleSource("darkApostle", a => darkApostleRules(a));
 
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];

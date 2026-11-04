@@ -94,6 +94,8 @@ import { hasInfectiousMiasma, hasRotsmith, hasBlessedWithPus, hasWalkingWastelan
 import { infectiousMiasmaStatus }                from "../combat/plague-marine.mjs";
 import { hasGolemMaster, hasInfernalShells, hasRebornInDust, nexusCopies } from "../rules/rubric-sorcerer.mjs";
 import { golemStatus }                           from "../combat/rubric-sorcerer.mjs";
+import { hasHarbingerOfHeresy, hasDarkDevotion, hasTruePrayer, hasLayOnHands, hasLitanyOfChaos, hasMartyr, hasMortalInstrument } from "../rules/dark-apostle.mjs";
+import { darkApostleStatus }                     from "../combat/dark-apostle.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
@@ -569,6 +571,17 @@ export function characterContext(actor) {
   context.hasNexusOfSouls = context.hasGolemMaster && nexusCopies(actor) > 0;
   context.hasRebornInDust = hasRebornInDust(actor);
   context.hasInfernalShells = hasInfernalShells(actor);
+  // Тёмный Апостол (Sahara 1-54b9, module/combat/dark-apostle.mjs): кнопки Черт и Талантов на вкладке БОЙ.
+  context.hasHarbinger = hasHarbingerOfHeresy(actor);
+  context.hasDarkDevotion = hasDarkDevotion(actor);
+  context.hasTruePrayer = hasTruePrayer(actor);
+  context.hasLayOnHands = hasLayOnHands(actor);
+  context.hasLitanyOfChaos = hasLitanyOfChaos(actor);
+  context.hasMartyr = hasMartyr(actor);
+  context.hasMortalInstrument = hasMortalInstrument(actor);
+  context.hasDarkApostle = context.hasHarbinger || context.hasDarkDevotion || context.hasTruePrayer || context.hasLayOnHands
+    || context.hasLitanyOfChaos || context.hasMartyr || context.hasMortalInstrument;
+  context.darkApostle = context.hasDarkApostle ? darkApostleStatus(actor) : null;
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
   // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.

@@ -94,7 +94,8 @@ import { cardFailUndo } from "../rules/fail-undo.mjs";
 import { awarenessTalentDegrees } from "../rules/awareness-talents.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
-import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
+import { isMoraleOpposedSkill, resolveTest, isSocialSkill } from "../rules/resolve-test.mjs";
+import { faithfulResistBonus } from "../rules/dark-apostle.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readTestKind, readDiceChoice, mergeReroll,
@@ -3079,7 +3080,9 @@ export class WarhammerCharacterSheet
     // Ярость соперника-NPC: социальный ответ — автопровал (Порог 0, бросок 1 = минимальный провал, без кубика).
     if (rageSocialAutoFail(opponentActor, { skill: skillKey, char: charKey }))
       return { opposed: { threshold: 0, roll: 1, rageAutoFail: true }, opponentActor: null };
-    const threshold = skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0);
+    // Правоверный Тёмного Апостола: +30 на сопротивление убеждению (rules/dark-apostle.mjs).
+    const threshold = (skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0))
+      + faithfulResistBonus(opponentActor, { social: isSocialSkill(skillKey) });
     const roll = await new Roll("1d100").evaluate();
     // unnatural (стр. 26, wdbc-y9i8) — соперник известен по документу здесь,
     // поэтому тай-брейк Сверхъестественной Характеристики можно проверить

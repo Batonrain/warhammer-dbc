@@ -154,7 +154,9 @@ describe("источники по умолчанию", () => {
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "commandSubstitution",
                 "conditions", "core",
-                "daemonInevitability", "devourerOfKnowledge", "dreadnought",
+                "daemonInevitability",
+                // darkApostle (Тёмный Апостол, Sahara 1-54b9) — Литания Слаанеш: +30 на Командование Апостола.
+                "darkApostle", "devourerOfKnowledge", "dreadnought",
                 // drugWithdrawal (wdbc-gyqf2, 25.10.2026) — штраф зависимого наркотика, пока доза просрочена.
                 "drugWithdrawal", "hatred", "homeworld", "items",
                 // khorneBerserker (Берсерк Кхорна, Sahara 1-54b9) — Гвозди Мясника вне Ярости и Закалённое в Крови.

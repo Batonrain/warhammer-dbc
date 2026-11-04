@@ -37,6 +37,7 @@ import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN
 import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
 import { painIsPleasureOnDamage } from "./noise-marine.mjs";
+import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
@@ -1422,6 +1423,14 @@ export async function applyDamageToActor(actor, damageData) {
   const negBonus = negativeWoundsBonus({ net: netDamage, value: system.wounds?.value, bonus: negWoundsBonus });
   netDamage += negBonus;
 
+  // Смертный Инструмент (Тёмный Апостол, combat/dark-apostle.mjs): мистический щит Богов отражает один смертельный удар.
+  let mortalShieldNote = "";
+  if (netDamage > 0 && !stunManeuver) {
+    const shield = await mortalShieldOnDamage(actor, netDamage);
+    netDamage = shield.net;
+    mortalShieldNote = shield.note;
+  }
+
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
 
@@ -1613,7 +1622,7 @@ export async function applyDamageToActor(actor, damageData) {
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
   if (headGuard.note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(headGuard.note)}</div>`);
-  for (const note of [...hardeningNotes, hellishNote, eye.note, ...statusNotes]) {
+  for (const note of [...hardeningNotes, hellishNote, mortalShieldNote, eye.note, ...statusNotes]) {
     if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);

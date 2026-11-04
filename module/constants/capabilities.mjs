@@ -5196,23 +5196,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Т_мный_Апостол — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.tMnyyApostol.layOnHands": {
     label: "Душа Апостола — проводник воли Хаоса в материальный мир. Возложив руки на добровольную цель, может дать ей столько Порчи,",
-    source: "Lay On Hands / Возложение Рук", reader: ""
+    source: "Lay On Hands / Возложение Рук", reader: "см. ability.layOnHands (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.tMnyyApostol.litanyOfChaos": {
     label: "Нечестивые литании наполняют паству силой Тёмных Богов. Может потратить Очко Бесчестия,",
-    source: "Litany of Chaos / Литания Хаоса", reader: ""
+    source: "Litany of Chaos / Литания Хаоса", reader: "см. ability.litanyOfChaos (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.tMnyyApostol.martyr": {
     label: "Истинно верующие готовы пожертвовать собой, чтобы впустить в мир посланцев Богов. Потратив полное действие на ритуальные распевы и тест For.",
-    source: "Martyr / Мученик", reader: ""
+    source: "Martyr / Мученик", reader: "см. ability.martyr (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.tMnyyApostol.mortalInstrument": {
     label: "Самые могущественные Апостолы напрямую проводят волю Пантеона. Раз в сессию, находясь в смертельной опасности,",
-    source: "Mortal Instrument / Смертный Инструмент", reader: ""
+    source: "Mortal Instrument / Смертный Инструмент", reader: "см. ability.mortalInstrument (Sahara 1-54b9)"
   },
   "elite.elitnyeArhetipy.tMnyyApostol.truePrayer": {
     label: "Когда произносит молитвы, по ту сторону Завесы их слышат. Может потратить полудействие, чтобы пройти тест For.",
-    source: "True Prayer / Истинная Молитва", reader: ""
+    source: "True Prayer / Истинная Молитва", reader: "см. ability.truePrayer (Sahara 1-54b9)"
   },
   // ── Элитные_архетипы\Тенеткач — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.tenetkach.coldOfDarkness": {
@@ -6902,11 +6902,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Т_мный_Апостол — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.tMnyyApostol.darkDevotion": {
     label: "Может потратить Очко Бесчестия, чтобы соорудить монумент Разрушительным Силам. Время и ресурсы зависят от амбиций (алтарь из ритуально распя…",
-    source: "Dark Devotion / Тёмное Поклонение", reader: ""
+    source: "Dark Devotion / Тёмное Поклонение", reader: "см. ability.darkDevotion (Sahara 1-54b9)"
   },
   "trait.elitnyeArhetipy.tMnyyApostol.harbingerOfHeresy": {
     label: "Опытный религиозный оратор. Может социально воздействовать в 10 раз на больше целей, чем обычно. Может потратить Очко Бесчестия,",
-    source: "Harbinger of Heresy / Предвестник Ереси", reader: ""
+    source: "Harbinger of Heresy / Предвестник Ереси", reader: "см. ability.harbingerOfHeresy (Sahara 1-54b9)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Тенеткач — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.tenetkach.daemonic3": {
@@ -8223,6 +8223,41 @@ export const CAPABILITIES = {
     label: "Подношение Черепов: убив достойного противника в рукопашной, Реакцией обезглавить труп — +2 Dmg ко всему рукопашному урону до конца боя",
     source: "Skull Offering / Подношение Черепов (packs-src/talents/Элитные_архетипы)",
     reader: "module/combat/khorne-berserker.mjs::registerKhorneKill, ::claimSkullOffering, module/rules/khorne-berserker.mjs::skullOfferingBonus (module/combat/attack.mjs) — Sahara 1-54b9"
+  },
+  "ability.harbingerOfHeresy": {
+    label: "Предвестник Ереси: ×10 целей социального воздействия, переброс провала за Очко Бесчестия с +10, обращение NPC (Charm+0 против W+0) и Правоверный (Очко и Charm+10, +30 на сопротивление убеждению)",
+    source: "Harbinger of Heresy / Предвестник Ереси (packs-src/traits/Элитные_архетипы)",
+    reader: "module/rules/dark-apostle.mjs::harbingerTargetMult (rules/leadership-talents.mjs::commandCapacity, rules/inspire-wrath.mjs::inspireWrathAudience), ::harbingerRerollBonus (module/hooks.mjs, меню Очков), ::faithfulResistBonus (module/sheets/actor-sheet.mjs::_resolveOpposedAuto), module/combat/dark-apostle.mjs::convertNpc, ::makeFaithful — Sahara 1-54b9"
+  },
+  "ability.darkDevotion": {
+    label: "Тёмное Поклонение: Очко Бесчестия — соорудить монумент Разрушительным Силам (запись и карточка; бонусы к ритуалам назначает ГМ)",
+    source: "Dark Devotion / Тёмное Поклонение (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/dark-apostle.mjs::buildMonument (кнопка вкладки БОЙ) — Sahara 1-54b9"
+  },
+  "ability.truePrayer": {
+    label: "Истинная Молитва: полудействие, For.Lore (Heresy)+0 — восстановить одно потраченное Очко Бесчестия (только в бою)",
+    source: "True Prayer / Истинная Молитва (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/dark-apostle.mjs::useTruePrayer (кнопка вкладки БОЙ) — Sahara 1-54b9"
+  },
+  "ability.layOnHands": {
+    label: "Возложение Рук: Порча добровольной цели до Порога Мутации (не выше Cor Апостола), три броска Апостола с его Inf и выбор мутации, раз в месяц на цель",
+    source: "Lay On Hands / Возложение Рук (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/dark-apostle.mjs::useLayOnHands, ::performLayOnHands (module/combat/gm-relay.mjs, запись layOnHands), module/rules/dark-apostle.mjs::layOnHandsPlan, ::layOnHandsPool — Sahara 1-54b9"
+  },
+  "ability.litanyOfChaos": {
+    label: "Литания Хаоса: Очко Бесчестия — бонус Бога подчинённым под Командным Присутствием до конца боя (Extreme (9), +30 на Командование, автопроход Трудного Ландшафта, Frenzy и Hatred (Все!), Fanatic)",
+    source: "Litany of Chaos / Литания Хаоса (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/dark-apostle.mjs::useLitanyOfChaos, ::performLitanyBlessing, ::clearLitanyOnCombatEnd (module/hooks.mjs), module/rules/dark-apostle.mjs::darkApostleRules, ::litanyGivesExtreme (module/combat/attack.mjs, module/rules/squad-roles.mjs), ::litanyAutoPassesTerrain (module/combat/movement-terrain.mjs) — Sahara 1-54b9"
+  },
+  "ability.martyr": {
+    label: "Мученик: полное действие, For.Lore (Heresy)+0 — Правоверный в поле зрения гибнет, на его месте демон под контролем ГМа (4+ Успеха — демона называет Апостол)",
+    source: "Martyr / Мученик (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/dark-apostle.mjs::useMartyr, ::finishMartyr, ::performMartyrSummon (module/combat/gm-relay.mjs, запись martyrSummon) — Sahara 1-54b9"
+  },
+  "ability.mortalInstrument": {
+    label: "Смертный Инструмент: раз в сессию, Очко Бесчестия — помощь Богов (мистический щит от смертельного удара, мутация, демоны), ответ выбирает ГМ",
+    source: "Mortal Instrument / Смертный Инструмент (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/dark-apostle.mjs::useMortalInstrument, ::grantMortalShield, ::mortalShieldOnDamage (module/combat/damage.mjs) — Sahara 1-54b9"
   },
   "ability.rubricOfAhriman": {
     label: "Рубрика Аримана: два броска на Варп-Прорыв (берётся меньший) и на Мутации; тест W−30 открывает выбор мутации из всей таблицы",

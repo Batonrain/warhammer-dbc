@@ -62,6 +62,8 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "slamUsed", "pounceKnockdownUsed", "pounceGrabUsed", "roundhouseUsed",
   // Колдун Рубрики (combat/rubric-sorcerer.mjs): Психическое Эхо — один Голем с карточки манифестации; карточка Регенерации — тест или автоуспех, одно из двух.
   "psychicEchoUsed", "regenerationDone",
+  // Тёмный Апостол (combat/dark-apostle.mjs): демон по карточке Мученика (1–3 Успеха) выбран ГМом; Смертный Инструмент — один ответ Богов на карточку.
+  "martyrDemonPicked", "mortalInstrumentUsed",
   // Саботаж (Талант Разбойника, combat/sabotage.mjs): Клин/отключение оружия цели с карточки удара.
   "sabotageApplied",
   // Разрубить (Талант «Рукопашных», combat/cleave.mjs): одна свободная атака с карточки урона.

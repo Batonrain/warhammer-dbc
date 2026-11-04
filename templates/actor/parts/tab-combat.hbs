@@ -426,6 +426,28 @@
     {{#if hasInfernalShells}}
     <button type="button" class="technique-btn infernal-shells-btn" style="margin-top:6px;" title="Инфернальные Снаряды — час резьбы: 24 обычных болта (единица боеприпаса) становятся Инферно-болтами Тзинча"><span class="tech-name">🔩 Инфернальные Снаряды</span></button>
     {{/if}}
+    {{#if hasHarbinger}}
+    <button type="button" class="technique-btn apostle-convert-btn" style="margin-top:6px;" title="Предвестник Ереси — наведите таргет (T) на дружественного NPC: Charm+0 против W+0, при победе он разделяет вашу веру"><span class="tech-name">📿 Обратить в веру</span></button>
+    <button type="button" class="technique-btn apostle-faithful-btn" style="margin-top:6px;" title="Предвестник Ереси — наведите таргет (T) на NPC, разделяющего вашу веру: Очко Бесчестия и Charm+10 делают его Правоверным (+30 на сопротивление убеждению). Правоверных на сцене: {{darkApostle.faithfulCount}}"><span class="tech-name">🕯 Правоверный ({{darkApostle.faithfulCount}})</span></button>
+    {{/if}}
+    {{#if hasDarkDevotion}}
+    <button type="button" class="technique-btn apostle-monument-btn" style="margin-top:6px;" title="Тёмное Поклонение — Очко Бесчестия: соорудить монумент Разрушительным Силам; бонусы к ритуалам назначает ГМ. Воздвигнуто: {{darkApostle.monuments}}"><span class="tech-name">🗿 Монумент ({{darkApostle.monuments}})</span></button>
+    {{/if}}
+    {{#if hasTruePrayer}}
+    <button type="button" class="technique-btn apostle-true-prayer-btn" style="margin-top:6px;" {{#unless darkApostle.inCombat}}disabled{{/unless}} title="Истинная Молитва — полудействие, For.Lore (Heresy)+0: успех возвращает одно потраченное Очко Бесчестия ({{darkApostle.infamy}}/{{darkApostle.infamyMax}}). Только в бою"><span class="tech-name">🙏 Истинная Молитва</span></button>
+    {{/if}}
+    {{#if hasLitanyOfChaos}}
+    <button type="button" class="technique-btn apostle-litany-btn" style="margin-top:6px;" {{#unless darkApostle.inCombat}}disabled{{/unless}} title="Литания Хаоса — Очко Бесчестия: подчинённым под вашим Командным Присутствием до конца боя один из бонусов Бога (Extreme (9/−1), +30 на Командование, автопроход Трудного Ландшафта, Frenzy и Hatred (Все!), Fanatic).{{#if darkApostle.litanyLabel}} Сейчас: {{darkApostle.litanyLabel}}.{{/if}}"><span class="tech-name">📜 Литания Хаоса{{#if darkApostle.litanyLabel}}: {{darkApostle.litanyLabel}}{{/if}}</span></button>
+    {{/if}}
+    {{#if hasLayOnHands}}
+    <button type="button" class="technique-btn apostle-lay-on-hands-btn" style="margin-top:6px;" title="Возложение Рук — наведите таргет (T) на добровольную цель: она получит Порчу до следующего Порога Мутации (не выше вашей Cor), а вы бросите мутацию три раза с вашим Inf и выберете. Раз в месяц на цель"><span class="tech-name">🖐 Возложение Рук</span></button>
+    {{/if}}
+    {{#if hasMartyr}}
+    <button type="button" class="technique-btn apostle-martyr-btn" style="margin-top:6px;" title="Мученик — полное действие, For.Lore (Heresy)+0: Правоверный в поле зрения погибает и становится демоном (4+ Успеха — демона называете вы, иначе ГМ). Правоверных на сцене: {{darkApostle.faithfulCount}}"><span class="tech-name">☠ Мученик</span></button>
+    {{/if}}
+    {{#if hasMortalInstrument}}
+    <button type="button" class="technique-btn apostle-mortal-btn" style="margin-top:6px;" {{#unless darkApostle.mortalReady}}disabled{{/unless}} title="Смертный Инструмент — раз в сессию, в смертельной опасности: Очко Бесчестия, Боги отвечают (щит от смертельного удара, мутация, демоны — выбирает ГМ).{{#if darkApostle.mortalShield}} Щит Богов поднят.{{/if}}"><span class="tech-name">⚡ Смертный Инструмент{{#if darkApostle.mortalShield}} (щит){{/if}}</span></button>
+    {{/if}}
     {{#if hasWalkingWasteland}}
     <button type="button" class="technique-btn walking-wasteland-btn" style="margin-top:6px;" title="Ходячая Пустошь — 1 непоглощаемого R урона себе, чтобы намеренно заразить местность вокруг (квадрат 100×100 м, 7 дней). Сама зона появляется и без кнопки, когда вы получаете непоглощённый урон в бою"><span class="tech-name">🏜 Заразить местность</span></button>
     {{/if}}

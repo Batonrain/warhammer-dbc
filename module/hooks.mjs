@@ -22,6 +22,10 @@ import { offerStatusResist } from "./combat/status-resist.mjs";
 import { useFinalPush, useNeverDie, usePainIllusion, useUnstoppableWrath, finalPushTurnEnd, finalPushCombatEnd,
          applyDeferredEffects } from "./combat/crit-talents-actions.mjs";
 import { rollNailsTest, giveInToNails, claimSkullOffering, khorneTurnEnd, clearKhorneCombat } from "./combat/khorne-berserker.mjs";
+import { harbingerRerollBonus } from "./rules/dark-apostle.mjs";
+import { gmPickMartyrDemon, grantMortalShield, summonMortalDaemon, clearLitanyOnCombatEnd } from "./combat/dark-apostle.mjs";
+import { rollMutationOrGift } from "./sheets/tabs/mutations.mjs";
+import { isSocialSkill } from "./rules/resolve-test.mjs";
 import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.mjs";
 import { rollShockDeath, rollBleedingTest } from "./combat/shock-death.mjs";
 import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
@@ -879,6 +883,37 @@ export function registerHooks() {
         const auto = el.dataset.auto === "1";
         const done = await runCardOnce(message, "regenerationDone", () => rollRegeneration(target, { auto }).then(() => true),
           "Эта карточка Регенерации уже решена.");
+        if (done) el.closest(".roll-defense-btns")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+      });
+    });
+    // Мученик (Тёмный Апостол): демона по карточке 1–3 Успехов выбирает ГМ.
+    html.querySelectorAll(".wh-martyr-gm-btn").forEach(btn => {
+      if (cardOnceUsed(message, "martyrDemonPicked")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (!game.user.isGM) return ui.notifications.warn("Демона по этой карточке выбирает ГМ.");
+        const done = await runCardOnce(message, "martyrDemonPicked", () => gmPickMartyrDemon(el.dataset.apostleUuid, el.dataset.faithfulUuid),
+          "Демон по этой карточке уже выбран.");
+        if (done) el.disabled = true;
+      });
+    });
+    // Смертный Инструмент (Тёмный Апостол): ответ Богов выбирает ГМ — щит, мутация или демоны (один ответ на карточку).
+    html.querySelectorAll(".wh-mortal-btn").forEach(btn => {
+      if (cardOnceUsed(message, "mortalInstrumentUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (!game.user.isGM) return ui.notifications.warn("Ответ Богов выбирает ГМ.");
+        const doc = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        const apostle = doc?.actor ?? doc;
+        if (!apostle) return ui.notifications.warn("Апостол не найден.");
+        const run = async () => {
+          if (el.dataset.kind === "shield") { await grantMortalShield(apostle); return true; }
+          if (el.dataset.kind === "mutation") { await rollMutationOrGift(apostle); return true; }
+          return summonMortalDaemon(apostle);
+        };
+        const done = await runCardOnce(message, "mortalInstrumentUsed", run, "Боги уже ответили по этой карточке.");
         if (done) el.closest(".roll-defense-btns")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
       });
     });
@@ -4427,7 +4462,10 @@ function _attachFateContextMenu(message, html) {
 
       // Извлекаем порог из старого сообщения
       const thresholdMatch = message.content.match(/Порог.*?<b>(\d+)<\/b>/);
-      const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) : null;
+      // Предвестник Ереси (Тёмный Апостол): переброс социального теста за своё Очко Бесчестия — с +10.
+      const harbinger = (thresholdMatch && !champion)
+        ? harbingerRerollBonus(actor, { social: isSocialSkill(skillTest?.skill) || (!skillTest?.skill && skillTest?.char === "fel") }) : 0;
+      const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) + harbinger : null;
 
       // За Гранью Человека: первый результат этого теста (его Характеристика
       // известна по флагу карточки Навыка/Характеристики с листа).
@@ -4490,6 +4528,7 @@ function _attachFateContextMenu(message, html) {
             ${ft.word} потрачена${esc(payerNote)} (осталось: ${reroll1.poolValue})
           </div>`,
           rollStatLine({ threshold, rv }),
+          harbinger ? `<div class="roll-threshold">Предвестник Ереси: +${harbinger} на переброс социального взаимодействия.</div>` : "",
           blessedFitsLine,
           failUndoLine,
           koaBtn
@@ -4770,6 +4809,8 @@ function _attachFateContextMenu(message, html) {
     await clearPainIsPleasure(combat);
     // Берсерк Кхорна: метки боя (Подношение Черепов, Кровавое Подношение, Закалённое в Крови).
     await clearKhorneCombat(combat);
+    // Тёмный Апостол: Литания Хаоса действует «до конца боя» — снять метки и выданные подчинённым Таланты/Трейт.
+    await clearLitanyOnCombatEnd();
     // Чумной Десантник: отложенные заражения «в конце боя» (Жёлчный Плевок, Благословенный Гноем), снятие меток боя.
     await resolvePlagueMarineCombatEnd(combat);
     // Охотник на Танки: опознанные модели техники — «до конца боя».

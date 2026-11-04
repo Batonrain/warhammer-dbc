@@ -36,6 +36,7 @@ import { itemHasName, hatredTargetsOf } from "./predicates.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { relationByDisposition } from "./warp-touched.mjs";
+import { harbingerTargetMult } from "./dark-apostle.mjs";
 
 // Геометрия токенов (дистанция центров, рукопашный контакт, поле зрения) —
 // НЕ импортируется из combat/facing.mjs / rules/vision-target.mjs /
@@ -119,7 +120,7 @@ export function hasAirOfAuthority(actor) {
  */
 export function commandCapacity(actor, charKey = "fel") {
   const bonus = Math.max(0, Number(actor?.system?.characteristics?.[charKey]?.bonus) || 0);
-  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT);
+  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT) * harbingerTargetMult(actor);
 }
 
 /**

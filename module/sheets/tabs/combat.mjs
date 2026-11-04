@@ -38,6 +38,7 @@ import { toggleDirgeOfDespair, applyWallOfDiscord, showSingForMeDialog } from ".
 import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
 import { activateInfectiousMiasma, startRotsmith, blessedTouch, startWasteland } from "../../combat/plague-marine.mjs";
 import { startGolemCreation, bindNexus, useRebornInDust, useInfernalShells } from "../../combat/rubric-sorcerer.mjs";
+import { useTruePrayer, buildMonument, convertNpc, makeFaithful, useLitanyOfChaos, useLayOnHands, useMartyr, useMortalInstrument } from "../../combat/dark-apostle.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
@@ -257,6 +258,16 @@ export function activateCombatListeners(root, actor) {
   on(root, ".infernal-shells-btn", "click", async () => {
     await useInfernalShells(actor);
   });
+
+  // ── Тёмный Апостол (Sahara 1-54b9, module/combat/dark-apostle.mjs) ────────
+  on(root, ".apostle-true-prayer-btn", "click", async () => { await useTruePrayer(actor); });
+  on(root, ".apostle-monument-btn", "click", async () => { await buildMonument(actor); });
+  on(root, ".apostle-convert-btn", "click", async () => { await convertNpc(actor); });
+  on(root, ".apostle-faithful-btn", "click", async () => { await makeFaithful(actor); });
+  on(root, ".apostle-litany-btn", "click", async () => { await useLitanyOfChaos(actor); });
+  on(root, ".apostle-lay-on-hands-btn", "click", async () => { await useLayOnHands(actor); });
+  on(root, ".apostle-martyr-btn", "click", async () => { await useMartyr(actor); });
+  on(root, ".apostle-mortal-btn", "click", async () => { await useMortalInstrument(actor); });
 
   // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──
   on(root, ".resplendent-raiment-btn", "click", async () => {
