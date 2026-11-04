@@ -163,6 +163,15 @@ describe("Импланты Механикум", () => {
     expect(await syncMechanicumImplants(a)).toBe(0);
   });
 
+  it("три одновременных вызова (архетип выдаёт три Черты разом) дают один комплект", async () => {
+    const a = hero({ items: [itemOf(IMPLANTS_TRAIT)] });
+    const realCreate = a.createEmbeddedDocuments;
+    a.createEmbeddedDocuments = async (kind, docs) => { await new Promise(r => setTimeout(r, 5)); return realCreate(kind, docs); };
+    const results = await Promise.all([syncMechanicumImplants(a), syncMechanicumImplants(a), syncMechanicumImplants(a)]);
+    expect(results.reduce((s, n) => s + n, 0)).toBe(MECHANICUS_IMPLANTS.length);
+    expect(a.created.filter(d => d.kind === "Item")).toHaveLength(MECHANICUS_IMPLANTS.length);
+  });
+
   it("без Черты и не у персонажа — ничего", async () => {
     expect(await syncMechanicumImplants(hero())).toBe(0);
     expect(await syncMechanicumImplants(hero({ items: [itemOf(IMPLANTS_TRAIT)], type: "daemon" }))).toBe(0);

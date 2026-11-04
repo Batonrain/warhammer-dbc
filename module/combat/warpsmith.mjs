@@ -84,7 +84,9 @@ const roll = async formula => (await new Roll(formula).evaluate()).total;
 export const hasMechanicumImplantsTrait = actor =>
   hasAbility(actor, "ability.mechanicumImplants", "Mechanicum Implants", "trait");
 
-export async function syncMechanicumImplants(actor) {
+const implantQueue = new Map();
+
+async function grantMechanicumImplants(actor) {
   if (!actor || actor.type !== "character" || !hasMechanicumImplantsTrait(actor)) return 0;
   const implants = [...(actor.items ?? [])].filter(i => i.type === "implant");
   if (implants.some(i => i.system?.category === "mechanicus")) return 0;
@@ -93,6 +95,14 @@ export async function syncMechanicumImplants(actor) {
   if (!toAdd.length) return 0;
   await actor.createEmbeddedDocuments("Item", toAdd);
   return toAdd.length;
+}
+
+export function syncMechanicumImplants(actor) {
+  if (!actor) return Promise.resolve(0);
+  const key = actor.id ?? actor.uuid;
+  const next = (implantQueue.get(key) ?? Promise.resolve()).then(() => grantMechanicumImplants(actor), () => grantMechanicumImplants(actor));
+  implantQueue.set(key, next);
+  return next.finally(() => { if (implantQueue.get(key) === next) implantQueue.delete(key); });
 }
 
 export async function warpforgedRegenClock(actor, { from, to }) {
