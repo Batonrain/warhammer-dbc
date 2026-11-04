@@ -438,7 +438,17 @@ export async function performMartyrSummon(target, op, initiator) {
 }
 
 export async function finishMartyr(apostle, faithful, name) {
-  const ok = await writeToTarget(faithful, { kind: "martyrSummon", name }, apostle);
+  const sent = await writeToTarget(faithful, { kind: "martyrSummon", name }, apostle);
+  const ranHere = !!globalThis.game?.user?.isGM || faithful.isOwner !== false;
+  const ok = sent && (!ranHere || !!faithful.getFlag?.(NS, "deceased"));
+  if (sent && !ok) {
+    await postTestCard(apostle, {
+      icon: ICON(), title: `Мученик — ${esc(apostle.name)}`,
+      lines: [`<div class="roll-threshold">Демон «${esc(name)}» не явился: ${esc(faithful.name)} остаётся жив.</div>`],
+      outcome: outcomeHtml(false, "Мученик не состоялся")
+    }, { sound: false });
+    return false;
+  }
   await postTestCard(apostle, {
     icon: ICON(), title: `Мученик — ${esc(apostle.name)}`,
     lines: [`<div class="roll-threshold">${esc(faithful.name)} мучительно умирает, плоть искажается: <b>${esc(name)}</b>. Демон сражается на стороне Апостола, но подчиняется ГМу.</div>`],

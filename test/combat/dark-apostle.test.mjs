@@ -582,8 +582,10 @@ describe("Мученик", () => {
     const a = hero({ items: [itemOf(MARTYR)] });
     const f = faithfulNpc(1);
     globalThis.game.packs = { get: () => ({ getIndex: async () => [], getDocument: async () => null }) };
-    expect(await finishMartyr(a, f, "Выдумка")).toBe(true);
+    expect(await finishMartyr(a, f, "Выдумка")).toBe(false);
     expect(f.getFlag(NS, "deceased")).toBeUndefined();
+    expect(lastCard()).toContain("остаётся жив");
+    expect(lastCard()).not.toContain("мучительно умирает");
   });
 
   it("ГМ выбирает демона по карточке (gmPickMartyrDemon) тем же путём", async () => {
