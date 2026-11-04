@@ -77,6 +77,9 @@ const num = v => Number(v) || 0;
 /** Сколько предметов требуется: пусто и 0 значат «один». */
 const wantCount = e => Math.max(1, num(e?.count) || 1);
 
+const hasWantedName = (item, want) =>
+  String(want).split("/").map(s => s.trim()).filter(Boolean).some(w => itemHasName(item, w));
+
 /**
  * Цена архетипа для персонажа: каждый следующий вдвое дороже предыдущего.
  * @param {number} base   цена самого архетипа
@@ -120,7 +123,7 @@ function talentOk(entry, who) {
   const want = String(entry?.name || "").trim();
   if (!want) return true;
   const spec = String(entry?.specialization || "").toLowerCase();
-  const hits = (who.talents || []).filter(t => itemHasName(t, want)
+  const hits = (who.talents || []).filter(t => hasWantedName(t, want)
     && (!spec || String(t?.specialization || "").toLowerCase() === spec));
   const need = wantCount(entry);
   if (need <= 1) return hits.length > 0;
@@ -162,7 +165,7 @@ function entryOk(entry, who) {
     case "notEldar": return !ELDAR_RACE_KEYS.includes(who.race);
     case "trait": {
       const want = String(entry.name || "").trim();
-      return !want || (who.traits || []).some(t => itemHasName(t, want));
+      return !want || (who.traits || []).some(t => hasWantedName(t, want));
     }
     case "patron":
       // «Любое» значит «хоть какое-то»: у безбожника Покровительства нет вовсе.
