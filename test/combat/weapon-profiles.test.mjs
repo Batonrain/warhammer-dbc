@@ -213,6 +213,10 @@ describe("attackIsMelee: окно и бросок обязаны решать о
     expect(attackIsMelee({ weaponClass: "thrown" }, { forceMelee: true })).toBe(true);
   });
 
+  it("авторский профиль с галочкой «Ближний бой» (Крюк Паджиги) — рукопашная", () => {
+    expect(attackIsMelee(ranged, { profile: { label: "Крюк", damage: "1d10+5", range: "2", melee: true } })).toBe(true);
+  });
+
   it("обычный авторский профиль стрельбу рукопашной не делает", () => {
     expect(attackIsMelee(ranged, { profile: { label: "Подавительный" } })).toBe(false);
   });

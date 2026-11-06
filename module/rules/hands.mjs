@@ -217,7 +217,8 @@ export function baseHandsFromTraits(actor) {
     .filter(isMultipleArmsTrait)
     .map(t => Number(t.system?.rating) || 0)
     .filter(n => n > 0);
-  return ratings.length ? Math.max(...ratings) : BASE_HANDS;
+  const base = ratings.length ? Math.max(...ratings) : BASE_HANDS;
+  return base + Math.max(0, Number(actor?.system?.extraHands) || 0);
 }
 
 /**
