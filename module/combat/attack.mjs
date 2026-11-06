@@ -1121,6 +1121,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   });
   // Двойной Выстрел: дальше второго попадания — «пролетают над целью, промахи».
   const hitsCount = doubleTapOn ? doubleTapHits(hitsCountBase) : hitsCountBase;
+  const burstKey    = (!isMelee && hit && rofMode === "semi") ? "rof_semi" : (!isMelee && hit && rofMode === "full") ? "rof_full" : null;
+  const burstCap    = burstKey ? (Number(hitCountSys[burstKey]) || 0) : 0;
+  const burstBase   = burstKey ? (Number(fanningSys[burstKey]) || 0) : 0;
+  const burstWanted = burstKey ? (rofMode === "semi" ? Math.ceil(deg / 2) : deg) : 0;
+  const burstCapNote = !burstKey ? ""
+    : wideBurst
+      ? `🎯 Широкая Очередь: потолок попаданий RoF ${burstBase} − 2${cageFiring ? " − 3" : ""} = ${burstCap}; ${deg} Усп. дали бы ${burstWanted}, попаданий ${hitsCountBase}. Уклонение цели −20 (уже в кнопках).`
+      : (burstWanted > burstCap && burstCap > 0)
+        ? `🎯 Очередь: ${deg} Усп. дали бы ${burstWanted} попад., но потолок RoF ${burstCap} — попаданий ${hitsCountBase}.`
+        : "";
   let ammoSpent = 0;
   let controlledBurstSaved = 0;
   let burstRofUsed = null;   // RoF очереди после Контролируемой Очереди — от него считается Насыщение
@@ -1461,6 +1471,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const bayonetShotOn = hit && isMelee && meleeTech === "bayonetCharge" && hasBayonetCharge(actor);
   if (bayonetShotOn) await actor.setFlag?.("warhammer-dbc", BAYONET_SHOT_PENDING_FLAG, true);
   const damageTalentNotes = [
+    burstCapNote,
     (hit && shockerOn) ? "⚡ Шокер: Избирательное попадание Гальванического оружия в голову — Шокирующее (цель: T+0 или Оглушение)." : "",
     (hit && igniter) ? IGNITER_NOTES[igniter] : "",
     (hit && wallopOn) ? `💥 Трепка: Оглушающее (${wallopRating}) — только на ПЕРВОЕ попадание (после Избеганий); применяйте эффект один раз.` : "",
