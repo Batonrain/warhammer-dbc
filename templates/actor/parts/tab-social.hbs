@@ -348,7 +348,7 @@
          title="Талант «Работа под Прикрытием»: потраченный Inf (Характеристика, не Очки) → ячейка тайных агентов. Inf 1 → 25/0, 2 → 30/1, 3 → 35/1, 4 → 40/2">
       ЯЧЕЙКИ АГЕНТОВ
       <span class="minion-count" title="Сколько ячеек заведено">{{coverUpCount}}</span>
-      <span class="minion-count cover-up-inf-left{{#if coverUpInfOver}} cover-up-over{{/if}}" title="Inf на листе {{coverUpInfSheet}} минус вложено в платные ячейки {{coverUpPaidInf}} = {{coverUpInfLeft}}. Бесплатные ячейки (галочка) не считаются: сейчас в них Inf {{coverUpFreeInf}}. Сам Inf на листе не меняется.{{#if coverUpInfOver}} Вложено больше, чем есть на листе!{{/if}}">Inf {{coverUpInfLeft}} / {{coverUpInfSheet}}</span>
+      <span class="minion-count cover-up-inf-left{{#if coverUpInfOver}} cover-up-over{{/if}}" title="Inf на листе {{coverUpInfSheet}} минус вложено в платные ячейки {{coverUpPaidInf}} = {{coverUpInfLeft}}. {{#if coverUpFreeAllowed}}Бесплатные ячейки (галочка) не считаются: сейчас в них Inf {{coverUpFreeInf}}.{{/if}} Сам Inf на листе не меняется.{{#if coverUpInfOver}} Вложено больше, чем есть на листе!{{/if}}">Inf {{coverUpInfLeft}} / {{coverUpInfSheet}}</span>
       <button type="button" class="minion-add-btn cover-up-add" title="Завести ячейку">+</button>
     </div>
     {{#if coverUpCells.length}}
@@ -356,7 +356,7 @@
       <thead><tr>
         <th>Ячейка</th>
         <th title="Потраченный Inf (Характеристика, не Очки)">Inf</th>
-        <th title="Ячейка без траты Inf: Отступник («Cover Up суммарно на 10 Inf без траты Inf»), Происхождение Аэльдари «Три Разговора, Один Нож» (ячейка 2 Inf, персонаж не платит). Отмеченная не вычитается из Inf на листе">Беспл.</th>
+        {{#if coverUpFreeAllowed}}<th title="Ячейка без траты Inf: Отступник («Cover Up суммарно на 10 Inf без траты Inf»), Происхождение Аэльдари «Три Разговора, Один Нож» (ячейка 2 Inf, персонаж не платит). Отмеченная не вычитается из Inf на листе">Беспл.</th>{{/if}}
         <th title="Средние характеристики агентов ячейки">Х-ки агентов</th>
         <th title="Справочно: в тест Реквизиции не подмешивается">Ур. Реквизиции</th>
         <th></th>
@@ -368,7 +368,7 @@
           <td><select class="cover-up-inf" data-index="{{c.idx}}">
             {{#each c.infOptions as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
           </select></td>
-          <td><input type="checkbox" class="cover-up-free" data-index="{{c.idx}}" {{#if c.free}}checked{{/if}} title="Бесплатная ячейка: Inf на листе не вычитается"/></td>
+          {{#if ../coverUpFreeAllowed}}<td><input type="checkbox" class="cover-up-free" data-index="{{c.idx}}" {{#if c.free}}checked{{/if}} title="Бесплатная ячейка: Inf на листе не вычитается"/></td>{{/if}}
           <td class="cover-up-agents">{{c.agents}}</td>
           <td class="cover-up-requisition">{{c.requisition}}</td>
           <td><button type="button" class="cover-up-remove" data-index="{{c.idx}}" title="Распустить ячейку">✕</button></td>

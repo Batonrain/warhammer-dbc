@@ -18,10 +18,10 @@ const NS = "warhammer-dbc";
 const talent = { type: "talent", name: "Cover Up / Работа под Прикрытием", system: {} };
 
 /** Актор-двойник: флаг читается как у документа, setFlag запоминает записанное и обновляет флаг. */
-function fakeActor({ items = [talent], cells, inf } = {}) {
+function fakeActor({ items = [talent], cells, inf, archetype = "", race = "human" } = {}) {
   const a = {
     items,
-    system: { characteristics: { inf: { total: inf ?? 0 } } },
+    system: { characteristics: { inf: { total: inf ?? 0 } }, archetype, race },
     flags: cells === undefined ? {} : { [NS]: { [COVER_UP_FLAG]: cells } },
     writes: [],
     async setFlag(scope, key, value) {
@@ -67,7 +67,7 @@ describe("контекст блока", () => {
 
 describe("Inf на листе минус вложено в ячейки — вычисляется, в актор не пишется", () => {
   it("платные ячейки уменьшают остаток, бесплатные нет; строка несёт галочку", () => {
-    const a = fakeActor({ inf: 30, cells: [
+    const a = fakeActor({ inf: 30, archetype: "renegade", cells: [
       { name: "Тени", inf: 3 }, { name: "Корсарская", inf: 2, free: true }, { name: "Гильдия", inf: 4 }] });
     const ctx = coverUpPanelContext(a);
     expect(ctx.coverUpCells.map(c => c.free)).toEqual([false, true, false]);
@@ -79,12 +79,50 @@ describe("Inf на листе минус вложено в ячейки — вы
     expect(ctx).toMatchObject({ coverUpInfLeft: -1, coverUpInfOver: true });
   });
   it("галочка бесплатной ячейки уходит в флаг, и остаток после неё растёт", async () => {
-    const a = fakeActor({ inf: 10, cells: [{ name: "А", inf: 4 }] });
+    const a = fakeActor({ inf: 10, race: "azuriane", cells: [{ name: "А", inf: 4 }] });
     expect(coverUpPanelContext(a).coverUpInfLeft).toBe(6);
     await changeCoverUpCell(a, 0, { free: true });
     expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: true }]);
     expect(coverUpPanelContext(a).coverUpInfLeft).toBe(10);
     expect(a.system.characteristics.inf.total).toBe(10);
+  });
+});
+
+describe("галочка «бесплатная ячейка» — только Отступник и Аэльдари (решение владельца 08.11.2026)", () => {
+  const cells = [{ name: "А", inf: 3, free: true }, { name: "Б", inf: 2 }];
+  it("у обычного персонажа галочки нет, старая бесплатная ячейка считается платной", () => {
+    const ctx = coverUpPanelContext(fakeActor({ inf: 20, cells }));
+    expect(ctx.coverUpFreeAllowed).toBe(false);
+    expect(ctx.coverUpCells.map(c => c.free)).toEqual([false, false]);
+    expect(ctx).toMatchObject({ coverUpPaidInf: 5, coverUpFreeInf: 0, coverUpInfLeft: 15 });
+  });
+  it("Отступник и Аэльдари галочку получают, бесплатная ячейка остаток не уменьшает", () => {
+    for (const over of [{ archetype: "renegade" }, { race: "drukhari" }]) {
+      const ctx = coverUpPanelContext(fakeActor({ inf: 20, cells, ...over }));
+      expect(ctx.coverUpFreeAllowed).toBe(true);
+      expect(ctx.coverUpCells.map(c => c.free)).toEqual([true, false]);
+      expect(ctx).toMatchObject({ coverUpPaidInf: 2, coverUpFreeInf: 3, coverUpInfLeft: 18 });
+    }
+  });
+  it("правка free=true у не-Отступника/не-Аэльдари в флаг не пишется", async () => {
+    const a = fakeActor({ inf: 10, cells: [{ name: "А", inf: 4 }] });
+    await changeCoverUpCell(a, 0, { free: true });
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: false }]);
+    expect(coverUpPanelContext(a).coverUpInfLeft).toBe(6);
+  });
+  it("снять галочку у не-Отступника можно всегда", async () => {
+    const a = fakeActor({ cells: [{ name: "А", inf: 4, free: true }] });
+    await changeCoverUpCell(a, 0, { free: false });
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: false }]);
+  });
+  it("разметка: колонка «Беспл.» и галочка показываются только при coverUpFreeAllowed", () => {
+    const hbs = fs.readFileSync(path.resolve(import.meta.dirname, "../../templates/actor/parts/tab-social.hbs"), "utf8");
+    const block = hbs.slice(hbs.indexOf('data-collapse-key="social-cover-up"'), hbs.indexOf("{{!-- ── Отношения ── --}}"));
+    const guardRe = /\{\{#if (?:\.\.\/)?coverUpFreeAllowed\}\}[^\n]*?\{\{\/if\}\}/g;
+    const guarded = [...block.matchAll(guardRe)].map(m => m[0]);
+    expect(guarded.some(g => g.includes("cover-up-free"))).toBe(true);
+    expect(guarded.some(g => g.includes("Беспл."))).toBe(true);
+    expect(block.replace(guardRe, "")).not.toMatch(/cover-up-free|Беспл\./);
   });
 });
 

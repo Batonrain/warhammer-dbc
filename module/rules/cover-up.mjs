@@ -27,7 +27,11 @@
 //      выдаётся БЕЗ траты (Архетип «Отступник»: «Cover Up (суммарно на 10 Inf
 //      без траты Inf)»; Происхождение Аэльдари «Три Разговора, Один Нож»:
 //      ячейка 2 Inf, «персонаж не платит за ее создание»). Галочку ставит
-//      игрок сам; лимит «суммарно на 10 Inf» Отступника не проверяется.
+//      игрок сам, но только у персонажа с Архетипом «Отступник» (ключ
+//      renegade) или расой группы Аэльдари (решение владельца 08.11.2026,
+//      freeCellAllowed): у остальных колонки нет, а ячейка с флагом free,
+//      оставшимся от прежней версии, считается платной (effectiveCells).
+//      Лимит «суммарно на 10 Inf» Отступника не проверяется.
 //    • Требование Таланта «Сеть Контактов» («Cover Up, 5 и больше ячеек») —
 //      условие получения, здесь не проверяется (rules/requisition-talents.mjs
 //      про него молчит ровно так же).
@@ -42,6 +46,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { AELDARI_RACES } from "../constants/races.mjs";
 
 /** Ключ флага актора (`flags.warhammer-dbc.<ключ>`). */
 export const COVER_UP_FLAG = "coverUpCells";
@@ -73,6 +78,23 @@ export function cellStats(inf) {
 /** Носитель Таланта «Cover Up» — только ему панель имеет смысл. */
 export function hasCoverUp(actor) {
   return [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Cover Up"));
+}
+
+const RENEGADE_ARCHETYPES = ["renegade", "ренегат", "отступник"];
+
+/**
+ * Можно ли актору отмечать ячейки бесплатными: Архетип «Отступник» (ключ или имя
+ * в system.archetype — как у isSkitariiActor) или раса группы Аэльдари.
+ */
+export function freeCellAllowed(actor) {
+  const arch = String(actor?.system?.archetype ?? "").trim().toLowerCase();
+  if (RENEGADE_ARCHETYPES.includes(arch)) return true;
+  return AELDARI_RACES.includes(actor?.system?.race);
+}
+
+/** Ячейки так, как они считаются: без права на бесплатные free сбрасывается. */
+export function effectiveCells(actor, cells) {
+  return freeCellAllowed(actor) ? cells : cells.map(c => (c.free === true ? { ...c, free: false } : c));
 }
 
 /** Ячейки из флага актора, приведённые к {name, inf, free}; не список — пусто. */
@@ -134,7 +156,7 @@ export function infOnSheet(actor) {
  */
 export function infRemaining(actor, cells) {
   const onSheet = infOnSheet(actor);
-  const { paidInf } = coverUpSummary(cells);
+  const { paidInf } = coverUpSummary(effectiveCells(actor, cells));
   const left = onSheet - paidInf;
   return { onSheet, paid: paidInf, left, over: left < 0 };
 }

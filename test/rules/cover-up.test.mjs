@@ -15,6 +15,7 @@ import path from "node:path";
 import {
   COVER_UP_TABLE, COVER_UP_FLAG,
   hasCoverUp, readCells, cellStats, coverUpSummary, clampInf, infOnSheet, infRemaining,
+  freeCellAllowed, effectiveCells,
   withAddedCell, withChangedCell, withoutCell
 } from "../../module/rules/cover-up.mjs";
 import { packDocuments, PACKS_SRC, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
@@ -136,7 +137,8 @@ describe("Inf на листе минус вложено в ячейки (реш�
   });
   it("остаток = Inf листа минус платные ячейки; бесплатные его не уменьшают", () => {
     const cells = [{ name: "А", inf: 3 }, { name: "Б", inf: 2, free: true }, { name: "В", inf: 4 }];
-    expect(infRemaining(sheetActor(40), cells)).toEqual({ onSheet: 40, paid: 7, left: 33, over: false });
+    const renegade = { system: { archetype: "renegade", characteristics: { inf: { total: 40 } } } };
+    expect(infRemaining(renegade, cells)).toEqual({ onSheet: 40, paid: 7, left: 33, over: false });
   });
   it("вложили больше, чем есть, — остаток отрицательный и помечен перебором", () => {
     expect(infRemaining(sheetActor(5), [{ name: "А", inf: 4 }, { name: "Б", inf: 3 }])).toEqual({ onSheet: 5, paid: 7, left: -2, over: true });
@@ -145,6 +147,35 @@ describe("Inf на листе минус вложено в ячейки (реш�
     const a = sheetActor(30);
     infRemaining(a, [{ name: "А", inf: 4 }]);
     expect(a.system.characteristics.inf.total).toBe(30);
+  });
+});
+
+describe("бесплатная ячейка — только Отступник и Аэльдари (решение владельца 08.11.2026)", () => {
+  const who = (archetype, race = "human") => ({ system: { archetype, race, characteristics: { inf: { total: 30 } } } });
+  it("Отступник: по ключу и по имени архетипа, любой регистр", () => {
+    for (const a of ["renegade", "Renegade", "ренегат", " Ренегат ", "отступник"]) expect(freeCellAllowed(who(a)), a).toBe(true);
+  });
+  it("Аэльдари: любая раса группы", () => {
+    for (const r of ["azuriane", "drukhari", "ynnari", "halfEldar", "harlequin", "exodite"]) expect(freeCellAllowed(who("", r)), r).toBe(true);
+  });
+  it("остальные — нет: другие архетипы и расы, пустой и отсутствующий актор", () => {
+    expect(freeCellAllowed(who("pirate"))).toBe(false);
+    expect(freeCellAllowed(who("renegadePsyker"))).toBe(false);
+    expect(freeCellAllowed(who("", "astartes"))).toBe(false);
+    expect(freeCellAllowed({})).toBe(false);
+    expect(freeCellAllowed(null)).toBe(false);
+  });
+  it("effectiveCells: у не-Отступника free сбрасывается, у Отступника сохраняется", () => {
+    const cells = [{ name: "А", inf: 2, free: true }, { name: "Б", inf: 1, free: false }];
+    expect(effectiveCells(who("pirate"), cells).map(c => c.free)).toEqual([false, false]);
+    expect(effectiveCells(who("renegade"), cells).map(c => c.free)).toEqual([true, false]);
+    expect(cells[0].free).toBe(true);
+  });
+  it("infRemaining: старая ячейка с free у не-Отступника платная, у Отступника — нет", () => {
+    const cells = [{ name: "А", inf: 4, free: true }, { name: "Б", inf: 2 }];
+    expect(infRemaining(who("pirate"), cells)).toEqual({ onSheet: 30, paid: 6, left: 24, over: false });
+    expect(infRemaining(who("renegade"), cells)).toEqual({ onSheet: 30, paid: 2, left: 28, over: false });
+    expect(infRemaining(who("", "azuriane"), cells)).toEqual({ onSheet: 30, paid: 2, left: 28, over: false });
   });
 });
 

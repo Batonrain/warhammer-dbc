@@ -14,7 +14,7 @@
 
 import {
   COVER_UP_FLAG, COVER_UP_INF_MIN, COVER_UP_INF_MAX,
-  hasCoverUp, readCells, cellStats, coverUpSummary, infRemaining,
+  hasCoverUp, readCells, cellStats, coverUpSummary, infRemaining, freeCellAllowed, effectiveCells,
   withAddedCell, withChangedCell, withoutCell
 } from "../../rules/cover-up.mjs";
 import { rootEl } from "../v2-helpers.mjs";
@@ -26,11 +26,12 @@ const INF_VALUES = Array.from({ length: COVER_UP_INF_MAX - COVER_UP_INF_MIN + 1 
 /** Контекст блока; без Таланта — только `hasCoverUp: false` (панель в шаблоне скрыта). */
 export function coverUpPanelContext(actor) {
   if (!hasCoverUp(actor)) return { hasCoverUp: false };
-  const cells = readCells(actor);
+  const cells = effectiveCells(actor, readCells(actor));
   const sum = coverUpSummary(cells);
   const inf = infRemaining(actor, cells);
   return {
     hasCoverUp: true,
+    coverUpFreeAllowed: freeCellAllowed(actor),
     coverUpCells: cells.map((c, idx) => {
       const stats = cellStats(c.inf);
       return {
@@ -75,7 +76,8 @@ export function addCoverUpCell(actor) {
 export function changeCoverUpCell(actor, index, patch) {
   return enqueue(actor, async () => {
     const cells = readCells(actor);
-    const next = withChangedCell(cells, index, patch);
+    const allowed = patch.free === true && !freeCellAllowed(actor) ? { ...patch, free: false } : patch;
+    const next = withChangedCell(cells, index, allowed);
     if (next !== cells) await save(actor, next);
   });
 }
