@@ -456,3 +456,90 @@ describe("несвязанные токены: конец боя, Ход, про
     expect(shortMod(tokenOf(soldier, "t1"))).toBe(10);
   });
 });
+
+// Лимит получателей (книга, «Командование»: «до F.b×2 подчинённых одновременно …
+// он выбирает, кто получает преимущества») относится и к массовым побочкам
+// Детальных Команд: «Храбрость» (снять Подавление/Шок) и «Особая Тактика»
+// (выдать Талант) достаются только первым F.b×2 (F.b×20 с Air of Authority).
+describe("лимит получателей: Храбрость и Особая Тактика (wdbc-ertdb)", () => {
+  const AOA = { type: "talent", name: "Air of Authority / Аура Власти", system: {} };
+  let rank, realFromUuid, realUi;
+
+  const addRank = n => {
+    rank = Array.from({ length: n }, (_, i) => {
+      const d = doc(`Actor.r${i}`, "character", { characteristics: { wp: { total: 30 } }, conditions: { pinned: true, shocked: true } });
+      d.createdItems = [];
+      d.createEmbeddedDocuments = async (_t, data) => { d.createdItems.push(...data); };
+      return d;
+    });
+    squad.system.members = rank.map((d, i) => ({ id: `r${i}`, uuid: d.uuid }));
+    const map = { "Actor.c": sarge, "Actor.sq": squad, ...Object.fromEntries(rank.map(d => [d.uuid, d])) };
+    globalThis.fromUuidSync = u => map[u] ?? null;
+    game.actors = [sarge, squad, ...rank];
+  };
+  const freed = () => rank.filter(d => !d.system.conditions.pinned && !d.system.conditions.shocked).length;
+
+  beforeEach(() => {
+    realFromUuid = globalThis.fromUuid;
+    realUi = globalThis.ui;
+    globalThis.fromUuid = async () => ({ name: "Bayonet Charge", toObject: () => ({ _id: "x", name: "Bayonet Charge", type: "talent", flags: {} }) });
+    globalThis.ui = { notifications: { warn() {}, info() {} } };
+  });
+  afterEach(() => { globalThis.fromUuid = realFromUuid; globalThis.ui = realUi; });
+
+  it("Храбрость: F.b 4 — сняты у первых восьми из двенадцати", async () => {
+    const { applyBraveryNow } = await import("../../module/combat/command-state.mjs");
+    addRank(12);
+    const names = await applyBraveryNow(squad);
+    expect(names).toHaveLength(8);
+    expect(freed()).toBe(8);
+    expect(rank.slice(0, 8).every(d => !d.system.conditions.pinned)).toBe(true);
+    expect(rank.slice(8).every(d => d.system.conditions.pinned && d.system.conditions.shocked)).toBe(true);
+  });
+
+  it("Храбрость: с Air of Authority у Командира F.b×20 — сняты у всех двенадцати", async () => {
+    const { applyBraveryNow } = await import("../../module/combat/command-state.mjs");
+    addRank(12);
+    sarge.items = [AOA];
+    expect(await applyBraveryNow(squad)).toHaveLength(12);
+  });
+
+  it("Храбрость без лимита (Полевая Казнь: «все остальные подчинённые») — сняты у всех", async () => {
+    const { applyBraveryNow } = await import("../../module/combat/command-state.mjs");
+    addRank(12);
+    expect(await applyBraveryNow(squad, { capped: false })).toHaveLength(12);
+  });
+
+  it("Храбрость у командира сброда: лимит по порядку followers", async () => {
+    const { applyBraveryNow } = await import("../../module/combat/command-state.mjs");
+    addRank(12);
+    squad.system.members = [];
+    sarge.system.followers = rank.map(d => ({ uuid: d.uuid }));
+    expect(await applyBraveryNow(sarge)).toHaveLength(8);
+    expect(rank[8].system.conditions.pinned).toBe(true);
+  });
+
+  it("Особая Тактика: Талант получают первые восемь, с Air of Authority — все двенадцать", async () => {
+    const { grantTacticTalent } = await import("../../module/combat/command-state.mjs");
+    addRank(12);
+    expect(await grantTacticTalent(squad, "bayonetCharge")).toHaveLength(8);
+    expect(rank.slice(0, 8).every(d => d.createdItems.length === 1)).toBe(true);
+    expect(rank.slice(8).every(d => d.createdItems.length === 0)).toBe(true);
+    for (const d of rank) d.createdItems = [];
+    sarge.items = [AOA];
+    expect(await grantTacticTalent(squad, "bayonetCharge")).toHaveLength(12);
+  });
+
+  it("Полевая Казнь снимает Шок/Подавление у всех остальных подчинённых, лимит Командования ей не мешает", async () => {
+    const { applyFieldExecutionClear } = await import("../../module/combat/field-execution.mjs");
+    addRank(12);
+    expect(await applyFieldExecutionClear(sarge, [squad])).toHaveLength(12);
+  });
+
+  it("без Командира (некому считать F.b) лимита нет", async () => {
+    const { applyBraveryNow } = await import("../../module/combat/command-state.mjs");
+    addRank(12);
+    squad.system.posts = {};
+    expect(await applyBraveryNow(squad)).toHaveLength(12);
+  });
+});

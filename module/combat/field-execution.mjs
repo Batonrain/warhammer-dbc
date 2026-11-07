@@ -26,8 +26,9 @@
 //      атаки — тем же приёмом, что «Скрыть трусость» у command-state.mjs.
 //      Снимает Шок/Подавление («запуган»/«отступает» не хранятся данными —
 //      см. заголовок rules/leadership-talents.mjs) — переиспользует
-//      applyBraveryNow (то же снятие, что у «Храбрости»), по каждому Отряду,
-//      которым командует исполнитель.
+//      applyBraveryNow (то же снятие, что у «Храбрости», но без лимита
+//      получателей F.b×2 — у Таланта «все остальные подчинённые»), по каждому
+//      Отряду, которым командует исполнитель.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { moraleThreshold } from "./intimidate.mjs";
@@ -108,7 +109,7 @@ function squadsLedBy(actor, allActors) {
 export async function applyFieldExecutionClear(executionerActor, allActors) {
   const freed = [];
   for (const squad of squadsLedBy(executionerActor, allActors ?? [])) {
-    freed.push(...(await applyBraveryNow(squad)));
+    freed.push(...(await applyBraveryNow(squad, { capped: false })));
   }
   return freed;
 }
