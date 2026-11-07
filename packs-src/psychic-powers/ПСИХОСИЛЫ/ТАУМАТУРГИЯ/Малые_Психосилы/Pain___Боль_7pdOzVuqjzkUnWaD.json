@@ -49,6 +49,7 @@
     },
     "resistChar": "wp",
     "resistMod": 0,
+    "mindEffect": true,
     "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Малые Психосилы» стр. 295)"
   },
   "_id": "7pdOzVuqjzkUnWaD",

@@ -133,6 +133,7 @@ import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from 
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
 import { butcherStatus } from "./beastman-subrace.mjs";
+import { baseIsCharge, baseIsFullAttack } from "../rules/melee-base.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -1380,7 +1381,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Brutal Charge/Брутальный Натиск — только при Базе «Натиск». rofMode у
   // рукопашной всегда "melee" (база живёт в opts.baseKey из диалога) —
   // прежний гейт rofMode==="charge" не срабатывал никогда.
-  const chargeBonus = (isMelee && opts.baseKey === "charge") ? brutalChargeDamageBonus(actor) : 0;
+  const chargeBonus = (isMelee && baseIsCharge(opts.baseKey)) ? brutalChargeDamageBonus(actor) : 0;
   // Кровавое Пламя (wdbc-1rno): +2 Dmg за каждого убитого этим оружием с
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
@@ -1504,7 +1505,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Натиск в полёте: общий признак для Хищника Небес (ниже) и Раптора (rules/melee-talents.mjs);
   // кубы Раптора идут в bonusDice (бросаются отдельно, первому попаданию).
   const chargeFromFlight = isChargeFromFlight({
-    charge: isMelee && opts.baseKey === "charge", altitude: actor.system?.movement?.altitude,
+    charge: isMelee && baseIsCharge(opts.baseKey), altitude: actor.system?.movement?.altitude,
     inFlightAltitudes: IN_FLIGHT_ALTITUDES
   });
   const raptorDice = hit ? raptorBonusDice(actor, { chargeFromFlight, deg }) : 0;
@@ -1538,7 +1539,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Тяжёлый Хук: метка на кнопки урона — карточка урона предложит встречный тест S+0 vs S+0 (сбить с ног).
   wp.haymaker = haymakerOn;
   // Жнец (combat/reaper-chain.mjs): удар с Базой «Натиск» — метка на кнопку урона (там решает, убила ли атака цель).
-  wp.chargeBase = isMelee && opts.baseKey === "charge";
+  wp.chargeBase = isMelee && baseIsCharge(opts.baseKey);
   // Окончательная Казнь (combat/final-execution.mjs): удар проведён с вооружённым Талантом — метка на кнопку урона
   // (конвейер урона метит жертву; убийство в том же Раунде дарит Страх (2) на 1 Раунд).
   wp.finalExecution = isMelee && !!opts.finalExecution;
@@ -2087,7 +2088,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // может совершать Физические Избегания» — метка на Ход, независимо от попадания
   // (combat/defense.mjs отказывает Уклонению и Парированию). Успешная
   // дополнительная атака Яростного Штурма открывает Реприз (Парирование).
-  if (isMelee && opts.baseKey === "fullatk") {
+  if (isMelee && baseIsFullAttack(opts.baseKey)) {
     await markFullAttack(actor, item);
     if (hit && opts.techniqueOpts?.furiousAssault) await markFuriousChild(actor);
   }

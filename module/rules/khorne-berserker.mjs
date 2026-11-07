@@ -21,6 +21,7 @@
 import { itemHasName } from "./predicates.mjs";
 import { itemHasKey } from "./item-marker.mjs";
 import { isInRage } from "./rage.mjs";
+import { baseIsFullAttack } from "./melee-base.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -113,7 +114,7 @@ export function isBleeding(actor) {
 
 /** +20 на Полную Атаку, пока Берсерк страдает от Кровотечения (прибавка к бонусу Базы). */
 export function forHeCaresNotBonus(actor, baseKey) {
-  if (baseKey !== "fullatk" || !hasForHeCaresNot(actor) || !isBleeding(actor)) return 0;
+  if (!baseIsFullAttack(baseKey) || !hasForHeCaresNot(actor) || !isBleeding(actor)) return 0;
   return FOR_HE_CARES_NOT_BONUS;
 }
 

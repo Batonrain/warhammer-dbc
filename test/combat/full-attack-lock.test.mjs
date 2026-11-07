@@ -208,6 +208,10 @@ describe("метку ставит сама атака (combat/attack.mjs)", () =
     expect(lockOf(a)).toMatchObject({ light: true });
   });
 
+  it("Безрассудный Натиск (считается и Натиском, и Полной Атакой) — метка стоит", async () => {
+    expect(lockOf(await swing({ baseKey: "recklessCharge" }))).toMatchObject({ light: false });
+  });
+
   it("другая База — метки нет", async () => {
     expect(lockOf(await swing({ baseKey: "standard" }))).toBeUndefined();
     expect(lockOf(await swing({ baseKey: "charge" }))).toBeUndefined();

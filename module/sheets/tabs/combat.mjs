@@ -29,7 +29,7 @@ import { toggleSuffocationMode } from "../../combat/condition-ticks.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showTortureDialog } from "../../apps/torture.mjs";
-import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
+import { hasFrenzyTalent, tryEnterRage, markFrenzyExited } from "../../combat/frenzy.mjs";
 import { attemptRageExit } from "../../combat/rage-behavior.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
 import { provokeNails, useRedStreak } from "../../combat/khorne-berserker.mjs";
@@ -177,14 +177,22 @@ export function activateCombatListeners(root, actor) {
   // сохраняется формой Foundry как обычно — здесь только гейт входа и отметка выхода.
   on(root, ".rage-toggle input", "change", async ev => {
     const checked = ev.currentTarget.checked;
-    if (checked && frenzyEntryBlocked(actor)) {
+    if (checked && hasFrenzyTalent(actor)) {
       // Слушатель висит на input, а лист (ApplicationV2, submitOnChange) — на
       // form: без stopPropagation форма сабмитнула бы inRage:true из DOM
-      // СЛЕДОМ за нашим откатом, и гейт молча проигрывал бы гонку.
+      // СЛЕДОМ за нашим откатом, и гейт молча проигрывал бы гонку. Вход платный (ОД,
+      // Огонь в Крови — полудействие) и асинхронный, поэтому значение пишем сами.
       ev.stopPropagation();
-      ev.currentTarget.checked = false;
-      ui.notifications.warn(`«${actor.name}» уже выходил(а) из Ярости в этом бою — повторный вход запрещён до конца боя (Frenzy/Ярость). Снимается Чертой Butcher's Nails / Гвозди Мясника.`);
-      await actor.update({ "system.inRage": false });
+      const input = ev.currentTarget;
+      const entry = await tryEnterRage(actor);
+      if (!entry.ok) {
+        input.checked = false;
+        ui.notifications.warn(entry.reason);
+        await actor.update({ "system.inRage": false });
+        return;
+      }
+      if (entry.cost > 0) ui.notifications.info(`«${actor.name}»: вход в Ярость — ${entry.cost} ОД.`);
+      await actor.update({ "system.inRage": true });
       return;
     }
     if (!checked) await markFrenzyExited(actor);

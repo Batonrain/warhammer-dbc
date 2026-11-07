@@ -31,6 +31,7 @@ import { hasAbility } from "./ability-by-key.mjs";
 import { MELEE_BASES } from "../constants/combat.mjs";
 import { PREDICATES } from "./predicates.mjs";
 import { forHeCaresNotBonus } from "./khorne-berserker.mjs";
+import { baseIsCharge, baseIsFullAttack } from "./melee-base.mjs";
 
 /** Ключи Возможностей (module/constants/capabilities.mjs) и имена Талантов. */
 export const BERSERKER_TALENTS = Object.freeze({
@@ -41,7 +42,8 @@ export const BERSERKER_TALENTS = Object.freeze({
   furiousAssault:{ key: "berserker.core.furiousAssault", name: "Furious Assault" },
   reprise:       { key: "berserker.core.reprise",       name: "Reprise" },
   vengeance:     { key: "berserker.core.vengeance",     name: "Vengeance" },
-  oneWillGoDown: { key: "berserker.core.oneWillGoDown", name: "One Will Go Down" }
+  oneWillGoDown: { key: "berserker.core.oneWillGoDown", name: "One Will Go Down" },
+  recklessCharge:{ key: "berserker.core.recklessCharge", name: "Reckless Charge" }
 });
 
 /** Есть ли у актора Талант Берсерка из списка выше (по имени или по ключу). */
@@ -59,7 +61,7 @@ export const BERSERK_CHARGE_BONUS = 10;
  * вне Натиска дорогой (hasRuleFlag собирает правила актора).
  */
 export function berserkChargeBonus(actor, baseKey) {
-  if (baseKey !== "charge") return 0;
+  if (!baseIsCharge(baseKey)) return 0;
   return hasBerserkerTalent(actor, "berserkCharge") ? BERSERK_CHARGE_BONUS : 0;
 }
 
@@ -83,7 +85,7 @@ export function meleeBaseBonus(actor, baseKey) {
  * Парировавший может сопротивляться тем же S+0; кто выиграл, решает общий встречный тест.
  */
 export function overpowerOffered(attacker, { baseKey, parried }) {
-  return !!parried && baseKey === "fullatk" && hasBerserkerTalent(attacker, "overpower");
+  return !!parried && baseIsFullAttack(baseKey) && hasBerserkerTalent(attacker, "overpower");
 }
 
 /** Метка на акторе-жертве (ставит ГМ в меню «Настройки листа»): лидер или чемпион своего отряда/врагов. */
@@ -120,7 +122,7 @@ export function vengeanceReward(killer, victim, { melee, hated }) {
  * дополнительная атака (furiousChild) новой не порождает — книга «еще одну», не цепочку.
  */
 export function furiousAssaultOffered(actor, { isMelee, baseKey, hit, furiousChild }) {
-  if (!isMelee || !hit || furiousChild || baseKey !== "fullatk") return false;
+  if (!isMelee || !hit || furiousChild || !baseIsFullAttack(baseKey)) return false;
   return hasBerserkerTalent(actor, "furiousAssault");
 }
 
@@ -146,7 +148,7 @@ export function killingStrikeOffered(actor, { isMelee }) {
  * уже стоит): эффект сохраняется без повторной платы.
  */
 export function killingStrikeApplies(actor, { isMelee, baseKey, toggles, replay = false }) {
-  if (!toggles?.killingStrike || baseKey !== "fullatk") return false;
+  if (!toggles?.killingStrike || !baseIsFullAttack(baseKey)) return false;
   if (replay) return !!isMelee && hasBerserkerTalent(actor, "killingStrike");
   return killingStrikeOffered(actor, { isMelee });
 }
@@ -168,7 +170,7 @@ export const HAMMER_BLOW_CONCUSSIVE = 2;
  */
 export function hammerBlowEffect(actor, { isMelee, baseKey, wsBonus }) {
   const none = { pen: 0, concussive: 0 };
-  if (!isMelee || baseKey !== "fullatk" || !hasBerserkerTalent(actor, "hammerBlow")) return none;
+  if (!isMelee || !baseIsFullAttack(baseKey) || !hasBerserkerTalent(actor, "hammerBlow")) return none;
   return { pen: Math.ceil((Number(wsBonus) || 0) / 2), concussive: HAMMER_BLOW_CONCUSSIVE };
 }
 
@@ -189,7 +191,7 @@ export function oneWillGoDownOffered(actor, { isMelee }) {
  * Hatred, rules/hatred.mjs). replay — переброс той же атаки: галочка уже сыграла, эффект остаётся.
  */
 export function oneWillGoDownApplies(actor, { isMelee, baseKey, toggles, targetActor, replay = false }) {
-  if (!isMelee || baseKey !== "fullatk") return false;
+  if (!isMelee || !baseIsFullAttack(baseKey)) return false;
   if (!replay && !toggles?.oneWillGoDown) return false;
   if (!hasBerserkerTalent(actor, "oneWillGoDown")) return false;
   // Переброс: Талант на этой атаке уже оплачен (рука ранена) — цель сегодняшнего выделения на сцене не спрашиваем,

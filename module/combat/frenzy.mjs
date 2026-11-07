@@ -27,10 +27,11 @@
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { spendActionPoints, isEncounterActive, hasActionEconomy } from "./action-economy.mjs";
 
 const FLAG = "frenzyReentry";
 
-function hasFrenzyTalent(actor) {
+export function hasFrenzyTalent(actor) {
   return hasAbility(actor, "ability.frenzy", "Frenzy", "talent");
 }
 
@@ -49,4 +50,35 @@ export function frenzyEntryBlocked(actor) {
 export async function markFrenzyExited(actor) {
   if (!hasFrenzyTalent(actor) || hasButchersNails(actor)) return;
   await markCapabilityUsed(actor, FLAG, "battle");
+}
+
+/** Огонь в Крови / Fire in Blood: «может войти в Ярость за полудействие». */
+export function hasFireInBlood(actor) {
+  return hasAbility(actor, "berserker.core.fireInBlood", "Fire in Blood", "talent");
+}
+
+/**
+ * Цена входа в Ярость в ОД: полное действие (2), с Огнём в Крови — полудействие (1), с Гвоздями Мясника — свободное (0).
+ * Вне боя и без экономики действий платить нечем — 0.
+ */
+export function frenzyEntryApCost(actor) {
+  if (!hasFrenzyTalent(actor) || hasButchersNails(actor)) return 0;
+  if (!isEncounterActive() || !hasActionEconomy(actor)) return 0;
+  return hasFireInBlood(actor) ? 1 : 2;
+}
+
+/**
+ * Вход в Ярость тумблером листа у владельца Frenzy: повторный вход в бою закрыт (frenzyEntryBlocked), иначе вход
+ * стоит ОД (frenzyEntryApCost). Сам тумблер переключает вызывающая сторона.
+ * @returns {Promise<{ok:boolean, reason?:string, cost?:number}>}
+ */
+export async function tryEnterRage(actor) {
+  if (frenzyEntryBlocked(actor)) {
+    return { ok: false, reason: `«${actor.name}» уже выходил(а) из Ярости в этом бою — повторный вход запрещён до конца боя (Frenzy/Ярость). Снимается Чертой Butcher's Nails / Гвозди Мясника.` };
+  }
+  const cost = frenzyEntryApCost(actor);
+  if (cost > 0 && !await spendActionPoints(actor, cost, { physical: true })) {
+    return { ok: false, reason: `«${actor.name}»: не хватает ОД на вход в Ярость (${cost === 1 ? "полудействие, Огонь в Крови" : "полное действие"}).` };
+  }
+  return { ok: true, cost };
 }

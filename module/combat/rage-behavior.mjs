@@ -9,6 +9,7 @@
 //    • processRageTurnStart — начало Хода персонажа в Ярости: тест W+0 на
 //      сохранение поддержания психосил и напоминание «двигаться к ближайшему
 //      видимому противнику» (hooks.mjs::updateCombat);
+//    • rideTheBeast — Верхом на Звере: тест W+0 с карточки-напоминания (свободный выбор цели);
 //    • attemptRageExit / rerollRageExit — кнопка «Выйти из Ярости»: тест W+0 с
 //      бонусами книги, переброс Холодной Ярости, метки состояния;
 //    • stampRageCombatEnd — бой кончился, а Ярость осталась: с этого момента
@@ -37,7 +38,7 @@ import {
   RAGE_EXIT_TRIED_FLAG, RAGE_EXIT_FAILED_FLAG, RAGE_AFTER_COMBAT_FLAG,
   rageAvoidanceVerdict, rageSocialAutoFail, rageSustainTestNeeded,
   rageExitTriedStamp, rageExitAttemptAllowed, turnsAfterCombat, rageExitParts,
-  hasRageExitAutoSuccess, hasBattleRage, pickRageTarget, rageTurnReminderText
+  hasRageExitAutoSuccess, hasBattleRage, hasRidingTheBeast, pickRageTarget, rageTurnReminderText
 } from "../rules/rage-behavior.mjs";
 
 const NS = "warhammer-dbc";
@@ -159,10 +160,42 @@ export async function processRageTurnStart(actor, tokenDoc = null) {
   if (rageSustainTestNeeded(actor)) await rageSustainTest(actor);
   const failedExit = !!actor.getFlag?.(NS, RAGE_EXIT_FAILED_FLAG);
   const target = pickRageTarget(rageSceneCandidates(tokenDoc), { failedExit });
+  const canChoose = !failedExit && hasRidingTheBeast(actor);
   await postTestCard(actor, {
     icon: "😡", title: `Ярость — ${esc(actor.name)}`, actorUuid: actor.uuid,
-    outcome: `<span class="roll-failure">${esc(rageTurnReminderText({ target, failedExit }))}</span>`
+    outcome: `<span class="roll-failure">${esc(rageTurnReminderText({ target, failedExit, canChoose }))}</span>`,
+    sections: canChoose ? [`<div class="roll-defense-section wh-owner-only" data-actor-uuid="${actor.uuid}">
+      <div class="roll-defense-btns"><button type="button" class="wh-riding-beast-btn"
+        title="Верхом на Звере: в Ярости пройти W+0, чтобы направить атаки на цель по своему выбору вместо ближайшего видимого врага (одна попытка на карточку).">
+        🎲 Выбрать цель (W+0)</button></div></div>`] : []
   }, { sound: false });
+}
+
+/**
+ * Верхом на Звере / Riding the Beast: тест W+0 с карточки-напоминания начала Хода. Успех — цель атак
+ * выбирается свободно, провал — «ближайший видимый враг» остаётся в силе. Принуждения токена нет.
+ * @param {string} actorUuid  data-actor-uuid секции кнопки на карточке-напоминании
+ * @returns {Promise<boolean>} состоялась ли попытка
+ */
+export async function rideTheBeast(actorUuid) {
+  const actor = actorUuid ? await fromUuid(actorUuid).catch(() => null) : null;
+  if (!actor) { ui.notifications?.warn?.("Персонаж карточки не найден."); return false; }
+  if (!actor.isOwner) { ui.notifications?.warn?.("Тест может провести владелец персонажа (или ГМ)."); return false; }
+  if (!hasRidingTheBeast(actor)) { ui.notifications?.warn?.("Выбрать цель в Ярости — Талант Верхом на Звере (Riding the Beast)."); return false; }
+  if (!isInRage(actor)) { ui.notifications?.info?.(`${actor.name}: не в Ярости.`); return false; }
+  const wp = Number(actor.system?.characteristics?.wp?.total) || 0;
+  const mods = autoTestMods(actor, { kind: "skill", char: "wp" });
+  const threshold = wp + mods.total;
+  const roll = await new Roll("1d100").evaluate();
+  const { success, deg } = testOutcome(roll.total, threshold);
+  await postTestCard(actor, {
+    icon: "😡", title: `Верхом на Звере — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    threshold: rollStatLine({ label: "W", base: wp, parts: mods.parts, threshold, rv: roll.total }),
+    outcome: success
+      ? `<span class="roll-success">Успех — атаки на цель по выбору, не на ближайшего врага</span>`
+      : `<span class="roll-failure">Провал (${deg}) — Ярость тянет к ближайшему видимому противнику</span>`
+  }, { rolls: [roll] });
+  return true;
 }
 
 // ── Выход из Ярости ───────────────────────────────────────────────────────────

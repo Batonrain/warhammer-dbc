@@ -61,6 +61,7 @@ import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
 import { stunForcedAim } from "../../rules/takedown.mjs";
 import { reverseStrikeSecondProfileIdx, freeMeleeFlags, freeAttackLockProblem } from "../../rules/melee-talents.mjs";
 import { haymakerBlocksSecondHand } from "../../rules/pugilist-talents.mjs";
+import { baseIsCharge } from "../../rules/melee-base.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -416,7 +417,7 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn(`⚠️ ${techniqueOpts.payOnRoll.label}: ${payProblem}`);
             return false;
           }
-          if (isMelee && sel.baseKey === "charge" && !sabreSecond && !freeShot && !freeMelee.skipChargeGate) {
+          if (isMelee && baseIsCharge(sel.baseKey) && !sabreSecond && !freeShot && !freeMelee.skipChargeGate) {
             chargeGate = await chargeAttackGate(actor);
             if (!chargeGate.ok) {
               ui.notifications.warn(`⚠️ ${actor.name}: тест Подавления (Прикрывающий Огонь) провален — Натиск не удался.`);
@@ -540,7 +541,7 @@ export function openAttackDialog(ctx) {
           if (isMelee && !fullAttackForced && !sabreSecond && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
           // Трудная Цель (wdbc-1rno.30): Натиск и Верховая Атака этого Хода —
           // метка до начала следующего своего Хода (rules/hard-target.mjs).
-          if (isMelee && (sel.baseKey === "charge" || sel.baseKey === "mounted")) {
+          if (isMelee && (baseIsCharge(sel.baseKey) || sel.baseKey === "mounted")) {
             actorUpdates[`flags.warhammer-dbc.${FAST_MOVE_FLAG}`] = true;
           }
           await actor.update(actorUpdates);
@@ -1035,7 +1036,7 @@ export function openAttackDialog(ctx) {
             return;
           }
           const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
-          const isCharge   = sel.baseKey === "charge";
+          const isCharge   = baseIsCharge(sel.baseKey);
           const cost       = deathDanceNextCost(actor);
           const fate       = actor.system.fate?.value ?? 0;
           const affordable = cost === 0 || fate >= cost;
@@ -1051,7 +1052,7 @@ export function openAttackDialog(ctx) {
           ev.preventDefault();
           if (deathDancePending) return; // уже вооружено — повторный клик не удваивает бонус
           const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
-          if (sel.baseKey !== "charge") return;
+          if (!baseIsCharge(sel.baseKey)) return;
           const cost = deathDanceNextCost(actor);
           const fate = actor.system.fate?.value ?? 0;
           if (cost > 0 && fate < cost) return ui.notifications.warn("Не хватает Очков Судьбы для повторного Смертельного Танца.");

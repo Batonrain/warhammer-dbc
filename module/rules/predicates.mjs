@@ -14,6 +14,7 @@ import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 import { anyTargetMatches, isPossessedActor } from "./talent-targets.mjs";
 import { isSerpentine } from "./naga-traits.mjs";
 import { readEnvForScene } from "../constants/scene-nexus.mjs";
+import { baseAspects } from "./melee-base.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -482,7 +483,8 @@ export const PREDICATES = {
   // для порога самой атаки см. rules/berserker-talents.mjs::meleeBaseBonus.
   // Годится там, где Базу спрашивают вне окна: Состояние после Натиска, Черта
   // «пока держится Натиск», сторона цели (rules/hard-target.mjs).
-  meleeBaseIs: (actor, ctx, value) => list(value).includes(actor?.system?.meleeBase || "standard"),
+  meleeBaseIs: (actor, ctx, value) => baseAspects(actor?.system?.meleeBase || "standard").some(part => list(value).includes(part))
+    || list(value).includes(actor?.system?.meleeBase || "standard"),
 
   // В Ярости (system.inRage, тот же флаг, что читает weapon-properties.mjs
   // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
