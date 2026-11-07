@@ -8,14 +8,14 @@ describe("wideBurstSummary", () => {
     expect(s.base).toBe(3);
     expect(s.result).toBe(1);
     expect(s.text).toContain("RoF 3 → 1");
-    expect(s.text).toContain("1 попадание");
+    expect(s.text).toContain("не больше 1 попадания");
   });
 
   it("Длинная очередь берёт RoF из своего поля", () => {
     const s = wideBurstSummary({ mode: "full", rofSemi: 3, rofFull: 6 });
     expect(s.result).toBe(4);
     expect(s.text).toContain("RoF 6 → 4");
-    expect(s.text).toContain("4 попадания");
+    expect(s.text).toContain("не больше 4 попаданий");
   });
 
   it("Огневая Клеть режет ещё на 3", () => {

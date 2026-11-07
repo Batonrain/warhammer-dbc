@@ -11,7 +11,7 @@ export function wideBurstSummary({ mode, rofSemi = 0, rofFull = 0, cageFiring = 
   }
   const cut = WIDE_BURST_RATING_CUT + (cageFiring ? CAGE_FIRING_RATING_CUT : 0);
   const result = Math.max(0, base - cut);
-  const hitWord = result === 1 ? "попадание" : (result >= 2 && result <= 4) ? "попадания" : "попаданий";
+  const hitWord = result === 1 ? "попадания" : "попаданий";
   return {
     applies: true,
     base,
