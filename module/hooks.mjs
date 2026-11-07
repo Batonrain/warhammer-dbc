@@ -214,8 +214,8 @@ import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
-import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch } from "./combat/rage-behavior.mjs";
-import { RAGE_EXIT_REROLL_CARD_FLAG } from "./rules/rage-behavior.mjs";
+import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
+import { RAGE_EXIT_REROLL_CARD_FLAG, RIDING_BEAST_CARD_FLAG } from "./rules/rage-behavior.mjs";
 import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
 import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
@@ -2038,6 +2038,18 @@ export function registerHooks() {
         ev.preventDefault();
         const done = await runCardOnce(message, RAGE_EXIT_REROLL_CARD_FLAG, () => rerollRageExit(message),
           "Переброс с этой карточки уже сделан.");
+        if (done) btn.disabled = true;
+      });
+    });
+
+    // Верхом на Звере: тест W+0 на свободный выбор цели — одна попытка на карточку-напоминание (combat/rage-behavior.mjs).
+    html.querySelectorAll(".wh-riding-beast-btn").forEach(btn => {
+      if (cardOnceUsed(message, RIDING_BEAST_CARD_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = btn.closest("[data-actor-uuid]")?.dataset.actorUuid ?? "";
+        const done = await runCardOnce(message, RIDING_BEAST_CARD_FLAG, () => rideTheBeast(uuid),
+          "Попытка с этой карточки уже была.");
         if (done) btn.disabled = true;
       });
     });

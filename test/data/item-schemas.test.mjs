@@ -520,7 +520,7 @@ const TYPES = {
       // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
       damage: "", damageType: "energy", damageSubtype: "", penetration: "0", xFormula: "", vortexPersistent: false, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
-      resistChar: "", resistMod: 0,
+      resistChar: "", resistMod: 0, mindEffect: false,
       effect: "", isSustained: false, sustainedDegree: null, sustainedEpr: null, sustainedTargetUuid: "",
       hasWeaponShop: false,
       // wdbc-exjp: Руна Сигиллитов — привязана к ЭТОЙ психосиле, не к актору

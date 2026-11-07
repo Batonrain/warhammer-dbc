@@ -22,6 +22,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { writeToTarget } from "./gm-relay.mjs";
+import { baseIsCharge } from "../rules/melee-base.mjs";
 
 /**
  * Швырнуть / Slam (Талант Пугилиста): «При взятии цели в Захват, победе во
@@ -36,7 +37,7 @@ export function slamOffered(margin) {
  * встречном Athletics на 3+ Успеха → свободный Повалить.
  */
 export function pounceOffered({ baseKey, margin }) {
-  return baseKey === "charge" && (Number(margin) || 0) >= 3;
+  return baseIsCharge(baseKey) && (Number(margin) || 0) >= 3;
 }
 
 /** Победа в этом Повалить на 5+ Успехов → схватить 2+ руками, упасть, Сжать + Заломить. */

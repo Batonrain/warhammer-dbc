@@ -51,6 +51,8 @@ export const CARD_ONCE_FLAGS = ["mistSaviorSwapped", "infamyFailSuccessUsed", "a
   "warpLockUsed",
   // Холодная Ярость (combat/rage-behavior.mjs::rerollRageExit): переброс неудачной попытки выйти из Ярости — один на карточку.
   "rageExitRerolled",
+  // Верхом на Звере (combat/rage-behavior.mjs::rideTheBeast): одна попытка W+0 на выбор цели с карточки-напоминания.
+  "ridingBeastTried",
   // Снайпер Ужаса: один тест Intimidate(BS)+0 на попадание (combat/terror-sniper.mjs).
   "terrorSniperRolled",
   // Поколотить (Талант Метания, combat/clobber.mjs): один S-тест цели на попадание метательным.

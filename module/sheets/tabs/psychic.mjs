@@ -59,6 +59,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
 import { bluntedCasterTest } from "../../rules/blunted.mjs";
+import { applyMentalRage } from "../../combat/mental-rage.mjs";
 import { arcExtraAttrs } from "../../rules/arc-extra.mjs";
 import { leftSustainRange } from "../../rules/psy-range.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
@@ -1519,6 +1520,12 @@ export async function executePsychotest(actor, item, opts) {
     }
   }
 
+  // ── Ментальный Гнев (Талант Берсерка, combat/mental-rage.mjs) ─────────────
+  // Решение воздействовать на разум цели в Ярости — Ступор кастеру на 1 Раунд, эффект цели игнорируется.
+  // Исход психотеста не важен; переброс Ступор заново не накладывает.
+  const mentalRageSection = opts.reroll ? ""
+    : await applyMentalRage(actor, item, [...(game.user?.targets ?? [])].map(t => t.actor ?? null));
+
   // ── Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9) ──────────────
   // Отдельная секция, а не общий defenseSection карточки атаки: от психосилы
   // не Уклоняются, Вираж и Сжатие к ней тоже не относятся, а само Парирование
@@ -1591,7 +1598,7 @@ export async function executePsychotest(actor, item, opts) {
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
       : `Психотест провален — ${deg} ${_degWord(deg)}`),
-    sections: [conversionLine, bluntedSection, resistSection, bladeShieldSection, damageSection, charDamageSection,
+    sections: [conversionLine, mentalRageSection, bluntedSection, resistSection, bladeShieldSection, damageSection, charDamageSection,
                attackPropsSection, signatureFreeHtml(actor, item, { success, rerollable: signatureRerollable, freeSpent: !!opts.signatureFreeSpent }), phenSection, warpShockSection,
                success ? psychicEchoButtonHtml(actor) : ""]
   }, { rolls: allRolls, flags: signatureRerollable

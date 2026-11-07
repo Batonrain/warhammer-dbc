@@ -2528,7 +2528,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.fireInBlood": {
     label: "Персонаж может войти в Ярость за полудействие.",
-    source: "Fire in Blood / Огонь в Крови", reader: ""
+    source: "Fire in Blood / Огонь в Крови", reader: "module/combat/frenzy.mjs::frenzyEntryApCost/tryEnterRage ← module/sheets/tabs/combat.mjs (тумблер «Ярость»): вход в Ярость у владельца Frenzy в бою стоит 2 ОД (полное действие), с этим Талантом — 1 ОД (полудействие), с Гвоздями Мясника — 0; не хватает ОД — вход закрыт. Вне боя бесплатно. Ярость от других источников (Кхорнгор, наркотики, Икона Богохульства) ОД не берёт; читается по ИМЕНИ Таланта ИЛИ по этому ключу"
   },
   "berserker.core.focusedWrath": {
     label: "Используя Очко Бесчестия для рукопашной атаки по Ненавистной цели, персонаж усиливает эффект: Усиление +20 вместо +10; Переброс также даёт Преимущество; Успех — ещё +1 Успех; Атака Ненависти — Inf.b Успехов вместо 1 (мин.1). Смоделировано: Усиление и Переброс — в меню карточки атаки, Атака Ненависти — в окне атаки; Успех — пункт «Успех» меню карточки теста дописывает Успех в карточку (решение 27.10.2026), с Талантом +1 ещё.",
@@ -2537,7 +2537,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.frenzy": {
     label: "За полное действие персонаж входит в боевую ярость: +10 к WS, S и W; −20 на все тесты BS, I и F; игнорирует −10 от Усталости;",
-    source: "Frenzy / Ярость", reader: "module/rules/rage.mjs — РЕАЛЬНО по состоянию system.inRage (не по Таланту): +10 WS/S/W в характеристиках (rules/character.mjs), −20 на тесты BS/I/F (источник правил «rage»; стрельба — строка sheets/attack/mods.mjs), игнор Усталости (rules/situational.mjs), нельзя Оглушить (rules/condition-guards.mjs), автоуспех Морали (rules/morale-test.mjs, combat/fear.mjs, combat/intimidate.mjs, combat/field-execution.mjs); module/combat/frenzy.mjs — лимит повторного входа за бой (wdbc-sk8s). Ментальные действия и манифестация заблокированы (rules/predicates.mjs::isMentalActionBlocked, wdbc-x1nz.2.32). Поведение (rules/rage-behavior.mjs, combat/rage-behavior.mjs, Sahara focused-wrath-20-bs п.2): Избегания закрыты без траты Реакции, Парирование — только с Боевым Гневом (combat/full-attack-lock.mjs::avoidanceVerdict, defense.mjs, mount.mjs, vehicle.mjs, walker.mjs); социальные тесты кроме Запугивания проваливаются сами (sheets/actor-sheet.mjs::_runTest); траты ОД/Реакций, помеченные physical:false (Ментальные), отказывают (combat/action-economy.mjs::actionBlockReason); в начале Хода — тест W+0 на сохранение поддержания психосил (провал снимает все через dispelAllSustained; у Холодной Ярости теста нет) и напоминание в чат «двигаться к ближайшему видимому противнику» с именем и дистанцией по токенам сцены (hooks.mjs::updateCombat → processRageTurnStart); кнопка «Выйти из Ярости» (лист/вкладка «Бой», HUD): тест W+0 (W с +10 самой Ярости) + 10 за каждый Ход после боя (считается от конца боя по игровому времени, 6 с = Ход; бонус теряется галочкой «союзники/пленники напали») + 30 Боевого Гнева, одна попытка в Ход (метка rageExitTried), успех снимает Ярость и закрывает повторный вход (combat/frenzy.mjs), провал — «обязан атаковать других» (метка rageExitFailed, напоминание меняется). НЕ делается: принуждение токена двигаться/атаковать (только напоминание), приоритет «сдавшиеся/обезоруженные» (по токенам различаются лишь беспомощные), потеря сознания при провале выхода"
+    source: "Frenzy / Ярость", reader: "module/rules/rage.mjs — РЕАЛЬНО по состоянию system.inRage (не по Таланту): +10 WS/S/W в характеристиках (rules/character.mjs), −20 на тесты BS/I/F (источник правил «rage»; стрельба — строка sheets/attack/mods.mjs), игнор Усталости (rules/situational.mjs), нельзя Оглушить (rules/condition-guards.mjs), автоуспех Морали (rules/morale-test.mjs, combat/fear.mjs, combat/intimidate.mjs, combat/field-execution.mjs); module/combat/frenzy.mjs — лимит повторного входа за бой (wdbc-sk8s) и цена входа в ОД (полное действие; Огонь в Крови — полудействие; Гвозди Мясника — свободно). Ментальные действия и манифестация заблокированы (rules/predicates.mjs::isMentalActionBlocked, wdbc-x1nz.2.32). Поведение (rules/rage-behavior.mjs, combat/rage-behavior.mjs, Sahara focused-wrath-20-bs п.2): Избегания закрыты без траты Реакции, Парирование — только с Боевым Гневом (combat/full-attack-lock.mjs::avoidanceVerdict, defense.mjs, mount.mjs, vehicle.mjs, walker.mjs); социальные тесты кроме Запугивания проваливаются сами (sheets/actor-sheet.mjs::_runTest); траты ОД/Реакций, помеченные physical:false (Ментальные), отказывают (combat/action-economy.mjs::actionBlockReason); в начале Хода — тест W+0 на сохранение поддержания психосил (провал снимает все через dispelAllSustained; у Холодной Ярости теста нет) и напоминание в чат «двигаться к ближайшему видимому противнику» с именем и дистанцией по токенам сцены (hooks.mjs::updateCombat → processRageTurnStart); кнопка «Выйти из Ярости» (лист/вкладка «Бой», HUD): тест W+0 (W с +10 самой Ярости) + 10 за каждый Ход после боя (считается от конца боя по игровому времени, 6 с = Ход; бонус теряется галочкой «союзники/пленники напали») + 30 Боевого Гнева, одна попытка в Ход (метка rageExitTried), успех снимает Ярость и закрывает повторный вход (combat/frenzy.mjs), провал — «обязан атаковать других» (метка rageExitFailed, напоминание меняется). НЕ делается: принуждение токена двигаться/атаковать (только напоминание), приоритет «сдавшиеся/обезоруженные» (по токенам различаются лишь беспомощные), потеря сознания при провале выхода"
   },
   "berserker.core.furiousAssault": {
     label: "После успешной атаки с базой Полная Атака (даже отменённой Избеганием) персонаж может потратить Реакцию,",
@@ -2561,7 +2561,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.mentalRage": {
     label: "Когда персонаж в Ярости, любой псайкер или демон, решивший воздействовать на его разум, получает Ступор на 1 Раунд,",
-    source: "Mental Rage / Ментальный Гнев", reader: ""
+    source: "Mental Rage / Ментальный Гнев", reader: "module/rules/mental-rage.mjs::mentalRageTargets ← module/combat/mental-rage.mjs::applyMentalRage ← module/sheets/tabs/psychic.mjs::executePsychotest (манифестация силы с system.mindEffect по цели в Ярости с Талантом: Ступор кастеру на 1 Раунд, строка «эффект игнорируется» на карточке; срабатывает и при провале психотеста, на переброс повторно не накладывается). Признак mindEffect выставлен у 62 сил (Телепатия, Пустотный Мечтатель, Слаанеш и др.) по книжному тексту. Эффекты силы на цель система сама не накладывает; читается по ИМЕНИ Таланта ИЛИ по этому ключу"
   },
   "berserker.core.oneWillGoDown": {
     label: "Атакой с базой Полная Атака по Ненавистной цели персонаж может удвоить её Dmg (до Поглощения).",
@@ -2575,7 +2575,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.recklessCharge": {
     label: "Проводя Натиск, персонаж может скомбинировать его с Полной Атакой, получив все бонусы и штрафы последней вместо бонусов Натиска.",
-    source: "Reckless Charge / Безрассудный Натиск", reader: ""
+    source: "Reckless Charge / Безрассудный Натиск", reader: "module/constants/combat.mjs::MELEE_BASES.recklessCharge (составная База: приём +30 вместо +20) — module/rules/melee-base.mjs::baseIsCharge/baseIsFullAttack/baseFitsList (считается и Натиском, и Полной Атакой: запрет Физических Избеганий — combat/attack.mjs::markFullAttack; Таланты Берсерка и Натиска; Приёмы, разрешённые не обеим Базам, недоступны), module/sheets/attack/selection.mjs::computeBaseOptions (пилюля видна только носителю Таланта, закрыта Стойками без Натиска и Божественной Защитой); читается по ИМЕНИ Таланта ИЛИ по этому ключу"
   },
   "berserker.core.reprise": {
     label: "После успешной дополнительной атаки от Furious Assault (даже отменённой Избеганием) персонаж может тратить оставшиеся Реакции на Парирование…",
@@ -2584,7 +2584,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.ridingTheBeast": {
     label: "В Ярости персонаж может пройти W+0, чтобы направить свои атаки на цель по своему выбору вместо ближайшего видимого врага.",
-    source: "Riding the Beast / Верхом на Звере", reader: ""
+    source: "Riding the Beast / Верхом на Звере", reader: "module/combat/rage-behavior.mjs::processRageTurnStart (кнопка «Выбрать цель (W+0)» в напоминании начала Хода) → ::rideTheBeast (тест W+0 по W с +10 Ярости; успех — цель по выбору, провал — ближайший видимый враг) ← module/hooks.mjs (.wh-riding-beast-btn, раз на карточку, card-once ridingBeastTried). Токен принудительно не двигается и не атакует; читается по ИМЕНИ Таланта ИЛИ по этому ключу"
   },
   "berserker.core.vengeance": {
     label: "Убивая лидера/чемпиона Ненавистного врага в рукопашной, персонаж восстанавливает 1 Очко Бесчестия (1d5,",

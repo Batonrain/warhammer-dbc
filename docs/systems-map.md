@@ -939,7 +939,13 @@ Spray); Парирование открывает только Боевой Гн
 галочке ГМа, одна попытка в Ход (метка Хода `rageExitTried`), успех снимает Ярость и закрывает
 повторный вход (`frenzy.mjs`), провал — метка `rageExitFailed`; переброс Холодной Ярости — кнопка
 на карточке (`card-once` `rageExitRerolled`). Принуждения токена нет — только напоминание), `rules/berserker-talents.mjs`
-(Натиск Берсерка: +10 к приёму при Натиске, `meleeBaseBonus`), `fully-armed.mjs`.
+(Натиск Берсерка: +10 к приёму при Натиске, `meleeBaseBonus`), `fully-armed.mjs`. Остальные Таланты Берсерка
+(Sahara 3-861e, 07.11.2026): Огонь в Крови — вход в Ярость тумблером листа у владельца Frenzy стоит ОД (2; с Талантом 1; Гвозди
+Мясника 0) — `frenzy.mjs::tryEnterRage`; Верхом на Звере — кнопка W+0 в напоминании начала Хода —
+`combat/rage-behavior.mjs::rideTheBeast`; Ментальный Гнев — признак `system.mindEffect` у психосилы (62 силы),
+манифестация по цели в Ярости даёт кастеру Ступор на 1 Раунд — `rules/mental-rage.mjs`, `combat/mental-rage.mjs`; Безрассудный
+Натиск — составная База `recklessCharge` (считается и Натиском, и Полной Атакой) — `rules/melee-base.mjs`
+(`baseIsCharge`, `baseIsFullAttack`, `baseFitsList`), везде вместо прямого `=== "charge"`/`"fullatk"`.
 
 - Гасители штрафов окна атаки (sheets/attack/mods.mjs, 26.09.2026):
   дальняя/экстремальная дистанция — `rules/range-penalty-immunity.mjs`

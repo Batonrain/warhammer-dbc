@@ -16,6 +16,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { baseIsCharge } from "./melee-base.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -145,7 +146,7 @@ const AIRBORNE = new Set(["low", "high"]);
  */
 export function flyingKickActive(actor) {
   if (!hasPugilistTalent(actor, "flyingKick")) return false;
-  if (String(actor?.system?.meleeBase ?? "standard") !== "charge") return false;
+  if (!baseIsCharge(String(actor?.system?.meleeBase ?? "standard"))) return false;
   return AIRBORNE.has(String(actor?.system?.movement?.altitude ?? "landed"));
 }
 

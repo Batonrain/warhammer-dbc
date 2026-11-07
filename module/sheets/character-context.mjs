@@ -127,6 +127,7 @@ import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.m
 import { fatigueFaintThreshold } from "../rules/resilience-talents.mjs";
 import { hasArmourMonger, armourMongerOn } from "../combat/armour-monger.mjs";
 import { hasHunkerDown, hunkerDownOn } from "../combat/hunker-down.mjs";
+import { baseFitsList } from "../rules/melee-base.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -188,7 +189,7 @@ export function characterContext(actor) {
   context.combatContestOptions = Object.entries(MELEE_CONTESTS)
     .filter(([key, c]) => {
       const categoryOk = !c.categories || !meleeCategory || c.categories.includes(meleeCategory);
-      const baseOk     = !c.bases || c.bases.includes(meleeBaseKey);
+      const baseOk     = !c.bases || baseFitsList(c.bases, meleeBaseKey);
       return categoryOk && baseOk;
     })
     .map(([key, c]) => ({ key, label: c.label, modLabel: c.modLabel }));

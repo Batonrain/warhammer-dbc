@@ -16,6 +16,7 @@ import { hasAbility } from "./ability-by-key.mjs";
 import { heldWeapons } from "./dual-wield-talents.mjs";
 import { talentSpecs } from "./dual-wield.mjs";
 import { fmtMeters, PATH_EPS } from "./movement-path.mjs";
+import { baseIsCharge, baseIsFullAttack } from "./melee-base.mjs";
 
 /** Ключи Возможностей (module/constants/capabilities.mjs) и имена Талантов. */
 export const MELEE_TALENTS = Object.freeze({
@@ -156,7 +157,7 @@ export function blademasterRerollOffered(actor, { item, isMelee, rv, threshold, 
  * @returns {number} рейтинг Felling (0 — Талант не действует)
  */
 export function unstoppableChargeFelling(actor, { isMelee, baseKey, mounted, wsBonus }) {
-  if (!isMelee || baseKey !== "charge" || !mounted) return 0;
+  if (!isMelee || !baseIsCharge(baseKey) || !mounted) return 0;
   if (!hasMeleeTalent(actor, "unstoppableCharge")) return 0;
   return Math.ceil((Number(wsBonus) || 0) / 2);
 }
@@ -275,7 +276,7 @@ export function freeAttackLockProblem(opts, { baseKey, maneuverKey }) {
     if (maneuverKey !== (opts.technique || "standard")) return "Упорство: повтор идёт с тем же Приёмом, что и первая атака";
   }
   if (opts?.furiousAssault) {
-    if (baseKey !== "fullatk") return "Яростный Штурм: ещё одна атака — с Базой Полная Атака";
+    if (!baseIsFullAttack(baseKey)) return "Яростный Штурм: ещё одна атака — с Базой Полная Атака";
     if (maneuverKey !== (opts.technique || "standard")) return "Яростный Штурм: ещё одна атака — с тем же Приёмом";
   }
   if (opts?.kneeStrike) {
@@ -286,7 +287,7 @@ export function freeAttackLockProblem(opts, { baseKey, maneuverKey }) {
     if (opts.forceBase && baseKey !== opts.forceBase) return "Казнь: дополнительная атака идёт с той же Базой, что и первая";
     if (maneuverKey !== "standard") return "Казнь: дополнительная атака — Обычная Атака (без Приёма)";
   }
-  if (opts?.reaperFollow && baseKey !== "charge") return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
+  if (opts?.reaperFollow && !baseIsCharge(baseKey)) return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
   return "";
 }
 

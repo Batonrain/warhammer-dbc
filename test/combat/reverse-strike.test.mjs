@@ -15,6 +15,7 @@ import { _executeAttackRoll } from "../../module/combat/attack.mjs";
 import { MELEE_MANEUVERS } from "../../module/constants/combat.mjs";
 import { weaponProfiles } from "../../module/combat/weapon-profiles.mjs";
 import { reverseStrikeSecondProfileIdx } from "../../module/rules/melee-talents.mjs";
+import { oneWillGoDownApplies } from "../../module/rules/berserker-talents.mjs";
 
 const KEY = "meleeCore.core.reverseStrike";
 const talentByKey = key => ({
@@ -131,5 +132,18 @@ describe("Оружие категории «Посох» без профилей
   });
   it("у штыка без профилей второй атаки нет (null)", () => {
     expect(reverseStrikeSecondProfileIdx(bayonet({ profiles: [] }))).toBeNull();
+  });
+});
+
+describe("Обратный Удар и Один Из Нас Падёт не совмещаются", () => {
+  it("Базы Обратного Удара не содержат Полную Атаку, а Один Из Нас Падёт требует именно её", () => {
+    const bases = MELEE_MANEUVERS.reverseStrike.bases;
+    expect(bases).not.toContain("fullatk");
+    const hatred = { type: "talent", name: "Hatred / Ненависть", system: { targets: [] }, flags: {}, getFlag: () => undefined };
+    const owgd = { type: "talent", name: "One Will Go Down / Один Из Нас Падёт", system: {}, flags: {}, getFlag: () => undefined };
+    const hero = { system: {}, items: [owgd, hatred] };
+    for (const baseKey of bases) {
+      expect(oneWillGoDownApplies(hero, { isMelee: true, baseKey, toggles: { oneWillGoDown: true }, targetActor: {} }), baseKey).toBe(false);
+    }
   });
 });
