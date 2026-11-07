@@ -11,9 +11,10 @@ import { raceMatches } from "./race.mjs";
 import { hasLodgedHorn } from "./lodged-horn.mjs";
 import { hordeSizeFor } from "./horde-damage.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
-import { anyTargetMatches } from "./talent-targets.mjs";
+import { anyTargetMatches, isPossessedActor } from "./talent-targets.mjs";
 import { isSerpentine } from "./naga-traits.mjs";
 import { readEnvForScene } from "../constants/scene-nexus.mjs";
+import { baseAspects } from "./melee-base.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -373,6 +374,11 @@ export function hatredTargetsOf(actor) {
     if (!itemHasName(item, "Hatred") && !itemHasName(item, "Ненависть")) continue;
     for (const t of item?.system?.targets ?? []) out.push(t);
   }
+  // Гвозди Мясника (Берсерк Кхорна, Sahara 1-54b9): «Находясь в Ярости, он получает Талант Hatred (Все!)».
+  // Ярость — system.inRage (сам файл rules/rage.mjs отсюда не импортируется: он импортирует этот).
+  if (actor?.system?.inRage && (hasNamed(actor, "Butcher's Nails") || holdsCapabilityKey(actor, "ability.butchersNails"))) {
+    out.push({ kind: "all", ref: "", value: "", name: "Все!", img: "" });
+  }
   return out;
 }
 
@@ -445,7 +451,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "attackMelee", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
-  "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget",
+  "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOnBerserker", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
   "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes", "targetIsPsyker"
 ]);
@@ -477,7 +483,8 @@ export const PREDICATES = {
   // для порога самой атаки см. rules/berserker-talents.mjs::meleeBaseBonus.
   // Годится там, где Базу спрашивают вне окна: Состояние после Натиска, Черта
   // «пока держится Натиск», сторона цели (rules/hard-target.mjs).
-  meleeBaseIs: (actor, ctx, value) => list(value).includes(actor?.system?.meleeBase || "standard"),
+  meleeBaseIs: (actor, ctx, value) => baseAspects(actor?.system?.meleeBase || "standard").some(part => list(value).includes(part))
+    || list(value).includes(actor?.system?.meleeBase || "standard"),
 
   // В Ярости (system.inRage, тот же флаг, что читает weapon-properties.mjs
   // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
@@ -705,20 +712,23 @@ export const PREDICATES = {
   targetSerpentine: (actor, ctx) => isSerpentine(ctx?.targetActor),
 
   // Avatar of Slaughter/Аватар Резни (wdbc-sk8s): цель провалила тест W−10
-  // против Берсерка → до конца боя −20 на атаки/манёвры, НЕ направленные на
-  // него. Метка — на самом акторе (module/combat/avatar-of-slaughter.mjs),
+  // против Берсерка → до конца боя −20 на все атаки и манёвры, направленные
+  // НА Берсерка (так в книге; до сверки 03.11.2026 читалось наоборот — «не на
+  // Берсерка»). Метка — на самом акторе (module/combat/avatar-of-slaughter.mjs),
   // читается здесь, а не через cross-actor источник (в отличие от Adjutant):
-  // условие целиком про самого актора и то, кого он сейчас атакует.
-  avatarOfSlaughterOffTarget: (actor, ctx) => {
+  // условие целиком про самого актора и то, кого он сейчас атакует. Нет
+  // определённой цели (ctx.targetActor пуст) — штрафа нет: утверждать, что
+  // бьют именно Берсерка, нечем.
+  avatarOfSlaughterOnBerserker: (actor, ctx) => {
     const mark = actor?.getFlag?.("warhammer-dbc", "avatarOfSlaughterMark");
     if (!mark?.berserkerUuid) return false;
-    return ctx?.targetActor?.uuid !== mark.berserkerUuid;
+    return !!ctx?.targetActor?.uuid && ctx.targetActor.uuid === mark.berserkerUuid;
   },
 
   // Защитник/vigilant 8-8, Оружие Наследия, стрелковая ветка (wdbc-1rno.35,
   // стр. 428): «Цель, по которой стреляли из этого оружия, до начала её
   // следующего Хода получает штраф −30 на атаки по персонажу.» Метка — НА
-  // САМОЙ ЦЕЛИ (тот же приём, что avatarOfSlaughterOffTarget выше, но
+  // САМОЙ ЦЕЛИ (тот же приём, что avatarOfSlaughterOnBerserker выше, но
   // направление обратное: штраф срабатывает, когда меченый атакует ИМЕННО
   // отметившего, не «любого кроме»). Гасится общим реестром turn-flags.mjs
   // на старте её же следующего Хода — сама метка живёт weaponId стрелка
@@ -733,7 +743,7 @@ export const PREDICATES = {
   // «Пока метка активна, все зверолюди-союзники получают +15 на атаки
   // против этой цели.» Метка живёт на ЦЕЛИ (module/combat/
   // beastman-shaman.mjs::applyHexMarkedPrey), поэтому cross-actor чтение —
-  // ctx.targetActor, не сам actor (в отличие от avatarOfSlaughterOffTarget
+  // ctx.targetActor, не сам actor (в отличие от avatarOfSlaughterOnBerserker
   // выше, где метка на самом акторе). «Зверолюди-союзники» — раса
   // effectiveRace(actor.system)==="beastman" (rules/race.mjs): чистое поле
   // актора, доступное предикату без canvas/disposition.
@@ -787,6 +797,18 @@ export function hasEliteArchetype(actor, name) {
 export function isPossessed(actor) {
   const sys = actor?.system || {};
   return (sys.alignment === "heretic" && !!sys.possessed) || hasEliteArchetype(actor, "Одержимый");
+}
+
+/**
+ * Может ли персонаж проявлять демона (авто-эффекты Проявления, rules/character.mjs):
+ * ручной чекбокс «Одержимый» ЛИБО Элитный архетип «Одержимый». Покупка архетипа
+ * флаг system.possessed не ставит, а вкладка Одержимого от неё открывается
+ * (isPossessed), так что одного флага мало: Дар «Гигант» давал +10 к текущим Ранам
+ * без +10 к максимуму (Sahara 20-10-caa0). Мировоззрение, в отличие от isPossessed,
+ * не проверяется — Проявление «еретиком» не ограничено (DoomBC 129-132).
+ */
+export function canManifestPossession(actor) {
+  return isPossessedActor(actor);
 }
 
 /**

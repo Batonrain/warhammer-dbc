@@ -67,6 +67,7 @@
             {{#each w.mods as |m|}}
             <tr class="item-row gear-modsub-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}">
               <td class="gear-modsub-arrow">↳</td>
+              <td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{m.id}}" title="Хранится не при себе" {{#if m.stored}}checked{{/if}}/></td>
               <td class="gear-modsub-main" colspan="6">
                 <button type="button" class="ability-detail-toggle gear-modsub-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button>
                 <span class="gear-modsub-name">{{m.name}}</span>
@@ -159,6 +160,7 @@
             {{#each a.mods as |m|}}
             <tr class="item-row gear-modsub-row {{#if m.activatable}}{{#unless m.active}}gear-modsub-off{{/unless}}{{/if}}" data-item-id="{{m.id}}" data-host-id="{{a.id}}">
               <td class="gear-modsub-arrow">↳</td>
+              <td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{m.id}}" title="Хранится не при себе" {{#if m.stored}}checked{{/if}}/></td>
               <td class="gear-modsub-main" colspan="8">
                 <button type="button" class="ability-detail-toggle gear-modsub-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button>
                 <span class="gear-modsub-name">{{m.name}}</span>
@@ -223,6 +225,7 @@
       <table class="items-table gear-table shield-gear-table">
         <thead><tr>
           <th class="shield-th-status" title="Статус"></th>
+          <th class="gear-stored-th" title="Хранится — не при себе, не учитывается в Нагрузке">Хран.</th>
           <th>Силовое поле</th>
           <th class="shield-th-nature" title="Природа">Прир.</th>
           <th class="shield-th-type">Тип</th>
@@ -236,6 +239,7 @@
             {{#each gearForcefields as |f|}}
             <tr class="item-row shield-row shield-row-{{f.statusKey}}" data-item-id="{{f.id}}">
               <td class="shield-status-cell"><span class="shield-status-dot shield-dot-{{f.statusKey}}" title="{{f.statusLabel}}">{{f.statusIcon}}</span></td>
+              <td class="gear-stored-cell"><input type="checkbox" class="item-stored-cb" data-item-id="{{f.id}}" title="Хранится не при себе" {{#if f.stored}}checked{{/if}}/></td>
               <td class="item-name-cell">{{f.name}}</td>
               <td class="shield-nature-cell">
                 {{#if (eq f.shieldNature "technological")}}<span class="shield-nature-tech" title="Технологический"></span>{{else}}<span class="shield-nature-warp" title="Чародейский"></span>{{/if}}
@@ -256,7 +260,7 @@
             </tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="8"><em>Нет силовых полей</em></td></tr>
+            <tr class="items-empty"><td colspan="9"><em>Нет силовых полей</em></td></tr>
           {{/if}}
         </tbody>
       </table>

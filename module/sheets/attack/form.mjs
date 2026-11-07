@@ -197,6 +197,7 @@ export function readAttackForm(form, ammoConds) {
     changeSoulless: on("#atk-change-soulless"),
     weaponOff:  on("#atk-weaponoff"),
     maximal:    on("#atk-maximal"),
+    plasmaBlast: on("#atk-plasma-blast"),
     bandIdx:    Number(el("#atk-band")?.value ?? -1),
     stanceKey, baseKey, maneuverKey, gripKey: gripKeySel, profIdx: profIdxSel, length: lengthSel
   };

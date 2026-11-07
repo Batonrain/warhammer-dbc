@@ -27,13 +27,14 @@ import {
   RUN_AND_GUN_PENDING_FLAG, RUN_AND_GUN_FIRED_FLAG, BAYONET_SHOT_PENDING_FLAG, CHARGE_CHECKED_FLAG, hasRunAndGun, hasBayonetCharge,
   runAndGunEligibleWeapon, bayonetShotEligibleWeapon, equippedWeaponsWhere, runAndGunLockReason
 } from "../rules/run-and-gun.mjs";
+import { RUNNING_THROW_PENDING_FLAG, runningThrowEligibleWeapon } from "../rules/throwing-talents.mjs";
 import { enemyContactTokenDocs } from "./free-attack.mjs";
 
 const NS = "warhammer-dbc";
 
 /** Виды бесплатных выстрелов (значение techniqueOpts.freeShot). */
 export const FREE_SHOT_KINDS = Object.freeze({
-  hipShooting: "hipShooting", drawFire: "drawFire", runAndGun: "runAndGun", bayonetCharge: "bayonetCharge"
+  hipShooting: "hipShooting", drawFire: "drawFire", runAndGun: "runAndGun", bayonetCharge: "bayonetCharge", runningThrow: "runningThrow"
 });
 
 /**
@@ -180,6 +181,13 @@ export async function activateFreeShot(actorUuid, kind, itemId = "") {
     const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
     return showAttackDialog(actor, item, { freeShot: kind });
   }
+  if (kind === FREE_SHOT_KINDS.runningThrow) {
+    if (!actor.getFlag?.(NS, RUNNING_THROW_PENDING_FLAG)) return ui.notifications?.warn("Бросок на Бегу: бросок уже сделан или Ход закончился.");
+    const item = itemId && actor.items.get(itemId);
+    if (!item || !runningThrowEligibleWeapon(item)) return ui.notifications?.warn("Бросок на Бегу: нужно метательное оружие или граната (бомбой нельзя).");
+    const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
+    return showAttackDialog(actor, item, { freeShot: kind });
+  }
   if (kind === FREE_SHOT_KINDS.drawFire) {
     const item = actor.items.get(itemId);
     if (!item) return ui.notifications?.warn("Огонь с Вытягивания: пистолет не найден.");
@@ -201,6 +209,7 @@ export function freeShotBlockReason(actor, kind) {
   if (kind === "coveringFire" && !actor.getFlag?.(NS, COVERING_FIRE_OFFER_FLAG)) return "Прикрывающий Огонь: очередь уже сделана";
   if (kind === FREE_SHOT_KINDS.runAndGun && !actor.getFlag?.(NS, RUN_AND_GUN_PENDING_FLAG)) return "Стрельба на Бегу: выстрел уже сделан";
   if (kind === FREE_SHOT_KINDS.bayonetCharge && !actor.getFlag?.(NS, BAYONET_SHOT_PENDING_FLAG)) return "Штыковая Атака: выстрел уже сделан";
+  if (kind === FREE_SHOT_KINDS.runningThrow && !actor.getFlag?.(NS, RUNNING_THROW_PENDING_FLAG)) return "Бросок на Бегу: бросок уже сделан";
   return "";
 }
 
@@ -216,6 +225,7 @@ export async function consumeFreeShot(actor, kind, item = null) {
     if (item?.id) await actor.setFlag(NS, RUN_AND_GUN_FIRED_FLAG, item.id);
   }
   if (kind === FREE_SHOT_KINDS.bayonetCharge) await actor.unsetFlag(NS, BAYONET_SHOT_PENDING_FLAG);
+  if (kind === FREE_SHOT_KINDS.runningThrow) await actor.unsetFlag(NS, RUNNING_THROW_PENDING_FLAG);
 }
 
 /** Выстрел Стрельбы от Бедра сделан — снять метку (вызывает окно атаки после списания). */

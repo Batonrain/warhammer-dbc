@@ -44,6 +44,34 @@ export function actorPatronKey(actor) {
   return String(raw ?? "").trim();
 }
 
+/** Имя Элитного архетипа Одержимого — по любой половине двуязычного «Possessed / Одержимый». */
+const POSSESSED_ARCHETYPE = "одержимый";
+
+/**
+ * Одержимый (DoomBC_Core 129-132): ручной чекбокс `system.possessed` ЛИБО
+ * купленный Элитный архетип «Одержимый» (предмет, шапка листа, дополнительные
+ * архетипы). Покупка архетипа флаг не ставит, поэтому одного флага мало
+ * (Sahara 20-10-caa0, talent-targets-possessed-flag).
+ *
+ * Живёт здесь, а не в predicates.mjs, потому что predicates.mjs сам импортирует
+ * этот файл (anyTargetMatches): цель «Одержимый» обязана вызывать это определение
+ * без обратного импорта. predicates::canManifestPossession вызывает его же —
+ * определение одно на цель Таланта, Проявление и Дары. Имя разбирается по
+ * своим правилам (половина двуязычного имени без «[WIP]»), как hasSnakeMutation
+ * ниже: общий itemHasName лежит в predicates.mjs.
+ */
+export function isPossessedActor(actor) {
+  const sys = actor?.system ?? {};
+  if (sys.possessed) return true;
+  const names = [
+    sys.eliteArchetype,
+    ...(sys.eliteArchetypesExtra || []),
+    ...[...(actor?.items ?? [])].filter(i => i?.type === "eliteArchetype").map(i => i?.name)
+  ];
+  return names.some(n => String(n ?? "").replace(/^\[WIP\]\s*/, "")
+    .split("/").some(h => h.trim().toLowerCase() === POSSESSED_ARCHETYPE));
+}
+
 /**
  * Признаки существа, по которым книга тоже нацеливает Ненависть и Связи:
  * «Hatred (Psykers)» — не про организацию и не про породу, а про свойство.
@@ -55,7 +83,7 @@ export function actorPatronKey(actor) {
  */
 export const TARGET_FEATURES = {
   psyker:      { label: "Псайкер",           test: a => !!a?.system?.isPsyker },
-  possessed:   { label: "Одержимый",         test: a => !!a?.system?.possessed },
+  possessed:   { label: "Одержимый",         test: a => isPossessedActor(a) },
   techpriest:  { label: "Техножрец",         test: a => !!a?.system?.isTechpriest },
   rogueTrader: { label: "Вольный торговец",  test: a => !!a?.system?.isRogueTrader },
   // Безграничное Тщеславие Наги: «Ее Талант Hatred (Наги) также

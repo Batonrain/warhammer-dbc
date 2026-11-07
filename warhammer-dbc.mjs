@@ -58,6 +58,8 @@ import { entryWhenOk } from "./module/rules/mech-when.mjs";
 import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
+import { isIroncladArchetypeItem } from "./module/rules/armour-of-the-gods.mjs";
+import { ensureDivinePlateArmour } from "./module/apps/armour-of-the-gods.mjs";
 import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
@@ -84,8 +86,8 @@ import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
 import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
 import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
-import { hasRuleFlag, ruleFlags }     from "./module/rules/flags.mjs";
-import { lockedPatron, enforcedPatron } from "./module/rules/patron-lock.mjs";
+import { hasRuleFlag, ruleFlags, ruleFlagLabels }     from "./module/rules/flags.mjs";
+import { lockedPatron, enforcedPatron, patronLockMessage, PATRON_LOCK_PREFIX } from "./module/rules/patron-lock.mjs";
 import { optionalIntegralEntries, integralEntrySelected, INTEGRAL_CHOSEN_FLAG } from "./module/rules/integral-rating.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
@@ -105,6 +107,8 @@ import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-set
 import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
 import { spawnHunterHound } from "./module/combat/the-hunter.mjs";
+import { spawnGolem, syncRubricShield } from "./module/combat/rubric-sorcerer.mjs";
+import { hasShieldOfRubric } from "./module/rules/rubric-sorcerer.mjs";
 import { spawnSunderingCopies } from "./module/combat/sundering.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
 import { bindDemonMount } from "./module/apps/demon-mount.mjs";
@@ -125,6 +129,7 @@ import { initPathLimitHooks } from "./module/combat/path-limit.mjs";
 import { PATH_LIMIT_SETTING, PATH_LIMIT_DEFAULT } from "./module/rules/movement-path.mjs";
 import { initSqueezeHooks } from "./module/combat/squeeze.mjs";
 import { initBoneHeadHooks } from "./module/combat/bone-head.mjs";
+import { initWarpsmithHooks } from "./module/combat/warpsmith.mjs";
 import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
@@ -132,6 +137,7 @@ import { onWoundRelevantItemChange, onWoundRelevantActorChange } from "./module/
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { GravitonZoneBehaviorType, GRAVITON_ZONE_TYPE } from "./module/regions/graviton-zone.mjs";
+import { WastelandZoneBehaviorType, WASTELAND_ZONE_TYPE } from "./module/regions/wasteland-zone.mjs";
 import { VortexZoneBehaviorType, VORTEX_ZONE_TYPE } from "./module/regions/vortex-zone.mjs";
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
 import { RunicWeaveZoneBehaviorType, RUNIC_WEAVE_ZONE_TYPE,
@@ -157,6 +163,7 @@ import { migrateSightAngle } from "./module/migrations/sight-angle.mjs";
 import { migrateStringListRestore } from "./module/migrations/string-list-restore.mjs";
 import { migrateLimbLossSides } from "./module/migrations/limb-loss-sides.mjs";
 import { migrateRadRating } from "./module/migrations/rad-rating.mjs";
+import { migrateDaemonicRadiation } from "./module/migrations/daemonic-radiation.mjs";
 import { migrateAdvancePricing } from "./module/migrations/advance-pricing-baseline.mjs";
 import { migrateRetinalDisplayMark } from "./module/migrations/retinal-display-mark.mjs";
 import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-fields.mjs";
@@ -348,6 +355,10 @@ Hooks.once("init", () => {
   CONFIG.RegionBehavior.typeLabels[GRAVITON_ZONE_TYPE] = "Гравитонное (усыхание)";
   CONFIG.RegionBehavior.typeIcons[GRAVITON_ZONE_TYPE]  = "fa-solid fa-circle-notch";
 
+  CONFIG.RegionBehavior.dataModels[WASTELAND_ZONE_TYPE] = WastelandZoneBehaviorType;
+  CONFIG.RegionBehavior.typeLabels[WASTELAND_ZONE_TYPE] = "Заражённая местность (Ходячая Пустошь)";
+  CONFIG.RegionBehavior.typeIcons[WASTELAND_ZONE_TYPE]  = "fa-solid fa-biohazard";
+
   // Зона «Укрытие» (wdbc-8k0i, стр. 30-31) — нативный Region Behavior,
   // тот же паттерн, что у Трудного ландшафта.
   CONFIG.RegionBehavior.dataModels[COVER_TYPE] = CoverBehaviorType;
@@ -498,6 +509,7 @@ Hooks.once("init", () => {
     "implantAvailabilityTokensVersion",
     "contentSyncBaselineTokensVersion",
     "radRatingTokensVersion",
+    "daemonicRadiationTokensVersion",
     "retinalDisplayMarkTokensVersion",
     "drugAddictionFieldsTokensVersion",
     "diseaseActiveTokensVersion",
@@ -659,6 +671,12 @@ Hooks.once("init", () => {
   // Версия простановки рейтинга Рад (X) радиевому оружию, выданному до
   // правки пака 02.10.2026 (одноразовая, rad-x-956a)
   game.settings.register("warhammer-dbc", "radRatingVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия дописывания иммунитетов к радиации, ядам и болезням копиям Черты
+  // Daemonic на акторах (одноразовая, daemonic-46e0; сейчас 2 — яды и болезни)
+  game.settings.register("warhammer-dbc", "daemonicRadiationVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1041,6 +1059,13 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
         return;
       }
+      if (data.action === "createGolem") {
+        // Голем Рубрики (Повелитель Големов, module/combat/rubric-sorcerer.mjs) — тот же приём, что summonDemon:
+        // Бестиарий скрыт от игрока, актора-Миньона и токен создаёт активный ГМ по плану из диалога игрока.
+        const res = await spawnGolem(data.plan ?? {});
+        if (!res.ok) console.warn("Warhammer DBC | Голем Рубрики:", res.reason);
+        return;
+      }
       if (data.action === "summonHunterHound") {
         // Загонщик/The Hunter (wdbc-1rno, Кхорн) — тот же приём, что
         // summonDemon выше: Бестиарий скрыт от игрока, спавн+метка+синк
@@ -1210,10 +1235,19 @@ Hooks.once("ready", () => {
   });
 });
 
+// ── Щит Рубрики у уже существующих Колдунов (идемпотентно, module/combat/rubric-sorcerer.mjs) ──
+Hooks.once("ready", async () => {
+  if (!game.user.isGM || game.users.activeGM?.id !== game.user.id) return;
+  for (const actor of game.actors ?? []) {
+    if (!actor.items?.some(i => i.type === "trait" && hasShieldOfRubric({ items: [i] }))) continue;
+    try { await syncRubricShield(actor); } catch (e) { console.warn("Warhammer DBC | Щит Рубрики:", actor.name, e); }
+  }
+});
+
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1460,6 +1494,24 @@ Hooks.once("ready", async () => {
   });
 });
 
+// ── Одноразовое дописывание: иммунитеты к радиации, ядам и болезням у копий
+// Черты Daemonic на акторах (демоны Бестиария и снимки Черты до правки пака) —
+// книга: «иммунен к ядам, болезням и радиации» (daemonic-46e0,
+// daemonic-force-sanctified-warp-weapon) ──
+// Ручной перезапуск: game.warhammerDBC.migrateDaemonicRadiation()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  // Идемпотентна (дописывает группу только при отсутствии иммунитета), проход
+  // по несвязанным токенам повторять безопасно.
+  await runMigrationGate({
+    // Версия 2: к радиации (v1) добавлены яды и болезни (daemonic-force-sanctified-warp-weapon
+    // п.1–2) — миры, где v1 уже отработала, догоняют недостающие группы.
+    key: "daemonicRadiationVersion", tokensKey: "daemonicRadiationTokensVersion", version: 2, tokensVersion: 2,
+    label: "Иммунитеты Daemonic к радиации, ядам и болезням",
+    full: () => migrateDaemonicRadiation(), tokensOnly: () => migrateDaemonicRadiation({ tokensOnly: true })
+  });
+});
+
 // ── Одноразово: режим цен мира закрепляется на «Склонностях», если ГМ его ни
 // разу не сохранял (умолчание сменили на Покровительство), и пересчитываются
 // цены купленного — Таланты Элитных Архетипов стали Нейтральными, цена покупки
@@ -1635,6 +1687,7 @@ Hooks.once("init", () => initPathLimitHooks());
 Hooks.once("init", () => initSqueezeHooks());
 // BONE-Head (Огрин): вышел из поля Haywire — сбой импланта и Ступор от поля снимаются сами.
 Hooks.once("init", () => initBoneHeadHooks());
+Hooks.once("init", () => initWarpsmithHooks());
 Hooks.once("init", () => initOverwatchHooks());
 // Огневая Точка (Хавок): сдвиг токена / Повален гасят точку (combat/fire-point.mjs).
 Hooks.once("init", () => initFirePointHooks());
@@ -2403,6 +2456,10 @@ export async function handleItemCreated(item, options, userId) {
   }
 
   await runAutoScripts(item);
+  // Броненосец: Божественные Латы (АР 8/10/8/8) — отдельная броня, выдаётся при
+  // любом появлении архетипа на акторе (покупка, Мутация «Доспехи Богов»,
+  // перетаскивание) — независимо от Механики и её SKIP_MECHANICS_HOOK.
+  if (isIroncladArchetypeItem(item)) await ensureDivinePlateArmour(actor);
   // Носитель расы/субрасы (originGrant стоит — страховка выше его не трогает)
   // уже получил свою Механику СИНХРОННО внутри applyRace/applySubrace
   // (module/apps/races.mjs) — опция SKIP_MECHANICS_HOOK в контексте создания
@@ -2834,7 +2891,7 @@ Hooks.on("preUpdateActor", (doc, changes) => {
   const keep = enforcedPatron(next, locked);
   if (keep === next) return;
   foundry.utils.setProperty(changes, "system.patronGod", keep);
-  ui.notifications?.warn(`${doc.name}: субраса не может потерять покровительство своего Бога — Покровитель оставлен прежним.`);
+  ui.notifications?.warn(patronLockMessage(doc.name, ruleFlagLabels(doc, PATRON_LOCK_PREFIX + locked)));
 });
 
 Hooks.on("preUpdateActor", (doc, changes) => {

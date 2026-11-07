@@ -181,11 +181,17 @@ export function effectAppliesTo(target, ctx) {
   // НЕ «suppression»: ctx.suppression в rules/match-context.mjs — «Подавление
   // Травм и Расстройств» (Мир-сад/Мир удовольствий), другая механика.
   if (scope === "suppression") return ctx.suppressionTest === true;
+  // Только тест Страха (combat/fear.mjs ставит ctx.fearTest) — не Запугивание, Пытки и Подавление, которые
+  // «morale» тоже ловит: Пьянящий Рёв Шумового Десантника (Sahara 1-54b9) называет «тесты Страха» отдельно.
+  if (scope === "fear") return ctx.fearTest === true;
   // Встречный тест демона против Экзорцизма/Чистой Демонологии (Локус Цепей,
   // wdbc-smc, daemon-sheet.mjs::_rollVsExorcism) — узкий вид теста, а не любой
   // "opposed": книга даёт бонус именно этому конкретному тесту, не всем
   // встречным тестам подряд.
   if (scope === "vsexorcism") return ctx.kind === "vsExorcism";
+  // Приёмы-Состязания (Повалить, Финт, Давление, Напролом, Обезоружить, действия Борьбы): окно combat/techniques.mjs
+  // ставит ctx.contest. Аватар Резни: «−20 на все атаки и манёвры, направленные на Берсерка».
+  if (scope === "contest") return ctx.contest === true;
   if (scope === "social") return isSocialSkill(ctx.skill);
   // Реквизиция — тест «достать снаряжение» (apps/requisition.mjs): идёт по Inf
   // (или по F у Сети Контактов), поэтому свой ctx-флаг, а не «char:inf» — тот
@@ -246,6 +252,10 @@ export function effectAppliesTo(target, ctx) {
   // или выжигания души» — психическая угроза, но не Непрямая сила
   // (ctx.psychicIndirect ставит hooks.mjs для делегированного теста).
   if (scope === "psychicdirect") return ctx.psychicThreat === true && ctx.psychicIndirect !== true;
+  // Засекание/распознание психосилы (Ведьмоискатель): ctx.psychicDetect ставит
+  // окно броска Awareness / Forbidden Lore (Psykers) по галочке игрока —
+  // система не знает, зачем бросают навык (sheets/actor-sheet.mjs).
+  if (scope === "psychicdetect") return ctx.psychicDetect === true;
   // Сопротивление допросу (Ортопрокси): встречный тест Воли жертвы в диалоге
   // пытки/допроса (apps/torture.mjs ставит ctx.interrogation).
   if (scope === "interrogation") return ctx.interrogation === true;

@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { resetCaptured, captured } from "../support/foundry-stub.mjs";
 import { commandNodesFor, expireCommandsAtTurnStart, handleMoraleFailure, revertMoraleFailure,
-         clearCommandsOnCombatEnd, commandEffectOn, COMMAND_LOST_FLAG } from "../../module/combat/command-state.mjs";
+         clearCommandsOnCombatEnd, commandEffectOn, squadChantOf, COMMAND_LOST_FLAG } from "../../module/combat/command-state.mjs";
 import { resolveTest } from "../../module/rules/resolve-test.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 
@@ -221,6 +221,15 @@ describe("Боевая Песнь (раздача Присутствия)", () =
     sarge.system.followers = [...filler(10), { uuid: "Actor.s" }];
     sarge.system.characteristics.fel.bonus = 20;
     expect(commandNodesFor(soldier)[0].chant.over).toBe(true);
+  });
+
+  it("squadChantOf: чип «Песня» листа Отряда — поёт ли Командир (иначе Лидер), W и лимит получателей", () => {
+    expect(squadChantOf(squad)).toEqual({ wp: 50, cap: 10, singer: "Actor.c" });
+    delete sarge.flags.warChantSinging;
+    expect(squadChantOf(squad)).toBe(null);
+    sarge.flags.warChantSinging = true;
+    squad.system.posts = {};                                        // некому петь
+    expect(squadChantOf(squad)).toBe(null);
   });
 
   it("узел без песни (обычный Отряд) chant = null — прежнее поведение", () => {

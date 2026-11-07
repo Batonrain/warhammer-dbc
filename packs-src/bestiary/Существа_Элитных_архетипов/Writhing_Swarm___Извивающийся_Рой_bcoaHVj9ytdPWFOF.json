@@ -1,0 +1,1035 @@
+{
+  "name": "Writhing Swarm / Извивающийся Рой",
+  "type": "character",
+  "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+  "folder": "zg31LDFTBGm8ynuJ",
+  "system": {
+    "bodyType": "other",
+    "race": "",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "heretic",
+    "patronGod": "nurgle",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 10,
+      "max": 10,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 0
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 77,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 34,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 34,
+        "bonus": 3,
+        "cost": 0
+      },
+      "bs": {
+        "base": 1,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 1,
+        "bonus": 0,
+        "cost": 0
+      },
+      "s": {
+        "base": 21,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 21,
+        "bonus": 2,
+        "cost": 0
+      },
+      "t": {
+        "base": 25,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 25,
+        "bonus": 2,
+        "cost": 0
+      },
+      "ag": {
+        "base": 34,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 34,
+        "bonus": 3,
+        "cost": 0
+      },
+      "int": {
+        "base": 7,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 7,
+        "bonus": 0,
+        "cost": 0
+      },
+      "per": {
+        "base": 34,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 34,
+        "bonus": 3,
+        "cost": 0
+      },
+      "wp": {
+        "base": 16,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 16,
+        "bonus": 1,
+        "cost": 0
+      },
+      "fel": {
+        "base": 7,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 7,
+        "bonus": 0,
+        "cost": 0
+      },
+      "inf": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 14
+      },
+      "athletics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 1
+      },
+      "awareness": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 34
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 14
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -4
+      },
+      "logic": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 14
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 14
+      },
+      "survival": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 34
+      },
+      "techUse": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -13
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0,
+      "spdBonus": 3
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "max": 0
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p>Извивающийся Рой — аморфный боевой конструкт из сегментированной плоти, призываемый Королём Червей (Трейт Worm Master). Броня Хитиновая 3/3/3/3, Погл. 5/5/5/5 (T.b 2). Трейт Swarm (1d10).</p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    },
+    "armorBonus": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "mount": {
+      "uuid": "",
+      "role": "rider",
+      "speed": "still",
+      "sync": false,
+      "linked": false,
+      "skidUsed": false
+    },
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Король Червей»)"
+  },
+  "items": [
+    {
+      "name": "Amorphous / Аморфный",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Форма непостоянна, не связана жёстким скелетом: вдвое (окр.▲) уменьшает SPD пешком. Раз в Ход может увеличить или уменьшить свой Размер на 1 или 2 — это не влияет на SPD, но может влиять на сложность попадания по нему, протискивание в узкие проходы и бонусы/штрафы в Борьбе. Автоматически выигрывает тесты на высвобождение из Борьбы; иммунен к Snare и прочим эффектам пут и оков.",
+        "notes": "Было перепутано с «−1/−2 к SPD» и вовсе без упоминания смены Размера — поправлено по книге (wdbc, сверка гл.3 Трейтов). SPD÷2 (окр.▲) и переключаемый раз в Ход Размер ±1/±2 не имеют полей в system.effects (только статичный addend speedMod/sizeMod); иммунитет к Snare/путам и авто-победа при высвобождении из Борьбы тоже не читаются кодом.",
+        "benefit": "SPD пешком ÷2 (окр.▲); раз в Ход ±1/±2 к Размеру по желанию; иммунитет к Snare/путам; авто-победа при высвобождении из Борьбы.",
+        "source": "форма тела",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "OkOTwKVrNxE2OSY6",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!bcoaHVj9ytdPWFOF.OkOTwKVrNxE2OSY6"
+    },
+    {
+      "name": "Deadly Natural Weapons (1) / Смертельное Естественное Оружие",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Когти персонажа — смертельное естественное оружие (Тех-Ассасин): профиль «Когти» Черты Deadly Natural Weapons с X = 4 — 1d10+4 R, Pen 4, Reinforced, Bl 0.",
+        "notes": "Выдаёт оружие «Claws (Deadly Natural Weapons)» через kind:\"integralAttack\"; X урона и Пробития подставляется рейтингом Черты (4). Источник — элитный архетип Тех-Ассасин (core.json, «Трейты: Deadly Natural Weapons (4, когти)…»).",
+        "benefit": "Естественное оружие: Когти (1d10+4 R, Pen 4, Reinforced).",
+        "source": "биология",
+        "bookSource": "DoomBC — Основная книга",
+        "hasRating": true,
+        "rating": 1,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "mUb5NBpQRhRU8M7B",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "dnw4grp",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "dnw4claw",
+                  "kind": "integralAttack",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "grantsMastery": false,
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "absorptionTarget": "",
+                  "absorptionValue": 1,
+                  "shieldSubtypeMode": "exclude",
+                  "shieldSubtypeKey": "",
+                  "shieldSubtypeRatingMax": 0,
+                  "shieldVsConditionKey": "",
+                  "ignoreTerrainProps": [],
+                  "ccDamage": "1d5",
+                  "ccPen": 0,
+                  "ccDamageType": "rending",
+                  "ccTearing": false,
+                  "ccShocking": false,
+                  "ccOnMiss": true,
+                  "ccOnUnarmedOrGrapple": true,
+                  "ccLabel": "",
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "capabilityMode": "flag",
+                  "capabilityAptScope": "skill",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "condKey": "",
+                  "condMode": "apply",
+                  "condLevel": "1",
+                  "condMitigate": "ignore",
+                  "condDurationValue": "1",
+                  "condDurationUnit": "",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.MdAKKPWWE2aYVHza",
+                  "equipSourceName": "Claws (Deadly Natural Weapons) / Когти (Смертельное Естественное Оружие)",
+                  "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipPrRequiredDelta": 0,
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "1",
+                  "auraAffects": "allies",
+                  "auraIncludesSelf": false,
+                  "auraImmuneTraits": "",
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 1,
+                  "scriptTrigger": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!bcoaHVj9ytdPWFOF.mUb5NBpQRhRU8M7B"
+    },
+    {
+      "name": "Swarm / Рой",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Рой мелких существ в унисон: атаки без свойств Blast/Flame/Spray/Scatter наносят ему только половину урона (окр.▲) до Поглощения. Не может быть взят в Захват, сбит с ног или связан. Может протискиваться через очень узкие щели, но не может прыгать. Никогда не получает Критических Эффектов — вместо этого считается уничтоженным, когда его Раны опускаются ниже 0. Естественное оружие Роя получает переменный бонус к Pen в X.",
+        "notes": "Было без иммунитета к Захвату/сбиванию/связыванию и без «протискивается, но не прыгает» — дополнено по книге (сверка гл.3 Трейтов). Половина урона от обычных атак и уязвимость к Blast/Flame — правка формулы получаемого урона по типу атаки; иммунитет к Захвату/сбиванию/связыванию и запрет прыжков не читаются кодом.",
+        "benefit": "Рой: половина урона от обычных атак (уязвим к Blast/Flame/Spray/Scatter); нельзя Захватить/сбить с ног/связать; протискивается в щели, не прыгает; Pen естественного оружия +X.",
+        "source": "биология",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "aeegfQbupHIsOAh0",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!bcoaHVj9ytdPWFOF.aeegfQbupHIsOAh0"
+    },
+    {
+      "name": "Toxic / Токсичный (3)",
+      "type": "trait",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "description": "Ядовитые железы или симбионты. Естественное оружие персонажа получает свойство Toxic (X) — при поражении жертва проходит тест Стойкости или получает дополнительный урон.",
+        "notes": "Автоматизировано: запись «Свойство атаки» (область «безоружные/интегральные», рейтинг = рейтинг этой Черты, apRating:\"rating\") — атаки естественным оружием, выданным как интегральные (Укус, Когти, Рога…), получают Toxic (X) (wdbc-ird9n). Естественное оружие, добавленное предметом без метки интегральной атаки, не получает.",
+        "benefit": "Естественное оружие получает Toxic (X).",
+        "source": "биология",
+        "hasRating": true,
+        "rating": 3,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "p6tyJdeZ78YWv0Q3",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "Wq7vAGxbOdAs7s1n",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "t5ga1gcNeYuPmjfs",
+                  "kind": "attackProp",
+                  "label": "Естественное оружие получает Toxic (X)",
+                  "apScope": "unarmed",
+                  "apKey": "toxic",
+                  "apRating": "rating",
+                  "apRating2": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!bcoaHVj9ytdPWFOF.p6tyJdeZ78YWv0Q3"
+    },
+    {
+      "name": "Swift Attack / Быстрая Атака",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Приём (База: Стандартная/Осторожная Атака; Оружие: любое с Балансом не ниже −1). Базовая атака со штрафом −10. При Успехе наносит одно попадание за каждый нечётный Успех (1,3,5…) до WS.b. Только одним оружием в Ход. Не активирует Cleave и Whirlwind of Death.",
+        "tier": 2,
+        "requirement": "WS 30",
+        "aptitudes": [
+          "ws",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Кхорн",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        },
+        "bookSource": "DoomBC — Основная книга"
+      },
+      "_id": "XzqC24F798bgf9zB",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "9tKcR2wYbNq8mXvL",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "3jHpF6sVdE0xC4bQ",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "technique.swiftAttack",
+                  "label": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!bcoaHVj9ytdPWFOF.XzqC24F798bgf9zB"
+    },
+    {
+      "name": "Chitinous Armour / Хитиновая Броня",
+      "type": "armor",
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "mesh",
+        "stacks": false,
+        "maxAgility": 100,
+        "propRatings": {},
+        "apSecond": {},
+        "equipped": true,
+        "head": 3,
+        "body": 3,
+        "leftArm": 3,
+        "rightArm": 3,
+        "leftLeg": 3,
+        "rightLeg": 3,
+        "quality": "common",
+        "availability": 1,
+        "weight": 3,
+        "properties": [
+          "special"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 5,
+        "drukhari": false,
+        "fieldMode": "",
+        "special": "AP = T.b носителя (для не-Друкхари — 3/4/3/3). W +5."
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "gaUJwBb2ojsVZEvE",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!bcoaHVj9ytdPWFOF.gaUJwBb2ojsVZEvE"
+    }
+  ],
+  "prototypeToken": {
+    "name": "Writhing Swarm / Извивающийся Рой",
+    "displayName": 30,
+    "actorLink": true,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "_id": "bcoaHVj9ytdPWFOF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1793719010572,
+    "modifiedTime": 1793719010572,
+    "lastModifiedBy": null
+  },
+  "_key": "!actors!bcoaHVj9ytdPWFOF"
+}

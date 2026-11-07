@@ -31,6 +31,7 @@ import {
   markMovedThisTurn, markMoveDegreeThisTurn, blockedByGrapple, showReachRing, bothLegsLost
 } from "./movement-actions.mjs";
 import { pickTeleportPoint, teleportToken } from "./token-teleport.mjs";
+import { prepareMistwalker, prepareMistLeap } from "./master-of-executions.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -76,7 +77,7 @@ export function talentMoveRows(actor) {
 /** Хватит ли цены прямо сейчас — с учётом Состояний, блокирующих действия (без списания). */
 function canPay(actor, move) {
   const reactions = move.cost?.reactions ?? 0;
-  const ap = move.cost?.ap ?? 0;
+  const ap = Math.max(move.cost?.ap ?? 0, move.needAp ?? 0);
   if (ap && !canSpendActionPoints(actor, ap, { physical: true })) {
     ui.notifications.warn("⚠️ Не хватает ОД (или Состояние не даёт действовать).");
     return false;
@@ -139,11 +140,23 @@ export async function declareTalentMove(actor, defId, moveId) {
   const limitKey = talentMoveLimitKey(def.id, move.id);
   let lines;
   if (move.mode === "teleport") {
-    const point = await pickTeleportPoint();
-    if (!point) return false; // отменено — ничего не потрачено
     const tokenDoc = tokenDocOf(actor);
+    // Мастер Казней (Sahara 1-54b9): запреты, цель и состояние Натиска — combat/master-of-executions.mjs.
+    const prepare = def.id === "mistwalker" ? prepareMistwalker : def.id === "mistLeap" ? prepareMistLeap : null;
+    let plan = null;
+    if (prepare) {
+      if (!tokenDoc?.parent) { ui.notifications.warn(`${def.label}: нет токена на сцене — переносить некого.`); return false; }
+      plan = await prepare(actor, tokenDoc, { meters });
+      if (!plan.ok) return false;
+    }
+    const point = plan?.point ?? await pickTeleportPoint();
+    if (!point) return false; // отменено — ничего не потрачено
     if (!tokenDoc?.parent) { ui.notifications.warn(`${def.label}: нет токена на сцене — переносить некого.`); return false; }
-    const res = await teleportToken(tokenDoc, point, { maxMeters: meters.unlimited ? Infinity : meters.meters });
+    const veto = plan?.checkPoint?.(point);
+    if (veto) { ui.notifications.warn(`⚠️ ${veto}`); return false; }
+    const res = plan?.skipTeleport
+      ? { ok: true, requestedMeters: 0, movedMeters: 0, stopped: false }
+      : await teleportToken(tokenDoc, point, { maxMeters: meters.unlimited ? Infinity : meters.meters });
     if (res.reason === "farther") {
       ui.notifications.warn(`⚠️ ${def.label}: точка дальше ${Math.round(meters.meters)} м.`);
       return false;
@@ -155,7 +168,10 @@ export async function declareTalentMove(actor, defId, moveId) {
     if (!await payCost(actor, move)) return false;
     if (move.limit) await markCapabilityUsed(actor, limitKey, move.limit.unit);
     await markMovedThisTurn(actor);
-    lines = [`Телепорт на ${Math.round(res.movedMeters)} м${res.stopped ? ` из ${Math.round(res.requestedMeters)} — путь перегородила стена, остановился у неё` : ""}. Лимит пути не тратится.`];
+    lines = [plan?.skipTeleport
+      ? "Телепорт не понадобился — уже в базовом контакте."
+      : `Телепорт на ${Math.round(res.movedMeters)} м${res.stopped ? ` из ${Math.round(res.requestedMeters)} — путь перегородила стена, остановился у неё` : ""}. Лимит пути не тратится.`];
+    if (plan?.after) lines.push(...await plan.after(res));
   } else {
     if (!await payCost(actor, move)) return false;
     if (move.limit) await markCapabilityUsed(actor, limitKey, move.limit.unit);

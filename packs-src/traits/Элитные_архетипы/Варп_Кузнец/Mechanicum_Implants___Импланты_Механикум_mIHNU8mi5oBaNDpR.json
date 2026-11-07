@@ -5,7 +5,7 @@
   "folder": "Atst6W906sMj7L8D",
   "system": {
     "description": "",
-    "notes": "«Полный комплект имплантов Механикум» — грант целой категории предметов-имплантов, не число.",
+    "notes": "Реализовано (Sahara 1-54b9). Комплект «полный комплект имплантов Механикум, описанный на стр. 20» — это семь имплантов из книги (Electro-Grafts, Electoo-Inductors, Respirator Unit, Cyber-Mantle, Potentia Coil, Cranial Circuitry, Noospheric Uplink; packs-src/implants/Адептус_Механикус, константы constants/implants.mjs::MECHANICUS_IMPLANTS). При появлении этой Черты у персонажа хук createItem (combat/warpsmith.mjs::syncMechanicumImplants) выдаёт недостающие импланты комплекта уже установленными (тот же набор, что у Еретеха и Технодесантника, apps/mechanicus-implant-grant.mjs); если у персонажа уже стоят импланты категории «mechanicus», повторной выдачи нет. Открытие блока Техножреца на листе и разрешение Талантов Механикума — записи Конструктора ниже.",
     "benefit": "Варп-Кузнец имеет полный комплект имплантов Механикум.",
     "source": "Элитный архетип: Варп-Кузнец",
     "hasRating": false,

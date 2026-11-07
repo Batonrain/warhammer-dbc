@@ -4,7 +4,7 @@
 //  бой может потратить Очко Бесчестия, чтобы перегрузить динамики и
 //  звуковые усилители брони: до начала следующего Хода усилить Dmg и Pen
 //  звукового оружия на Per.b [«R.b» книги — решение пользователя], ЛИБО
-//  испустить звуковую волну по всем в радиусе ½ Cor.b м, кто не посвящён
+//  испустить звуковую волну по всем в радиусе ½ Cor м (от самой Порчи), кто не посвящён
 //  Слаанеш (тест W−20 или один из эффектов на выбор до активации: рейтинг
 //  Страха 2 до конца боя; 1d5 Усталости; Оглушение на 2 Раунда).»
 //
@@ -134,11 +134,11 @@ async function applyWaveEffect(targetActor, effectKey, caster) {
     : "Рейтинг Страха 2 до конца боя — записать некому (нет ГМа), отметьте вручную";
 }
 
-/** Ветка «звуковая волна»: AoE в радиусе ½Cor.b м, тест W−20, провал → выбранный эффект (общий для всех провалившихся). */
+/** Ветка «звуковая волна»: AoE в радиусе ½ Cor м (от самой Порчи, не от её Бонуса — книга), тест W−20, провал → выбранный эффект (общий для всех провалившихся). */
 export async function applyDreadWailWave(actor, casterToken, effectKey) {
   await spendAndCount(actor);
-  const corBonus = Number(actor.system?.corruptionBonus) || 0;
-  const radius = corBonus / 2;
+  const corValue = Number(actor.system?.corruption?.value) || 0;
+  const radius = corValue / 2;
   const inRange = tokensWithinRadius(casterToken, radius)
     .filter(t => t.actor && !hasRuleFlag(t.actor, "dreadWail.immune"));
 

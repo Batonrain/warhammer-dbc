@@ -10,13 +10,14 @@
 //
 //  Breeze/Бриз (Общие Мутации, wdbc-1rno): «не получает штрафов за
 //  экстремальную жару или холод» — держателю тест не нужен вовсе, кнопка
-//  сама об этом сообщает и ничего не катает.
+//  сама об этом сообщает и ничего не катает. Так же — Burning Body/Пылающее Тело
+//  (wdbc-1rno.16): «иммунитет к экстремальным температурам».
 // ════════════════════════════════════════════════════════════════════════
 
 import { isWorldTimeCooldownReady, worldTimeRemaining } from "../rules/cooldown.mjs";
 import { tempEffect } from "../constants/environment.mjs";
 import { readEnvForScene, currentScene } from "../constants/scene-nexus.mjs";
-import { tempHazardIntervalSeconds, BREEZE_CAPABILITY } from "../rules/temperature-hazard.mjs";
+import { tempHazardIntervalSeconds, BREEZE_CAPABILITY, BURNING_BODY_CAPABILITY } from "../rules/temperature-hazard.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -44,6 +45,12 @@ export async function rollTempHazardTest(actor) {
   if (!actor) return;
   if (hasRuleFlag(actor, BREEZE_CAPABILITY)) {
     return ui.notifications?.info(`${actor.name}: Бриз держит вокруг комфортную температуру — тест не нужен.`);
+  }
+  // Пылающее Тело: «иммунитет к экстремальным температурам» — и жара, и холод.
+  // Подавление пламени тестом W+0 на 1 час (вместе с иммунитетами) не смоделировано:
+  // пока Мутация на персонаже, иммунитет действует всегда.
+  if (hasRuleFlag(actor, BURNING_BODY_CAPABILITY)) {
+    return ui.notifications?.info(`${actor.name}: Пылающее Тело — иммунитет к экстремальным температурам, тест не нужен.`);
   }
 
   const env = readEnvForScene(currentScene());

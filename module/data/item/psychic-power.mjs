@@ -124,6 +124,10 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // нечем) и не перманентная правка (ничего не хранится).
       resistChar:    new StringField({ initial: "", label: "Тест Сопротивления цели (характеристика)" }),
       resistMod:     num(0, "Модификатор теста Сопротивления цели"),
+      // Сила воздействует на РАЗУМ цели (Телепатия и подобные): носитель Ментального Гнева в Ярости
+      // отвечает на неё Ступором кастера на 1 Раунд и игнорирует эффект (rules/mental-rage.mjs,
+      // combat/mental-rage.mjs). Ставится по книжному тексту силы, не по Дисциплине.
+      mindEffect:    new BooleanField({ initial: false, label: "Воздействует на разум цели" }),
       effect:        new StringField({ initial: "", label: "Эффект" }),
       isSustained:   new BooleanField({ initial: false, label: "Поддерживается сейчас" }),
       // wdbc-8m0x: степень успеха психотеста, на которой сейчас манифестирована

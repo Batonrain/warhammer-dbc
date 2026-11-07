@@ -150,6 +150,7 @@
             {{#if p.cyberpreacherActive}}<span class="wh-craft-lbl" title="Киберпроповедник: Преимущество на имплантацию бионики/кибернетики">⚙ Киберпроповедник: Преимущество применяется автоматически</span>{{/if}}
           </div>
           {{#if p.notCraftable}}<div class="wh-craft-warn">⚠ По таблице предмет этой Категории не создаётся при выбранной Редкости — задайте Банк вручную или измените Редкость.</div>{{/if}}
+          {{#if p.prototypingNote}}<div class="wh-craft-hint" title="Предмет опознаётся по названию проекта (поле вверху); память пишется, когда проект-создание закрыт, и хранится на персонаже-крафтере">{{p.prototypingNote}}</div>{{/if}}
           {{#if p.machineNote}}
           <div class="wh-craft-toggles">
             <label><span class="wh-craft-lbl">Размер машины</span><input type="number" name="machinesize" value="{{p.machineSize}}" min="0" class="wh-craft-num"/></label>

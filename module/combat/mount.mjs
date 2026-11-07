@@ -38,6 +38,7 @@ import { fallDamageSectionHtml } from "./fall-damage.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { cardFailUndo } from "../rules/fail-undo.mjs";
 import { combinedThreshold } from "../rules/test-kind.mjs";
 import { testKindHtml, diceModeHtml, critLineHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
@@ -46,7 +47,7 @@ import {
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
   fallFromSaddle, acrobaticsStayMod, spliceBonus, hasTalent, passengerCount,
   hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue, BLADES_TIER_USES,
-  mountAutoTerrain, trotApplies, mountSenseTerrainBonus, ironMountLimit, ironMountArmor, isPossessed } from "../rules/mount.mjs";
+  mountAutoTerrain, trotApplies, mountSenseTerrainBonus, ironMountLimit, ironMountArmor, isPossessed, mountTestContext } from "../rules/mount.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -120,8 +121,12 @@ async function rollWithKind(actor, baseEff, tk, ctx) {
  * бросок, переброс, крит, исход, свои блоки). Звук кубика — только когда
  * бросок действительно был, как и раньше.
  */
-async function postCard(actor, card, rolls = []) {
-  await postTestCard(actor, card, { rolls, sound: rolls.length > 0 });
+async function postCard(actor, card, rolls = [], outcome = null) {
+  // Откат последствий провала (Шок Инфернальной Воли и т.п.) — во флаг карточки, чтобы переброс за Очко и
+  // «Провал → успех» могли его снять (rules/fail-undo.mjs, task-e30b).
+  const failUndo = cardFailUndo(actor, outcome?.failUndo);
+  await postTestCard(actor, card, { rolls, sound: rolls.length > 0,
+    ...(failUndo ? { flags: { "warhammer-dbc": { failUndo } } } : {}) });
 }
 
 // ── Кто и на чём едет ─────────────────────────────────────────────────────
@@ -227,7 +232,7 @@ async function resolveTurn(rider, ctx, turns, idx, extraMod, tk = { kind: "base"
   }
 
   const baseEff = control.value + option.mod + extraMod;
-  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, { actor: rider, kind: "skill" });
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, mountTestContext(rider, control.info));
   const { success: passed, deg } = outcome;
 
   const body = passed
@@ -244,12 +249,12 @@ async function resolveTurn(rider, ctx, turns, idx, extraMod, tk = { kind: "base"
       threshold: baseEff + (tk.difficulty || 0), rv
     }),
     lines: [
-      outcome.combinedLine,
+      outcome.combinedLine, outcome.unnaturalLine,
       control.combined ? `<div class="roll-defense-note">Навыком не владеет — по книге это комбинированный тест с основным действием.</div>` : ""
     ],
     rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
-  }, [roll]);
+  }, [roll], outcome);
 }
 
 // ── Занос (стр. 477) ──────────────────────────────────────────────────────
@@ -306,7 +311,7 @@ export async function showSkidDialog(rider) {
   });
   if (!result) return;
 
-  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, result, { actor: rider, kind: "skill" });
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, result, mountTestContext(rider, control.info));
   const { success: passed, deg } = outcome;
 
   const body = passed
@@ -321,13 +326,13 @@ export async function showSkidDialog(rider) {
       parts: [`${sgn(info.mod)} (Занос ${sgn(MOUNT_SKID.mod)}${info.manoeuvreParts.length ? `, ${modLine(info.manoeuvreParts)}` : ""})${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""}`],
       threshold: baseEff + (result.difficulty || 0), rv
     }),
-    lines: [outcome.combinedLine],
+    lines: [outcome.combinedLine, outcome.unnaturalLine],
     rerollNote, critLine: outcome.critLine,
     sections: [
       body, outcome.extendedLine, outcome.opposedLine,
       `<div class="roll-allout-note">Независимо от исхода: −10 на все физические действия до начала следующего Хода.</div>`
     ]
-  }, [roll]);
+  }, [roll], outcome);
 
   await rider.update({ "system.mount.skidUsed": true });
 }
@@ -400,7 +405,7 @@ export async function showBladesDialog(rider) {
   });
   if (!result) return;
 
-  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, result, { actor: rider, kind: "skill" });
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, result, mountTestContext(rider, control));
   const { success: passed, deg } = outcome;
 
   const body = passed
@@ -431,9 +436,10 @@ export async function showBladesDialog(rider) {
       parts: [`−10${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""}`],
       threshold: baseEff + (result.difficulty || 0), rv
     }),
+    lines: [outcome.unnaturalLine],
     rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
-  }, [roll]);
+  }, [roll], outcome);
 
   await rider.update({ "system.mount.bladesUsed": used + 1 });
 }
@@ -528,7 +534,7 @@ async function resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod,
   const { mount, control } = ctx;
   const total = terrainMod + zone + extra;
   const baseEff = skill + total;
-  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, { actor: rider, kind: "skill" });
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, mountTestContext(rider, control.info));
   const { success: passed, deg } = outcome;
 
   const body = passed
@@ -553,10 +559,10 @@ async function resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod,
       parts: [`${sgn(total)} (верхом ${sgn(terrainMod)}${zone ? `, зона ${sgn(zone)}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""}`],
       threshold: baseEff + (tk.difficulty || 0), rv
     }),
-    lines: [outcome.combinedLine],
+    lines: [outcome.combinedLine, outcome.unnaturalLine],
     rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
-  }, [roll]);
+  }, [roll], outcome);
 }
 
 // ── Удержание в седле ─────────────────────────────────────────────────────
@@ -597,11 +603,14 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
   const { mount, control, speedKey } = ctx;
   const def = SADDLE_KINDS[kind] || SADDLE_KINDS.agility;
 
-  let base, label;
+  // Чем бросают — для общего исхода (task-55d0): Навык управления, Акробатика или голая Ловкость (тест Характеристики).
+  let base, label, saddleInfo;
   if (def.control) {
     base = control.value;
     label = control.label;
+    saddleInfo = control.info;
   } else if (def.skill) {
+    saddleInfo = { scope: "skill", key: def.skill, char: def.char };
     const chars = rider.system.characteristics ?? {};
     const rank = rider.system.skills?.[def.skill]?.rank ?? "untrained";
     base = (Number(chars[def.char]?.total) || 0) + (SKILL_RANKS[rank]?.bonus ?? -20);
@@ -609,6 +618,7 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
   } else {
     base = Number(rider.system.characteristics?.[def.char]?.total) || 0;
     label = def.label;
+    saddleInfo = { char: def.char };
   }
 
   // «Сращивание» одержимого скакуна: +5×W.b демона именно на эти тесты.
@@ -649,7 +659,7 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
   });
   if (!tk) return;
 
-  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, { actor: rider, kind: "skill" });
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, mountTestContext(rider, saddleInfo));
   const { success: passed, deg } = outcome;
 
   const skilled = hasTalent(rider, "Skilled Rider", "Опытный Всадник");
@@ -674,12 +684,12 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
       threshold: baseEff + (tk.difficulty || 0), rv
     }),
     lines: [
-      outcome.combinedLine,
+      outcome.combinedLine, outcome.unnaturalLine,
       reason ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Причина: ${esc(reason)}</div>` : ""
     ],
     rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
-  }, [roll]);
+  }, [roll], outcome);
 }
 
 /** Блок выпадения: высота, формула урона и кнопка применения к всаднику. */
@@ -947,7 +957,7 @@ export async function ironMountTest(rider) {
 
   const baseEff = control.value - 10;
   const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, { kind: "base", difficulty: 0 },
-    { actor: rider, kind: "skill" });
+    mountTestContext(rider, control.info));
   const { success: passed, deg } = outcome;
   const ap = passed ? ironMountArmor(deg) : 0;
   const body = passed
@@ -959,10 +969,10 @@ export async function ironMountTest(rider) {
     icon: rollIcon("shield", "#8fd0ff"),
     title: `Железный Скакун — ${esc(rider.name)}`,
     threshold: rollStatLine({ label: control.label, base: control.value, parts: ["−10"], threshold: baseEff, rv }),
-    lines: [outcome.combinedLine],
+    lines: [outcome.combinedLine, outcome.unnaturalLine],
     rerollNote, critLine: outcome.critLine,
     sections: [body]
-  }, [roll]);
+  }, [roll], outcome);
 }
 
 /**
@@ -1017,7 +1027,7 @@ export async function dragonKnightTest(rider) {
   const base = Number.isFinite(survival) ? survival : -20;
   const baseEff = base - 10;
   const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, { kind: "base", difficulty: 0 },
-    { actor: rider, kind: "skill", skill: "survival" });
+    mountTestContext(rider, { scope: "skill", key: "survival", char: "ag" }));
   const { success: passed, deg } = outcome;
   const value = passed ? dragonKnightValue(deg) : 0;
 
@@ -1040,10 +1050,10 @@ export async function dragonKnightTest(rider) {
     icon: rollIcon("shield", "#ffb84d"),
     title: `Драконий Рыцарь — ${esc(rider.name)}`,
     threshold: rollStatLine({ label: "Выживание", base, parts: ["−10"], threshold: baseEff, rv }),
-    lines: [outcome.combinedLine],
+    lines: [outcome.combinedLine, outcome.unnaturalLine],
     rerollNote, critLine: outcome.critLine,
     sections: [body]
-  }, [roll]);
+  }, [roll], outcome);
   return applied;
 }
 
@@ -1149,7 +1159,7 @@ export async function showBikeRepairDialog(bikeActor) {
 async function resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken, tk = { kind: "base", difficulty: 0 } }) {
   const total = mode.mod + parts + extra;
   const baseEff = skill + total;
-  const { roll, rv, rerollNote, outcome } = await rollWithKind(bikeActor, baseEff, tk, { actor: bikeActor, kind: "skill", skill: "techUse" });
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(bikeActor, baseEff, tk, mountTestContext(bikeActor, { scope: "skill", key: "techUse", char: "int" }));
   const { success: passed, deg } = outcome;
 
   const s = bikeActor.system.structure ?? {};
@@ -1181,8 +1191,8 @@ async function resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken,
       parts: [`${sgn(total)} (ремонт ${sgn(mode.mod)}${parts ? `, детали +${parts}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""}`],
       threshold: baseEff + (tk.difficulty || 0), rv
     }),
-    lines: [outcome.combinedLine],
+    lines: [outcome.combinedLine, outcome.unnaturalLine],
     rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
-  }, [roll]);
+  }, [roll], outcome);
 }

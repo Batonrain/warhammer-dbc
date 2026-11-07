@@ -37,6 +37,7 @@ import { FAST_MOVE_FLAG } from "../rules/hard-target.mjs";
 import { HIP_SHOOTING_FLAG, hipShootingWeapon } from "../rules/gunner-talents.mjs";
 import { RUN_AND_GUN_PENDING_FLAG, hasRunAndGun } from "../rules/run-and-gun.mjs";
 import { runAndGunOfferHtml, markChargeChecked, markChargeFailed, chargeFailedThisRound } from "./free-shot.mjs";
+import { offerRunningThrow } from "./running-throw.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
@@ -186,6 +187,8 @@ async function _rollWalkOnStumps(actor, moveLabel) {
 export async function markMovedThisTurn(actor) {
   if (!actor || actor.getFlag("warhammer-dbc", "movedThisTurn")) return;
   await actor.setFlag("warhammer-dbc", "movedThisTurn", true);
+  // Бросок на Бегу (Талант Метания): первое Движение Хода в бою — предложить тест Acrobatics−10 (combat/running-throw.mjs).
+  await offerRunningThrow(actor);
 }
 
 /**

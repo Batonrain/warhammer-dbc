@@ -21,7 +21,7 @@ import { registerRuleSource } from "../rules/source-registry.mjs";
 import { commandRulesFor, braveryActive, moraleCommandActive, commandEffectNode,
          syncAssaultBonus, volleySuppressionMod } from "../rules/command-effects.mjs";
 import { commandReachFor } from "../rules/command.mjs";
-import { commandCapacity, warChantSinging } from "../rules/leadership-talents.mjs";
+import { commandCapacity, followerCapacity, warChantSinging } from "../rules/leadership-talents.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { isItemActive } from "../apps/effects.mjs";
@@ -172,6 +172,18 @@ function chantFor(singer, idx) {
 }
 
 /**
+ * Боевая Песнь командующего Отряда (Командир, иначе Лидер — тот же, что раздаёт
+ * Присутствие): для чипа «Песня» на листе Отряда и кнопки «Тройка» (песня даёт
+ * все три эффекта, в том числе Концентрацию огня).
+ * @returns {?{wp:number, cap:number, singer:string}} null — не поёт
+ */
+export function squadChantOf(squad) {
+  const { active } = squadGiver(squad);
+  const chant = chantFor(active, 0);
+  return chant ? { wp: chant.wp, cap: chant.cap, singer: active.name ?? "" } : null;
+}
+
+/**
  * Лишён ли актор Командования Рисовкой (rules/command-suppression.mjs). Читает флаг прямо, без
  * реестра правил: его зовёт сам источник «command» (круга быть не должно).
  */
@@ -244,11 +256,9 @@ export function commandNodesFor(actor) {
   const fIdx = followers.findIndex(f => sameActor(actor, f.uuid));
   if (boss && fIdx >= 0) {
     const cmd = boss.system.command ?? {};
-    // Дрессировка: «максимум подчинённых животных — P.b» вместо F.b×2
-    // (Air of Authority эту ветку не меняет — он про Command, не про зверей).
-    const bossCap = cmd.training
-      ? (Number(boss.system?.characteristics?.per?.bonus) || 0)
-      : commandCapacity(boss, "fel");
+    // Дрессировка: P.b вместо F.b×2 (rules/leadership-talents.mjs::followerCapacity —
+    // тот же хелпер даёт число на значке ⚑ вкладки Социум).
+    const bossCap = followerCapacity(boss);
     nodes.push({
       sourceUuid: boss.uuid,
       label: boss.name,

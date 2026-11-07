@@ -459,7 +459,7 @@ describe("общее требование к предикатам", () => {
     sizeMax: 1, charMin: { s: 40 }, charBonusMin: { s: 5 },
     woundTier: ["heavy"],
     // В Ярости (wdbc-wyr3) — читает actor.system.inRage, значение из `when`
-    // не участвует (тот же случай, что avatarOfSlaughterOffTarget ниже).
+    // не участвует (тот же случай, что avatarOfSlaughterOnBerserker ниже).
     inRage: undefined,
     // Герметичная броня (wdbc-1rno) — читает actor.items, значение из `when`
     // не участвует, тот же случай, что inRage выше.
@@ -496,7 +496,7 @@ describe("общее требование к предикатам", () => {
     hasFaction: "chaos", targetHasFaction: "chaos",
     // Метка Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — читает флаг самого
     // актора, значение из `when` не участвует.
-    avatarOfSlaughterOffTarget: undefined,
+    avatarOfSlaughterOnBerserker: undefined,
     // Метка Hex-Marked Prey/Проклятая Метка (wdbc-xxb7) — читает флаг ЦЕЛИ
     // (ctx.targetActor); значение из `when` — необязательный фильтр по god
     // (wdbc-w8z4, см. describe("hexMarkedPreyAllyBonus") выше), undefined
@@ -509,7 +509,7 @@ describe("общее требование к предикатам", () => {
     hasHatredTarget: undefined,
     // Защитник, Оружие Наследия (wdbc-1rno.35) — читает флаг ЦЕЛИ
     // (ctx.targetActor), значение из `when` не участвует, тот же случай, что
-    // avatarOfSlaughterOffTarget/hexMarkedPreyAllyBonus выше.
+    // avatarOfSlaughterOnBerserker/hexMarkedPreyAllyBonus выше.
     legacyGuardianMarked: undefined,
     // Подавляющее поле друкхарийской брони цели (wdbc-j8cn) — читает
     // system.fieldPsyMod ЦЕЛИ, значение из `when` не участвует.

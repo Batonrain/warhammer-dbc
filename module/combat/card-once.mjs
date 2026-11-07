@@ -16,7 +16,7 @@
 const NS = "warhammer-dbc";
 
 /** Ключи флагов, которые ГМ ставит по просьбе игрока (белый список сокета). */
-export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
+export const CARD_ONCE_FLAGS = ["mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
   // Трата Очка «Успех» из меню карточки теста (apps/infamy-success.mjs): +Успех дописан в эту карточку.
   "infamySuccessAdded",
   // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).
@@ -26,11 +26,17 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   // Мастерство: автоуспех за Очко (combat/mastery.mjs) и «За Гранью Человека»:
   // оставить первый результат переброса (combat/beyond-human.mjs).
   "masteryAutoSuccessUsed", "beyondHumanKept",
+  // Последствия провала этой карточки уже сняты (или переданы переброшенной карточке): combat/fear.mjs::revertCardFailure.
+  "failUndoSettled",
   // Таланты Стойкости на карточке Критического Эффекта (crit-talents.mjs, shock-death.mjs):
   // Последний Рывок, Не Умирать, Боль — Лишь Иллюзия и тест «смерть от шока».
   "finalPushUsed", "neverDieUsed", "painIllusionUsed", "finalPushApplied",
   // Ключи попыток без итога (runCardOnce с persist:false) флагом не пишутся, но стыковочный тест требует их в списке.
   "finalPushTried", "painTried", "shockDeathRolled",
+  // Неостановимый Гнев (Черта Берсерка Кхорна, combat/crit-talents-actions.mjs): попытка, успех и «Смерть игнорирована этим успехом».
+  "unstoppableWrathTried", "unstoppableWrathUsed", "unstoppableWrathDeath",
+  // Гвозди Мясника (combat/khorne-berserker.mjs): карточка «тест W+10 или Ярость» решена; Подношение Черепов принято.
+  "nailsGateResolved", "skullOfferingClaimed",
   // Вырубание: «сбить с ног» с карточки урона при успешном Оглушении (combat/takedown.mjs).
   "takedownKnockdown",
   // Ключевые Силы (Талант Псайканы, combat/psyker-pools.mjs): бесплатная способность Очка Бесчестия — одна на карточку манифестации.
@@ -45,13 +51,21 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "warpLockUsed",
   // Холодная Ярость (combat/rage-behavior.mjs::rerollRageExit): переброс неудачной попытки выйти из Ярости — один на карточку.
   "rageExitRerolled",
+  // Верхом на Звере (combat/rage-behavior.mjs::rideTheBeast): одна попытка W+0 на выбор цели с карточки-напоминания.
+  "ridingBeastTried",
   // Снайпер Ужаса: один тест Intimidate(BS)+0 на попадание (combat/terror-sniper.mjs).
   "terrorSniperRolled",
+  // Поколотить (Талант Метания, combat/clobber.mjs): один S-тест цели на попадание метательным.
+  "clobberRolled",
   // Хирургическая Точность (Медик, combat/surgical-precision.mjs): один тест Medicae−10 на карточку атаки.
   "surgicalPrecisionUsed",
   // Таланты Пугилиста: свободные действия с карточек Захвата и Пинка (3-eddb) — Швырнуть
   // (Метнуть/Замахнуться — одно действие), обе части Наскока и Пинок с Разворота.
   "slamUsed", "pounceKnockdownUsed", "pounceGrabUsed", "roundhouseUsed",
+  // Колдун Рубрики (combat/rubric-sorcerer.mjs): Психическое Эхо — один Голем с карточки манифестации; карточка Регенерации — тест или автоуспех, одно из двух.
+  "psychicEchoUsed", "regenerationDone",
+  // Тёмный Апостол (combat/dark-apostle.mjs): демон по карточке Мученика (1–3 Успеха) выбран ГМом; Смертный Инструмент — один ответ Богов на карточку.
+  "martyrDemonPicked", "mortalInstrumentUsed",
   // Саботаж (Талант Разбойника, combat/sabotage.mjs): Клин/отключение оружия цели с карточки удара.
   "sabotageApplied",
   // Разрубить (Талант «Рукопашных», combat/cleave.mjs): одна свободная атака с карточки урона.
@@ -62,16 +76,26 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "reaperUsed",
   // Трофей (Мастер Казней, combat/trophy-kill.mjs): одно решение ГМа о начислении Очков Трофеев с карточки убийства.
   "trophyAwarded",
+  // Трофеи Приговора (Талант Мастера Казней, combat/trophy-kill.mjs): один возврат Очка с карточки убийства.
+  "trophyJudgementUsed",
   // Рисовка (Талант «Рукопашных», combat/show-off.mjs): одна свободная атака по цели с её карточки победы.
   "showOffAttackUsed",
   // Упорство (Талант «Рукопашных», combat/tenacity.mjs): один повтор атаки с карточки.
   "tenacityUsed",
+  // Казнь (Черта Мастера Казней, combat/execution.mjs): одна дополнительная атака с карточки.
+  "executionUsed",
+  // Окончательная Казнь (combat/final-execution.mjs): Страх (2) на 1 Раунд — один раз на карточку-запрос.
+  "finalExecutionFearGranted",
   // Сцепление Клинков (Талант «Рукопашных», combat/blade-binding.mjs): один встречный тест с карточки Парирования.
   "bladeBindingUsed",
   // Пересилить (Талант Берсерка, combat/overpower.mjs): один встречный тест с карточки Парирования.
   "overpowerUsed",
   // Яростный Штурм (Талант Берсерка, combat/furious-assault.mjs): одна дополнительная атака за Реакцию с карточки.
   "furiousAssaultUsed",
+  // Один Из Нас Падёт (Талант Берсерка, combat/one-will-go-down.mjs): итог удара (Усталость) подводится один раз на карточку.
+  "oneWillGoDownSettled",
+  // Тяжёлый Хук, Направляющий Удар, Удар с Коленом (Таланты Пугилиста, combat/pugilist-strikes.mjs): раз на атаку / карточку.
+  "haymakerUsed", "goadingPressUsed", "kneeStrikeUsed",
   // Ложный Натиск (hooks.mjs, .wh-false-advance-btn): один Финт или Давление с карточки Движения.
   "falseAdvanceUsed",
   // Гренадер (Талант Метания, combat/grenadier.mjs): «уменьшить смещение» и «перебросить направление» — по разу на карточку.
@@ -80,7 +104,10 @@ export const CARD_ONCE_FLAGS = ["infamyFailSuccessUsed", "attackRerolled", "legi
   "ramPirouetteUsed",
   // Снайпер Ужаса: тест Подавления каждого врага из карточки — по разу на врага (строка карточки = номер,
   // combat/terror-sniper.mjs::terrorSuppressKey; врагов больше TERROR_SUPPRESS_ROWS остаются без общей отметки).
-  ...Array.from({ length: 20 }, (_, i) => `terrorSuppress${i}`)];
+  ...Array.from({ length: 20 }, (_, i) => `terrorSuppress${i}`),
+  // Лазерный Прицел (combat/laser-sight.mjs): тест Внимательности−10 каждого врага с шёпота ГМу — по разу на
+  // строку (laserSpot0…19, combat/laser-sight.mjs::laserSpotKey). Шёпот пишет клиент стрелка; отметку ставит нажавший его ГМ.
+  ...Array.from({ length: 20 }, (_, i) => `laserSpot${i}`)];
 
 const local = new Set();
 const localKey = (message, key) => `${message?.id}:${key}`;

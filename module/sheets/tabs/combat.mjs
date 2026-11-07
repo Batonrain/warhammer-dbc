@@ -29,10 +29,18 @@ import { toggleSuffocationMode } from "../../combat/condition-ticks.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showTortureDialog } from "../../apps/torture.mjs";
-import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
+import { hasFrenzyTalent, tryEnterRage, markFrenzyExited } from "../../combat/frenzy.mjs";
 import { attemptRageExit } from "../../combat/rage-behavior.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
+import { provokeNails, useRedStreak } from "../../combat/khorne-berserker.mjs";
 import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
+import { toggleDirgeOfDespair, applyWallOfDiscord, showSingForMeDialog } from "../../combat/noise-marine.mjs";
+import { showDistilledTormentDialog } from "../../combat/distilled-torment.mjs";
+import { activateInfectiousMiasma, startRotsmith, blessedTouch, startWasteland } from "../../combat/plague-marine.mjs";
+import { startGolemCreation, bindNexus, useRebornInDust, useInfernalShells } from "../../combat/rubric-sorcerer.mjs";
+import { useIronCage, forgeSigil, useCellOfShame, useEmpyreanWhip, useForgeOfOne, useRunDown } from "../../combat/warpsmith.mjs";
+import { useTruePrayer, buildMonument, convertNpc, makeFaithful, useLitanyOfChaos, useLayOnHands, useMartyr, useMortalInstrument } from "../../combat/dark-apostle.mjs";
+import { useHuntersSight } from "../../combat/master-of-executions.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
@@ -169,14 +177,22 @@ export function activateCombatListeners(root, actor) {
   // сохраняется формой Foundry как обычно — здесь только гейт входа и отметка выхода.
   on(root, ".rage-toggle input", "change", async ev => {
     const checked = ev.currentTarget.checked;
-    if (checked && frenzyEntryBlocked(actor)) {
+    if (checked && hasFrenzyTalent(actor)) {
       // Слушатель висит на input, а лист (ApplicationV2, submitOnChange) — на
       // form: без stopPropagation форма сабмитнула бы inRage:true из DOM
-      // СЛЕДОМ за нашим откатом, и гейт молча проигрывал бы гонку.
+      // СЛЕДОМ за нашим откатом, и гейт молча проигрывал бы гонку. Вход платный (ОД,
+      // Огонь в Крови — полудействие) и асинхронный, поэтому значение пишем сами.
       ev.stopPropagation();
-      ev.currentTarget.checked = false;
-      ui.notifications.warn(`«${actor.name}» уже выходил(а) из Ярости в этом бою — повторный вход запрещён до конца боя (Frenzy/Ярость). Снимается Чертой Butcher's Nails / Гвозди Мясника.`);
-      await actor.update({ "system.inRage": false });
+      const input = ev.currentTarget;
+      const entry = await tryEnterRage(actor);
+      if (!entry.ok) {
+        input.checked = false;
+        ui.notifications.warn(entry.reason);
+        await actor.update({ "system.inRage": false });
+        return;
+      }
+      if (entry.cost > 0) ui.notifications.info(`«${actor.name}»: вход в Ярость — ${entry.cost} ОД.`);
+      await actor.update({ "system.inRage": true });
       return;
     }
     if (!checked) await markFrenzyExited(actor);
@@ -194,6 +210,14 @@ export function activateCombatListeners(root, actor) {
     await applyAvatarOfSlaughter(actor, target);
   });
 
+  // ── Берсерк Кхорна (Sahara 1-54b9, module/combat/khorne-berserker.mjs) ─────
+  on(root, ".butchers-nails-btn", "click", async () => {
+    await provokeNails(actor);
+  });
+  on(root, ".red-streak-btn", "click", async () => {
+    await useRedStreak(actor);
+  });
+
   // ── Грозный Вопль (wdbc-sk8s, module/combat/dread-wail.mjs) ──────────────
   on(root, ".dread-wail-btn", "click", async () => {
     if (!dreadWailAvailable(actor)) {
@@ -201,6 +225,69 @@ export function activateCombatListeners(root, actor) {
     }
     await showDreadWailDialog(actor);
   });
+
+  // ── Шумовой Десантник (Sahara 1-54b9, module/combat/noise-marine.mjs) ─────
+  on(root, ".dirge-of-despair-btn", "click", async () => {
+    await toggleDirgeOfDespair(actor);
+  });
+  on(root, ".wall-of-discord-btn", "click", async () => {
+    const token = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+    await applyWallOfDiscord(actor, token);
+  });
+  on(root, ".sing-for-me-btn", "click", async () => {
+    await showSingForMeDialog(actor);
+  });
+  on(root, ".distilled-torment-btn", "click", async () => {
+    await showDistilledTormentDialog(actor);
+  });
+
+  // ── Чумной Десантник (Sahara 1-54b9, module/combat/plague-marine.mjs) ─────
+  on(root, ".infectious-miasma-btn", "click", async () => {
+    await activateInfectiousMiasma(actor);
+  });
+  on(root, ".rotsmith-btn", "click", async () => {
+    await startRotsmith(actor);
+  });
+  on(root, ".blessed-touch-btn", "click", async () => {
+    await blessedTouch(actor);
+  });
+  on(root, ".walking-wasteland-btn", "click", async () => {
+    await startWasteland(actor);
+  });
+
+  // ── Колдун Рубрики (Sahara 1-54b9, module/combat/rubric-sorcerer.mjs) ─────
+  on(root, ".golem-create-btn", "click", async () => {
+    await startGolemCreation(actor);
+  });
+  on(root, ".nexus-bind-btn", "click", async () => {
+    await bindNexus(actor);
+  });
+  on(root, ".reborn-in-dust-btn", "click", async () => {
+    await useRebornInDust(actor);
+  });
+  on(root, ".infernal-shells-btn", "click", async () => {
+    await useInfernalShells(actor);
+  });
+
+  // ── Тёмный Апостол (Sahara 1-54b9, module/combat/dark-apostle.mjs) ────────
+  on(root, ".apostle-true-prayer-btn", "click", async () => { await useTruePrayer(actor); });
+  on(root, ".apostle-monument-btn", "click", async () => { await buildMonument(actor); });
+  on(root, ".apostle-convert-btn", "click", async () => { await convertNpc(actor); });
+  on(root, ".apostle-faithful-btn", "click", async () => { await makeFaithful(actor); });
+  on(root, ".apostle-litany-btn", "click", async () => { await useLitanyOfChaos(actor); });
+  on(root, ".apostle-lay-on-hands-btn", "click", async () => { await useLayOnHands(actor); });
+  on(root, ".apostle-martyr-btn", "click", async () => { await useMartyr(actor); });
+  on(root, ".apostle-mortal-btn", "click", async () => { await useMortalInstrument(actor); });
+
+  // ── Мастер Казней (Sahara 1-54b9, module/combat/master-of-executions.mjs) ───
+  on(root, ".hunter-sight-btn", "click", async () => { await useHuntersSight(actor); });
+
+  on(root, ".warpsmith-cage-btn", "click", async () => { await useIronCage(actor); });
+  on(root, ".warpsmith-sigil-btn", "click", async () => { await forgeSigil(actor); });
+  on(root, ".warpsmith-cell-btn", "click", async () => { await useCellOfShame(actor); });
+  on(root, ".warpsmith-whip-btn", "click", async () => { await useEmpyreanWhip(actor); });
+  on(root, ".warpsmith-forge-btn", "click", async () => { await useForgeOfOne(actor); });
+  on(root, ".warpsmith-rundown-btn", "click", async () => { await useRunDown(actor); });
 
   // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──
   on(root, ".resplendent-raiment-btn", "click", async () => {

@@ -19,6 +19,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { hasWarpforgedPlate } from "../rules/warpsmith.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "../rules/wounds.mjs";
 import { addFatigue, conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
@@ -456,6 +457,12 @@ function fireproofBurningApBonus(actor) {
   return best;
 }
 
+export function warpforgedBurningAp(actor) {
+  if (!hasWarpforgedPlate(actor)) return 0;
+  const abs = actor.system?.absorption;
+  return Math.max(0, (Number(abs?.body) || 0) - (Number(abs?.toughnessBonus) || 0));
+}
+
 // Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце, «даёт улучшение
 // Cooler, пока активен»): книжный порог «пламя, которым объят персонаж,
 // наносит не больше 1d10 урона» — 10, не повторный бросок 1d10 (это разбор
@@ -796,14 +803,17 @@ export async function processConditionTurnEnd(actor) {
     const formula = burningTickFormula(actor);
     const roll = await new Roll(formula).evaluate();
     const tb = Number(actor.system?.characteristics?.t?.bonus) || 0;
-    const fireAp = fireproofBurningApBonus(actor);
+    const fireproofAp = fireproofBurningApBonus(actor);
+    const plateAp = warpforgedBurningAp(actor);
+    const fireAp = Math.max(fireproofAp, plateAp);
+    const apTag = plateAp > fireproofAp ? "AP" : "AP(×2)";
     const net = Math.max(0, roll.total - tb - fireAp);
     if (net > 0) {
       const loss = await applyWoundLoss(actor, net);
       const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } = loss;
       await addFatigue(actor, 1);
       const destroyed = gotCritical && newCritical >= woundDeathThreshold(maxWounds);
-      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> − T.b ${tb}${fireAp ? ` − AP(×2) ${fireAp}` : ""} = <b>${net}</b> урона E(Fl)${fireAp ? "" : ", игнор брони"}. Раны: ${currentWounds} → ${newWounds}${gotCritical ? ` (крит. <b>${newCritical}</b>)` : ""} · 😓 Усталость +1${destroyed ? ` — <b>уничтожен</b>` : ""}</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> − T.b ${tb}${fireAp ? ` − ${apTag} ${fireAp}` : ""} = <b>${net}</b> урона E(Fl)${fireAp ? "" : ", игнор брони"}. Раны: ${currentWounds} → ${newWounds}${gotCritical ? ` (крит. <b>${newCritical}</b>)` : ""} · 😓 Усталость +1${destroyed ? ` — <b>уничтожен</b>` : ""}</div>`);
       // Горение в минус — Крит. Эффект по таблице Энергии (E(Fl)), место не
       // названо книгой — Торс (wdbc-x1nz.2.85).
       const burnCrit = await secondaryCritHtml(actor, loss, { damageType: "energy", hitLocation: "Торс" });
@@ -815,7 +825,7 @@ export async function processConditionTurnEnd(actor) {
     } else {
       const t = await rollConditionCharTest(actor, "t");
       if (!t.success) await addFatigue(actor, 1);
-      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> целиком в T.b${fireAp ? ` + AP(×2) ${fireAp}` : ""} — ${charTestText("T+0", t)} ${t.success ? `<span class="roll-success">успех</span>` : `<span class="roll-failure">провал → 😓 Усталость +1</span>`}</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> целиком в T.b${fireAp ? ` + ${apTag} ${fireAp}` : ""} — ${charTestText("T+0", t)} ${t.success ? `<span class="roll-success">успех</span>` : `<span class="roll-failure">провал → 😓 Усталость +1</span>`}</div>`);
     }
   }
   // Погасшее Горение не должно отдать свою формулу следующему пожару.

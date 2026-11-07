@@ -17,6 +17,7 @@ import { focusQualityEffect, focusRollResult } from "../../rules/psy-focus.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES, PSY_ACTIONS, subPathTotals } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
+import { rollPeril, psychicEchoButtonHtml } from "../../combat/rubric-sorcerer.mjs";
 import { calmWarpButtonsHtml } from "../../combat/calm-warp.mjs";
 import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
@@ -32,6 +33,7 @@ import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
+import { nailsForcePeril } from "../../rules/khorne-berserker.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
 import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS } from "../../rules/psyker.mjs";
@@ -57,6 +59,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../../helpers/test-card.mjs";
 import { bluntedCasterTest } from "../../rules/blunted.mjs";
+import { applyMentalRage } from "../../combat/mental-rage.mjs";
 import { arcExtraAttrs } from "../../rules/arc-extra.mjs";
 import { leftSustainRange } from "../../rules/psy-range.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
@@ -1390,12 +1393,11 @@ export async function executePsychotest(actor, item, opts) {
     // Прорыв (если Феномен переходит в Прорыв)
     if (phen.peril) {
       perilTriggered = true;
-      const perilRoll = await new Roll("1d100").evaluate();
-      allRolls.push(perilRoll);
+      const perilRoll = await rollPeril(actor, allRolls);
       const peril = getPeril(perilRoll.total);
       phenSection += `
           <div class="psy-peril">
-            <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! (бросок ${perilRoll.total})</div>
+            <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! (бросок ${perilRoll.total})${perilRoll.note}</div>
             <div class="psy-peril-name">${peril.label}</div>
             <div class="psy-peril-text">${peril.text}</div>
           </div>`;
@@ -1412,13 +1414,30 @@ export async function executePsychotest(actor, item, opts) {
     phenSection = `<div class="roll-threshold" style="font-size:0.85em;color:#3a7a3a;">Феномен не вызван.</div>`;
   }
 
+  // Гвозди Мясника (Берсерк Кхорна): «Если он Псайкер, персонаж вызывает Прорыв на каждой успешной манифестации
+  // психосилы» — Прорыв выпадает сам, без Феномена (и в Безопасном режиме тоже).
+  let forcedPeril = false;
+  if (success && !perilTriggered && nailsForcePeril(actor)) {
+    forcedPeril = true;
+    perilTriggered = true;
+    const perilRoll = await rollPeril(actor, allRolls);
+    const peril = getPeril(perilRoll.total);
+    phenSection += `
+        <div class="psy-peril">
+          <div class="psy-peril-header">💀 ВАРП-ПРОРЫВ! Гвозди Мясника (бросок ${perilRoll.total})${perilRoll.note}</div>
+          <div class="psy-peril-name">${peril.label}</div>
+          <div class="psy-peril-text">${peril.text}</div>
+        </div>`;
+    phenSection += warpLockButtonsHtml(actor);
+  }
+
   // ── Варп-Шок: не-Хаоситы получают Порчу при Феномене (1d5 при Прорыве) ──────
   let warpShockSection = "";
   // Сколько Порчи эта карточка добавила (после Взгляда в Бездну; ниже, после записи, сверено с фактом): переброс психотеста Ключевой Силой
   // снимает ровно столько (combat/psyker-pools.mjs::returnWarpShock), а не пересчитывает заново — Порча других
   // источников и прежние ручные правки не трогаются.
   let warpShockApplied = 0;
-  if (phenomena && !NAT.isChaos) {
+  if ((phenomena && !NAT.isChaos) || forcedPeril) {
     let corrAmt = 1;
     if (perilTriggered) {
       const corrRoll = await new Roll("1d5").evaluate();
@@ -1502,6 +1521,12 @@ export async function executePsychotest(actor, item, opts) {
     }
   }
 
+  // ── Ментальный Гнев (Талант Берсерка, combat/mental-rage.mjs) ─────────────
+  // Решение воздействовать на разум цели в Ярости — Ступор кастеру на 1 Раунд, эффект цели игнорируется.
+  // Исход психотеста не важен; переброс Ступор заново не накладывает.
+  const mentalRageSection = opts.reroll ? ""
+    : await applyMentalRage(actor, item, [...(game.user?.targets ?? [])].map(t => t.actor ?? null));
+
   // ── Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9) ──────────────
   // Отдельная секция, а не общий defenseSection карточки атаки: от психосилы
   // не Уклоняются, Вираж и Сжатие к ней тоже не относятся, а само Парирование
@@ -1574,8 +1599,9 @@ export async function executePsychotest(actor, item, opts) {
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
       : `Психотест провален — ${deg} ${_degWord(deg)}`),
-    sections: [conversionLine, bluntedSection, resistSection, bladeShieldSection, damageSection, charDamageSection,
-               attackPropsSection, signatureFreeHtml(actor, item, { success, rerollable: signatureRerollable, freeSpent: !!opts.signatureFreeSpent }), phenSection, warpShockSection]
+    sections: [conversionLine, mentalRageSection, bluntedSection, resistSection, bladeShieldSection, damageSection, charDamageSection,
+               attackPropsSection, signatureFreeHtml(actor, item, { success, rerollable: signatureRerollable, freeSpent: !!opts.signatureFreeSpent }), phenSection, warpShockSection,
+               success ? psychicEchoButtonHtml(actor) : ""]
   }, { rolls: allRolls, flags: signatureRerollable
     // Параметры броска — чтобы кнопка «Переброс» с карточки повторила тест с теми же модификаторами.
     // JSON-круг выкидывает функции (onResult и т.п.): во флаге только данные.

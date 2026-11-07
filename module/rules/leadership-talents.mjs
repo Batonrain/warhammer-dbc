@@ -36,6 +36,7 @@ import { itemHasName, hatredTargetsOf } from "./predicates.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { relationByDisposition } from "./warp-touched.mjs";
+import { harbingerTargetMult } from "./dark-apostle.mjs";
 
 // Геометрия токенов (дистанция центров, рукопашный контакт, поле зрения) —
 // НЕ импортируется из combat/facing.mjs / rules/vision-target.mjs /
@@ -99,7 +100,10 @@ function hasLeadershipTalent(actor, names) {
 // Authority). Живёт здесь, а не в combat/command-state.mjs: command-state
 // импортирует этот файл (не наоборот), а этот файл тянет sources.mjs — обратный
 // импорт замкнул бы круг (см. шапку и AGENTS.md, «Источники правил»).
-// Ветка Дрессировки (P.b вместо F.b×2) хелпера не касается.
+// Ветка Дрессировки (P.b вместо F.b×2) commandCapacity не касается — её выбирает followerCapacity ниже.
+// Вторая половина Таланта — «+10 Лояльности Миньонам-людям» — читается в
+// rules/minion-build.mjs::minionLoyalty через hasAirOfAuthority ниже
+// (air-of-authority-10); minion-build импортирует этот файл, не наоборот.
 
 const AIR_OF_AUTHORITY_NAMES = ["Air of Authority", "Аура Власти"];
 const COMMAND_CAPACITY_MULT = 2;
@@ -116,12 +120,26 @@ export function hasAirOfAuthority(actor) {
  */
 export function commandCapacity(actor, charKey = "fel") {
   const bonus = Math.max(0, Number(actor?.system?.characteristics?.[charKey]?.bonus) || 0);
-  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT);
+  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT) * harbingerTargetMult(actor);
 }
 
-/** Лимит целей Command/Intimidate «на подчинённых» — F.b×2, F.b×20 с Air of Authority. */
-export function commandTargetLimit(actor) {
+/**
+ * Сколько подчинённых («Под моим Присутствием») держит командир: Дрессировка —
+ * «максимум подчинённых животных — P.b» вместо F.b×2 (Air of Authority эту
+ * ветку не меняет — он про Command, не про зверей); иначе commandCapacity(fel).
+ * Один источник и для узла командования (combat/command-state.mjs), и для
+ * значка ⚑ на вкладке Социум — раньше значок всегда считал F.b×2.
+ */
+export function followerCapacity(actor) {
+  if (actor?.system?.command?.training) {
+    return Math.max(0, Number(actor.system?.characteristics?.per?.bonus) || 0);
+  }
   return commandCapacity(actor, "fel");
+}
+
+/** Лимит целей Command/Intimidate «на подчинённых» — F.b×2, F.b×20 с Air of Authority; с Дрессировкой — P.b. */
+export function commandTargetLimit(actor) {
+  return followerCapacity(actor);
 }
 
 // ── Rancor / Злопамятность ───────────────────────────────────────────────────
