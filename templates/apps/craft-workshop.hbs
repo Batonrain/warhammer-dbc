@@ -85,7 +85,7 @@
             <label><span class="wh-craft-lbl">Инструменты</span>
               <select name="tool" class="wh-craft-select">{{#each p.tools as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}} ({{#if (gte t.mod 0)}}+{{/if}}{{t.mod}})</option>{{/each}}</select>
             </label>
-            <label><span class="wh-craft-lbl">Базовый Банк</span><input type="number" name="basebank" value="{{p.baseBankVal}}" min="1" class="wh-craft-num"/></label>
+            <label><span class="wh-craft-lbl">Базовый Банк</span><input type="number" name="basebank" value="{{p.baseBankVal}}" min="1" {{#if p.repairNeedsBank}}placeholder="впишите"{{/if}} class="wh-craft-num"/></label>
             <label><span class="wh-craft-lbl">Ассистенты (успехи/смена)</span><input type="number" name="assistants" value="{{p.assistants}}" min="0" class="wh-craft-num"/></label>
             {{#if p.hasAssistants}}
             <label title="Один из ассистентов — конкретный актор: Подмастерье/Тёмная Муза проверяются по его настоящему инвентарю, не на слово стола">
@@ -102,7 +102,7 @@
             <label class="wh-craft-check"><input type="checkbox" name="improve" {{#if p.improve}}checked{{/if}}/> Улучшение (−20, Банк /2)</label>
             <label class="wh-craft-check"><input type="checkbox" name="monotony" {{#if p.monotony}}checked{{/if}}/> Монотонность (−30)</label>
             {{#if p.isRepairable}}
-            <label class="wh-craft-check" title="Ремонт, а не создание: тот же расширенный тест Tech-Use. Банк Успехов книга для ремонта не называет — впишите его в «Базовый Банк». Мастер-Технопровидец, Фабрикатор и прочие бонусы Крафта действуют и на ремонт.">
+            <label class="wh-craft-check" title="Ремонт, а не создание: тот же расширенный тест Tech-Use. Банк Успехов книга для ремонта не называет — впишите его в «Базовый Банк», пока поле пусто, цель ремонта не определена. Мастер-Технопровидец, Фабрикатор и прочие бонусы Крафта действуют и на ремонт.">
               <input type="checkbox" name="repair" {{#if p.repair}}checked{{/if}}/> Ремонт
             </label>
             {{#if p.repair}}
@@ -149,7 +149,8 @@
             <label class="wh-craft-check"><input type="radio" name="dicemode" value="disadvantage" {{#if (eq p.diceMode "disadvantage")}}checked{{/if}}/> Помеха</label>
             {{#if p.cyberpreacherActive}}<span class="wh-craft-lbl" title="Киберпроповедник: Преимущество на имплантацию бионики/кибернетики">⚙ Киберпроповедник: Преимущество применяется автоматически</span>{{/if}}
           </div>
-          {{#if p.notCraftable}}<div class="wh-craft-warn">⚠ По таблице предмет этой Категории не создаётся при выбранной Редкости — задайте Банк вручную или измените Редкость.</div>{{/if}}
+          {{#if p.repairNeedsBank}}<div class="wh-craft-warn">⚠ Впишите Базовый Банк ремонта (в книге формулы нет) — пока он пуст, цель не определена и ГОТОВО не наступит; Успехи смен копятся сами.</div>{{/if}}
+{{#if p.notCraftable}}<div class="wh-craft-warn">⚠ По таблице предмет этой Категории не создаётся при выбранной Редкости — задайте Банк вручную или измените Редкость.</div>{{/if}}
           {{#if p.prototypingNote}}<div class="wh-craft-hint" title="Предмет опознаётся по названию проекта (поле вверху); память пишется, когда проект-создание закрыт, и хранится на персонаже-крафтере">{{p.prototypingNote}}</div>{{/if}}
           {{#if p.machineNote}}
           <div class="wh-craft-toggles">
@@ -185,10 +186,10 @@
         {{!-- Банк и прогресс --}}
         <div class="wh-craft-panel wh-craft-progress">
           <div class="wh-craft-bankrow">
-            <div class="wh-craft-bank">Банк Успехов: <b>{{p.bank}}</b></div>
+            <div class="wh-craft-bank">Банк Успехов: <b>{{p.bankText}}</b></div>
             <div class="wh-craft-shifts">{{{../icoShift}}} Смен: <b>{{p.shifts}}</b> · Усталость: <b>{{p.fatigue}}</b></div>
           </div>
-          <div class="wh-craft-bar"><div class="wh-craft-bar-fill{{#if p.done}} done{{/if}}" style="width:{{p.pct}}%"></div><span class="wh-craft-bar-txt">{{p.accumulated}} / {{p.bank}}{{#if p.done}} — ГОТОВО{{/if}}</span></div>
+          <div class="wh-craft-bar"><div class="wh-craft-bar-fill{{#if p.done}} done{{/if}}" style="width:{{p.pct}}%"></div><span class="wh-craft-bar-txt">{{p.accumulated}} / {{p.bankText}}{{#if p.done}} — ГОТОВО{{/if}}</span></div>
           <div class="wh-craft-actions">
             <button type="button" class="wh-craft-btn primary" data-act="shift" {{#unless p.hasCrafter}}disabled{{/unless}}>{{{../icoShift}}} Отработать смену</button>
             <button type="button" class="wh-craft-btn" data-act="reset">Сбросить прогресс</button>
