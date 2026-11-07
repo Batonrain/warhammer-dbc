@@ -33,18 +33,20 @@ export const WAR_CRY_EFFECT_KEY = "warCry";
 export const WAR_CRY_PRIORITY = 100;
 
 /**
- * Данные эффекта на один Раунд «до начала следующего Хода» (чистая функция).
+ * Данные эффекта на один Раунд «до начала следующего Хода» (чистая функция); `duration` задаёт другой срок,
+ * `span` — на сколько Раундов после выдачи эффект переживает подметание (Психический Рывок: срок до конца Хода в следующем Раунде).
  *
- * @param {{key:string, name:string, img?:string, changes:object[], combat?:{id:string, round:number}|null}} spec
+ * @param {{key:string, name:string, img?:string, changes:object[], combat?:{id:string, round:number}|null, duration?:object|null, span?:number}} spec
  */
-export function timedEffectData({ key, name, img, changes, combat = null }) {
+export function timedEffectData({ key, name, img, changes, combat = null, duration = null, span = 0 }) {
+  const round = Number(combat?.round) || 0;
   return {
     name,
     img: img || "icons/svg/upgrade.svg",
     // type "add" и фаза — по ключу (constants/effect-keys.mjs), как у всех эффектов системы.
     system: { changes: changes.map(c => ({ priority: 0, type: "add", ...c, phase: c.phase ?? expectedPhase(c.key) })) },
-    duration: { value: 1, units: "rounds", expiry: "turnStart" },
-    flags: { [NS]: { [TIMED_EFFECT_FLAG]: { key, combatId: combat?.id ?? "", round: Number(combat?.round) || 0 } } }
+    duration: duration ?? { value: 1, units: "rounds", expiry: "turnStart" },
+    flags: { [NS]: { [TIMED_EFFECT_FLAG]: { key, combatId: combat?.id ?? "", round, ...(span ? { lastRound: round + span } : {}) } } }
   };
 }
 
@@ -58,13 +60,13 @@ export function timedEffectsOf(actor, key) {
 
 /**
  * Пора ли снять эффект в начале Хода хозяина (чистая функция): он выдан в
- * другом бою или в Раунде раньше текущего. Вне боя (combat нет) «до следующего
+ * другом бою или его последний Раунд (выдача + span) раньше текущего. Вне боя (combat нет) «до следующего
  * Хода» наступить не может — эффект живёт, пока не начнётся бой.
  */
 export function timedEffectStale(flag, combat) {
   if (!flag || !combat) return false;
   if (flag.combatId && flag.combatId !== combat.id) return true;
-  return Number(combat.round) > Number(flag.round);
+  return Number(combat.round) > Number(flag.lastRound ?? flag.round);
 }
 
 /**

@@ -8064,6 +8064,11 @@ export const CAPABILITIES = {
     source: "The Eternal War / Вечная Война (packs-src/aeldari-talents/Элитные_архетипы)",
     reader: "module/rules/eternal-war.mjs isEternalWarItem()"
   },
+  "talent.psychicSprint": {
+    label: "Психический Рывок (Высший Варлок): кнопка на листе Таланта — тест W−30+3×эPR (эPR — текущий Пси-Рейтинг); успех даёт временный эффект +эPR к SPD на этот и следующий Раунд (до конца Хода носителя в следующем Раунде), на это время Полное Движение, Бег и Натиск стоят на 1 ОД меньше (списывается само), раз за бой, попытка засчитывается и при провале. НЕ покрыто: Толчок и Феномены эPR не повышают; срок привязан к Ходу, шедшему в момент нажатия.",
+    source: "A Psychic Sprint / Психический Рывок (packs-src/aeldari-talents/Элитные_архетипы/Высший_Варлок)",
+    reader: "module/apps/talent-actions.mjs (кнопка) → module/combat/psychic-sprint.mjs::startPsychicSprint (тест, эффект SPD через module/combat/timed-effects.mjs::grantTimedEffect, отметка «раз за бой» rules/cooldown.mjs); module/rules/psychic-sprint.mjs; скидка ОД — combat/psychic-sprint.mjs::movementApCost в combat/movement-actions.mjs (declareFullMove, declareRun, declareCharge) и sheets/attack/dialog.mjs (Натиск как База атаки)"
+  },
   "mutation.flayed": {
     label: "Мутация «Освежёванный» — опознание самого предмета",
     source: "Flayed / Освежеванный (packs-src/mutations/Общие_мутации)",

@@ -77,6 +77,7 @@ import { isHandShield } from "./hand-shield.mjs";
 import { PATH_LIMIT_OFF_FLAG, PATH_LIMIT_ACTOR_TYPES, grantMoveAllowance, isForcedMove } from "../rules/movement-path.mjs";
 import { isNextMoveForced, toggleNextMoveForced } from "./forced-next-move.mjs";
 import { talentMoveDefsFor } from "../rules/talent-moves.mjs";
+import { movementApCost, movementApNote } from "./psychic-sprint.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
 // — Движение Физическое (см. тип действия «Физическое», стр. 12), поэтому
@@ -416,7 +417,8 @@ export async function declareFullMove(actor, { hipShooting = false } = {}) {
   if (_blockedByGrapple(actor, { move: true })) return;
   if (_bothLegsLost(actor))
     return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
-  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  const fullMoveAp = movementApCost(actor, 2);
+  if (!await spendActionPoints(actor, fullMoveAp, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Полное Движение")) return;
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -437,7 +439,7 @@ export async function declareFullMove(actor, { hipShooting = false } = {}) {
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — ${hipShooting ? "Стрельба от Бедра (Полное Движение + Одиночный Выстрел)" : "Полное Движение"}</div>${hipShooting ? `
     <div class="roll-threshold">Стрельба от Бедра: один Одиночный Выстрел (не Избирательный, без Прицеливания, не длинная винтовка и не тяжёлое) в этом Ходу — без дополнительных ОД.</div>
     <button class="wh-free-shot-btn" type="button" data-kind="hipShooting" data-actor-uuid="${actor.uuid}">🎯 Выстрел от бедра</button>` : ""}
-    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до ${hasSpeedTalent(actor, "sprint") ? "SPD×3 (Спринт — на дистанцию Натиска)" : "SPD×2"}.</div>
+    <div class="roll-threshold">Полное действие (${fullMoveAp} ОД). Перемещение до ${hasSpeedTalent(actor, "sprint") ? "SPD×3 (Спринт — на дистанцию Натиска)" : "SPD×2"}.</div>${movementApNote(actor)}
     <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32). Для следующего Карабканья/Прыжка/Плавания в этом Ходу — уже автоматически.</div>
     ${falseAdvanceHtml(actor)}
   </div>`);
@@ -490,7 +492,7 @@ export async function declareCharge(actor) {
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>${runAndGunOfferHtml(actor)}
     <div class="roll-threshold">Перемещение до ${hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
-    <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, 2 ОД спишутся на броске атаки.</div>
+    <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, ${movementApCost(actor, 2)} ОД спишутся на броске атаки.</div>${movementApNote(actor)}
   </div>`);
 }
 
@@ -669,7 +671,8 @@ export async function declareRun(actor) {
     if (far === null) return;
     sprintFar = far;
   }
-  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  const runAp = movementApCost(actor, 2);
+  if (!await spendActionPoints(actor, runAp, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   // wdbc-x1nz.2.97 п.4: Бег без обеих стоп — тот же бросок (раньше не было).
   if (_bothFeetLost(actor) && !await _rollWalkOnStumps(actor, "Бег")) return;
   await actor.setFlag("warhammer-dbc", "running", true);
@@ -684,7 +687,7 @@ export async function declareRun(actor) {
   const sprintNote = sprintFar ? await _noteSprintFar(actor) : "";
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
-    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до ${sprintFar ? "SPD×12 (Спринт)" : "SPD×6"}.</div>${sprintNote}
+    <div class="roll-threshold">Полное действие (${runAp} ОД). Перемещение до ${sprintFar ? "SPD×12 (Спринт)" : "SPD×6"}.</div>${movementApNote(actor)}${sprintNote}
     <div class="roll-threshold" style="font-size:0.85em;">До начала следующего Хода: нельзя Реакции, вся Стрельба по персонажу −20, вся Рукопашная по нему +20.</div>
   </div>`);
 }
