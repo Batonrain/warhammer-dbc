@@ -74,7 +74,8 @@ import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from ".
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
 import { leapUpDenied, standUpExtraApCost } from "../rules/takedown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
-import { PATH_LIMIT_OFF_FLAG, grantMoveAllowance, isForcedMove } from "../rules/movement-path.mjs";
+import { PATH_LIMIT_OFF_FLAG, PATH_LIMIT_ACTOR_TYPES, grantMoveAllowance, isForcedMove } from "../rules/movement-path.mjs";
+import { isNextMoveForced, toggleNextMoveForced } from "./forced-next-move.mjs";
 import { talentMoveDefsFor } from "../rules/talent-moves.mjs";
 
 // Захват (стр. 12, wdbc-x1nz.2.31): «только действия Борьбы или не-Физические»
@@ -239,6 +240,20 @@ export async function clearStaleMovedFlags(combat) {
       if (actor.getFlag("warhammer-dbc", key) !== undefined) await actor.unsetFlag("warhammer-dbc", key);
     }
   }
+}
+
+/**
+ * Тумблер «Следующий сдвиг — вынужденный» (толчок, перевозка): ровно одно
+ * следующее перетаскивание токена не считается в лимит пути и гаснет само
+ * (combat/forced-next-move.mjs, обвязка — combat/path-limit.mjs).
+ */
+export function toggleForcedNextMove(actor) {
+  if (!actor?.uuid) return false;
+  const on = toggleNextMoveForced(actor.uuid, actor.name);
+  ui.notifications.info(on
+    ? `${actor.name}: следующий сдвиг токена вынужденный — в лимит пути не пойдёт (сработает один раз).`
+    : `${actor.name}: вынужденный сдвиг отключён.`);
+  return on;
 }
 
 /** ГМ: снять/вернуть лимит пути конкретному персонажу (особый случай, сломавшаяся история). */
@@ -2043,6 +2058,16 @@ export function movementMenuItems(actor) {
     items.push({ key: "marchA", label: "Ускоренный марш", cost: "", action: () => showMarchDialog(actor, "accelerated") });
     items.push({ key: "marchR", label: "Марафонский бег", cost: "", action: () => showMarchDialog(actor, "run") });
     items.push({ key: "marchF", label: "Форсированный марш", cost: "", action: () => showMarchDialog(actor, "forced") });
+  }
+  // Толчок/перевозка руками стола: следующий сдвиг не считается в лимит пути
+  // (в бою; тумблер сам гаснет после одного сдвига и на смене Хода).
+  if (isEncounterActive() && PATH_LIMIT_ACTOR_TYPES.includes(actor.type)) {
+    items.push({
+      key: "forcedNextMove",
+      label: isNextMoveForced(actor.uuid) ? "Вынужденный сдвиг: ВКЛ (отключить)" : "Следующий сдвиг — вынужденный",
+      cost: "толчок/перевозка",
+      action: () => toggleForcedNextMove(actor)
+    });
   }
   // ГМ: обойти лимит пути для этого персонажа (особые случаи — перевозка,
   // Движение по Таланту, которого система не знает, сбитая история Хода).
