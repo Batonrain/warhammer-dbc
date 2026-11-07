@@ -628,12 +628,16 @@ export function commandEffectOn(actor, key) {
   return commandEffectNode(actor, commandNodesFor(actor), key, { commandLost: commandLostActive(actor) });
 }
 
-/** Подчинённые-соседи по тому же узлу (Отряду/командиру) — документы. */
-function nodeMatesOf(actor, node) {
+/**
+ * Подчинённые-соседи по тому же узлу (Отряду/командиру) — документы. Только
+ * внутри лимита получателей F.b×2 (×20 с Air of Authority): Синхронный Натиск
+ * и Прикрытие работают между теми, до кого Команда реально дошла.
+ */
+export function nodeMatesOf(actor, node) {
   if (!node?.sourceUuid) return [];
   const source = resolve(node.sourceUuid);
   const me = actorIdentityUuids(actor);
-  return subordinatesOf(source).filter(d => !me.has(d.uuid));
+  return subordinatesOf(source, { capped: true }).filter(d => !me.has(d.uuid));
 }
 
 const tokenOf = actor => actor?.getActiveTokens?.(false)?.[0]?.document ?? actor?.token ?? null;

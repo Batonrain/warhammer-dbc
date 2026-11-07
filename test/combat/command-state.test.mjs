@@ -460,7 +460,8 @@ describe("несвязанные токены: конец боя, Ход, про
 // Лимит получателей (книга, «Командование»: «до F.b×2 подчинённых одновременно …
 // он выбирает, кто получает преимущества») относится и к массовым побочкам
 // Детальных Команд: «Храбрость» (снять Подавление/Шок) и «Особая Тактика»
-// (выдать Талант) достаются только первым F.b×2 (F.b×20 с Air of Authority).
+// (выдать Талант) достаются только первым F.b×2 (F.b×20 с Air of Authority);
+// соратниками для Синхронного Натиска и Прикрытия тоже считаются только они.
 describe("лимит получателей: Храбрость и Особая Тактика (wdbc-ertdb)", () => {
   const AOA = { type: "talent", name: "Air of Authority / Аура Власти", system: {} };
   let rank, realFromUuid, realUi;
@@ -534,6 +535,15 @@ describe("лимит получателей: Храбрость и Особая 
     const { applyFieldExecutionClear } = await import("../../module/combat/field-execution.mjs");
     addRank(12);
     expect(await applyFieldExecutionClear(sarge, [squad])).toHaveLength(12);
+  });
+
+  it("Синхронный Натиск и Прикрытие: соратники — только внутри лимита F.b×2, с Air of Authority — все", async () => {
+    const { nodeMatesOf } = await import("../../module/combat/command-state.mjs");
+    addRank(12);
+    const node = { sourceUuid: squad.uuid };
+    expect(nodeMatesOf(rank[0], node).map(d => d.uuid)).toEqual(rank.slice(1, 8).map(d => d.uuid));
+    sarge.items = [AOA];
+    expect(nodeMatesOf(rank[0], node).map(d => d.uuid)).toEqual(rank.slice(1).map(d => d.uuid));
   });
 
   it("без Командира (некому считать F.b) лимита нет", async () => {
