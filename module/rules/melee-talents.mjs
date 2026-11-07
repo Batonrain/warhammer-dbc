@@ -250,18 +250,19 @@ export function reaperMeasure({ charge, halfMove, walked, initialToNext, attacke
  * Упорство и Рисовка — свободные и атакой не считаются; Жнец — продолжение Натиска: ОД не
  * списываются (Натиск уже оплачен), а сама атака — дополнительная Атака Таланта (карточка «Жнец»), в лимит Хода не идёт.
  * Яростный Штурм — «еще одна атака ... за свободное действие» (её цена — Реакция, payOnRoll окна).
+ * Разрубить — «за свободное действие атаковать базовой атакой ещё одного персонажа».
  * @returns {{noAp:boolean, uncounted:boolean, skipChargeGate:boolean}}
  */
 export function freeMeleeFlags(opts) {
-  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault);
+  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault || opts?.cleave);
   return { noAp: free, uncounted: free, skipChargeGate: free };
 }
 
 /**
  * Свободные атаки Талантов не должны давать бесплатно поднять Базу или Приём (ОД и лимит с них сняты):
  * Рисовка — «базовая рукопашная атака» (Стандартная База, Обычная Атака); Упорство — «с той же базой
- * и приемом»; Жнец — тот же Натиск (Приём свободный).
- * @param {object} opts  techniqueOpts окна (showOffFree/tenacityRepeat/reaperFollow/furiousAssault, forceBase, technique)
+ * и приемом»; Жнец — тот же Натиск (Приём свободный); Разрубить — «базовой атакой» (Стандартная База).
+ * @param {object} opts  techniqueOpts окна (showOffFree/tenacityRepeat/reaperFollow/furiousAssault/cleave, forceBase, technique)
  * @param {{baseKey:string, maneuverKey:string}} sel  выбранное в окне
  * @returns {string} причина отказа или ""
  */
@@ -278,6 +279,7 @@ export function freeAttackLockProblem(opts, { baseKey, maneuverKey }) {
     if (baseKey !== "fullatk") return "Яростный Штурм: ещё одна атака — с Базой Полная Атака";
     if (maneuverKey !== (opts.technique || "standard")) return "Яростный Штурм: ещё одна атака — с тем же Приёмом";
   }
+  if (opts?.cleave && baseKey !== "standard") return "Разрубить: свободная атака — Стандартная База";
   if (opts?.reaperFollow && baseKey !== "charge") return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
   return "";
 }

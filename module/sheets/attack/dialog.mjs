@@ -273,7 +273,7 @@ export function openAttackDialog(ctx) {
           const sabreSecond = !!techniqueOpts?.sabreSecondAttack;
           // Упорство (combat/tenacity.mjs): повтор атаки — свободное действие, ни ОД, ни Лимит Атак не тратит.
           // Рисовка (свободная атака «не считается атакой») — то же; Жнец — продолжение Натиска, Яростный Штурм —
-          // «еще одна атака за свободное действие»: ни ОД, ни лимита (rules/melee-talents.mjs::freeMeleeFlags).
+          // «еще одна атака за свободное действие»: ни ОД, ни лимита; Разрубить — то же (rules/melee-talents.mjs::freeMeleeFlags).
           const freeMelee = freeMeleeFlags(techniqueOpts);
           const uncountedAttack = freeMelee.uncounted;
           // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
