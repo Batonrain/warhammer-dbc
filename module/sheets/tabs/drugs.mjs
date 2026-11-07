@@ -9,6 +9,7 @@ import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields,
          fatigueChangeFields, announceFatigueChange } from "./conditions.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { stunTaintFor, STUN_TAINT_ACTOR_FLAG } from "../../rules/stun-taint.mjs";
 import { expiryAtFor } from "../../rules/drug-expiry.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
@@ -560,6 +561,10 @@ export async function triggerAfterEffect(actor, item) {
       fat.delta += lvlToGrant;
       fat.touched = true;
     }
+    // Порча за Ходы Оглушения (Струп): метка на акторе, начисляет тик Хода
+    // (combat/condition-ticks.mjs), пока идёт это Оглушение.
+    const stunTaint = stunTaintFor(item, fx);
+    if (stunTaint) actorUpdates[`flags.warhammer-dbc.${STUN_TAINT_ACTOR_FLAG}`] = stunTaint;
   }
 
   const extras = await applyEffectExtras(actor, fx, { poisonSource: sys.drugCategory === "poison" });

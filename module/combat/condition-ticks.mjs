@@ -42,6 +42,7 @@ import { rollShieldAgainstConditionTick, burningGraceSourceItem } from "./damage
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
 // "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
 import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
+import { stunTaintStep, STUN_TAINT_ACTOR_FLAG } from "../rules/stun-taint.mjs";
 import { BLESSED_FITS_PENDING_FLAG, blessedFitsRefundDue } from "../rules/blessed-fits.mjs";
 import { changeActorInfamy } from "../apps/infamy-points.mjs";
 // Parasite/Паразит (Трейт — общий, wdbc-ux8a): parasiticContact — тот же
@@ -564,6 +565,30 @@ export async function rollBurningPanicTest(actor) {
 }
 
 /**
+ * Порча Струпа на начале Хода: метка stunTaint на акторе (ставит
+ * drugs.mjs::triggerAfterEffect). Порча пишется отдельным update, чтобы
+ * preUpdateActor мог перенаправить её в Безумие («Считает Cor как Безумие»);
+ * снятие метки докладывается в общий патч `updates`.
+ * @returns {Promise<string>} строка для карточки Состояний или ""
+ */
+async function applyStunTaint(actor, updates) {
+  const taint = actor.getFlag?.(NS, STUN_TAINT_ACTOR_FLAG);
+  if (!taint) return "";
+  const stunned = !!actor.system?.conditions?.stunned;
+  const rounds = Number(actor.system?.conditions?.stunnedRounds) || 0;
+  const { amount, clear } = stunTaintStep(taint, {
+    stunned,
+    ending: rounds === 1 && !hasConditionDuration(actor, "stunned"),
+    patronGod: actor.system?.patronGod || ""
+  });
+  if (clear) updates[`flags.${NS}.-=${STUN_TAINT_ACTOR_FLAG}`] = null;
+  if (amount <= 0) return "";
+  const cur = Number(actor.system?.corruption?.value) || 0;
+  await actor.update({ "system.corruption.value": Math.min(100, cur + amount) });
+  return `<div class="roll-threshold">${rollIcon("warn", "#8fbf3a")}${esc(taint.source || "Оглушение")}: Ход Оглушения без Покровительства Нургла — Порча <b>+${amount}</b></div>`;
+}
+
+/**
  * Начало Хода актора: Паника от Горения (если Горит), декремент счётчиков
  * длительности, снятие состояния на нуле. Зовётся из hooks.mjs::updateCombat
  * рядом с resetActionEconomy (после него — панике нужно обнулить уже
@@ -609,6 +634,12 @@ export async function processConditionTurnStart(actor) {
   // не дублируем — только называем, что кончилось.
   const swept = await sweepConditionDurations(actor, { round: game.combat?.round, turn: game.combat?.turn });
   for (const key of swept.expired) lines.push(conditionExpiryLine(key));
+
+  // Порча за Ход Оглушения (Струп, стр. 283, wdbc-777vf): считается ДО общего
+  // цикла ниже — счётчик Раундов ещё не уменьшен, и последний Ход Оглушения
+  // (1 → 0) тоже Ход Оглушения.
+  const taintLine = await applyStunTaint(actor, updates);
+  if (taintLine) lines.push(taintLine);
 
   for (const { key, field, label } of ROUND_CONDITIONS) {
     // Удушье (стр. 30-31, wdbc-r5o7.6, wdbc-x1nz.2.94) — особый случай, не
