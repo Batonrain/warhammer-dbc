@@ -41,7 +41,8 @@
 //      Карточка показывает, свободен ли перехват у каждого кандидата, и
 //      даёт кнопку «Отметить перехват» — отмечает счётчик потраченным при
 //      ручном переносе; кнопка «Перехват» у попадания делает это сама
-//      (payFanaticIntercept: бесплатный перехват Таланта, иначе Реакция).
+//      (payFanaticIntercept: бесплатный раз в Раунд у любого носителя Fanatic,
+//      иначе Реакция).
 //      Исчерпанный бесплатный перехват НЕ блокирует Трейт Fanatic как
 //      таковой — обычная версия (за Реакцию) всегда доступна, это
 //      ограничение только добавки от Таланта.
@@ -195,18 +196,12 @@ export async function markBackToBackFreeUseUsed(actor) {
   await markCapabilityUsed(actor, BACK_TO_BACK_FREE_USE_FLAG, "round");
 }
 
-/** Фанатик у actor получен раздачей Спиной к Спине (а не собственный Трейт) — только ему положен бесплатный перехват. */
-export function hasGrantedFanatic(actor) {
-  return [...(actor?.items ?? [])].some(i =>
-    i?.type === "trait" && FANATIC_NAMES.some(n => itemHasName(i, n)) && !!i.flags?.[NS]?.[FANATIC_GRANT_FLAG]);
-}
-
 const FANATIC_PAID_FLAG = "fanaticPaid";
 const paidIntercepts = new Set();
 
 /**
- * Заплатить за перехват попадания Фанатиком: бесплатный раз в Раунд (только
- * розданный Трейт), иначе Реакция. Один носитель платит один раз за карточку
+ * Заплатить за перехват попадания Фанатиком: бесплатный раз в Раунд (любой
+ * носитель Fanatic), иначе Реакция. Один носитель платит один раз за карточку
  * атаки — остальные попадания очереди он перехватывает в ту же Реакцию.
  * @returns {Promise<{ok: boolean, free?: boolean, already?: boolean}>}
  */
@@ -215,7 +210,7 @@ export async function payFanaticIntercept(fanatic, message = null) {
   const paidOnCard = message ? (message.getFlag?.(NS, FANATIC_PAID_FLAG) ?? []) : [];
   if (message && (paidIntercepts.has(key) || paidOnCard.includes(fanatic.uuid))) return { ok: true, already: true };
   let free = false;
-  if (hasGrantedFanatic(fanatic) && backToBackFreeUseAvailable(fanatic)) {
+  if (backToBackFreeUseAvailable(fanatic)) {
     await markBackToBackFreeUseUsed(fanatic);
     free = true;
   } else {

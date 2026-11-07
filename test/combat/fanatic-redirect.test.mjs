@@ -15,7 +15,7 @@ vi.mock("../../module/combat/action-economy.mjs", () => ({ spendReaction: vi.fn(
 import { spendReaction } from "../../module/combat/action-economy.mjs";
 import { hasFanatic, fanaticCandidates, backToBackGrantSectionHtml,
   fanaticInterceptCandidates, backToBackFreeUseAvailable, markBackToBackFreeUseUsed, clearFanaticGrants,
-  hasGrantedFanatic, payFanaticIntercept
+  payFanaticIntercept
 } from "../../module/combat/fanatic-redirect.mjs";
 
 const trait = (name) => ({ type: "trait", name, system: {} });
@@ -155,15 +155,6 @@ describe("backToBackFreeUseAvailable/markBackToBackFreeUseUsed — раз в Р�
   });
 });
 
-describe("hasGrantedFanatic — Фанатик именно от Спиной к Спине", () => {
-  const granted = { type: "trait", name: "Fanatic", flags: { "warhammer-dbc": { fanaticGrant: { source: "cmd1" } } } };
-  it("розданный Трейт — да, собственный — нет", () => {
-    expect(hasGrantedFanatic(actor("a1", [granted]))).toBe(true);
-    expect(hasGrantedFanatic(actor("a1", [trait("Fanatic")]))).toBe(false);
-    expect(hasGrantedFanatic(actor("a1", []))).toBe(false);
-  });
-});
-
 describe("payFanaticIntercept — плата за перехват: бесплатный раз в Раунд или Реакция", () => {
   const grantedItem = { type: "trait", name: "Fanatic", flags: { "warhammer-dbc": { fanaticGrant: { source: "cmd1" } } } };
   const bearer = (uuid, items) => {
@@ -198,22 +189,28 @@ describe("payFanaticIntercept — плата за перехват: беспла
     expect(spendReaction).toHaveBeenCalledWith(f);
   });
 
-  it("собственный Фанатик (не от Таланта) бесплатного перехвата не имеет — всегда Реакция", async () => {
+  it("собственный Фанатик (не от Таланта) тоже перехватывает бесплатно раз в Раунд, потом за Реакцию", async () => {
     const f = bearer("f1", [trait("Fanatic")]);
-    const r = await payFanaticIntercept(f, message());
-    expect(r).toMatchObject({ ok: true, free: false });
+    const first = await payFanaticIntercept(f, message());
+    expect(first).toMatchObject({ ok: true, free: true });
+    expect(backToBackFreeUseAvailable(f)).toBe(false);
+    expect(spendReaction).not.toHaveBeenCalled();
+    const second = await payFanaticIntercept(f, message());
+    expect(second).toMatchObject({ ok: true, free: false });
     expect(spendReaction).toHaveBeenCalledTimes(1);
-    expect(backToBackFreeUseAvailable(f)).toBe(true);
   });
 
   it("нет Реакции — перехват не состоялся", async () => {
     spendReaction.mockResolvedValue(false);
-    const r = await payFanaticIntercept(bearer("f1", [trait("Fanatic")]), message());
+    const f = bearer("f1", [trait("Fanatic")]);
+    await markBackToBackFreeUseUsed(f);
+    const r = await payFanaticIntercept(f, message());
     expect(r.ok).toBe(false);
   });
 
   it("на одной карточке второе попадание тем же Фанатиком — уже оплачено, ничего не списывается", async () => {
     const f = bearer("f1", [trait("Fanatic")]);
+    await markBackToBackFreeUseUsed(f);
     const msg = message();
     await payFanaticIntercept(f, msg);
     const again = await payFanaticIntercept(f, msg);
@@ -223,6 +220,7 @@ describe("payFanaticIntercept — плата за перехват: беспла
 
   it("на другой карточке платится заново", async () => {
     const f = bearer("f1", [trait("Fanatic")]);
+    await markBackToBackFreeUseUsed(f);
     await payFanaticIntercept(f, message());
     await payFanaticIntercept(f, message());
     expect(spendReaction).toHaveBeenCalledTimes(2);

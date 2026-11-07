@@ -670,10 +670,16 @@ describe("Спиной к Спине: кнопка переноса урона �
     expect(html).not.toContain("wh-fanatic-redirect-btn");
   });
 
-  it("носитель не от Таланта (granted:false) — подпись про обычный перехват за Реакцию, без «Отметить»", () => {
-    const html = card({ fanaticIntercepts: [{ uuid: "Actor.n1", name: "Природный", freeUse: false, granted: false }] });
-    expect(html).not.toContain("wh-back-to-back-mark-used");
+  it("бесплатный перехват свободен — у любого носителя есть «Отметить», без подписи про Реакцию", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.n1", name: "Природный", freeUse: true }] });
+    expect(html).toContain("wh-back-to-back-mark-used");
     expect(html).not.toContain("уже отмечен использованным");
+  });
+
+  it("бесплатный перехват потрачен — «Отметить» нет, подпись про обычный перехват за Реакцию", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.n1", name: "Природный", freeUse: false }] });
+    expect(html).not.toContain("wh-back-to-back-mark-used");
+    expect(html).toContain("уже отмечен использованным");
     expect(html).toContain("за Реакцию");
   });
 });

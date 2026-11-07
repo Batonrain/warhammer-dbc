@@ -457,9 +457,7 @@ function fanaticInterceptSection(fanaticIntercepts) {
     <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: «Перехват» у попадания выше переносит урон на него (или выделите его токен и примените урон вручную).
       ${f.freeUse
         ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
-        : f.granted === false
-          ? `Фанатик не от Спиной к Спине — перехват за Реакцию.`
-          : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
+        : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
       ${f.savior && f.targetTokenUuid
         ? ` Спаситель Туманов: <button type="button" class="wh-mist-savior-swap" data-fanatic-uuid="${f.uuid}" data-target-token-uuid="${f.targetTokenUuid}">Поменяться местами с целью</button>`
         : ""}
@@ -887,7 +885,7 @@ export function attackCard({
   grappleCoverHits = [],
   // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
   // Fanatic в базовом контакте с целью — уже найдены геометрией attack.mjs
-  // ([{uuid, name, freeUse, granted, tokenUuid}]); перенос урона — выбор
+  // ([{uuid, name, freeUse, tokenUuid}]); перенос урона — выбор
   // стола кнопкой «Перехват» у попадания (fanaticRedirectButtons) или вручную
   // через обычную «Применить урон»; секция показывает кандидатов и остаток
   // «раз в Раунд без Реакции».
