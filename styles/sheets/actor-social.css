@@ -92,6 +92,7 @@
 .warhammer-dbc .cover-up-name { width: 100%; font-size: 0.82em; height: 22px; }
 .warhammer-dbc .cover-up-inf { width: 52px; font-size: 0.82em; height: 22px; }
 .warhammer-dbc .cover-up-agents, .warhammer-dbc .cover-up-requisition { font-size: 0.86em; }
+.warhammer-dbc .cover-up-over { color: #ffb0b0; border-color: #7a2e2e; }
 
 /* ── Командование вне Отряда: панель «Под моим Присутствием» ──
       Слаженности и Риска у такой группы нет — это свойства сведённого отряда,
