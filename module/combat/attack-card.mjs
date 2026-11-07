@@ -103,7 +103,8 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  */
 function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
-                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0, pyromaniac = false, torrent = null }) {
+                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0, pyromaniac = false, torrent = null,
+                                    fanaticIntercepts = [] }) {
   if (!hits.length) return "";
   // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
   // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
@@ -336,7 +337,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
-  </button>${wp.warpSoak ? `
+  </button>${toHorde ? "" : fanaticRedirectButtons(fanaticIntercepts, hits.length > 1 ? i + 1 : 0)}${wp.warpSoak ? `
   <button class="wh-pain-absorb-btn" type="button" data-damage="${d.total}" title="Друкхари с Очками Боли: выбранный токен цели поглощает урон Болью вместо Ран (3 урона за 1 Боль)">
     🔥 Поглотить Болью ${i + 1}: <b>${d.total}</b>
   </button>` : ""}${swapBtn}${sparksBtn}${deadlyTrapBtn}${butcherDice > 0 ? `
@@ -424,20 +425,41 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
 }
 
 /**
+ * Кнопки «Перехват» внутри группы попадания (рядом с «Применить урон»):
+ * по одной на носителя Fanatic. Без своих data-damage — hooks.mjs берёт
+ * число и свойства урона с главной кнопки той же группы (data-mirror-hit),
+ * поэтому правки Кубик→Успехи/Искры доходят и сюда. Класс не
+ * wh-apply-dmg-btn: порядковые номера тех кнопок хранят правки урона
+ * (combat/damage-override.mjs). data-force-target — токен носителя, чтобы
+ * применение урона не просило выделить его на сцене.
+ */
+function fanaticRedirectButtons(fanaticIntercepts, hitNo) {
+  return fanaticIntercepts.map(f => `
+  <button class="wh-fanatic-redirect-btn" type="button" data-mirror-hit="1"
+    data-fanatic-uuid="${f.uuid}" data-force-target="${f.tokenUuid || f.uuid}"
+    title="Fanatic перехватывает это попадание вместо цели: урон применится ему, спишется бесплатный перехват (Спиной к Спине, раз в Раунд) или Реакция">
+    ${rollIcon("shield", "#ffb347")}Перехват${hitNo ? ` ${hitNo}` : ""}: ${esc(f.name)}
+  </button>`).join("");
+}
+
+/**
  * Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
  * Fanatic в базовом контакте с целью уже найдены геометрией attack.mjs —
  * показ кандидатов и остатка «раз в Раунд без Реакции» (rules/cooldown.mjs).
- * Сам перенос урона — выделить токен названного носителя и нажать обычную
- * «Применить урон» выше; кнопка здесь только отмечает бесплатный перехват
- * потраченным, когда стол решил им воспользоваться.
+ * Перенос урона — кнопка «Перехват» у каждого попадания (fanaticRedirectButtons,
+ * платит бесплатным перехватом или Реакцией сама); кнопка здесь только
+ * отмечает бесплатный перехват потраченным при ручном переносе (выделить
+ * токен носителя и нажать обычную «Применить урон»).
  */
 function fanaticInterceptSection(fanaticIntercepts) {
   if (!fanaticIntercepts.length) return "";
   const rows = fanaticIntercepts.map(f => `
-    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: выделите его токен и примените урон туда вместо цели.
+    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: «Перехват» у попадания выше переносит урон на него (или выделите его токен и примените урон вручную).
       ${f.freeUse
         ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
-        : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
+        : f.granted === false
+          ? `Фанатик не от Спиной к Спине — перехват за Реакцию.`
+          : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
       ${f.savior && f.targetTokenUuid
         ? ` Спаситель Туманов: <button type="button" class="wh-mist-savior-swap" data-fanatic-uuid="${f.uuid}" data-target-token-uuid="${f.targetTokenUuid}">Поменяться местами с целью</button>`
         : ""}
@@ -865,9 +887,10 @@ export function attackCard({
   grappleCoverHits = [],
   // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
   // Fanatic в базовом контакте с целью — уже найдены геометрией attack.mjs
-  // ([{uuid, name, freeUse}]); перенос урона — выбор стола через обычную
-  // кнопку «Применить урон» (эта секция только показывает кандидатов и
-  // остаток «раз в Раунд без Реакции», ничего не переносит сама).
+  // ([{uuid, name, freeUse, granted, tokenUuid}]); перенос урона — выбор
+  // стола кнопкой «Перехват» у попадания (fanaticRedirectButtons) или вручную
+  // через обычную «Применить урон»; секция показывает кандидатов и остаток
+  // «раз в Раунд без Реакции».
   fanaticIntercepts = [],
   // Нечестивая Преданность (combat/unholy-devotion.mjs): Миньоны Хозяина-цели,
   // способные принять попадание ([{uuid, name, distance, bonus, threshold,
@@ -1181,7 +1204,8 @@ export function attackCard({
             sixthSenseBypassAvailable, musicOfBattleBypassAvailable, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
-                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice, pyromaniac, torrent }),
+                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice, pyromaniac, torrent,
+                                            fanaticIntercepts }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(grappleCoverHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid },

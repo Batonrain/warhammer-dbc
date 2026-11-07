@@ -12,16 +12,15 @@
 //  полудвижения, и если это позволяет встать на пути атаки — получает это
 //  попадание и урон от него вместо союзника.»
 //
-//  Перенос самого попадания остаётся ручным решением стола: movement и
-//  геометрия «встал на пути атаки» не моделируются — но и не нужны отдельным
-//  кодом. module/combat/attack-card.mjs::applyDamageSection уже умеет
-//  применять урон НЕ той цели, по которой стреляли: кнопка «Применить урон»
-//  (кроме случаев с data-force-target — Орда/рикошет/встречная атака, где
-//  цель известна на 100%) резолвит актора из нацеленных/выделенных токенов
-//  СЦЕНЫ В МОМЕНТ КЛИКА (hooks.mjs, тот же общий механизм, что у любого
-//  применения урона). Поэтому «перенести попадание на Fanatic» ничем не
-//  отличается от обычного ручного решения ГМа: выделить токен носителя
-//  Fanatic вместо исходной цели и нажать существующую кнопку.
+//  Перехват — выбор стола (Fanatic «может» потратить Реакцию): movement и
+//  геометрия «встал на пути атаки» не моделируются, а решение «перехватывать
+//  ли» остаётся за игроком. Выбор — кнопка «Перехват» у каждого попадания в
+//  карточке атаки (attack-card.mjs::applyDamageSection): она несёт
+//  data-force-target носителя и data-mirror-hit — hooks.mjs берёт число и
+//  свойства урона с главной кнопки «Применить урон» той же группы (с учётом
+//  правок Кубик→Успехи/Искры) и применяет урон носителю без выделения токена.
+//  Ручной путь (выделить токен носителя и нажать обычную «Применить урон»)
+//  остаётся, но Реакцию и счётчик «раз в Раунд» тогда стол отмечает сам.
 //
 //  УСИЛЕННАЯ АВТОМАТИЗАЦИЯ (19.10.2026, решение владельца — «нужно сильнее
 //  автоматизировать»): раньше ГМ должен был САМ заметить, что рядом с целью
@@ -40,10 +39,9 @@
 //      (rules/cooldown.mjs::isCapabilityAvailable/markCapabilityUsed, unit
 //      "round", тот же механизм, что у Assassin Strike/Соблазнения Стаи).
 //      Карточка показывает, свободен ли перехват у каждого кандидата, и
-//      даёт кнопку «Отметить перехват» — отмечает счётчик потраченным, когда
-//      стол воспользовался бесплатным перехватом (сам перенос урона всё
-//      равно через обычную кнопку «Применить урон», см. выше — две кнопки
-//      не связаны программно, связь — только в том, что делает стол).
+//      даёт кнопку «Отметить перехват» — отмечает счётчик потраченным при
+//      ручном переносе; кнопка «Перехват» у попадания делает это сама
+//      (payFanaticIntercept: бесплатный перехват Таланта, иначе Реакция).
 //      Исчерпанный бесплатный перехват НЕ блокирует Трейт Fanatic как
 //      таковой — обычная версия (за Реакцию) всегда доступна, это
 //      ограничение только добавки от Таланта.
@@ -195,4 +193,38 @@ export function backToBackFreeUseAvailable(actor) {
 /** Отметить бесплатный перехват actor потраченным в этом Раунде. */
 export async function markBackToBackFreeUseUsed(actor) {
   await markCapabilityUsed(actor, BACK_TO_BACK_FREE_USE_FLAG, "round");
+}
+
+/** Фанатик у actor получен раздачей Спиной к Спине (а не собственный Трейт) — только ему положен бесплатный перехват. */
+export function hasGrantedFanatic(actor) {
+  return [...(actor?.items ?? [])].some(i =>
+    i?.type === "trait" && FANATIC_NAMES.some(n => itemHasName(i, n)) && !!i.flags?.[NS]?.[FANATIC_GRANT_FLAG]);
+}
+
+const FANATIC_PAID_FLAG = "fanaticPaid";
+const paidIntercepts = new Set();
+
+/**
+ * Заплатить за перехват попадания Фанатиком: бесплатный раз в Раунд (только
+ * розданный Трейт), иначе Реакция. Один носитель платит один раз за карточку
+ * атаки — остальные попадания очереди он перехватывает в ту же Реакцию.
+ * @returns {Promise<{ok: boolean, free?: boolean, already?: boolean}>}
+ */
+export async function payFanaticIntercept(fanatic, message = null) {
+  const key = `${message?.id ?? ""}:${fanatic.uuid}`;
+  const paidOnCard = message ? (message.getFlag?.(NS, FANATIC_PAID_FLAG) ?? []) : [];
+  if (message && (paidIntercepts.has(key) || paidOnCard.includes(fanatic.uuid))) return { ok: true, already: true };
+  let free = false;
+  if (hasGrantedFanatic(fanatic) && backToBackFreeUseAvailable(fanatic)) {
+    await markBackToBackFreeUseUsed(fanatic);
+    free = true;
+  } else {
+    const { spendReaction } = await import("./action-economy.mjs");
+    if (!await spendReaction(fanatic)) return { ok: false };
+  }
+  if (message) {
+    paidIntercepts.add(key);
+    if (message.isOwner) await message.setFlag?.(NS, FANATIC_PAID_FLAG, [...paidOnCard, fanatic.uuid]);
+  }
+  return { ok: true, free };
 }
