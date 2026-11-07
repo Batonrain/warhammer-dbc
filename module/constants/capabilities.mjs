@@ -1515,7 +1515,7 @@ export const CAPABILITIES = {
   "courage.core.fearless": {
     label: "Персонаж автоматически проходит тесты Морали, но, чтобы выйти из боя или отказаться от драки, должен пройти W+0.",
     source: "Fearless / Бесстрашный",
-    reader: "module/rules/morale-auto.mjs::moraleAutoPass — автопроход тестов Морали (как Ярость): rules/morale-test.mjs (Шок, Паника от Горения, Подавление и его преодоление), combat/fear.mjs (Страх), combat/intimidate.mjs, combat/field-execution.mjs; тест W+0 «выйти из боя» остаётся столу"
+    reader: "module/rules/morale-auto.mjs::moraleAutoPass — автопроход тестов Морали (как Ярость): rules/morale-test.mjs (Шок, Паника от Горения, Подавление и его преодоление), combat/fear.mjs (Страх), combat/intimidate.mjs, combat/field-execution.mjs, apps/torture.mjs (Пытка и Искусная Пытка — жертва); тест W+0 «выйти из боя» остаётся столу"
   },
   "courage.core.fireman": {
     label: "Персонаж не паникует от Горения и получает +30 на тесты тушения себя или других.",
