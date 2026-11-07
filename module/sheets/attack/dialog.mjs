@@ -39,6 +39,7 @@ import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
 import { allGunsBlazingMod, tyranthikosSecondAttackDice } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
+import { wideBurstSummary } from "../../rules/wide-burst.mjs";
 import { attackIsMelee, profileHasOwnFire, weaponProfiles as atkProfilesOf } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
@@ -847,7 +848,26 @@ export function openAttackDialog(ctx) {
       let lastGKey      = dyn0.gKey;
       let lastManeuverGKey = dyn0.gKey;   // Хват, от которого посчитаны пилюли Приёма (Обратный Удар требует Хват на обе руки)
 
+      const wideBurstEl   = form.querySelector("#atk-wide-burst");
+      const wideBurstNote = form.querySelector("#atk-wide-burst-note");
+      const refreshWideBurst = () => {
+        if (!wideBurstEl || !wideBurstNote) return;
+        const on = wideBurstEl.checked;
+        wideBurstEl.closest("label")?.classList.toggle("atk-wide-burst-on", on);
+        wideBurstNote.hidden = !on;
+        if (!on) return;
+        const s = wideBurstSummary({
+          mode: form.querySelector('input[name="atk-rof"]:checked')?.value,
+          rofSemi: wideBurstEl.dataset.rofSemi,
+          rofFull: wideBurstEl.dataset.rofFull,
+          cageFiring: !!form.querySelector('.atk-talent-toggle[data-key="cageFiring"]')?.checked,
+        });
+        wideBurstNote.textContent = s.text;
+        wideBurstNote.classList.toggle("atk-wide-burst-idle", !s.applies);
+      };
+
       const updateTotal = () => {
+        refreshWideBurst();
         const f = readAttackForm(form, ammoConds);
         // Стойка/База/Приём/Хват/Профиль меняются прямо в форме — заголовок и
         // сводки эффектов должны обновляться вместе с порогом, иначе бейджи и

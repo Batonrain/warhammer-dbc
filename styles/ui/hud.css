@@ -324,12 +324,13 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 /* ── Прицеливание (wdbc-1rno.5) — всегда на виду рядом с ОД/Реакциями, не
      вкладка: было радио в диалоге атаки без расхода ОД, теперь настоящее
      HUD-действие (combat/aiming-action.mjs, aimMenuItems). ── */
-.wh-hud-aiming { display: flex; gap: 4px; margin-top: 2px; }
+.wh-hud-aiming { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; min-width: 0; max-width: 100%; }
 .wh-hud-aim-btn {
   display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
   font-size: 11px; font-weight: 700; letter-spacing: .02em; color: #d8ffe8;
   border: 1px solid var(--cg-line); border-radius: 3px; padding: 3px 8px;
-  background: rgba(0,0,0,.2); white-space: nowrap;
+  background: rgba(0,0,0,.2); white-space: nowrap; max-width: 100%; box-sizing: border-box;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .wh-hud-aim-btn:hover { color: var(--cg); border-color: var(--cg); background: rgba(77,255,166,.1); }
 .wh-hud-aim-btn.active { color: #1a1006; border-color: #ffb84d; background: #ffb84d; }

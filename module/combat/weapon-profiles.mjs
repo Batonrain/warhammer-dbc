@@ -251,6 +251,24 @@ export function attackIsMelee(sys, { forceMelee = false, profile = null } = {}) 
   return sys?.weaponClass === "melee" || !!forceMelee || isMeleeProfile(profile);
 }
 
+/**
+ * system оружия для расчёта Длины Оружия рукопашным профилем стрелкового
+ * оружия (rng-475): у приклада и у Крюка своя досягаемость (profile.range,
+ * число или диапазон «2-4»), а system.range у ствола — дальность стрельбы.
+ * Без этой подмены правило 4 («слишком длинное оружие вблизи») брало Rng
+ * ствола и давало штраф в сотни пунктов. Рукопашному оружию и стрелковым
+ * профилям возвращается тот же sys.
+ */
+export function sysWithMeleeProfileReach(sys, profile) {
+  if (!profile?.melee || sys?.weaponClass === "melee") return sys;
+  const m = String(profile.range ?? "").match(/(\d+)(?:\s*[-–]\s*(\d+))?/);
+  const a = m ? Number(m[1]) : 0;
+  const b = m && m[2] ? Number(m[2]) : a;
+  const max = Math.max(a, b);
+  const min = Math.min(a, b);
+  return { ...sys, range: max, rangeMin: min < max ? min : 0 };
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  СВОЙ СТВОЛ ПРОФИЛЯ — комби-оружие (wdbc-jho9).
 //

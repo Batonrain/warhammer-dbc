@@ -107,6 +107,7 @@ import { tenacityButtonHtml } from "./tenacity.mjs";
 import { shockerGrantsShocking, wallopConcussiveRating, sparksAvailable, welderMarksHit, irradiateMode,
   lensTuningShot, LENS_CHARGES_FLAG, litanyReliability, litanyCoversWeapon, LITANY_CLEANED_FLAG,
   weaponTechShot, WEAPON_TECH_SPENT_FLAG, igniterZone, IGNITER_NOTES } from "../rules/gunsmith-talents.mjs";
+import { WIDE_BURST_RATING_CUT, CAGE_FIRING_RATING_CUT } from "../rules/wide-burst.mjs";
 import { saturationFireCoverShots, sureShotApplies, sureShotDodgePenalty, cageFiringApplies, CAGE_FIRING_EVADE_COST, controlledBurstApplies, controlledBurstRof, eyeOfVengeanceBonus, eyeOfVengeanceAvailable, EYE_OF_VENGEANCE_FLAG, crackShotBonus, cripplingStrikeBonus, doubleTapActive, doubleTapLocation, doubleTapHits, onThisMarkActive, appliedPhysicsShift } from "../rules/gunner-talents.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
 import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
@@ -1067,7 +1068,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const cageFiring = cageFiringApplies(actor, { toggles, isMelee, rofMode, wideBurst });
   wp.evadeCost = cageFiring ? CAGE_FIRING_EVADE_COST : 1;
   const hitCountSys = wideBurst
-    ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - 2 - (cageFiring ? 3 : 0)) }
+    ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - WIDE_BURST_RATING_CUT - (cageFiring ? CAGE_FIRING_RATING_CUT : 0)) }
     : fanningSys;
   const wideBurstPenalty = wideBurst ? -20 : 0;
   // Верный Выстрел (rules/gunner-talents.mjs): после успешного одиночного выстрела 1 Очко Бесчестия —
@@ -1121,6 +1122,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   });
   // Двойной Выстрел: дальше второго попадания — «пролетают над целью, промахи».
   const hitsCount = doubleTapOn ? doubleTapHits(hitsCountBase) : hitsCountBase;
+  const burstKey    = (!isMelee && hit && rofMode === "semi") ? "rof_semi" : (!isMelee && hit && rofMode === "full") ? "rof_full" : null;
+  const burstCap    = burstKey ? (Number(hitCountSys[burstKey]) || 0) : 0;
+  const burstBase   = burstKey ? (Number(fanningSys[burstKey]) || 0) : 0;
+  const burstWanted = burstKey ? (rofMode === "semi" ? Math.ceil(deg / 2) : deg) : 0;
+  const burstCapNote = !burstKey ? ""
+    : wideBurst
+      ? `🎯 Широкая Очередь: потолок попаданий RoF ${burstBase} − 2${cageFiring ? " − 3" : ""} = ${burstCap}; ${deg} Усп. дали бы ${burstWanted}, попаданий ${hitsCountBase}. Уклонение цели −20 (уже в кнопках).`
+      : (burstWanted > burstCap && burstCap > 0)
+        ? `🎯 Очередь: ${deg} Усп. дали бы ${burstWanted} попад., но потолок RoF ${burstCap} — попаданий ${hitsCountBase}.`
+        : "";
   let ammoSpent = 0;
   let controlledBurstSaved = 0;
   let burstRofUsed = null;   // RoF очереди после Контролируемой Очереди — от него считается Насыщение
@@ -1461,6 +1472,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const bayonetShotOn = hit && isMelee && meleeTech === "bayonetCharge" && hasBayonetCharge(actor);
   if (bayonetShotOn) await actor.setFlag?.("warhammer-dbc", BAYONET_SHOT_PENDING_FLAG, true);
   const damageTalentNotes = [
+    burstCapNote,
     (hit && shockerOn) ? "⚡ Шокер: Избирательное попадание Гальванического оружия в голову — Шокирующее (цель: T+0 или Оглушение)." : "",
     (hit && igniter) ? IGNITER_NOTES[igniter] : "",
     (hit && wallopOn) ? `💥 Трепка: Оглушающее (${wallopRating}) — только на ПЕРВОЕ попадание (после Избеганий); применяйте эффект один раз.` : "",

@@ -728,6 +728,9 @@ export function initHUD() {
   Hooks.on("updateActor", (a) => { if (mine(a)) refreshHUD(); });
   for (const h of ["createItem", "updateItem", "deleteItem"])
     Hooks.on(h, (it) => { if (mine(it.parent)) refreshHUD(); });
+  const effectOwner = (ef) => ef?.parent?.documentName === "Item" ? ef.parent.parent : ef?.parent;
+  for (const h of ["createActiveEffect", "updateActiveEffect", "deleteActiveEffect"])
+    Hooks.on(h, (ef) => { if (mine(effectOwner(ef))) refreshHUD(); });
   Hooks.on("controlToken", () => refreshHUD());
   Hooks.on("canvasReady", () => refreshHUD());
 
