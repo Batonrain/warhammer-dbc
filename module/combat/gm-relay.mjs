@@ -256,7 +256,7 @@ export async function performTargetWrite(target, op, initiator = null) {
   }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");
-    return grantDreadWailFear(target);
+    return grantDreadWailFear(target, initiator);
   }
   if (op.kind === "inspireHatred") {
     const item = inspiredHatredData(op.target, { uuid: initiator?.uuid ?? "", name: initiator?.name ?? "" }, await hatredTemplate());

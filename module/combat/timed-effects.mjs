@@ -23,6 +23,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { expectedPhase } from "../constants/effect-keys.mjs";
+import { combatOfActor } from "./actor-combat.mjs";
 
 const NS = "warhammer-dbc";
 /** Метка на эффекте: { key, combatId, round }. key — какая способность его выдала. */
@@ -116,9 +117,13 @@ export function dreadWailFearEffectData(combat = null) {
 const dreadWailFearEffectsOf = actor => [...(actor?.effects ?? [])].filter(e =>
   (e.getFlag?.(NS, DREAD_WAIL_FEAR_FLAG) ?? e.flags?.[NS]?.[DREAD_WAIL_FEAR_FLAG]));
 
-/** Наложить Страх 2 на цель до конца текущего боя; повторное попадание заменяет прежний эффект. */
-export async function grantDreadWailFear(actor) {
-  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
+/**
+ * Наложить Страх 2 на цель до конца её боя; повторное попадание заменяет прежний эффект.
+ * Бой — начатый бой цели, а не game.combat (бой из трекера того, кто пишет, у ГМа он может быть
+ * чужим); цели вне боя — бой заклинателя `caster`, чтобы волна по прохожим снималась с его концом.
+ */
+export async function grantDreadWailFear(actor, caster = null) {
+  const combat = combatOfActor(actor) ?? (caster ? combatOfActor(caster) : null);
   const old = dreadWailFearEffectsOf(actor).map(e => e.id).filter(Boolean);
   if (old.length) await actor.deleteEmbeddedDocuments("ActiveEffect", old);
   await actor.createEmbeddedDocuments("ActiveEffect", [dreadWailFearEffectData(combat)]);
