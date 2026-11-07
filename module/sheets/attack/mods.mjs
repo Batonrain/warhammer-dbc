@@ -26,6 +26,7 @@ import { isNearestUndamagedEnemy } from "../../combat/legacy-weapon-mutations.mj
 import { isActorsOwnTurn } from "../../combat/delay-action.mjs";
 import { meleeEffectiveRange, parseGrips } from "../../constants/combat.mjs";
 import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../../rules/weapon-length.mjs";
+import { sysWithMeleeProfileReach } from "../../combat/weapon-profiles.mjs";
 import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
 import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
@@ -446,12 +447,13 @@ export function situationalMods(v) {
   // в этом же окне, поэтому автогалочки ниже — подсказка по базовой связке
   // оружия, а не гарантированно точное число после Выпада/другого Хвата;
   // как и остальные автогалочки этого файла, их можно поправить руками.
+  const lengthSys = weapon ? sysWithMeleeProfileReach(weapon.system, weaponProfile) : null;
   const meleeAttackerRange = (isMelee && weapon)
-    ? meleeEffectiveRange(weapon.system?.range, parseGrips(weapon.system?.grips)[0] ?? null, "standard", false,
+    ? meleeEffectiveRange(lengthSys?.range, parseGrips(lengthSys?.grips)[0] ?? null, "standard", false,
         Math.max(0, Number(actor?.system?.size) || 0))
     : 0;
   const longerWeaponAuto  = isMelee ? longerWeaponBonus(meleeAttackerRange, attackCtx.targetActor) : false;
-  const closeQuartersAuto = (isMelee && inContactWithTarget && weapon) ? closeQuartersPenalty(closeQuartersRange(weapon.system)) : 0;
+  const closeQuartersAuto = (isMelee && inContactWithTarget && weapon) ? closeQuartersPenalty(closeQuartersRange(lengthSys)) : 0;
   // Прикрывающая Стойка (стр. 15, wdbc-x1nz.2.66.7): −20 рукопашным атакам
   // по союзникам, стоящим в Базовом/Глубоком контакте с персонажем в этой
   // Стойке — то же соседство, что Свободная Атака/Связан в Рукопашной

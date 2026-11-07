@@ -70,7 +70,7 @@ import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs"
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
-import { weaponProfiles, attackIsMelee, sysWithProfileFire } from "../combat/weapon-profiles.mjs";
+import { weaponProfiles, attackIsMelee, sysWithProfileFire, sysWithMeleeProfileReach } from "../combat/weapon-profiles.mjs";
 import { conductiveMeleeOf } from "../rules/conductive.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
@@ -171,6 +171,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // окно (attack/dialog.mjs, reopenWithProfile) — вся сборка ниже считается
   // один раз от этих полей.
   sys = sysWithProfileFire(sys, startProfile);
+  sys = sysWithMeleeProfileReach(sys, startProfile);
 
   // Вид теста фиксируется на ВХОДЕ в окно и внутри него не меняется: от него
   // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
