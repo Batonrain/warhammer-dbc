@@ -215,6 +215,7 @@ import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, R
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
+import { markFrenzyExited } from "./combat/frenzy.mjs";
 import { RAGE_EXIT_REROLL_CARD_FLAG, RIDING_BEAST_CARD_FLAG } from "./rules/rage-behavior.mjs";
 import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
@@ -5342,9 +5343,11 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("updateActor", actor => { refreshParasiteHosts(actor); });
 
   // Ярость кончилась любым путём (тумблер листа, HUD токена, кнопка выхода) — метки «провалил выход» и
-  // «Ходы после боя» гаснут. Пишет тот, кто снял Ярость: у него есть права на актора (module/combat/rage-behavior.mjs).
+  // «Ходы после боя» гаснут, а повторный вход в этом бою закрывается (module/combat/frenzy.mjs, wdbc-sh3qt).
+  // Пишет тот, кто снял Ярость: у него есть права на актора (module/combat/rage-behavior.mjs).
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
     if (game.user?.id !== userId || changes?.system?.inRage !== false) return;
+    await markFrenzyExited(actor);
     const patch = clearRageStatePatch(actor);
     if (Object.keys(patch).length) await actor.update(patch);
   });
