@@ -2162,10 +2162,17 @@ export function registerHooks() {
     });
 
     // Применение урона
-    html.querySelectorAll(".wh-apply-dmg-btn").forEach(btn => {
+    [...html.querySelectorAll(".wh-apply-dmg-btn"), ...html.querySelectorAll(".wh-fanatic-redirect-btn")].forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const ds = ev.currentTarget.dataset;
+        const own = ev.currentTarget.dataset;
+        // «Перехват» Фанатиком (attack-card.mjs::fanaticRedirectButtons): число
+        // и свойства урона — с главной кнопки «Применить урон» той же группы
+        // попадания (там уже учтены Кубик→Успехи/Искры), цель — носитель.
+        const mainBtn = own.mirrorHit === "1"
+          ? ev.currentTarget.closest(".roll-dmg-hit-group")?.querySelector(".wh-apply-dmg-btn") : null;
+        if (own.mirrorHit === "1" && !mainBtn) return ui.notifications.warn("⚠️ Не найдено попадание этой кнопки.");
+        const ds = mainBtn ? { ...mainBtn.dataset, forceTarget: own.forceTarget } : own;
         // Щит вне арки (core.json, «Типы Рукопашного Оружия») — галочка
         // рядом с кнопкой (attack-card.mjs::shieldArcCheckbox), тот же приём
         // чтения соседнего DOM, что у .wh-dmg-swap-btn выше в этом файле.
@@ -2291,6 +2298,18 @@ export function registerHooks() {
           if (doc?.documentName === "Token" && doc.object) {
             const attackerToken = await resolveAttackerToken(damageData.attackerUuid);
             damageData.frontArcHit = attackerToken ? isFrontArcHit(doc.object, attackerToken) : false;
+          }
+          // Перехват Фанатиком: плата (бесплатный раз в Раунд или Реакция) — до применения урона.
+          if (own.fanaticUuid) {
+            const fanatic = await fromUuid(own.fanaticUuid).catch(() => null);
+            if (!fanatic) return ui.notifications.warn("⚠️ Носитель Fanatic не найден.");
+            if (!fanatic.isOwner) return ui.notifications.warn("Перехватывает владелец носителя (или ГМ).");
+            const { payFanaticIntercept } = await import("./combat/fanatic-redirect.mjs");
+            const paid = await payFanaticIntercept(fanatic, message);
+            if (!paid.ok) return ui.notifications.warn(`${fanatic.name}: нет Реакции — перехват невозможен.`);
+            if (!paid.already) ui.notifications.info(paid.free
+              ? `Спиной к Спине: ${fanatic.name} перехватывает бесплатно (раз в Раунд).`
+              : `${fanatic.name} тратит Реакцию на перехват.`);
           }
           return applyDamageToActor(actor, damageData);
         }
