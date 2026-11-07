@@ -6,6 +6,7 @@ import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS 
 import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
+import { resolveCardRadiantPresence } from "./combat/radiant-presence.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack, revertCardFailure, failUndoLineHtml } from "./combat/fear.mjs";
 import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG } from "./rules/fail-undo.mjs";
@@ -3137,6 +3138,10 @@ export function registerHooks() {
       });
     });
 
+    // Блистательное Присутствие на карточке подавления (wdbc-051qb): галочка
+    // стартует в «прочерке» — стол её не трогал, и при броске +10 решает
+    // видимость союзного или нейтрального носителя для токена цели; отметил или снял — решает стол.
+    html.querySelectorAll(".wh-radiant-presence-cb").forEach(cb => { cb.indeterminate = true; });
     // Тест на Подавление (Стрельба на подавление, стр. 32-33) — по выбранному
     // токену цели, штраф уже посчитан (RoF + Импульсное) в attack.mjs.
     //
@@ -3160,9 +3165,10 @@ export function registerHooks() {
         const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
         // Radiant Presence/Into the Jaws of Hell (Sahara 3-ac78, 19.10.2026) —
         // галочки той же карточки, решение стола (combat/attack-card.mjs).
-        const radiantPresence = !!el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb")?.checked;
+        const radiantBox = el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb");
         const intoTheJawsOfHell = !!el.closest(".roll-suppression")?.querySelector(".wh-jaws-of-hell-cb")?.checked;
         const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const radiantPresence = resolveCardRadiantPresence(radiantBox, actor, sourceActor);
         await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление", sourceActor, safeOverride, radiantPresence, intoTheJawsOfHell });
       });
     });
@@ -3178,9 +3184,10 @@ export function registerHooks() {
         if (!actor) return;
         const mod = parseInt(el.dataset.testMod || "0");
         const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
-        const radiantPresence = !!el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb")?.checked;
+        const radiantBox = el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb");
         const intoTheJawsOfHell = !!el.closest(".roll-suppression")?.querySelector(".wh-jaws-of-hell-cb")?.checked;
         const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const radiantPresence = resolveCardRadiantPresence(radiantBox, actor, sourceActor);
         await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий", sourceActor, safeOverride, radiantPresence, intoTheJawsOfHell });
       });
     });
