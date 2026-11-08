@@ -30,7 +30,7 @@ import { grappleCoverPartner } from "./grapple.mjs";
 import { fanaticInterceptCandidates, backToBackFreeUseAvailable } from "./fanatic-redirect.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
-import { ammoIsFree } from "../rules/ammo-free.mjs";
+import { ammoIsFree, hasInfiniteMagazine } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
@@ -2190,7 +2190,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       ammo: isMelee ? null : {
         name:   loadedAmmo?.name || "",
         mods:   loadedAmmo ? _buildAmmoModString(ammoSys) : "",
-        magCur: sys.magazineCur ?? "?", magMax: sys.magazineMax ?? "?",
+        magCur: sys.magazineCur ?? "?", magMax: sys.magazineMax ?? "?", magInfinite: hasInfiniteMagazine(item),
         spent:  ammoSpent, special: ammoSpecial,
         condLabels: opts.ammoCondLabels || [], warning: ammoWarning
       },
