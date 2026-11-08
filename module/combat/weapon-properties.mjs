@@ -465,6 +465,15 @@ function reliableNote(p, jamAt) {
   return `Надёжное: заклинивает на ${jamAt}+`;
 }
 
+/**
+ * Убирает из списка для показа Примитивное, которое расчёт уже снял
+ * (Безоружный Мастер, качество Высшее): иначе карточка велит удваивать броню.
+ */
+export function visibleWeaponProps(props, wp) {
+  if (wp?.primitive) return props;
+  return props.filter(p => !p.def.auto?.primitive);
+}
+
 /** Блок «Свойства оружия» для сообщения о броске. */
 export function buildPropertyChatBlock(props, { jamAt } = {}) {
   if (!props.length) return "";

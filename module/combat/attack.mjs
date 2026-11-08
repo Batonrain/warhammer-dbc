@@ -8,7 +8,7 @@ import { MELEE_STANCES, parseGrips }                from "../constants/combat.mj
 import { _getAmmoSpent, _buildAmmoModString, esc }  from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
-         jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
+         jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock, visibleWeaponProps,
          buildTargetEffectButtons, hasWeaponPropertyImmunity }
                                                       from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
@@ -968,7 +968,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const jamData = ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: jamCard({
-        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(wProps, { jamAt: jamNoteAt }) },
+        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(visibleWeaponProps(wProps, wp), { jamAt: jamNoteAt }) },
         spoiled
       }),
       rolls: [roll],
@@ -1785,13 +1785,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (тот же приём, что Молот по лежащему выше). Место известно только теперь,
   // поэтому свойства карточки пересобираются здесь; на урон Concussive не влияет.
   const crushingHead = (ammoDmgSubtype || effDmgSubtype) === "crushing" && hits.some(h => isHeadHit(h.loc));
-  const cardProps = crushingHead ? (() => {
+  const cardProps = visibleWeaponProps(crushingHead ? (() => {
     const entries = _mergedEntries.map(e => ({ ...e }));
     const conc = entries.find(e => e.key === "concussive");
     if (conc) conc.rating = (Number(conc.rating) || 0) + 1;
     else entries.push({ key: "concussive", rating: -1 });
     return resolveWeaponPropsList(entries);
-  })() : wProps;
+  })() : wProps, wp);
 
   // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
   // 427): нат. 100 на попадание — «оружие попадает по случайному союзнику»
