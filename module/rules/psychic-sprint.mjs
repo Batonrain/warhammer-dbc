@@ -26,3 +26,23 @@ export function discountedMovementAp(cost, active) {
   const base = Math.max(0, Number(cost) || 0);
   return active ? Math.max(0, base - PSYCHIC_SPRINT_AP_DISCOUNT) : base;
 }
+
+export const PSYCHIC_SPRINT_PENDING_FLAG = "psychicSprintPending";
+
+export function psychicSprintPendingData(success, bonus) {
+  return { success: !!success, bonus: success ? psychicSprintSpeedBonus(bonus) : 0 };
+}
+
+export function psychicSprintPendingOf(actor) {
+  const pending = actor?.getFlag?.("warhammer-dbc", PSYCHIC_SPRINT_PENDING_FLAG);
+  return pending && typeof pending === "object" ? pending : null;
+}
+
+export function psychicSprintEffectSpec(bonus) {
+  return {
+    key: PSYCHIC_SPRINT_EFFECT_KEY, name: `Психический Рывок — SPD +${bonus}`, img: "icons/svg/wing.svg",
+    changes: [{ key: PSYCHIC_SPRINT_SPD_KEY, type: "add", value: bonus }],
+    duration: { value: 1, units: "rounds", expiry: "turnEnd" },
+    span: PSYCHIC_SPRINT_EXTRA_ROUNDS
+  };
+}

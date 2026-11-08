@@ -6,9 +6,12 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { grantTimedEffect, timedEffectsOf } from "./timed-effects.mjs";
 import {
-  PSYCHIC_SPRINT_KEY, PSYCHIC_SPRINT_EFFECT_KEY, PSYCHIC_SPRINT_SPD_KEY, PSYCHIC_SPRINT_EXTRA_ROUNDS,
-  psychicSprintEpr, psychicSprintTestMod, psychicSprintThreshold, psychicSprintSpeedBonus, discountedMovementAp
+  PSYCHIC_SPRINT_KEY, PSYCHIC_SPRINT_EFFECT_KEY, PSYCHIC_SPRINT_PENDING_FLAG,
+  psychicSprintEpr, psychicSprintTestMod, psychicSprintThreshold, psychicSprintSpeedBonus, discountedMovementAp,
+  psychicSprintPendingData, psychicSprintPendingOf, psychicSprintEffectSpec
 } from "../rules/psychic-sprint.mjs";
+
+const NS = "warhammer-dbc";
 
 export function psychicSprintActive(actor) {
   return timedEffectsOf(actor, PSYCHIC_SPRINT_EFFECT_KEY)
@@ -25,6 +28,11 @@ export function movementApNote(actor) {
     : "";
 }
 
+/**
+ * Рывок, брошенный вне начатого боя, не может стать эффектом сразу: ядро Foundry вне боя помечает
+ * срок в Раундах истёкшим. Результат ждёт на акторе флагом, пока бой не начнётся (processPsychicSprintCombatStart);
+ * он же служит ячейкой «раз за бой» до боя — повторить Рывок, пока флаг висит, нельзя, провал тоже.
+ */
 export async function startPsychicSprint(actor) {
   if (!actor) return false;
   const epr = psychicSprintEpr(actor);
@@ -32,12 +40,12 @@ export async function startPsychicSprint(actor) {
     ui.notifications?.warn(`${actor.name}: Психический Рывок — нет Пси-Рейтинга (эPR 0).`);
     return false;
   }
-  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
-  if (!combat) {
-    ui.notifications?.warn(`${actor.name}: Психический Рывок имеет смысл только в бою — вне боя бросок не делается и Талант не тратится.`);
+  if (psychicSprintPendingOf(actor)) {
+    ui.notifications?.warn(`${actor.name}: Психический Рывок уже брошен вне боя — его результат ждёт начала боя.`);
     return false;
   }
-  if (!isCapabilityAvailable(actor, PSYCHIC_SPRINT_KEY, "battle")) {
+  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
+  if (combat && !isCapabilityAvailable(actor, PSYCHIC_SPRINT_KEY, "battle")) {
     ui.notifications?.warn(`${actor.name}: Психический Рывок уже применён в этом бою.`);
     return false;
   }
@@ -46,9 +54,10 @@ export async function startPsychicSprint(actor) {
   const threshold = psychicSprintThreshold(wp, epr, mods.total);
   const roll = await new Roll("1d100").evaluate();
   const { success, deg } = testOutcome(roll.total, threshold);
-  await markCapabilityUsed(actor, PSYCHIC_SPRINT_KEY, "battle");
-
   const bonus = psychicSprintSpeedBonus(epr);
+  if (combat) await markCapabilityUsed(actor, PSYCHIC_SPRINT_KEY, "battle");
+  else await actor.setFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG, psychicSprintPendingData(success, bonus));
+
   const statLine = rollStatLine({
     label: "W", base: wp,
     parts: [`Рывок −30+3×эPR(${epr}) = ${psychicSprintTestMod(epr)}`, ...mods.parts],
@@ -59,16 +68,22 @@ export async function startPsychicSprint(actor) {
   if (!success) {
     await postTestCard(actor, {
       icon, title, threshold: statLine,
-      outcome: outcomeHtml(false, `Провал (${deg} ${_degWord(deg)}) — рывка нет; Талант на этот бой потрачен`)
+      outcome: outcomeHtml(false, `Провал (${deg} ${_degWord(deg)}) — рывка нет; Талант на ${combat ? "этот" : "ближайший"} бой потрачен`)
     }, { rolls: [roll] });
     return true;
   }
-  await grantTimedEffect(actor, {
-    key: PSYCHIC_SPRINT_EFFECT_KEY, name: `Психический Рывок — SPD +${bonus}`, img: "icons/svg/wing.svg",
-    changes: [{ key: PSYCHIC_SPRINT_SPD_KEY, type: "add", value: bonus }],
-    duration: { value: 1, units: "rounds", expiry: "turnEnd" },
-    span: PSYCHIC_SPRINT_EXTRA_ROUNDS
-  });
+  if (!combat) {
+    await postTestCard(actor, {
+      icon, title, threshold: statLine,
+      outcome: outcomeHtml(true, `Успех (${deg} ${_degWord(deg)}) — SPD +${bonus} на первый и второй Раунд боя`),
+      lines: [
+        `<div class="roll-threshold">Боя нет, поэтому эффект начнётся с началом боя: результат запомнен и превратится в эффект «Психический Рывок» в 1-м Раунде.</div>`,
+        `<div class="roll-threshold">Талант на ближайший бой потрачен: повторить Рывок до боя и в этом бою нельзя.</div>`
+      ]
+    }, { rolls: [roll] });
+    return true;
+  }
+  await grantTimedEffect(actor, psychicSprintEffectSpec(bonus));
   await postTestCard(actor, {
     icon, title, threshold: statLine,
     outcome: outcomeHtml(true, `Успех (${deg} ${_degWord(deg)}) — SPD +${bonus} на этот и следующий Раунд`),
@@ -78,4 +93,28 @@ export async function startPsychicSprint(actor) {
     ]
   }, { rolls: [roll] });
   return true;
+}
+
+/**
+ * Бой начался (первый updateCombat, пишет активный ГМ): участникам, у кого висит результат Рывка вне боя,
+ * успех становится обычным эффектом 1-го Раунда этого боя, а Талант отмечается потраченным в нём.
+ * Ожидание лежит на мировом акторе (кнопка с бокового листа) или на акторе токена (с листа токена) —
+ * читаем и снимаем оба. Не участник боя ожидание сохраняет до своего боя.
+ */
+export async function processPsychicSprintCombatStart(combat) {
+  for (const combatant of combat?.combatants ?? []) {
+    const actor = combatant?.actor;
+    if (!actor) continue;
+    const base = actor.isToken ? (actor.token?.baseActor ?? globalThis.game?.actors?.get?.(actor.id) ?? null) : null;
+    const holders = [base, actor].filter(Boolean);
+    const pending = holders.map(psychicSprintPendingOf).find(Boolean);
+    if (!pending) continue;
+    if (pending.success && pending.bonus > 0) {
+      await grantTimedEffect(actor, { ...psychicSprintEffectSpec(pending.bonus), combat: { id: combat.id, round: 1 } });
+    }
+    await markCapabilityUsed(actor, PSYCHIC_SPRINT_KEY, "battle", combat.id);
+    for (const holder of holders) {
+      if (psychicSprintPendingOf(holder)) await holder.unsetFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG);
+    }
+  }
 }

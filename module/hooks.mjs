@@ -172,6 +172,7 @@ import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
 import { clearLegacyKillerBuffs } from "./combat/legacy-weapon-killer.mjs";
 import { clearLegacyPunisherStacks, markLegacyDeadlyTrapUsed } from "./rules/legacy-weapon.mjs";
 import { activateLegacyRegroup, processLegacyRegroupRoundStart } from "./combat/legacy-weapon-regroup.mjs";
+import { processPsychicSprintCombatStart } from "./combat/psychic-sprint.mjs";
 import { activateSabreSecondAttack, clearSabreSecondAttackAtTurnEnd } from "./combat/sabre-second-attack.mjs";
 import { rollStunningLegacyCheck } from "./combat/legacy-weapon-stunning.mjs";
 import { rollLegacyReaperTest } from "./combat/legacy-weapon-reaper.mjs";
@@ -5163,6 +5164,14 @@ function _attachFateContextMenu(message, html) {
     // Смена Позиции (Талант Скорости): карточка «кто может подвигаться на
     // Полудвижение сразу после Инициативы» — тем же GM-гейтом, что соседи.
     if (game.user.isGM) await postRepositionCard(combat);
+  });
+
+  // Психический Рывок, брошенный вне боя, ждёт на акторе: хук combatStart звучит до обновления боя
+  // (round ещё 0, ядро Foundry пометило бы срок эффекта от нулевого Раунда), поэтому ждущий результат
+  // превращается в эффект первым обновлением боя в Раунд 1 — combat/psychic-sprint.mjs.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf || changed?.round !== 1 || !combat.started) return;
+    await processPsychicSprintCombatStart(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
