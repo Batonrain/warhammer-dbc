@@ -44,6 +44,7 @@ import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
 import { allGunsBlazingMod, tyranthikosSecondAttackDice, DUAL_HAND_MAIN, DUAL_HAND_OFF } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { createMaximalRangeSync } from "./maximal-range.mjs";
+import { wideBurstSummary } from "../../rules/wide-burst.mjs";
 import { attackIsMelee, profileHasOwnFire, weaponProfiles as atkProfilesOf } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { getModEffects } from "../../combat/weapon-mods.mjs";
@@ -905,7 +906,26 @@ export function openAttackDialog(ctx) {
       // чтобы порог сразу считался по новой автоотметке.
       const syncMaximalRange = createMaximalRangeSync(form, maximalRange);
 
+      const wideBurstEl   = form.querySelector("#atk-wide-burst");
+      const wideBurstNote = form.querySelector("#atk-wide-burst-note");
+      const refreshWideBurst = () => {
+        if (!wideBurstEl || !wideBurstNote) return;
+        const on = wideBurstEl.checked;
+        wideBurstEl.closest("label")?.classList.toggle("atk-wide-burst-on", on);
+        wideBurstNote.hidden = !on;
+        if (!on) return;
+        const s = wideBurstSummary({
+          mode: form.querySelector('input[name="atk-rof"]:checked')?.value,
+          rofSemi: wideBurstEl.dataset.rofSemi,
+          rofFull: wideBurstEl.dataset.rofFull,
+          cageFiring: !!form.querySelector('.atk-talent-toggle[data-key="cageFiring"]')?.checked,
+        });
+        wideBurstNote.textContent = s.text;
+        wideBurstNote.classList.toggle("atk-wide-burst-idle", !s.applies);
+      };
+
       const updateTotal = () => {
+        refreshWideBurst();
         syncMaximalRange(form.querySelector("#atk-maximal")?.checked);
         const f = readAttackForm(form, ammoConds);
         // Стойка/База/Приём/Хват/Профиль меняются прямо в форме — заголовок и

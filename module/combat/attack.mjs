@@ -122,6 +122,7 @@ import { executionOfferHtml } from "./execution.mjs";
 import { shockerGrantsShocking, wallopConcussiveRating, sparksAvailable, welderMarksHit, irradiateMode,
   lensTuningShot, LENS_CHARGES_FLAG, litanyReliability, litanyCoversWeapon, LITANY_CLEANED_FLAG,
   weaponTechShot, WEAPON_TECH_SPENT_FLAG, igniterZone, IGNITER_NOTES } from "../rules/gunsmith-talents.mjs";
+import { WIDE_BURST_RATING_CUT, CAGE_FIRING_RATING_CUT } from "../rules/wide-burst.mjs";
 import { saturationFireCoverShots, sureShotApplies, sureShotDodgePenalty, cageFiringApplies, CAGE_FIRING_EVADE_COST, controlledBurstApplies, controlledBurstRof, eyeOfVengeanceBonus, eyeOfVengeanceAvailable, EYE_OF_VENGEANCE_FLAG, crackShotBonus, cripplingStrikeBonus, doubleTapActive, doubleTapLocation, doubleTapHits, onThisMarkActive, appliedPhysicsShift } from "../rules/gunner-talents.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
 import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
@@ -1122,7 +1123,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const cageFiring = cageFiringApplies(actor, { toggles, isMelee, rofMode, wideBurst });
   wp.evadeCost = cageFiring ? CAGE_FIRING_EVADE_COST : 1;
   const hitCountSys = wideBurst
-    ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - 2 - (cageFiring ? 3 : 0)) }
+    ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - WIDE_BURST_RATING_CUT - (cageFiring ? CAGE_FIRING_RATING_CUT : 0)) }
     : fanningSys;
   const wideBurstPenalty = wideBurst ? -20 : 0;
   // Верный Выстрел (rules/gunner-talents.mjs): после успешного одиночного выстрела 1 Очко Бесчестия —

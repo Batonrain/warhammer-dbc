@@ -1346,8 +1346,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const wideBurstAvailable = !isMelee && ((sys.rof_semi || 0) >= 3 || (sys.rof_full || 0) >= 3);
   const wideBurstHtml = wideBurstAvailable ? `
     <label class="attack-mod-check" title="Стр. 35: у выбранной Очереди (Короткой/Длинной, базовый RoF ≥3) RoF −2, расход патронов — по полному RoF, Уклонению цели от этой атаки −20.">
-      <input type="checkbox" id="atk-wide-burst"/> Широкая Очередь (RoF−2, Уклонение цели −20)
-    </label>` : "";
+      <input type="checkbox" id="atk-wide-burst" data-rof-semi="${Number(sys.rof_semi) || 0}" data-rof-full="${Number(sys.rof_full) || 0}"/> Широкая Очередь (RoF−2, Уклонение цели −20)
+    </label>
+    <div class="atk-wide-burst-text" id="atk-wide-burst-note" hidden></div>` : "";
   // Двойной Выстрел (Талант Стрелка, rules/gunner-talents.mjs): галочка рядом с
   // Широкой Очередью — тот же блок «Режим атаки», отдельной проводки в разметку нет.
   // По Этим Координатам (Талант Стрелка): галочка запирает Избирательную атаку и обнуляет Прицеливание.
