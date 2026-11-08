@@ -153,7 +153,7 @@ describe("реактивный триггер: враг входит в сект
   it("враг спереди в секторе 45° — предлагает карточку с кнопками режима", async () => {
     const weapon = weaponItem({ rof_semi: 6 });
     const shooter = fakeActor({ characteristics: { bs: { bonus: 5 } }, actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter" });
-    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 0, disposition: FRIENDLY, actor: shooter });
+    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 180, disposition: FRIENDLY, actor: shooter });
     const enemyActor = fakeActor({ characteristics: { ag: { total: 30 } }, uuid: "Actor.enemy", name: "Культист" });
     const enemyToken = token({ id: "e", x: 0, y: -5, rotation: 0, disposition: HOSTILE, actor: enemyActor, name: "Культист" });
     place(shooterToken, enemyToken);
@@ -177,7 +177,7 @@ describe("реактивный триггер: враг входит в сект
   it("перемещение вызвал другой клиент — карточку не постим (иначе она уйдёт с каждого)", async () => {
     const weapon = weaponItem({ rof_semi: 6 });
     const shooter = fakeActor({ characteristics: { bs: { bonus: 5 } }, actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter" });
-    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 0, disposition: FRIENDLY, actor: shooter });
+    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 180, disposition: FRIENDLY, actor: shooter });
     const enemyActor = fakeActor({ characteristics: { ag: { total: 30 } }, uuid: "Actor.enemy", name: "Культист" });
     const enemyToken = token({ id: "e", x: 0, y: -5, rotation: 0, disposition: HOSTILE, actor: enemyActor, name: "Культист" });
     place(shooterToken, enemyToken);
@@ -199,7 +199,7 @@ describe("реактивный триггер: враг входит в сект
   it("союзник входит в сектор — не предлагает", async () => {
     const weapon = weaponItem();
     const shooter = fakeActor({ characteristics: { bs: { bonus: 5 } }, actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter" });
-    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 0, disposition: FRIENDLY, actor: shooter });
+    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 180, disposition: FRIENDLY, actor: shooter });
     const allyActor = fakeActor({ uuid: "Actor.ally" });
     const allyToken = token({ id: "a", x: 0, y: -5, rotation: 0, disposition: FRIENDLY, actor: allyActor });
     place(shooterToken, allyToken);
@@ -220,7 +220,7 @@ describe("реактивный триггер: враг входит в сект
   it("та же цель дважды — не дублирует карточку", async () => {
     const weapon = weaponItem({ rof_semi: 6 });
     const shooter = fakeActor({ characteristics: { bs: { bonus: 5 } }, actionPoints: { value: 2, max: 2 }, items: [weapon], uuid: "Actor.shooter" });
-    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 0, disposition: FRIENDLY, actor: shooter });
+    const shooterToken = token({ id: "s", x: 0, y: 0, rotation: 180, disposition: FRIENDLY, actor: shooter });
     const enemyActor = fakeActor({ characteristics: { ag: { total: 30 } }, uuid: "Actor.enemy" });
     const enemyToken = token({ id: "e", x: 0, y: -5, rotation: 0, disposition: HOSTILE, actor: enemyActor });
     place(shooterToken, enemyToken);

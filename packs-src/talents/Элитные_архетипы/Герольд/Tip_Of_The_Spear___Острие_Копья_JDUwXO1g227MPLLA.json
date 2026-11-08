@@ -1,5 +1,5 @@
 {
-  "name": "Tip Of The Spear / Остриё Копья",
+  "name": "Tip Of The Spear / Острие Копья",
   "type": "talent",
   "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
   "folder": "M0OwNm1S3REYPPx7",
@@ -24,7 +24,7 @@
       "fearRating": 0,
       "speedMod": 0
     },
-    "bookSource": "Домашнее правило (не из официальной книги)"
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Герольд»)"
   },
   "_id": "JDUwXO1g227MPLLA",
   "effects": [],

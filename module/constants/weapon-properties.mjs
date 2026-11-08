@@ -422,7 +422,10 @@ export const WEAPON_PROPERTIES = {
   },
 
   linger: {
-    key: "linger", label: "Остаётся", en: "Linger", rating: true, rating2: true, cat: "ranged",
+    // ratingDice: X бывает кубиком — Linger (1d5) у Даров Одержимого «Демоническое
+    // Дыхание»/«Демоническая Артиллерия». Без текстового поля лист оружия показал бы
+    // «1d5» в числовом input пустым и при сохранении затёр бы рейтинг.
+    key: "linger", label: "Остаётся", en: "Linger", rating: true, ratingDice: true, rating2: true, cat: "ranged",
     desc: "Шаблоны взрыва/спрея остаются на поле боя на X раундов. Персонаж, впервые за ход входящий в шаблон или начинающий в нём ход, получает попадание.",
     reminder: "☁️ Остаётся (X): облако держится X раундов",
     auto: { linger: null }
@@ -430,7 +433,7 @@ export const WEAPON_PROPERTIES = {
 
   maximal: {
     key: "maximal", label: "Максимальное", en: "Maximal", rating: false, cat: "ranged",
-    desc: "Может быть активировано на максимальном режиме: +10 Rng, +1d10 урона, +2 Pen, получает Blast(2) и Recharge, удвоенный расход боеприпасов.",
+    desc: "Может быть активировано на максимальном режиме: +10 Rng, +1d10 урона, +2 Pen, +2 к радиусу свойства Blast (если оно у оружия есть) и свойство Recharge, удвоенный расход боеприпасов.",
     reminder: "⚡ Максимальное: усиленный режим (+урон/Pen/Rng, Recharge)",
     auto: { maximal: true }
   },

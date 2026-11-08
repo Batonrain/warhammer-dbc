@@ -32,8 +32,9 @@ import { moraleAutoPass } from "./morale-auto.mjs";
  * @param {string} [opts.char="wp"] — характеристика теста: машина без свободы
  *   воли проходит Страх и Шок на Int (стр. 53, «Страх и Машины»).
  * @param {boolean} [opts.radiantPresence] — галочка «видит/слышит союзника
- *   с Radiant Presence» (rules/leadership-talents.mjs) — решение стола,
- *   код просто передаёт её в ctx для источника «leadershipTalents».
+ *   с Radiant Presence» (rules/leadership-talents.mjs) — проставляется
+ *   по видимости токена или руками (combat/radiant-presence.mjs), код просто
+ *   передаёт её в ctx для источника «leadershipTalents».
  * @param {boolean} [opts.suppression] — это именно тест на Подавление (не
  *   Страх/Шок/Паника): едет в ctx как suppressionTest — область «suppression»
  *   правил (Стальные Нервы). Тест на ПРЕОДОЛЕНИЕ Подавления флаг не ставит.

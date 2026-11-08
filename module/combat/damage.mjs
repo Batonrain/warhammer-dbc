@@ -36,14 +36,22 @@ import { hasPugilistTalent, rollingWithPunchesBonus } from "../rules/pugilist-ta
 import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN_FLAG } from "../rules/resilience-talents.mjs";
 import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
+import { painIsPleasureOnDamage } from "./noise-marine.mjs";
+import { mortalShieldOnDamage } from "./dark-apostle.mjs";
+import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
+import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
+import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
 import { offerHardeningSpend } from "./ablative-hardening.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { takedownSection } from "./takedown.mjs";
 import { cleaveSection } from "./cleave.mjs";
+import { settleOneWillGoDownOnFelled } from "./one-will-go-down.mjs";
+import { haymakerSection } from "./pugilist-strikes.mjs";
 import { vampireSection } from "./psychic-vampire.mjs";
 import { hamstringSection } from "./hamstring.mjs";
 import { markLastChargeHit } from "./reaper-chain.mjs";
+import { markLastFinalExecutionHit } from "./final-execution.mjs";
 import { markMeleeDamageDealt, markMeleeDamageApplied } from "./tenacity.mjs";
 import { hollowBonesTb } from "../rules/hollow-bones.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
@@ -832,6 +840,9 @@ export async function applyDamageToActor(actor, damageData) {
     damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
   }
 
+  // Отвратная Физиология Чумного Десантника: Реакция + T+30 — урон от этого противника уменьшается на Успехи.
+  damageData = await abominableOnHit(actor, damageData);
+
   const {
     rawDamage,       // число — урон до поглощения
     penetration,     // число — бронепробитие
@@ -873,7 +884,10 @@ export async function applyDamageToActor(actor, damageData) {
     negWoundsBonus = 0, // Пробивной Удар (rules/gunner-talents.mjs): +N к урону, если Раны уйдут в минус
     hamstring = false,   // Подрезать Сухожилья (combat/hamstring.mjs): метка атаки — Избирательная в Ногу, не Быстрая/Молниеносная
     chargeBase = false,  // Жнец (combat/reaper-chain.mjs): удар проведён с Базой «Натиск»
+    finalExecution = false, // Окончательная Казнь (combat/final-execution.mjs): удар с вооружённым Талантом
     cleaveChild = false, // Разрубить (combat/cleave.mjs): это сама дополнительная атака Таланта — новых не порождает
+    oneWillGoDown = false, // Один Из Нас Падёт (combat/one-will-go-down.mjs): цель выведена из строя → 1 Усталости атакующему
+    haymaker = false,    // Тяжёлый Хук (combat/pugilist-strikes.mjs): попавшая цель проходит S+0 vs S+0 или Ничком — кнопка в карточке
     ignoreSubtypeImmunity = false, // Огонь Души (combat/soulfire.mjs): иммунитет к подвиду этого попадания не действует
     sourceMessageId = "" // карточка атаки, с которой пришёл урон — к ней привязан итог пробития (wdbc-x1nz.2.79)
   } = damageData;
@@ -1409,8 +1423,25 @@ export async function applyDamageToActor(actor, damageData) {
   const negBonus = negativeWoundsBonus({ net: netDamage, value: system.wounds?.value, bonus: negWoundsBonus });
   netDamage += negBonus;
 
+  // Смертный Инструмент (Тёмный Апостол, combat/dark-apostle.mjs): мистический щит Богов отражает один смертельный удар.
+  let mortalShieldNote = "";
+  if (netDamage > 0 && !stunManeuver) {
+    const shield = await mortalShieldOnDamage(actor, netDamage);
+    netDamage = shield.net;
+    mortalShieldNote = shield.note;
+  }
+
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
+
+  // Боль Это Наслаждение (Талант Шумового Десантника, combat/noise-marine.mjs): непоглощённый урон снимает
+  // 1 Усталости и даёт +10 на все тесты до конца следующего Хода (макс. +30).
+  const painNote = await painIsPleasureOnDamage(actor, netDamage);
+  // Чумной Десантник (combat/plague-marine.mjs): Жёлчный Плевок / Благословенный Гноем ставят метку
+  // «заражение в конце боя» на цель, Ходячая Пустошь носителя заражает поле боя.
+  const plagueNote = await plagueMarineOnDamage(actor, damageData, netDamage);
+  // Гвозди Мясника (Берсерк Кхорна, combat/khorne-berserker.mjs): непоглощённый урон — карточка «тест W+10 или Ярость».
+  const nailsNote = await butchersNailsOnDamage(actor, netDamage);
 
   // Электрическая регенерация (Электродуга Best.Q, wdbc-3hgd0): «Каждый раз,
   // когда персонаж получает E(El), он восстанавливает 1d10 ран» — решение
@@ -1434,8 +1465,12 @@ export async function applyDamageToActor(actor, damageData) {
   // ранении: «последнее» и есть то, от которого умерли.
   if (weaponUuid && netDamage > 0) {
     await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
+    // Закалённое в Крови (Берсерк Кхорна): рукопашное R-оружие нанесло урон — до конца боя его не выбить.
+    await temperedOnDamage(attackerUuid, weaponUuid, netDamage);
     // Жнец (combat/reaper-chain.mjs): был ли это рукопашный Натиск — решит setDeceased, когда смерть констатируют.
     await markLastChargeHit(actor, { melee, chargeBase, attackerUuid, targetTokenUuid: _targetTokenUuid(actor) });
+    // Окончательная Казнь: убийство в этом же Раунде даст убийце Страх (2) — решит setDeceased.
+    await markLastFinalExecutionHit(actor, { melee, finalExecution, attackerUuid });
   }
 
   // Обескровливание (wdbc-x1nz.2.92): без сознания от него — «пока он не
@@ -1587,7 +1622,7 @@ export async function applyDamageToActor(actor, damageData) {
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
   if (headGuard.note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(headGuard.note)}</div>`);
-  for (const note of [...hardeningNotes, hellishNote, eye.note, ...statusNotes]) {
+  for (const note of [...hardeningNotes, hellishNote, mortalShieldNote, eye.note, ...statusNotes]) {
     if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);
@@ -1614,6 +1649,9 @@ export async function applyDamageToActor(actor, damageData) {
 
   if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);
   if (electricRegenNote) propEffectNotes.push(electricRegenNote);
+  if (painNote) propEffectNotes.push(painNote);
+  if (plagueNote) propEffectNotes.push(plagueNote);
+  if (nailsNote) propEffectNotes.push(nailsNote);
   // Странная Неуязвимость (wdbc-1rno.24) — здесь, а не в propNotes: те видны
   // только у обычного поглощения, а срезанный урон от Варп-Оружия тоже
   // должен объясняться в карточке.
@@ -1720,6 +1758,10 @@ export async function applyDamageToActor(actor, damageData) {
   // сама книжная строка прямо утверждает смерть цели (не через
   // CONDITIONS_DEF — deathButtonHtml читает flags.warhammer-dbc.deceased).
   const critPills = critEffect ? parseCritEffectPills(critEffect) : [];
+  // Окрась Всё в Красный (Берсерк Кхорна): Критические Эффекты этого оружия всегда наносят Кровотечение.
+  if (critEffect && paintItRedNeedsBleedPill(critPills) && await paintItRedBleeds(attackerUuid, weaponUuid)) {
+    critPills.push({ key: "bleeding", formula: null });
+  }
   const critLine = gotCritical ? `
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
@@ -1769,6 +1811,13 @@ export async function applyDamageToActor(actor, damageData) {
     woundsBefore: currentWounds, woundsAfter: newWounds, targetName: actor.name
   });
 
+  // Один Из Нас Падёт: удар вывел цель из строя (Раны были > 0, стали ≤ 0 — как у Разрубить) — цена Таланта 1 Усталости
+  // засчитывается сама, если атакующего этот клиент может менять; иначе остаётся кнопка на карточке атаки.
+  // Тяжёлый Хук: «если цель получила попадание» — урон применён; встречный тест S+0 vs S+0, иначе Ничком (цель уже лежит — нечего).
+  const haymakerBtn = (haymaker && melee) ? haymakerSection({ attackerUuid, targetActor: actor, sourceMessageId }) : "";
+  const owgdNote = (oneWillGoDown && attackerUuid && (Number(currentWounds) || 0) > 0 && (Number(newWounds) || 0) <= 0)
+    ? await settleOneWillGoDownOnFelled({ attackerUuid, sourceMessageId }) : "";
+
   // Психический Вампир (Талант Псайканы, combat/psychic-vampire.mjs): психическая атака вывела цель из строя —
   // кнопка «поглотить душу» (W+0, лечение 1d5 Ран или вся Усталость, доза «наркотика»).
   const vampireBtn = await vampireSection({
@@ -1817,6 +1866,8 @@ export async function applyDamageToActor(actor, damageData) {
       throughShotBtn,
       takedownBtn,
       cleaveBtn,
+      owgdNote,
+      haymakerBtn,
       vampireBtn,
       hamstringBtn,
       reaperSection,

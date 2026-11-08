@@ -1737,6 +1737,65 @@ describe("Хват дальнобойного: 6 отложенных потре
       expect(captured.dialog.content).not.toContain('id="atk-sight"');
     });
 
+    // Лазерный Прицел (Sahara 10, п.1): «+10 на одиночные выстрелы» — к попаданию в пилюле режима.
+    it("Лазерный Прицел: пилюля Одиночного выстрела +10 сверх обычных +10, без Прицеливания тоже", () => {
+      const rifle = weaponFor({ rof_single: 1, rof_semi: 3, rof_full: 6 });
+      const mod = sightOn(rifle.id, "s1", "Laser Sight / Лазерный Прицел", { rofSingleAttackMod: 10 });
+      showAttackDialog(attacker({ items: [rifle, mod], aiming: "none" }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toMatch(/value="single" data-bonus="20"/);
+      expect(html).toMatch(/value="semi" data-bonus="0"/);
+    });
+
+    // Омни-Прицел (task-e683): «комбинирует эффекты всех остальных прицелов» — своих чисел в моде нет,
+    // они приходят из module/rules/sight-effects.mjs.
+    it("Омни-Прицел: +5 Коллиматорного при Прицеливании, без Прицеливания — нет", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "reliable" }] });
+      const omni = sightOn(rifle.id, "s1", "Omni-Sight / Омни-Прицел", {});
+      const p = showAttackDialog(attacker({ items: [rifle, omni], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      captured.dice = [96];
+      await pressRoll(p);
+      // 45 BS + 10 (Прицеливание) + 5 (Коллиматорный через Омни) = 60.
+      expect(thresholdInCard()).toBe(60);
+      resetCaptured();
+      showAttackDialog(attacker({ items: [rifle, omni], aiming: "none" }), rifle);
+      expect(captured.dialog.content).not.toContain("Прицел (пока Прицеливаюсь)");
+    });
+
+    it("Омни-Прицел: гасит −20 «Цель Бежит» при Прицеливании (как Предсказатель Движения), без него — нет", () => {
+      const rifle = weaponFor();
+      const omni = sightOn(rifle.id, "s1", "Omni-Sight / Омни-Прицел", {});
+      setTargets([runnerTarget()]);
+      showAttackDialog(attacker({ items: [rifle, omni], aiming: "half" }), rifle);
+      expect(captured.dialog.content).toContain("Цель Бежит (−20, погашено)");
+      resetCaptured();
+      setTargets([runnerTarget()]);
+      showAttackDialog(attacker({ items: [rifle, omni], aiming: "none" }), rifle);
+      expect(captured.dialog.content).toContain("Цель Бежит (−20)");
+    });
+
+    it("Омни-Прицел: пилюли режимов огня получают +10 одиночному, +5 короткой, +10 длинной", () => {
+      const rifle = weaponFor({ rof_single: 1, rof_semi: 3, rof_full: 6 });
+      const omni = sightOn(rifle.id, "s1", "Omni-Sight / Омни-Прицел", {});
+      showAttackDialog(attacker({ items: [rifle, omni] }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toMatch(/value="single" data-bonus="20"/);
+      expect(html).toMatch(/value="semi" data-bonus="5"/);
+      expect(html).toMatch(/value="full" data-bonus="0"/);
+    });
+
+    it("Омни-Прицел вместе с Коллиматорным: бонусы не складываются (+5, а не +10)", async () => {
+      const rifle = weaponFor({ weaponProps: [{ key: "reliable" }] }, { flags: { "warhammer-dbc.hudSight": "s2" } });
+      const coll = sightOn(rifle.id, "s1", "Collimator Sight / Коллиматорный Прицел", { aimAttackMod: 5 });
+      const omni = sightOn(rifle.id, "s2", "Omni-Sight / Омни-Прицел", {});
+      const p = showAttackDialog(attacker({ items: [rifle, coll, omni], aiming: "half",
+        characteristics: { bs: char(45) } }), rifle);
+      captured.dice = [96];
+      await pressRoll(p);
+      expect(thresholdInCard()).toBe(60);   // 45 + 10 + 5, а не +10
+    });
+
     it("Предсказатель Движения: рукопашная — бонус +20 цели-бегуна не задет", () => {
       const sword = weaponFor({ weaponClass: "melee" });
       const mod = modOn(sword.id, { aimIgnoresRunning: true });

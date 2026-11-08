@@ -117,6 +117,28 @@ export function resolvePropRating(rating, prValue, { deg, rollData, x } = {}) {
   return mechFormulaTotalSafe(withSuccesses, { ...rollData, pr: prValue });
 }
 
+/** Рейтинг — кубик («1d5», «2d10»), а не число. */
+export function isDiceRating(r) {
+  return typeof r === "string" && /^\s*\d*d\d+\s*$/i.test(r);
+}
+
+/** У оружия есть зона «Остаётся»: число раундов больше нуля или кубик длительности. */
+export function hasLinger(wp) {
+  const r = wp?.lingerRating;
+  return isDiceRating(r) || Number(r) > 0;
+}
+
+/**
+ * Длительность зоны «Остаётся» в раундах. Число отдаётся как есть, кубик
+ * («1d5») бросается ОДИН раз при размещении зоны — `roll(formula)` отдаёт
+ * итог броска (в hooks.mjs он же пишет бросок в чат, чтобы игрок видел, сколько
+ * раундов выпало). Пусто, 0 и мусор — 0, то есть зоны нет.
+ */
+export async function resolveLingerRounds(spec, roll) {
+  if (isDiceRating(spec)) return Math.max(0, Math.trunc(Number(await roll(String(spec).trim())) || 0));
+  return Math.max(0, Math.trunc(Number(spec) || 0));
+}
+
 /** Резолвит rating/rating2 у всего списка свойств (см. resolvePropRating). */
 export function resolvePropRatings(list, prValue, extra = {}) {
   return (list ?? []).map(p => ({
@@ -280,7 +302,12 @@ export function aggregateAuto(props) {
     if (au.recoil !== undefined)      a.recoilRating     = Math.max(a.recoilRating, r);
     if (au.smoke !== undefined)       a.smokeRating      = Math.max(a.smokeRating, r);
     if (au.linger !== undefined) {
-      a.lingerRating = Math.max(a.lingerRating, r);
+      // Linger (1d5) — длительность зоны кубиком (Дары Одержимого «Демоническое
+      // Дыхание»/«Демоническая Артиллерия»). Кубик остаётся строкой до самого
+      // размещения зоны (resolveLingerRounds в hooks.mjs бросает его там);
+      // Math.max со строкой «1d5» дал бы NaN и молча убил бы зону.
+      if (isDiceRating(r)) a.lingerRating = String(r).trim();
+      else if (typeof a.lingerRating !== "string") a.lingerRating = Math.max(a.lingerRating, r);
       a.lingerDrift  = Math.max(a.lingerDrift, p.rating2 || 0);
     }
     if (au.arc !== undefined) {
@@ -426,11 +453,32 @@ function fillRating(text, p) {
   return t;
 }
 
+/**
+ * Подпись Надёжного с фактическим порогом клина: режимы Настройки Мощности,
+ * качество и Таланты двигают Надёжность, а текст свойства о них не знает.
+ * jamAt — результат jamThreshold(wp): число (клин с N) или null (не клинит).
+ */
+function reliableNote(p, jamAt) {
+  if (jamAt === undefined || p.def.key !== "reliable") return null;
+  if (jamAt === null) return "Надёжное: не заклинивает";
+  if (jamAt >= 100) return null;
+  return `Надёжное: заклинивает на ${jamAt}+`;
+}
+
+/**
+ * Убирает из списка для показа Примитивное, которое расчёт уже снял
+ * (Безоружный Мастер, качество Высшее): иначе карточка велит удваивать броню.
+ */
+export function visibleWeaponProps(props, wp) {
+  if (wp?.primitive) return props;
+  return props.filter(p => !p.def.auto?.primitive);
+}
+
 /** Блок «Свойства оружия» для сообщения о броске. */
-export function buildPropertyChatBlock(props) {
+export function buildPropertyChatBlock(props, { jamAt } = {}) {
   if (!props.length) return "";
   const lines = props.map(p => {
-    const txt = fillRating(p.def.reminder || p.def.label, p);
+    const txt = reliableNote(p, jamAt) ?? fillRating(p.def.reminder || p.def.label, p);
     return `<div class="roll-wprop">${txt}</div>`;
   }).join("");
   // Свёрнуто по умолчанию: напоминалки по свойствам занимают половину карточки,

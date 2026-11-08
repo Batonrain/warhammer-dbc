@@ -5,7 +5,7 @@
   "folder": "PSwZVHanAWF9Yjjy",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано (Sahara 1-54b9). Кнопка вкладки БОЙ (combat/dark-apostle.mjs::useTruePrayer): работает только в бою, списывает полудействие, тест Forbidden Lore (Heresy)+0 с модификаторами; при успехе Очко Бесчестия возвращается (не выше максимума).",
     "benefit": "Когда произносит молитвы, по ту сторону Завесы их слышат. Может потратить полудействие, чтобы пройти тест For.Lore(Heresy)+0 и восстановить одно ранее потраченное Очко Бесчестия. Работает только в бою.",
     "tier": 1,
     "requirement": "Forbidden Lore (Heresy)+10",
@@ -24,7 +24,7 @@
       "fearRating": 0,
       "speedMod": 0
     },
-    "bookSource": "Домашнее правило (не из официальной книги)"
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Тёмный Апостол»)"
   },
   "_id": "ycZ1I5WtPWl18PUA",
   "effects": [],
@@ -35,7 +35,27 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "XQdBlwwSnOfmsvmv",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "zLouJQrJ5GHUO2HG",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "ability.truePrayer",
+              "label": "Истинная Молитва: полудействие, For.Lore (Heresy)+0 — восстановить одно потраченное Очко Бесчестия (только в бою)",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

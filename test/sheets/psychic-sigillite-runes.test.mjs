@@ -254,6 +254,36 @@ describe("Психотест — режим и Феномены Пути", () =>
   });
 });
 
+// ── wdbc-b8n4f: «считается Best.Q Психофокусом на все дисциплины» ────────────
+// Тест Психофокуса идёт при W 40: бросок 30 — успех, 44 — крит. провал (дубль).
+describe("Психофокус Пути «Руны Сигиллитов» — Best.Q без предмета (wdbc-b8n4f)", () => {
+  it("успех: +10 и ещё +5 резонанса на любой Дисциплине, причина видна в карточке", async () => {
+    const a = actor({ sigillite: true, runes: 20 });
+    captured.nextRoll = 30;
+    await executePsychotest(a, power({ prRequired: 1, discipline: "telekinesis" }), { ...base, path: "sigillite" });
+    expect(captured.chat[0].content).toContain("успех, +15");
+    expect(captured.chat[0].content).toContain("+5 резонанс");
+    expect(captured.chat[0].content).toContain("Руны Сигиллитов");
+  });
+
+  it("крит. провал Психофокуса не даёт −10: штраф игнорируется", async () => {
+    const a = actor({ sigillite: true, runes: 20 });
+    captured.nextRoll = 44;
+    await executePsychotest(a, power({ prRequired: 1 }), { ...base, path: "sigillite" });
+    expect(captured.chat[0].content).toContain("крит. провал, без бонуса");
+    expect(captured.chat[0].content).not.toContain("крит. провал, -10");
+    expect(captured.chat[0].content).toContain("штраф крит. провала игнорируется");
+  });
+
+  it("у Пути «Психофокус» без предмета крит. провал по-прежнему −10", async () => {
+    const a = actor({ sigillite: true, runes: 20 });
+    captured.nextRoll = 44;
+    await executePsychotest(a, power({ prRequired: 1 }), { ...base, path: "psychofocus" });
+    expect(captured.chat[0].content).toContain("крит. провал, -10");
+    expect(captured.chat[0].content).not.toContain("штраф крит. провала игнорируется");
+  });
+});
+
 // ── wdbc-qd6w: сочетание Инкантации/Медитации/Нечестивых Символов ────────────
 // Книга (стр. 101-102): «Этот путь может использовать механику ВСЕХ следующих
 // путей ОДНОВРЕМЕННО (необязательно все сразу, псайкер может определять

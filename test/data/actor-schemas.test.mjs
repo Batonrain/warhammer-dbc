@@ -313,6 +313,9 @@ const DEVIATIONS = {
     // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от
     // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
     incomingDamageReduction: 0,
+    // Временная прибавка к числу рук от эффекта (Временный модификатор,
+    // rules/hands.mjs) — заведено гораздо позже template.json.
+    extraHands: 0,
     // Высота полёта (стр. 30, wdbc-n1cy) — состояние Хода, заведено гораздо
     // позже template.json, тем же приёмом, что mount.speed. Дефолт "landed"
     // ("не летит"), не "ground" (wdbc-x1nz.2.16, живой тест) — свежий актор

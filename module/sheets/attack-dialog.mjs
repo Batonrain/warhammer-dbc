@@ -31,14 +31,19 @@ import { buildSelection } from "./attack/selection.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
 import { ironGardenQuality }                  from "../rules/iron-garden.mjs";
+import { hasInfiniteMagazine }               from "../rules/ammo-free.mjs";
+import { tracksMagazine }                    from "../rules/no-magazine.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
-import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
+import { resolveWeaponPropsList, aggregateAuto, visibleWeaponProps } from "../combat/weapon-properties.mjs";
 import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
-import { unstablePlatformPenalty }            from "../rules/damage-talents.mjs";
+import { volleyThrowApplies, VOLLEY_ROF_MIN, VOLLEY_ROF_MAX } from "../rules/throwing-talents.mjs";
+import { sightEffectsOf }                     from "../rules/sight-effects.mjs";
+import { unstablePlatformPenalty, plasmaMasteryBlastChoice } from "../rules/damage-talents.mjs";
+import { MAXIMAL_RNG_BONUS }                  from "../rules/maximal-mode.mjs";
 import { RIPOSTE_EVASION_PENALTY, stockGripActive } from "../rules/melee-talents.mjs";
 import { weaponIsBound } from "../combat/blade-binding.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
@@ -67,10 +72,11 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
+import { markedPreyActive } from "../combat/marked-prey.mjs";
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
-import { weaponProfiles, attackIsMelee, sysWithProfileFire } from "../combat/weapon-profiles.mjs";
+import { weaponProfiles, attackIsMelee, sysWithProfileFire, sysWithMeleeProfileReach } from "../combat/weapon-profiles.mjs";
 import { conductiveMeleeOf } from "../rules/conductive.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
@@ -85,7 +91,7 @@ import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
 import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { runtForbidsOneHand } from "../rules/runt.mjs";
 import { stunForcedAim } from "../rules/takedown.mjs";
-import { fistBalanceBonus, headcrackerHeadReduction, headCalledShotPenalty } from "../rules/pugilist-talents.mjs";
+import { fistBalanceBonus, headcrackerHeadReduction, headCalledShotPenalty, goadingStrikePenalty, unarmedLosesPrimitive } from "../rules/pugilist-talents.mjs";
 import { talentTogglesHtml } from "./attack/talent-toggles.mjs";
 import { lensTuningAvailable, LENS_CHARGES_FLAG } from "../rules/gunsmith-talents.mjs";
 import { COVERING_FIRE_PENALTY } from "../rules/gunner-talents.mjs";
@@ -171,6 +177,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // окно (attack/dialog.mjs, reopenWithProfile) — вся сборка ниже считается
   // один раз от этих полей.
   sys = sysWithProfileFire(sys, startProfile);
+  sys = sysWithMeleeProfileReach(sys, startProfile);
 
   // Вид теста фиксируется на ВХОДЕ в окно и внутри него не меняется: от него
   // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
@@ -276,7 +283,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // system.*, из-за чего Pistol Grip и Secondary Grip не работали вовсе:
   // DataModel плоское поле отбрасывает, так что у реальных модов там всегда
   // undefined (wdbc-xwe0).
-  const modFxOf = m => m.system?.effects || {};
+  // Омни-Прицел «комбинирует эффекты всех остальных прицелов» (rules/sight-effects.mjs):
+  // для него поля дополнены, для прочих модов — собственные system.effects.
+  const modFxOf = sightEffectsOf;
   const modGrantedGrips = installedMods.map(m => modFxOf(m).grantsGrip).filter(Boolean);
   const commandoGrip    = (!isMelee && wp.carbine && hasRuleFlag(actor, "weapon.commandoCarbine")) ? "1р" : null;
   const doubleGripGrip  = (!isMelee && sys.weaponClass === "pistol" && hasRuleFlag(actor, "weapon.doubleGripPistol")) ? "2р" : null;
@@ -342,12 +351,21 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Прицеливания именно в этом режиме броска.
   // Без exclude: revolver сам уже сидит в handHeldItems (равно, если экипирован) —
   // нужна ЛИШНЯЯ свободная рука сверх той, что держит сам револьвер.
-  const fanningActive = !isMelee && wp.revolver && gripKey === "1р"
+  const fanningRevolver = !isMelee && wp.revolver && gripKey === "1р"
     && hasRuleFlag(actor, "weapon.fanningRevolver")
     && handsOccupied(actor).free >= 1;
+  // Залповый Бросок (rules/throwing-talents.mjs, Sahara 3-8318): метательный нож/флешета — тот же режим, что у Быстрого Курка:
+  // Длинная очередь +0 вместо −10, RoF 2..4 по выбору, без бонуса Прицеливания. Механика выбора RoF и обнуления Прицеливания
+  // общая, поэтому разделяет флаг fanningActive (подписи полей различаются — fanningRofLabel).
+  const volleyActive = !isMelee && volleyThrowApplies(actor, sys);
+  const fanningActive = fanningRevolver || volleyActive;
   const bsBonus = actor.system.characteristics?.bs?.bonus ?? 0;
-  // Потолок выбора — не меньше 2 (текст Таланта), даже если BS.b мал.
-  const fanningRofMax = Math.max(2, bsBonus);
+  // Потолок выбора — не меньше 2 (текст Таланта), даже если BS.b мал; у Залпового Броска — 4.
+  const fanningRofMax = fanningRevolver ? Math.max(2, bsBonus) : VOLLEY_ROF_MAX;
+  const fanningRofLabel = fanningRevolver ? "Быстрый Курок: RoF Длинной очереди" : "Залповый Бросок: сколько метнуть";
+  const fanningRofHint = fanningRevolver
+    ? `2..BS.b (${fanningRofMax}) по выбору — заменяет фиксированный RoF револьвера в режиме Длинной очереди. Без бонуса Прицеливания.`
+    : `2..${VOLLEY_ROF_MAX} по выбору — режим Длинной очереди для метательных ножей и флешет без штрафа −10. Без бонуса Прицеливания.`;
 
   // Качество: рукопашное даёт мод на тесты с оружием (Poor −10 / Good +5 / Best +10)
   // Железный Сад: группа одноимённых дендритов бьёт по наименьшему Качеству.
@@ -459,7 +477,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     autoMods: (resolvedAttack.autoMods || []).filter(m =>
       String(m.ruleId ?? "").startsWith("command.") || m.ruleId === "situational.shock"
       // Пассажир верхом: «−10 на все физические действия» — атака тоже (rules/mount.mjs::passengerTestMod)
-      || m.ruleId === "situational.passenger")
+      || m.ruleId === "situational.passenger"
+      // Скакун под меткой Драконьего Рыцаря: +3×Успехи на все Атаки (rules/dragon-knight.mjs)
+      || m.ruleId === "situational.dragonKnight")
   });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -473,9 +493,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Один Против Сотни (wdbc-u0by): авто-обнаружение, не чекбокс — цель Орда
   // проверяется программно (game.user.targets), самоотчёт тут не нужен.
   const oneVsHundred = oneAgainstAHundredAdvantage(actor, attackCtx.targetActor?.type === "horde");
-  const oneVsHundredHtml = oneVsHundred
-    ? `<div class="roll-defense-note">⚔️ Один Против Сотни: Преимущество на атаку (цель — Орда)</div>`
+  // Та же строка-заметка служит и Отмеченной Добыче (combat/marked-prey.mjs): Преимущество на атаки Казни по
+  // отмеченной цели; применимость к хвату/оружию проверяет бросок (sheets/attack/dialog.mjs), строка — только памятка.
+  const markedPreyNote = (isMelee && markedPreyActive(actor, attackCtx.targetActor))
+    ? `<div class="roll-defense-note">🎯 Отмеченная Добыча: Преимущество на атаки Казни по этой цели (двуручное оружие, двуручный хват)</div>`
     : "";
+  const oneVsHundredHtml = (oneVsHundred
+    ? `<div class="roll-defense-note">⚔️ Один Против Сотни: Преимущество на атаку (цель — Орда)</div>`
+    : "") + markedPreyNote;
 
   // Стойка цели (стр. 15, Защитная/Прикрывающая) меняет ЧУЖИЕ атаки против
   // неё — читается с targetActor, а не с атакующего, и складывается прямо в
@@ -663,6 +688,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   }
   const wantShortBox = !isMelee && (wp.meltaShort || wp.scatter);
   const wantMaximal  = !isMelee && wp.maximal;
+  // Мастерство Плазмы: радиус Взрыва в Максимальном режиме — выбор стрелка (rules/damage-talents.mjs).
+  const masteryBlastChoice = plasmaMasteryBlastChoice(actor, { isMelee, sys, maximalAvailable: wp.maximal });
 
   // Стойка/База — персистентны на акторе, стартовые значения для resolveSelection
   // ниже (выбор в этом диалоге может их поменять — см. кнопку «Бросок!»).
@@ -877,14 +904,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       const semiBonus = impulseBonus + hipFireSemi + dgSemi + modSemi;
       rofModes.push({ value: "semi", label: `Короткая очередь (${fmtMod(semiBonus)}${impulseHint}${extraHint(hipFireSemi, dgSemi)}${modHint(modSemi)}, ${sys.rof_semi} выстр.)`, bonus: semiBonus });
     }
-    if (sys.rof_full > 0) {
+    if (sys.rof_full > 0 || volleyActive) {
       // Fanning / Быстрый Курок (wdbc-fy33, стр. 39): револьвер "1р" со
       // свободной второй рукой — Длинная очередь БЕЗ обычного штрафа −10,
       // вместо обычного расчёта (RoF 2..BS.b по выбору не смоделирован).
       // Бонус модификации (Целеуказатель) — свойство самого оружия, а не
       // обычного расчёта очереди, поэтому остаётся и при Быстром Курке.
       const fullBonus = (fanningActive ? 0 : (impulseBonus - 10 + hipFireFull + dgFull)) + modFull;
-      const label = fanningActive
+      const label = volleyActive
+        ? `Залповый Бросок (${fmtMod(fullBonus)}${modHint(modFull)}, ${VOLLEY_ROF_MIN}..${VOLLEY_ROF_MAX} ножей по выбору, без бонуса Прицеливания)`
+        : fanningActive
         ? `Длинная очередь — Быстрый Курок (${fmtMod(fullBonus)}${modHint(modFull)}, RoF 2..BS.b по выбору, без бонуса Прицеливания)`
         : `Длинная очередь (${fmtMod(fullBonus)}${impulseHint}${extraHint(hipFireFull, dgFull)}${modHint(modFull)}, ${sys.rof_full} выстр.)`;
       rofModes.push({ value: "full", label, bonus: fullBonus });
@@ -1047,8 +1076,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // паковое число, а живой расчёт от броска атакующего; Pistol Grip и
   // подобные моды дальности метательному не полагаются (gripRangeMult не
   // умножает эту ветку).
+  // Бросок на Бегу (Талант Метания, techniqueOpts.freeShot === "runningThrow"): Rng уменьшается до S.b×2.
   const gripRange = sys.weaponClass === "thrown"
-    ? sBonus * 3
+    ? sBonus * (techniqueOpts.freeShot === "runningThrow" ? 2 : 3)
     : Math.round((Number(sys.range) || 0) * gripRangeMult);
 
   let rangeInfoHtml = "";
@@ -1057,28 +1087,41 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const rngMult = ammoSys?.rangeMultiplier ?? 1;
     const rngAdd  = ammoSys?.rangeMod ?? 0;
     const effRng  = Math.round(rng * rngMult) + rngAdd;
-    const bounds  = rangeBandBoundaries(effRng);
     // У короткоствольного оружия (Rng ≤ 6) «короткая»/«боевая» вырождены упором
     // (см. rangeBandBoundaries) — их границы совпадают, строку не показываем,
     // иначе игрок увидит бессмысленное "Короткая: 3–3м".
-    const zones = [
-      { cls: "atr-pb", label: "В упор",   mod: "+30", lo: 0.5,            hi: bounds.pointBlank },
-      { cls: "atr-sh", label: "Короткая", mod: "+10", lo: bounds.pointBlank, hi: bounds.short },
-      { cls: "atr-cb", label: "Боевая",   mod: "±0",  lo: bounds.short,      hi: bounds.combat },
-      { cls: "atr-lg", label: "Дальняя",  mod: "−10", lo: bounds.combat,     hi: bounds.long },
-      { cls: "atr-ex", label: "Экстрем.", mod: "−30", lo: bounds.long,       hi: bounds.extreme }
-    ].filter(z => z.hi > z.lo);
-    const zonesHtml = zones
-      .map(z => `<span class="atr-zone ${z.cls}">${z.label}: ${z.lo}–${z.hi}м → <b>${z.mod}</b></span>`)
-      .join("\n          ");
+    const zonesFor = eff => {
+      const bounds = rangeBandBoundaries(eff);
+      return [
+        { cls: "atr-pb", label: "В упор",   mod: "+30", lo: 0.5,            hi: bounds.pointBlank },
+        { cls: "atr-sh", label: "Короткая", mod: "+10", lo: bounds.pointBlank, hi: bounds.short },
+        { cls: "atr-cb", label: "Боевая",   mod: "±0",  lo: bounds.short,      hi: bounds.combat },
+        { cls: "atr-lg", label: "Дальняя",  mod: "−10", lo: bounds.combat,     hi: bounds.long },
+        { cls: "atr-ex", label: "Экстрем.", mod: "−30", lo: bounds.long,       hi: bounds.extreme }
+      ].filter(z => z.hi > z.lo)
+        .map(z => `<span class="atr-zone ${z.cls}">${z.label}: ${z.lo}–${z.hi}м → <b>${z.mod}</b></span>`)
+        .join("\n          ");
+    };
+    const zonesHtml = zonesFor(effRng);
+    // Максимальный режим: +10 Rng (rules/maximal-mode.mjs) — второй вариант сетки, окно переключает видимость
+    // вместе с галочкой (attack/dialog.mjs::syncMaximalRange).
+    const maximalRngHtml = wantMaximal ? `
+        <div class="atk-range-maximal" hidden>
+          <div class="atk-range-title">⚡ Максимальный режим: Rng +${MAXIMAL_RNG_BONUS}м = ${effRng + MAXIMAL_RNG_BONUS}м</div>
+          <div class="atk-range-grid">
+            ${zonesFor(effRng + MAXIMAL_RNG_BONUS)}
+          </div>
+        </div>` : "";
     rangeInfoHtml = `
       <div class="atk-range-info">
-        <div class="atk-range-title">
-          📏 Дистанции (Rng = ${rng}м${rngMult !== 1 ? ` ×${rngMult}` : ""}${rngAdd !== 0 ? ` ${rngAdd >= 0 ? "+" : ""}${rngAdd}м` : ""} = ${effRng}м)
-        </div>
-        <div class="atk-range-grid">
-          ${zonesHtml}
-        </div>
+        <div class="atk-range-normal">
+          <div class="atk-range-title">
+            📏 Дистанции (Rng = ${rng}м${rngMult !== 1 ? ` ×${rngMult}` : ""}${rngAdd !== 0 ? ` ${rngAdd >= 0 ? "+" : ""}${rngAdd}м` : ""} = ${effRng}м)
+          </div>
+          <div class="atk-range-grid">
+            ${zonesHtml}
+          </div>
+        </div>${maximalRngHtml}
         <div class="atk-range-note" style="font-size:0.82em;opacity:0.8;">В ближнем бою — дистанция в упор, но модификатор ±0.</div>
       </div>`;
   }
@@ -1087,7 +1130,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (!isMelee) {
     const magCur   = sys.magazineCur || 0;
     const magMax   = sys.magazineMax || 0;
-    const magCls   = magCur === 0 ? "ammo-empty"
+    const magInf   = hasInfiniteMagazine(item);
+    const magNone  = !magInf && !tracksMagazine({ system: sys });
+    const magCls   = magInf || magNone ? ""
+      : magCur === 0 ? "ammo-empty"
       : magCur <= Math.ceil(magMax * 0.25) ? "ammo-low" : "";
     const ammoMods = loadedAmmo ? _buildAmmoModString(ammoSys) : "";
     ammoDialogHtml = `
@@ -1095,7 +1141,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <span class="atk-ammo-label">${rollIcon("spark","#8fd0ff")}Боеприпасы:</span>
         <span class="atk-ammo-name">${loadedAmmo ? esc(loadedAmmo.name) : "стандартные"}</span>
         ${ammoMods ? `<span class="atk-ammo-mods">(${ammoMods})</span>` : ""}
-        <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magCur}/${magMax}</b></span>
+        <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magInf ? "∞" : magNone ? "—" : `${magCur}/${magMax}`}</b></span>
       </div>`;
   }
 
@@ -1143,6 +1189,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}"${isLocked ? ' title="Распознано автоматически — снять нельзя"' : ""}>
       <input type="checkbox" class="atk-mod-cb"
              ${m.id ? `id="${m.id}"` : ""}
+             ${m.band ? `data-band="${m.band}"` : ""}
              data-value="${(isAF || isAS) ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
              ${isAS    ? 'data-autosuccess="true"' : ""}
@@ -1190,7 +1237,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     : "";
 
   // Свойства оружия — напоминание + чекбокс короткой дистанции + перезарядка
-  const wpDialogList = wProps.map(p => {
+  const primitiveLost = unarmedLosesPrimitive(actor, item)
+    || !!qualityEffects(item, ironGardenQuality(actor, item)).auto.losesPrimitive;
+  const wpShown = visibleWeaponProps(wProps, { primitive: wp.primitive && !primitiveLost });
+  const wpDialogList = wpShown.map(p => {
     // wdbc-cy4z: показываем «/Y» только когда у ЭТОГО предмета реально задан
     // rating2 (p.rating2), а не когда свойство лишь СПОСОБНО его нести
     // (p.def.rating2) — Toxic/Haywire теперь тоже умеют rating2 (нестандартный
@@ -1221,7 +1271,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="atk-wprops-list">${weaponTraining.parts
         .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
     </div>` : "";
-  const wpDialogHtml = (wProps.length ? `
+  const wpDialogHtml = (wpShown.length ? `
     <div class="atk-dlg-modifiers">
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
@@ -1260,7 +1310,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     </label>` : "";
   const distanceHintHtml = measured ? `
     <div class="atk-distance-hint">${rollIcon("target","#8fd0ff")}Измеренная дистанция: ${measured.edgeM} м${gripRange ? ` (Дальность оружия: ${gripRange} м${gripRangeMult !== 1 ? ` — ×${gripRangeMult} на этом Хвате, база ${sys.range} м` : ""})` : ""}</div>${bandKey === "out" ? `
-    <div class="atk-recharge-warn">${rollIcon("warn","#ff6b6b")}Цель вне дальности: ${measured.edgeM} м при максимуме ${gripRange * 3} м (3×Rng)</div>` : ""}` : "";
+    <div class="atk-recharge-warn" id="atk-out-of-range">${rollIcon("warn","#ff6b6b")}Цель вне дальности: ${measured.edgeM} м при максимуме ${gripRange * 3} м (3×Rng)</div>` : ""}` : "";
   // Выключенное оружие (стр. 209-211): цепное/шоковое/силовое можно погасить
   // свободным действием, и полем Haywire — принудительно.
   const OFF_HINT = { chain: "−2 урона, −1 Проб., без Рвущего",
@@ -1278,8 +1328,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const maximalHtml = wantMaximal ? `
     <label class="attack-mod-check">
       <input type="checkbox" id="atk-maximal"/>
-      <span>${rollIcon("bolt","#ffb84d")}Максимальный режим (+1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка)</span>
-    </label>` : "";
+      <span>${rollIcon("bolt","#ffb84d")}Максимальный режим (+10 Rng, +1d10 урона, +2 Проб., +2 к радиусу Взрыва, если он есть, ×2 расход, Перезарядка)</span>
+    </label>${masteryBlastChoice ? `
+    <label class="attack-mod-check" title="Мастерство Плазмы: в Максимальном режиме можно дать оружию ещё +2 к радиусу Взрыва; если Взрыва у оружия нет — оружие получает Взрыв (2), без надбавок Максимального режима и Таланта.">
+      <input type="checkbox" id="atk-plasma-blast"/>
+      <span>${rollIcon("bolt","#ffb84d")}Мастерство Плазмы: ${(Number(wp.blastRating) || 0) > 0 ? "+2 к радиусу Взрыва" : "Взрыв (2)"} (только в Максимальном режиме)</span>
+    </label>` : ""}` : "";
   const rechargeWarnHtml = (!isMelee && sys.needsRecharge)
     ? `<div class="atk-recharge-warn">${rollIcon("bolt","#6fe6ff")}Оружие на подзарядке — стрельба раз в 2 хода.</div>`
     : "";
@@ -1302,8 +1356,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const wideBurstAvailable = !isMelee && ((sys.rof_semi || 0) >= 3 || (sys.rof_full || 0) >= 3);
   const wideBurstHtml = wideBurstAvailable ? `
     <label class="attack-mod-check" title="Стр. 35: у выбранной Очереди (Короткой/Длинной, базовый RoF ≥3) RoF −2, расход патронов — по полному RoF, Уклонению цели от этой атаки −20.">
-      <input type="checkbox" id="atk-wide-burst"/> Широкая Очередь (RoF−2, Уклонение цели −20)
-    </label>` : "";
+      <input type="checkbox" id="atk-wide-burst" data-rof-semi="${Number(sys.rof_semi) || 0}" data-rof-full="${Number(sys.rof_full) || 0}"/> Широкая Очередь (RoF−2, Уклонение цели −20)
+    </label>
+    <div class="atk-wide-burst-text" id="atk-wide-burst-note" hidden></div>` : "";
   // Двойной Выстрел (Талант Стрелка, rules/gunner-talents.mjs): галочка рядом с
   // Широкой Очередью — тот же блок «Режим атаки», отдельной проводки в разметку нет.
   // По Этим Координатам (Талант Стрелка): галочка запирает Избирательную атаку и обнуляет Прицеливание.
@@ -1482,10 +1537,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // Наследие Ярости (wdbc-1rno.35): вторая рука — то же оружие может нести
     // Историю не хуже первой.
     const s = legacyWrathEffectiveRof(w.system || {}, w);
-    const opts = [{ value: "single", label: "Одиночный" }];
+    // «Одиночный» — только если у оружия он есть: теперь он даёт +10 к порогу второй руки (task-f67c),
+    // и оружию без одиночного режима (rof_single 0) этот бонус не положен. Пустой список — запасной «Одиночный».
+    const opts = [];
+    if ((Number(s.rof_single) || 0) > 0) opts.push({ value: "single", label: "Одиночный" });
     if ((Number(s.rof_semi) || 0) > 0) opts.push({ value: "semi", label: `Короткая очередь (${s.rof_semi})` });
     if ((Number(s.rof_full) || 0) > 0) opts.push({ value: "full", label: `Длинная очередь (${s.rof_full})` });
-    return opts;
+    return opts.length ? opts : [{ value: "single", label: "Одиночный" }];
   };
   const dualWieldHtml = dualCandidates.length ? `
     <div class="av-row" title="Атаки с обеих рук — ОДНА атака, занимающая наибольшее действие из двух (стр. 62). Обе получают −20; Таланты ветки «Два оружия» этот штраф уменьшают.">
@@ -1576,6 +1634,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     dyn0,
     fanningActive,
     fanningRofMax,
+    fanningRofLabel,
+    fanningRofHint,
     forceMelee,
     isMelee,
     item,
@@ -1665,6 +1725,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           && lensTuningAvailable(actor, { item, isMelee })
           && (f.talentToggles?.lensTune || (Number(item.getFlag?.("warhammer-dbc", LENS_CHARGES_FLAG)) || 0) > 0))
           ? Math.min(20, -(Number(f.aimPenalty) || 0)) : 0 },
+      // Направляющий Удар (Пугилист, rules/pugilist-talents.mjs): атака кулаком со штрафом −20 ради свободного Давления по Успеху.
+      { label: "Направляющий Удар",  value: goadingStrikePenalty(actor, { weapon: item, isMelee, toggles: f.talentToggles }) },
       { label: "Прикрывающий Огонь",  value: techniqueOpts.freeShot === "coveringFire" ? COVERING_FIRE_PENALTY : 0 },
       { label: "Стойка цели",        value: targetStanceMod },
       { label: "Цель раскрыта",      value: exposedMod },
@@ -1818,6 +1880,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     computeStanceOptions,
     fullFireOpts,
     batpackOn,
+    // Максимальный режим сдвигает полосы дальности на +10 м (attack/dialog.mjs::syncMaximalRange): окну нужны
+    // измеренная дистанция и Rng оружия, от которых посчитана автоотметка полосы.
+    maximalRange: (wantMaximal && measured && gripRange > 0) ? { edgeM: measured.edgeM, gripRange } : null,
     reopenWithProfile: (idx) => showAttackDialog(actor, item, { ...techniqueOpts, profileIdx: idx }),
   });
 }

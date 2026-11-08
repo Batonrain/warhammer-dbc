@@ -103,11 +103,11 @@ describe("promptSubraceAptitudeChoice: диалог", () => {
     resetCaptured();
     const promise = promptSubraceAptitudeChoice("afriel", "Африэль");
     const charSelects  = [{ dataset: {}, value: "s" }, { dataset: {}, value: "ag" }];
-    const skillSelects = [{ dataset: {}, value: "charm" }, { dataset: {}, value: "" }, { dataset: {}, value: "dodge" }];
+    const skillSelects = [{ dataset: {}, value: "charm" }, { dataset: {}, value: "athletics" }, { dataset: {}, value: "dodge" }];
     const html = fakeHtml({}, { ".sub-apt-char": charSelects, ".sub-apt-skill": skillSelects });
     captured.dialog.buttons.ok.callback(html);
     const picks = await promise;
-    expect(picks).toEqual({ chars: ["s", "ag"], skills: ["charm", "dodge"] });
+    expect(picks).toEqual({ chars: ["s", "ag"], skills: ["charm", "athletics", "dodge"] });
   });
 
   it("Пропустить — null", async () => {
@@ -199,10 +199,70 @@ describe("Диалог: повтор одного выбора запрещён"
   it("дубль среди Навыков тоже отвергается; один и тот же ключ в Характеристиках и Навыках — не дубль", async () => {
     resetCaptured();
     const promise = promptSubraceAptitudeChoice("afriel", "Африэль");
-    const dupSkills = fakeHtml({}, { ".sub-apt-char": [], ".sub-apt-skill": [{ dataset: {}, value: "charm" }, { dataset: {}, value: "charm" }] });
-    expect(() => captured.dialog.buttons.ok.callback(dupSkills)).toThrow();
-    const fine = fakeHtml({}, { ".sub-apt-char": [{ dataset: {}, value: "s" }], ".sub-apt-skill": [{ dataset: {}, value: "charm" }] });
+    const chars2 = [{ dataset: {}, value: "s" }, { dataset: {}, value: "ag" }];
+    const dupSkills = fakeHtml({}, { ".sub-apt-char": chars2, ".sub-apt-skill": [{ dataset: {}, value: "charm" }, { dataset: {}, value: "charm" }, { dataset: {}, value: "dodge" }] });
+    expect(() => captured.dialog.buttons.ok.callback(dupSkills)).toThrow(/дважды/);
+    const fine = fakeHtml({}, { ".sub-apt-char": [{ dataset: {}, value: "s" }, { dataset: {}, value: "ag" }], ".sub-apt-skill": [{ dataset: {}, value: "charm" }, { dataset: {}, value: "dodge" }, { dataset: {}, value: "athletics" }] });
     captured.dialog.buttons.ok.callback(fine);
-    expect(await promise).toEqual({ chars: ["s"], skills: ["charm"] });
+    expect(await promise).toEqual({ chars: ["s", "ag"], skills: ["charm", "dodge", "athletics"] });
+  });
+});
+
+// task-979b: пустой дропдаун молча отбрасывался (`if (el.value)`), и «Принять»
+// проходило с недобором — Благородный получал одну Дружественную вместо двух.
+// «Пропустить» и закрытие окна остаются единственным способом отказаться от
+// выбора целиком; частичный выбор — не вариант.
+describe("Диалог: «Принять» требует заполнить все дропдауны (task-979b)", () => {
+  const sel = value => ({ dataset: {}, value });
+
+  it("Благородный: одна Характеристика из двух — отказ, окно остаётся открытым", async () => {
+    resetCaptured();
+    const promise = promptArchetypeAptitudeChoice("noble", "Благородный");
+    let settled = false;
+    promise.then(() => { settled = true; });
+    const partial = fakeHtml({}, { ".sub-apt-char": [sel("ag"), sel("")], ".sub-apt-skill": [] });
+    expect(() => captured.dialog.buttons.ok.callback(partial)).toThrow(/выберите|все/i);
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    const full = fakeHtml({}, { ".sub-apt-char": [sel("ag"), sel("fel")], ".sub-apt-skill": [] });
+    captured.dialog.buttons.ok.callback(full);
+    expect(await promise).toEqual({ chars: ["ag", "fel"], skills: [] });
+  });
+
+  it("Благородный: все дропдауны пусты — тоже отказ (а не тихий пустой выбор)", () => {
+    resetCaptured();
+    promptArchetypeAptitudeChoice("noble", "Благородный");
+    const empty = fakeHtml({}, { ".sub-apt-char": [sel(""), sel("")], ".sub-apt-skill": [] });
+    expect(() => captured.dialog.buttons.ok.callback(empty)).toThrow();
+  });
+
+  it("Африэль: Характеристики заполнены, но один Навык пуст — отказ", () => {
+    resetCaptured();
+    promptSubraceAptitudeChoice("afriel", "Африэль");
+    const html = fakeHtml({}, {
+      ".sub-apt-char": [sel("s"), sel("ag")],
+      ".sub-apt-skill": [sel("charm"), sel(""), sel("dodge")]
+    });
+    expect(() => captured.dialog.buttons.ok.callback(html)).toThrow();
+  });
+
+  it("Эльданар: 3 Характеристики и 6 Навыков, недобор Навыков — отказ; полный набор проходит", async () => {
+    resetCaptured();
+    const promise = promptSubraceAptitudeChoice("eldanar", "Эльданар");
+    const chars = [sel("s"), sel("ag"), sel("fel")];
+    const five = ["charm", "dodge", "athletics", "awareness", "stealth"].map(sel);
+    expect(() => captured.dialog.buttons.ok.callback(fakeHtml({}, { ".sub-apt-char": chars, ".sub-apt-skill": [...five, sel("")] }))).toThrow();
+    const six = [...five, sel("command")];
+    captured.dialog.buttons.ok.callback(fakeHtml({}, { ".sub-apt-char": chars, ".sub-apt-skill": six }));
+    const picks = await promise;
+    expect(picks.chars).toEqual(["s", "ag", "fel"]);
+    expect(picks.skills).toHaveLength(6);
+  });
+
+  it("«Пропустить» по-прежнему отменяет выбор целиком, без ошибки", async () => {
+    resetCaptured();
+    const promise = promptArchetypeAptitudeChoice("noble", "Благородный");
+    captured.dialog.buttons.cancel.callback();
+    expect(await promise).toBe(null);
   });
 });

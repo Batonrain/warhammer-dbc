@@ -9,6 +9,7 @@ import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields,
          fatigueChangeFields, announceFatigueChange } from "./conditions.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { stunTaintFor, STUN_TAINT_ACTOR_FLAG } from "../../rules/stun-taint.mjs";
 import { expiryAtFor } from "../../rules/drug-expiry.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
@@ -29,6 +30,9 @@ import { DRUG_DOSES_FLAG, doseKey, logDose, dosesThisWeek, weeklyDoseLimit, addi
 import { addictionTestParts, lowestPart, parseFrequency, readWithdrawalEntries, drugKey, breakTestState, breakTestMod, addictionRecords,
          isAddictedTo, withdrawalStatusLabel } from "../../rules/drug-withdrawal.mjs";
 import { startWithdrawal, endWithdrawal, markBreakTested } from "../../combat/drug-withdrawal.mjs";
+// Шумовой Десантник (Sahara 1-54b9): Нектар Богов и Дистиллированная Мука читают каждую принятую дозу.
+import { nectarOfTheGodsOnDose, hasNectarOfTheGods } from "../../combat/noise-marine.mjs";
+import { noteDrugTaken } from "../../combat/distilled-torment.mjs";
 // New Men / Новые Люди (Йигори): срок вдвое, без пост-эффекта, разовый эффект
 // медикамента вдвое (module/rules/new-men.mjs).
 import { newMenDrugDuration, newMenInstantMedicine, halvesInstantMedicine,
@@ -465,6 +469,10 @@ export async function applyDrug(owner, item, recipient = null) {
  * (кнопка в панели Зависимостей). Лимит: Репликант ×2, Толерантность +1.
  */
 export async function weeklyDoseCheck(actor, item) {
+  if (actor && item) {
+    await nectarOfTheGodsOnDose(actor, item);
+    await noteDrugTaken(actor, item);
+  }
   const add = item?.system?.addiction;
   if (!actor || !add?.hasAddiction) return;
   const now = game.time?.worldTime ?? 0;
@@ -498,7 +506,8 @@ export async function triggerAfterEffect(actor, item) {
   // действие препарата просто кончается, пост-эффект не наступает — раньше
   // Дар гасил только тест Зависимости, а пост-эффект приходил как обычно.
   // Новые Люди (Йигори): «игнорирует побочные эффекты» — тот же исход.
-  const aftermathImmune = drugAftermathImmunity(actor) || (ignoresDrugSideEffects(actor) ? "Новые Люди" : "");
+  const aftermathImmune = drugAftermathImmunity(actor) || (ignoresDrugSideEffects(actor) ? "Новые Люди" : "")
+    || (hasNectarOfTheGods(actor) ? "Талант «Нектар Богов»" : "");
   if (aftermathImmune) {
     await deactivateDrugEffect(item);
     await postTestCard(actor, {
@@ -552,6 +561,10 @@ export async function triggerAfterEffect(actor, item) {
       fat.delta += lvlToGrant;
       fat.touched = true;
     }
+    // Порча за Ходы Оглушения (Струп): метка на акторе, начисляет тик Хода
+    // (combat/condition-ticks.mjs), пока идёт это Оглушение.
+    const stunTaint = stunTaintFor(item, fx);
+    if (stunTaint) actorUpdates[`flags.warhammer-dbc.${STUN_TAINT_ACTOR_FLAG}`] = stunTaint;
   }
 
   const extras = await applyEffectExtras(actor, fx, { poisonSource: sys.drugCategory === "poison" });

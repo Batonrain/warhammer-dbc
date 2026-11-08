@@ -1191,6 +1191,7 @@ export class WarhammerItemSheet
           // Свой ствол (комби-оружие, wdbc-jho9, combat/weapon-profiles.mjs):
           // поля показываются только у стрелкового оружия.
           ranged: context.system.weaponClass !== "melee",
+          melee: !!prof.melee,
           ownFire: !!prof.ownFire,
           rof_single: prof.rof_single ?? 0, rof_semi: prof.rof_semi ?? 0, rof_full: prof.rof_full ?? 0,
           magazineMax: prof.magazineMax ?? 0, magazineCur: prof.magazineCur ?? 0,
@@ -2098,7 +2099,8 @@ export class WarhammerItemSheet
 
     // ── Талант «Чёрная Мантия»: усиленный режим Меланохрома (3-b530) ───────
     on(".black-mantle-cb", "change", async ev => {
-      await setBlackMantleOn(this.item, ev.currentTarget.checked);
+      // Отказ (не хватило ОД) — вернуть галочку в то положение, что в флаге.
+      if (!(await setBlackMantleOn(this.item, ev.currentTarget.checked))) this.render(false);
     });
 
     // ── Действия Талантов (3-b530): Предусмотрительность и др. ─────────────
@@ -2339,6 +2341,14 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.corruptionValue = ev.currentTarget.value; saveMech(arr); }
     });
+    // «не выше Cor», «если Порча <», «иначе» — необязательные оговорки Порчи
+    for (const [cls, field] of [["cap", "corruptionCap"], ["below", "corruptionIfBelow"], ["else", "corruptionElse"]]) {
+      on(`.mech-corruption-${cls}`, "change", ev => {
+        const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+        const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+        if (e) { e[field] = ev.currentTarget.value.trim(); saveMech(arr); }
+      });
+    }
     // Раны (kind:"wounds")
     on(".mech-wounds-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -3451,6 +3461,7 @@ export class WarhammerItemSheet
       const NUMERIC = ["penetration", "rof_single", "rof_semi", "rof_full", "magazineMax", "magazineCur"];
       arr[i][field] = ev.currentTarget.type === "checkbox" ? ev.currentTarget.checked
         : NUMERIC.includes(field) ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
+      if (field === "melee" && arr[i].melee) arr[i].ownFire = false;
       await this.item.update({ "system.profiles": arr });
     });
     // Свойства конкретного профиля (свой блок Devastating/Primitive и т.п.)

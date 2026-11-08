@@ -11,8 +11,10 @@ import { describe, it, expect, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { applyDreadWailWave } from "../../module/combat/dread-wail.mjs";
 import { checkTargetWrite, performTargetWrite } from "../../module/combat/gm-relay.mjs";
-import { dreadWailFearEffectData, grantDreadWailFear, clearDreadWailFear, DREAD_WAIL_FEAR_FLAG }
-  from "../../module/combat/timed-effects.mjs";
+import {
+  dreadWailFearEffectData, grantDreadWailFear, clearDreadWailFear, DREAD_WAIL_FEAR_FLAG,
+  grantTimedEffect, sweepTimedEffects, timedEffectsOf, TIMED_EFFECT_FLAG, WAR_CRY_EFFECT_KEY, WAR_CRY_PRIORITY
+} from "../../module/combat/timed-effects.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -44,7 +46,16 @@ function actorWithEffects({ name = "Жертва", uuid = "Actor.v1", traits = [
 }
 const fearEffects = a => a.effects.filter(e => e.flags?.[NS]?.[DREAD_WAIL_FEAR_FLAG]);
 
-afterEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
+const fearCombatId = a => fearEffects(a)[0]?.flags?.[NS]?.[DREAD_WAIL_FEAR_FLAG]?.combatId;
+const startedCombat = (id, actors = [], round = 1) => ({
+  id, started: true, round, combatants: actors.map(actor => ({ actor }))
+});
+
+afterEach(() => {
+  resetCaptured();
+  globalThis.game.combat = undefined;
+  globalThis.game.combats = undefined;
+});
 
 describe("данные эффекта", () => {
   it("рейтинг Страха 2 как upgrade (не складывается с другими источниками Страха), фаза final, срок — флаг боя", () => {
@@ -66,28 +77,66 @@ describe("ГМ-релей: белый список", () => {
       { initiatorOwned: true, initiator: caster }).ok).toBe(false);
   });
   it("performTargetWrite создаёт эффект Страха 2 и метку на цели", async () => {
-    globalThis.game.combat = { id: "c1", started: true, round: 1 };
-    const victim = actorWithEffects();
+    const victim = actorWithEffects({ uuid: "Actor.victim" });
+    globalThis.game.combats = [startedCombat("c1", [victim])];
     await performTargetWrite(victim, { kind: "dreadWailFear" }, caster);
     expect(fearEffects(victim)).toHaveLength(1);
     expect(fearEffects(victim)[0].system.changes[0]).toMatchObject({ key: "system.fearRating", type: "upgrade", value: 2 });
     expect(victim.getFlag(NS, "dreadWailFeared")).toBe(true);
+    expect(fearCombatId(victim)).toBe("c1");
+  });
+  it("ГМ-релей передаёт заклинателя: цель вне боя привязывается к бою заклинателя", async () => {
+    const wailer = actorWithEffects({ uuid: "Actor.wailer", traits: ["Dread Wail / Грозный Вопль"] });
+    const bystander = actorWithEffects({ uuid: "Actor.bystander" });
+    globalThis.game.combats = [startedCombat("c9", [wailer])];
+    await performTargetWrite(bystander, { kind: "dreadWailFear" }, wailer);
+    expect(fearCombatId(bystander)).toBe("c9");
   });
 });
 
 describe("grantDreadWailFear / clearDreadWailFear", () => {
   it("повторное попадание заменяет эффект, а не множит", async () => {
-    globalThis.game.combat = { id: "c1", started: true, round: 1 };
     const victim = actorWithEffects();
+    globalThis.game.combats = [startedCombat("c1", [victim])];
     await grantDreadWailFear(victim);
     await grantDreadWailFear(victim);
     expect(fearEffects(victim)).toHaveLength(1);
   });
 
+  it("срок привязан к бою ЦЕЛИ, а не к бою, открытому в трекере у ГМа", async () => {
+    const victim = actorWithEffects({ uuid: "Actor.victim" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    globalThis.game.combats = [globalThis.game.combat, startedCombat("real", [victim])];
+    await grantDreadWailFear(victim);
+    expect(fearCombatId(victim)).toBe("real");
+    await clearDreadWailFear({ id: "real", combatants: [{ actor: victim }], scene: { tokens: [] } });
+    expect(fearEffects(victim)).toHaveLength(0);
+  });
+
+  it("цель не в бою — берётся бой заклинателя; волна по прохожему снимается с концом этого боя", async () => {
+    const wailer = actorWithEffects({ uuid: "Actor.wailer" });
+    const bystander = actorWithEffects({ uuid: "Actor.bystander" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    globalThis.game.combats = [globalThis.game.combat, startedCombat("c9", [wailer])];
+    await grantDreadWailFear(bystander, wailer);
+    expect(fearCombatId(bystander)).toBe("c9");
+    await clearDreadWailFear({ id: "c9", combatants: [{ actor: wailer }], scene: { tokens: [{ actor: bystander }] } });
+    expect(fearEffects(bystander)).toHaveLength(0);
+  });
+
+  it("ни цель, ни заклинатель не в бою — срок пустой (снимется с первым концом боя), не бой ГМа из трекера", async () => {
+    const victim = actorWithEffects({ uuid: "Actor.victim" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    globalThis.game.combats = [globalThis.game.combat];
+    await grantDreadWailFear(victim, actorWithEffects({ uuid: "Actor.wailer" }));
+    expect(fearEffects(victim)).toHaveLength(1);
+    expect(fearCombatId(victim)).toBe("");
+  });
+
   it("конец боя снимает эффект и метку у участников и у токенов сцены; чужие эффекты не трогаются", async () => {
-    globalThis.game.combat = { id: "c1", started: true, round: 2 };
     const inCombat = actorWithEffects({ uuid: "Actor.a" });
     const onScene = actorWithEffects({ uuid: "Actor.b" });
+    globalThis.game.combats = [startedCombat("c1", [inCombat, onScene], 2)];
     await grantDreadWailFear(inCombat);
     await grantDreadWailFear(onScene);
     await inCombat.createEmbeddedDocuments("ActiveEffect", [{ name: "Боевой клич", flags: { [NS]: { timedEffect: { key: "warCry" } } } }]);
@@ -108,19 +157,62 @@ describe("grantDreadWailFear / clearDreadWailFear", () => {
   });
 
   it("эффект другого боя конец этого боя не снимает", async () => {
-    globalThis.game.combat = { id: "other", started: true, round: 1 };
     const victim = actorWithEffects();
+    globalThis.game.combats = [startedCombat("other", [victim])];
     await grantDreadWailFear(victim);
     await clearDreadWailFear({ id: "c1", combatants: [{ actor: victim }], scene: { tokens: [] } });
     expect(fearEffects(victim)).toHaveLength(1);
   });
 });
 
+describe("Боевой Клич: срок привязан к бою носителя, а не к бою из трекера ГМа", () => {
+  const warCry = { key: WAR_CRY_EFFECT_KEY, name: "Боевой клич", changes: [{ key: "system.fearRating", type: "add", value: 1, priority: WAR_CRY_PRIORITY }] };
+  const cryFlag = a => timedEffectsOf(a, WAR_CRY_EFFECT_KEY)[0]?.flags?.[NS]?.[TIMED_EFFECT_FLAG];
+
+  it("в трекере у ГМа открыт чужой бой, носитель в другом — эффект несёт id и Раунд боя носителя", async () => {
+    const shouter = actorWithEffects({ uuid: "Actor.shouter" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    globalThis.game.combats = [globalThis.game.combat, startedCombat("real", [shouter], 2)];
+    await grantTimedEffect(shouter, warCry);
+    expect(cryFlag(shouter)).toEqual({ key: WAR_CRY_EFFECT_KEY, combatId: "real", round: 2 });
+  });
+
+  it("эффект, выданный в своём бою, не сметается подметанием в начале Хода носителя в том же Раунде", async () => {
+    const shouter = actorWithEffects({ uuid: "Actor.shouter" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    const real = startedCombat("real", [shouter], 2);
+    globalThis.game.combats = [globalThis.game.combat, real];
+    await grantTimedEffect(shouter, warCry);
+    expect(await sweepTimedEffects(shouter, real)).toBe(0);
+    expect(timedEffectsOf(shouter, WAR_CRY_EFFECT_KEY)).toHaveLength(1);
+    expect(await sweepTimedEffects(shouter, { ...real, round: 3 })).toBe(1);
+  });
+
+  it("носитель не в бою, а в трекере ГМа бой идёт — к чужому бою эффект не привязывается", async () => {
+    const shouter = actorWithEffects({ uuid: "Actor.shouter" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    globalThis.game.combats = [globalThis.game.combat];
+    await grantTimedEffect(shouter, warCry);
+    expect(cryFlag(shouter)).toEqual({ key: WAR_CRY_EFFECT_KEY, combatId: "", round: 0 });
+  });
+
+  it("несвязанный токен: бой найден по uuid токена, а не по мировому актору", async () => {
+    const world = actorWithEffects({ uuid: "Actor.world" });
+    const tokenActor = actorWithEffects({ uuid: "Scene.s.Token.t.Actor.world" });
+    tokenActor.isToken = true;
+    tokenActor.id = "world";
+    tokenActor.token = { baseActor: world };
+    globalThis.game.combats = [startedCombat("real", [tokenActor], 5)];
+    await grantTimedEffect(world, warCry);
+    expect(cryFlag(world)).toEqual({ key: WAR_CRY_EFFECT_KEY, combatId: "real", round: 5 });
+  });
+});
+
 describe("звуковая волна: ветка «Страх 2»", () => {
   it("провалившая тест цель получает настоящий эффект, а не только отметку вручную", async () => {
-    globalThis.game.combat = { id: "c1", started: true, round: 1 };
-    const caster = actorWithEffects({ name: "Шумовой", traits: ["Dread Wail / Грозный Вопль"] });
+    const caster = actorWithEffects({ name: "Шумовой", uuid: "Actor.caster", traits: ["Dread Wail / Грозный Вопль"] });
     const victim = actorWithEffects({ uuid: "Actor.victim", wp: 20 });
+    globalThis.game.combats = [startedCombat("c1", [caster, victim])];
     const casterToken = { id: "c", x: 0, y: 0, width: 1, height: 1, hidden: false, actor: caster };
     const tokens = [casterToken, { id: "t", x: 100, y: 0, width: 1, height: 1, hidden: false, actor: victim }];
     casterToken.parent = { grid: { size: 100, distance: 2 }, tokens: { contents: tokens } };

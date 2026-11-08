@@ -26,6 +26,7 @@
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { DURATION_UNITS, durationDataFor } from "../rules/condition-duration.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { expectedPhase, effectKeyLabel } from "../constants/effect-keys.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
@@ -34,6 +35,28 @@ export const TEMP_MODIFIER_FLAG = "tempModifier";
 
 /** Иконка временного модификатора — та же, что у прочих безымянных эффектов. */
 const TEMP_ICON = "icons/svg/downgrade.svg";
+
+/** Что ещё, кроме значения характеристики, можно менять временно: путь → подпись. */
+export const TEMP_OTHER_TARGETS = {
+  "system.extraHands":            "Руки",
+  "system.actionPoints.max":      "ОД макс.",
+  "system.reactions.max":         "Реакции макс.",
+  "system.reactions.defenseMax":  "Реакции Избегания макс.",
+  "system.initiative":            "Инициатива",
+  "system.speed":                 "Скорость",
+  "system.incomingDamageReduction": "Снижение урона",
+  "system.corruptionBonus":       "Cor.b"
+};
+
+/** Короткая подпись цели: «Ag», «Ag (Unnatural)», «Руки». */
+export function tempTargetLabel(key) {
+  const m = /^system\.characteristics\.(\w+)\.(totalFx|bonusFx)$/.exec(key);
+  if (m) {
+    const abbr = CHARACTERISTICS[m[1]]?.abbr ?? m[1].toUpperCase();
+    return m[2] === "bonusFx" ? `${abbr} (Unnatural)` : abbr;
+  }
+  return TEMP_OTHER_TARGETS[key] ?? effectKeyLabel(key);
+}
 
 /** Заведён ли этот эффект кнопкой «Временный модификатор». */
 export function isTempModifier(effect) {
@@ -52,8 +75,10 @@ export function isTempModifier(effect) {
  * @param {number} o.duration число единиц срока (0/пусто — без срока)
  * @param {string} o.unit     единица срока (DURATION_UNITS)
  */
-export function tempModifierData({ charKey, value, source = "", duration = 0, unit = "" }) {
-  const abbr = CHARACTERISTICS[charKey]?.abbr ?? String(charKey ?? "").toUpperCase();
+export function tempModifierData({ charKey, key = "", value, source = "", duration = 0, unit = "" }) {
+  const path = key || `system.characteristics.${charKey}.totalFx`;
+  const abbr = key ? tempTargetLabel(key)
+    : (CHARACTERISTICS[charKey]?.abbr ?? String(charKey ?? "").toUpperCase());
   const amount = Number(value) || 0;
   const signed = amount < 0 ? `−${Math.abs(amount)}` : `+${amount}`;
   // Имя эффекта ВСЕГДА несёт число, даже когда источник назван: в сводке
@@ -66,8 +91,8 @@ export function tempModifierData({ charKey, value, source = "", duration = 0, un
     name,
     img: TEMP_ICON,
     system: { changes: [{
-      key: `system.characteristics.${charKey}.totalFx`,
-      type: "add", value: amount, phase: "initial", priority: 0
+      key: path,
+      type: "add", value: amount, phase: expectedPhase(path), priority: 0
     }] },
     duration: durationDataFor(duration, unit),
     disabled: false,
@@ -81,24 +106,28 @@ export function tempModifierData({ charKey, value, source = "", duration = 0, un
  */
 export async function showTempModifierDialog(actor) {
   if (!actor) return null;
-  const charOpts = Object.entries(CHARACTERISTICS)
-    .filter(([key]) => key !== "inf") // у Инф нет бонуса/значения на листе
-    .map(([key, def]) => `<option value="${key}">${esc(def.abbr)} — ${esc(def.label)}</option>`)
-    .join("");
+  const chars = Object.entries(CHARACTERISTICS).filter(([key]) => key !== "inf"); // у Инф нет бонуса/значения на листе
+  const charOpts = `
+    <optgroup label="Значение характеристики">${chars
+      .map(([key, def]) => `<option value="system.characteristics.${key}.totalFx">${esc(def.abbr)} — ${esc(def.label)}</option>`).join("")}</optgroup>
+    <optgroup label="Unnatural (бонус характеристики)">${chars
+      .map(([key, def]) => `<option value="system.characteristics.${key}.bonusFx">${esc(def.abbr)} — бонус (Unnatural)</option>`).join("")}</optgroup>
+    <optgroup label="Прочее">${Object.entries(TEMP_OTHER_TARGETS)
+      .map(([path, label]) => `<option value="${path}">${esc(label)}</option>`).join("")}</optgroup>`;
   const unitOpts = DURATION_UNITS
     .map(u => `<option value="${u.key}">${esc(u.label)}</option>`).join("");
 
   const result = await foundry.applications.api.DialogV2.wait({
-    window: { title: "Временный модификатор характеристики" },
+    window: { title: "Временный модификатор" },
     classes: ["wh-temp-modifier-dialog", "warhammer-dbc", "wh-holo"],
     position: { width: 380 },
     content: `
       <div class="wh-temp-modifier-form">
-        <label class="tm-row">Характеристика
+        <label class="tm-row">Что менять
           <select class="tm-char">${charOpts}</select>
         </label>
         <label class="tm-row">Модификатор
-          <input type="number" class="tm-value" value="-10" step="5"/>
+          <input type="number" class="tm-value" value="-10" step="1"/>
         </label>
         <label class="tm-row">Источник
           <input type="text" class="tm-source" placeholder="напр. Ослепляющая граната"/>
@@ -114,7 +143,7 @@ export async function showTempModifierDialog(actor) {
       {
         action: "add", label: "Наложить", icon: "fas fa-plus", default: true,
         callback: (event, button) => ({
-          charKey:  button.form.querySelector(".tm-char")?.value || "ws",
+          key:      button.form.querySelector(".tm-char")?.value || "system.characteristics.ws.totalFx",
           value:    Number(button.form.querySelector(".tm-value")?.value) || 0,
           source:   button.form.querySelector(".tm-source")?.value || "",
           duration: Number(button.form.querySelector(".tm-duration")?.value) || 0,

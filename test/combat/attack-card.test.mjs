@@ -619,7 +619,141 @@ describe("Спиной к Спине/Back to Back: показ носителей
     ] });
     expect(html).toContain("Первый");
     expect(html).toContain("Второй");
-    expect(html).toContain('data-fanatic-uuid="Actor.f1"');
-    expect(html).not.toContain('data-fanatic-uuid="Actor.f2"');
+    expect(html).toContain('class="wh-back-to-back-mark-used" data-fanatic-uuid="Actor.f1"');
+    expect(html).not.toContain('class="wh-back-to-back-mark-used" data-fanatic-uuid="Actor.f2"');
+  });
+});
+
+describe("Спиной к Спине: кнопка переноса урона на Фанатика в группе каждого попадания", () => {
+  const f1 = { uuid: "Actor.f1", name: "Телохранитель", freeUse: true, tokenUuid: "Scene.s.Token.f1" };
+  const groups = html => html.split('class="roll-dmg-hit-group"').slice(1);
+
+  it("без кандидатов кнопки нет", () => {
+    expect(card({ fanaticIntercepts: [] })).not.toContain("wh-fanatic-redirect-btn");
+  });
+
+  it("у попадания — кнопка с data-force-target токена Фанатика и его uuid", () => {
+    const html = card({ fanaticIntercepts: [f1] });
+    const [group] = groups(html);
+    expect(group).toContain('class="wh-fanatic-redirect-btn"');
+    expect(group).toContain('data-force-target="Scene.s.Token.f1"');
+    expect(group).toContain('data-fanatic-uuid="Actor.f1"');
+    expect(group).toContain('data-mirror-hit="1"');
+  });
+
+  it("без токена — force-target падает на uuid актора", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.f2", name: "Второй", freeUse: false }] });
+    expect(html).toContain('data-force-target="Actor.f2"');
+  });
+
+  it("кнопка не носит собственного урона и не имеет класса «Применить урон» — число берётся с главной кнопки группы", () => {
+    const html = card({ fanaticIntercepts: [f1] });
+    const tag = html.match(/<button[^>]*class="wh-fanatic-redirect-btn"[^>]*>/)[0];
+    expect(tag).not.toContain("data-damage");
+    expect(html.match(/class="wh-apply-dmg-btn/g)).toHaveLength(1);
+  });
+
+  it("каждое попадание очереди получает свою кнопку на каждого кандидата", () => {
+    const html = card({
+      hitsCount: 2, hits: [{ total: 11, loc: "Торс" }, { total: 7, loc: "Голова" }],
+      fanaticIntercepts: [f1, { uuid: "Actor.f2", name: "Второй", freeUse: true }]
+    });
+    const gs = groups(html);
+    expect(gs).toHaveLength(2);
+    for (const g of gs) {
+      expect(g.match(/class="wh-fanatic-redirect-btn"/g)).toHaveLength(2);
+    }
+  });
+
+  it("попадание, уведённое в Орду, кнопки Фанатика не получает", () => {
+    const html = card({ hordeHits: [true], fanaticIntercepts: [f1] });
+    expect(html).not.toContain("wh-fanatic-redirect-btn");
+  });
+
+  it("бесплатный перехват свободен — у любого носителя есть «Отметить», без подписи про Реакцию", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.n1", name: "Природный", freeUse: true }] });
+    expect(html).toContain("wh-back-to-back-mark-used");
+    expect(html).not.toContain("уже отмечен использованным");
+  });
+
+  it("бесплатный перехват потрачен — «Отметить» нет, подпись про обычный перехват за Реакцию", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.n1", name: "Природный", freeUse: false }] });
+    expect(html).not.toContain("wh-back-to-back-mark-used");
+    expect(html).toContain("уже отмечен использованным");
+    expect(html).toContain("за Реакцию");
+  });
+});
+
+describe("Спаситель Туманов (Мастер Казней, Sahara 1-54b9): обмен местами после перехвата Fanatic", () => {
+  it("кнопка «Поменяться местами с целью» — только у носителя Таланта, с токеном цели в данных", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Телохранитель", freeUse: true, savior: true, targetTokenUuid: "Scene.s.Token.t9" },
+      { uuid: "Actor.f2", name: "Простой", freeUse: true, savior: false, targetTokenUuid: "Scene.s.Token.t9" }
+    ] });
+    expect(html).toContain('class="wh-mist-savior-swap"');
+    expect(html).toContain('data-fanatic-uuid="Actor.f1" data-target-token-uuid="Scene.s.Token.t9"');
+    expect(html.match(/wh-mist-savior-swap/g)).toHaveLength(1);
+  });
+
+  it("без токена цели кнопки нет", () => {
+    const html = card({ fanaticIntercepts: [{ uuid: "Actor.f1", name: "Телохранитель", freeUse: true, savior: true, targetTokenUuid: "" }] });
+    expect(html).not.toContain("wh-mist-savior-swap");
+  });
+});
+
+describe("«Перехват»: одноимённые носители Fanatic различимы в подписи кнопки", () => {
+  const labels = html => [...html.matchAll(/<button[^>]*class="wh-fanatic-redirect-btn"[\s\S]*?<\/button>/g)]
+    .map(m => m[0].replace(/<svg[\s\S]*?<\/svg>/g, "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
+
+  it("разные имена — подпись как раньше", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Первый", freeUse: true, tokenUuid: "Scene.s.Token.a", tokenName: "Первый" },
+      { uuid: "Actor.f2", name: "Второй", freeUse: true, tokenUuid: "Scene.s.Token.b", tokenName: "Второй" }
+    ] });
+    expect(labels(html)).toEqual(["Перехват: Первый", "Перехват: Второй"]);
+  });
+
+  it("одно имя актора, разные имена токенов — добавляется имя токена", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Культист", freeUse: true, tokenUuid: "Scene.s.Token.a", tokenName: "Культист у двери" },
+      { uuid: "Actor.f2", name: "Культист", freeUse: true, tokenUuid: "Scene.s.Token.b", tokenName: "Культист на лестнице" }
+    ] });
+    expect(labels(html)).toEqual(["Перехват: Культист (Культист у двери)", "Перехват: Культист (Культист на лестнице)"]);
+  });
+
+  it("одно имя и у токенов — нумерация по порядку", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Культист", freeUse: true, tokenUuid: "Scene.s.Token.a", tokenName: "Культист" },
+      { uuid: "Actor.f2", name: "Культист", freeUse: true, tokenUuid: "Scene.s.Token.b", tokenName: "Культист" }
+    ] });
+    expect(labels(html)).toEqual(["Перехват: Культист #1", "Перехват: Культист #2"]);
+  });
+
+  it("имя токена тоже совпало у двух — для них #n, третий одноимённый остаётся с именем токена", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Культист", freeUse: true, tokenName: "Страж" },
+      { uuid: "Actor.f2", name: "Культист", freeUse: true, tokenName: "Страж" },
+      { uuid: "Actor.f3", name: "Культист", freeUse: true, tokenName: "Дозорный" }
+    ] });
+    expect(labels(html)).toEqual(["Перехват: Культист #1", "Перехват: Культист #2", "Перехват: Культист (Дозорный)"]);
+  });
+
+  it("без имени токена (старые данные) — #n; один кандидат не меняется", () => {
+    expect(labels(card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Культист", freeUse: true },
+      { uuid: "Actor.f2", name: "Культист", freeUse: true }
+    ] }))).toEqual(["Перехват: Культист #1", "Перехват: Культист #2"]);
+    expect(labels(card({ fanaticIntercepts: [{ uuid: "Actor.f1", name: "Один", freeUse: true, tokenName: "Другой" }] })))
+      .toEqual(["Перехват: Один"]);
+  });
+
+  it("номер попадания остаётся впереди, data-атрибуты не меняются", () => {
+    const html = card({ hitsCount: 2, hits: [{ total: 11, loc: "Торс" }, { total: 7, loc: "Голова" }],
+      fanaticIntercepts: [
+        { uuid: "Actor.f1", name: "Культист", freeUse: true, tokenUuid: "Scene.s.Token.a", tokenName: "Культист" },
+        { uuid: "Actor.f2", name: "Культист", freeUse: true, tokenUuid: "Scene.s.Token.b", tokenName: "Культист" }
+      ] });
+    expect(labels(html)).toEqual(["Перехват 1: Культист #1", "Перехват 1: Культист #2", "Перехват 2: Культист #1", "Перехват 2: Культист #2"]);
+    expect(html).toContain('data-fanatic-uuid="Actor.f2" data-force-target="Scene.s.Token.b"');
   });
 });

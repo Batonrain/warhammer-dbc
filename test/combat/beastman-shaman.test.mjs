@@ -19,6 +19,8 @@ import {
   ritualBloodlettingAvailable, applyRitualBloodletting,
   hasSymbolOfPower, applySymbolOfPowerGrant
 } from "../../module/combat/beastman-shaman.mjs";
+import { markFrenzyExited } from "../../module/combat/frenzy.mjs";
+import { withRageGate } from "../support/rage-gate.mjs";
 
 let _uuidSeq = 0;
 
@@ -139,6 +141,20 @@ describe("Primal Howl", () => {
     expect(keys).toContain("system.characteristics.s.totalFx");
     expect(keys).toContain("system.characteristics.ws.totalFx");
     expect(fx.flags["warhammer-dbc"].beastmanShamanTemp).toBe(a.uuid);
+  });
+
+  it("Кхорн: союзник, уже выходивший из Ярости в этом бою, входит снова — психосила исключение из запрета (wdbc-sh3qt)", async () => {
+    globalThis.game.combat = { id: "c1" };
+    const a = shamanWithTalent("Primal Howl / Первобытный Вой", { patronGod: "khorne" });
+    const casterT = token("c", a, 1);
+    const ally = withRageGate(mutableActor({ name: "Союзник" }));
+    const s = scene([casterT, token("t1", ally, 1)]);
+    casterT.parent = s;
+    await markFrenzyExited(ally);
+
+    await applyPrimalHowl(a, casterT);
+    expect(ally.system.inRage).toBe(true);
+    expect(captured.warnings).toEqual([]);
   });
 
   it("персонаж получает временный Fear(+1) как реальный ActiveEffect", async () => {

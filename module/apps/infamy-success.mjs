@@ -20,6 +20,7 @@ import { postTestCard, testCardHtml, outcomeHtml, rollStatLine } from "../helper
 import { _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { attackIsMelee } from "../combat/weapon-profiles.mjs";
+import { attackWeapon } from "../combat/attack-snapshot.mjs";
 
 const NS = "warhammer-dbc";
 export const INFAMY_SUCCESS_FLAG = "infamySuccessAdded";
@@ -78,7 +79,7 @@ export async function spendSuccessOnCard(actor, message) {
     const atk = message.flags?.[NS]?.attack ?? null;
     if (atk) {
       const atkActor = game.actors?.get(atk.actorId) ?? actor;
-      const item = atkActor?.items?.get(atk.itemId);
+      const item = attackWeapon(atkActor, atk);
       const melee = item ? attackIsMelee(item.system, { forceMelee: atk.opts?.forceMelee, profile: atk.opts?.profile }) : true;
       // Сфокусированный Гнев: «Успех: еще +1 Успех» — рукопашная атака по Ненавистной цели.
       if (await focusedWrathOnAttack(atkActor, atk, melee)) { extra += 1; wrath = true; }

@@ -22,6 +22,7 @@ import { flightSpeedOf } from "../flight-speed.mjs";
 import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
 import { speedMultiplierTraitsOf, speedMultipliersFor } from "../speed-multipliers.mjs";
 import { mechRollData } from "../mech-formula.mjs";
+import { VAST_SIZE_FLAG, vastSizeBonus } from "../strange-invulnerability.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -59,6 +60,13 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   system.sizeMod   = sizeMod;          // вклад Черт в Размер (двигает SPD)
   system.sizeModNoSpd = sizeModNoSpd;  // вклад в Размер БЕЗ влияния на SPD
   system.sizeTotal = size + sizeModNoSpd; // итоговый Размер (база + оба вклада)
+  // Странная Неуязвимость, 7 «Необъятный» (wdbc-1rno.24): пока персонаж держит
+  // пойманного Захватом, его Размер — на 1 выше Размера атакующего (флаг ставит
+  // combat/grapple.mjs при автозахвате). Размер без SPD — как у Amorphous
+  // («не влияет на его SPD»), поэтому только в итог, не в size для calcMovement.
+  system.sizeTotal += vastSizeBonus(system.sizeTotal,
+    actor?.flags?.["warhammer-dbc"]?.[VAST_SIZE_FLAG] ?? actor?.getFlag?.("warhammer-dbc", VAST_SIZE_FLAG),
+    !!system.conditions?.grappling);
   const stance  = system.meleeStance || "standard";
 
   let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
