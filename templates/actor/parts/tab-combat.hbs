@@ -699,7 +699,7 @@
             <span class="rwc-no-ammo">Нет боеприпасов</span> {{/if}}
           <div class="rwc-mag-block
             {{#if w.magLow}}rwc-mag-low{{/if}}
-            {{#if w.magEmpty}}rwc-mag-empty{{/if}}"> <span class="rwc-mag-cur">{{w.magazineCur}}</span> <span class="rwc-mag-sep">/</span> <span class="rwc-mag-max">{{w.magazineMax}}</span> </div> <button type="button" class="weapon-reload-btn rwc-reload-btn" data-item-id="{{w.id}}" title="Перезарядить: {{w.name}}">Перезар.</button> {{#each w.compatAmmo as |ammo|}}
+            {{#if w.magEmpty}}rwc-mag-empty{{/if}}"> {{#if w.magLabel}}<span class="rwc-mag-cur">{{w.magLabel}}</span>{{else}}<span class="rwc-mag-cur">{{w.magazineCur}}</span> <span class="rwc-mag-sep">/</span> <span class="rwc-mag-max">{{w.magazineMax}}</span>{{/if}} </div> <button type="button" class="weapon-reload-btn rwc-reload-btn" data-item-id="{{w.id}}" title="Перезарядить: {{w.name}}">Перезар.</button> {{#each w.compatAmmo as |ammo|}}
             {{#if ammo.loaded}}
             <span class="rwc-ammo-stock" title="В запасе: {{ammo.name}}"> {{ammo.quantity}}
             </span> {{/if}}

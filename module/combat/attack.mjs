@@ -33,6 +33,7 @@ import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
 import { ammoIsFree, hasInfiniteMagazine } from "../rules/ammo-free.mjs";
 import { hasNoMagazine, isExpendableOrdnance } from "../rules/no-magazine.mjs";
 import { spendExpendable } from "./spend-expendable.mjs";
+import { weaponSnapshot } from "./attack-snapshot.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
@@ -1842,6 +1843,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           return { uuid: payer.uuid, name: a.name,
             freeUse: backToBackFreeUseAvailable(payer),
             tokenUuid: t.document?.uuid ?? "",
+            tokenName: t.document?.name ?? t.name ?? "",
             savior: hasMistSavior(a), targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" };
         })
     : [];
@@ -2390,6 +2392,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
     "warhammer-dbc": { attack: {
       actorId: actor.id, itemId: item.id, charKey, rv,
+      ...(weaponSnapshot(item) ? { itemSnapshot: weaponSnapshot(item) } : {}),
       // Цель этой атаки: +10 за Очко и Переброс сверяют её с Ненавистью (Сфокусированный Гнев,
       // combat/focused-wrath.mjs) — выделение на сцене к клику по меню могло смениться.
       targetUuid: defenderActor?.uuid ?? null,

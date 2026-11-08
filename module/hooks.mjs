@@ -8,6 +8,7 @@ import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/rec
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
 import { resolveCardRadiantPresence } from "./combat/radiant-presence.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
+import { attackWeapon }                from "./combat/attack-snapshot.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack, revertCardFailure, failUndoLineHtml } from "./combat/fear.mjs";
 import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG } from "./rules/fail-undo.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
@@ -1832,7 +1833,7 @@ export function registerHooks() {
         if (!atkActor?.isOwner) {
           return ui.notifications.warn("Сдвинуть место попадания может только сам атакующий (или ГМ).");
         }
-        const atkItem = atkActor.items?.get(atk.itemId);
+        const atkItem = attackWeapon(atkActor, atk);
         if (!atkItem) return;
         const shift = parseInt(ev.currentTarget.dataset.shift) || 0;
         await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold, atk.rofMode, atk.aimTarget,
@@ -1858,7 +1859,7 @@ export function registerHooks() {
         if (!atkActor?.isOwner) {
           return ui.notifications.warn("Пересчитать Тирантикос может только сам атакующий (или ГМ).");
         }
-        const atkItem = atkActor.items?.get(atk.itemId);
+        const atkItem = attackWeapon(atkActor, atk);
         if (!atkItem) return;
         const firstHit = firstHandHitNow(game.messages?.contents ?? game.messages, atk.opts?.dualPairId);
         if (firstHit == null) {
@@ -1894,7 +1895,7 @@ export function registerHooks() {
         const atk = message.flags?.["warhammer-dbc"]?.attack;
         if (!atk) return;
         const atkActor = game.actors?.get(atk.actorId);
-        const atkItem  = atkActor?.items?.get(atk.itemId);
+        const atkItem  = attackWeapon(atkActor, atk);
         if (!atkActor || !atkItem) return;
         el.disabled = true;
         const roll = await new Roll("1d10").evaluate();
@@ -4403,7 +4404,7 @@ function _attachFateContextMenu(message, html) {
     // помечена флагом attackRerolled (combat/card-once.mjs, wdbc-6rjtc.2).
     const atkCtx = message.flags?.["warhammer-dbc"]?.attack ?? null;
     const atkCtxActor = atkCtx ? (game.actors?.get(atkCtx.actorId) ?? actor) : null;
-    const atkCtxItem = atkCtx ? atkCtxActor?.items?.get(atkCtx.itemId) : null;
+    const atkCtxItem = atkCtx ? attackWeapon(atkCtxActor, atkCtx) : null;
     const atkIsMelee = atkCtxItem
       ? attackIsMelee(atkCtxItem.system, { forceMelee: atkCtx.opts?.forceMelee, profile: atkCtx.opts?.profile })
       : true;
@@ -4479,7 +4480,7 @@ function _attachFateContextMenu(message, html) {
       const atk = message.flags?.["warhammer-dbc"]?.attack;
       if (atk) {
         const atkActor = game.actors?.get(atk.actorId) ?? actor;
-        const atkItem  = atkActor?.items?.get(atk.itemId);
+        const atkItem  = attackWeapon(atkActor, atk);
         if (atkItem) {
           // За Гранью Человека: данные о первом результате едут в опциях атаки
           // (они ложатся во флаги новой карточки). Старую метку убираем —
@@ -4695,7 +4696,7 @@ function _attachFateContextMenu(message, html) {
       const atkB = message.flags?.["warhammer-dbc"]?.attack;
       if (atkB) {
         const atkActor = game.actors?.get(atkB.actorId) ?? actor;
-        const atkItem  = atkActor?.items?.get(atkB.itemId);
+        const atkItem  = attackWeapon(atkActor, atkB);
         if (atkItem) {
           const bonus1 = await spendBonusPoint();
           if (!bonus1) return;

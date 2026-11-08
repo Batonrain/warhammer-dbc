@@ -424,6 +424,19 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
   </div>`;
 }
 
+function fanaticButtonNames(fanaticIntercepts) {
+  const sameName = f => fanaticIntercepts.filter(g => g.name === f.name);
+  const numbered = new Map();
+  return fanaticIntercepts.map(f => {
+    if (sameName(f).length < 2) return f.name;
+    const tokenName = f.tokenName && f.tokenName !== f.name ? f.tokenName : "";
+    if (tokenName && sameName(f).filter(g => g.tokenName === tokenName).length === 1) return `${f.name} (${tokenName})`;
+    const n = (numbered.get(f.name) ?? 0) + 1;
+    numbered.set(f.name, n);
+    return `${f.name} #${n}`;
+  });
+}
+
 /**
  * Кнопки «Перехват» внутри группы попадания (рядом с «Применить урон»):
  * по одной на носителя Fanatic. Без своих data-damage — hooks.mjs берёт
@@ -434,11 +447,12 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
  * применение урона не просило выделить его на сцене.
  */
 function fanaticRedirectButtons(fanaticIntercepts, hitNo) {
-  return fanaticIntercepts.map(f => `
+  const names = fanaticButtonNames(fanaticIntercepts);
+  return fanaticIntercepts.map((f, idx) => `
   <button class="wh-fanatic-redirect-btn" type="button" data-mirror-hit="1"
     data-fanatic-uuid="${f.uuid}" data-force-target="${f.tokenUuid || f.uuid}"
     title="Fanatic перехватывает это попадание вместо цели: урон применится ему, спишется бесплатный перехват (Спиной к Спине, раз в Раунд) или Реакция">
-    ${rollIcon("shield", "#ffb347")}Перехват${hitNo ? ` ${hitNo}` : ""}: ${esc(f.name)}
+    ${rollIcon("shield", "#ffb347")}Перехват${hitNo ? ` ${hitNo}` : ""}: ${esc(names[idx])}
   </button>`).join("");
 }
 
