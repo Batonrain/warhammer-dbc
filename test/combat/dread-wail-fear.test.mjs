@@ -11,8 +11,10 @@ import { describe, it, expect, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { applyDreadWailWave } from "../../module/combat/dread-wail.mjs";
 import { checkTargetWrite, performTargetWrite } from "../../module/combat/gm-relay.mjs";
-import { dreadWailFearEffectData, grantDreadWailFear, clearDreadWailFear, DREAD_WAIL_FEAR_FLAG }
-  from "../../module/combat/timed-effects.mjs";
+import {
+  dreadWailFearEffectData, grantDreadWailFear, clearDreadWailFear, DREAD_WAIL_FEAR_FLAG,
+  grantTimedEffect, sweepTimedEffects, timedEffectsOf, TIMED_EFFECT_FLAG, WAR_CRY_EFFECT_KEY, WAR_CRY_PRIORITY
+} from "../../module/combat/timed-effects.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -160,6 +162,49 @@ describe("grantDreadWailFear / clearDreadWailFear", () => {
     await grantDreadWailFear(victim);
     await clearDreadWailFear({ id: "c1", combatants: [{ actor: victim }], scene: { tokens: [] } });
     expect(fearEffects(victim)).toHaveLength(1);
+  });
+});
+
+describe("Боевой Клич: срок привязан к бою носителя, а не к бою из трекера ГМа", () => {
+  const warCry = { key: WAR_CRY_EFFECT_KEY, name: "Боевой клич", changes: [{ key: "system.fearRating", type: "add", value: 1, priority: WAR_CRY_PRIORITY }] };
+  const cryFlag = a => timedEffectsOf(a, WAR_CRY_EFFECT_KEY)[0]?.flags?.[NS]?.[TIMED_EFFECT_FLAG];
+
+  it("в трекере у ГМа открыт чужой бой, носитель в другом — эффект несёт id и Раунд боя носителя", async () => {
+    const shouter = actorWithEffects({ uuid: "Actor.shouter" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    globalThis.game.combats = [globalThis.game.combat, startedCombat("real", [shouter], 2)];
+    await grantTimedEffect(shouter, warCry);
+    expect(cryFlag(shouter)).toEqual({ key: WAR_CRY_EFFECT_KEY, combatId: "real", round: 2 });
+  });
+
+  it("эффект, выданный в своём бою, не сметается подметанием в начале Хода носителя в том же Раунде", async () => {
+    const shouter = actorWithEffects({ uuid: "Actor.shouter" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    const real = startedCombat("real", [shouter], 2);
+    globalThis.game.combats = [globalThis.game.combat, real];
+    await grantTimedEffect(shouter, warCry);
+    expect(await sweepTimedEffects(shouter, real)).toBe(0);
+    expect(timedEffectsOf(shouter, WAR_CRY_EFFECT_KEY)).toHaveLength(1);
+    expect(await sweepTimedEffects(shouter, { ...real, round: 3 })).toBe(1);
+  });
+
+  it("носитель не в бою, а в трекере ГМа бой идёт — к чужому бою эффект не привязывается", async () => {
+    const shouter = actorWithEffects({ uuid: "Actor.shouter" });
+    globalThis.game.combat = startedCombat("gm-view", [], 4);
+    globalThis.game.combats = [globalThis.game.combat];
+    await grantTimedEffect(shouter, warCry);
+    expect(cryFlag(shouter)).toEqual({ key: WAR_CRY_EFFECT_KEY, combatId: "", round: 0 });
+  });
+
+  it("несвязанный токен: бой найден по uuid токена, а не по мировому актору", async () => {
+    const world = actorWithEffects({ uuid: "Actor.world" });
+    const tokenActor = actorWithEffects({ uuid: "Scene.s.Token.t.Actor.world" });
+    tokenActor.isToken = true;
+    tokenActor.id = "world";
+    tokenActor.token = { baseActor: world };
+    globalThis.game.combats = [startedCombat("real", [tokenActor], 5)];
+    await grantTimedEffect(world, warCry);
+    expect(cryFlag(world)).toEqual({ key: WAR_CRY_EFFECT_KEY, combatId: "real", round: 5 });
   });
 });
 
