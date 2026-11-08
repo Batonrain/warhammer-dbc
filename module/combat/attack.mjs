@@ -942,6 +942,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Распыление клинит не по броску атаки, а по первому кубику урона (стр. 168,
   // sprayJamFace) — общий порог по d100 к нему неприменим, см. sprayJam ниже.
   const jamAt    = jamThreshold(wp);
+  const jamNoteAt = (!isMelee && !wp.spray && sys.weaponClass !== "thrown") ? jamAt : undefined;
   // Метательное (стр. 40, wdbc-x1nz.2.58): «При Критическом Промахе,
   // метательное оружие не Заклинивает» — исключено из общего механизма
   // Заклинивания по Надёжности целиком, не только на натуральном крите.
@@ -967,7 +968,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const jamData = ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: jamCard({
-        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(wProps) },
+        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(wProps, { jamAt: jamNoteAt }) },
         spoiled
       }),
       rolls: [roll],
@@ -2340,7 +2341,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           : ""
       },
       blocks: {
-        props:         buildPropertyChatBlock(cardProps),
+        props:         buildPropertyChatBlock(cardProps, { jamAt: jamNoteAt }),
         quality:       buildQualityChatBlock(item, gardenQuality),
         splinter:      isSplinter(sys) ? splinterReminders() : "",
         // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
