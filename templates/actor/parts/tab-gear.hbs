@@ -57,7 +57,7 @@
               <td class="item-name-cell">{{w.name}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}}{{#if (eq w.weaponType "grenade")}} <button type="button" class="weapon-grenade-pin-btn" data-item-id="{{w.id}}" title="Сорвать чеку и детонировать на месте (стр. 27): Полудействие, не атака, Уклонения нет.">💣</button>{{/if}}</td>
               <td>{{w.weaponClass}}</td><td>{{w.weaponType}}</td>
               <td>{{w.damage}}</td><td>{{w.damageType}}</td>
-              <td>{{w.magazineCur}}/{{w.magazineMax}}</td><td>{{w.weight}}</td>
+              <td>{{#if w.magLabel}}{{w.magLabel}}{{else}}{{w.magazineCur}}/{{w.magazineMax}}{{/if}}</td><td>{{w.weight}}</td>
               <td class="gear-infoguard-cell" title="Успехи Инфограждения">
                 {{#if w.infoguard}}🛡 {{w.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{w.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{w.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
                 {{else if (eq w.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{w.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{w.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
