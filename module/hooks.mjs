@@ -172,7 +172,7 @@ import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
 import { clearLegacyKillerBuffs } from "./combat/legacy-weapon-killer.mjs";
 import { clearLegacyPunisherStacks, markLegacyDeadlyTrapUsed } from "./rules/legacy-weapon.mjs";
 import { activateLegacyRegroup, processLegacyRegroupRoundStart } from "./combat/legacy-weapon-regroup.mjs";
-import { processPsychicSprintCombatStart } from "./combat/psychic-sprint.mjs";
+import { processPsychicSprintCombatStart, convertPsychicSprintPending } from "./combat/psychic-sprint.mjs";
 import { activateSabreSecondAttack, clearSabreSecondAttackAtTurnEnd } from "./combat/sabre-second-attack.mjs";
 import { rollStunningLegacyCheck } from "./combat/legacy-weapon-stunning.mjs";
 import { rollLegacyReaperTest } from "./combat/legacy-weapon-reaper.mjs";
@@ -5172,6 +5172,12 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("updateCombat", async (combat, changed) => {
     if (!game.users.activeGM?.isSelf || changed?.round !== 1 || !combat.started) return;
     await processPsychicSprintCombatStart(combat);
+  });
+
+  Hooks.on("createCombatant", async combatant => {
+    const combat = combatant?.parent;
+    if (!game.users.activeGM?.isSelf || !combat?.started || !(combat.round >= 1)) return;
+    await convertPsychicSprintPending(combat, combatant, combat.round);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {

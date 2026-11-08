@@ -6,7 +6,7 @@ import {
   PSYCHIC_SPRINT_KEY, PSYCHIC_SPRINT_EFFECT_KEY, PSYCHIC_SPRINT_PENDING_FLAG, psychicSprintEpr, psychicSprintTestMod, psychicSprintThreshold,
   psychicSprintSpeedBonus, discountedMovementAp
 } from "../../module/rules/psychic-sprint.mjs";
-import { startPsychicSprint, psychicSprintActive, movementApCost, processPsychicSprintCombatStart } from "../../module/combat/psychic-sprint.mjs";
+import { startPsychicSprint, psychicSprintActive, movementApCost, processPsychicSprintCombatStart, convertPsychicSprintPending } from "../../module/combat/psychic-sprint.mjs";
 import { talentActionsHtml, runTalentAction, isPsychicSprintItem } from "../../module/apps/talent-actions.mjs";
 import { timedEffectData, timedEffectStale, TIMED_EFFECT_FLAG } from "../../module/combat/timed-effects.mjs";
 import { expectedPhase } from "../../module/constants/effect-keys.mjs";
@@ -390,5 +390,19 @@ describe("Психический Рывок: ожидание превращае
     await processPsychicSprintCombatStart(combat);
     await processPsychicSprintCombatStart(combat);
     expect(a.effects).toHaveLength(1);
+  });
+
+  it("боец, добавленный в уже начатый бой позже, получает эффект сразу на текущий Раунд", async () => {
+    const a = await pendingWarlock();
+    const combat = { id: "c9", round: 3, started: true, combatants: [] };
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toEqual({ success: true, bonus: 3 });
+    expect(await convertPsychicSprintPending(combat, { actor: a }, combat.round)).toBe(true);
+    expect(a.effects).toHaveLength(1);
+    expect(a.effects[0].flags[NS][TIMED_EFFECT_FLAG]).toEqual({ key: PSYCHIC_SPRINT_EFFECT_KEY, combatId: "c9", round: 3, lastRound: 4 });
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toBeUndefined();
+    expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(false);
+    expect(await convertPsychicSprintPending(combat, { actor: a }, combat.round)).toBe(false);
   });
 });

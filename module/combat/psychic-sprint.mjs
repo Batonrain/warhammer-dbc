@@ -99,22 +99,26 @@ export async function startPsychicSprint(actor) {
  * Бой начался (первый updateCombat, пишет активный ГМ): участникам, у кого висит результат Рывка вне боя,
  * успех становится обычным эффектом 1-го Раунда этого боя, а Талант отмечается потраченным в нём.
  * Ожидание лежит на мировом акторе (кнопка с бокового листа) или на акторе токена (с листа токена) —
- * читаем и снимаем оба. Не участник боя ожидание сохраняет до своего боя.
+ * читаем и снимаем оба. Не участник боя ожидание сохраняет до своего боя; присоединившийся к уже начатому бою
+ * получает эффект сразу (convertPsychicSprintPending из хука createCombatant).
  */
-export async function processPsychicSprintCombatStart(combat) {
-  for (const combatant of combat?.combatants ?? []) {
-    const actor = combatant?.actor;
-    if (!actor) continue;
-    const base = actor.isToken ? (actor.token?.baseActor ?? globalThis.game?.actors?.get?.(actor.id) ?? null) : null;
-    const holders = [base, actor].filter(Boolean);
-    const pending = holders.map(psychicSprintPendingOf).find(Boolean);
-    if (!pending) continue;
-    if (pending.success && pending.bonus > 0) {
-      await grantTimedEffect(actor, { ...psychicSprintEffectSpec(pending.bonus), combat: { id: combat.id, round: 1 } });
-    }
-    await markCapabilityUsed(actor, PSYCHIC_SPRINT_KEY, "battle", combat.id);
-    for (const holder of holders) {
-      if (psychicSprintPendingOf(holder)) await holder.unsetFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG);
-    }
+export async function convertPsychicSprintPending(combat, combatant, round = 1) {
+  const actor = combatant?.actor;
+  if (!actor) return false;
+  const base = actor.isToken ? (actor.token?.baseActor ?? globalThis.game?.actors?.get?.(actor.id) ?? null) : null;
+  const holders = [base, actor].filter(Boolean);
+  const pending = holders.map(psychicSprintPendingOf).find(Boolean);
+  if (!pending) return false;
+  if (pending.success && pending.bonus > 0) {
+    await grantTimedEffect(actor, { ...psychicSprintEffectSpec(pending.bonus), combat: { id: combat.id, round } });
   }
+  await markCapabilityUsed(actor, PSYCHIC_SPRINT_KEY, "battle", combat.id);
+  for (const holder of holders) {
+    if (psychicSprintPendingOf(holder)) await holder.unsetFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG);
+  }
+  return true;
+}
+
+export async function processPsychicSprintCombatStart(combat) {
+  for (const combatant of combat?.combatants ?? []) await convertPsychicSprintPending(combat, combatant, 1);
 }
