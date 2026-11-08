@@ -884,6 +884,18 @@ export function openAttackDialog(ctx) {
       const breakdown = form.querySelector("#atk-threshold-breakdown");
       const hint      = form.querySelector(".av-adv-hint");
 
+      // DialogV2 закрывает окно после любого колбэка, даже вернувшего false, — отказ свободной атаки
+      // (закреплённая База/Приём) ловим на клике, до отправки формы: окно остаётся открытым.
+      form.querySelector("button[data-action='roll']")?.addEventListener("click", ev => {
+        if (!isMelee) return;
+        const picked = resolveSelectionSafe(readAttackForm(form, ammoConds));
+        const problem = freeAttackLockProblem(techniqueOpts, { baseKey: picked.baseKey, maneuverKey: picked.maneuverKey });
+        if (!problem) return;
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        ui.notifications.warn(`⚠️ ${problem}.`);
+      }, true);
+
       const badgesEl        = form.querySelector("#atk-badges");
       const noteEl          = form.querySelector("#atk-gripnote");
       const dualNoteEl      = form.querySelector("#atk-dual-note");
