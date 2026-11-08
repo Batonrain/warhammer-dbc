@@ -3264,7 +3264,7 @@ export function registerHooks() {
         if (!commander.isOwner) return ui.notifications.warn("Раздать может владелец отдающего (или ГМ).");
         el.disabled = true;
         const { grantFanaticTrait } = await import("./combat/fanatic-redirect.mjs");
-        const given = await grantFanaticTrait(commander, game.actors ?? []);
+        const given = await grantFanaticTrait(commander);
         ui.notifications.info(given.length ? `Fanatic получили: ${given.join(", ")}.` : "Fanatic: некому раздавать.");
       });
     });
@@ -4853,7 +4853,7 @@ function _attachFateContextMenu(message, html) {
     await clearCombatFormationOnCombatEnd(combat);
     // Спиной к Спине: розданный Fanatic — тоже до конца боя.
     const { clearFanaticGrants } = await import("./combat/fanatic-redirect.mjs");
-    await clearFanaticGrants(game.actors ?? []);
+    await clearFanaticGrants();
     // Затрещина (Пугилист): память «кто видел приём» живёт до конца боя (combat/whack.mjs).
     const { clearWhackMemory } = await import("./combat/whack.mjs");
     await clearWhackMemory(combat);
