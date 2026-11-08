@@ -1829,12 +1829,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // стола — кнопкой «Перехват» у попадания (attack-card.mjs) или вручную через
   // обычную «Применить урон» (выделить токен Фанатика).
   const fanaticIntercepts = hits.length
-    ? fanaticInterceptCandidates(targetToken, game.actors ?? [], { excludeUuids: [defenderActor?.uuid] })
-        .map(a => {
+    ? fanaticInterceptCandidates(targetToken, undefined, { excludeUuids: [defenderActor?.uuid] })
+        .map(({ actor: a, token: t }) => {
           const payer = fanaticPayer(a);
           return { uuid: payer.uuid, name: a.name,
             freeUse: backToBackFreeUseAvailable(payer),
-            tokenUuid: a.getActiveTokens?.()[0]?.document?.uuid ?? "",
+            tokenUuid: t.document?.uuid ?? "",
             savior: hasMistSavior(a), targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" };
         })
     : [];
