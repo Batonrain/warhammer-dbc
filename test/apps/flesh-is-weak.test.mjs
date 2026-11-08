@@ -21,7 +21,12 @@ function stub(data, id) {
   it.id = id; it.flags ??= {};
   it.getFlag = (s, k) => it.flags[s]?.[k];
   it.effects = (it.effects ?? []).map(e => ({ ...e, id: e._id }));
+  for (const e of it.effects) {
+    for (const ch of e.system.changes) ch.effect = e;
+    e.toObject = () => ({ _id: e._id, system: { changes: e.system.changes.map(({ effect, ...ch }) => structuredClone(ch)) } });
+  }
   it.updateEmbeddedDocuments = async (_t, ups) => {
+    JSON.stringify(ups);
     for (const u of ups) {
       const e = it.effects.find(x => x.id === u._id);
       e.system.changes = u["system.changes"];
@@ -77,6 +82,25 @@ describe("syncFleshIsWeak", () => {
     expect(ap(m).every(v => v === 4)).toBe(true);
     expect(ap(m)).toHaveLength(6);
     expect(m.flags["warhammer-dbc"].fiwContribution).toBe(1);
+  });
+
+  it("у записей changes живого эффекта есть обратная ссылка effect: в update уходят чистые данные без неё", async () => {
+    const m = machine("m");
+    const a = actorWith([m, fiw("a")]);
+    const sent = [];
+    const write = m.updateEmbeddedDocuments;
+    m.updateEmbeddedDocuments = async (t, ups) => { sent.push(...ups); return write(t, ups); };
+    await syncFleshIsWeak(a);
+    expect(sent.length).toBeGreaterThan(0);
+    for (const u of sent) for (const ch of u["system.changes"]) expect(ch).not.toHaveProperty("effect");
+  });
+
+  it("без toObject у эффекта обратная ссылка тоже срезается", async () => {
+    const m = machine("m");
+    for (const e of m.effects) delete e.toObject;
+    await syncFleshIsWeak(actorWith([m, fiw("a")]));
+    expect(m.system.rating).toBe(4);
+    expect(ap(m).every(v => v === 4)).toBe(true);
   });
 
   it("идемпотентно: повторный вызов без перемен ничего не меняет", async () => {
