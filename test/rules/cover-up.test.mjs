@@ -151,12 +151,16 @@ describe("Inf на листе минус вложено в ячейки (реш�
 });
 
 describe("бесплатная ячейка — только Отступник и Аэльдари (решение владельца 08.11.2026)", () => {
-  const who = (archetype, race = "human") => ({ system: { archetype, race, characteristics: { inf: { total: 30 } } } });
+  const who = (archetype, race = "human", band = "") => ({ system: { archetype, race, band, characteristics: { inf: { total: 30 } } } });
   it("Отступник: по ключу и по имени архетипа, любой регистр", () => {
     for (const a of ["renegade", "Renegade", "ренегат", " Ренегат ", "отступник"]) expect(freeCellAllowed(who(a)), a).toBe(true);
   });
-  it("Аэльдари: любая раса группы", () => {
-    for (const r of ["azuriane", "drukhari", "ynnari", "halfEldar", "harlequin", "exodite"]) expect(freeCellAllowed(who("", r)), r).toBe(true);
+  it("Аэльдари: только банда «Агенты Тишины Миян», остальные расы и банды — нет", () => {
+    for (const r of ["azuriane", "drukhari", "ynnari", "halfEldar", "harlequin", "exodite"]) {
+      expect(freeCellAllowed(who("", r, "miyanAgents")), r).toBe(true);
+      expect(freeCellAllowed(who("", r)), r).toBe(false);
+      expect(freeCellAllowed(who("", r, "diamondClaw")), r).toBe(false);
+    }
   });
   it("остальные — нет: другие архетипы и расы, пустой и отсутствующий актор", () => {
     expect(freeCellAllowed(who("pirate"))).toBe(false);
@@ -175,7 +179,8 @@ describe("бесплатная ячейка — только Отступник 
     const cells = [{ name: "А", inf: 4, free: true }, { name: "Б", inf: 2 }];
     expect(infRemaining(who("pirate"), cells)).toEqual({ onSheet: 30, paid: 6, left: 24, over: false });
     expect(infRemaining(who("renegade"), cells)).toEqual({ onSheet: 30, paid: 2, left: 28, over: false });
-    expect(infRemaining(who("", "azuriane"), cells)).toEqual({ onSheet: 30, paid: 2, left: 28, over: false });
+    expect(infRemaining(who("", "azuriane", "miyanAgents"), cells)).toEqual({ onSheet: 30, paid: 2, left: 28, over: false });
+    expect(infRemaining(who("", "azuriane"), cells)).toEqual({ onSheet: 30, paid: 6, left: 24, over: false });
   });
 });
 

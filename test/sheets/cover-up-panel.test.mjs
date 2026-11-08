@@ -18,10 +18,10 @@ const NS = "warhammer-dbc";
 const talent = { type: "talent", name: "Cover Up / Работа под Прикрытием", system: {} };
 
 /** Актор-двойник: флаг читается как у документа, setFlag запоминает записанное и обновляет флаг. */
-function fakeActor({ items = [talent], cells, inf, archetype = "", race = "human" } = {}) {
+function fakeActor({ items = [talent], cells, inf, archetype = "", race = "human", band = "" } = {}) {
   const a = {
     items,
-    system: { characteristics: { inf: { total: inf ?? 0 } }, archetype, race },
+    system: { characteristics: { inf: { total: inf ?? 0 } }, archetype, race, band },
     flags: cells === undefined ? {} : { [NS]: { [COVER_UP_FLAG]: cells } },
     writes: [],
     async setFlag(scope, key, value) {
@@ -79,7 +79,7 @@ describe("Inf на листе минус вложено в ячейки — вы
     expect(ctx).toMatchObject({ coverUpInfLeft: -1, coverUpInfOver: true });
   });
   it("галочка бесплатной ячейки уходит в флаг, и остаток после неё растёт", async () => {
-    const a = fakeActor({ inf: 10, race: "azuriane", cells: [{ name: "А", inf: 4 }] });
+    const a = fakeActor({ inf: 10, race: "azuriane", band: "miyanAgents", cells: [{ name: "А", inf: 4 }] });
     expect(coverUpPanelContext(a).coverUpInfLeft).toBe(6);
     await changeCoverUpCell(a, 0, { free: true });
     expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: true }]);
@@ -97,7 +97,7 @@ describe("галочка «бесплатная ячейка» — только 
     expect(ctx).toMatchObject({ coverUpPaidInf: 5, coverUpFreeInf: 0, coverUpInfLeft: 15 });
   });
   it("Отступник и Аэльдари галочку получают, бесплатная ячейка остаток не уменьшает", () => {
-    for (const over of [{ archetype: "renegade" }, { race: "drukhari" }]) {
+    for (const over of [{ archetype: "renegade" }, { race: "drukhari", band: "miyanAgents" }]) {
       const ctx = coverUpPanelContext(fakeActor({ inf: 20, cells, ...over }));
       expect(ctx.coverUpFreeAllowed).toBe(true);
       expect(ctx.coverUpCells.map(c => c.free)).toEqual([true, false]);

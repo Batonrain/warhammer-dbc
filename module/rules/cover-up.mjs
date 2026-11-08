@@ -28,8 +28,8 @@
 //      без траты Inf)»; Происхождение Аэльдари «Три Разговора, Один Нож»:
 //      ячейка 2 Inf, «персонаж не платит за ее создание»). Галочку ставит
 //      игрок сам, но только у персонажа с Архетипом «Отступник» (ключ
-//      renegade) или расой группы Аэльдари (решение владельца 08.11.2026,
-//      freeCellAllowed): у остальных колонки нет, а ячейка с флагом free,
+//      renegade) или бандой корсаров «Агенты Тишины Миян» (system.band =
+//      miyanAgents; решение владельца 08.11.2026, freeCellAllowed): у остальных колонки нет, а ячейка с флагом free,
 //      оставшимся от прежней версии, считается платной (effectiveCells).
 //      Лимит «суммарно на 10 Inf» Отступника не проверяется.
 //    • Требование Таланта «Сеть Контактов» («Cover Up, 5 и больше ячеек») —
@@ -46,7 +46,6 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
-import { AELDARI_RACES } from "../constants/races.mjs";
 
 /** Ключ флага актора (`flags.warhammer-dbc.<ключ>`). */
 export const COVER_UP_FLAG = "coverUpCells";
@@ -81,15 +80,17 @@ export function hasCoverUp(actor) {
 }
 
 const RENEGADE_ARCHETYPES = ["renegade", "ренегат", "отступник"];
+const FREE_CELL_BAND = "miyanAgents";
 
 /**
  * Можно ли актору отмечать ячейки бесплатными: Архетип «Отступник» (ключ или имя
- * в system.archetype — как у isSkitariiActor) или раса группы Аэльдари.
+ * в system.archetype — как у isSkitariiActor) или Происхождение Аэльдари — банда
+ * корсаров «Агенты Тишины Миян» (system.band), единственное с бесплатной ячейкой.
  */
 export function freeCellAllowed(actor) {
   const arch = String(actor?.system?.archetype ?? "").trim().toLowerCase();
   if (RENEGADE_ARCHETYPES.includes(arch)) return true;
-  return AELDARI_RACES.includes(actor?.system?.race);
+  return actor?.system?.band === FREE_CELL_BAND;
 }
 
 /** Ячейки так, как они считаются: без права на бесплатные free сбрасывается. */
