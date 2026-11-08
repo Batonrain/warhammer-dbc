@@ -20,6 +20,7 @@ import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
 const IMPERIAL = "packs-src/weapons/Имперское/Стрелковое";
 const DOCS = {
   aeldariGrenade: packDocById("packs-src/weapons/Азуриане/Стрелковое/Гранаты_и_бомбы", "u0CX6mFuQ2XyJVz0"),
+  imperialBomb:   packDocById(`packs-src/weapons/Имперское/Оружие_снаряжения`, "bUXXaToWlbB8IfJa"),
   aeldariRocket:  packDocById("packs-src/weapons/Азуриане/Стрелковое/Ракеты", "QZSEy2aJ8VvJ5dcW"),
   frag:           packDocById(`${IMPERIAL}/Гранаты`, "vmWiEiuIfIRfNkWW"),
   krakRocket:     packDocById(`${IMPERIAL}/Ракеты`, "fGe14AvArOK6gkRz"),
@@ -60,7 +61,7 @@ describe("hasNoMagazine / isExpendableOrdnance", () => {
   });
 
   it("расходуемое: гранаты, ракеты, Одноразовая Ракетница; болтер и пусковая установка — нет", () => {
-    for (const key of ["aeldariGrenade", "aeldariRocket", "frag", "krakRocket", "disposable"]) {
+    for (const key of ["aeldariGrenade", "aeldariRocket", "frag", "krakRocket", "disposable", "imperialBomb"]) {
       expect(isExpendableOrdnance(fromPack(DOCS[key])), key).toBe(true);
     }
     for (const key of ["missileLauncher", "blaster", "doomfire"]) {

@@ -1,4 +1,4 @@
-const EXPENDABLE_TYPES = new Set(["grenade", "rocket"]);
+const EXPENDABLE_TYPES = new Set(["grenade", "rocket", "explosive"]);
 const NON_RELOADABLE = /^\s*Не перезаряжается/u;
 
 export function hasNoMagazine(item) {
