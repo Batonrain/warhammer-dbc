@@ -21,7 +21,7 @@
 
 import { MINION_GROUPS, MINION_TIERS } from "../../constants/minions.mjs";
 import { minionSlots, slotUsage, minionCapacity, groupTally } from "../../rules/minion-build.mjs";
-import { effectiveMinionGroup } from "../../rules/binary-dominion.mjs";
+import { effectiveMinionGroup, hasBinaryDominion, hasBinaryFlock } from "../../rules/binary-dominion.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 
 /**
@@ -116,7 +116,9 @@ function minionRow(minion) {
  * решает, показывать ли его вообще: Талант, уже привязанный слуга без слота
  * (wdbc-1rno) ИЛИ возможность держать слугу без слота — Инфернальный
  * Оруженосец (wdbc-8t8); `freeSlots` — сколько Талантов ждут своего слугу, и
- * есть ли смысл в «+».
+ * есть ли смысл в «+». `minionBinaryHint` — у актора есть Бинарное Владычество
+ * или Паства, а слуг и слотов нет: вместо блока одна строка о том, что слуг
+ * даёт только «Миньон Хаоса».
  */
 export function minionsPanelContext(actor, actors = []) {
   const items = [...(actor?.items ?? [])];
@@ -124,7 +126,10 @@ export function minionsPanelContext(actor, actors = []) {
   const minions = minionsOfActor(actor, actors)
     .sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
   if (!slots.length && !minions.length && !canHoldSlotlessMinion(actor))
-    return { hasMinionTalent: false, minionRows: [], freeSlots: [] };
+    return {
+      hasMinionTalent: false, minionRows: [], freeSlots: [],
+      minionBinaryHint: hasBinaryDominion(actor) || hasBinaryFlock(actor)
+    };
 
   // Бинарная Паства (rules/binary-dominion.mjs): человек в латах Скитария
   // считается «Машиной» и в слотах, и в максимуме, и в счётчике шапки.
@@ -138,6 +143,7 @@ export function minionsPanelContext(actor, actors = []) {
 
   return {
     hasMinionTalent: true,
+    minionBinaryHint: false,
     minionRows: minions.map(minionRow),
     minionCount: minions.length,
     minionCapacity: minionCapacity(actor, groups),

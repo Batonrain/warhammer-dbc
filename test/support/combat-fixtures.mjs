@@ -67,7 +67,7 @@ export function actorFor({ items = [], ...system } = {}) {
   };
 }
 
-/** Оружие. Умеет `update()` — атака списывает патроны и метит Перезарядку. */
+/** Оружие. Умеет `update()` — атака списывает патроны и метит Перезарядку, и `delete()` — брошенная граната расходуется. */
 export function weaponFor(system = {}, { id = "weapon-1", name = "Болтер", flags = {} } = {}) {
   const item = {
     id, name, type: "weapon",
@@ -78,7 +78,8 @@ export function weaponFor(system = {}, { id = "weapon-1", name = "Болтер",
       ...system
     },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
-    async update(data) { for (const [path, value] of Object.entries(data)) setPath(item, path, value); }
+    async update(data) { for (const [path, value] of Object.entries(data)) setPath(item, path, value); },
+    async delete() { item.deleted = true; }
   };
   return item;
 }

@@ -27,6 +27,7 @@ import { warpLockBlocksManifest } from "../rules/warp-lock.mjs";
 import { sustainOffPatch } from "../combat/psychic-sustain.mjs";
 import { attemptRageExit } from "../combat/rage-behavior.mjs";
 import { actorInfamyMax } from "./infamy-points.mjs";
+import { tracksMagazine } from "../rules/no-magazine.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const TPL = `systems/${SYSTEM}/templates/apps/hud.hbs`;
@@ -276,8 +277,8 @@ export function hudData(actor) {
       loaded: ammo?.name ?? "",
       clip: Number(g.magazineCur) || 0,
       clipMax: Number(g.magazineMax) || 0,
-      empty2: !melee && (Number(g.magazineCur) || 0) <= 0 && (Number(g.magazineMax) || 0) > 0,
-      noMag: !Number(g.magazineMax),
+      empty2: !melee && (Number(g.magazineCur) || 0) <= 0 && tracksMagazine(w),
+      noMag: !tracksMagazine(w),
       recharge: !!g.needsRecharge,
       rof, fireGate,
       gripOpts, profOpts, hasOptions: gripOpts.length > 0 || profOpts.length > 0,

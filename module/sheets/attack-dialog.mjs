@@ -32,6 +32,7 @@ import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
 import { ironGardenQuality }                  from "../rules/iron-garden.mjs";
 import { hasInfiniteMagazine }               from "../rules/ammo-free.mjs";
+import { tracksMagazine }                    from "../rules/no-magazine.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto, visibleWeaponProps } from "../combat/weapon-properties.mjs";
@@ -1130,7 +1131,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const magCur   = sys.magazineCur || 0;
     const magMax   = sys.magazineMax || 0;
     const magInf   = hasInfiniteMagazine(item);
-    const magCls   = magInf ? ""
+    const magNone  = !magInf && !tracksMagazine({ system: sys });
+    const magCls   = magInf || magNone ? ""
       : magCur === 0 ? "ammo-empty"
       : magCur <= Math.ceil(magMax * 0.25) ? "ammo-low" : "";
     const ammoMods = loadedAmmo ? _buildAmmoModString(ammoSys) : "";
@@ -1139,7 +1141,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <span class="atk-ammo-label">${rollIcon("spark","#8fd0ff")}Боеприпасы:</span>
         <span class="atk-ammo-name">${loadedAmmo ? esc(loadedAmmo.name) : "стандартные"}</span>
         ${ammoMods ? `<span class="atk-ammo-mods">(${ammoMods})</span>` : ""}
-        <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magInf ? "∞" : `${magCur}/${magMax}`}</b></span>
+        <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magInf ? "∞" : magNone ? "—" : `${magCur}/${magMax}`}</b></span>
       </div>`;
   }
 
