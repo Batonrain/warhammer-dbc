@@ -1783,7 +1783,7 @@
         "availability": "",
         "weight": 0,
         "attackBonus": 0,
-        "special": "",
+        "special": "∞.",
         "equipped": false,
         "loadedAmmoId": "",
         "weaponProps": [
