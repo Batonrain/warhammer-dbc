@@ -96,6 +96,7 @@ import { addictionTestParts, parseFrequency, readWithdrawalEntries, addictionRec
 import { hasOverclock } from "../rules/technomystic-talents.mjs";
 import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist } from "../rules/technomystic-resources.mjs";
 import { diseaseVectors, vectorLabel } from "../rules/disease-infection.mjs";
+import { isExpendableOrdnance } from "../rules/no-magazine.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -644,7 +645,7 @@ function buildGetDataUncached(actor) {
 
     const magLow   = !melee && (s.magazineCur || 0) > 0
                      && (s.magazineCur || 0) <= Math.ceil((effClipMax || 1) * 0.25);
-    const magEmpty = !melee && (s.magazineCur || 0) === 0 && (effClipMax || 0) > 0;
+    const magEmpty = !melee && (s.magazineCur || 0) === 0 && (effClipMax || 0) > 0 && !isExpendableOrdnance(i);
 
     return {
       id: i.id, name: i.name,

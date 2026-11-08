@@ -794,13 +794,13 @@ function gorgetSection({ rating, outcome }) {
 }
 
 /** Заряженный боеприпас, остаток магазина и расход за этот выстрел. */
-function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", magInfinite = false, spent = 0,
+function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", magInfinite = false, magNone = false, spent = 0,
                      special = "", condLabels = [], warning = "" }) {
   return `
       <div class="roll-ammo-block${!name ? " roll-ammo-none" : ""}">
         Боеприпасы: <b>${name || "стандартные"}</b>
         ${mods ? `<span class="roll-ammo-mods">(${mods})</span>` : ""}
-        | Магазин: <b>${magInfinite ? "∞" : `${magCur}/${magMax}`}</b>
+        | Магазин: <b>${magInfinite ? "∞" : magNone ? "—" : `${magCur}/${magMax}`}</b>
         ${spent > 0 ? `<span class="roll-ammo-spent">(израсходовано: ${spent})</span>` : ""}
         ${special ? `<div class="roll-ammo-special">${special}</div>` : ""}
         ${condLabels.length

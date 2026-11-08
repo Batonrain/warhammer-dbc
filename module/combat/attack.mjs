@@ -31,6 +31,8 @@ import { fanaticInterceptCandidates, backToBackFreeUseAvailable, fanaticPayer } 
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
 import { ammoIsFree, hasInfiniteMagazine } from "../rules/ammo-free.mjs";
+import { hasNoMagazine, isExpendableOrdnance } from "../rules/no-magazine.mjs";
+import { spendExpendable } from "./spend-expendable.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
@@ -1246,7 +1248,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Оба книжных источника «выстрел не тратит патрон» — Рука Смерти и Дар
   // «Рука-Пушка» — живут в rules/ammo-free.mjs, см. его шапку.
   const infiniteAmmo = ammoIsFree(item, actor);
-  if (!isMelee && rofMode !== "melee" && !infiniteAmmo) {
+  const expendable = isExpendableOrdnance(item);
+  const magazineless = hasNoMagazine({ system: sys }) || expendable;
+  if (!isMelee && rofMode !== "melee" && !infiniteAmmo && !magazineless) {
     // Контролируемая Очередь (rules/gunner-talents.mjs): расчётный RoF — не меньше половины и не меньше
     // попаданий+1 (без бонусных от Storm/Twin-linked).
     let ammoRof = _getAmmoSpent({ system: fanningSys }, rofMode);
@@ -1284,6 +1288,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     }
   }
 
+  if (!isMelee && rofMode !== "melee" && expendable && !opts.skipAmmo) {
+    const left = await spendExpendable(item);
+    ammoWarning = `<div class="roll-ammo-low">Израсходовано${left > 0 ? ` (осталось: ${left})` : ""}</div>`;
+  }
+
   // Выпуск Батареи: после этой атаки оружие ломается и бесполезно (system.destroyed, как у Огрина и Песни
   // Перерождения); перебросы того же выстрела (skipAmmo) повторно не ломают — оно уже сломано.
   if (batpackOn && !opts.skipAmmo) await item.update({ "system.destroyed": true });
@@ -1294,9 +1303,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // счётчик quantity и та же логика «>1 — decrement, иначе удалить предмет»,
   // что у «Вырвать чеку»/детонации на Крит-Промахе (draw-action.mjs).
   if (isMelee && hit && sys.weaponType === "grenade" && !opts.skipAmmo) {
-    const qty = Number(sys.quantity) || 1;
-    if (qty > 1) await item.update({ "system.quantity": qty - 1 });
-    else await item.delete();
+    await spendExpendable(item);
   }
 
   // Урон
@@ -2193,7 +2200,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       ammo: isMelee ? null : {
         name:   loadedAmmo?.name || "",
         mods:   loadedAmmo ? _buildAmmoModString(ammoSys) : "",
-        magCur: sys.magazineCur ?? "?", magMax: sys.magazineMax ?? "?", magInfinite: hasInfiniteMagazine(item),
+        magCur: sys.magazineCur ?? "?", magMax: sys.magazineMax ?? "?", magInfinite: hasInfiniteMagazine(item), magNone: magazineless,
         spent:  ammoSpent, special: ammoSpecial,
         condLabels: opts.ammoCondLabels || [], warning: ammoWarning
       },
