@@ -172,27 +172,40 @@ export function fanaticCandidates(allActors, { excludeUuids = [] } = {}) {
 }
 
 /**
- * Носители Fanatic (кроме excludeUuids), чей активный токен сейчас в
- * базовом контакте с targetToken — геометрия вместо «искать глазами на
- * сцене». Нет targetToken (атака не в рукопашной/токен не выделен) —
- * список пуст: перехват в базовом контакте не книжный случай для дистанции.
+ * Носители Fanatic (кроме excludeUuids) среди токенов сцены, стоящие в базовом
+ * контакте с targetToken — геометрия вместо «искать глазами на сцене». Берутся
+ * токены сцены и актор токена (t.actor), поэтому Fanatic в дельте несвязанного
+ * токена виден, а токен предлагается именно тот, что стоит в контакте. Связанный
+ * актор с несколькими токенами даёт одного кандидата (первый токен в контакте),
+ * несвязанные токены — каждый отдельно. Нет targetToken (атака не в
+ * рукопашной/токен не выделен) — список пуст: перехват в базовом контакте не
+ * книжный случай для дистанции.
+ * @returns {{actor: Actor, token: Token}[]}
  */
-export function fanaticInterceptCandidates(targetToken, allActors, { excludeUuids = [] } = {}) {
+export function fanaticInterceptCandidates(targetToken, tokens = globalThis.canvas?.tokens?.placeables ?? [], { excludeUuids = [] } = {}) {
   if (!targetToken) return [];
   const exclude = new Set(excludeUuids.filter(Boolean));
-  return fanaticCandidates(allActors, { excludeUuids: [...exclude] }).filter(a => {
-    const token = a.getActiveTokens?.()[0];
-    return token && token !== targetToken && inMeleeContact(token, targetToken);
-  });
+  const targetId = targetToken.document?.id;
+  const seen = new Set();
+  const out = [];
+  for (const t of tokens ?? []) {
+    const a = t?.actor;
+    if (!a?.uuid || t === targetToken || (targetId && t.document?.id === targetId)) continue;
+    if (exclude.has(a.uuid) || seen.has(a.uuid) || !hasFanatic(a) || !inMeleeContact(t, targetToken)) continue;
+    seen.add(a.uuid);
+    out.push({ actor: a, token: t });
+  }
+  return out;
 }
 
 /**
- * Кто платит за перехват: актор активного токена носителя, а не мировой актор.
- * Токены несвязанные (actorLink:false) по умолчанию: у актора токена своя дельта —
- * Реакции, отметка «раз в Раунд», Черты, — и урон перехвата идёт именно ему.
- * Плата мировому актору расходилась с уроном (task-ed4e).
+ * Кто платит за перехват: актор токена носителя. Токены несвязанные
+ * (actorLink:false) по умолчанию: у актора токена своя дельта — Реакции,
+ * отметка «раз в Раунд», Черты, — и урон перехвата идёт именно ему. Актор
+ * несвязанного токена возвращается как есть; мировой актор заменяется актором
+ * своего активного токена (task-ed4e).
  */
-export const fanaticPayer = actor => actor?.getActiveTokens?.()[0]?.actor ?? actor;
+export const fanaticPayer = actor => actor?.isToken ? actor : (actor?.getActiveTokens?.()[0]?.actor ?? actor);
 
 /** Свободен ли у actor бесплатный (без Реакции) перехват этим Раундом — Спиной к Спине. */
 export function backToBackFreeUseAvailable(actor) {
