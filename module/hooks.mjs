@@ -232,7 +232,7 @@ import { collectTestMods } from "./rules/roll-mods.mjs";
 import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
-import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn } from "./combat/command-state.mjs";
+import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn, actorIdentityUuids } from "./combat/command-state.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { sparksSwap, igniterFollowUp } from "./rules/gunsmith-talents.mjs";
 import { applyDamageOverrides, recordDamageOverride, DMG_OVERRIDES_FLAG } from "./combat/damage-override.mjs";
@@ -2303,8 +2303,11 @@ export function registerHooks() {
           }
           // Перехват Фанатиком: плата (бесплатный раз в Раунд или Реакция) — до применения урона.
           if (own.fanaticUuid) {
-            const fanatic = await fromUuid(own.fanaticUuid).catch(() => null);
-            if (!fanatic) return ui.notifications.warn("⚠️ Носитель Fanatic не найден.");
+            const named = await fromUuid(own.fanaticUuid).catch(() => null);
+            if (!named) return ui.notifications.warn("⚠️ Носитель Fanatic не найден.");
+            // Урон получает актор токена, и платить обязан он же: у несвязанного токена Реакции и «раз в Раунд»
+            // лежат в его дельте, а карточка (особенно старая) могла назвать мирового актора.
+            const fanatic = actor !== named && actorIdentityUuids(actor).has(named.uuid) ? actor : named;
             if (!fanatic.isOwner) return ui.notifications.warn("Перехватывает владелец носителя (или ГМ).");
             const { payFanaticIntercept } = await import("./combat/fanatic-redirect.mjs");
             const paid = await payFanaticIntercept(fanatic, message);

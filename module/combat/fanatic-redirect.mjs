@@ -186,6 +186,14 @@ export function fanaticInterceptCandidates(targetToken, allActors, { excludeUuid
   });
 }
 
+/**
+ * Кто платит за перехват: актор активного токена носителя, а не мировой актор.
+ * Токены несвязанные (actorLink:false) по умолчанию: у актора токена своя дельта —
+ * Реакции, отметка «раз в Раунд», Черты, — и урон перехвата идёт именно ему.
+ * Плата мировому актору расходилась с уроном (task-ed4e).
+ */
+export const fanaticPayer = actor => actor?.getActiveTokens?.()[0]?.actor ?? actor;
+
 /** Свободен ли у actor бесплатный (без Реакции) перехват этим Раундом — Спиной к Спине. */
 export function backToBackFreeUseAvailable(actor) {
   return isCapabilityAvailable(actor, BACK_TO_BACK_FREE_USE_FLAG, "round");
