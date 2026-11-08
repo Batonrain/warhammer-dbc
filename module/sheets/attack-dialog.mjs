@@ -475,7 +475,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     autoMods: (resolvedAttack.autoMods || []).filter(m =>
       String(m.ruleId ?? "").startsWith("command.") || m.ruleId === "situational.shock"
       // Пассажир верхом: «−10 на все физические действия» — атака тоже (rules/mount.mjs::passengerTestMod)
-      || m.ruleId === "situational.passenger")
+      || m.ruleId === "situational.passenger"
+      // Скакун под меткой Драконьего Рыцаря: +3×Успехи на все Атаки (rules/dragon-knight.mjs)
+      || m.ruleId === "situational.dragonKnight")
   });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
