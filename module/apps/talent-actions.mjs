@@ -13,7 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemIs } from "../rules/item-marker.mjs";
-import { PSYCHIC_SPRINT_KEY } from "../rules/psychic-sprint.mjs";
+import { PSYCHIC_SPRINT_KEY, psychicSprintPendingOf } from "../rules/psychic-sprint.mjs";
 import { isInspireWrathItem } from "../rules/inspire-wrath.mjs";
 import { FORESIGHT_READY_FLAG } from "../rules/situational.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -65,11 +65,17 @@ export function talentActionsHtml(item, actor) {
     </div>`;
   }
   if (isPsychicSprintItem(item)) {
+    const pending = psychicSprintPendingOf(actor);
+    const note = pending
+      ? `<div class="talent-action-note" style="font-size:0.85em;opacity:0.85;">${pending.success
+        ? `Рывок удался: SPD +${pending.bonus} ждёт боя и начнётся с 1-го Раунда.`
+        : "Рывок брошен и провален: Талант на ближайший бой потрачен."} Повторить нельзя, пока не начнётся бой.</div>`
+      : "";
     return `<div class="talent-action-panel">
       <button type="button" class="talent-action-btn" data-talent-action="psychicSprint" data-item-id="${esc(item.id)}"
-        title="Тест W−30+3×эPR (эPR — текущий Пси-Рейтинг). Успех: +эPR к SPD на этот и следующий Раунд, Полное Движение, Натиск и Бег на это время — на 1 ОД меньше. Раз за бой; попытка засчитывается, даже если провалена.">
+        title="Тест W−30+3×эPR (эPR — текущий Пси-Рейтинг). Успех: +эPR к SPD на этот и следующий Раунд, Полное Движение, Натиск и Бег на это время — на 1 ОД меньше. Раз за бой; попытка засчитывается, даже если провалена. Вне боя бросок разрешён: эффект ждёт и начнётся с началом боя.">
         ${rollIcon("run", "#9a7dff")}Психический Рывок (W−30+3×эPR)
-      </button>
+      </button>${note}
     </div>`;
   }
   if (isBlessingOfSteelItem(item)) {

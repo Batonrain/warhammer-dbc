@@ -74,10 +74,11 @@ export function timedEffectStale(flag, combat) {
  * эффект (рейтинг Страха от двух кличей подряд не складывается).
  * Бой — начатый бой самого актора, а не game.combat (бой из трекера того, кто пишет, у ГМа он
  * может быть чужим); актор вне боя — бой `caster`, если он передан (game-combat-dread-wail).
+ * `spec.combat` ({id, round}) — явный бой: Психический Рывок, ждавший начала боя, выдаётся в миг старта.
  * @returns {Promise<object|null>} созданный эффект
  */
 export async function grantTimedEffect(actor, spec, caster = null) {
-  const combat = combatOfActor(actor) ?? (caster ? combatOfActor(caster) : null);
+  const combat = spec.combat ?? combatOfActor(actor) ?? (caster ? combatOfActor(caster) : null);
   const old = timedEffectsOf(actor, spec.key).map(e => e.id).filter(Boolean);
   if (old.length) await actor.deleteEmbeddedDocuments("ActiveEffect", old);
   const [effect] = (await actor.createEmbeddedDocuments("ActiveEffect", [timedEffectData({ ...spec, combat })])) ?? [];

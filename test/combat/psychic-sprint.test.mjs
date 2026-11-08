@@ -3,10 +3,10 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 import {
-  PSYCHIC_SPRINT_KEY, PSYCHIC_SPRINT_EFFECT_KEY, psychicSprintEpr, psychicSprintTestMod, psychicSprintThreshold,
+  PSYCHIC_SPRINT_KEY, PSYCHIC_SPRINT_EFFECT_KEY, PSYCHIC_SPRINT_PENDING_FLAG, psychicSprintEpr, psychicSprintTestMod, psychicSprintThreshold,
   psychicSprintSpeedBonus, discountedMovementAp
 } from "../../module/rules/psychic-sprint.mjs";
-import { startPsychicSprint, psychicSprintActive, movementApCost } from "../../module/combat/psychic-sprint.mjs";
+import { startPsychicSprint, psychicSprintActive, movementApCost, processPsychicSprintCombatStart } from "../../module/combat/psychic-sprint.mjs";
 import { talentActionsHtml, runTalentAction, isPsychicSprintItem } from "../../module/apps/talent-actions.mjs";
 import { timedEffectData, timedEffectStale, TIMED_EFFECT_FLAG } from "../../module/combat/timed-effects.mjs";
 import { expectedPhase } from "../../module/constants/effect-keys.mjs";
@@ -182,27 +182,73 @@ describe("Психический Рывок: кнопка и бросок", () =
     expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(true);
   });
 
-  it("вне боя бросок не делается, эффекта нет, Талант не тратится и игроку сказано почему", async () => {
+  it("вне боя успех создаёт ожидание, а не эффект, и ячейку боя не тратит", async () => {
     const a = warlock({ wp: 50, rating: 3 });
-    const rolls = captured.rolls.length;
-    const cards = captured.chat.length;
-    expect(await startPsychicSprint(a)).toBe(false);
-    expect(captured.rolls.length).toBe(rolls);
-    expect(captured.chat.length).toBe(cards);
+    captured.nextRoll = 29;
+    expect(await runTalentAction("psychicSprint", talent(), a)).toBe(true);
     expect(a.effects).toEqual([]);
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toEqual({ success: true, bonus: 3 });
+    expect(psychicSprintActive(a)).toBe(false);
+    expect(lastCard()).toContain("<b>29</b>");
+    expect(lastCard()).toContain("начнётся с началом боя");
     expect(a.getFlag(NS, "usageLimits.talent-psychicSprint")).toBeUndefined();
-    expect(captured.warnings.some(w => w.includes("только в бою"))).toBe(true);
-    globalThis.game.combat = { id: "c1", round: 1, started: true };
+    globalThis.game.combat = { id: "c1", round: 0, started: false };
     expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(true);
   });
 
-  it("бой создан, но не начат — то же, что вне боя", async () => {
-    globalThis.game.combat = { id: "c1", round: 0, started: false };
-    const a = warlock();
+  it("вне боя провал тоже занимает ожидание: эффекта нет, повторять до боя нельзя", async () => {
+    const a = warlock({ wp: 50, rating: 3 });
+    captured.nextRoll = 30;
+    expect(await startPsychicSprint(a)).toBe(true);
+    expect(a.effects).toEqual([]);
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toEqual({ success: false, bonus: 0 });
+    expect(lastCard()).toContain("Провал");
     const rolls = captured.rolls.length;
+    expect(await startPsychicSprint(a)).toBe(false);
+    expect(captured.rolls.length).toBe(rolls);
+  });
+
+  it("повторный Рывок вне боя при висящем ожидании — отказ с причиной, ожидание не накапливается", async () => {
+    const a = warlock({ wp: 50, rating: 3 });
+    captured.nextRoll = 1;
+    await startPsychicSprint(a);
+    const rolls = captured.rolls.length;
+    const cards = captured.chat.length;
     expect(await runTalentAction("psychicSprint", talent(), a)).toBe(false);
     expect(captured.rolls.length).toBe(rolls);
+    expect(captured.chat.length).toBe(cards);
+    expect(captured.warnings.some(w => w.includes("ждёт начала боя"))).toBe(true);
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toEqual({ success: true, bonus: 3 });
+  });
+
+  it("бой создан, но не начат — то же, что вне боя: ожидание, ячейка боя нетронута", async () => {
+    globalThis.game.combat = { id: "c1", round: 0, started: false };
+    const a = warlock();
+    captured.nextRoll = 1;
+    expect(await runTalentAction("psychicSprint", talent(), a)).toBe(true);
     expect(a.effects).toEqual([]);
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toEqual({ success: true, bonus: 3 });
+    expect(a.getFlag(NS, "usageLimits.talent-psychicSprint")).toBeUndefined();
+  });
+
+  it("в начатом бою при висящем ожидании бросок не делается", async () => {
+    const a = warlock();
+    captured.nextRoll = 1;
+    await startPsychicSprint(a);
+    globalThis.game.combat = { id: "c1", round: 1, started: true };
+    const rolls = captured.rolls.length;
+    expect(await startPsychicSprint(a)).toBe(false);
+    expect(captured.rolls.length).toBe(rolls);
+    expect(a.effects).toEqual([]);
+  });
+
+  it("лист Таланта показывает, что эффект ждёт боя", async () => {
+    const a = warlock();
+    expect(talentActionsHtml(talent(), a)).not.toContain("ждёт боя");
+    await a.setFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG, { success: true, bonus: 3 });
+    expect(talentActionsHtml(talent(), a)).toContain("SPD +3 ждёт боя");
+    await a.setFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG, { success: false, bonus: 0 });
+    expect(talentActionsHtml(talent(), a)).toContain("провален: Талант на ближайший бой потрачен");
   });
 
   it("чужой предмет кнопкой не запускается", async () => {
@@ -254,5 +300,95 @@ describe("Психический Рывок: скидка ОД на Движен
     await declareRun(rushed);
     expect(rushed.system.actionPoints.value).toBe(1);
     expect(lastCard()).toContain("Полное действие (1 ОД)");
+  });
+});
+
+describe("Психический Рывок: ожидание превращается в эффект со стартом боя", () => {
+  const started = (actors, id = "c9") => ({ id, round: 1, started: true, combatants: actors.map(actor => ({ actor })) });
+
+  async function pendingWarlock({ roll = 1, rating = 3 } = {}) {
+    const a = warlock({ rating });
+    captured.nextRoll = roll;
+    await startPsychicSprint(a);
+    return a;
+  }
+
+  it("успешное ожидание даёт обычный эффект Рывка этого боя с Раундом 1 и очищается", async () => {
+    const a = await pendingWarlock();
+    const combat = started([a]);
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    expect(a.effects).toHaveLength(1);
+    const fx = a.effects[0];
+    expect(fx.system.changes).toEqual([{ key: "system.movement.spdBonus", type: "add", value: 3, phase: "initial", priority: 0 }]);
+    expect(fx.duration).toEqual({ value: 1, units: "rounds", expiry: "turnEnd" });
+    expect(fx.flags[NS][TIMED_EFFECT_FLAG]).toEqual({ key: PSYCHIC_SPRINT_EFFECT_KEY, combatId: "c9", round: 1, lastRound: 2 });
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toBeUndefined();
+    expect(psychicSprintActive(a)).toBe(true);
+    expect(movementApCost(a, 2)).toBe(1);
+  });
+
+  it("со стартом боя Талант в этом бою отмечен потраченным — второй раз в бою нельзя", async () => {
+    const a = await pendingWarlock();
+    const combat = started([a]);
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(false);
+    const rolls = captured.rolls.length;
+    expect(await startPsychicSprint(a)).toBe(false);
+    expect(captured.rolls.length).toBe(rolls);
+  });
+
+  it("проваленное ожидание эффекта не даёт, но очищается и Талант на бой потрачен", async () => {
+    const a = await pendingWarlock({ roll: 99 });
+    const combat = started([a]);
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    expect(a.effects).toEqual([]);
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toBeUndefined();
+    expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(false);
+  });
+
+  it("боец не в бою — ожидание остаётся и ждёт своего боя", async () => {
+    const a = await pendingWarlock();
+    const other = warlock();
+    const combat = started([other]);
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    expect(a.effects).toEqual([]);
+    expect(a.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toEqual({ success: true, bonus: 3 });
+    expect(other.effects).toEqual([]);
+  });
+
+  it("у участников без ожидания ничего не меняется", async () => {
+    const a = warlock();
+    const combat = started([a]);
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    expect(a.effects).toEqual([]);
+    expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(true);
+  });
+
+  it("несвязанный токен: ожидание на мировом акторе, эффект ложится на актора токена, ожидание снимается с мирового", async () => {
+    const world = await pendingWarlock();
+    const token = warlock();
+    token.isToken = true;
+    token.token = { baseActor: world };
+    const combat = started([token]);
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    expect(token.effects).toHaveLength(1);
+    expect(world.effects).toEqual([]);
+    expect(world.getFlag(NS, PSYCHIC_SPRINT_PENDING_FLAG)).toBeUndefined();
+    expect(isCapabilityAvailable(token, PSYCHIC_SPRINT_KEY, "battle")).toBe(false);
+  });
+
+  it("повторный запуск на тот же бой эффект не удваивает", async () => {
+    const a = await pendingWarlock();
+    const combat = started([a]);
+    globalThis.game.combat = combat;
+    await processPsychicSprintCombatStart(combat);
+    await processPsychicSprintCombatStart(combat);
+    expect(a.effects).toHaveLength(1);
   });
 });

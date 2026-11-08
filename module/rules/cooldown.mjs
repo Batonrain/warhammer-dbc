@@ -81,10 +81,10 @@ export function isCapabilityAvailable(actor, flag, unit = "round") {
   return stored !== current;
 }
 
-/** Отметить Раз-в-<unit> возможность актора потраченной в текущем <unit>. */
-export async function markCapabilityUsed(actor, flag, unit = "round") {
+/** Отметить Раз-в-<unit> возможность актора потраченной в текущем <unit> (или в явно заданном `at`: старт боя звучит до того, как game.combat станет этим боем). */
+export async function markCapabilityUsed(actor, flag, unit = "round", at = undefined) {
   if (!actor) return;
-  const current = liveValue(unit);
+  const current = at ?? liveValue(unit);
   if (current === undefined) return;
   await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`, { scope: unit, used: true, [unit]: current });
 }
