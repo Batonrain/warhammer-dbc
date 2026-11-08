@@ -4,7 +4,7 @@
 //  Foundry-токен: центр в пиксельных координатах сцены + rotation.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc, isWithinArc } from "../rules/facing.mjs";
+import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc, isWithinArc, facingBearing } from "../rules/facing.mjs";
 // tokenDocDistance (wdbc-shr, находка 3): единственное место, где считается
 // «пиксели → клетки → игровые единицы сцены» — раньше tokenDistance ниже
 // заново реализовывал ТУ ЖЕ формулу (Math.hypot / grid.size × grid.distance)
@@ -33,7 +33,8 @@ export function tokenCenter(token) {
 }
 
 /**
- * Разворот токена в градусах (0 = «на север», по часовой) — TokenDocument.rotation.
+ * Разворот токена в градусах (0 = смотрит на юг, растёт по часовой) —
+ * TokenDocument.rotation; в пеленг переводится через rules/facing.mjs::facingBearing.
  * Экспортируется (wdbc-1rno.27, Караул) — модулям, которым нужен разворот
  * стрелка сам по себе, не только внутри isFrontArcHit/isTargetWithinVehicleArc.
  */
@@ -182,7 +183,7 @@ export function isOutsideDefenderView(defenderToken, attackerToken) {
   const angle = headlessSightAngle(defenderActor, baseAngle);
   if (angle >= 360) return false;
   const bearing = bearingDegrees(defenderPos, attackerPos);
-  return !isWithinArc(tokenRotation(defenderToken), bearing, angle);
+  return !isWithinArc(facingBearing(tokenRotation(defenderToken)), bearing, angle);
 }
 
 // Решение чата (wdbc-1rno.3): «у токенов уже есть угол обзора — задавать

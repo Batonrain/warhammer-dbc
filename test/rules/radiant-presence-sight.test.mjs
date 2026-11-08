@@ -54,21 +54,21 @@ describe("radiantHoldersInSight", () => {
   });
 
   it("вне сектора обзора цели (взгляд на север, носитель на востоке при угле 90°) — не виден", () => {
-    const own = tok("t-own", 0, { rotation: 0, angle: 90 });
+    const own = tok("t-own", 0, { rotation: 180, angle: 90 });
     expect(radiantHoldersInSight({ ownTokens: [own], candidates: [holder("h", tok("t-h", 300))], grid })).toEqual([]);
   });
 
   it("в секторе обзора цели (взгляд на восток) — виден", () => {
-    const own = tok("t-own", 0, { rotation: 90, angle: 90 });
+    const own = tok("t-own", 0, { rotation: 270, angle: 90 });
     expect(radiantHoldersInSight({ ownTokens: [own], candidates: [holder("h", tok("t-h", 300))], grid }).length).toBe(1);
   });
 
   it("направление — цель смотрит на носителя, а не носитель на цель", () => {
-    const own = tok("t-own", 0, { rotation: 90, angle: 90 });
-    const h = tok("t-h", 300, { rotation: 0, angle: 90 });
+    const own = tok("t-own", 0, { rotation: 270, angle: 90 });
+    const h = tok("t-h", 300, { rotation: 180, angle: 90 });
     expect(radiantHoldersInSight({ ownTokens: [own], candidates: [holder("h", h)], grid }).length).toBe(1);
-    const ownAway = tok("t-own", 0, { rotation: 0, angle: 90 });
-    const hFacing = tok("t-h", 300, { rotation: 270, angle: 90 });
+    const ownAway = tok("t-own", 0, { rotation: 180, angle: 90 });
+    const hFacing = tok("t-h", 300, { rotation: 90, angle: 90 });
     expect(radiantHoldersInSight({ ownTokens: [ownAway], candidates: [holder("h", hFacing)], grid })).toEqual([]);
   });
 
