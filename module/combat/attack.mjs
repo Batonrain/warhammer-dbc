@@ -8,7 +8,7 @@ import { MELEE_STANCES, parseGrips }                from "../constants/combat.mj
 import { _getAmmoSpent, _buildAmmoModString, esc }  from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
-         jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
+         jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock, visibleWeaponProps,
          buildTargetEffectButtons, hasWeaponPropertyImmunity }
                                                       from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
@@ -30,7 +30,7 @@ import { grappleCoverPartner } from "./grapple.mjs";
 import { fanaticInterceptCandidates, backToBackFreeUseAvailable, fanaticPayer } from "./fanatic-redirect.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
-import { ammoIsFree } from "../rules/ammo-free.mjs";
+import { ammoIsFree, hasInfiniteMagazine } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
@@ -942,6 +942,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Распыление клинит не по броску атаки, а по первому кубику урона (стр. 168,
   // sprayJamFace) — общий порог по d100 к нему неприменим, см. sprayJam ниже.
   const jamAt    = jamThreshold(wp);
+  const jamNoteAt = (!isMelee && !wp.spray && sys.weaponClass !== "thrown") ? jamAt : undefined;
   // Метательное (стр. 40, wdbc-x1nz.2.58): «При Критическом Промахе,
   // метательное оружие не Заклинивает» — исключено из общего механизма
   // Заклинивания по Надёжности целиком, не только на натуральном крите.
@@ -967,7 +968,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const jamData = ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: jamCard({
-        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(wProps) },
+        weaponName: item.name, rv, blocks: { props: buildPropertyChatBlock(visibleWeaponProps(wProps, wp), { jamAt: jamNoteAt }) },
         spoiled
       }),
       rolls: [roll],
@@ -1784,13 +1785,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (тот же приём, что Молот по лежащему выше). Место известно только теперь,
   // поэтому свойства карточки пересобираются здесь; на урон Concussive не влияет.
   const crushingHead = (ammoDmgSubtype || effDmgSubtype) === "crushing" && hits.some(h => isHeadHit(h.loc));
-  const cardProps = crushingHead ? (() => {
+  const cardProps = visibleWeaponProps(crushingHead ? (() => {
     const entries = _mergedEntries.map(e => ({ ...e }));
     const conc = entries.find(e => e.key === "concussive");
     if (conc) conc.rating = (Number(conc.rating) || 0) + 1;
     else entries.push({ key: "concussive", rating: -1 });
     return resolveWeaponPropsList(entries);
-  })() : wProps;
+  })() : wProps, wp);
 
   // Наследие Предательства, Оружие Наследия (wdbc-1rno.35, История 4, стр.
   // 427): нат. 100 на попадание — «оружие попадает по случайному союзнику»
@@ -2192,7 +2193,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       ammo: isMelee ? null : {
         name:   loadedAmmo?.name || "",
         mods:   loadedAmmo ? _buildAmmoModString(ammoSys) : "",
-        magCur: sys.magazineCur ?? "?", magMax: sys.magazineMax ?? "?",
+        magCur: sys.magazineCur ?? "?", magMax: sys.magazineMax ?? "?", magInfinite: hasInfiniteMagazine(item),
         spent:  ammoSpent, special: ammoSpecial,
         condLabels: opts.ammoCondLabels || [], warning: ammoWarning
       },
@@ -2343,7 +2344,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           : ""
       },
       blocks: {
-        props:         buildPropertyChatBlock(cardProps),
+        props:         buildPropertyChatBlock(cardProps, { jamAt: jamNoteAt }),
         quality:       buildQualityChatBlock(item, gardenQuality),
         splinter:      isSplinter(sys) ? splinterReminders() : "",
         // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для

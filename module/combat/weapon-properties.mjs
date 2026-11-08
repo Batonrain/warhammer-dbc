@@ -453,11 +453,32 @@ function fillRating(text, p) {
   return t;
 }
 
+/**
+ * Подпись Надёжного с фактическим порогом клина: режимы Настройки Мощности,
+ * качество и Таланты двигают Надёжность, а текст свойства о них не знает.
+ * jamAt — результат jamThreshold(wp): число (клин с N) или null (не клинит).
+ */
+function reliableNote(p, jamAt) {
+  if (jamAt === undefined || p.def.key !== "reliable") return null;
+  if (jamAt === null) return "Надёжное: не заклинивает";
+  if (jamAt >= 100) return null;
+  return `Надёжное: заклинивает на ${jamAt}+`;
+}
+
+/**
+ * Убирает из списка для показа Примитивное, которое расчёт уже снял
+ * (Безоружный Мастер, качество Высшее): иначе карточка велит удваивать броню.
+ */
+export function visibleWeaponProps(props, wp) {
+  if (wp?.primitive) return props;
+  return props.filter(p => !p.def.auto?.primitive);
+}
+
 /** Блок «Свойства оружия» для сообщения о броске. */
-export function buildPropertyChatBlock(props) {
+export function buildPropertyChatBlock(props, { jamAt } = {}) {
   if (!props.length) return "";
   const lines = props.map(p => {
-    const txt = fillRating(p.def.reminder || p.def.label, p);
+    const txt = reliableNote(p, jamAt) ?? fillRating(p.def.reminder || p.def.label, p);
     return `<div class="roll-wprop">${txt}</div>`;
   }).join("");
   // Свёрнуто по умолчанию: напоминалки по свойствам занимают половину карточки,

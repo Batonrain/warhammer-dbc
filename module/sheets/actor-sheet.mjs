@@ -2882,7 +2882,7 @@ export class WarhammerCharacterSheet
           const bRollCtx = () => {
             const parsed = parseTestTarget(bTargetSelect?.value, defaultChar);
             const charKey = bCharSelect?.value || parsed.charKey;
-            return { kind: "skill", char: charKey, skill: parsed.skillKey ?? undefined, targetActor };
+            return withSocialFaction({ kind: "skill", char: charKey, skill: parsed.skillKey ?? undefined, targetActor }, socialFaction);
           };
           const refreshBMods = () => {
             if (!bModsSlot) return;
@@ -2973,6 +2973,7 @@ export class WarhammerCharacterSheet
             recomputeB();
           });
           bCharSelect?.addEventListener("change", () => { refreshBMods(); recomputeB(); });
+          root.querySelector("#social-faction-select")?.addEventListener("change", () => { recomputeA(); refreshBMods(); recomputeB(); });
           bDifficulty?.addEventListener("change", recomputeB);
           bTargetInput?.addEventListener("input", recomputeB);
           bModifierInput?.addEventListener("input", recomputeB);

@@ -31,9 +31,10 @@ import { buildSelection } from "./attack/selection.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
 import { ironGardenQuality }                  from "../rules/iron-garden.mjs";
+import { hasInfiniteMagazine }               from "../rules/ammo-free.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
-import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
+import { resolveWeaponPropsList, aggregateAuto, visibleWeaponProps } from "../combat/weapon-properties.mjs";
 import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
@@ -89,7 +90,7 @@ import { isZeroedByLoss, ZERO_EFFECTS } from "../rules/char-loss.mjs";
 import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
 import { runtForbidsOneHand } from "../rules/runt.mjs";
 import { stunForcedAim } from "../rules/takedown.mjs";
-import { fistBalanceBonus, headcrackerHeadReduction, headCalledShotPenalty, goadingStrikePenalty } from "../rules/pugilist-talents.mjs";
+import { fistBalanceBonus, headcrackerHeadReduction, headCalledShotPenalty, goadingStrikePenalty, unarmedLosesPrimitive } from "../rules/pugilist-talents.mjs";
 import { talentTogglesHtml } from "./attack/talent-toggles.mjs";
 import { lensTuningAvailable, LENS_CHARGES_FLAG } from "../rules/gunsmith-talents.mjs";
 import { COVERING_FIRE_PENALTY } from "../rules/gunner-talents.mjs";
@@ -1128,7 +1129,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (!isMelee) {
     const magCur   = sys.magazineCur || 0;
     const magMax   = sys.magazineMax || 0;
-    const magCls   = magCur === 0 ? "ammo-empty"
+    const magInf   = hasInfiniteMagazine(item);
+    const magCls   = magInf ? ""
+      : magCur === 0 ? "ammo-empty"
       : magCur <= Math.ceil(magMax * 0.25) ? "ammo-low" : "";
     const ammoMods = loadedAmmo ? _buildAmmoModString(ammoSys) : "";
     ammoDialogHtml = `
@@ -1136,7 +1139,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <span class="atk-ammo-label">${rollIcon("spark","#8fd0ff")}Боеприпасы:</span>
         <span class="atk-ammo-name">${loadedAmmo ? esc(loadedAmmo.name) : "стандартные"}</span>
         ${ammoMods ? `<span class="atk-ammo-mods">(${ammoMods})</span>` : ""}
-        <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magCur}/${magMax}</b></span>
+        <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magInf ? "∞" : `${magCur}/${magMax}`}</b></span>
       </div>`;
   }
 
@@ -1232,7 +1235,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     : "";
 
   // Свойства оружия — напоминание + чекбокс короткой дистанции + перезарядка
-  const wpDialogList = wProps.map(p => {
+  const primitiveLost = unarmedLosesPrimitive(actor, item)
+    || !!qualityEffects(item, ironGardenQuality(actor, item)).auto.losesPrimitive;
+  const wpShown = visibleWeaponProps(wProps, { primitive: wp.primitive && !primitiveLost });
+  const wpDialogList = wpShown.map(p => {
     // wdbc-cy4z: показываем «/Y» только когда у ЭТОГО предмета реально задан
     // rating2 (p.rating2), а не когда свойство лишь СПОСОБНО его нести
     // (p.def.rating2) — Toxic/Haywire теперь тоже умеют rating2 (нестандартный
@@ -1263,7 +1269,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="atk-wprops-list">${weaponTraining.parts
         .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
     </div>` : "";
-  const wpDialogHtml = (wProps.length ? `
+  const wpDialogHtml = (wpShown.length ? `
     <div class="atk-dlg-modifiers">
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
