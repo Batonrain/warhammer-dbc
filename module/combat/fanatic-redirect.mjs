@@ -52,6 +52,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { hasBackToBack, backToBackGrantCap } from "../rules/leadership-talents.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
+import { worldAndTokenActors } from "../migrations/unlinked-tokens.mjs";
 
 const BACK_TO_BACK_FREE_USE_FLAG = "backToBackFreeUse";
 const MELEE_REACH_MULT = 1.5; // combat/rig-steal.mjs::inMeleeContact — своя копия, см. заголовок файла.
@@ -85,25 +86,54 @@ export function hasFanatic(actor) {
     i?.type === "trait" && FANATIC_NAMES.some(n => itemHasName(i, n)));
 }
 
+/**
+ * Все uuid, под которыми актор встречается в списках: сам и — у актора
+ * несвязанного токена — его базовый мировой актор (в посту Отряда мог лежать
+ * любой из двух).
+ */
+function identityUuids(actor) {
+  const ids = new Set();
+  if (actor?.uuid) ids.add(actor.uuid);
+  if (actor?.isToken && actor.token?.baseActor?.uuid) ids.add(actor.token.baseActor.uuid);
+  return ids;
+}
+
 /** Отряды, которыми actor командует (Командир ИЛИ Лидер) — тот же лёгкий обход, что field-execution.mjs. */
 function squadsLedBy(actor, allActors) {
-  const uuid = actor?.uuid;
-  if (!uuid) return [];
+  const ids = identityUuids(actor);
+  if (!ids.size) return [];
   return (allActors ?? []).filter(a => a?.type === "squad"
-    && (a.system?.posts?.commander?.uuid === uuid || a.system?.posts?.leader?.uuid === uuid));
+    && (ids.has(a.system?.posts?.commander?.uuid) || ids.has(a.system?.posts?.leader?.uuid)));
+}
+
+/**
+ * Живые документы записи Отряда: мировой актор несвязанного токена
+ * (prototypeToken.actorLink === false) раскрывается в акторов его токенов из
+ * списка — Черта должна лечь в дельту токена, а не на шаблон; нет токенов —
+ * остаётся сам мировой актор.
+ */
+function liveDocsOfMember(doc, allActors) {
+  if (doc.isToken || doc.prototypeToken?.actorLink !== false) return [doc];
+  const tokens = (allActors ?? []).filter(a => a?.isToken && a.token?.baseActor?.uuid === doc.uuid);
+  return tokens.length ? tokens : [doc];
 }
 
 /** Подчинённые во всех Отрядах, которыми командует actor (без дублей, кроме него самого). */
 function subordinatesLedBy(actor, allActors) {
+  const self = identityUuids(actor);
   const seen = new Set(), out = [];
   const index = new Map();
   for (const a of allActors ?? []) if (a?.uuid) index.set(a.uuid, a);
   for (const squad of squadsLedBy(actor, allActors)) {
     for (const m of squad.system?.members ?? []) {
-      if (!m.uuid || m.uuid === actor.uuid || seen.has(m.uuid)) continue;
-      seen.add(m.uuid);
+      if (!m.uuid || self.has(m.uuid)) continue;
       const doc = index.get(m.uuid);
-      if (doc) out.push(doc);
+      if (!doc) continue;
+      for (const live of liveDocsOfMember(doc, allActors)) {
+        if (!live.uuid || self.has(live.uuid) || seen.has(live.uuid)) continue;
+        seen.add(live.uuid);
+        out.push(live);
+      }
     }
   }
   return out;
@@ -111,10 +141,11 @@ function subordinatesLedBy(actor, allActors) {
 
 /** Снять предыдущий грант этого источника (книга: «до повторного использования»). */
 async function clearPreviousGrant(commanderActor, allActors) {
+  const sources = identityUuids(commanderActor);
   const candidates = [commanderActor, ...subordinatesLedBy(commanderActor, allActors)];
   for (const doc of candidates) {
-    const ids = (doc.items ?? [])
-      .filter(i => i.flags?.[NS]?.[FANATIC_GRANT_FLAG]?.source === commanderActor.uuid)
+    const ids = [...(doc.items ?? [])]
+      .filter(i => sources.has(i.flags?.[NS]?.[FANATIC_GRANT_FLAG]?.source))
       .map(i => i.id);
     if (ids.length && doc.isOwner) await doc.deleteEmbeddedDocuments("Item", ids);
   }
@@ -122,11 +153,17 @@ async function clearPreviousGrant(commanderActor, allActors) {
 
 /**
  * Конец боя (книга: Fanatic — «до конца боя»): снять все розданные Fanatic.
+ * allActors по умолчанию — мировые акторы и акторы несвязанных токенов.
  * ponytail: снимает гранты любого источника на конце любого боя — при двух
  * боях разом сгорят и гранты второго; станет важно — сверять source с комбатантами.
  */
-export async function clearFanaticGrants(allActors) {
+export async function clearFanaticGrants(allActors = worldAndTokenActors()) {
+  const seen = new Set();
   for (const doc of allActors ?? []) {
+    if (doc?.uuid) {
+      if (seen.has(doc.uuid)) continue;
+      seen.add(doc.uuid);
+    }
     const ids = [...(doc.items ?? [])].filter(i => i.flags?.[NS]?.[FANATIC_GRANT_FLAG]).map(i => i.id);
     if (ids.length && doc.isOwner) await doc.deleteEmbeddedDocuments("Item", ids);
   }
@@ -134,9 +171,10 @@ export async function clearFanaticGrants(allActors) {
 
 /**
  * Раздать Fanatic себе и до backToBackGrantCap(commanderActor) подчинённых.
+ * allActors по умолчанию — мировые акторы и акторы несвязанных токенов.
  * @returns {string[]} имена, кто получил
  */
-export async function grantFanaticTrait(commanderActor, allActors) {
+export async function grantFanaticTrait(commanderActor, allActors = worldAndTokenActors()) {
   const trait = await fromUuid(`Compendium.warhammer-dbc.traits.Item.${FANATIC_TRAIT_COMPENDIUM_ID}`).catch(() => null);
   if (!trait) { ui.notifications?.warn("Трейт «Fanatic» не найден в компендиуме."); return []; }
 
