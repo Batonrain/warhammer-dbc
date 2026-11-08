@@ -1843,6 +1843,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           return { uuid: payer.uuid, name: a.name,
             freeUse: backToBackFreeUseAvailable(payer),
             tokenUuid: t.document?.uuid ?? "",
+            tokenName: t.document?.name ?? t.name ?? "",
             savior: hasMistSavior(a), targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" };
         })
     : [];
