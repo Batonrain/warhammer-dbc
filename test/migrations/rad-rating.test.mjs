@@ -57,8 +57,11 @@ describe("Пак: у кого Рад и с каким рейтингом", () =>
   // 12 → 15 (rad-x): Гамма Пистолет (Rad 1d10+5, core.json), Спаренный Рад
   // Очиститель и Ракетная Батарея Карахнос (Rad 1d10, machines.json) получили
   // само свойство — раньше Рад стоял у них только текстом в special.
-  it("15 предметов с рейтингом-формулой, ровно 1d5/1d10/1d10+5/2d10/4d10", () => {
-    expect(RAD_DOCS).toHaveLength(15);
+  // 15 → 18: Hellhammer Cannon (Rad 1d10), Twin Irradiation Engine (Rad 2d10) и
+  // Phosphex Discharger (Rad 2d10) заведены по таблицам орудий machines.json
+  // (wdbc-nzzgn).
+  it("18 предметов с рейтингом-формулой, ровно 1d5/1d10/1d10+5/2d10/4d10", () => {
+    expect(RAD_DOCS).toHaveLength(18);
     expect(new Set(RAD_DOCS.map(radRatingOf))).toEqual(new Set(["1d5", "1d10", "1d10+5", "2d10", "4d10"]));
   }, PACK_SCAN_TIMEOUT);
 });

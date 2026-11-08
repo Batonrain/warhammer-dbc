@@ -607,3 +607,17 @@ body.wh-hud-on #chat-notifications { display: none !important; }
   color: #ff6b6b; border-color: #ff6b6b; font-weight: bold;
   animation: wh-ship-blink 1.4s ease-in-out infinite;
 }
+
+/* Плашка тумблера «следующий сдвиг — вынужденный» (combat/forced-next-move-indicator.mjs) */
+.wh-forced-next-chip {
+  position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); z-index: 1000;
+  display: flex; align-items: center; gap: 10px; max-width: 90vw;
+  padding: 6px 12px; font-size: .85em;
+  background: #3a1f0c; border: 1px solid #ffb347; border-radius: 4px; color: #ffd9a0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+.wh-forced-next-chip button {
+  cursor: pointer; padding: 1px 8px; font-size: .9em; line-height: 1.4;
+  background: #5a2d0e; border: 1px solid #ffb347; border-radius: 3px; color: #ffd9a0;
+}
+.wh-forced-next-chip button:hover { background: #ffb347; color: #2a1405; }

@@ -195,6 +195,7 @@ import { registerHooks }              from "./module/hooks.mjs";
 import { registerCharacterStartButton, openStartedCharacter, NEW_CHARACTER_NAME } from "./module/apps/character-start.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG, postPacifismGateCard } from "./module/combat/pacifism.mjs";
+import { blockRageReentry } from "./module/combat/frenzy.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/combat/ship-tokens.mjs";
@@ -2904,6 +2905,12 @@ Hooks.on("preUpdateActor", (doc, changes) => {
   foundry.utils.setProperty(changes, "system.corruption.value", result.corruption);
   foundry.utils.setProperty(changes, "system.insanity.value", result.insanity);
 });
+
+// ── Повторный вход в Ярость (wdbc-sh3qt) ──────────────────────────────────────
+// Книга: «Однажды выйдя из Ярости, персонаж не может снова войти в нее до конца боя, кроме как с помощью
+// наркотиков или психосил». Все источники Ярости пишут system.inRage, поэтому гейт один — здесь
+// (module/combat/frenzy.mjs::blockRageReentry); наркотики и психосилы помечают update options.whRageSource.
+Hooks.on("preUpdateActor", (doc, changes, options) => { blockRageReentry(doc, changes, options); });
 
 // ── «Крайне миролюбив» (Серый Человек, wdbc-gzuf) ─────────────────────────────
 // Вход в Ярость (system.inRage) до первой атаки по себе в этом бою гейтится

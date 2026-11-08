@@ -6,6 +6,7 @@ import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS 
 import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { rollOverpenetration } from "./combat/overpenetration.mjs";
+import { resolveCardRadiantPresence } from "./combat/radiant-presence.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack, revertCardFailure, failUndoLineHtml } from "./combat/fear.mjs";
 import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG } from "./rules/fail-undo.mjs";
@@ -215,6 +216,7 @@ import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, R
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
+import { markFrenzyExited } from "./combat/frenzy.mjs";
 import { RAGE_EXIT_REROLL_CARD_FLAG, RIDING_BEAST_CARD_FLAG } from "./rules/rage-behavior.mjs";
 import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
@@ -2162,10 +2164,17 @@ export function registerHooks() {
     });
 
     // Применение урона
-    html.querySelectorAll(".wh-apply-dmg-btn").forEach(btn => {
+    [...html.querySelectorAll(".wh-apply-dmg-btn"), ...html.querySelectorAll(".wh-fanatic-redirect-btn")].forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const ds = ev.currentTarget.dataset;
+        const own = ev.currentTarget.dataset;
+        // «Перехват» Фанатиком (attack-card.mjs::fanaticRedirectButtons): число
+        // и свойства урона — с главной кнопки «Применить урон» той же группы
+        // попадания (там уже учтены Кубик→Успехи/Искры), цель — носитель.
+        const mainBtn = own.mirrorHit === "1"
+          ? ev.currentTarget.closest(".roll-dmg-hit-group")?.querySelector(".wh-apply-dmg-btn") : null;
+        if (own.mirrorHit === "1" && !mainBtn) return ui.notifications.warn("⚠️ Не найдено попадание этой кнопки.");
+        const ds = mainBtn ? { ...mainBtn.dataset, forceTarget: own.forceTarget } : own;
         // Щит вне арки (core.json, «Типы Рукопашного Оружия») — галочка
         // рядом с кнопкой (attack-card.mjs::shieldArcCheckbox), тот же приём
         // чтения соседнего DOM, что у .wh-dmg-swap-btn выше в этом файле.
@@ -2291,6 +2300,18 @@ export function registerHooks() {
           if (doc?.documentName === "Token" && doc.object) {
             const attackerToken = await resolveAttackerToken(damageData.attackerUuid);
             damageData.frontArcHit = attackerToken ? isFrontArcHit(doc.object, attackerToken) : false;
+          }
+          // Перехват Фанатиком: плата (бесплатный раз в Раунд или Реакция) — до применения урона.
+          if (own.fanaticUuid) {
+            const fanatic = await fromUuid(own.fanaticUuid).catch(() => null);
+            if (!fanatic) return ui.notifications.warn("⚠️ Носитель Fanatic не найден.");
+            if (!fanatic.isOwner) return ui.notifications.warn("Перехватывает владелец носителя (или ГМ).");
+            const { payFanaticIntercept } = await import("./combat/fanatic-redirect.mjs");
+            const paid = await payFanaticIntercept(fanatic, message);
+            if (!paid.ok) return ui.notifications.warn(`${fanatic.name}: нет Реакции — перехват невозможен.`);
+            if (!paid.already) ui.notifications.info(paid.free
+              ? `Спиной к Спине: ${fanatic.name} перехватывает бесплатно (раз в Раунд).`
+              : `${fanatic.name} тратит Реакцию на перехват.`);
           }
           return applyDamageToActor(actor, damageData);
         }
@@ -3117,6 +3138,10 @@ export function registerHooks() {
       });
     });
 
+    // Блистательное Присутствие на карточке подавления (wdbc-051qb): галочка
+    // стартует в «прочерке» — стол её не трогал, и при броске +10 решает
+    // видимость союзного или нейтрального носителя для токена цели; отметил или снял — решает стол.
+    html.querySelectorAll(".wh-radiant-presence-cb").forEach(cb => { cb.indeterminate = true; });
     // Тест на Подавление (Стрельба на подавление, стр. 32-33) — по выбранному
     // токену цели, штраф уже посчитан (RoF + Импульсное) в attack.mjs.
     //
@@ -3140,9 +3165,10 @@ export function registerHooks() {
         const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
         // Radiant Presence/Into the Jaws of Hell (Sahara 3-ac78, 19.10.2026) —
         // галочки той же карточки, решение стола (combat/attack-card.mjs).
-        const radiantPresence = !!el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb")?.checked;
+        const radiantBox = el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb");
         const intoTheJawsOfHell = !!el.closest(".roll-suppression")?.querySelector(".wh-jaws-of-hell-cb")?.checked;
         const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const radiantPresence = resolveCardRadiantPresence(radiantBox, actor, sourceActor);
         await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление", sourceActor, safeOverride, radiantPresence, intoTheJawsOfHell });
       });
     });
@@ -3158,9 +3184,10 @@ export function registerHooks() {
         if (!actor) return;
         const mod = parseInt(el.dataset.testMod || "0");
         const safeOverride = !!el.closest(".roll-suppression")?.querySelector(".wh-suppression-safe-cb")?.checked;
-        const radiantPresence = !!el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb")?.checked;
+        const radiantBox = el.closest(".roll-suppression")?.querySelector(".wh-radiant-presence-cb");
         const intoTheJawsOfHell = !!el.closest(".roll-suppression")?.querySelector(".wh-jaws-of-hell-cb")?.checked;
         const sourceActor = await fromUuid(el.dataset.attackerUuid || "").catch(() => null);
+        const radiantPresence = resolveCardRadiantPresence(radiantBox, actor, sourceActor);
         await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий", sourceActor, safeOverride, radiantPresence, intoTheJawsOfHell });
       });
     });
@@ -5323,9 +5350,11 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("updateActor", actor => { refreshParasiteHosts(actor); });
 
   // Ярость кончилась любым путём (тумблер листа, HUD токена, кнопка выхода) — метки «провалил выход» и
-  // «Ходы после боя» гаснут. Пишет тот, кто снял Ярость: у него есть права на актора (module/combat/rage-behavior.mjs).
+  // «Ходы после боя» гаснут, а повторный вход в этом бою закрывается (module/combat/frenzy.mjs, wdbc-sh3qt).
+  // Пишет тот, кто снял Ярость: у него есть права на актора (module/combat/rage-behavior.mjs).
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
     if (game.user?.id !== userId || changes?.system?.inRage !== false) return;
+    await markFrenzyExited(actor);
     const patch = clearRageStatePatch(actor);
     if (Object.keys(patch).length) await actor.update(patch);
   });

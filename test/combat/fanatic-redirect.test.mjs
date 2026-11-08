@@ -6,10 +6,16 @@
 // без Реакции». Перенос самого попадания по-прежнему не требует кода
 // (существующая кнопка «Применить урон» уже резолвит цель из выделенного
 // токена сцены в момент клика) — см. заголовок module/combat/fanatic-redirect.mjs.
+// Кнопка «Перехват» в карточке (attack-card.mjs) переносит урон сама, а
+// payFanaticIntercept списывает бесплатный перехват или Реакцию.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
+vi.mock("../../module/combat/action-economy.mjs", () => ({ spendReaction: vi.fn() }));
+import { spendReaction } from "../../module/combat/action-economy.mjs";
 import { hasFanatic, fanaticCandidates, backToBackGrantSectionHtml,
-  fanaticInterceptCandidates, backToBackFreeUseAvailable, markBackToBackFreeUseUsed, clearFanaticGrants
+  fanaticInterceptCandidates, backToBackFreeUseAvailable, markBackToBackFreeUseUsed, clearFanaticGrants,
+  payFanaticIntercept
 } from "../../module/combat/fanatic-redirect.mjs";
 
 const trait = (name) => ({ type: "trait", name, system: {} });
@@ -146,5 +152,77 @@ describe("backToBackFreeUseAvailable/markBackToBackFreeUseUsed — раз в Р�
   it("без активного Combat — отследить нечем, доступность не отнимается", () => {
     globalThis.game = {};
     expect(backToBackFreeUseAvailable(fanaticActor())).toBe(true);
+  });
+});
+
+describe("payFanaticIntercept — плата за перехват: бесплатный раз в Раунд или Реакция", () => {
+  const grantedItem = { type: "trait", name: "Fanatic", flags: { "warhammer-dbc": { fanaticGrant: { source: "cmd1" } } } };
+  const bearer = (uuid, items) => {
+    const flags = {};
+    return { uuid, items, getFlag: (_ns, key) => flags[key], setFlag: async (_ns, key, value) => { flags[key] = value; } };
+  };
+  let seq = 0;
+  const message = (id = `m${++seq}`) => {
+    const flags = {};
+    return { id, isOwner: true, getFlag: (_ns, key) => flags[key], setFlag: async (_ns, key, value) => { flags[key] = value; } };
+  };
+
+  beforeEach(() => {
+    globalThis.game = { combat: { round: 1 } };
+    spendReaction.mockReset();
+    spendReaction.mockResolvedValue(true);
+  });
+
+  it("розданный Фанатик: первый перехват бесплатный и гасит счётчик Раунда, Реакция цела", async () => {
+    const f = bearer("f1", [grantedItem]);
+    const r = await payFanaticIntercept(f, message());
+    expect(r).toMatchObject({ ok: true, free: true });
+    expect(backToBackFreeUseAvailable(f)).toBe(false);
+    expect(spendReaction).not.toHaveBeenCalled();
+  });
+
+  it("бесплатный уже потрачен — тратит Реакцию", async () => {
+    const f = bearer("f1", [grantedItem]);
+    await markBackToBackFreeUseUsed(f);
+    const r = await payFanaticIntercept(f, message());
+    expect(r).toMatchObject({ ok: true, free: false });
+    expect(spendReaction).toHaveBeenCalledWith(f);
+  });
+
+  it("собственный Фанатик (не от Таланта) тоже перехватывает бесплатно раз в Раунд, потом за Реакцию", async () => {
+    const f = bearer("f1", [trait("Fanatic")]);
+    const first = await payFanaticIntercept(f, message());
+    expect(first).toMatchObject({ ok: true, free: true });
+    expect(backToBackFreeUseAvailable(f)).toBe(false);
+    expect(spendReaction).not.toHaveBeenCalled();
+    const second = await payFanaticIntercept(f, message());
+    expect(second).toMatchObject({ ok: true, free: false });
+    expect(spendReaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("нет Реакции — перехват не состоялся", async () => {
+    spendReaction.mockResolvedValue(false);
+    const f = bearer("f1", [trait("Fanatic")]);
+    await markBackToBackFreeUseUsed(f);
+    const r = await payFanaticIntercept(f, message());
+    expect(r.ok).toBe(false);
+  });
+
+  it("на одной карточке второе попадание тем же Фанатиком — уже оплачено, ничего не списывается", async () => {
+    const f = bearer("f1", [trait("Fanatic")]);
+    await markBackToBackFreeUseUsed(f);
+    const msg = message();
+    await payFanaticIntercept(f, msg);
+    const again = await payFanaticIntercept(f, msg);
+    expect(again).toMatchObject({ ok: true, already: true });
+    expect(spendReaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("на другой карточке платится заново", async () => {
+    const f = bearer("f1", [trait("Fanatic")]);
+    await markBackToBackFreeUseUsed(f);
+    await payFanaticIntercept(f, message());
+    await payFanaticIntercept(f, message());
+    expect(spendReaction).toHaveBeenCalledTimes(2);
   });
 });

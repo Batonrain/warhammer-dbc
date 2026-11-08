@@ -18,9 +18,10 @@ const NS = "warhammer-dbc";
 const talent = { type: "talent", name: "Cover Up / Работа под Прикрытием", system: {} };
 
 /** Актор-двойник: флаг читается как у документа, setFlag запоминает записанное и обновляет флаг. */
-function fakeActor({ items = [talent], cells } = {}) {
+function fakeActor({ items = [talent], cells, inf, archetype = "", race = "human" } = {}) {
   const a = {
     items,
+    system: { characteristics: { inf: { total: inf ?? 0 } }, archetype, race },
     flags: cells === undefined ? {} : { [NS]: { [COVER_UP_FLAG]: cells } },
     writes: [],
     async setFlag(scope, key, value) {
@@ -50,7 +51,7 @@ describe("контекст блока", () => {
       cells: [{ name: "Тени Улья", inf: 1 }, { name: "Гильдия", inf: 4 }]
     }));
     const [a, b] = ctx.coverUpCells;
-    expect(a).toMatchObject({ idx: 0, name: "Тени Улья", inf: 1, agents: 25, requisition: 0 });
+    expect(a).toMatchObject({ idx: 0, name: "Тени Улья", inf: 1, agents: 25, requisition: 0, free: false });
     expect(b).toMatchObject({ idx: 1, name: "Гильдия", inf: 4, agents: 40, requisition: 2 });
     expect(ctx.coverUpCount).toBe(2);
     expect(ctx.coverUpTotalInf).toBe(5);
@@ -64,24 +65,85 @@ describe("контекст блока", () => {
   });
 });
 
+describe("Inf на листе минус вложено в ячейки — вычисляется, в актор не пишется", () => {
+  it("платные ячейки уменьшают остаток, бесплатные нет; строка несёт галочку", () => {
+    const a = fakeActor({ inf: 30, archetype: "renegade", cells: [
+      { name: "Тени", inf: 3 }, { name: "Корсарская", inf: 2, free: true }, { name: "Гильдия", inf: 4 }] });
+    const ctx = coverUpPanelContext(a);
+    expect(ctx.coverUpCells.map(c => c.free)).toEqual([false, true, false]);
+    expect(ctx).toMatchObject({ coverUpInfSheet: 30, coverUpPaidInf: 7, coverUpFreeInf: 2, coverUpInfLeft: 23, coverUpInfOver: false });
+    expect(ctx.coverUpTotalInf).toBe(9);
+  });
+  it("перебор: вложено больше Inf с листа — остаток минус и флаг", () => {
+    const ctx = coverUpPanelContext(fakeActor({ inf: 3, cells: [{ name: "А", inf: 4 }] }));
+    expect(ctx).toMatchObject({ coverUpInfLeft: -1, coverUpInfOver: true });
+  });
+  it("галочка бесплатной ячейки уходит в флаг, и остаток после неё растёт", async () => {
+    const a = fakeActor({ inf: 10, race: "azuriane", cells: [{ name: "А", inf: 4 }] });
+    expect(coverUpPanelContext(a).coverUpInfLeft).toBe(6);
+    await changeCoverUpCell(a, 0, { free: true });
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: true }]);
+    expect(coverUpPanelContext(a).coverUpInfLeft).toBe(10);
+    expect(a.system.characteristics.inf.total).toBe(10);
+  });
+});
+
+describe("галочка «бесплатная ячейка» — только Отступник и Аэльдари (решение владельца 08.11.2026)", () => {
+  const cells = [{ name: "А", inf: 3, free: true }, { name: "Б", inf: 2 }];
+  it("у обычного персонажа галочки нет, старая бесплатная ячейка считается платной", () => {
+    const ctx = coverUpPanelContext(fakeActor({ inf: 20, cells }));
+    expect(ctx.coverUpFreeAllowed).toBe(false);
+    expect(ctx.coverUpCells.map(c => c.free)).toEqual([false, false]);
+    expect(ctx).toMatchObject({ coverUpPaidInf: 5, coverUpFreeInf: 0, coverUpInfLeft: 15 });
+  });
+  it("Отступник и Аэльдари галочку получают, бесплатная ячейка остаток не уменьшает", () => {
+    for (const over of [{ archetype: "renegade" }, { race: "drukhari" }]) {
+      const ctx = coverUpPanelContext(fakeActor({ inf: 20, cells, ...over }));
+      expect(ctx.coverUpFreeAllowed).toBe(true);
+      expect(ctx.coverUpCells.map(c => c.free)).toEqual([true, false]);
+      expect(ctx).toMatchObject({ coverUpPaidInf: 2, coverUpFreeInf: 3, coverUpInfLeft: 18 });
+    }
+  });
+  it("правка free=true у не-Отступника/не-Аэльдари в флаг не пишется", async () => {
+    const a = fakeActor({ inf: 10, cells: [{ name: "А", inf: 4 }] });
+    await changeCoverUpCell(a, 0, { free: true });
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: false }]);
+    expect(coverUpPanelContext(a).coverUpInfLeft).toBe(6);
+  });
+  it("снять галочку у не-Отступника можно всегда", async () => {
+    const a = fakeActor({ cells: [{ name: "А", inf: 4, free: true }] });
+    await changeCoverUpCell(a, 0, { free: false });
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: false }]);
+  });
+  it("разметка: колонка «Беспл.» и галочка показываются только при coverUpFreeAllowed", () => {
+    const hbs = fs.readFileSync(path.resolve(import.meta.dirname, "../../templates/actor/parts/tab-social.hbs"), "utf8");
+    const block = hbs.slice(hbs.indexOf('data-collapse-key="social-cover-up"'), hbs.indexOf("{{!-- ── Отношения ── --}}"));
+    const guardRe = /\{\{#if (?:\.\.\/)?coverUpFreeAllowed\}\}[^\n]*?\{\{\/if\}\}/g;
+    const guarded = [...block.matchAll(guardRe)].map(m => m[0]);
+    expect(guarded.some(g => g.includes("cover-up-free"))).toBe(true);
+    expect(guarded.some(g => g.includes("Беспл."))).toBe(true);
+    expect(block.replace(guardRe, "")).not.toMatch(/cover-up-free|Беспл\./);
+  });
+});
+
 describe("запись через флаг актора (без схемы)", () => {
   it("добавить: в флаг уходит весь список с новой ячейкой (Inf 1, пустое имя)", async () => {
     const a = fakeActor({ cells: [{ name: "А", inf: 2 }] });
     await addCoverUpCell(a);
-    expect(a.writes).toEqual([[NS, COVER_UP_FLAG, [{ name: "А", inf: 2 }, { name: "", inf: 1 }]]]);
+    expect(a.writes).toEqual([[NS, COVER_UP_FLAG, [{ name: "А", inf: 2, free: false }, { name: "", inf: 1, free: false }]]]);
   });
 
   it("изменить имя и Inf: чужие ячейки целы, Inf вне 1…4 прижимается", async () => {
     const a = fakeActor({ cells: [{ name: "А", inf: 2 }, { name: "Б", inf: 3 }] });
     await changeCoverUpCell(a, 1, { name: "Бэ" });
     await changeCoverUpCell(a, 0, { inf: 9 });
-    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4 }, { name: "Бэ", inf: 3 }]);
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "А", inf: 4, free: false }, { name: "Бэ", inf: 3, free: false }]);
   });
 
   it("удалить: ячейка уходит, остальные остаются", async () => {
     const a = fakeActor({ cells: [{ name: "А", inf: 1 }, { name: "Б", inf: 2 }] });
     await removeCoverUpCell(a, 0);
-    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "Б", inf: 2 }]);
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "Б", inf: 2, free: false }]);
   });
 
   it("несуществующий индекс ничего не пишет", async () => {
@@ -113,7 +175,7 @@ describe("быстрые правки подряд не затирают дру�
   it("переименование и сразу «+» — обе правки в итоговом списке", async () => {
     const a = slowActor();
     await Promise.all([changeCoverUpCell(a, 0, { name: "Переименована" }), addCoverUpCell(a)]);
-    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "Переименована", inf: 1 }, { name: "", inf: 1 }]);
+    expect(a.flags[NS][COVER_UP_FLAG]).toEqual([{ name: "Переименована", inf: 1, free: false }, { name: "", inf: 1, free: false }]);
   });
   it("сбой одной записи не глушит следующие", async () => {
     const a = slowActor();
@@ -138,7 +200,7 @@ describe("разметка вкладки СОЦИУМ", () => {
     expect(hbs).toMatch(/\{\{#if hasCoverUp\}\}/);
     expect(hbs).toContain('data-collapse-key="social-cover-up"');
     expect(hbs).toContain('data-action="panelCollapse"');
-    for (const cls of ["cover-up-add", "cover-up-remove", "cover-up-name", "cover-up-inf"]) {
+    for (const cls of ["cover-up-add", "cover-up-remove", "cover-up-name", "cover-up-inf", "cover-up-free", "coverUpInfLeft"]) {
       expect(hbs, cls).toContain(cls);
     }
   });

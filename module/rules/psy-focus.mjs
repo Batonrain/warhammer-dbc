@@ -81,20 +81,29 @@ export function psyFocusCandidates(actor) {
 
 /**
  * Что даёт привязанный предмет психотесту силы `power`.
+ *
+ * `path` — запись Пути из PSY_PATHS: если Путь сам «считается Good.Q/Best.Q
+ * Психофокусом на все Дисциплины» (`focusQuality` + `focusAllDisciplines`,
+ * Руны Сигиллитов), он даёт +5 на любой силе и, при Best.Q, снимает штраф
+ * крит. провала без всякого предмета. С реальным предметом берётся лучшее
+ * из двух, а не сумма: +5 один раз.
  * @returns {{item: object|null, quality: string, resonates: boolean,
- *            bonus: number, ignoresCritFail: boolean}}
+ *            bonus: number, ignoresCritFail: boolean, pathGranted: boolean}}
  */
-export function focusQualityEffect(actor, power) {
+export function focusQualityEffect(actor, power, path = null) {
   const item = activeFocusItem(actor);
   const quality = item?.system?.quality ?? "";
   const aboveCommon = quality === "good" || quality === "best";
   const resonance = actor?.system?.psyker?.focusResonance || "";
   const discipline = power?.system?.discipline || "";
-  const resonates = aboveCommon && !!resonance && resonance === discipline;
+  const itemResonates = aboveCommon && !!resonance && resonance === discipline;
+  const pathQuality = path?.focusAllDisciplines ? path.focusQuality : "";
+  const pathGranted = pathQuality === "good" || pathQuality === "best";
+  const resonates = itemResonates || pathGranted;
   return {
-    item, quality, resonates,
+    item, quality, resonates, pathGranted,
     bonus: resonates ? 5 : 0,
-    ignoresCritFail: quality === "best"
+    ignoresCritFail: quality === "best" || pathQuality === "best"
   };
 }
 

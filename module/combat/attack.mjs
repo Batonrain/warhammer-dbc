@@ -1825,10 +1825,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
   // Fanatic в базовом контакте с целью — только показ кандидатов и остатка
   // «раз в Раунд без Реакции» в карточке, перенос урона остаётся выбором
-  // стола через обычную кнопку «Применить урон» (выделить токен Фанатика).
+  // стола — кнопкой «Перехват» у попадания (attack-card.mjs) или вручную через
+  // обычную «Применить урон» (выделить токен Фанатика).
   const fanaticIntercepts = hits.length
     ? fanaticInterceptCandidates(targetToken, game.actors ?? [], { excludeUuids: [defenderActor?.uuid] })
-        .map(a => ({ uuid: a.uuid, name: a.name, freeUse: backToBackFreeUseAvailable(a),
+        .map(a => ({ uuid: a.uuid, name: a.name,
+          freeUse: backToBackFreeUseAvailable(a),
+          tokenUuid: a.getActiveTokens?.()[0]?.document?.uuid ?? "",
           savior: hasMistSavior(a), targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" }))
     : [];
 

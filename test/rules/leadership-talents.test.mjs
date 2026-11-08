@@ -374,7 +374,7 @@ describe("Air of Authority/Аура Власти — лимит целей Comma
   });
 });
 
-describe("Radiant Presence/Блистательное Присутствие — галочка диалога, не скан сцены", () => {
+describe("Radiant Presence/Блистательное Присутствие — +10 по готовой галочке диалога (видимость — rules/radiant-presence-sight.mjs)", () => {
   it("anyRadiantPresenceHolderExists — хоть один носитель в списке", () => {
     expect(anyRadiantPresenceHolderExists([{ items: [talentOf("Radiant Presence")] }, { items: [] }])).toBe(true);
     expect(anyRadiantPresenceHolderExists([{ items: [] }])).toBe(false);

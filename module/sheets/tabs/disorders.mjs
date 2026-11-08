@@ -33,6 +33,7 @@ import { hasTalentCapability } from "../../rules/ability-by-key.mjs";
 import { JADED_CAP } from "../../rules/courage-talents.mjs";
 import { INFERNAL_FAMILIARITY_CAP } from "../../rules/defiance-talents.mjs";
 import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../../rules/leadership-talents.mjs";
+import { radiantPresenceSeenBy, radiantPresenceHint } from "../../combat/radiant-presence.mjs";
 import { RAGE_FEAR_CAPABILITY, rageFearRating, isRageFearSource, relationByDisposition } from "../../rules/warp-touched.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
@@ -131,11 +132,14 @@ export function openFearDialog(actor) {
     ? `<div class="atk-dlg-row"><label title="Затронутый Варпом: Страх врага в Ярости нельзя игнорировать — не действуют память сцены, автоуспех по Infamy или своему Страху, Стальное Сердце"><input id="fear-prop-unignorable" type="checkbox"${pre.unignorable ? " checked" : ""}/> Нельзя игнорировать (враг в Ярости)</label></div>`
     : "";
   // Radiant Presence/Блистательное Присутствие и Into the Jaws of Hell/
-  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — решение владельца: галочки
-  // тем же приёмом, что «Нельзя игнорировать» выше — ГМ решает на глаз,
-  // показываются только если в мире вообще есть носитель (иначе незачем).
+  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — галочки тем же приёмом, что
+  // «Нельзя игнорировать» выше, показываются только если в мире вообще есть
+  // носитель (иначе незачем). Блистательное Присутствие (wdbc-051qb) —
+  // проставляется само, если союзный или нейтральный носитель в поле зрения токена; «слышит»
+  // и снятие — руками. «В Самое Пекло» — только руками: книга не даёт радиуса.
+  const radiantSeen = radiantPresenceSeenBy(actor, { sourceActor: targetActor });
   const radiantPresenceHtml = anyRadiantPresenceHolderExists(game.actors ?? [])
-    ? `<div class="atk-dlg-row"><label title="Видит или слышит союзника/нейтрального с Блистательным Присутствием — +10 на этот тест"><input id="fear-prop-radiant" type="checkbox"/> Блистательное Присутствие (+10)</label></div>`
+    ? `<div class="atk-dlg-row"><label title="${esc(radiantPresenceHint(radiantSeen))}"><input id="fear-prop-radiant" type="checkbox"${radiantSeen.seen ? " checked" : ""}/> Блистательное Присутствие (+10)</label></div>`
     : "";
   const jawsOfHellHtml = anyIntoTheJawsOfHellHolderExists(game.actors ?? [])
     ? `<div class="atk-dlg-row"><label title="Рядом сражается командующий с В Самое Пекло — тест проходит автоматически"><input id="fear-prop-jaws" type="checkbox"/> В Самое Пекло (авто-успех)</label></div>`

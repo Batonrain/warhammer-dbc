@@ -19,6 +19,7 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { _executeAttackRoll } from "../../combat/attack.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction, canSpendReaction } from "../../combat/action-economy.mjs";
+import { movementApCost } from "../../combat/psychic-sprint.mjs";
 import { fullFireOptionByValue, fullFireSecondThreshold, fullFireSecondBlockReason, secondRofBonus } from "../../rules/full-fire.mjs";
 import { weaponTrainingPenalty } from "../../rules/weapon-training.mjs";
 import { BATPACK_ROF } from "../../rules/batpack-dump.mjs";
@@ -288,7 +289,7 @@ export function openAttackDialog(ctx) {
           const sabreSecond = !!techniqueOpts?.sabreSecondAttack;
           // Упорство (combat/tenacity.mjs): повтор атаки — свободное действие, ни ОД, ни Лимит Атак не тратит.
           // Рисовка (свободная атака «не считается атакой») — то же; Жнец — продолжение Натиска, Яростный Штурм —
-          // «еще одна атака за свободное действие»: ни ОД, ни лимита (rules/melee-talents.mjs::freeMeleeFlags).
+          // «еще одна атака за свободное действие»: ни ОД, ни лимита; Разрубить — то же (rules/melee-talents.mjs::freeMeleeFlags).
           const freeMelee = freeMeleeFlags(techniqueOpts);
           const uncountedAttack = freeMelee.uncounted;
           // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
@@ -449,9 +450,10 @@ export function openAttackDialog(ctx) {
             // Таланта «Два Оружия», и ровно этого не было: после Натиска
             // второй удар упирался в «не хватает ОД», хотя по книге входил в
             // то же действие.
-            const apCost = apCostForActionType(dualOff
+            const baseApCost = apCostForActionType(dualOff
               ? dualWieldActionType(ownActionType, offActionType(dualOff))
               : ownActionType);
+            const apCost = (isMelee && baseIsCharge(sel.baseKey)) ? movementApCost(actor, baseApCost) : baseApCost;
             if (!await spendActionPoints(actor, apCost, { physical: true })) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;

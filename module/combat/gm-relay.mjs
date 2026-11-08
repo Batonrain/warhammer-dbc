@@ -29,7 +29,8 @@
 //      Причастие (до 3 ⚡), пачка J (Sahara 3-2501): клиент присылает только число,
 //      ГМ сам пересчитывает по данным цели (свободное место, потолок ½I.b за Раунд,
 //      Апокрифа цели); нужен соответствующий Талант у инициатора, а для ⚙ — цель,
-//      подключённая к Ноосфере. Расстояние и согласие цели ведёт стол.
+//      подключённая к Ноосфере. Расстояние и согласие цели ведёт стол. Записи по одной
+//      цели идут по очереди (SERIAL_KINDS), чтобы две одновременные передачи складывались.
 //    • singForMeDamage / singForMeBoon / wallPush — Шумовой Десантник (Sahara 1-54b9): «Спой Мне!»
 //      (2d10 непоглощаемого R урона жертве; +1 Очко Бесчестия и снятие Усталости палачу и наблюдателям —
 //      поклонникам Слаанеш) и Стена Диссонанса (отброс токена цели; дальность ограничена Cor.b×3 м
@@ -335,8 +336,33 @@ export async function hatredTemplate() {
   } catch { return null; }
 }
 
+/**
+ * «Прочитать значение цели и записать прибавленное» — виды записи, которые на ГМ-клиенте
+ * нельзя гонять вперемешку: обе передачи прочтут одно и то же старое число и вторая
+ * затрёт первую (wdbc-ekrk2). Листовых вызовов вглубь (writeToTarget) у этих видов нет,
+ * поэтому очередь не может запереться сама на себе.
+ */
+const SERIAL_KINDS = new Set(["apDebt", "grantCognition", "grantEnergy"]);
+const WRITE_CHAINS = new Map();
+
+/** Записи по одной цели идут друг за другом; отказ одной не глушит следующие. */
+function serialWrite(target, task) {
+  const key = target.uuid ?? target.id;
+  const run = (WRITE_CHAINS.get(key) ?? Promise.resolve()).then(task);
+  const tail = run.catch(() => {});
+  WRITE_CHAINS.set(key, tail);
+  tail.then(() => { if (WRITE_CHAINS.get(key) === tail) WRITE_CHAINS.delete(key); });
+  return run;
+}
+
 /** Исполнить запись на клиенте, у которого есть право (ГМ или владелец цели). */
-export async function performTargetWrite(target, op, initiator = null) {
+export function performTargetWrite(target, op, initiator = null) {
+  return SERIAL_KINDS.has(op?.kind)
+    ? serialWrite(target, () => _performTargetWrite(target, op, initiator))
+    : _performTargetWrite(target, op, initiator);
+}
+
+async function _performTargetWrite(target, op, initiator) {
   if (op.kind === "update") return target.update(op.data);
   if (op.kind === "addFatigue") {
     const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
@@ -395,7 +421,7 @@ export async function performTargetWrite(target, op, initiator = null) {
   }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");
-    return grantDreadWailFear(target);
+    return grantDreadWailFear(target, initiator);
   }
   if (op.kind === "inspireHatred") {
     const item = inspiredHatredData(op.target, { uuid: initiator?.uuid ?? "", name: initiator?.name ?? "" }, await hatredTemplate());

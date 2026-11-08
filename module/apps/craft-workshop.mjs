@@ -225,16 +225,21 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       hookUpMod: hookUpCraftMod(crafter, proj) };
     const combined = computeCombined(selectedOpts, mods);
 
-    const tableBank = isResearch ? null : bankFromTable(category, proj.rarity);
-    const notCraftable = !isResearch && tableBank === null && proj.baseBank == null;
-    const baseBank = proj.baseBank ?? (isResearch ? 20 : (tableBank ?? 10));
+    // Ремонт (wdbc-53of9): книга Банка ремонта не называет, таблица создания к нему не относится —
+    // Банк вписывает игрок, пока он пуст, цели нет (bank = null) и ГОТОВО не наступает.
+    const isRepair = proj.mode === "craft" && !!proj.repair;
+    const repairNeedsBank = isRepair && proj.baseBank == null;
+    const tableBank = isResearch || isRepair ? null : bankFromTable(category, proj.rarity);
+    const notCraftable = !isResearch && !isRepair && tableBank === null && proj.baseBank == null;
+    const baseBank = proj.baseBank ?? (isResearch ? 20 : repairNeedsBank ? null : (tableBank ?? 10));
     const isMachine = !!category?.machine && !isResearch;
     // Машины: итоговый Банк ×(Размер+1) — раньше подсказка просила учесть это
     // руками (wdbc-5il7), теперь размер вводится тут же и множится сразу.
     const machineSize = isMachine ? Math.max(0, Number(proj.machineSize) || 0) : 0;
-    const bank = bankFor(baseBank, proj.quality, proj.improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
+    const bank = repairNeedsBank ? null
+      : bankFor(baseBank, proj.quality, proj.improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
 
-    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable,
+    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable, repairNeedsBank,
       machineNote: isMachine, machineSize, crafter, isResearch, isStudy, proto };
   }
 
@@ -376,7 +381,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       : proj.mode === "training" ? ""
       : (R.category?.label || "");
     const accum = proj.project.accumulated;
-    const pct = proj.mode === "training" ? 0 : Math.max(0, Math.min(100, Math.round((accum / R.bank) * 100)));
+    const pct = proj.mode === "training" ? 0 : Math.max(0, Math.min(100, Math.round((accum / (R.bank ?? Infinity)) * 100)));
     const training = proj.mode === "training" ? this._trainingVM(proj) : null;
 
     const testRows = R.slots.map((s, i) => {
@@ -392,7 +397,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       title: proj.title, autoTitle: `${modeLabel}${crafterName ? " · " + crafterName : ""}${catLabel ? " · " + catLabel : ""}`,
       summary: proj.mode === "bio" ? `цикл ${proj.bioCycle || 0}`
         : proj.mode === "training" ? `сеанс ${proj.sessionCount || 0}/${TRAINING_SESSIONS_PER_COURSE}`
-        : `${accum}/${R.bank}`,
+        : `${accum}/${R.bank ?? "?"}`,
       isCraft: proj.mode === "craft", isResearch: proj.mode === "research",
       isBio: proj.mode === "bio", bio: proj.mode === "bio" ? this._bioVM(proj) : null,
       isTraining: proj.mode === "training", training,
@@ -441,13 +446,14 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       assistantId: proj.assistantId || "",
       prototypingNote: this._prototypingNote(proj, R),
       baseBankVal: R.baseBank, machineNote: R.machineNote, machineSize: R.machineSize, notCraftable: R.notCraftable,
+      repairNeedsBank: R.repairNeedsBank,
 
       testRows, limit,
       limitCls: limit >= 50 ? "good" : limit >= 20 ? "mid" : "bad",
       toolModVal: R.mods.toolMod, gmModVal: R.mods.gmMod, improveMod: R.mods.improveMod,
 
-      bank: R.bank, accumulated: accum, shifts: proj.project.shifts, fatigue: proj.project.fatigue,
-      pct, done: accum >= R.bank
+      bank: R.bank, bankText: R.bank ?? "—", accumulated: accum, shifts: proj.project.shifts, fatigue: proj.project.fatigue,
+      pct, done: R.bank != null && accum >= R.bank
     };
   }
 
@@ -502,7 +508,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=slowshift]", "change", e => upd(e.currentTarget, p => p.slowShift = e.target.checked));
     on("[name=assistant-actor]", "change", e => upd(e.currentTarget, p => p.assistantId = e.target.value));
     on("[name=torrent-weapon]", "change", e => upd(e.currentTarget, p => p.torrentWeaponUuid = e.target.value));
-    on("[name=repair]", "change", e => upd(e.currentTarget, p => p.repair = e.target.checked));
+    on("[name=repair]", "change", e => upd(e.currentTarget, p => { p.repair = e.target.checked; p.baseBank = null; }));
     on("[name=repair-weapon]", "change", e => upd(e.currentTarget, p => p.repairWeaponId = e.target.value));
     on("[name=noparts]", "change", e => upd(e.currentTarget, p => p.noParts = e.target.checked));
 
@@ -676,11 +682,11 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const poly = polymathCrit(crafter, crit.success, chain);
 
     const gain = Math.max(0, dos) + assist;
-    const wasDone = proj.project.accumulated >= R.bank;
+    const wasDone = R.bank != null && proj.project.accumulated >= R.bank;
     proj.project.shifts += 1;
     proj.project.fatigue += 1;
     proj.project.accumulated += gain;
-    const done = proj.project.accumulated >= R.bank;
+    const done = R.bank != null && proj.project.accumulated >= R.bank;
 
     // Через addFatigue (wdbc-x1nz.2.95): смена работы у порога T.b+W.b роняет
     // мастера без сознания, Саркофаг держит иммунитет — прямой записью ни
@@ -785,7 +791,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${repairNote ? `<div class="wh-craft-roll-line ok">${repairNote}</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
           ${torrentNote ? `<div class="wh-craft-roll-line ok">${torrentNote}</div>` : ""}
-          <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
+          <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank ?? "?"}${R.repairNeedsBank ? " · <b style='color:#f0c88a'>Впишите Базовый Банк ремонта (в книге формулы нет)</b>" : ""}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,
       rolls: [roll, polyFatigueRoll].filter(Boolean), sound: CONFIG.sounds.dice

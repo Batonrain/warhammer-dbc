@@ -29,7 +29,7 @@ import { toggleSuffocationMode } from "../../combat/condition-ticks.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showTortureDialog } from "../../apps/torture.mjs";
-import { hasFrenzyTalent, tryEnterRage, markFrenzyExited } from "../../combat/frenzy.mjs";
+import { tryEnterRage } from "../../combat/frenzy.mjs";
 import { attemptRageExit } from "../../combat/rage-behavior.mjs";
 import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
 import { provokeNails, useRedStreak } from "../../combat/khorne-berserker.mjs";
@@ -171,13 +171,14 @@ export function activateCombatListeners(root, actor) {
   // Общая Пытка для всех (3-dc87): встречный тест + Мучитель.
   on(root, ".torture-btn", "click", () => showTortureDialog(actor));
 
-  // ── Ярость: лимит повторного входа за бой (wdbc-sk8s, module/combat/frenzy.mjs) ──
-  // «Однажды выйдя, нельзя войти снова до конца боя» — Frenzy/Ярость, снимается
-  // Чертой Butcher's Nails/Гвозди Мясника. Тумблер сам по себе (system.inRage)
-  // сохраняется формой Foundry как обычно — здесь только гейт входа и отметка выхода.
+  // ── Ярость: лимит повторного входа за бой (wdbc-sk8s, wdbc-sh3qt, module/combat/frenzy.mjs) ──
+  // «Однажды выйдя, нельзя войти снова до конца боя» — для любого персонажа, снимается
+  // Чертой Butcher's Nails/Гвозди Мясника. Тумблер сам по себе (system.inRage) сохраняется
+  // формой Foundry как обычно; отметку выхода пишет хук updateActor (hooks.mjs), гейт входа
+  // для остальных источников — preUpdateActor (warhammer-dbc.mjs), здесь же отказ с откатом галочки.
   on(root, ".rage-toggle input", "change", async ev => {
     const checked = ev.currentTarget.checked;
-    if (checked && hasFrenzyTalent(actor)) {
+    if (checked) {
       // Слушатель висит на input, а лист (ApplicationV2, submitOnChange) — на
       // form: без stopPropagation форма сабмитнула бы inRage:true из DOM
       // СЛЕДОМ за нашим откатом, и гейт молча проигрывал бы гонку. Вход платный (ОД,
@@ -193,9 +194,7 @@ export function activateCombatListeners(root, actor) {
       }
       if (entry.cost > 0) ui.notifications.info(`«${actor.name}»: вход в Ярость — ${entry.cost} ОД.`);
       await actor.update({ "system.inRage": true });
-      return;
     }
-    if (!checked) await markFrenzyExited(actor);
   });
   // Кнопка «Выйти из Ярости»: тест W+0 с бонусами книги (combat/rage-behavior.mjs::attemptRageExit).
   on(root, ".rage-exit-btn", "click", ev => { ev.preventDefault(); return attemptRageExit(actor); });
