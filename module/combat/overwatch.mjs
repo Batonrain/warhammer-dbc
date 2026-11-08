@@ -32,7 +32,7 @@
 //  атаки конкретного оружия» в системе нет ни у одной реактивной механики.
 // ════════════════════════════════════════════════════════════════════════
 
-import { isWithinArc, bearingDegrees } from "../rules/facing.mjs";
+import { isWithinArc, bearingDegrees, facingBearing } from "../rules/facing.mjs";
 import { tokenCenter, tokenRotation } from "./facing.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
 import { hasActionEconomy, isEncounterActive, spendActionPoints } from "./action-economy.mjs";
@@ -208,7 +208,7 @@ function isMoverInSector(shooterToken, state, moverTokenDoc) {
   const shooterPos = tokenCenter(shooterToken);
   const moverPos = tokenCenter(moverTokenDoc);
   if (!shooterPos || !moverPos) return false;
-  return isWithinArc(state.sectorCenter, bearingDegrees(shooterPos, moverPos), state.arcWidth);
+  return isWithinArc(facingBearing(state.sectorCenter), bearingDegrees(shooterPos, moverPos), state.arcWidth);
 }
 
 export function initOverwatchHooks() {
