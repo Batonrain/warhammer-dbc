@@ -55,7 +55,7 @@ function warlock({ wp = 50, rating = 3 } = {}) {
 const lastCard = () => String(captured.chat.at(-1)?.content ?? "");
 
 beforeEach(() => { resetCaptured(); globalThis.game.combat = undefined; });
-afterEach(() => { globalThis.game.combat = undefined; });
+afterEach(() => { globalThis.game.combat = undefined; globalThis.game.combats = undefined; });
 
 describe("Психический Рывок: чистые правила", () => {
   it("модификатор теста W — минус 30 плюс 3 за каждый эPR", () => {
@@ -133,15 +133,16 @@ describe("Психический Рывок: кнопка и бросок", () =
   });
 
   it("успех: +эPR к SPD на этот и следующий Раунд, Талант отмечен на бой", async () => {
-    globalThis.game.combat = { id: "c1", round: 2, started: true };
     const a = warlock({ wp: 50, rating: 3 });
+    globalThis.game.combat = { id: "c1", round: 2, started: true, combatants: [{ actor: a }] };
+    globalThis.game.combats = [globalThis.game.combat];
     captured.nextRoll = 29;
     expect(await runTalentAction("psychicSprint", talent(), a)).toBe(true);
     expect(a.effects).toHaveLength(1);
     const fx = a.effects[0];
     expect(fx.system.changes).toEqual([{ key: "system.movement.spdBonus", type: "add", value: 3, phase: "initial", priority: 0 }]);
     expect(fx.duration).toEqual({ value: 1, units: "rounds", expiry: "turnEnd" });
-    expect(fx.flags[NS][TIMED_EFFECT_FLAG].lastRound).toBe(3);
+    expect(fx.flags[NS][TIMED_EFFECT_FLAG]).toMatchObject({ combatId: "c1", round: 2, lastRound: 3 });
     expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(false);
     expect(lastCard()).toContain("<b>29</b>");
     expect(lastCard()).toContain("+3");
@@ -179,6 +180,29 @@ describe("Психический Рывок: кнопка и бросок", () =
     expect(await startPsychicSprint(a)).toBe(false);
     expect(captured.rolls.length).toBe(rolls);
     expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(true);
+  });
+
+  it("вне боя бросок не делается, эффекта нет, Талант не тратится и игроку сказано почему", async () => {
+    const a = warlock({ wp: 50, rating: 3 });
+    const rolls = captured.rolls.length;
+    const cards = captured.chat.length;
+    expect(await startPsychicSprint(a)).toBe(false);
+    expect(captured.rolls.length).toBe(rolls);
+    expect(captured.chat.length).toBe(cards);
+    expect(a.effects).toEqual([]);
+    expect(a.getFlag(NS, "usageLimits.talent-psychicSprint")).toBeUndefined();
+    expect(captured.warnings.some(w => w.includes("только в бою"))).toBe(true);
+    globalThis.game.combat = { id: "c1", round: 1, started: true };
+    expect(isCapabilityAvailable(a, PSYCHIC_SPRINT_KEY, "battle")).toBe(true);
+  });
+
+  it("бой создан, но не начат — то же, что вне боя", async () => {
+    globalThis.game.combat = { id: "c1", round: 0, started: false };
+    const a = warlock();
+    const rolls = captured.rolls.length;
+    expect(await runTalentAction("psychicSprint", talent(), a)).toBe(false);
+    expect(captured.rolls.length).toBe(rolls);
+    expect(a.effects).toEqual([]);
   });
 
   it("чужой предмет кнопкой не запускается", async () => {

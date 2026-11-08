@@ -27,7 +27,7 @@ import { goadingStrikeButtonHtml } from "./pugilist-strikes.mjs";
 import { whackStrike, recordWhackSeen } from "./whack.mjs";
 import { roundhouseButtonHtml, isKickWeapon } from "./roundhouse.mjs";
 import { grappleCoverPartner } from "./grapple.mjs";
-import { fanaticInterceptCandidates, backToBackFreeUseAvailable } from "./fanatic-redirect.mjs";
+import { fanaticInterceptCandidates, backToBackFreeUseAvailable, fanaticPayer } from "./fanatic-redirect.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
@@ -1829,10 +1829,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // обычную «Применить урон» (выделить токен Фанатика).
   const fanaticIntercepts = hits.length
     ? fanaticInterceptCandidates(targetToken, game.actors ?? [], { excludeUuids: [defenderActor?.uuid] })
-        .map(a => ({ uuid: a.uuid, name: a.name,
-          freeUse: backToBackFreeUseAvailable(a),
-          tokenUuid: a.getActiveTokens?.()[0]?.document?.uuid ?? "",
-          savior: hasMistSavior(a), targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" }))
+        .map(a => {
+          const payer = fanaticPayer(a);
+          return { uuid: payer.uuid, name: a.name,
+            freeUse: backToBackFreeUseAvailable(payer),
+            tokenUuid: a.getActiveTokens?.()[0]?.document?.uuid ?? "",
+            savior: hasMistSavior(a), targetTokenUuid: targetToken?.document?.uuid ?? targetToken?.uuid ?? "" };
+        })
     : [];
 
   // Нечестивая Преданность/Unholy Devotion (combat/unholy-devotion.mjs):

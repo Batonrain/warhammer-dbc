@@ -33,7 +33,7 @@ const mainDataset = { damage: "13", penetration: "4", damageType: "impact", hitL
 const redirectDataset = { mirrorHit: "1", fanaticUuid: "Actor.f1", forceTarget: "Scene.s.Token.f1" };
 
 const fanatic = { uuid: "Actor.f1", name: "Телохранитель", isOwner: true };
-const fanaticTargetActor = { uuid: "Actor.f1", name: "Телохранитель" };
+const fanaticTargetActor = { uuid: "Scene.s.Token.f1.Actor.f1", id: "f1", isToken: true, token: { baseActor: fanatic }, name: "Телохранитель", isOwner: true };
 
 /** Карточка с группой попадания: главная кнопка и «Перехват» — нажать «Перехват». */
 async function clickRedirect({ withMain = true, message = { id: "msg-1" } } = {}) {
@@ -72,12 +72,47 @@ describe("кнопка «Перехват» Фанатика", () => {
     expect(dmg).toMatchObject({ rawDamage: 13, penetration: 4, hitLocation: "Рука", weaponName: "Силовой меч", melee: true });
   });
 
-  it("платит за перехват этим носителем и карточкой до применения урона", async () => {
+  it("несвязанный токен: платит актор токена (у него своя дельта Реакций), а не мировой актор из старой карточки", async () => {
     const message = { id: "msg-7" };
     await clickRedirect({ message });
-    expect(payFanaticIntercept).toHaveBeenCalledWith(fanatic, message);
+    expect(payFanaticIntercept).toHaveBeenCalledTimes(1);
+    expect(payFanaticIntercept.mock.calls[0][0]).toBe(fanaticTargetActor);
+    expect(payFanaticIntercept.mock.calls[0][1]).toBe(message);
     expect(payFanaticIntercept.mock.invocationCallOrder[0])
       .toBeLessThan(applyDamageToActor.mock.invocationCallOrder[0]);
+    expect(applyDamageToActor.mock.calls[0][0]).toBe(fanaticTargetActor);
+  });
+
+  it("карточка уже несёт uuid актора токена — платит он же, урон ему же", async () => {
+    globalThis.fromUuid = async uuid => ({
+      "Scene.s.Token.f1.Actor.f1": fanaticTargetActor,
+      "Scene.s.Token.f1": { documentName: "Token", actor: fanaticTargetActor }
+    })[uuid] ?? null;
+    redirectDataset.fanaticUuid = "Scene.s.Token.f1.Actor.f1";
+    try {
+      await clickRedirect();
+    } finally { redirectDataset.fanaticUuid = "Actor.f1"; }
+    expect(payFanaticIntercept.mock.calls[0][0]).toBe(fanaticTargetActor);
+    expect(applyDamageToActor.mock.calls[0][0]).toBe(fanaticTargetActor);
+  });
+
+  it("связанный токен: актор токена и есть мировой — платит он", async () => {
+    globalThis.fromUuid = async uuid => ({
+      "Actor.f1": fanatic,
+      "Scene.s.Token.f1": { documentName: "Token", actor: fanatic }
+    })[uuid] ?? null;
+    await clickRedirect();
+    expect(payFanaticIntercept.mock.calls[0][0]).toBe(fanatic);
+  });
+
+  it("цель урона — чужой актор, не тот Фанатик: платит названный в карточке", async () => {
+    const stranger = { uuid: "Actor.other", name: "Другой", isOwner: true };
+    globalThis.fromUuid = async uuid => ({
+      "Actor.f1": fanatic,
+      "Scene.s.Token.f1": { documentName: "Token", actor: stranger }
+    })[uuid] ?? null;
+    await clickRedirect();
+    expect(payFanaticIntercept.mock.calls[0][0]).toBe(fanatic);
   });
 
   it("нет Реакции — урон не применяется, стол предупреждён", async () => {
@@ -89,9 +124,10 @@ describe("кнопка «Перехват» Фанатика", () => {
 
   it("не владелец носителя — не перехватывает и не платит", async () => {
     fanatic.isOwner = false;
+    fanaticTargetActor.isOwner = false;
     try {
       await clickRedirect();
-    } finally { fanatic.isOwner = true; }
+    } finally { fanatic.isOwner = true; fanaticTargetActor.isOwner = true; }
     expect(payFanaticIntercept).not.toHaveBeenCalled();
     expect(applyDamageToActor).not.toHaveBeenCalled();
   });

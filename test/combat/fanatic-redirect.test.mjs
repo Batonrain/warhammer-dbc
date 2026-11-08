@@ -15,7 +15,7 @@ vi.mock("../../module/combat/action-economy.mjs", () => ({ spendReaction: vi.fn(
 import { spendReaction } from "../../module/combat/action-economy.mjs";
 import { hasFanatic, fanaticCandidates, backToBackGrantSectionHtml,
   fanaticInterceptCandidates, backToBackFreeUseAvailable, markBackToBackFreeUseUsed, clearFanaticGrants,
-  payFanaticIntercept
+  payFanaticIntercept, fanaticPayer
 } from "../../module/combat/fanatic-redirect.mjs";
 
 const trait = (name) => ({ type: "trait", name, system: {} });
@@ -119,6 +119,27 @@ describe("fanaticInterceptCandidates — геометрия базового к�
 
   it("без targetToken — пусто", () => {
     expect(fanaticInterceptCandidates(null, [actorWithToken("f1", token(0, 0))])).toEqual([]);
+  });
+});
+
+describe("fanaticPayer — кто платит за перехват", () => {
+  it("несвязанный токен: актор токена (своя дельта Реакций и счётчика), а не мировой актор", () => {
+    const world = { uuid: "Actor.f1", name: "Фанатик" };
+    const tokenActor = { uuid: "Scene.s.Token.t.Actor.f1", name: "Фанатик", isToken: true };
+    world.getActiveTokens = () => [{ actor: tokenActor }];
+    expect(fanaticPayer(world)).toBe(tokenActor);
+  });
+
+  it("связанный токен: тот же актор", () => {
+    const world = { uuid: "Actor.f1" };
+    world.getActiveTokens = () => [{ actor: world }];
+    expect(fanaticPayer(world)).toBe(world);
+  });
+
+  it("токена на сцене нет — мировой актор", () => {
+    const world = { uuid: "Actor.f1", getActiveTokens: () => [] };
+    expect(fanaticPayer(world)).toBe(world);
+    expect(fanaticPayer({ uuid: "Actor.f2" })).toEqual({ uuid: "Actor.f2" });
   });
 });
 

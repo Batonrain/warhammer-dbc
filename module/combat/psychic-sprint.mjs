@@ -32,6 +32,11 @@ export async function startPsychicSprint(actor) {
     ui.notifications?.warn(`${actor.name}: Психический Рывок — нет Пси-Рейтинга (эPR 0).`);
     return false;
   }
+  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
+  if (!combat) {
+    ui.notifications?.warn(`${actor.name}: Психический Рывок имеет смысл только в бою — вне боя бросок не делается и Талант не тратится.`);
+    return false;
+  }
   if (!isCapabilityAvailable(actor, PSYCHIC_SPRINT_KEY, "battle")) {
     ui.notifications?.warn(`${actor.name}: Психический Рывок уже применён в этом бою.`);
     return false;
@@ -58,7 +63,6 @@ export async function startPsychicSprint(actor) {
     }, { rolls: [roll] });
     return true;
   }
-  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
   await grantTimedEffect(actor, {
     key: PSYCHIC_SPRINT_EFFECT_KEY, name: `Психический Рывок — SPD +${bonus}`, img: "icons/svg/wing.svg",
     changes: [{ key: PSYCHIC_SPRINT_SPD_KEY, type: "add", value: bonus }],
@@ -69,7 +73,7 @@ export async function startPsychicSprint(actor) {
     icon, title, threshold: statLine,
     outcome: outcomeHtml(true, `Успех (${deg} ${_degWord(deg)}) — SPD +${bonus} на этот и следующий Раунд`),
     lines: [
-      `<div class="roll-threshold">Прибавка к SPD <b>+${bonus}</b> учтена на листе временным эффектом: до конца Хода ${esc(actor.name)} в следующем Раунде${combat ? "" : " (срок пойдёт с началом боя)"}.</div>`,
+      `<div class="roll-threshold">Прибавка к SPD <b>+${bonus}</b> учтена на листе временным эффектом: до конца Хода ${esc(actor.name)} в следующем Раунде.</div>`,
       `<div class="roll-threshold">Полное Движение, Натиск и Бег на это время — на <b>1 ОД меньше</b>: цена в ОД спишется уже со скидкой. В бою Талант применяется один раз.</div>`
     ]
   }, { rolls: [roll] });
