@@ -78,6 +78,7 @@ export function weaponFor(system = {}, { id = "weapon-1", name = "Болтер",
       ...system
     },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
+    toObject: () => structuredClone({ _id: item.id, name: item.name, type: item.type, system: item.system, flags: {} }),
     async update(data) { for (const [path, value] of Object.entries(data)) setPath(item, path, value); },
     async delete() { item.deleted = true; }
   };
