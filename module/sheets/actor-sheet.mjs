@@ -2270,6 +2270,7 @@ export class WarhammerCharacterSheet
    */
   _itemRollModsHtml(context) {
     const groups = [];
+    let resolved = null;
     for (const it of this.actor.items) {
       const mods = it.getFlag("warhammer-dbc", "rollMods");
       if (!Array.isArray(mods) || !mods.length) continue;
@@ -2277,8 +2278,15 @@ export class WarhammerCharacterSheet
       if (!hits.length) continue;
       // Качество снаряжения (стр. 165): ±тесты «с этим снаряжением» — строка
       // в тот же блок, уже отмеченная: снаряжение применимо к этому тесту.
+      // Но если у предмета есть и запись «Модификатор теста», строку качества уже
+      // дал конвейер правил (rules/resolve-test.mjs, ruleId quality.<id>) — второй не нужно.
       const q = gearQualityRollMod(it);
-      if (q) hits.push({ ...q, preChecked: true });
+      if (q) {
+        resolved ??= resolveTest({ actor: this.actor, ...context });
+        const dupId = `quality.${it.id ?? it.name}`;
+        const viaRules = [...resolved.mods, ...resolved.autoMods].some(m => m.ruleId === dupId);
+        if (!viaRules) hits.push({ ...q, preChecked: true });
+      }
       groups.push({ item: it, mods: hits });
     }
     if (!groups.length) return { html: "", mods: [] };
