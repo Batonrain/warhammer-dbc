@@ -60,3 +60,13 @@ describe("исключения общей таблицы", () => {
     expect(gearQualityRollMod({ type: "cybernetic", system: { quality: "good" } })).toBe(null);
   });
 });
+
+import { quantityUnitNote } from "../../module/rules/requisition.mjs";
+
+describe("Количество патронов в Реквизиции — магазины (стр. 165)", () => {
+  it("у боеприпасов подпись про магазин, у прочего пусто", () => {
+    expect(quantityUnitNote({ type: "ammo" })).toContain("1 стандартный магазин");
+    expect(quantityUnitNote({ type: "gear" })).toBe("");
+    expect(quantityUnitNote(null)).toBe("");
+  });
+});
