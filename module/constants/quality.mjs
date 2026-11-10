@@ -139,6 +139,56 @@ export function qualityEffects(item, qualityOverride = null) {
   return { cat, info, auto, reminders };
 }
 
+/**
+ * Штраф АТАКУЮЩЕМУ на Избирательную атаку по сочленению/шее или визору (глазу)
+ * носителя качественной брони (core, стр. 165): Good.Q и Best.Q — −10. Берётся
+ * один раз, а не за каждый предмет: книга говорит «на атаки по носителю брони».
+ * Друкхарийская броня идёт по своей таблице (там такого штрафа нет).
+ * @param {Iterable<object>} items предметы цели (actor.items)
+ * @returns {number} 0 или −10
+ */
+export function armorQualitySelectivePenalty(items) {
+  for (const it of items ?? []) {
+    if (it?.type !== "armor" || !it.system?.equipped || isDrukhariItem(it)) continue;
+    const q = normQuality(it.system.quality);
+    if (q === "good" || q === "best") return -10;
+  }
+  return 0;
+}
+
+/**
+ * Poor.Q брони (стр. 165): «−10 на все тесты A» (Ловкость) носителя. Один раз
+ * на актора, не за каждый предмет. Друкхарийская броня — по своей таблице.
+ * @returns {number} 0 или −10
+ */
+export function armorQualityAgilityPenalty(items) {
+  for (const it of items ?? []) {
+    if (it?.type !== "armor" || !it.system?.equipped || isDrukhariItem(it)) continue;
+    if (normQuality(it.system.quality) === "poor") return -10;
+  }
+  return 0;
+}
+
+/**
+ * Качество «прочего снаряжения» (стр. 165): Poor −10, Good +5, Best +10 на тесты
+ * «с этим снаряжением». Тесты «с ним» — те, где применима собственная запись
+ * снаряжения (rollMods предмета): окно броска добавляет эту строку рядом.
+ * Оружие, броня и щиты идут своими таблицами — для них null.
+ * @returns {?{value:number,label:string}}
+ */
+export function gearQualityRollMod(item) {
+  if (qualityCategory(item) !== "misc") return null;
+  // Импланты и кибернетика: качество у каждого своё, прописано в книге по предмету
+  // (в Конструкторе — отдельные записи Poor.Q/Good.Q/Best.Q), общая таблица не для них.
+  if (item?.type === "implant" || item?.type === "cybernetic") return null;
+  // «Обычно уникальное для каждого, но если не указано, то…»: если у предмета
+  // качество прописано своим текстом, общая таблица не применяется.
+  if (itemSpecificQuality(item)) return null;
+  const value = qualityEffects(item).auto.testMod || 0;
+  if (!value) return null;
+  return { value, label: `Качество (${qualityInfo(item?.system?.quality).abbr})` };
+}
+
 /** Применяет модификатор Перегрузки щита от качества с клампом до мин. 1. */
 export function applyShieldOverloadQuality(baseOverload, q) {
   const { auto } = qualityEffects({ type: "forcefield", system: { quality: q } });

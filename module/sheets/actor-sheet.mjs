@@ -81,6 +81,7 @@ import { CHAOS_PATRONS, chaosPatronMeta, godAttentionTip } from "../constants/ch
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
+import { gearQualityRollMod } from "../constants/quality.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { socialFactionPickerShown, socialFactionOptions, withSocialFaction } from "../rules/social-faction.mjs";
 import { getFactionIndex } from "../rules/factions.mjs";
@@ -2269,11 +2270,24 @@ export class WarhammerCharacterSheet
    */
   _itemRollModsHtml(context) {
     const groups = [];
+    let resolved = null;
     for (const it of this.actor.items) {
       const mods = it.getFlag("warhammer-dbc", "rollMods");
       if (!Array.isArray(mods) || !mods.length) continue;
       const hits = mods.filter(m => matchesContext(m.when, context));
-      if (hits.length) groups.push({ item: it, mods: hits });
+      if (!hits.length) continue;
+      // Качество снаряжения (стр. 165): ±тесты «с этим снаряжением» — строка
+      // в тот же блок, уже отмеченная: снаряжение применимо к этому тесту.
+      // Но если у предмета есть и запись «Модификатор теста», строку качества уже
+      // дал конвейер правил (rules/resolve-test.mjs, ruleId quality.<id>) — второй не нужно.
+      const q = gearQualityRollMod(it);
+      if (q) {
+        resolved ??= resolveTest({ actor: this.actor, ...context });
+        const dupId = `quality.${it.id ?? it.name}`;
+        const viaRules = [...resolved.mods, ...resolved.autoMods].some(m => m.ruleId === dupId);
+        if (!viaRules) hits.push({ ...q, preChecked: true });
+      }
+      groups.push({ item: it, mods: hits });
     }
     if (!groups.length) return { html: "", mods: [] };
     const allMods = [];
@@ -2285,7 +2299,7 @@ export class WarhammerCharacterSheet
         const sign = m.value > 0 ? `+${m.value}` : (m.value < 0 ? `${m.value}` : "");
         return `<label class="attack-mod-check item-roll-mod">
           <input type="checkbox" class="item-mod" data-idx="${gi}" data-value="${m.value || 0}"
-                 ${m.halvePenalty ? 'data-halve="1"' : ""}/>
+                 ${m.halvePenalty ? 'data-halve="1"' : ""}${m.preChecked ? " checked" : ""}/>
           <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
       }).join("");
       return `<div class="atk-dlg-modifiers item-mods">

@@ -29,7 +29,7 @@ import { situationalMods } from "./attack/mods.mjs";
 import { attackFatigueApplies } from "../rules/situational.mjs";
 import { buildSelection } from "./attack/selection.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
-import { qualityEffects }                     from "../constants/quality.mjs";
+import { qualityEffects, armorQualitySelectivePenalty } from "../constants/quality.mjs";
 import { ironGardenQuality }                  from "../rules/iron-garden.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
@@ -1671,6 +1671,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Беспомощная цель",   value: helplessRangedMod },
       { label: "Цель бежит",         value: runningMod },
       { label: "Трудная Цель",       value: hardTargetMod },
+      // Качество брони цели (стр. 165): Good.Q/Best.Q — −10 на Избирательные атаки
+      // по сочленениям и визорам (глазу) носителя.
+      { label: "Качественная броня цели (сочленение/визор)",
+        value: (f.aimVal === "joint" || f.aimVal === "eye")
+          ? armorQualitySelectivePenalty(attackCtx.targetActor?.items) : 0 },
       { label: "Цель Повалена",      value: proneMod },
       { label: "Оглушение/Ступор цели", value: stunnedMod },
       // Мухи (wdbc-1rno) — эскалация читает ЖИВОЙ f.aimPenalty (чекбокс
