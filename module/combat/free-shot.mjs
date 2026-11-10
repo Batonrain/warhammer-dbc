@@ -34,7 +34,7 @@ const NS = "warhammer-dbc";
 
 /** Виды бесплатных выстрелов (значение techniqueOpts.freeShot). */
 export const FREE_SHOT_KINDS = Object.freeze({
-  hipShooting: "hipShooting", drawFire: "drawFire", runAndGun: "runAndGun", bayonetCharge: "bayonetCharge", runningThrow: "runningThrow"
+  hipShooting: "hipShooting", drawFire: "drawFire", runAndGun: "runAndGun", bayonetCharge: "bayonetCharge", runningThrow: "runningThrow", independent: "independent"
 });
 
 /**
@@ -118,6 +118,29 @@ export function bayonetShotButtonsHtml(actor) {
   return guns.map(g => `<button class="wh-free-shot-btn" type="button" data-kind="bayonetCharge" data-actor-uuid="${actor.uuid}" data-item-id="${g.id}" title="Свободное действие: выстрел как в упор (+30), несмотря на связанность в рукопашной">🔫 Штыковая Атака: выстрел из ${esc(g.name)}</button>`).join("");
 }
 
+/** Раз-в-Раунд возможность Независимого оружия (книга, свойство Independent). */
+export const INDEPENDENT_SHOT_ROUND_FLAG = "weaponProperty.independentShot";
+
+/** Независимое ли оружие: свойство Independent в его списке свойств. */
+export function isIndependentWeapon(item) {
+  return item?.type === "weapon" && (Array.isArray(item.system?.weaponProps) ? item.system.weaponProps : [])
+    .some(p => p?.key === "independent");
+}
+
+/**
+ * Кнопка «Выстрел наплечным» для карточки любой атаки (книга, Independent: «Раз в Раунд,
+ * когда персонаж совершает любую атаку (даже рукопашную), он может также совершить выстрел
+ * из этого оружия»). "" — нет такого оружия в руках, оно уже стреляло в этом Раунде или
+ * это и есть выстрел Независимым.
+ */
+export function independentShotOfferHtml(actor, { attackingItem = null, freeShotKind = "" } = {}) {
+  if (freeShotKind === FREE_SHOT_KINDS.independent) return "";
+  if (!isRoundCapabilityAvailable(actor, INDEPENDENT_SHOT_ROUND_FLAG)) return "";
+  const guns = equippedWeaponsWhere(actor, i => isIndependentWeapon(i) && i.id !== attackingItem?.id);
+  if (!guns.length) return "";
+  return guns.map(g => `<button class="wh-free-shot-btn" type="button" data-kind="independent" data-actor-uuid="${actor.uuid}" data-item-id="${g.id}" title="Раз в Раунд, вдобавок к любой атаке: выстрел из Независимого оружия, без траты ОД">🦾 Выстрел наплечным: ${esc(g.name)}</button>`).join("");
+}
+
 /** В базовом/глубоком контакте ли актор с врагом сейчас (токен на сцене). */
 export function actorInMeleeContact(actor) {
   const doc = actor?.getActiveTokens?.()?.[0]?.document;
@@ -188,6 +211,13 @@ export async function activateFreeShot(actorUuid, kind, itemId = "") {
     const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
     return showAttackDialog(actor, item, { freeShot: kind });
   }
+  if (kind === FREE_SHOT_KINDS.independent) {
+    const item = actor.items.get(itemId);
+    if (!item || !isIndependentWeapon(item)) return ui.notifications?.warn("Независимое оружие не найдено.");
+    if (!isRoundCapabilityAvailable(actor, INDEPENDENT_SHOT_ROUND_FLAG)) return ui.notifications?.warn("Независимое оружие: в этом Раунде уже стреляло.");
+    const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
+    return showAttackDialog(actor, item, { freeShot: kind });
+  }
   if (kind === FREE_SHOT_KINDS.drawFire) {
     const item = actor.items.get(itemId);
     if (!item) return ui.notifications?.warn("Огонь с Вытягивания: пистолет не найден.");
@@ -207,6 +237,7 @@ export function freeShotBlockReason(actor, kind) {
   if (kind === FREE_SHOT_KINDS.hipShooting && !actor.getFlag?.(NS, HIP_SHOOTING_FLAG)) return "Стрельба от Бедра: выстрел уже сделан";
   if (kind === FREE_SHOT_KINDS.drawFire && !isRoundCapabilityAvailable(actor, DRAW_FIRE_ROUND_FLAG)) return "Огонь с Вытягивания: в этом Раунде уже использован";
   if (kind === "coveringFire" && !actor.getFlag?.(NS, COVERING_FIRE_OFFER_FLAG)) return "Прикрывающий Огонь: очередь уже сделана";
+  if (kind === FREE_SHOT_KINDS.independent && !isRoundCapabilityAvailable(actor, INDEPENDENT_SHOT_ROUND_FLAG)) return "Независимое оружие: в этом Раунде уже стреляло";
   if (kind === FREE_SHOT_KINDS.runAndGun && !actor.getFlag?.(NS, RUN_AND_GUN_PENDING_FLAG)) return "Стрельба на Бегу: выстрел уже сделан";
   if (kind === FREE_SHOT_KINDS.bayonetCharge && !actor.getFlag?.(NS, BAYONET_SHOT_PENDING_FLAG)) return "Штыковая Атака: выстрел уже сделан";
   if (kind === FREE_SHOT_KINDS.runningThrow && !actor.getFlag?.(NS, RUNNING_THROW_PENDING_FLAG)) return "Бросок на Бегу: бросок уже сделан";
@@ -219,6 +250,7 @@ export function freeShotBlockReason(actor, kind) {
  */
 export async function consumeFreeShot(actor, kind, item = null) {
   if (kind === FREE_SHOT_KINDS.drawFire) await markRoundCapabilityUsed(actor, DRAW_FIRE_ROUND_FLAG);
+  if (kind === FREE_SHOT_KINDS.independent) await markRoundCapabilityUsed(actor, INDEPENDENT_SHOT_ROUND_FLAG);
   if (kind === FREE_SHOT_KINDS.hipShooting) await consumeHipShooting(actor);
   if (kind === FREE_SHOT_KINDS.runAndGun) {
     await actor.unsetFlag(NS, RUN_AND_GUN_PENDING_FLAG);

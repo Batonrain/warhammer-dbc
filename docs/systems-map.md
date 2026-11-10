@@ -1021,6 +1021,8 @@ Spray); Парирование открывает только Боевой Гн
 - `module/combat/weapon-properties.mjs` — движок автоматизации Свойств,
   центральный для атаки/защиты/урона; `weapon-profiles.mjs`, `weapon-mods.mjs`,
   `reload.mjs`.
+- Свойства оружия по книге (сверка 10.11.2026, wdbc-x1nz.4): Резонирующее — `rules/resonance.mjs` + Состояние «Резонанс»; Выгорание — `damage.mjs::_applyDeflagrate`; Связывающее — `combat/snare.mjs` (кнопки «вырваться»/«перерезать»); Квад (два d100) — `attack.mjs`; Когнис — `rules/cognis.mjs`; Независимое — `free-shot.mjs::independentShotOfferHtml`; Силовое Поле в обе стороны — `defense.mjs`; Спаренное+Спрей — `defense.mjs::_performSprayCancel`.
+- Неосновная рука: `rules/off-hand.mjs` (поле `system.mainHand`; −20 на Парирование и на тесты атаки WS/BS, снимают Амбидекстр и двуручное; Защитное снимает только штраф Парирования). Выбор чувства (Слух и др.) в тесте Внимательности/Восприятия — `ctx.sense`, предикат `testSense`, `awareness-talents.mjs::sensePickerShown`.
 - Модификации оружия — какие действуют: `combat/weapon-mods.mjs::getActiveMods`
   (его читают getModEffects, окно атаки, гасители штрафов, бюджет рук).
   Отсекает мод, «бесполезный без» надетого/установленного предмета

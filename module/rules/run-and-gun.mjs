@@ -79,7 +79,7 @@ export const freeShotCountsAsAttack = kind => !kind || kind === "hipShooting";
 /** Режимы огня окна атаки для бесплатного выстрела. */
 export function freeShotRofModes(kind) {
   if (kind === "coveringFire") return ["semi", "full"];
-  if (kind === "runAndGun" || kind === "bayonetCharge") return ["single", "semi", "full"];
+  if (kind === "runAndGun" || kind === "bayonetCharge" || kind === "independent") return ["single", "semi", "full"];
   // Бросок на Бегу (rules/throwing-talents.mjs): одиночный бросок; «full» есть только у метательного с Залповым Броском.
   if (kind === "runningThrow") return ["single", "full"];
   return ["single"];

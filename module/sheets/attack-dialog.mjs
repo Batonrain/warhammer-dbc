@@ -66,6 +66,7 @@ import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
+import { offHandAttackPenalty } from "../rules/off-hand.mjs";
 import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
@@ -372,6 +373,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const qTestMod     = isMelee ? (qualityEffects(item, ironGardenQuality(actor, item)).auto.testMod || 0) : 0;
   // Легион (стр. 179): своё оружие Астартес берут без штрафа, чужое — со
   // штрафом, и наоборот — не-Астартес не сладит с легионным хватом.
+  // Неосновная рука (rules/off-hand.mjs): оружие не в основной руке — −20 на тест атаки,
+  // если нет Амбидекстра и оружие не двуручное.
+  const offHandFit = offHandAttackPenalty(actor, item);
   const legionFit = legionAttackPenalty({
     hasLegion:  _entries.some(e => e.key === "legion"),
     fitsLegion: hasRuleFlag(actor, LEGION_FIT_FLAG),
@@ -655,7 +659,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // «Холодное» значение здесь тоже по умолчанию не-Избирательное (−10) — тем
   // же приёмом, что meleeMaceMod.
   const meleeHookMod = (isMelee && sys.meleeCategory === "Крюк") ? -10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + hardTargetMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + offHandFit.value + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + hardTargetMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod + meleeMaceMod + meleeHookMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -1284,7 +1288,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const shortRangeHtml = wantShortBox ? `
     <label class="attack-mod-check">
       <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}" ${autoShortRange ? "checked" : ""}/>
-      <span>${rollIcon("target","#4dffa6")}Короткая дистанция / в упор${wp.meltaShort ? " — Мельта ×2 Проб." : ""}${wp.scatter ? " — Рассеив. +10/+1d10" : ""}</span>
+      <span>${rollIcon("target","#4dffa6")}Короткая дистанция / в упор${wp.meltaShort ? " — Мельта ×2 Проб." : ""}${wp.scatter ? " — Разброс +10; в упор +1d10, Избегание −20" : ""}</span>
     </label>` : "";
   // Полосы дальности: у оружия свой список бонусов по дистанции (стр. 193-197).
   // Числовых порогов (min/max, м) у контента пока почти нигде нет — где их
@@ -1693,6 +1697,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Модификации",        value: modFx.attackMod || 0 },
       { label: "Качество",           value: qTestMod },
       { label: "Легион",             value: legionFit.total },
+      { label: "Неосновная рука",   value: offHandFit.value },
       { label: "Огрины",             value: ogrynFit.total },
       { label: "Тренировка",         value: weaponTraining.total },
       // Булава (core.json, «Типы Рукопашного Оружия»): «Дает бонус +10 на

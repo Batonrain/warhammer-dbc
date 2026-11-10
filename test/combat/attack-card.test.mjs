@@ -55,7 +55,7 @@ describe("карточка атаки", () => {
     });
     expect(html).toContain("(2 попадания)");
     expect(html).toContain("+4 доп.");
-    expect(html).toContain("+6 выгор.");
+    expect(html).toContain("выгор.: взрыв 6");
     expect(html).toContain("−3 мульти-удар");
   });
 

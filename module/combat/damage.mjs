@@ -220,6 +220,26 @@ async function _applyCrippling(actor, armorKey, hitLocation, damageType, rating)
   </div>`;
 }
 
+/**
+ * Выгорание (Deflagrate X). Порог брони: «участок тела с AP 2 или выше».
+ * AP ≥ 2 — броня выжжена, взрыв получают все вокруг, кроме цели (бросок уже
+ * сделан при атаке и показан здесь, шаблон ставит игрок кнопкой «Разместить
+ * шаблон» карточки). AP < 2 — взрыва нет, цель получает X непоглощаемого E.
+ */
+export const DEFLAGRATE_MIN_AP = 2;
+export function deflagrateBranch(armorAP) {
+  return (Number(armorAP) || 0) >= DEFLAGRATE_MIN_AP ? "blast" : "direct";
+}
+async function _applyDeflagrate(actor, { rating, roll, armorAP, hitLocation }) {
+  if (deflagrateBranch(armorAP) === "blast") {
+    return `<div class="dmg-tb-note">🔥 Выгорание (${rating}): броня (${hitLocation}, AP ${armorAP}) выжжена — взрыв радиусом ${rating} м по всем вокруг, КРОМЕ ${esc(actor.name)}: <b>${roll}</b> X(Fr) Dmg, Pen 0 (по правилам Взрывов).</div>`;
+  }
+  const loss = await applyWoundLoss(actor, rating);
+  const { currentWounds, newWounds, newCritical, gotCritical } = loss;
+  const crit = await secondaryCritHtml(actor, loss, { damageType: "energy", hitLocation: hitLocation || "Торс" });
+  return `<div class="dmg-tb-note">🔥 Выгорание (${rating}): у цели в ${hitLocation} меньше ${DEFLAGRATE_MIN_AP} AP (${armorAP}) — взрыва нет, зато <b>${rating}</b> непоглощаемого E Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>${crit}`;
+}
+
 /** Наносит урон одной раны Калечащего (клик .wh-crippling-trigger-btn, hooks.mjs) — рана не снимается. */
 export async function applyCripplingTrigger(actor, rating, hitLocation, damageType = "rending") {
   const loss = await applyWoundLoss(actor, rating);
@@ -866,6 +886,8 @@ export async function applyDamageToActor(actor, damageData) {
     melee = false,      // Рукопашная атака — нужно свойству брони Rods (Стержни)
     frontArcHit = false, // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
     shieldOutOfArc = false, // Щит: атака вне арки 180° щита (core.json, «Типы Рукопашного Оружия») — геометрия не считается, решает ГМ
+    deflagrateRating = 0, // Выгорание (X): рейтинг; при deflagrateRoll > 0 (на кубе урона выпало 7–10) — см. ниже
+    deflagrateRoll = 0,   // Выгорание: бросок взрыва 1d10+X, сделанный при атаке (взрыв по соседям)
     corrosiveRating = 0, // Разъедающее (X): −X AP в месте попадания (wdbc-plsf)
     entropyRating = 0,   // Касание Энтропии: −X AP места попадания ДО поглощения (wdbc-1rno)
     touchOfPainIgnoreTb = false, // Касание Боли: T.b Поглощения этой атаки игнорируется целиком (wdbc-1rno)
@@ -1645,6 +1667,13 @@ export async function applyDamageToActor(actor, damageData) {
   }
   if (haywireActive && !hasWeaponPropertyImmunity(actor, "haywire")) {
     propEffectNotes.push(await _applyHaywire(actor, haywireRating, haywireDamage2));
+  }
+  // Выгорание (книга): на 7–10 куба урона по участку тела с AP 2+ — взрыв
+  // радиусом X м по ВСЕМ, кроме цели (1d10+X X(Fr), Pen 0, правила Взрывов);
+  // если AP участка меньше 2 — цель получает X непоглощаемого E Dmg.
+  if (deflagrateRating > 0 && deflagrateRoll > 0 && !hasWeaponPropertyImmunity(actor, "deflagrate")) {
+    propEffectNotes.push(await _applyDeflagrate(actor, {
+      rating: deflagrateRating, roll: deflagrateRoll, armorAP, hitLocation }));
   }
 
   if (resisted) propEffectNotes.push(`<div class="dmg-tb-note">⚡ Сопротивление к ${damageSubtype === "electrical" ? "E(El)" : damageSubtype}: урон после поглощения вдвое.</div>`);

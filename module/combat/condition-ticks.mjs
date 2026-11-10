@@ -781,6 +781,16 @@ export async function processConditionTurnEnd(actor) {
     }
   }
 
+  // Резонанс (свойство оружия Resonant): «в конце каждого своего Хода цель
+  // теряет 1 пункт Резонанса» (rules/resonance.mjs).
+  if (conds.resonance) {
+    const lvl = Number(conds.resonanceLevel) || 0;
+    if (lvl > 0) {
+      await actor.update(conditionAdjustFields(actor, "resonance", -1));
+      lines.push(`<div class="roll-threshold">〰️ Резонанс: <b>${lvl}</b> → <b>${lvl - 1}</b></div>`);
+    }
+  }
+
   // Предел Обескровливания — и без Кровотечения: уровень остаётся после
   // остановки, пока не сойдёт по часу.
   if (!actor.getFlag?.(NS, "deceased")) await processHaemorrhageLimit(actor, lines);

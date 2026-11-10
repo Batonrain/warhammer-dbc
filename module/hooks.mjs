@@ -241,6 +241,7 @@ import { applyDamageOverrides, recordDamageOverride, DMG_OVERRIDES_FLAG } from "
 import { applyScatterOverride, SCATTER_FLAG } from "./combat/grenadier.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
 import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
+import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -622,15 +623,28 @@ export function registerHooks() {
     // 166-170) — по образцу wh-dodge-btn: актор берётся с выбранного на
     // сцене токена защищающегося, а не из карточки (шаблон может отметить
     // несколько токенов, кнопка одна на всех — жмётся по разу за токен).
+    // Связывающее: «вырваться» (тест в свой Ход) и «перерезать путы» (союзник).
+    html.querySelectorAll(".wh-snare-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const d = { ...ev.currentTarget.dataset };
+        const actor = await fromUuid(d.actorUuid).catch(() => null);
+        if (!actor) return ui.notifications.warn("⚠️ Связанный персонаж не найден.");
+        if (!game.user.isGM && !actor.isOwner && d.kind === "escape") return ui.notifications.warn(`⚠️ Нет прав на «${actor.name}».`);
+        await resolveSnareButton(actor, { kind: d.kind, char: d.char, rating: d.rating });
+      });
+    });
+
     html.querySelectorAll(".wh-spray-cancel-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        const doubled = ev.currentTarget.dataset.doubled === "1";
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
         // Sprayer / Распылитель (3-8318): штраф −20 зависит от стрелка, не от цели.
         const attackerUuid = ev.currentTarget.dataset.attackerUuid;
         const attacker = attackerUuid ? (await fromUuid(attackerUuid).catch(() => null)) : null;
-        await _performSprayCancel(actor, { attacker });
+        await _performSprayCancel(actor, { attacker, doubled });
       });
     });
 
@@ -1335,7 +1349,7 @@ export function registerHooks() {
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         if (!await confirmHordeHitEvasion(actor, ds.hordeHit === "1", "Парирование")) return;
-        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "",
+        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "", evadeCost: parseInt(ds.evadeCost || "1"),
           chomper: ds.chomper === "1", forAlly: ds.bodyguardUuid ? (ds.forAlly || "") : "",
           // База атаки с этой карточки — для Пересилить (Берсерк): действует только против Полной Атаки.
           attackBaseKey: message.flags?.["warhammer-dbc"]?.attack?.opts?.baseKey || "" });
@@ -2242,6 +2256,10 @@ export function registerHooks() {
           haywireActive:   ds.haywire != null && ds.haywire !== "",
           haywireRating:   parseInt(ds.haywire || "0"),
           haywireDamage2:  ds.haywireDmg2 || "",
+          // Выгорание (Deflagrate X): рейтинг и готовый бросок взрыва (1d10+X) —
+          // что именно выгорит, решает applyDamageToActor по AP цели.
+          deflagrateRating: parseInt(ds.deflagrate || "0"),
+          deflagrateRoll:   parseInt(ds.deflagrateRoll || "0"),
           // Выстрел Насквозь (wdbc-wlwf): применяется в applyDamageToActor —
           // там уже известны AP цели и T.b, из которых и складывается тест
           // «пробило ли» (combat/through-shot.mjs::throughShotPierces).
@@ -2626,8 +2644,8 @@ export function registerHooks() {
         const isDiceArc  = !/^\s*\d+\s*$/.test(arcFormula);
         const arcRoll    = isDiceArc ? await new Roll(arcFormula).evaluate() : null;
         const arcDamage  = isDiceArc ? arcRoll.total : (parseInt(arcFormula) || 0);
-        // Пробитие: своё у Электродуги Best.Q (data-arc-pen), иначе = урону дуги.
-        const arcPen = ds.arcPen !== undefined && ds.arcPen !== "" ? Number(ds.arcPen) || 0 : arcDamage;
+        // Пробитие: по книге у Дуги Pen 0; своё — у свойства «Пробитие дуг» (data-arc-pen) и Электродуги Best.Q.
+        const arcPen = ds.arcPen !== undefined && ds.arcPen !== "" ? Number(ds.arcPen) || 0 : 0;
         hitIds.add(target.id);
         button.dataset.arcHit = [...hitIds].join(",");
         await applyDamageToActor(target.actor, {
@@ -4043,6 +4061,10 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     }
     if (Object.keys(update).length) await actor.update(update);
     if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    // Связывающее: связанная цель выбирается тестом в свой Ход, союзник режет путы (combat/snare.mjs).
+    if (propKey === "snare" && applied.length && actor.system?.conditions?.helpless) {
+      appliedNote += snareEscapeButtonsHtml(actor.uuid, rating);
+    }
     if (immune.length) appliedNote += `<div class="roll-threshold">Иммунитет: <b>${immune.join(", ")}</b> — не накладывается</div>`;
     for (const n of resistedNotes) appliedNote += `<div class="roll-threshold">${esc(n)}</div>`;
     // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/

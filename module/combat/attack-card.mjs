@@ -80,7 +80,9 @@ function hitLines(hits, { blastRating = 0 } = {}) {
     const bonusStr = d.bonusNote
       ? `<span class="roll-bonus-dice">+${d.bonusNote} доп.</span>` : "";
     const deflStr = d.deflagrateNote
-      ? `<span class="roll-bonus-dice">+${d.deflagrateNote} выгор.</span>` : "";
+      ? `<span class="roll-bonus-dice" title="Выгорание: если AP части тела цели ≥ 2 — взрыв по всем вокруг, кроме цели (Pen 0); если меньше — цель получает X непоглощаемого E Dmg. Решается при «Применить урон».">выгор.: взрыв ${d.deflagrateNote}</span>` : "";
+    const resStr = d.resonance > 0
+      ? `<span class="roll-bonus-dice" title="Резонанс цели: кубики урона ×${d.resonance}; −${10 * d.resonance} к Восприятию">〰️ Резонанс ${d.resonance}</span>` : "";
     const msStr = d.msPenalty
       ? `<span class="roll-hit-pen">−${d.msPenalty} мульти-удар</span>` : "";
     const idxLabel = blastRating > 0 ? `Взрыв ${i + 1}` : `Попадание ${i + 1}`;
@@ -88,7 +90,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
       <span class="roll-hit-idx">${idxLabel}</span>
       <span class="roll-hit-dmg">${d.total}</span>
       <span class="roll-hit-loc">${d.loc}</span>
-      ${bonusStr || deflStr || msStr ? `<span class="roll-hit-extra">${bonusStr}${deflStr}${msStr}</span>` : ""}
+      ${bonusStr || deflStr || msStr || resStr ? `<span class="roll-hit-extra">${bonusStr}${deflStr}${resStr}${msStr}</span>` : ""}
     </div>${extStr}`;
   }).join("");
 }
@@ -187,7 +189,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // токен на сцене и кликнуть, до того как жать «Применить урон» этому токену.
   const sprayCancelBtn = (!isMelee && wp.spray) ? `
     <div class="roll-defense-section">
-      <button class="wh-spray-cancel-btn" type="button" data-attacker-uuid="${attackerUuid}">
+      <button class="wh-spray-cancel-btn" type="button" data-attacker-uuid="${attackerUuid}" data-doubled="${wp.extraHits === "twinLinked" ? 1 : 0}">
         ${rollIcon("run")} Тест на отмену (Распыление, Acrobatics A+0) — выберите токен цели
       </button>
       <div class="roll-defense-note">Свободное действие, Реакция не тратится. Если шаблон полностью накрывает Базу цели — годится только Отскок в исходе теста, не сама отмена (стр. 12).</div>
@@ -213,7 +215,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     <button class="wh-arc-btn" type="button"
       data-arc-damage="${wp.arcDamage}" data-weapon-name="${weaponName}"
       data-attacker="${actorName}" data-attacker-uuid="${attackerUuid}"${arcExtraAttrs(wp)}>
-      ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcPen ?? wp.arcDamage})
+      ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcPen ?? 0})
     </button>` : "";
   const buttons = hits.map((d, i) => {
     // «Прячась в Орде»: попадание, уведённое в союзную Орду, применяется к ней,
@@ -321,6 +323,8 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-piercing="${wp.piercing ? 1 : 0}"
     data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
     data-haywire-dmg2="${wp.haywireDamage2 || ""}"
+    data-deflagrate="${wp.deflagrate ? (wp.deflagrateRating ?? 0) : 0}"
+    data-deflagrate-roll="${d.deflagrateNote || 0}"
     data-through-shot="${wp.throughShot ? 1 : 0}"
     data-has-extreme="${d.hasExtreme ? 1 : 0}"
     data-opportunist-floor="${d.opportunistFloor ? 1 : 0}"
@@ -675,7 +679,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                title="Незримая атака (стр. 32): Парирование недоступно, пока не засечена альтернативными методами — Психочутьем/Технологиям (кнопки ниже).">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""} — не засечена
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"${isMelee ? "" : ` title="Стрельбу без Базового контакта со стрелком парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-evade-cost="${wp?.evadeCost ?? 1}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"${isMelee ? "" : ` title="Стрельбу без Базового контакта со стрелком парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
@@ -867,6 +871,8 @@ export function attackCard({
   tankHunterOffer = null,
   // Штыковая Атака (combat/free-shot.mjs::bayonetShotButtonsHtml): готовая разметка кнопок выстрела в упор.
   bayonetShotHtml = "",
+  // Независимое оружие (combat/free-shot.mjs::independentShotOfferHtml): кнопка выстрела раз в Раунд после любой атаки.
+  independentShotHtml = "",
   // Яростный Штурм (combat/furious-assault.mjs): готовая разметка кнопки доп. атаки.
   furiousAssaultHtml = "",
   // Упорство (combat/tenacity.mjs): готовая разметка кнопки повтора.
@@ -1135,6 +1141,7 @@ export function attackCard({
       🎯 Опознать модель «${esc(tankHunterOffer.targetName)}» — Common Lore (War)−10
     </button>` : "",
       isMelee && bayonetShotHtml ? bayonetShotHtml : "",
+      independentShotHtml || "",
       isMelee && furiousAssaultHtml ? furiousAssaultHtml : "",
       isMelee && tenacityHtml ? tenacityHtml : "",
       isMelee && executionHtml ? executionHtml : "",

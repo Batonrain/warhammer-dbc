@@ -200,6 +200,7 @@ export function aggregateAuto(props) {
     radiationSourced: false,
     // Свойства, автоматизированные позже (стр. 166-170): раньше были только
     // текстовыми напоминаниями и на расчёты не влияли.
+    resonant: false,
     ordnance: false, otherAttacksMod: 0, doubleDamageRoll: false,
     devastatingRating: 0, wreckerRating: 0, hefty: false, heftyType: "",
     recoilRating: 0, carbine: false, antiAir: false, gyroStabilized: false,
@@ -294,6 +295,7 @@ export function aggregateAuto(props) {
     if (au.warpSoak)      a.warpSoak = true;
     if (au.sanctified)    a.sanctified = true;
     // ── Свойства с числовыми/флаговыми эффектами (стр. 166-170) ──
+    if (au.resonant)         a.resonant = true;
     if (au.ordnance)         a.ordnance = true;
     if (au.otherAttacksMod)  a.otherAttacksMod += au.otherAttacksMod;
     if (au.doubleDamageRoll) a.doubleDamageRoll = true;

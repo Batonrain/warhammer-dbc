@@ -84,6 +84,7 @@ import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { gearQualityRollMod } from "../constants/quality.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { socialFactionPickerShown, socialFactionOptions, withSocialFaction } from "../rules/social-faction.mjs";
+import { sensePickerShown, senseSelectHtml, withSense } from "../rules/awareness-talents.mjs";
 import { WITCHFINDER_CAP, witchfinderTestKind } from "../rules/defiance-talents.mjs";
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { getFactionIndex } from "../rules/factions.mjs";
@@ -2466,6 +2467,11 @@ export class WarhammerCharacterSheet
     const socialPick = socialFactionPickerShown(this.actor, rollCtx)
       ? socialFactionOptions(this.actor, getFactionIndex()) : null;
     let socialFaction = "";
+    // Необязательный выбор одного из пяти чувств (Слух, Зрение…) на тестах Внимательности/Восприятия: нужен
+    // правилам, что различают чувства (Оглох — автопровал слуха, Резонанс — штраф Слуха, Усиленные Чувства).
+    let sense = "";
+    const senseRowHtml = sensePickerShown(rollCtx) ? `<div class="roll-dlg-row" title="Необязательно: какое чувство проверяет этот тест. Без выбора тест общий на все чувства; с выбором работают модификаторы именно этого чувства (Оглох, Резонанс и т.п.).">
+        <label>Чувство:</label>${senseSelectHtml()}</div>` : "";
     const socialFactionRowHtml = socialPick ? `<div class="roll-dlg-row" title="Собеседника нет на сцене токеном — укажите, из какой он группы: Связи, Репутация, Враг и Ненависть сработают по ней.">
         <label>Собеседник:</label>
         <select id="social-faction-select">
@@ -2623,6 +2629,7 @@ export class WarhammerCharacterSheet
               <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
               <div id="assist-list" class="assist-list"></div>
               ${socialFactionRowHtml}
+              ${senseRowHtml}
               ${witchfinderRowHtml}
               ${hw.html}
               ${im.html}
@@ -2709,6 +2716,7 @@ export class WarhammerCharacterSheet
               checkedRuleIds: checkedRuleIds(form),
               // Фракция собеседника без токена (Sahara task-240a) — _runTest досчитывает по ней авто-модификаторы.
               socialFaction: socialFaction || undefined,
+              sense: sense || undefined,
               // isOpposed/isSafe — сама галочка «Встречный», отдельно от opposed
               // (которое null, пока Порог/Бросок соперника не введены вручную и
               // авто-резолв ещё не отработал): полтеста без соперника — всё равно
@@ -2805,6 +2813,15 @@ export class WarhammerCharacterSheet
           updateAutoOutcomeNote();
         });
 
+        root.querySelector("#sense-select")?.addEventListener("change", ev => {
+          sense = ev.currentTarget.value;
+          delete rollCtx.sense;
+          if (sense) rollCtx.sense = sense;
+          autoModsCache.clear();
+          refreshAutoMods();
+          updateAutoOutcomeNote();
+        });
+
         // Ведьмоискатель: галочка включает/снимает ctx.psychicDetect и пересобирает
         // блок перебросов — радиокнопка переброса появляется только с ней.
         root.querySelector("#witchfinder-psychic")?.addEventListener("change", ev => {
@@ -2896,7 +2913,7 @@ export class WarhammerCharacterSheet
           const bRollCtx = () => {
             const parsed = parseTestTarget(bTargetSelect?.value, defaultChar);
             const charKey = bCharSelect?.value || parsed.charKey;
-            return withSocialFaction({ kind: "skill", char: charKey, skill: parsed.skillKey ?? undefined, targetActor }, socialFaction);
+            return withSense(withSocialFaction({ kind: "skill", char: charKey, skill: parsed.skillKey ?? undefined, targetActor }, socialFaction), sense);
           };
           const refreshBMods = () => {
             if (!bModsSlot) return;
@@ -2988,6 +3005,7 @@ export class WarhammerCharacterSheet
           });
           bCharSelect?.addEventListener("change", () => { refreshBMods(); recomputeB(); });
           root.querySelector("#social-faction-select")?.addEventListener("change", () => { recomputeA(); refreshBMods(); recomputeB(); });
+          root.querySelector("#sense-select")?.addEventListener("change", () => { recomputeA(); refreshBMods(); recomputeB(); });
           bDifficulty?.addEventListener("change", recomputeB);
           bTargetInput?.addEventListener("input", recomputeB);
           bModifierInput?.addEventListener("input", recomputeB);
@@ -3271,7 +3289,7 @@ export class WarhammerCharacterSheet
     // сошёлся бы с брошенным.
     // Фракция собеседника, выбранная в окне (Sahara task-240a): тот же ctx.socialFaction, что видел диалог.
     const autoCtxBase = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
-    const autoCtx = result.socialFaction ? withSocialFaction(autoCtxBase, result.socialFaction) : autoCtxBase;
+    const autoCtx = withSense(result.socialFaction ? withSocialFaction(autoCtxBase, result.socialFaction) : autoCtxBase, result.sense);
     if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
     const autoResolved = resolveTest({ actor: this.actor, ...autoCtx });
     const autoMods = autoResolved.autoMods;
@@ -3328,7 +3346,8 @@ export class WarhammerCharacterSheet
     if (combined) {
       const bCtx = { kind: "skill", targetActor: sceneTarget, char: combined.charKey || defaultChar,
                      skill: combined.skillKey ?? undefined,
-                     ...(result.socialFaction ? { socialFaction: result.socialFaction } : {}) };
+                     ...(result.socialFaction ? { socialFaction: result.socialFaction } : {}),
+                     ...(result.sense ? { sense: result.sense } : {}) };
       if (isMoraleOpposedSkill(combined.skillKey)) bCtx.morale = true;
       const bAutoResolved = resolveTest({ actor: this.actor, ...bCtx });
       const bEff = combined.target + combined.modifier + combined.difficulty + autoModsTotal(bAutoResolved.autoMods);

@@ -218,7 +218,7 @@ export function damageFormulaFor({ damage, flatBonus = 0, chars = {}, corruption
  *
  * Эти кубы не вызывают Экстремальный урон — их бросает отдельный Roll.
  */
-export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0, aimed = false,
+export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, pointBlank = false, meleeShot = false, maximal = false, band = null, ammoDice = 0, aimed = false,
                                    confinedSpace = false, damageType = "", meleeTypeBonusDie = false }) {
   let dice = 0;
   // «При одиночных выстрелах С Прицеливанием» (стр. 166) — без Прицеливания
@@ -239,7 +239,9 @@ export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, max
       else if (deg >= 3) dice += 1;
     }
   }
-  if (wp.scatter && shortRange) dice += 1;
+  // Разброс: +1d10 только для выстрелов в Упор и в рукопашной (+10 к попаданию — на
+  // короткой и ближе, это галочка окна атаки).
+  if (wp.scatter && (pointBlank || meleeShot)) dice += 1;
   if (maximal)                  dice += 1;
   if (wp.prismaAtMax)           dice += 1;
   // Quiet Elimination / Тихое Устранение (wdbc-1rno.3): «+1 куб урона»

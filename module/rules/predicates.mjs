@@ -448,7 +448,7 @@ export function enemyTalentsOf(actor) {
  * предикат, читающий ctx, обязан быть здесь.
  */
 export const CTX_DEPENDENT_PREDICATES = new Set([
-  "weaponClass", "attackMelee", "charNotIn", "charIn",
+  "weaponClass", "attackMelee", "charNotIn", "charIn", "testSense",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOnBerserker", "hexMarkedPreyAllyBonus", "hasHatredTarget",
@@ -629,6 +629,11 @@ export const PREDICATES = {
   // у targetHasCondition ниже.
   hasCondition: (actor, ctx, value) =>
     list(value).some(key => !!actor?.system?.conditions?.[key]),
+
+  // Какое из пяти чувств проверяет этот тест Внимательности/Восприятия (необязательный
+  // выбор в окне теста, ctx.sense: sight|hearing|touch|smell|taste). Без выбора ни одно
+  // правило с testSense не срабатывает — тест остаётся «общим на все чувства».
+  testSense: (actor, ctx, value) => !!ctx?.sense && list(value).includes(ctx.sense),
 
   // Ослеплён по-настоящему (wdbc-x1nz.2.89): свой флаг ИЛИ оба глаза потеряны
   // (isBlindedActor выше) — hasCondition одного ключа не видит второй путь.

@@ -203,6 +203,8 @@ export function creatureSchema({ granted = false } = {}) {
     isTechpriest:  bool(false, "Техножрец"),
     isRogueTrader: bool(false, "Вольный торговец"),
     meleeStance:   str("standard", "Стойка"),
+    // Основная рука ("right"/"left"): оружие в другой руке парирует с −20 (rules/off-hand.mjs).
+    mainHand:      str("right", "Основная рука"),
     meleeBase:     str("standard", "База"),
     // Ярость (Frenzy) — ручной тумблер состояния боя, тот же приём, что
     // meleeStance: полная механика Ярости (+10 WS/S/W, −20 BS/I/F, стр. 15)

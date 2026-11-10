@@ -364,6 +364,10 @@
   <div class="combat-section-panel" data-collapse-key="combat-stance"> <div class="panel-title" data-action="panelCollapse">СТОЙКА{{#if stanceLocked}} <span class="rwc-recharge-badge" title="Стр. 31: Смену Стойки нельзя проводить после рукопашной атаки — снимется на следующем Ходу">🔒 заблокировано</span>{{/if}}</div> <div class="combat-collapse-body">
     <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{#if ../stanceLocked}}Стр. 31: нельзя менять Стойку после рукопашной атаки в этом Ходу{{else}}{{s.desc}}{{/if}}" {{#if ../stanceLocked}}disabled{{/if}}> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
     </div>
+    <div class="roll-dlg-row" style="margin-top:6px;" title="Оружие в другой руке парирует с −20 (снимают свойство Защитное и Талант Амбидекстр; двуручное и щиты не страдают). Рука оружия назначается на панели оружия.">
+      <label>Основная рука:</label>
+      <select name="system.mainHand"><option value="right" {{#if (eq system.mainHand "right")}}selected{{/if}}>Правая</option><option value="left" {{#if (eq system.mainHand "left")}}selected{{/if}}>Левая</option></select>
+    </div>
     {{!-- Ярость (wdbc-plsf) — тумблер состояния боя. Числа Ярости (+10 WS/S/W,
           −20 BS/I/F, стр. 15) считает rules/rage.mjs по этому полю, поведение
           (запрет Избеганий/речи/психосил, напоминание в начале Хода, тест выхода) —

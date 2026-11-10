@@ -241,6 +241,8 @@ const DEVIATIONS = {
     // База рукопашной атаки (стр. 13) — заведена отдельно от Приёма гораздо
     // позже template.json, тем же приёмом, что и meleeStance когда-то.
     meleeBase: "standard",
+    // Основная рука (rules/off-hand.mjs: оружие в другой руке парирует с −20) — заведена гораздо позже template.json.
+    mainHand: "right",
     // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
     // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
     "conditions.helpless": false,
@@ -260,6 +262,10 @@ const DEVIATIONS = {
     // заведён гораздо позже template.json (раньше decay не срабатывал
     // вовсе, поле отсутствовало).
     "conditions.hallucinogenicRounds": 0,
+    // Резонанс (свойство оружия Resonant) — счётчик-уровень, заведён гораздо
+    // позже template.json (module/constants/conditions.mjs).
+    "conditions.resonance": false,
+    "conditions.resonanceLevel": 0,
     // Стазис (wdbc-1rno) — заведено гораздо позже template.json, на основе
     // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
     "conditions.stasis": false,

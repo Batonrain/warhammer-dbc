@@ -1,18 +1,18 @@
 {
-  "name": "Scatter / Рассеивание",
+  "name": "Surge / Скачок",
   "type": "weaponProperty",
   "img": "icons/svg/sword.svg",
   "folder": "xxMPmGqXM8wjzNqb",
   "system": {
-    "description": "На короткой дистанции +10 к попаданию и +1d10 урона. На большой дистанции рассеивается и менее эффективно.",
-    "reminder": "🔸 Рассеивание: на короткой дист. +10 поп. и +1d10 урона",
+    "description": "Это энергетическое оружие умножает расход зарядов батареи в X раз. Если несколько эффектов дают оружию это свойство, их рейтинги суммируются. С другими свойствами, что удваивают расход боеприпасов (Maximal, Storm, Twin-Linked), эффект умножается как обычно.",
+    "reminder": "🔋 Скачок (X): ×X расход зарядов батареи",
     "category": "ranged",
-    "hasRating": false,
+    "hasRating": true,
     "hasRating2": false,
-    "autoKey": "scatter",
+    "autoKey": "surge",
     "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
   },
-  "_id": "5YamzmOFnqovMXqQ",
+  "_id": "73oIkMYr5HcrMTw6",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -31,5 +31,5 @@
     "duplicateSource": null,
     "exportSource": null
   },
-  "_key": "!items!5YamzmOFnqovMXqQ"
+  "_key": "!items!73oIkMYr5HcrMTw6"
 }

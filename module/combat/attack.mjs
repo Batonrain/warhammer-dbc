@@ -1,5 +1,8 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { resonanceCap, resonanceAfterHits, multiplyDamageDice } from "../rules/resonance.mjs";
+import { sizeOf } from "../rules/predicates.mjs";
+import { cognisDecision, hasMechanicumImplants } from "../rules/cognis.mjs";
 import { hasHitLocationShift } from "../rules/hit-location-shift.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
@@ -100,7 +103,7 @@ import { misfireCandidates, hasTargetSelection }      from "../rules/target-sele
 import { laserDotOffered }                            from "../rules/laser-sight.mjs";
 import { hasFlamerTalent, pyromaniacActive, torrentActive, torrentBlastRadius, torrentMaxDistance } from "../rules/flamer-talents.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
-import { bayonetShotButtonsHtml } from "./free-shot.mjs";
+import { bayonetShotButtonsHtml, independentShotOfferHtml } from "./free-shot.mjs";
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
@@ -512,6 +515,18 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
   wp.reliabilityScore += modFx.reliabilityMod || 0;
+  // Когнис (rules/cognis.mjs): допуск по Трейту Mechanicum Implants; атака через I
+  // вместо WS/BS стоит 1 Когниции (характеристику игрок меняет в окне атаки).
+  if (wp.cognis) {
+    const cg = cognisDecision({
+      implants: hasMechanicumImplants(actor),
+      onVehicle: item.parent?.type === "vehicle" || actor.type === "vehicle",
+      isGM: !!game.user?.isGM, charKey, cognition: actor.system?.cognition?.value
+    });
+    if (cg.warn) ui.notifications?.warn?.(`⚠️ ${cg.warn}`);
+    if (cg.blocked) return;
+    if (cg.spend) await actor.update({ "system.cognition.value": (Number(actor.system.cognition?.value) || 0) - cg.spend });
+  }
   // Окрась Всё в Красный (Талант Берсерка Кхорна): 8 на любом кубике урона — Экстремальный Урон (rollExtremeDamage).
   if (isMelee && paintItRedApplies(actor, item)) wp.paintItRed = true;
   // Облучить (rules/gunsmith-talents.mjs, Sahara 3-9d40): до броска — удвоить Felling Рад-оружия
@@ -789,6 +804,21 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     rerollDropped = picked.dropped;
   } else {
     roll = await new Roll("1d100").evaluate();
+  }
+  // Квад (Quad, книга): «делается две атаки с одинаковыми модификаторами по той же цели,
+  // и каждая наносит свои попадания». Вторая атака — свой d100 против того же порога;
+  // основной разбор (Уклонение, место, крит) идёт по лучшему броску, попадания второго
+  // прибавляются ниже. Переигровка (forcedRoll) второй раз не бросает.
+  let quadOther = null;
+  if (wp.extraHits === "quad" && !isMelee && opts.forcedRoll == null) {
+    const secondRoll = await new Roll("1d100").evaluate();
+    const probe = r => attackHitOutcome({ rv: r.total, threshold, isMelee, wp, forceHit: opts.forceHit,
+      forceFail: !isMelee && handOfKhorneBlocksRangedAttack(item), fixedSuccessDeg: opts.fixedSuccessDeg });
+    const o1 = probe(roll), o2 = probe(secondRoll);
+    const secondIsBetter = (o2.success && !o1.success) || (o2.success && o1.success && o2.deg > o1.deg);
+    const [main, other, otherOutcome] = secondIsBetter ? [secondRoll, roll, o1] : [roll, secondRoll, o2];
+    roll = main;
+    quadOther = { roll: other, hit: otherOutcome.success, deg: otherOutcome.deg };
   }
   const rv       = roll.total;
   const rollMode = game.settings.get("core", "rollMode");
@@ -1125,7 +1155,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Огневая Клеть (rules/gunner-talents.mjs): Широкая Длинная очередь — эффективный RoF ещё на 3 меньше,
   // а цель тратит вдвое больше Успехов на Уклонение (evadeCost → кнопки Уклонения карточки).
   const cageFiring = cageFiringApplies(actor, { toggles, isMelee, rofMode, wideBurst });
-  wp.evadeCost = cageFiring ? CAGE_FIRING_EVADE_COST : 1;
+  // Запрещённый Приём (Cheap Shot, книга): Избегания от него тратят вдвое больше Успехов
+  // на отмену каждого попадания; множится с Огневой Клетью.
+  wp.evadeCost = (cageFiring ? CAGE_FIRING_EVADE_COST : 1) * (isMelee && wp.cheapShot ? 2 : 1);
   const hitCountSys = wideBurst
     ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - WIDE_BURST_RATING_CUT - (cageFiring ? CAGE_FIRING_RATING_CUT : 0)) }
     : fanningSys;
@@ -1205,8 +1237,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     // Потолок попаданий Быстрой/Молниеносной — бонус WS атакующего (стр. 14).
     wsBonus: Number(actor.system?.characteristics?.ws?.bonus) || 0
   });
+  // Квад: попадания второй атаки (если она тоже попала) прибавляются к первой.
+  const quadHitsExtra = (quadOther?.hit && hit)
+    ? hitCount({ hit: true, isMelee, rofMode, deg: quadOther.deg, wp, sys: hitCountSys,
+        wsBonus: Number(actor.system?.characteristics?.ws?.bonus) || 0 }).count : 0;
   // Двойной Выстрел: дальше второго попадания — «пролетают над целью, промахи».
-  const hitsCount = doubleTapOn ? doubleTapHits(hitsCountBase) : hitsCountBase;
+  const hitsCount = (doubleTapOn ? doubleTapHits(hitsCountBase) : hitsCountBase) + quadHitsExtra;
   const burstKey    = (!isMelee && hit && rofMode === "semi") ? "rof_semi" : (!isMelee && hit && rofMode === "full") ? "rof_full" : null;
   const burstCap    = burstKey ? (Number(hitCountSys[burstKey]) || 0) : 0;
   const burstBase   = burstKey ? (Number(fanningSys[burstKey]) || 0) : 0;
@@ -1621,6 +1657,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     (hit && bloodOffering.sanctified) ? `🩸 Кровавое Подношение: +${bloodOffering.dmg} Dmg (½Cor.b, уже в сумме) и свойство Освящённое — метка израсходована.` : "",
     bileSpit.pen ? `🧪 Жёлчный Плевок: +${bileSpit.pen} к Pen (1d5, уже в Pen).` : "",
     dirgeOn ? "🎼 Песнь Отчаянья: урон звукового оружия уменьшен до 0, свойство Оглушающее (3) до начала следующего Хода." : "",
+    quadOther ? `🔫 Квад: вторая атака — бросок ${quadOther.roll.total}, ${quadOther.hit ? `попала (${quadOther.deg} Усп.${quadHitsExtra ? `, +${quadHitsExtra} попад.` : ""})` : "промах"}; основной разбор — по лучшему из двух.` : "",
     sabotageOn ? `🔧 Саботаж: удар по оружию цели «${sabotageWeapon.name}» — урона существу нет.` : ""
   ].filter(Boolean).join("<br>");
   if (earlyDeathBonus) await markEarlyDeathLegacyUsed(actor, item, hit);
@@ -1662,6 +1699,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const bringItDownDice = hit ? Math.max(0, Number(opts.bringItDownDice) || 0) : 0;
   const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bringItDownDice + raptorDice + (batpackOn && hit ? BATPACK_BONUS_DICE : 0) + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
+    pointBlank: !!opts.pointBlank, meleeShot: !!opts.meleeShot,
     ammoDice: ammoSys?.damageDiceMod,
     aimed,
     confinedSpace: confinedSpaceOn, damageType: effDmgType,
@@ -1672,6 +1710,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Хищник Небес (Раптор, rules/die-swap.mjs): Натиск, пока персонаж в воздухе.
   const skyPredatorOn = chargeFromFlight && hasRuleFlag(actor, SKY_PREDATOR);
   const allRolls    = [roll];
+  if (quadOther) allRolls.push(quadOther.roll);
   if (owgdHand) allRolls.push(owgdHand.roll);
   if (betrayalRoll) allRolls.push(betrayalRoll);
   if (dishonorableRoll) allRolls.push(dishonorableRoll);
@@ -1695,15 +1734,30 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (grenadierReduce) blastScatter.grenadier = { reduce: grenadierReduce };
   }
 
+  // Резонирующее (Resonant): каждое попадание до урона даёт цели +1 пункт
+  // Резонанса (макс. Размер+2), а число кубиков урона самого оружия
+  // умножается на текущий уровень Резонанса (rules/resonance.mjs). Бонусные
+  // кубы (Меткое/Рассеивание/…) бросаются отдельным Roll и не умножаются.
+  // Только существа: у Техники/Орды Состояний нет.
+  const resonantTarget = (hit && wp.resonant && defenderActor?.system?.conditions
+    && !["vehicle", "horde"].includes(defenderActor.type)) ? defenderActor : null;
+  const resonanceStart = resonantTarget ? (Number(resonantTarget.system.conditions.resonanceLevel) || 0) : 0;
+  const resonanceMax   = resonantTarget ? resonanceCap(sizeOf(resonantTarget)) : 0;
+  let resonanceFinal = resonanceStart;
+
   // Саботаж бьёт по оружию цели, а не по телу: урона существу не бросается (sabotageOn).
   if (hit && hitsCount > 0 && (effDamage || isMelee) && !sabotageOn) {
     for (let i = 0; i < hitsCount; i++) {
-      let dmgRoll = await new Roll(dmgFormula).evaluate();
+      // Резонанс этого попадания (см. выше): уровень после наложения пункта.
+      const resonanceNow = resonantTarget ? resonanceAfterHits(resonanceStart, i + 1, resonanceMax) : 0;
+      resonanceFinal = resonanceNow || resonanceFinal;
+      const hitFormula = resonanceNow > 1 ? multiplyDamageDice(dmgFormula, resonanceNow) : dmgFormula;
+      let dmgRoll = await new Roll(hitFormula).evaluate();
       allRolls.push(dmgRoll);
       // Артиллерия (стр. 169): при прямом попадании бросает урон 2 раза и
       // выбирает лучший результат.
       if (wp.doubleDamageRoll) {
-        const second = await new Roll(dmgFormula).evaluate();
+        const second = await new Roll(hitFormula).evaluate();
         allRolls.push(second);
         if (second.total > dmgRoll.total) dmgRoll = second;
       }
@@ -1744,14 +1798,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         total += bRoll.total;
         bonusNote = bRoll.total;
       }
-      // Выгорание (Deflagrate): на 7–10 куба урона — доп. 1d10+X энерг. урона.
-      // Керамит (wdbc-nquc): иммунитет к свойству Deflagrate гасит именно
-      // этот доп. кубик, не базовый урон попадания.
+      // Выгорание (Deflagrate X): на 7–10 хотя бы на одном кубе урона выжигает
+      // броню (если AP части тела ≥ 2) и даёт ВЗРЫВ радиусом X м по всем, КРОМЕ
+      // самой цели: 1d10+X X(Fr), Pen 0 (книга, «Особые Свойства Оружия»).
+      // Здесь бросается только сам кубик взрыва — он НЕ входит в урон по цели
+      // (total не трогаем). AP цели в этом месте тела известен только при
+      // применении урона, поэтому кнопка «Применить урон» несёт этот бросок
+      // (data-deflagrate-roll), а damage.mjs решает: AP ≥ 2 — взрыв по соседям,
+      // иначе цель получает X непоглощаемого E Dmg.
+      // Керамит (wdbc-nquc): иммунитет к свойству Deflagrate гасит и бросок.
       let deflagrateNote = 0;
       if (wp.deflagrate && deflagrateHit && !deflagrateImmune) {
         const dRoll = await new Roll(`1d10 + ${wp.deflagrateRating}`).evaluate();
         allRolls.push(dRoll);
-        total += dRoll.total;
         deflagrateNote = dRoll.total;
       }
       // Мульти-удар (стр. 169): каждое попадание после первого получает
@@ -1780,8 +1839,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       damageRolls.push({ total, extremeLevel, hasExtreme, critEffect: shownCrit, bonusNote, deflagrateNote, msPenalty,
         baseDieResult, swapDice, skyPredator: skyPredatorOn, successes: deg, cleavingRoll: !!wp.legacyCleavingRollActive,
         sparksDice: sparksOn ? activeDieResults(dmgRoll) : [],
-        opportunistFloor: !!wp.legacyOpportunistFloor });
+        opportunistFloor: !!wp.legacyOpportunistFloor, resonance: resonanceNow });
     }
+  }
+
+  // Резонанс остаётся на цели: уровень после всех попаданий этой атаки.
+  if (resonantTarget && resonanceFinal > resonanceStart) {
+    try {
+      const { conditionApplyFields } = await import("../sheets/tabs/conditions.mjs");
+      const fields = conditionApplyFields("resonance", resonanceFinal, resonantTarget);
+      if (Object.keys(fields).length) await resonantTarget.update(fields);
+    } catch (e) { console.warn("warhammer-dbc | Резонанс не наложен", e); }
   }
 
   // Место каждого попадания считается один раз: карточка печатает его и в
@@ -2066,6 +2134,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // руке рукопашное оружие с Балансом не ниже −1 — считается один раз здесь,
   // потому что ниже тот же бонус нужен и обычной кнопке Уклонения, и её
   // recoil-варианту.
+  // Разброс (Scatter, книга): Избегания от него на Короткой дистанции и в Упор
+  // (но не в рукопашной) получают −20.
+  const scatterDodgePenalty = (wp.scatter && !isMelee && !opts.meleeShot && (opts.shortRange || opts.pointBlank)) ? -20 : 0;
   const meleeShotDodgeBonus = techOpts.targetDodgeMod
     ?? ((opts.meleeShot && sys.weaponClass !== "pistol" && !gunGuardCancelsDodgeBonus(actor, item)) ? (wp.carbine ? 10 : 30) : 0);
 
@@ -2178,6 +2249,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         ? clobberOfferHtml(clobberOfferFor(actor, { projectileKg: sys.weight, target: defenderActor }), actor.uuid || "")
         : "",
       bayonetShotHtml: bayonetShotOn ? bayonetShotButtonsHtml(actor) : "",
+      independentShotHtml: independentShotOfferHtml(actor, { attackingItem: item, freeShotKind: opts.freeShot || opts.techniqueOpts?.freeShot || "" }),
       // Яростный Штурм (rules/berserker-talents.mjs): успешная Полная Атака носителя — кнопка доп. атаки за Реакцию.
       furiousAssaultHtml: furiousAssaultOffered(actor, { isMelee, baseKey: opts.baseKey, hit, furiousChild: !!opts.techniqueOpts?.furiousAssault })
         ? furiousAssaultButtonHtml({ attackerUuid: actor.uuid || "", weaponUuid: item.uuid || "", technique: opts.techniqueOpts?.technique || "" })
@@ -2268,10 +2340,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // (безусловно) — у одного оружия сразу оба быть не могут (разные
         // weaponClass-ветки самой записи).
         dodgeMod: (hiddenAttack || feintBlocked || killingStrikeOn) ? -999
-          : meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
+          : meleeShotDodgeBonus + scatterDodgePenalty + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item) + whack.penalty - bladeJugglerPenalty,
         dodgeModRecoil: (!hiddenAttack && !feintBlocked && !killingStrikeOn && hasEvasionRecoilImperative(defenderActor))
-          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
+          ? meleeShotDodgeBonus + scatterDodgePenalty + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item) + whack.penalty - bladeJugglerPenalty
           : null,
         // Unarmed Master (стр. 62): Захват мастера Парировать нельзя — тот же порог −999.
