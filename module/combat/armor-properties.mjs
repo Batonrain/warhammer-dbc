@@ -36,7 +36,7 @@ export function aggregateArmorAuto(props, ratings = {}) {
     noRanged: false, noJointCalled: false, noEyeCalled: false,
     blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
     frontArcNoProtect: false, runesOfProtection: false,
-    gorgetRating: 0, jointArmourRating: 0, apBonusByType: {},
+    gorgetRating: 0, jointArmourRating: 0, qualityJointAp: 0, apBonusByType: {},
     // Подвиды урона (wdbc-q0q8) — те же три директивы, что noApVsType/
     // doubleApVsType/apBonusVsType выше, но ключом служит DAMAGE_SUBTYPES
     // (crushing/fragmentation/electrical/flame/laser/toxic), а не DAMAGE_TYPES:
@@ -131,6 +131,7 @@ export function mergeArmorLocFlags(a, b) {
     runesOfProtection:       a.runesOfProtection || b.runesOfProtection,
     gorgetRating:            Math.max(a.gorgetRating || 0, b.gorgetRating || 0),
     jointArmourRating:       Math.max(a.jointArmourRating || 0, b.jointArmourRating || 0),
+    qualityJointAp:          Math.max(a.qualityJointAp || 0, b.qualityJointAp || 0),
     noApVsSubtype:           orSubtypeSet(a.noApVsSubtype, b.noApVsSubtype),
     doubleApVsSubtype:       orSubtypeSet(a.doubleApVsSubtype, b.doubleApVsSubtype),
     tripleApVsSubtype:       orSubtypeSet(a.tripleApVsSubtype, b.tripleApVsSubtype)
@@ -141,7 +142,7 @@ const EMPTY_FLAGS = Object.freeze({
   noEnergy: false, noImpact: false, doubleBlast: false,
   noRanged: false, noJointCalled: false, noEyeCalled: false,
   blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-  frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0, jointArmourRating: 0,
+  frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0, jointArmourRating: 0, qualityJointAp: 0,
   noApVsSubtype: Object.freeze({}), doubleApVsSubtype: Object.freeze({}), tripleApVsSubtype: Object.freeze({})
 });
 
@@ -307,7 +308,9 @@ export function resolveArmorAbsorptionAP({
     // eyeBonus — броня самих глаз от Мутации (Зрящие Рога, wdbc-1rno.10): не
     // шлем, поэтому остаётся, как и естественная броня. subtypeBonus сюда
     // не входит сознательно — это AP тела/головы, а не глаз.
-    return halveHead(natural + (pf.isPowerArmor ? 4 : 0) + Math.max(0, Number(eyeBonus) || 0));
+    // qualityJointAp — «+2 AP в сочленениях и визорах» брони Высшего качества (стр. 165).
+    return halveHead(natural + (pf.isPowerArmor ? 4 : 0) + Math.max(0, Number(eyeBonus) || 0)
+      + Math.max(0, Number(pf.qualityJointAp) || 0));
   }
 
   let ap = halveHead(baseArmorAP + vsTypeBonus + subtypeBonus);
@@ -322,6 +325,8 @@ export function resolveArmorAbsorptionAP({
     // подвида урона обычное деление уже может дать больше 4 — тогда его и
     // берём), только поднимает низкое значение до X.
     if (pf.jointArmourRating) ap = Math.max(ap, pf.jointArmourRating);
+    // Best.Q брони (стр. 165): «+2 AP в сочленениях … после уменьшения».
+    ap += Math.max(0, Number(pf.qualityJointAp) || 0);
   }
   if (pf.doubleBlast && damageType === "blast") ap *= 2;
   if (damageSubtype && pf.doubleApVsSubtype?.[damageSubtype]) ap *= 2;

@@ -1866,7 +1866,16 @@ Spray); Парирование открывает только Боевой Гн
   «Транскрипции» — такой механики в коде нет вовсе), первая половина Clear
   Mind (обучение Пути — Пути Аэльдари не покупаются за опыт) — обе честно
   задокументированы в `capabilities.mjs`, см. bd `wdbc-5yafq`.
-- `constants/quality.mjs` — движок Качества снаряжения (Poor…Artisan).
+- `constants/quality.mjs` — движок Качества снаряжения (Poor…Artisan). Читатели
+  (core стр. 165, 227): Надёжность/тест/урон/Primitive оружия — `combat/attack.mjs`;
+  Перегрузка щита — `combat/shield.mjs`; +1 AP брони и Max.A —
+  `rules/character/armour.mjs`, `combat/armor-mods.mjs::armorAgilityCap`; −10 к
+  Избирательной по сочленению/визору (`armorQualitySelectivePenalty`, окно атаки) и
+  +2 AP им у Best.Q (`combat/armor-properties.mjs`, флаг `qualityJointAp`); Poor.Q брони
+  −10 на тесты Ловкости (`rules/situational.mjs::poorArmourAgilityPenalty`); запас воздуха
+  Void — `rules/void-air.mjs`; «прочее снаряжение» — строка качества в тесте, где предмет
+  даёт бонус (`rules/resolve-test.mjs::rollModsFromRules`, `gearQualityRollMod`; не для
+  предметов со своим `qualityEffects`, имплантов и кибернетики).
 - `constants/rig.mjs` + `apps/rig-manager.mjs` — Разгрузка (слотовая модель).
 
 ## 16. Хирургия, Импланты, Кибернетика, Геносемя

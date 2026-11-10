@@ -95,3 +95,22 @@ describe("потолок Ловкости от брони", () => {
     expect(armorAgilityCap(a)).toBe(35);
   });
 });
+
+describe("Качество брони двигает Max.A (стр. 227: Poor −10, Good +5, Best +10)", () => {
+  const q = (id, maxAgility, quality, armorType = "heavy") =>
+    ({ id, type: "armor", system: { equipped: true, armorType, maxAgility, quality } });
+
+  it("Poor.Q: 25 → 15", () => expect(armorAgilityCap(actorWith(q("a", 25, "poor")))).toBe(15));
+  it("Good.Q: 25 → 30", () => expect(armorAgilityCap(actorWith(q("a", 25, "good")))).toBe(30));
+  it("Best.Q: 25 → 35", () => expect(armorAgilityCap(actorWith(q("a", 25, "best")))).toBe(35));
+  it("обычное качество потолок не двигает", () => {
+    expect(armorAgilityCap(actorWith(q("a", 25, "common")))).toBe(25);
+  });
+  it("у брони без Max.A (стоит 100) Poor.Q потолка НЕ создаёт", () => {
+    expect(armorAgilityCap(actorWith(q("a", 100, "poor")))).toBe(100);
+  });
+  it("друкхарийская броня по своей таблице — потолок не двигается", () => {
+    const d = q("a", 25, "poor"); d.system.drukhari = true;
+    expect(armorAgilityCap(actorWith(d))).toBe(25);
+  });
+});
