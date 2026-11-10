@@ -447,6 +447,8 @@ function traitRatingSum(actor, name) {
  */
 export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
   const mods = [];
+  // Качество снаряжения (стр. 165) — одна строка на предмет, а не на каждую его запись.
+  const qualityDone = new Set();
   for (const rule of rules ?? []) {
     for (const effect of rule?.effects ?? []) {
       if (!isKnownEffectKind(effect?.kind)) {
@@ -463,7 +465,17 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
         // (rules/roll-mods.mjs::collectTestMods) его не складывают.
         // setChar — галочка переключает «Бросок с:» на эту Характеристику
         // (Аналитический Взгляд: I вместо P), диалог навыка читает data-set-char.
-        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}), ...(effect.setChar ? { setChar: effect.setChar } : {}) });
+        if (value !== null) {
+          mods.push({ ruleId: rule.id, label, value, halvePenalty: false, ...(effect.askOnly ? { askOnly: true } : {}), ...(effect.setChar ? { setChar: effect.setChar } : {}) });
+          // Предмет дал бонус этому тесту — тест «с этим снаряжением»: рядом
+          // строка Качества. В галочках она отмечена заранее, в авто — сама.
+          const q = rule.qualityMod;
+          if (q && !qualityDone.has(q.itemId)) {
+            qualityDone.add(q.itemId);
+            mods.push({ ruleId: `quality.${q.itemId}`, label: `${q.label}: ${q.itemName}`, value: q.value,
+              halvePenalty: false, ...(auto ? {} : { preChecked: true }) });
+          }
+        }
         continue;
       }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.

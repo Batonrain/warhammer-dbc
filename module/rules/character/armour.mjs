@@ -95,6 +95,9 @@ export function prepareArmourDerived(actor, system) {
     }
     const propAuto = aggregateArmorAuto(itemProps, s.propRatings);
     propAuto.isPowerArmor = s.armorType === "power";
+    // Best.Q: +2 AP сочленениям и визорам (constants/quality.mjs, apJoints) —
+    // читает combat/armor-properties.mjs::resolveArmorAbsorptionAP.
+    propAuto.qualityJointAp = qualityEffects(item).auto.apJoints || 0;
     for (const k of Object.keys(ap)) {
       if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
     }
