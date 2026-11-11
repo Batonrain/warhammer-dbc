@@ -8,7 +8,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags,
   emptyArmorLocFlags, resolveArmorAbsorptionAP, aggregateArmorSkillMods,
-  breachArmorAtLocation, armorNullers
+  breachArmorAtLocation, armorNullers, hasHiddenJoints
 } from "../../module/combat/armor-properties.mjs";
 
 describe("resolveArmorProps", () => {
@@ -321,6 +321,94 @@ describe("resolveArmorAbsorptionAP", () => {
 
     it("без jointArmourRating (0) обычное ÷3 работает как раньше", () => {
       expect(resolveArmorAbsorptionAP({ baseArmorAP: 7, damageType: "impact", hitLocation: "Сочленение / Шея" })).toBe(2);
+    });
+
+    it("с переданными слоями (без Мягкой) — тоже обычное ÷3, с минимумом X", () => {
+      const hard = { ap: 7, stacks: false, nullers: armorNullers({}) };
+      const flags = { ...emptyArmorLocFlags(), jointArmourRating: 4 };
+      expect(resolveArmorAbsorptionAP({
+        baseArmorAP: 7, damageType: "impact", hitLocation: "Сочленение / Шея", flags, layers: [hard]
+      })).toBe(4);
+    });
+  });
+
+  // wdbc-x1nz.4, «Скрытые Сочленения»: Мягкая броня НАД Жёсткой на одной
+  // локации — штраф Избирательной атаки по сочленению растёт на 10
+  // (attack-dialog.mjs), а АР этой Мягкой брони можно взять ВМЕСТО АР
+  // сочленений (книга: «может использоваться», то есть берётся лучшее).
+  describe("Скрытые Сочленения — АР Мягкой вместо АР сочленений (wdbc-x1nz.4)", () => {
+    const hardLayer = ap => ({ ap, stacks: false, nullers: armorNullers({}) });
+    const softLayer = ap => ({ ap, stacks: false, nullers: armorNullers({ noJointReduction: true }) });
+
+    it("только Мягкая броня на локации — сочленений нет, идёт полный (необрезанный) AP", () => {
+      expect(resolveArmorAbsorptionAP({
+        baseArmorAP: 4, damageType: "impact", hitLocation: "Сочленение / Шея", layers: [softLayer(4)]
+      })).toBe(4);
+    });
+
+    it("только Жёсткая — обычное ÷3, Мягкую сравнивать не с чем", () => {
+      expect(resolveArmorAbsorptionAP({
+        baseArmorAP: 9, damageType: "impact", hitLocation: "Сочленение / Шея", layers: [hardLayer(9)]
+      })).toBe(3);
+    });
+
+    it("Мягкая НАД Жёсткой: берётся большее из (÷3 общей брони) и (АР самой Мягкой)", () => {
+      // Жёсткая 9 → ÷3 = 3; Мягкая её же локации — 5, без деления. 5 > 3 — берём 5,
+      // а не полный необрезанный AP локации (9), как было бы по старому pf.noJointReduction.
+      expect(resolveArmorAbsorptionAP({
+        baseArmorAP: 9, damageType: "impact", hitLocation: "Сочленение / Шея", layers: [hardLayer(9), softLayer(5)]
+      })).toBe(5);
+    });
+
+    it("Мягкая НАД Жёсткой, но её ÷3 всё равно больше — берётся ÷3", () => {
+      // Жёсткая 9 → ÷3 = 3; Мягкая — всего 2. max(3, 2) = 3.
+      expect(resolveArmorAbsorptionAP({
+        baseArmorAP: 9, damageType: "impact", hitLocation: "Сочленение / Шея", layers: [hardLayer(9), softLayer(2)]
+      })).toBe(3);
+    });
+
+    it("не действует на попадания не в Сочленение/Шею", () => {
+      expect(resolveArmorAbsorptionAP({
+        baseArmorAP: 9, damageType: "impact", hitLocation: "Торс", layers: [hardLayer(9), softLayer(5)]
+      })).toBe(9);
+    });
+  });
+
+  describe("hasHiddenJoints — Мягкая и Жёсткая одновременно на одной локации (wdbc-x1nz.4)", () => {
+    const armorItem = (props, ap, equipped = true) => ({
+      type: "armor", system: { equipped, head: ap, properties: props }
+    });
+
+    it("и Мягкая, и Жёсткая надеты и дают AP в эту локацию — true", () => {
+      const actor = { items: [armorItem(["soft"], 2), armorItem(["hard"], 5)] };
+      expect(hasHiddenJoints(actor, "head")).toBe(true);
+    });
+
+    it("только одна из двух — false", () => {
+      expect(hasHiddenJoints({ items: [armorItem(["soft"], 2)] }, "head")).toBe(false);
+      expect(hasHiddenJoints({ items: [armorItem(["hard"], 5)] }, "head")).toBe(false);
+    });
+
+    it("не надета (equipped:false) — не считается", () => {
+      const actor = { items: [armorItem(["soft"], 2, false), armorItem(["hard"], 5)] };
+      expect(hasHiddenJoints(actor, "head")).toBe(false);
+    });
+
+    it("не даёт AP в эту локацию (0) — не считается", () => {
+      const actor = { items: [armorItem(["soft"], 0), armorItem(["hard"], 5)] };
+      expect(hasHiddenJoints(actor, "head")).toBe(false);
+    });
+
+    it("обе есть, но на другой локации (AP>0 только в body) — для head false", () => {
+      const softBody = { type: "armor", system: { equipped: true, body: 2, head: 0, properties: ["soft"] } };
+      const hardBody = { type: "armor", system: { equipped: true, body: 5, head: 0, properties: ["hard"] } };
+      expect(hasHiddenJoints({ items: [softBody, hardBody] }, "head")).toBe(false);
+      expect(hasHiddenJoints({ items: [softBody, hardBody] }, "body")).toBe(true);
+    });
+
+    it("нет актора/предметов — false, не падает", () => {
+      expect(hasHiddenJoints(null, "head")).toBe(false);
+      expect(hasHiddenJoints({ items: [] }, "head")).toBe(false);
     });
   });
 

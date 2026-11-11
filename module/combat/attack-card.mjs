@@ -811,6 +811,29 @@ function gorgetSection({ rating, outcome }) {
     </div>`;
 }
 
+/**
+ * Кнопка «Скрытые Сочленения» (core.json, «Броня», wdbc-x1nz.4): атакующий
+ * может бросить Common Lore (War)+0, «определяя сочленения по памяти», чтобы
+ * снять штраф +10 постфактум. Правит эту же карточку (см. hooks.mjs) — тем же
+ * приёмом, что Горжет выше, только меняет ПОРОГ, не место/локацию попадания.
+ */
+function hiddenJointsSection(outcome) {
+  if (outcome) {
+    return `
+    <div class="roll-defense-section roll-hidden-joints">
+      <div class="roll-defense-title">🦾 Скрытые Сочленения: Common Lore (War)+0 — ${outcome.roll} против ${outcome.threshold} — ${
+        outcome.success ? "<b>успех</b>, штраф +10 снят" : "<b>провал</b>, штраф остаётся"}</div>
+    </div>`;
+  }
+  return `
+    <div class="roll-defense-section roll-hidden-joints">
+      <div class="roll-defense-title">Скрытые Сочленения: штраф +10 можно снять, определив их по памяти — только атакующий</div>
+      <div class="roll-defense-btns">
+        <button type="button" class="wh-hidden-joints-btn">🦾 Бросить Common Lore (War)+0</button>
+      </div>
+    </div>`;
+}
+
 /** Заряженный боеприпас, остаток магазина и расход за этот выстрел. */
 function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", magInfinite = false, magNone = false, spent = 0,
                      special = "", condLabels = [], warning = "" }) {
@@ -836,6 +859,8 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", magInfini
  * @param {object}   [d.locShift]    { max, current } — кнопки сдвига места, либо null
  * @param {object}   [d.gorget]      { rating, outcome } — кнопка Горжета (wdbc-8b5), либо null
  * @param {?{applied:number}} [d.tyranthikos] вторая рука пары Терминатора: сколько кубов Тирантикоса на карточке; null — не его случай
+ * @param {object}   [d.hiddenJoints] { outcome } — кнопка Скрытых Сочленений
+ *                                     (wdbc-x1nz.4), либо null
  * @param {object}   [d.ammo]        блок боеприпасов (только стрелковое), либо null
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
  * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
@@ -861,7 +886,7 @@ export function attackCard({
   hitsCount = 0, hits = [],
   // Сколько «попаданий» учесть кнопкам Избегания вместо hitsCount (На Лезвии Бритвы); null — hitsCount.
   evasionHits = null,
-  hitLocLabel = "", locRoll = 0, locShift = null, gorget = null, tyranthikos = null,
+  hitLocLabel = "", locRoll = 0, locShift = null, gorget = null, tyranthikos = null, hiddenJoints = null,
   isMelee = false, dtLabel = "", damageType = "", damageSubtype = "", pen = 0,
   // Assassin Strike / Удар Ассасина (wdbc-qpcg): доступность кнопки уже
   // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
@@ -1167,6 +1192,7 @@ export function attackCard({
       locShift ? locShiftSection(locShift, actorName) : "",
       gorget ? gorgetSection(gorget) : "",
       tyranthikos ? tyranthikosSection(tyranthikos) : "",
+      hiddenJoints ? hiddenJointsSection(hiddenJoints.outcome) : "",
       notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : "",
       notes.blastScatter ? `
     <div class="roll-allout-note">

@@ -133,7 +133,7 @@ import { saturationFireCoverShots, sureShotApplies, sureShotDodgePenalty, cageFi
 import { isBiteName } from "../rules/integral-rating.mjs";
 import { VENOM_BITE_CAPABILITY, venomBiteDamage, isBiteAttack, ADAPTIVE_VENOM_DOSE_FLAG } from "../rules/naga-traits.mjs";
 import { fieldDisablesWeapon, fieldForbidsShot } from "../rules/null-zones.mjs";
-import { isHeadHit } from "./armor-properties.mjs";
+import { isHeadHit, hasHiddenJoints } from "./armor-properties.mjs";
 import { COLD_KILLER } from "../rules/cold-killer.mjs";
 import { LEGIONNAIRE_VIRTUOSO, isLegionRangedWeapon } from "../rules/legionnaire-virtuoso.mjs";
 import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from "../rules/die-swap.mjs";
@@ -1095,6 +1095,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         if (success) hitLocLabel = "Торс";
       }
     }
+  }
+
+  // Скрытые Сочленения (core.json, «Броня», wdbc-x1nz.4): Избирательная атака
+  // в Сочленение/Шею получает +10 к штрафу (уже в threshold, attack-dialog.mjs
+  // — modParts «Скрытые Сочленения цели»), если на локации ЦЕЛИ одновременно
+  // надеты Мягкая и Жёсткая броня. Атакующий может бросить Common Lore(War)+0,
+  // «определяя сочленения по памяти» — кнопка на карточке переигровает её же
+  // бросок (тот же приём, что Горжет выше), с порогом выше на 10 на успех;
+  // opts.hiddenJointsOutcome приходит от hooks.mjs::wh-hidden-joints-btn уже
+  // посчитанным (combat/hidden-joints.mjs), эта функция сама тест не бросает.
+  // "Сочленение / Шея" всегда маппится на armorKey "head" (LOCATION_TO_ARMOR).
+  let hiddenJoints = null;
+  if (aimTarget?.value === "joint" && hasHiddenJoints(defenderActor, "head")) {
+    hiddenJoints = { outcome: opts.hiddenJointsOutcome || null };
   }
 
   // Кнут (core.json, «Типы Рукопашного Оружия»): «При попадании в конечность
@@ -2240,6 +2254,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
       tyranthikos: tyranthikosEligible ? { applied: tyranthikosDice } : null,
       gorget,
+      hiddenJoints,
       isMelee, dtLabel, damageType: ammoDmgType || effDmgType,
       damageSubtype: ammoDmgSubtype || effDmgSubtype, pen,
       assassinStrike: isMelee && assassinStrikeAvailable(actor),

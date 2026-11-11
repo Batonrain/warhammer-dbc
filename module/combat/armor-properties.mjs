@@ -217,8 +217,36 @@ export function armorNullers(propAuto = {}) {
     noEnergy: !!propAuto.noEnergy, noImpact: !!propAuto.noImpact,
     noApVsSubtype: { ...(propAuto.noApVsSubtype || {}) },
     noRanged: !!propAuto.noRanged, noJointCalled: !!propAuto.noJointCalled,
-    noEyeCalled: !!propAuto.noEyeCalled, frontArcNoProtect: !!propAuto.frontArcNoProtect
+    noEyeCalled: !!propAuto.noEyeCalled, frontArcNoProtect: !!propAuto.frontArcNoProtect,
+    // Мягкая (soft, wdbc-x1nz.4): «нет Сочленений» — метка слоя, не только
+    // locaton-уровня noJointReduction, нужна resolveArmorAbsorptionAP, чтобы
+    // отличить «вся локация мягкая» (нет сочленений вовсе) от «мягкая НАД
+    // жёсткой» (сочленения есть, но её АР можно взять вместо их AP÷3).
+    isSoft: !!propAuto.noJointReduction
   };
+}
+
+/**
+ * Скрытые Сочленения (core.json, «Броня», раздел «Скрытые Сочленения»,
+ * wdbc-x1nz.4): «Одежда или мягкая броня, носимая поверх жесткой брони,
+ * визуально закрывает сочленения... увеличивает штраф на атаки в сочленения
+ * на 10». Приближённая автоматизация (решение владельца) — система не знает,
+ * что надето СВЕРХУ, только что на одной локации одновременно надеты и
+ * Мягкая (soft), и Жёсткая (hard) броня, каждая реально даёт AP>0 в неё.
+ * Читает сырые поля предмета (как _conflictingHardArmor, sheets/tabs/gear.mjs)
+ * — правило про сам комплект, не про итоговый AP с модами/качеством.
+ */
+export function hasHiddenJoints(actor, armorKey) {
+  let soft = false, hard = false;
+  for (const item of actor?.items ?? []) {
+    if (item.type !== "armor" || !item.system?.equipped) continue;
+    if ((Number(item.system?.[armorKey]) || 0) <= 0) continue;
+    const props = item.system?.properties || [];
+    if (props.includes("soft")) soft = true;
+    if (props.includes("hard")) hard = true;
+    if (soft && hard) return true;
+  }
+  return false;
 }
 
 /**
@@ -316,18 +344,34 @@ export function resolveArmorAbsorptionAP({
 
   let ap = halveHead(baseArmorAP + vsTypeBonus + subtypeBonus);
   // Попадание в Сочленение/Шею — AP этой части тела втрое меньше настоящего,
-  // округление вниз (стр. 34). У брони без сочленений (Мягкая) выцелить
-  // нечего — идёт полный AP.
-  if (hitLocation === "Сочленение / Шея" && !pf.noJointReduction) {
-    ap = Math.floor(ap / 3);
-    // Joint Lining (wdbc-aq4c, Панцирь Темпестус, стр. 229): «AP 4 на
-    // сочленениях» — не бонус К расчёту, а ГАРАНТИРОВАННЫЙ МИНИМУМ поверх
-    // него: Math.max, никогда не хуже обычного ÷3 (напр. при бонусе против
-    // подвида урона обычное деление уже может дать больше 4 — тогда его и
-    // берём), только поднимает низкое значение до X.
-    if (pf.jointArmourRating) ap = Math.max(ap, pf.jointArmourRating);
-    // Best.Q брони (стр. 165): «+2 AP в сочленениях … после уменьшения».
-    ap += Math.max(0, Number(pf.qualityJointAp) || 0);
+  // округление вниз (стр. 34). У брони без сочленений (чисто Мягкая, без
+  // жёсткой на той же локации) выцелить нечего — идёт полный AP.
+  if (hitLocation === "Сочленение / Шея") {
+    // С отдельными слоями (wdbc-x1nz.2.81 и далее wdbc-x1nz.4, «Скрытые
+    // Сочленения»): смотрим на КОНКРЕТНЫЕ предметы этой локации, не на
+    // слитый pf.noJointReduction — он не различает «вся локация мягкая»
+    // (сочленений нет вовсе) и «мягкая НАД жёсткой» (сочленения есть, но
+    // книга разрешает взять АР мягкой ВМЕСТО АР сочленений, «может
+    // использоваться», т.е. берём лучшее из двух — Math.max после деления).
+    const hasSoftLayer = Array.isArray(layers) && layers.some(l => l.nullers?.isSoft);
+    const hasOtherLayer = Array.isArray(layers) && layers.some(l => !l.nullers?.isSoft);
+    const pureSoft = Array.isArray(layers) ? (hasSoftLayer && !hasOtherLayer) : !!pf.noJointReduction;
+    if (!pureSoft) {
+      ap = Math.floor(ap / 3);
+      // Joint Lining (wdbc-aq4c, Панцирь Темпестус, стр. 229): «AP 4 на
+      // сочленениях» — не бонус К расчёту, а ГАРАНТИРОВАННЫЙ МИНИМУМ поверх
+      // него: Math.max, никогда не хуже обычного ÷3 (напр. при бонусе против
+      // подвида урона обычное деление уже может дать больше 4 — тогда его и
+      // берём), только поднимает низкое значение до X.
+      if (pf.jointArmourRating) ap = Math.max(ap, pf.jointArmourRating);
+      // Best.Q брони (стр. 165): «+2 AP в сочленениях … после уменьшения».
+      ap += Math.max(0, Number(pf.qualityJointAp) || 0);
+      // Скрытые Сочленения, вторая половина правила (wdbc-x1nz.4): «АР
+      // [мягкой] также может использоваться вместо АР сочленений» — берём
+      // лучшее из (÷3 общей брони, с бонусами выше) и (необрезанный АР
+      // самой мягкой).
+      if (hasSoftLayer) ap = Math.max(ap, wornLayersAP(layers, l => !!l.nullers?.isSoft));
+    }
   }
   if (pf.doubleBlast && damageType === "blast") ap *= 2;
   if (damageSubtype && pf.doubleApVsSubtype?.[damageSubtype]) ap *= 2;
