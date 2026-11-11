@@ -54,6 +54,7 @@ import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
 import { ARMOUR_SIDES, VEHICLE_AIM_TARGETS } from "../constants/vehicle.mjs";
 import { isWalkerVehicle } from "../rules/walker.mjs";
+import { hasHiddenJoints } from "../combat/armor-properties.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG, GIANTS_ARMS_FLAG, wearsPowerArmour } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
@@ -896,6 +897,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   }
 
 
+  // Скрытые Сочленения (core.json, «Броня», wdbc-x1nz.4): Избирательная атака
+  // в Сочленение/Шею получает +10 к штрафу, если на этой локации ЦЕЛИ
+  // одновременно надеты Мягкая и Жёсткая броня — приближённая автоматизация
+  // (решение владельца): система не знает, что надето СВЕРХУ, только что оба
+  // типа присутствуют одновременно. "Сочленение / Шея" всегда маппится на
+  // armorKey "head" (module/combat/damage.mjs::LOCATION_TO_ARMOR) — считаем
+  // один раз здесь, строка штрафа — ниже в modParts («Избирательно в Корму» —
+  // тот же приём отдельной строки сверх списка aimTargets).
+  const targetHiddenJoints = attackCtx.targetActor?.type !== "vehicle"
+    && hasHiddenJoints(attackCtx.targetActor, "head");
+
   // Точное (Precise): −20 к штрафу Избирательных по сочленениям и глазам
   const csMod = wp.calledShotMod || 0;
   // Локус Подношения (стр. 31, wdbc-smc): штраф Избирательной в голову меньше на 20.
@@ -1730,6 +1742,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // отдельная строка от "Избирательная атака" выше (та зона тела/машины
       // тут не выбирается вовсе, это отдельный штраф за смену стороны брони).
       { label: "Избирательно в Корму", value: resolveVehicleSide(f).penalty },
+      // Скрытые Сочленения (wdbc-x1nz.4) — см. targetHiddenJoints выше.
+      // Можно снять постфактум кнопкой на карточке атаки (Common Lore(War)+0,
+      // combat/hidden-joints.mjs) — тот же приём, что Горжет.
+      { label: "Скрытые Сочленения цели", value: (f.aimVal === "joint" && targetHiddenJoints) ? -10 : 0 },
       { label: "Атака всем телом",     value: f.extraBonus },
       // Парное оружие (wdbc-3jlm): −20 книги минус скидки Талантов ветки.
       // Отдельной строкой, а не в «Доп. мод»: игрок должен видеть, что это

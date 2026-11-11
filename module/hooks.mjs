@@ -55,6 +55,7 @@ import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick } from "./combat/overwatch.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { resolveTankHunterClick, clearTankHunterMemory } from "./combat/tank-hunter.mjs";
+import { resolveHiddenJointsClick } from "./combat/hidden-joints.mjs";
 import { resolveTerrorSniperClick, terrorSuppressOnCard, terrorSuppressKey } from "./combat/terror-sniper.mjs";
 import { pyromaniacCoverPenalty, torrentPlacementProblem } from "./rules/flamer-talents.mjs";
 import { coverApForToken } from "./combat/cover.mjs";
@@ -1585,6 +1586,13 @@ export function registerHooks() {
       const owner = atkForVis && game.actors?.get(atkForVis.actorId)?.isOwner;
       if (!owner) section.remove();
     });
+    // Скрытые Сочленения (wdbc-x1nz.4): кнопку жмёт АТАКУЮЩИЙ (не защищающийся,
+    // как у Горжета ниже) — тот же приём видимости, что у сдвига места попадания.
+    html.querySelectorAll(".roll-hidden-joints").forEach(section => {
+      const atkForVis = message.flags?.["warhammer-dbc"]?.attack;
+      const owner = atkForVis && game.actors?.get(atkForVis.actorId)?.isOwner;
+      if (!owner) section.remove();
+    });
     html.querySelectorAll(".wh-locshift-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -1622,6 +1630,32 @@ export function registerHooks() {
         const roll = await new Roll("1d10").evaluate();
         await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold, atk.rofMode, atk.aimTarget,
           { ...(atk.opts || {}), forcedRoll: atk.rv, skipAmmo: true, gorgetRoll: roll.total, updateMessageId: message.id });
+      });
+    });
+
+    // Скрытые Сочленения (core.json, «Броня», wdbc-x1nz.4): атакующий может
+    // бросить Common Lore (War)+0, «определяя сочленения по памяти», чтобы
+    // снять штраф +10 постфактум. Правит эту же карточку (updateMessageId),
+    // тем же приёмом, что Горжет/сдвиг места попадания выше — тем же rv через
+    // opts.forcedRoll, только меняет сам ПОРОГ (+10 на успех теста), а не
+    // место/локацию попадания.
+    html.querySelectorAll(".wh-hidden-joints-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const atk = message.flags?.["warhammer-dbc"]?.attack;
+        if (!atk) return;
+        const atkActor = game.actors?.get(atk.actorId);
+        const atkItem  = atkActor?.items?.get(atk.itemId);
+        if (!atkActor || !atkItem) return;
+        if (!atkActor.isOwner) {
+          return ui.notifications.warn("Определить сочленения по памяти может только сам атакующий (или ГМ).");
+        }
+        el.disabled = true;
+        const outcome = await resolveHiddenJointsClick(atkActor);
+        await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold + (outcome.success ? 10 : 0),
+          atk.rofMode, atk.aimTarget,
+          { ...(atk.opts || {}), forcedRoll: atk.rv, skipAmmo: true, hiddenJointsOutcome: outcome, updateMessageId: message.id });
       });
     });
 
