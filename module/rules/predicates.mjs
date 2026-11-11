@@ -360,6 +360,27 @@ function hasInstalledImplant(actor, name) {
 }
 
 /**
+ * Имплант «Чёрный Панцирь / Black Carapace» хирургически установлен (не
+ * просто лежит в инвентаре) и исправен. Снимает два штрафа силовой брони
+ * (стр. 233): потерю Трейта Nimble (targetKeepsNimbleInArmour выше) и −10 на
+ * тонкие манипуляции пальцами (wearsPowerArmourWithoutBlackCarapace ниже) —
+ * общий читатель для обоих, вместо двух копий одной проверки.
+ */
+export function hasBlackCarapace(actor) {
+  return hasInstalledImplant(actor, "Black Carapace");
+}
+
+/**
+ * Силовая Броня (стр. 233): «Накладывает штраф –10 на все тонкие манипуляции
+ * пальцами. Черный Панцирь Космодесантников убирает этот штраф» — надета
+ * (wearsPowerArmour, включает и Аспектную: громоздкость доспеха, не его
+ * питание, не зависит от active) И нет установленного Чёрного Панциря.
+ */
+export function wearsPowerArmourWithoutBlackCarapace(actor) {
+  return wearsPowerArmour(actor) && !hasBlackCarapace(actor);
+}
+
+/**
  * Состоит ли актор в каждой из перечисленных фракций — считая нижестоящие.
  * Персонаж из III роты Несущих Слово подходит под условие «Хаос».
  *
@@ -684,8 +705,15 @@ export const PREDICATES = {
   targetKeepsNimbleInArmour: (actor, ctx) => {
     const t = ctx?.targetActor;
     if (!wearsPowerArmour(t)) return true;
-    return hasInstalledImplant(t, "Black Carapace");
+    return hasBlackCarapace(t);
   },
+
+  // «Накладывает штраф –10 на все тонкие манипуляции пальцами. Черный
+  // Панцирь Космодесантников убирает этот штраф» (стр. 233, та же глава, что
+  // targetKeepsNimbleInArmour выше) — здесь про самого АКТОРА (тест Навыка он
+  // совершает сам, не как цель чужого броска), поэтому `ctx.targetActor` не
+  // при чём и отдельный предикат, а не переиспользование того.
+  wearsPowerArmourWithoutBlackCarapace,
 
   // Цель без надетой герметичной брони (wdbc-1rno.11, Миазмы: «если он не
   // носит герметический доспех или скафандр… бонус +40 на попытки отследить
