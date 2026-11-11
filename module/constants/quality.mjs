@@ -61,6 +61,14 @@ export function qualityCategory(item) {
   }
   if (t === "armor")      return "armor";
   if (t === "forcefield") return "shield";
+  // Яды/эликсиры/наркотики/медикаменты — расходуемое снаряжение одного
+  // применения: книга не даёт им общей таблицы «−10/+5/+10 на тесты с этим
+  // снаряжением» (та для оружия/броней/инструментов, см. default ниже) —
+  // владелец яда с ней ничего не делает. У ядов отдельная книжная таблица
+  // Качества, но она модифицирует тест ЦЕЛИ, а не владельца (wdbc-x1nz.4,
+  // module/rules/poison-resist.mjs), поэтому сюда, в «эффекты владельца», не
+  // попадает вовсе.
+  if (t === "drug") return "drug";
   return "misc"; // gear, tool, cybernetic, implant и прочее
 }
 
@@ -128,6 +136,15 @@ export function qualityEffects(item, qualityOverride = null) {
       if (q === "poor") { auto.overloadMod = +10; reminders.push("Низкое: +10 к рейтингу Перегрузки."); }
       if (q === "good") { auto.overloadMod =  -5; reminders.push("Хорошее: −5 к рейтингу Перегрузки (до мин. 1)."); }
       if (q === "best") { auto.overloadMod = -10; reminders.push("Высшее: −10 к рейтингу Перегрузки (до мин. 1)."); }
+      break;
+
+    case "drug":
+      // Яды/эликсиры/наркотики/медикаменты: никакого типового напоминания и
+      // auto-бонуса владельцу — у ядов своя таблица (цель, не владелец, см.
+      // qualityCategory выше); у прочих категорий Химии книга вовсе не
+      // определяет эффект Качества. Текст конкретного препарата (если задан
+      // qualityEffects.poor/good/best самого предмета) остаётся — его
+      // показывает itemSpecificQuality независимо от этой функции.
       break;
 
     default: // misc — «Прочее снаряжение»
