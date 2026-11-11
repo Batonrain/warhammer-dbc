@@ -164,6 +164,24 @@ function wearsPowerArmour(actor) {
 }
 
 /**
+ * Надета включённая Силовая Броня (стр. 233, глава «СИЛОВАЯ БРОНЯ»,
+ * wdbc-x1nz.4) — НЕ Аспектная (armorType "aspect"): та Аэльдарская и к этой
+ * главе не относится (тот же вывод, что у «Вес» в rules/character.mjs,
+ * комментарий про selfCarriedArmourWeight). «Включённая» — system.active
+ * !== false (умолчание true — поле может отсутствовать у старых записей,
+ * как и везде, где это поле читается, напр. rules/armour-penalty.mjs).
+ * Используется только для Размера (rules/character/movement.mjs) — у
+ * Nimble (core.nimble) своё, более широкое условие (targetKeepsNimbleInArmour
+ * выше), которое включает и Аспектную броню и не смотрит на active: та
+ * механика про саму ГРОМОЗДКОСТЬ доспеха, а не про его питание.
+ */
+export function wearsActivePowerArmour(actor) {
+  return (actor?.items ?? []).some(i =>
+    i?.type === "armor" && i?.system?.equipped && i?.system?.armorType === "power" &&
+    i?.system?.active !== false);
+}
+
+/**
  * Носит ли актор хоть один надетый предмет брони со свойством «Sealed /
  * Закрытая» (ARMOR_PROPERTIES.sealed, constants/items.mjs — «Защита от химии
  * на коже»). Свойства брони хранятся как плоский массив строк-ключей
