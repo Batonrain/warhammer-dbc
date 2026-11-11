@@ -248,6 +248,9 @@ export async function confirmVeilTooThick(gate, ritualName) {
   return foundry.applications.api.DialogV2.confirm({
     window: { title: "Завеса слишком плотна" },
     content: `<p>${esc(ritualVeilMessage(gate, ritualName))}</p><p>Продолжить?</p>`,
+    // Подписи заданы явно: без них кнопки берут язык ядра, а в мире он en.
+    yes: { label: "Да" },
+    no: { label: "Нет", default: true },
     rejectClose: false
   });
 }
