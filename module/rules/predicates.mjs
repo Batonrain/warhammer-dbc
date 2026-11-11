@@ -159,9 +159,39 @@ export function hitSizeOf(actor) {
 // уже завязан на живой актор).
 const POWER_ARMOUR_TYPES = new Set(["power", "aspect"]);
 
+/**
+ * actor.items в живой игре — Foundry EmbeddedCollection (полифиллит .some()
+ * сама), но в тестах иногда стоит настоящий `Map` «как в движке» (.get() +
+ * итерируема, без .some()) — .values() достаёт сами предметы в обоих
+ * случаях без развилки на тип. wdbc-x1nz.4: без этого .some() на чистом Map
+ * падал TypeError при любом hasRuleFlag-вызове на таком акторе, не только у
+ * силовой брони (ritual-cast.test.mjs, asWeapon).
+ */
+function itemsOf(actor) {
+  return actor?.items?.values ? [...actor.items.values()] : (actor?.items ?? []);
+}
+
 function wearsPowerArmour(actor) {
-  return (actor?.items ?? []).some(i =>
+  return itemsOf(actor).some(i =>
     i?.type === "armor" && i?.system?.equipped && POWER_ARMOUR_TYPES.has(i?.system?.armorType));
+}
+
+/**
+ * Надета включённая Силовая Броня (стр. 233, глава «СИЛОВАЯ БРОНЯ»,
+ * wdbc-x1nz.4) — НЕ Аспектная (armorType "aspect"): та Аэльдарская и к этой
+ * главе не относится (тот же вывод, что у «Вес» в rules/character.mjs,
+ * комментарий про selfCarriedArmourWeight). «Включённая» — system.active
+ * !== false (умолчание true — поле может отсутствовать у старых записей,
+ * как и везде, где это поле читается, напр. rules/armour-penalty.mjs).
+ * Используется только для Размера (rules/character/movement.mjs) — у
+ * Nimble (core.nimble) своё, более широкое условие (targetKeepsNimbleInArmour
+ * выше), которое включает и Аспектную броню и не смотрит на active: та
+ * механика про саму ГРОМОЗДКОСТЬ доспеха, а не про его питание.
+ */
+export function wearsActivePowerArmour(actor) {
+  return itemsOf(actor).some(i =>
+    i?.type === "armor" && i?.system?.equipped && i?.system?.armorType === "power" &&
+    i?.system?.active !== false);
 }
 
 /**
@@ -338,8 +368,29 @@ export function blindsightActive(actor) {
 
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
-  return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&
+  return itemsOf(actor).some(i => i?.type === "implant" && itemHasName(i, name) &&
     i?.flags?.["warhammer-dbc"]?.installed && !i?.flags?.["warhammer-dbc"]?.disabled);
+}
+
+/**
+ * Имплант «Чёрный Панцирь / Black Carapace» хирургически установлен (не
+ * просто лежит в инвентаре) и исправен. Снимает два штрафа силовой брони
+ * (стр. 233): потерю Трейта Nimble (targetKeepsNimbleInArmour выше) и −10 на
+ * тонкие манипуляции пальцами (wearsPowerArmourWithoutBlackCarapace ниже) —
+ * общий читатель для обоих, вместо двух копий одной проверки.
+ */
+export function hasBlackCarapace(actor) {
+  return hasInstalledImplant(actor, "Black Carapace");
+}
+
+/**
+ * Силовая Броня (стр. 233): «Накладывает штраф –10 на все тонкие манипуляции
+ * пальцами. Черный Панцирь Космодесантников убирает этот штраф» — надета
+ * (wearsPowerArmour, включает и Аспектную: громоздкость доспеха, не его
+ * питание, не зависит от active) И нет установленного Чёрного Панциря.
+ */
+export function wearsPowerArmourWithoutBlackCarapace(actor) {
+  return wearsPowerArmour(actor) && !hasBlackCarapace(actor);
 }
 
 /**
@@ -678,8 +729,15 @@ export const PREDICATES = {
   targetKeepsNimbleInArmour: (actor, ctx) => {
     const t = ctx?.targetActor;
     if (!wearsPowerArmour(t)) return true;
-    return hasInstalledImplant(t, "Black Carapace");
+    return hasBlackCarapace(t);
   },
+
+  // «Накладывает штраф –10 на все тонкие манипуляции пальцами. Черный
+  // Панцирь Космодесантников убирает этот штраф» (стр. 233, та же глава, что
+  // targetKeepsNimbleInArmour выше) — здесь про самого АКТОРА (тест Навыка он
+  // совершает сам, не как цель чужого броска), поэтому `ctx.targetActor` не
+  // при чём и отдельный предикат, а не переиспользование того.
+  wearsPowerArmourWithoutBlackCarapace,
 
   // Цель без надетой герметичной брони (wdbc-1rno.11, Миазмы: «если он не
   // носит герметический доспех или скафандр… бонус +40 на попытки отследить

@@ -23,6 +23,7 @@ import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
 import { speedMultiplierTraitsOf, speedMultipliersFor } from "../speed-multipliers.mjs";
 import { mechRollData } from "../mech-formula.mjs";
 import { VAST_SIZE_FLAG, vastSizeBonus } from "../strange-invulnerability.mjs";
+import { wearsActivePowerArmour } from "../predicates.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -56,7 +57,13 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // намеренно НЕ двигают SPD. Складывается с тем, что уже мог записать
   // легаси-эффект тем же ключом (тот же приём, что traitSizeMod/sizeMod выше).
   const sizeModNoSpd = traitSizeModNoSpd + (Number(system.sizeModNoSpd) || 0);
-  const size    = (system.size ?? 0) + sizeMod;
+  let size = (system.size ?? 0) + sizeMod;
+  // Силовая Броня (стр. 233): «Увеличивает Размер персонажа до 1 (если он не
+  // больше изначально)» — потолок СНИЗУ, а не надбавка: персонаж Размером 2+
+  // (напр. Астартес) не уменьшается, Размером 0/−1 поднимается ровно до 1.
+  // Входит в `size` (а не в sizeModNoSpd) — двигает SPD, как и вклад Черт
+  // выше: громоздкий доспех увеличивает шаг не только на бумаге.
+  if (wearsActivePowerArmour(actor)) size = Math.max(size, 1);
   system.sizeMod   = sizeMod;          // вклад Черт в Размер (двигает SPD)
   system.sizeModNoSpd = sizeModNoSpd;  // вклад в Размер БЕЗ влияния на SPD
   system.sizeTotal = size + sizeModNoSpd; // итоговый Размер (база + оба вклада)
