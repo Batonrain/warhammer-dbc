@@ -1103,6 +1103,28 @@ Spray); Парирование открывает только Боевой Гн
   `core.drukhariFieldPsyMod` (штраф чужим психотестам) и Blunted.
 - Blunted / Затупленный (Черта или поле брони): `rules/blunted.mjs` — строка
   «пройдите Psyniscience −10×X» на карточке манифестации (wdbc-j8cn).
+- Горжет (wdbc-x1nz.4): Избирательная атака в «Сочленение/Шею» владельца
+  Горжета — доп. −20 (строка в `sheets/attack-dialog.mjs`) и АР торса вместо
+  головы при попадании, если оно выше (`combat/damage.mjs`, подмена источника
+  `baseArmorAP`/`wornAP`/`layers`, сама локация/пробитие остаются «головой»).
+- Cloak/Плащ: `combat/damage.mjs::cloakKeepsProtecting` — AP не обнуляется во
+  фронтальной дуге, если защищающийся Лежит или в Защитной Стойке; Укрытие и
+  «держит плащ рукой» остаются ручным решением ГМа.
+- Скрытые Сочленения (wdbc-x1nz.4, `combat/armor-properties.mjs::
+  hasHiddenJoints`, `combat/hidden-joints.mjs`): Мягкая+Жёсткая броня на одной
+  локации — доп. −10 на Избирательную в сочленение, кнопка Common Lore(War)+0
+  на карточке атаки снимает штраф постфактум; АР мягкой может использоваться
+  вместо АР сочленений (по слоям `layers[].nullers.isSoft`, не по слитому
+  `pf.noJointReduction` — тот не отличал «вся локация мягкая» от «мягкая+
+  жёсткая»). Приближённая автоматизация — порядок надевания не отслеживается.
+- Силовая Броня, доп. механики (wdbc-x1nz.4): Размер персонажа →1 и штраф −10
+  на тонкие манипуляции пальцами, пока надета включённая силовая броня (кроме
+  Чёрного Панциря Космодесантников) — `rules/predicates.mjs::
+  wearsActivePowerArmour`/`wearsPowerArmourWithoutBlackCarapace`,
+  `rules/character/movement.mjs`, правило `core.powerArmourFineManipulation`.
+  Батарея на 24ч + время надевания/снятия — `rules/power-armour-battery.mjs`
+  (по образцу `void-air.mjs`), кнопки на листе предмета (`item-sheet.mjs`,
+  `templates/item/parts/armor.hbs`).
 
 ## 8. Пространственные механизмы: Шаблоны, Ауры, Зоны
 
@@ -2097,6 +2119,14 @@ AGENTS.md).
 ## 24. Химия, Болезни
 
 - Химия/наркотики/яды: `data/item/drug.mjs`, `sheets/tabs/drugs.mjs`.
+- Яды (wdbc-x1nz.4): Качество яда больше не даёт владельцу ложный бонус
+  «на тесты с этим снаряжением» (`constants/quality.mjs` — `drug` теперь своя
+  категория, не `misc`) — вместо этого спасбросок ЦЕЛИ (`poisonTestChar`/
+  `poisonTestMod` из схемы предмета, раньше их никто не читал) с модификатором
+  Качества (Poor+10/Good−10/Best−20, `rules/poison-resist.mjs`), карточка
+  через `test-card.mjs`. Эликсиры не действуют на Парий (`PARIAH_SELF`) и на
+  персонажей с суммарным встречным бонусом ≥+20 против психосил (тег
+  `psychicThreat`), кроме носителей Bastion of Iron Will.
 - Болезни: `data/item/disease.mjs`, `constants/diseases.mjs` (справочник
   богов — сами болезни в компендиуме), `sheets/tabs/diseases.mjs`.
 - **Тест заражения (wdbc-dbveg, 25.10.2026):** у болезни структурное поле
