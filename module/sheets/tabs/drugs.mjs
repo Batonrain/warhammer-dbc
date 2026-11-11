@@ -27,6 +27,13 @@ import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
 import { poisonResistPart } from "../../rules/poison-resist.mjs";
 import { poisonResistReroll } from "../../rules/squat-traits.mjs";
 import { rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
+// «Иммунных к психосилам (вроде Парий)» (книга «Эликсиры») — книжный пример
+// буквально совпадает с уже реализованной расой: Пария несёт capabilityKey
+// "pariah.self" прямо на расовой Черте (не аура, не сцена — простой флаг
+// «это Пария», rules/null-zones.mjs), это и есть читаемый примитив под
+// книжный пример. Другие источники «иммунитета к психосилам целиком» (From
+// Beyond и т.п.) им не покрываются — см. отчёт/задачу Sahara.
+import { PARIAH_SELF } from "../../rules/null-zones.mjs";
 // Иммунитет/бонус цели против психосил для Эликсиров (книга «Эликсиры»,
 // wdbc-x1nz.4): опознание Таланта «Bastion of Iron Will» по имени предмета
 // (module/rules/ability-by-key.mjs::hasAbility) — НЕ hasTalentCapability:
@@ -222,12 +229,14 @@ export async function applyDrug(owner, item, recipient = null) {
   // как от самого Таланта Bastion of Iron Will — его носитель обходит ОБА
   // условия целиком (решение по этой задаче, wdbc-x1nz.4).
   //
-  // Иммунитет к психосилам «целиком» (трейт From Beyond, «ментальным
-  // психосилам») здесь НЕ проверяется: capabilities.mjs несёт ключ
-  // trait.fromBeyond с пустым reader (не читается нигде), и ни один предмет
-  // packs-src не заводит под него grantFlag — примитива «иммунен ли актор к
-  // психосилам» в системе нет вовсе. Заведена задача Sahara (см. отчёт) —
-  // не изобретаем здесь новый реестр способностей под одну эту проверку.
+  // Иммунитет к психосилам «целиком» — книжный пример «вроде Парий» читается
+  // буквально: Пария несёт capabilityKey "pariah.self" прямо на расовой Черте
+  // (rules/null-zones.mjs), это и есть примитив под книжный пример. ОСТАЛЬНЫЕ
+  // источники иммунитета к психосилам целиком (трейт From Beyond и т.п.) этим
+  // НЕ покрываются — capabilities.mjs несёт ключ trait.fromBeyond с пустым
+  // reader (не читается нигде), и ни один предмет packs-src не заводит под
+  // него grantFlag. Заведена задача Sahara (см. отчёт) — не изобретаем здесь
+  // новый общий реестр «иммунитета к психосилам» под одну эту проверку.
   //
   // Суммарный бонус читается тем же общим сборщиком правил, что уже считает
   // «Бастион Железной Воли»/«Защитный Щит»/«Непреклонный» (rules/roll-mods.mjs
@@ -235,12 +244,16 @@ export async function applyDrug(owner, item, recipient = null) {
   // scope psychicdirect/psychicmind/psychicpower). char:"wp" — встречный тест
   // против психосилы в этой системе идёт по Воле (как и у «Непреклонного»).
   if (sys.drugCategory === "elixir" && !hasBastionOfIronWill(actor)) {
+    const isPariah = hasRuleFlag(actor, PARIAH_SELF);
     const psyBonus = collectTestMods(actor, { kind: "skill", char: "wp", psychicThreat: true }).total;
-    if (psyBonus >= 20) {
+    if (isPariah || psyBonus >= 20) {
       await item.update({ "system.quantity": qty });
+      const why = isPariah
+        ? `<div class="roll-threshold">Пария — иммунитет к психосилам целиком.</div>`
+        : `<div class="roll-threshold">Встречный бонус против психосил: <b>+${psyBonus}</b> (≥ +20).</div>`;
       await postTestCard(owner, {
         icon: rollIcon("shield", "#9d7cd8"), title: `${esc(item.name)} → ${esc(actor.name)}`,
-        threshold: `<div class="roll-threshold">Встречный бонус против психосил: <b>+${psyBonus}</b> (≥ +20).</div>`,
+        threshold: why,
         rv: "—", outcome: `<span class="roll-success">Эликсир не действует (доза потрачена, осталось: ${qty}).</span>`
       }, { sound: false });
       return;

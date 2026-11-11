@@ -46,6 +46,17 @@ function bastionTalent() {
   return { id: "bastion-1", name: "Bastion of Iron Will / Бастион Железной Воли", type: "talent", system: {}, flags: {} };
 }
 
+/** Расовая Черта «Пария» — capabilityKey "pariah.self" прямо на Черте (как в паке). */
+function pariahTrait() {
+  return {
+    id: "pariah-1", name: "Pariah / Пария", type: "trait", system: {},
+    flags: { "warhammer-dbc": { mechanics: [{
+      id: "grp1", operator: "AND",
+      entries: [{ id: "e1", kind: "capability", capabilityKey: "pariah.self", when: { negate: false, conditions: [] } }]
+    }] } }
+  };
+}
+
 function actor({ items = [], t = 40, wp = 35 } = {}) {
   const list = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
@@ -172,6 +183,22 @@ describe("Эликсиры: иммунитет к психосилам / вст�
     await applyDrug(a, item);
 
     expect(a.system.wounds.value).toBe(6);
+  });
+
+  it("Пария — иммунитет к психосилам целиком, даже без встречного бонуса", async () => {
+    const pariah = pariahTrait();
+    const item = drug({ system: {
+      quantity: 2, drugCategory: "elixir",
+      specialEffects: { removesWounds: 5 }, activeEffect: {}
+    } });
+    const a = actor({ items: [item, pariah] });
+    a.system.wounds = { value: 1, max: 10, critical: 0 };
+
+    await applyDrug(a, item);
+
+    expect(a.system.wounds.value).toBe(1);
+    expect(captured.chat[0].content).toContain("Пария");
+    expect(captured.chat[0].content).toContain("не действует");
   });
 
   it("яд (не эликсир) — проверка психосил не применяется вовсе", async () => {
