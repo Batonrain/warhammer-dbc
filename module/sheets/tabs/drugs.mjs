@@ -21,6 +21,24 @@ import { hasRuleFlag, ruleFlagLabels } from "../../rules/flags.mjs";
 import { DRUG_AFTERMATH_IMMUNE_CAPABILITY, POISON_IMMUNE_CAPABILITY } from "../../rules/naga-traits.mjs";
 import { ALCHEM_MONSTER, alchemDurationFactor, mustRerollSuccess } from "../../rules/replicant.mjs";
 import { isReplicantSerum, takeSerum } from "../../combat/replicant.mjs";
+// Спасбросок цели против яда (книга «Яды», wdbc-x1nz.4): характеристика +
+// модификатор яда с предмета + модификатор его Качества — своя таблица,
+// отдельная от общей module/constants/quality.mjs (та — для владельца).
+import { poisonResistPart } from "../../rules/poison-resist.mjs";
+import { poisonResistReroll } from "../../rules/squat-traits.mjs";
+import { rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
+// Иммунитет/бонус цели против психосил для Эликсиров (книга «Эликсиры»,
+// wdbc-x1nz.4): опознание Таланта «Bastion of Iron Will» по имени предмета
+// (module/rules/ability-by-key.mjs::hasAbility) — НЕ hasTalentCapability:
+// у Таланта в паке только запись testMod (область psychicPower), без
+// отдельной записи kind:"capability" под ключ psyResist.core.
+// bastionOfIronWill (test/rules/talent-capability-stale-copy.test.mjs
+// проверяет именно её — заводить дубль ради одной этой проверки не нужно).
+import { hasAbility } from "../../rules/ability-by-key.mjs";
+
+/** «Bastion of Iron Will» (английская половина — как в CAPABILITIES[key].source). */
+const BASTION_OF_IRON_WILL_NAME = "Bastion of Iron Will";
+const hasBastionOfIronWill = actor => hasAbility(actor, "psyResist.core.bastionOfIronWill", BASTION_OF_IRON_WILL_NAME, "talent");
 // Snake Eater / Пожиратель Змей (Талант Стойкости, глава 3): урон ядов и
 // длительность ядов/пост-эффектов вдвое меньше (окр.▲).
 import { snakeEaterHalve, hasResilienceTalent } from "../../rules/resilience-talents.mjs";
@@ -197,6 +215,36 @@ export async function applyDrug(owner, item, recipient = null) {
       rv: "—", outcome: `<span class="roll-success">Яд не действует (доза потрачена, осталось: ${qty}).</span>`
     }, { sound: false });
     return;
+  }
+
+  // Эликсиры не действуют на цель, иммунную к психосилам целиком, или имеющую
+  // суммарный встречный бонус ≥ +20 против психосил (книга «Эликсиры»), кроме
+  // как от самого Таланта Bastion of Iron Will — его носитель обходит ОБА
+  // условия целиком (решение по этой задаче, wdbc-x1nz.4).
+  //
+  // Иммунитет к психосилам «целиком» (трейт From Beyond, «ментальным
+  // психосилам») здесь НЕ проверяется: capabilities.mjs несёт ключ
+  // trait.fromBeyond с пустым reader (не читается нигде), и ни один предмет
+  // packs-src не заводит под него grantFlag — примитива «иммунен ли актор к
+  // психосилам» в системе нет вовсе. Заведена задача Sahara (см. отчёт) —
+  // не изобретаем здесь новый реестр способностей под одну эту проверку.
+  //
+  // Суммарный бонус читается тем же общим сборщиком правил, что уже считает
+  // «Бастион Железной Воли»/«Защитный Щит»/«Непреклонный» (rules/roll-mods.mjs
+  // collectTestMods, тег psychicThreat — rules/resolve-test.mjs::effectAppliesTo,
+  // scope psychicdirect/psychicmind/psychicpower). char:"wp" — встречный тест
+  // против психосилы в этой системе идёт по Воле (как и у «Непреклонного»).
+  if (sys.drugCategory === "elixir" && !hasBastionOfIronWill(actor)) {
+    const psyBonus = collectTestMods(actor, { kind: "skill", char: "wp", psychicThreat: true }).total;
+    if (psyBonus >= 20) {
+      await item.update({ "system.quantity": qty });
+      await postTestCard(owner, {
+        icon: rollIcon("shield", "#9d7cd8"), title: `${esc(item.name)} → ${esc(actor.name)}`,
+        threshold: `<div class="roll-threshold">Встречный бонус против психосил: <b>+${psyBonus}</b> (≥ +20).</div>`,
+        rv: "—", outcome: `<span class="roll-success">Эликсир не действует (доза потрачена, осталось: ${qty}).</span>`
+      }, { sound: false });
+      return;
+    }
   }
 
   let resolvedRounds = 0;
@@ -452,9 +500,69 @@ export async function applyDrug(owner, item, recipient = null) {
   // говорящего, режим броска и звук (wdbc-kuun).
   const allRolls = [...(durationRoll ? [durationRoll] : []), ...extras.rolls];
   await postTestCard(owner, chatContent, { rolls: allRolls });
+  // Яд (книга «Яды», wdbc-x1nz.4): отдельная карточка спасброска ЦЕЛИ против
+  // самого яда — характеристика/мод с предмета + Качество яда. Только после
+  // того, как иммунитет к ядам выше его не отсёк.
+  if (sys.drugCategory === "poison") await rollPoisonResistTest(actor, item);
   // Алкоголь: счётчик Провалов опьянения (3-edc4 п.8, Декаданс удваивает пороги).
   if (isAlcoholItem(item)) await applyAlcoholDrink(actor, item);
   await weeklyDoseCheck(actor, item);
+}
+
+/**
+ * Спасбросок ЦЕЛИ против яда-препарата (drugCategory:"poison", книга «Яды»):
+ * характеристика/модификатор берутся с самого предмета (poisonTestChar/
+ * poisonTestMod — были в схеме DrugData, но до этой правки их не читал ни
+ * один кусок кода), плюс модификатор Качества яда (rules/poison-resist.mjs —
+ * своя таблица, НЕ общая Качества снаряжения: та модифицирует тест владельца
+ * «с этим снаряжением», здесь — тест цели против эффекта яда).
+ *
+ * Чисто информационная карточка: книга (в части, процитированной в задаче)
+ * не говорит, что именно меняют успех/провал В САМОМ эффекте яда — применение
+ * эффекта (statMods/specialEffects выше) идёт независимо от исхода этого
+ * броска. Решение задачи — не изобретать гейтинг эффекта яда по этому броску
+ * без книжного текста; найдено заведена задача Sahara (см. отчёт).
+ * @returns {Promise<{success:boolean, deg:number}>}
+ */
+export async function rollPoisonResistTest(actor, item) {
+  const sys = item?.system ?? {};
+  const { charKey, mod } = poisonResistPart(sys);
+  const charTotal = actor.system.characteristics?.[charKey]?.total ?? 0;
+  // Тот же тег "poisonTest", что у единственного другого места в системе,
+  // реально кидающего тест против яда (свойство оружия Toxic, hooks.mjs) —
+  // Преимущество Крепкого как Камень/Живучести Сплайса (squat-traits.mjs)
+  // подключается ниже этим же тегом, а не второй отдельной проверкой.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey, poisonTest: true });
+  const eff = charTotal + mod + ruleMods.total;
+  const abbr = CHARACTERISTICS[charKey]?.abbr ?? charKey.toUpperCase();
+
+  let { rv, rolls, rerollNote } = await rollD100WithReroll(poisonResistReroll(actor, "poisoned"));
+  // Алхимическое Чудовище (Репликант): «должен перебрасывать успешные тесты
+  // против ядов» — тот же приём, что у Toxic (hooks.mjs) и теста Зависимости.
+  let alchemNote = "";
+  if (mustRerollSuccess(rv <= eff, hasRuleFlag(actor, ALCHEM_MONSTER))) {
+    const first = rv;
+    const second = await new Roll("1d100").evaluate();
+    rolls.push(second);
+    rv = second.total;
+    alchemNote = `<div class="roll-threshold">⚗️ Алхимическое Чудовище: успех против яда (${first}) обязательно перебрасывается → <b>${rv}</b></div>`;
+  }
+
+  const success = rv <= eff;
+  const deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
+
+  await postTestCard(actor, {
+    icon: rollIcon("skull", "#8b0000"), title: `Спасбросок против яда — ${esc(item?.name ?? "Яд")}`,
+    threshold: rollStatLine({
+      label: abbr, base: charTotal,
+      parts: [...(mod !== 0 ? [`${mod >= 0 ? "+" : ""}${mod}`] : []), ...ruleMods.parts],
+      threshold: eff, rv
+    }) + alchemNote,
+    outcome: rerollNote + (success
+      ? `<span class="roll-success">Сопротивление успешно — ${deg} ${_degWord(deg)}</span>`
+      : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`)
+  }, { rolls });
+  return { success, deg };
 }
 
 /**
