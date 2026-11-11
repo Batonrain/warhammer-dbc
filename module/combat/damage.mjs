@@ -1104,8 +1104,19 @@ export async function applyDamageToActor(actor, damageData) {
       // обычной высокотех. брони. Не действует, если щит уже исключён выше.
       const shieldPrimitiveHere = !shieldExcluded && melee && !!absorption.shieldPrimitiveLoc?.[armorKey];
       const effLocFlags = shieldPrimitiveHere ? { ...(locFlags || {}), blocksPrimitiveDouble: true } : locFlags;
+      // Gorget / Горжет (книга, «Броня»): «при попадании используют АР торса,
+      // а не головы, если она выше (но уменьшают её как обычно при попадании
+      // в сочленения)» — попадание остаётся «в шею» (armorKey/breach не
+      // трогаем), подменяется только ИСТОЧНИК baseArmorAP/wornAP/layers для
+      // самого расчёта AP; редукция ÷3 ниже по-прежнему применяется.
+      const gorgetJointSwap = hitLocation === "Сочленение / Шея" && Number(locFlags?.gorgetRating) > 0
+        && (Number(absorption.body) || 0) > (Number(absorption.head) || 0);
+      const apSourceKey = gorgetJointSwap ? "body" : armorKey;
+      const swappedArmorAP = gorgetJointSwap
+        ? (shieldExcluded ? (absorption.noShield?.[apSourceKey] ?? 0) : (absorption[apSourceKey] ?? 0)) - (absorption.toughnessBonus ?? 0)
+        : baseArmorAP;
       armorAP = resolveArmorAbsorptionAP({
-        baseArmorAP,
+        baseArmorAP: swappedArmorAP,
         vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
         // vsSubtypeAt — бонус только этой локации (Укреплённые Рога: Cor.b AP
         // против I(Cr) в голову, wdbc-1rno.10), складывается с общим vsSubtype.
@@ -1114,11 +1125,11 @@ export async function applyDamageToActor(actor, damageData) {
         eyeBonus: absorption.eyeBonus ?? 0,
         damageType, damageSubtype, melee, hitLocation, primitive, frontArcHit,
         flags: effLocFlags,
-        wornAP: absorption.wornOnly?.[armorKey],
+        wornAP: absorption.wornOnly?.[apSourceKey],
         // Обнуление по предмету, а не по локации (wdbc-x1nz.2.81); Ртуть — вся
         // часть тела, поэтому целиком.
-        layers: absorption.layers?.[armorKey] ?? null,
-        otherWornAP: (shieldExcluded ? absorption.otherWornNoShield : absorption.otherWorn)?.[armorKey] ?? 0,
+        layers: absorption.layers?.[apSourceKey] ?? null,
+        otherWornAP: (shieldExcluded ? absorption.otherWornNoShield : absorption.otherWorn)?.[apSourceKey] ?? 0,
         locationNulled: mercuryMarked && damageSubtype === "electrical"
       });
       // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в технику/скакуна,
@@ -1940,6 +1951,19 @@ export async function applyMonofilamentHit(actor, { rating, damage, weaponName =
   return { jointRoll, isJoint, hitLocation };
 }
 
+/**
+ * Cloak / Плащ (книга, «Броня»): «не защищает от атак с передней арки 90°,
+ * кроме как если персонаж Лежит... или стоит в Защитной Стойке». Эти два
+ * состояния читаются автоматически — та же пара, что уже используют
+ * targetConditionAttackMods (sheets/attack-dialog.mjs, conditions.prone) и
+ * MELEE_STANCES.defensive (constants/combat.mjs) в других местах боя.
+ * Укрытие и «держит плащ одной рукой» остаются ручным решением ГМа — для них
+ * в системе нет отслеживаемого флага. Чистая функция — тестируется напрямую.
+ */
+export function cloakKeepsProtecting(defenderActor) {
+  return !!defenderActor?.system?.conditions?.prone || defenderActor?.system?.meleeStance === "defensive";
+}
+
 // ─── Диалог применения урона ──────────────────────────────────────────────────
 export async function showApplyDamageDialog(damageData) {
   const targets  = [...(game.user.targets ?? [])];
@@ -1956,10 +1980,14 @@ export async function showApplyDamageDialog(damageData) {
   // Геометрия передней дуги (Cloak/Плащ, wdbc-p5el) — атакующий один на всю
   // карточку, резолвится один раз; у каждого защищающегося своя дуга.
   const attackerToken = await resolveAttackerToken(damageData.attackerUuid);
-  const withFacing = defenderToken => ({
-    ...damageData,
-    frontArcHit: attackerToken ? isFrontArcHit(defenderToken, attackerToken) : false
-  });
+  const withFacing = defenderToken => {
+    const defenderActor = defenderToken.actor ?? defenderToken.document?.actor;
+    return {
+      ...damageData,
+      frontArcHit: (attackerToken && !cloakKeepsProtecting(defenderActor))
+        ? isFrontArcHit(defenderToken, attackerToken) : false
+    };
+  };
 
   // Один токен — применяем без диалога
   if (candidates.length === 1) {

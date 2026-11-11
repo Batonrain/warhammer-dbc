@@ -300,16 +300,17 @@ export function resolveArmorAbsorptionAP({
   const halveHead = ap => (damageSubtype === "crushing" && isHeadHit(hitLocation)) ? Math.ceil(ap / 2) : ap;
 
   // Попадание в Глаз — попадание в голову, игнорирующее AP шлема целиком
-  // (стр. 34), кроме силовых шлемов: у них по правилам дома всё равно есть
-  // 4 AP на линзы очей. Плоское значение, а не доля от базового AP.
-  // Естественная броня (Черты, импланты) — не шлем, она остаётся.
+  // (стр. 34), кроме силовых шлемов: «Линзы шлема сделаны из бронированного
+  // хрусталя и обеспечивают 2 AP против атак по глазам» (книга, «Силовая
+  // Броня», wdbc-x1nz.4 — было по ошибке 4). Плоское значение, а не доля от
+  // базового AP. Естественная броня (Черты, импланты) — не шлем, она остаётся.
   if (hitLocation === "Глаз (Голова)") {
     const natural = wornAP == null ? 0 : Math.max(0, baseArmorAP - (Number(wornAP) || 0));
     // eyeBonus — броня самих глаз от Мутации (Зрящие Рога, wdbc-1rno.10): не
     // шлем, поэтому остаётся, как и естественная броня. subtypeBonus сюда
     // не входит сознательно — это AP тела/головы, а не глаз.
     // qualityJointAp — «+2 AP в сочленениях и визорах» брони Высшего качества (стр. 165).
-    return halveHead(natural + (pf.isPowerArmor ? 4 : 0) + Math.max(0, Number(eyeBonus) || 0)
+    return halveHead(natural + (pf.isPowerArmor ? 2 : 0) + Math.max(0, Number(eyeBonus) || 0)
       + Math.max(0, Number(pf.qualityJointAp) || 0));
   }
 

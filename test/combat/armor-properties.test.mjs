@@ -257,9 +257,9 @@ describe("resolveArmorAbsorptionAP", () => {
   it("в Глаз: AP шлема игнорируется, естественная броня головы остаётся", () => {
     // Голова 6 = шлем 4 + естественная 2 (Черта/имплант): в Глаз — только 2.
     expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, wornAP: 4, damageType: "impact", hitLocation: "Глаз (Голова)" })).toBe(2);
-    // Силовой шлем: 4 на линзы + естественная 2.
+    // Силовой шлем: 2 на линзы (книга, «Силовая Броня») + естественная 2.
     const power = { ...emptyArmorLocFlags(), isPowerArmor: true };
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 10, wornAP: 8, damageType: "impact", hitLocation: "Глаз (Голова)", flags: power })).toBe(6);
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 10, wornAP: 8, damageType: "impact", hitLocation: "Глаз (Голова)", flags: power })).toBe(4);
     // Без разбивки (wornAP не передан) — весь AP считается шлемом, как раньше.
     expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", hitLocation: "Глаз (Голова)" })).toBe(0);
   });

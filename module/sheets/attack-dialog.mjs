@@ -1743,6 +1743,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Качественная броня цели (сочленение/визор)",
         value: (f.aimVal === "joint" || f.aimVal === "eye")
           ? armorQualitySelectivePenalty(attackCtx.targetActor?.items) : 0 },
+      // Gorget / Горжет цели (книга, «Броня»): «Избирательные атаки в
+      // сочленения шеи этой брони увеличивают штраф на еще −20» — joint-цель
+      // и есть попадание в «Сочленение / Шею» (LOCATION_TO_ARMOR → head), то
+      // есть ровно шея. AP-подмена на торс при попадании — combat/damage.mjs.
+      { label: "Горжет цели (сочленение/шея)",
+        value: (f.aimVal === "joint"
+          && Number(attackCtx.targetActor?.system?.absorption?.propFlags?.head?.gorgetRating) > 0) ? -20 : 0 },
       { label: "Цель Повалена",      value: proneMod },
       { label: "Оглушение/Ступор цели", value: stunnedMod },
       // Мухи (wdbc-1rno) — эскалация читает ЖИВОЙ f.aimPenalty (чекбокс

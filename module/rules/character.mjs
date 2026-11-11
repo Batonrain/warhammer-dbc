@@ -487,8 +487,15 @@ export function prepareCharacterDerived(actor, system) {
     const armorCharBonus = { s: 0, wp: 0, ag: 0 };
     for (const item of actor.items) {
       if (item.type !== "armor" || !item.system.equipped) continue;
-      armorCharBonus.s  += item.system.strengthBonus || 0;
-      armorCharBonus.wp += item.system.wpBonus       || 0;
+      // Выключенная силовая броня (стр. 233): «не даёт три предыдущих бонуса»
+      // (бонус S, нейтрализация веса, ретинальный дисплей) — нейтрализация
+      // веса уже проверяла active (documents/actor.mjs), бонус S/WP раньше
+      // начислялся всегда, пока броня надета, даже выключенной (wdbc-x1nz.4).
+      const powerBonusActive = item.system.armorType !== "power" || item.system.active !== false;
+      if (powerBonusActive) {
+        armorCharBonus.s  += item.system.strengthBonus || 0;
+        armorCharBonus.wp += item.system.wpBonus       || 0;
+      }
       const penalty = Math.max(0, (item.system.agilityPenalty || 0)
         - armourTrainingPenaltyReduction(actor, item.system.armorType));
       armorCharBonus.ag -= penalty;
