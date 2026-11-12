@@ -2093,6 +2093,18 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     entry = resolved[0];
   }
 
+  // Талант с целями «на выбор» (Peer/Hatred/Good Reputation: Придворный, Отступник,
+  // Предсказание — dbc-152): игрок выбирает targetChoiceCount целей до выдачи,
+  // они ложатся в system.targets (читатели rules/hatred.mjs, social-talents.mjs).
+  if (entry.kind === "talent" && Number(entry.targetChoiceCount) > 0 && !entry.targets?.length) {
+    const { promptTargetChoices, targetChoiceLabel } = await import("./target-choice.mjs");
+    const src = await resolveMechSource(entry);
+    const title = String(src?.name || entry.sourceName || "Талант").split("/").pop().trim();
+    const picked = await promptTargetChoices(title, Number(entry.targetChoiceCount), "Выберите, к кому относится Талант");
+    if (!picked) return;
+    entry = { ...entry, targets: picked, specialization: picked.map(targetChoiceLabel).join(", ") };
+  }
+
   // Талант «любые N» (rules/talent-spec-choice.mjs) — выбор специализаций до
   // выдачи, тем же диалогом/коллектором Мастера, что у Навыков.
   if (entry.kind === "talent" && anySpecCount(entry.specialization) != null) {

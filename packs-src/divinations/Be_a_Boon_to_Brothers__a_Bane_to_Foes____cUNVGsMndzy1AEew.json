@@ -117,7 +117,8 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "",
-              "code": ""
+              "code": "",
+              "targetChoiceCount": 1
             }
           ]
         }

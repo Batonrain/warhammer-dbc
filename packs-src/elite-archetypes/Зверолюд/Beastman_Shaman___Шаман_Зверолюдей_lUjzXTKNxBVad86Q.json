@@ -6,7 +6,37 @@
     "key": "1589d9d5",
     "cost": 3000,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "dbc13r01",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 40
+        },
+        {
+          "id": "dbc13r02",
+          "kind": "characteristic",
+          "charKey": "int",
+          "value": 35
+        },
+        {
+          "id": "dbc13r03",
+          "kind": "trait",
+          "key": "",
+          "name": "Psyker / Псайкер",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
+        },
+        {
+          "id": "dbc13r04",
+          "kind": "psyRating",
+          "value": 4
+        },
+        {
+          "id": "dbc13r05",
+          "kind": "other",
+          "text": "Command+0, Schol.Lore (Occult)+0"
+        }
+      ],
       "secondary": []
     },
     "race": "Зверолюд",

@@ -45,6 +45,9 @@ import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs
 import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
 import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
 
+/** Подписи диспозиции токена — для примечания «Связан в Рукопашной». */
+const DISPOSITION_LABELS = { "-2": "Тайный", "-1": "Враждебный", 0: "Нейтральный", 1: "Дружественный" };
+
 /**
  * Атака оружием в руке без пальцев (мутация Потеря Конечности, субмутации
  * 1/6): рука назначена кнопкой Л/П — она; двуручное — любая из двух; без
@@ -554,7 +557,7 @@ export function situationalMods(v) {
       immune: lockedByEnemies.length === 0,
       autoCheck: lockedByEnemies.length > 0 && !inContactWithTarget,
       note: lockedByEnemies.length > 0
-        ? `в контакте с врагом (рукопашное/Пистолет): ${lockedByEnemies.map(d => d.name).join(", ")} (стр. 30)`
+        ? `в контакте с врагом (рукопашное/Пистолет): ${lockedByEnemies.map(d => `${d.name} [${DISPOSITION_LABELS[d.disposition] ?? d.disposition}]`).join(", ")} (стр. 30; врагом считается токен с другой диспозицией, чем у стрелка [${DISPOSITION_LABELS[attackerToken.document?.disposition ?? attackerToken.disposition] ?? "?"}] — если это союзник, поправьте его диспозицию)`
         : undefined },
     // Стрельба ПО цели в рукопашной с ТРЕТЬИМ лицом (стр. 30) — отдельно от
     // «Стрельба в рукопашную» выше (та про самого стрелка, с исключением для

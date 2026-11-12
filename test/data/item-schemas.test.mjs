@@ -250,7 +250,7 @@ const TYPES = {
       // вторая цена книги для не-Космодесантника (Облитератор: 4500 / 5500).
       key: "", cost: 0, costNonAstartes: 0, paidCost: 0,
       requirements: { primary: [], secondary: [] },
-      race: "", god: "", req: "", charBonus: "", freeTalents: "",
+      race: "", god: "", req: "", becoming: "", charBonus: "", freeTalents: "",
       gear: "", traits: [], talents: [], description: "", notes: "", bookSource: ""
     }
   },

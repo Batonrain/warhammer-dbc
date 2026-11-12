@@ -209,6 +209,20 @@ function wearsSealedArmour(actor) {
     (i?.system?.properties ?? []).includes("sealed"));
 }
 
+// Терминаторская броня (dbc-10: Чемпион-Терминатор — «все преимущества работают
+// только в Терминаторской броне»). Отдельного признака у брони нет, поэтому —
+// по имени пяти книжных образцов (packs-src/armor/Астартес/Броня/Терминаторская:
+// Мк I Сатурнин, Мк II Катафракт, Мк III Индомитус, Мк IV Тартарос, Эгида);
+// «крупная База» (largeBase) для признака мала — её носит и Экзо-Костюм.
+const TERMINATOR_ARMOUR_RE = /saturnyne|cataphractii|indom[ie]nus|tartaros|terminator aegis|терминатор|катафракт|тартарос|сатурнин|индомитус/i;
+
+/** Надета ли Терминаторская броня (Мк I–IV, Эгида). */
+export function wearsTerminatorArmour(actor) {
+  return (actor?.items ?? []).some(i =>
+    i?.type === "armor" && i?.system?.equipped
+    && TERMINATOR_ARMOUR_RE.test(String(i.name ?? "")));
+}
+
 // Респиратор/Противогаз (wdbc-1rno, Sweet Mist/Сладкий Туман) — предметы
 // gear в Головном слоте (system.gearCategory:"head"), НЕ armor и не несут
 // свойства "sealed" (проверено по packs-src — оба JSON без system.properties
@@ -546,6 +560,9 @@ export const PREDICATES = {
   // Механики (when.requireSealedArmour/negateSealedArmour, mech-when.mjs,
   // wdbc-1rno: «без гермодоспеха» у Миазм и подобных).
   wearsSealedArmour,
+
+  // Носит ли Терминаторскую броню (dbc-10): when.predicates: { wearsTerminatorArmour: true }.
+  wearsTerminatorArmour: (actor, ctx, value) => wearsTerminatorArmour(actor) === (value !== false),
 
   // Обут ли (Barefoot / Босоногий Ратлинга): `true` — обут, `false` — босиком.
   // Запись Конструктора ставит when.predicates: { wearsFootwear: false }.

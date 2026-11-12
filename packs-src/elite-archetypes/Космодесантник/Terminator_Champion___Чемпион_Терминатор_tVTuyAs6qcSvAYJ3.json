@@ -6,7 +6,26 @@
     "key": "43e4b463",
     "cost": 2500,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "dbc13r01",
+          "kind": "characteristic",
+          "charKey": "ws",
+          "value": 50
+        },
+        {
+          "id": "dbc13r02",
+          "kind": "characteristic",
+          "charKey": "bs",
+          "value": 50
+        },
+        {
+          "id": "dbc13r03",
+          "kind": "characteristic",
+          "charKey": "inf",
+          "value": 40
+        }
+      ],
       "secondary": []
     },
     "race": "Космодесантник",
@@ -30,8 +49,9 @@
       "Tyranthikos / Тирантикос"
     ],
     "description": "<p>Терминаторы Хаоса – ветераны, облачённые в костюмы тактической брони дредноута. Они составляют элитную гвардию своего господина, и хотя их броня громоздка по сравнению с более лёгкой бронёй обычных космодесантников Хаоса, только прямое попадание противотанкового оружия сможет сразить терминатора, и то лишь при удачном выстреле.</p>\n<p>Превыше обычных Терминаторов стоят Чемпионы Терминаторов, наследники темной славы Почетной Стражи былых легионов: воинов, что шли в бой одесную Примархов как их телохранители, проливали с ними кровь и разделили их легенду. Легендарные техники этих великих воинов смешались и разошлись за тысячи лет Долгой Войны и многие молодые чемпионы жадно пожирают каждое слово историй об их свершениях, вы-уживая из них частички могущества и мастерства.</p>",
-    "notes": "<p>Все преимущества, Трейты и Таланты этого Архетипа работают только когда персонаж носит Терминаторскую броню. (Лист это пока не проверяет сам: снял броню — ГМ и игрок отключают бонусы вручную.)</p>",
-    "bookSource": "DoomBC — Основная книга"
+    "notes": "<p>Все преимущества, Трейты и Таланты этого Архетипа работают только когда персонаж носит Терминаторскую броню. (Лист это пока не проверяет сам: снял броню — ГМ и игрок отключают бонусы вручную.)</p> Бонусы (+5 к Характеристикам, Graceful Giant, Legendary Plate) включены только в Терминаторской броне: условие wearsTerminatorArmour (rules/predicates.mjs, dbc-10).",
+    "bookSource": "DoomBC — Основная книга",
+    "becoming": "Персонаж должен заполучить Терминаторский доспех и каким-то образом обучиться техникам другого элитного терминатора, будь это из литературы, обучения, наблюдения за одним из них в бою, или сразив другого чемпиона и съев его мозг (заодно заполучив и доспех)."
   },
   "_id": "tVTuyAs6qcSvAYJ3",
   "effects": [],
@@ -124,7 +144,14 @@
               "label": "",
               "code": "",
               "kind": "trait",
-              "id": "ea0"
+              "id": "ea0",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "predicates": {
+                  "wearsTerminatorArmour": true
+                }
+              }
             },
             {
               "corruptionValue": "1",
@@ -203,7 +230,14 @@
               "label": "",
               "code": "",
               "kind": "trait",
-              "id": "ea1"
+              "id": "ea1",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "predicates": {
+                  "wearsTerminatorArmour": true
+                }
+              }
             }
           ]
         },
@@ -288,7 +322,14 @@
               "label": "",
               "code": "",
               "kind": "characteristic",
-              "id": "eaC10"
+              "id": "eaC10",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "predicates": {
+                  "wearsTerminatorArmour": true
+                }
+              }
             },
             {
               "corruptionValue": "1",
@@ -367,7 +408,14 @@
               "label": "",
               "code": "",
               "kind": "characteristic",
-              "id": "eaC11"
+              "id": "eaC11",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "predicates": {
+                  "wearsTerminatorArmour": true
+                }
+              }
             }
           ]
         },
@@ -452,7 +500,14 @@
               "label": "",
               "code": "",
               "kind": "characteristic",
-              "id": "eaC12"
+              "id": "eaC12",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "predicates": {
+                  "wearsTerminatorArmour": true
+                }
+              }
             },
             {
               "corruptionValue": "1",
@@ -531,7 +586,14 @@
               "label": "",
               "code": "",
               "kind": "characteristic",
-              "id": "eaC13"
+              "id": "eaC13",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "predicates": {
+                  "wearsTerminatorArmour": true
+                }
+              }
             }
           ]
         },

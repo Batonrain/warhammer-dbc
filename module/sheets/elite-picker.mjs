@@ -168,6 +168,7 @@ function eliteRow(doc, check, cost, note, taken, fated = {}) {
     ${reqTxt ? `<div class="elite-req-line">${reqTxt}</div>` : ""}
     <div class="pick-desc" style="display:none;">
       ${desc}
+      ${doc.system?.becoming ? `<p><b>Становление:</b> ${esc(doc.system.becoming)}</p>` : ""}
       ${doc.system?.charBonus ? `<p><b>Бонусы:</b> ${esc(doc.system.charBonus)}</p>` : ""}
       ${doc.system?.freeTalents ? `<p><b>Бесплатные Таланты:</b> ${esc(doc.system.freeTalents)}</p>` : ""}
       ${doc.system?.gear ? `<p><b>Снаряжение:</b> ${esc(doc.system.gear)}</p>` : ""}

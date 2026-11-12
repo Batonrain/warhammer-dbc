@@ -542,6 +542,8 @@ describe("общее требование к предикатам", () => {
     targetLacksSealedArmour: undefined,
     // Обут ли (Barefoot / Босоногий Ратлинга): false — «босиком».
     wearsFootwear: false,
+    // Терминаторская броня (dbc-10, Чемпион-Терминатор).
+    wearsTerminatorArmour: true,
     // Сцена в невесомости/микро-гравитации (Пустота в Венах Сквата, wdbc-9tpng).
     weightlessScene: true,
     // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
