@@ -16,7 +16,7 @@
 //  sources.mjs и он не должен туда попадать (source-registry-acyclic).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { actorImmuneToDiseaseEffects } from "./disease-immunity.mjs";
+import { actorImmuneToInfection } from "./disease-immunity.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 
 const CHAR_LABELS = { t: "T", wp: "W", s: "S", ag: "Ag", int: "I", per: "P", fel: "F", inf: "Inf", ws: "WS", bs: "BS" };
@@ -142,7 +142,7 @@ export function rowsPatch(list, index, field, raw, numeric = []) {
  * носителя возможности (apps/effects.mjs::isItemActive): подавленная мутация не защищает.
  */
 export function infectionBlockedBy(actor, isActive) {
-  return actorImmuneToDiseaseEffects(actor, isActive)
+  return actorImmuneToInfection(actor, isActive)
     ? "Иммунитет к болезням (Метка Нургла, Струп): носитель не заражается"
     : null;
 }

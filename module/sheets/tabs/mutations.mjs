@@ -15,6 +15,8 @@ import { centerPicker, pickerPos }     from "../picker-ui.mjs";
 import { hasSubmutations }             from "../../rules/submutations.mjs";
 import { rollSubmutation }             from "../../apps/submutations.mjs";
 import { hasRuleFlag }                 from "../../rules/flags.mjs";
+import { hasRubricOfAhriman }          from "../../rules/rubric-sorcerer.mjs";
+import { rollChoiceTest }              from "../../combat/rubric-sorcerer.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
 
@@ -30,12 +32,15 @@ import { postTestCard } from "../../helpers/test-card.mjs";
  * @param {?number} roll2   Второй бросок Неделимого (только для type "mutation").
  * @param {number}  infB    Бонус Влияния — задаёт диапазон сдвига в обе стороны.
  * @param {boolean} failed  От Порчи за Провал — закрывает и сдвиг, и второй бросок.
+ * @param {boolean} [freeChoice] Рубрика Аримана: тест W−30 пройден — мутацию (не Дар) можно выбрать из всей таблицы.
+ * @param {boolean} [extraDie] Рубрика Аримана: второй кубик есть и при Порче за Провал (запрет книги — только Неделимым).
  * @returns {{name:string, range:string, text:string}[]} в порядке самой таблицы.
  */
-export function mutationPool(type, god, roll1, roll2, infB, failed) {
+export function mutationPool(type, god, roll1, roll2, infB, failed, freeChoice = false, extraDie = false) {
   const cat = mutationCatalog();
   const source = type === "gift" ? (cat.gifts.find(g => g.god === god)?.items || []) : cat.common;
-  const rolls = (type === "mutation" && roll2 != null && !failed) ? [roll1, roll2] : [roll1];
+  if (freeChoice && type === "mutation") return source;
+  const rolls = (type === "mutation" && roll2 != null && (!failed || extraDie)) ? [roll1, roll2] : [roll1];
   const shifts = failed ? [0] : Array.from({ length: infB * 2 + 1 }, (_, i) => i - infB);
   const achievable = new Set();
   for (const r of rolls) for (const s of shifts) {
@@ -67,13 +72,16 @@ export async function rollMutationOrGift(actor) {
   // «Всегда бросает только один кубик на мутации и субмутации» (Пасынки
   // Богов Зверолюда) — второй бросок Неделимого не положен.
   const undivided = !physImmune && patron === "undivided" && !hasRuleFlag(actor, "mutation.singleDie");
+  // Рубрика Аримана: «бросает два кубика на Мутации и выбирает один» — второй бросок попадает в тот же пул выбора, что у Неделимого.
+  const rubric = !physImmune && hasRubricOfAhriman(actor);
   const roll1 = await new Roll("1d100").evaluate();
-  const roll2 = undivided ? await new Roll("1d100").evaluate() : null;
+  const roll2 = (undivided || rubric) ? await new Roll("1d100").evaluate() : null;
+  let freeChoice = false;
   const defaultGod = GOD_GIFTS[patron] ? patron : Object.keys(GOD_GIFTS)[0];
   const godOptions = Object.entries(GOD_GIFTS)
     .map(([k, g]) => `<option value="${k}" ${k === defaultGod ? "selected" : ""}>${g.label}</option>`).join("");
   const rollsLabel = roll2 ? `${roll1.total}, ${roll2.total}` : `${roll1.total}`;
-  const poolFor = (type, god, failed) => mutationPool(type, god, roll1.total, roll2?.total ?? null, infB, failed);
+  const poolFor = (type, god, failed) => mutationPool(type, god, roll1.total, roll2?.total ?? null, infB, failed, freeChoice, rubric);
 
   const optionRow = (x, god) => `
     <div class="pick-row" data-name="${esc(x.name)}" data-god="${esc(god)}">
@@ -101,6 +109,8 @@ export async function rollMutationOrGift(actor) {
         <label title="Мутация от Порчи за Провал не даёт ни сдвига ±Inf.b (${infB}), ни второго броска Неделимым — достижима только запись под самим броском">От Порчи за Провал:</label>
         <input type="checkbox" id="mg-fail"/>
       </div>
+      ${rubric ? `<div class="atk-dlg-row" id="mg-rubric-row"><label title="Рубрика Аримана: если мутация не нравится, пройти тест W−30 и выбрать любую из всей таблицы">Рубрика Аримана:</label>
+        <button type="button" id="mg-rubric-test">Тест W−30 — выбрать мутацию</button></div>` : ""}
       <div class="atk-dlg-row"><label>Итог:</label><b id="mg-result">${defaultName}</b></div>
       <input type="hidden" id="mg-pick-name" value="${esc(defaultName)}"/>
       <input type="hidden" id="mg-pick-god" value=""/>
@@ -127,7 +137,7 @@ export async function rollMutationOrGift(actor) {
           title: type === "gift" ? `Дар ${GOD_GIFTS[god]?.label || god}` : "Мутация",
           lines: [`<div class="roll-statline"><span class="roll-stat"><label>Бросок</label><b>${rollsLabel}</b></span></div>`],
           outcome: `<b>${esc(name)}</b>`
-        }, { rolls: [roll1, ...(roll2 && !failed ? [roll2] : [])] });
+        }, { rolls: [roll1, ...(roll2 && (!failed || rubric) ? [roll2] : [])] });
         // Субмутация бросается сразу за мутацией — она часть той же выдачи
         // (стр. 440), и её сдвиг тоже закрыт Порчей за Провал.
         if (item && hasSubmutations(item.system?.benefit || ""))
@@ -172,6 +182,15 @@ export async function rollMutationOrGift(actor) {
       };
       html.find("#mg-type, #mg-fail").on("change", () => {
         html.find("#mg-god-row").toggle(html.find("#mg-type").val() === "gift");
+        html.find("#mg-rubric-row").toggle(html.find("#mg-type").val() === "mutation");
+        renderPool();
+      });
+      html.find("#mg-rubric-test").on("click", async ev => {
+        ev.preventDefault();
+        const btn = ev.currentTarget;
+        btn.disabled = true;
+        freeChoice = await rollChoiceTest(actor);
+        btn.textContent = freeChoice ? "Тест пройден — выбор открыт" : "Тест провален";
         renderPool();
       });
       html.find("#mg-god").on("change", renderPool);

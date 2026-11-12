@@ -61,6 +61,57 @@ describe("matchPackSource", () => {
   });
 });
 
+describe("matchPackSource: неоднозначное имя (task-8d6a)", () => {
+  // Граната «Rad / Рад» и ракета «Rad / Ракета: Рад» отзываются на половину «rad».
+  const grenade = doc("u-gren", "Rad / Рад", "weapon", { dmg: "2d10" });
+  const rocket  = doc("u-rock", "Rad / Ракета: Рад", "weapon", { dmg: "4d10" });
+
+  it("копия с коротким именем «Rad» без uuid источника НЕ сопоставляется ни с одним из двух", () => {
+    for (const docs of [[grenade, rocket], [rocket, grenade]]) {
+      const index = buildPackIndex(docs);
+      expect(matchPackSource(item({ name: "Rad", type: "weapon" }), index)).toBe(null);
+    }
+  });
+
+  it("попадает в «Без соответствия» отчёта, а не в строки замены", () => {
+    const actor = { id: "a1", name: "Тест", items: [item({ name: "Rad", type: "weapon", system: { dmg: "9d10" } })] };
+    const report = buildSyncReport([actor], buildPackIndex([grenade, rocket]));
+    expect(report.rows).toEqual([]);
+    expect(report.unmatched.map(u => u.itemName)).toEqual(["Rad"]);
+  });
+
+  it("полное имя однозначно и находит свой документ, даже когда половина общая", () => {
+    const index = buildPackIndex([grenade, rocket]);
+    expect(matchPackSource(item({ name: "Rad / Рад", type: "weapon" }), index)).toBe(grenade);
+    expect(matchPackSource(item({ name: "Rad / Ракета: Рад", type: "weapon" }), index)).toBe(rocket);
+  });
+
+  it("однозначная вторая половина по-прежнему работает: «Рад» только у гранаты", () => {
+    const index = buildPackIndex([grenade, rocket]);
+    expect(matchPackSource(item({ name: "Ракета: Рад", type: "weapon" }), index)).toBe(rocket);
+  });
+
+  it("compendiumSource решает без оглядки на неоднозначность имени", () => {
+    const index = buildPackIndex([grenade, rocket]);
+    expect(matchPackSource(item({ name: "Rad", type: "weapon", src: rocket.uuid }), index)).toBe(rocket);
+  });
+
+  it("два документа с общей половиной, но ОДИНАКОВЫМ содержимым, не мешают (дубль в двух паках)", () => {
+    const a = doc("u-a", "Radium Jezzail", "weapon", { dmg: "1d10" });
+    const b = doc("u-b", "Radium Jezzail", "weapon", { dmg: "1d10" });
+    const index = buildPackIndex([a, b]);
+    expect(matchPackSource(item({ name: "Radium Jezzail", type: "weapon" }), index)).toBe(a);
+  });
+
+  it("тот же ключ у документов РАЗНЫХ типов — не неоднозначность", () => {
+    const w = doc("u-w", "Rad", "weapon", { dmg: "2d10" });
+    const g = doc("u-g", "Rad", "gear", {});
+    const index = buildPackIndex([w, g]);
+    expect(matchPackSource(item({ name: "Rad", type: "weapon" }), index)).toBe(w);
+    expect(matchPackSource(item({ name: "Rad", type: "gear" }), index)).toBe(g);
+  });
+});
+
 describe("diffItemAgainstPack", () => {
   it("пак не менял поле относительно опоры — не показываем, даже если поле правили локально", () => {
     const pack = doc("u1", "Болтер", "weapon", { dmg: "1d10+4", cost: 100 });

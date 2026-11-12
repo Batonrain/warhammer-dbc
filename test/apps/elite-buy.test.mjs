@@ -192,3 +192,34 @@ describe("Предначертанный Путь", () => {
     expect(eliteCostFor(a, elite("Ведьма Культа", { cost: 2000 })).cost).toBe(2000);
   });
 });
+
+// Облитератор: «4500 xp для Космодесантника, 5500 xp для Человека» (корбук).
+// system.cost — цена для Космодесантника, system.costNonAstartes — для прочих.
+describe("цена архетипа с отдельной ценой для не-Космодесантника", () => {
+  const obliterator = elite("Obliterator", { cost: 4500, costNonAstartes: 5500 });
+  const marine = (items = []) => actor({ system: { race: "astartes" }, items });
+
+  it("Космодесантник платит базовую цену", () => {
+    expect(eliteCostFor(marine(), obliterator).cost).toBe(4500);
+  });
+
+  it("Человек платит повышенную цену", () => {
+    expect(eliteCostFor(actor(), obliterator).cost).toBe(5500);
+  });
+
+  it("Космодесантник по Черте «Astartes» при другой расе листа — тоже Космодесантник", () => {
+    const withTrait = actor({ items: [{ name: "Astartes / Астартес", type: "trait", system: {} }] });
+    expect(eliteCostFor(withTrait, obliterator).cost).toBe(4500);
+  });
+
+  it("множитель за взятые архетипы ложится на ту цену, что относится к персонажу", () => {
+    expect(eliteCostFor(actor({ items: [elite("A")] }), obliterator).cost).toBe(11000);
+    expect(eliteCostFor(marine([elite("A")]), obliterator).cost).toBe(9000);
+  });
+
+  it("архетип без отдельной цены не меняется ни для кого", () => {
+    const plain = elite("Ведьма Культа", { cost: 2000 });
+    expect(eliteCostFor(actor(), plain).cost).toBe(2000);
+    expect(eliteCostFor(marine(), plain).cost).toBe(2000);
+  });
+});

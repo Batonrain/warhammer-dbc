@@ -9,15 +9,17 @@
 //   • Cold Eyes / Холодные Глаза (стр. 243) — то же;
 //   • Optical Sight / Оптический Прицел и Djinn Sight / Джинн-Прицел (стр.
 //     171) — то же, но с меткой «(Прицеливание)»: только когда стрелок
-//     прицелился (system.aiming, ставит HUD — combat/aiming-action.mjs).
+//     прицелился (system.aiming, ставит HUD — combat/aiming-action.mjs);
+//   • Omni-Sight / Омни-Прицел — «комбинирует эффекты всех остальных»
+//     (Sahara task-e683): отвечает «да» через rules/sight-effects.mjs.
 //  Чистая логика без Foundry.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemIs } from "./item-marker.mjs";
 import { hasColdEyes } from "./cold-eyes.mjs";
+import { sightGrants, SIGHT_EFFECT } from "./sight-effects.mjs";
 
 export const MARKSMAN_CAPABILITY = "rangedCore.core.marksman";
-const AIM_SCOPES = ["Optical Sight", "Djinn Sight"];
 
 /**
  * Причина (подпись для строки окна атаки), по которой штраф дальней и
@@ -31,7 +33,8 @@ export function longRangeImmunityReason(actor, installedMods = [], { aiming = ""
   if (items.some(i => itemIs(i, "talent", MARKSMAN_CAPABILITY, "Marksman"))) return "Снайпер";
   if (hasColdEyes(actor)) return "Холодные Глаза";
   if (aiming && aiming !== "none") {
-    const scope = installedMods.find(m => AIM_SCOPES.some(n => itemIs(m, "weaponMod", null, n)));
+    // Оптический, Джинн и Омни-Прицел (rules/sight-effects.mjs).
+    const scope = sightGrants(installedMods, SIGHT_EFFECT.longRange);
     if (scope) return `${String(scope.name).split("/").pop().trim()} (Прицеливание)`;
   }
   return null;

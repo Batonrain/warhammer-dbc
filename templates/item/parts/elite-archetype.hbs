@@ -26,6 +26,11 @@
       <span class="wr-label" title="Базовая цена в опыте. Каждый следующий Элитный архетип персонажа вдвое дороже предыдущего">Цена (опыт)</span>
       <input type="number" name="system.cost" value="{{system.cost}}" min="0"/>
     </label>
+
+    <label class="wr-row">
+      <span class="wr-label" title="Только когда книга называет две цены (Облитератор: 4500 для Космодесантника, 5500 для Человека). Тогда «Цена» — для Космодесантника, это поле — для остальных. 0 — отдельной цены нет">Цена не-Космодесантника</span>
+      <input type="number" name="system.costNonAstartes" value="{{system.costNonAstartes}}" min="0"/>
+    </label>
   </div>
 
   <label class="wr-row wr-row-wide">

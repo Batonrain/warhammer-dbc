@@ -14,6 +14,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { commandBlockReason } from "./command.mjs";
+import { litanyGivesExtreme } from "./dark-apostle.mjs";
 
 /** Роль актора (по uuid) в конкретном Отряде — null, если не состоит вовсе. */
 export function squadRoleOf(squad, actorUuid) {
@@ -61,6 +62,8 @@ export function minionCanCauseExtremeDamage(actor) {
   if (actor?.type !== "minion" && actor?.type !== "horde") return true;
   // Оглох/Без сознания — Присутствие не доходит вовсе (rules/command.mjs).
   if (commandBlockReason(actor)) return false;
+  // Литания Хаоса Неделимого: подчинённым выдано свойство Extreme (9/−1) на все атаки.
+  if (litanyGivesExtreme(actor)) return true;
   const squad = findMemberSquad(actor.uuid);
   // Проваливший Мораль боец Отряда теряет все преимущества Командования.
   const entry = (squad?.system?.members || []).find(m => m.uuid === actor.uuid);

@@ -63,6 +63,27 @@ describe("tempModifierData: форма временного модификато
     expect(isTempModifier(null)).toBe(false);
   });
 
+  it("Unnatural: целится в bonusFx характеристики, фаза initial", () => {
+    const data = tempModifierData({ key: "system.characteristics.s.bonusFx", value: 2, source: "Стимуляторы" });
+    expect(data.system.changes[0].key).toBe("system.characteristics.s.bonusFx");
+    expect(data.system.changes[0].phase).toBe("initial");
+    expect(data.name).toBe("Стимуляторы (S (Unnatural) +2)");
+  });
+
+  it("руки: хранимое поле extraHands в фазе initial", () => {
+    const data = tempModifierData({ key: "system.extraHands", value: 2, source: "Точный Телекинез", duration: 3, unit: "rounds" });
+    expect(data.system.changes[0].key).toBe("system.extraHands");
+    expect(data.system.changes[0].phase).toBe("initial");
+    expect(data.name).toBe("Точный Телекинез (Руки +2)");
+    expect(data.duration).toEqual({ value: 3, units: "rounds", expiry: "turnEnd" });
+  });
+
+  it("ОД максимум: initial, как требует реестр ключей", () => {
+    const data = tempModifierData({ key: "system.actionPoints.max", value: 1 });
+    expect(data.system.changes[0].phase).toBe(expectedPhase("system.actionPoints.max"));
+    expect(data.system.changes[0].phase).toBe("initial");
+  });
+
   it("бонус тоже можно: механизм про знаковый модификатор, не только про штраф", () => {
     const data = tempModifierData({ charKey: "s", value: 20, source: "Боевые стимуляторы" });
     expect(data.system.changes[0].value).toBe(20);

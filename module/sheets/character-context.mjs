@@ -21,7 +21,7 @@ import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.
 
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { hasRuneMagic }                          from "../rules/sigillite-runes.mjs";
-import { hasTrophyPoints }                       from "../rules/trophy-points.mjs";
+import { hasTrophyPoints, hasTrophiesOfJudgement, hasMarkedPrey } from "../rules/trophy-points.mjs";
 import { ignoresWeight }                         from "../rules/encumbrance.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -86,7 +86,19 @@ import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
 import { hasSkillfulTorture }                    from "../apps/skillful-torture.mjs";
 import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
+import { hasButchersNails, hasRedStreak }          from "../rules/khorne-berserker.mjs";
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
+import { hasDirgeOfDespair, dirgeActive, hasWallOfDiscord, hasSingForMe } from "../combat/noise-marine.mjs";
+import { hasDistilledTorment }                  from "../combat/distilled-torment.mjs";
+import { hasInfectiousMiasma, hasRotsmith, hasBlessedWithPus, hasWalkingWasteland } from "../rules/plague-marine.mjs";
+import { infectiousMiasmaStatus }                from "../combat/plague-marine.mjs";
+import { hasGolemMaster, hasInfernalShells, hasRebornInDust, nexusCopies } from "../rules/rubric-sorcerer.mjs";
+import { golemStatus }                           from "../combat/rubric-sorcerer.mjs";
+import { hasHarbingerOfHeresy, hasDarkDevotion, hasTruePrayer, hasLayOnHands, hasLitanyOfChaos, hasMartyr, hasMortalInstrument } from "../rules/dark-apostle.mjs";
+import { darkApostleStatus }                     from "../combat/dark-apostle.mjs";
+import { hasHunterSight }                        from "../rules/master-of-executions.mjs";
+import { hasIronCage, hasSigilOfDominion, hasCellOfShame, hasEmpyreanWhip, hasForgeOfOne, hasRunDown, hasWarpsmithAbility } from "../rules/warpsmith.mjs";
+import { warpsmithStatus }                       from "../combat/warpsmith.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasCaution }                            from "../combat/caution.mjs";
@@ -115,6 +127,7 @@ import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.m
 import { fatigueFaintThreshold } from "../rules/resilience-talents.mjs";
 import { hasArmourMonger, armourMongerOn } from "../combat/armour-monger.mjs";
 import { hasHunkerDown, hunkerDownOn } from "../combat/hunker-down.mjs";
+import { baseFitsList } from "../rules/melee-base.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -176,7 +189,7 @@ export function characterContext(actor) {
   context.combatContestOptions = Object.entries(MELEE_CONTESTS)
     .filter(([key, c]) => {
       const categoryOk = !c.categories || !meleeCategory || c.categories.includes(meleeCategory);
-      const baseOk     = !c.bases || c.bases.includes(meleeBaseKey);
+      const baseOk     = !c.bases || baseFitsList(c.bases, meleeBaseKey);
       return categoryOk && baseOk;
     })
     .map(([key, c]) => ({ key, label: c.label, modLabel: c.modLabel }));
@@ -464,6 +477,10 @@ export function characterContext(actor) {
   context.hasSigilliteRunes = hasRuneMagic(actor);
   // Очки Трофеев (Мастер Казней, Sahara task-bbe1) — ячейка шапки только носителю.
   context.hasTrophyPoints = hasTrophyPoints(actor);
+  // Кнопки ячейки: ⚖ Трофеи Приговора (возврат Очка, решает ГМ) и 🎯 Отмеченная Добыча (combat/marked-prey.mjs).
+  context.hasTrophiesOfJudgement = hasTrophiesOfJudgement(actor);
+  context.hasMarkedPrey = hasMarkedPrey(actor);
+  context.markedPreyName = context.hasMarkedPrey ? (actor.getFlag?.("warhammer-dbc", "markedPrey")?.name ?? "") : "";
   // Фактор Прибыли (Вольный Торговец): бонус = ФП ÷ 10 (как у характеристик)
   context.profitFactorBonus = Math.floor((Number(system.aspirations?.profitFactor) || 0) / 10);
   // Иннари: выбор «Прошлого» (бывшей расы) и её бонусы + Черты Иннари.
@@ -537,8 +554,47 @@ export function characterContext(actor) {
   context.hasSkillfulTorture = hasSkillfulTorture(actor);
   // Кнопка «Аватар Резни» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
   context.hasAvatarOfSlaughter = hasAvatarOfSlaughter(actor);
+  context.hasButchersNails = hasButchersNails(actor);
+  context.hasRedStreak = hasRedStreak(actor);
   // Кнопка «Грозный Вопль» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
   context.hasDreadWail = hasDreadWail(actor);
+  // Шумовой Десантник (Sahara 1-54b9): кнопки вкладки БОЙ — только владельцам Талантов.
+  context.hasDirgeOfDespair = hasDirgeOfDespair(actor);
+  context.dirgeActive = dirgeActive(actor);
+  context.hasWallOfDiscord = hasWallOfDiscord(actor);
+  context.hasSingForMe = hasSingForMe(actor);
+  context.hasDistilledTorment = hasDistilledTorment(actor);
+  context.hasInfectiousMiasma = hasInfectiousMiasma(actor);
+  context.miasmaStatus = context.hasInfectiousMiasma ? infectiousMiasmaStatus(actor) : null;
+  context.hasRotsmith = hasRotsmith(actor);
+  context.hasBlessedWithPus = hasBlessedWithPus(actor);
+  context.hasWalkingWasteland = hasWalkingWasteland(actor);
+  // Колдун Рубрики (Sahara 1-54b9, module/combat/rubric-sorcerer.mjs): Големы, Узы Душ, Возрождён во Прахе, Инфернальные Снаряды.
+  context.hasGolemMaster = hasGolemMaster(actor);
+  context.golemStatus = context.hasGolemMaster ? golemStatus(actor) : null;
+  context.hasNexusOfSouls = context.hasGolemMaster && nexusCopies(actor) > 0;
+  context.hasRebornInDust = hasRebornInDust(actor);
+  context.hasInfernalShells = hasInfernalShells(actor);
+  // Тёмный Апостол (Sahara 1-54b9, module/combat/dark-apostle.mjs): кнопки Черт и Талантов на вкладке БОЙ.
+  context.hasHarbinger = hasHarbingerOfHeresy(actor);
+  context.hasDarkDevotion = hasDarkDevotion(actor);
+  context.hasTruePrayer = hasTruePrayer(actor);
+  context.hasLayOnHands = hasLayOnHands(actor);
+  context.hasLitanyOfChaos = hasLitanyOfChaos(actor);
+  context.hasMartyr = hasMartyr(actor);
+  context.hasMortalInstrument = hasMortalInstrument(actor);
+  context.hasDarkApostle = context.hasHarbinger || context.hasDarkDevotion || context.hasTruePrayer || context.hasLayOnHands
+    || context.hasLitanyOfChaos || context.hasMartyr || context.hasMortalInstrument;
+  context.darkApostle = context.hasDarkApostle ? darkApostleStatus(actor) : null;
+  // Мастер Казней (Sahara 1-54b9, module/combat/master-of-executions.mjs): кнопка Взора Охотника на вкладке БОЙ.
+  context.hasHunterSight = hasHunterSight(actor);
+  context.hasIronCage = hasIronCage(actor);
+  context.hasSigilOfDominion = hasSigilOfDominion(actor);
+  context.hasCellOfShame = hasCellOfShame(actor);
+  context.hasEmpyreanWhip = hasEmpyreanWhip(actor);
+  context.hasForgeOfOne = hasForgeOfOne(actor);
+  context.hasRunDown = hasRunDown(actor);
+  context.warpsmith = hasWarpsmithAbility(actor) ? warpsmithStatus(actor) : null;
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
   // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.

@@ -1,0 +1,21 @@
+{
+  "name": "Существа Элитных архетипов",
+  "type": "Actor",
+  "sorting": "m",
+  "_id": "zg31LDFTBGm8ynuJ",
+  "description": "",
+  "folder": null,
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!zg31LDFTBGm8ynuJ"
+}

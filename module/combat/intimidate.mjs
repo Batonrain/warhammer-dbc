@@ -31,6 +31,7 @@ import { rootEl } from "../sheets/v2-helpers.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { intoTheJawsOfHellActive, anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../rules/leadership-talents.mjs";
+import { radiantPresenceSeenBy, radiantPresenceHint } from "./radiant-presence.mjs";
 
 /**
  * Модификаторы и переброс стороны — тем же приёмом, что rules/morale-test.mjs
@@ -80,7 +81,7 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
   // это два теста, и каждый обязан видеть свои Черты и своё состояние тела.
   // Оба помечены morale:true — Запугивание книга прямо называет тестом Морали
   // (rules/resolve-test.mjs::isMoraleOpposedSkill), и цель отвечает им же.
-  // radiantPresence — галочка диалога (решение стола), только на стороне цели.
+  // radiantPresence — галочка диалога (по видимости или руками), только на стороне цели.
   // targetActor — противоположная сторона теста (Angel Hunters и подобные
   // правила с when.target*), тем же приёмом, что атака/навык/Страх.
   const atkResolved = resolveTest({ actor: attacker, kind: "skill", skill: "intimidate", char: "wp", morale: true, targetActor: target });
@@ -162,15 +163,19 @@ async function _postIntimidateMsg(attacker, target, data) {
 }
 
 /** Диалог: модификаторы обеих сторон, порог уже виден до броска. */
-async function intimidateDialog(actor, target) {
+export async function intimidateDialog(actor, target) {
   if (!target) return;
   const base = intimidateThreshold(actor);
   const targetBase = moraleThreshold(target);
   // Radiant Presence/Into the Jaws of Hell (Sahara 3-ac78, 19.10.2026) —
-  // галочки на стороне ЦЕЛИ (решение стола), показываются только если в
-  // мире вообще есть носитель.
+  // галочки на стороне ЦЕЛИ, показываются только если в мире вообще есть
+  // носитель. Блистательное Присутствие (wdbc-051qb) проставляется само, если
+  // союзный или нейтральный носитель в поле зрения токена цели (источник — нападающий, его
+  // собственное Присутствие не считается); «слышит» и снятие — руками.
+  // «В Самое Пекло» — только руками.
+  const radiantSeen = radiantPresenceSeenBy(target, { sourceActor: actor });
   const radiantPresenceHtml = anyRadiantPresenceHolderExists(game.actors ?? [])
-    ? `<div class="atk-dlg-row"><label title="Цель видит или слышит союзника/нейтрального с Блистательным Присутствием — +10 на её тест Морали"><input id="intim-radiant" type="checkbox"/> Блистательное Присутствие (+10 цели)</label></div>` : "";
+    ? `<div class="atk-dlg-row"><label title="${esc(radiantPresenceHint(radiantSeen))}"><input id="intim-radiant" type="checkbox"${radiantSeen.seen ? " checked" : ""}/> Блистательное Присутствие (+10 цели)</label></div>` : "";
   const jawsOfHellHtml = anyIntoTheJawsOfHellHolderExists(game.actors ?? [])
     ? `<div class="atk-dlg-row"><label title="Рядом с целью сражается её командующий с В Самое Пекло — тест цели проходит автоматически"><input id="intim-jaws" type="checkbox"/> В Самое Пекло (авто-успех цели)</label></div>` : "";
 

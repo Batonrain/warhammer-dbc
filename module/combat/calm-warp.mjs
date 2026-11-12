@@ -20,6 +20,7 @@ import { hasCalmWinds, hasFavouredByTheWarp } from "../rules/psyker-talents.mjs"
 import { claimSignatureFree, releaseSignatureFree } from "./psyker-pools.mjs";
 import { warpLockButtonsHtml } from "./warp-lock.mjs";
 import { getPhenomenon } from "../constants/psyker-tables.mjs";
+import { rollPeril } from "./rubric-sorcerer.mjs";
 import { calmWarpAllowed, calmWarpResult, hasImperialSanctioning, offerFreePerilReroll, CALM_WARP_COR }
   from "../rules/calm-warp.mjs";
 
@@ -64,10 +65,10 @@ function phenHtml(phen, phenTotal, phenMod, note = "") {
     </div>`;
 }
 
-function perilHtml(peril, total, prefix = "") {
+function perilHtml(peril, total, prefix = "", note = "") {
   return `
     <div class="psy-peril">
-      <div class="psy-peril-header">💀 ${prefix}ВАРП-ПРОРЫВ! (бросок ${total})</div>
+      <div class="psy-peril-header">💀 ${prefix}ВАРП-ПРОРЫВ! (бросок ${total})${note}</div>
       <div class="psy-peril-name">${peril.label}</div>
       <div class="psy-peril-text">${peril.text}</div>
     </div>`;
@@ -130,9 +131,9 @@ export async function handleCalmWarpClick(message, btn) {
   let newLabel = ""; // что выпало при переброске — Штилю показать выбор «оставить или вернуть»
   let favouredNote = ""; // Любимец Варпа: пояснение о двух бросках в шапке Феномена
   if (table === "peril") {
-    const r = await new Roll("1d100").evaluate(); rolls.push(r);
+    const r = await rollPeril(actor, rolls);
     const res = calmWarpResult("peril", { perilTotal: r.total });
-    sections.push(perilHtml(res.peril, r.total, "ПЕРЕБРОС: "));
+    sections.push(perilHtml(res.peril, r.total, "ПЕРЕБРОС: ", r.note));
     newLabel = res.peril.label;
   } else {
     let pr = await new Roll(`1d100 + ${phenMod}`).evaluate(); rolls.push(pr);
@@ -146,14 +147,16 @@ export async function handleCalmWarpClick(message, btn) {
       pr = keep;
     }
     let perilTotal = null;
+    let perilNote = "";
     if (calmWarpResult("phenomenon", { phenTotal: pr.total }).perilTriggered) {
-      const r = await new Roll("1d100").evaluate(); rolls.push(r);
+      const r = await rollPeril(actor, rolls);
       perilTotal = r.total;
+      perilNote = r.note;
     }
     const res = calmWarpResult("phenomenon", { phenTotal: pr.total, perilTotal });
     perilTriggered = res.perilTriggered;
     sections.push(phenHtml(res.phen, pr.total, phenMod, favouredNote));
-    if (res.peril) sections.push(perilHtml(res.peril, perilTotal));
+    if (res.peril) sections.push(perilHtml(res.peril, perilTotal, "", perilNote));
     else sections.push(`<div class="roll-threshold" style="font-size:0.85em;color:#3a7a3a;">Прорыва нет.</div>`);
     newLabel = `${res.phen.label}${res.peril ? ` → Прорыв: ${res.peril.label}` : ""}`;
   }

@@ -292,7 +292,7 @@ async function buildAllTrees(force = false) {
 // приём «компендиум с фильтрами плюс счётчик», просто пак другой.
 const GRANTABLE_PACKS = ["weapons", "armor", "gear", "ammunition", "implants",
   "weapon-mods", "armor-mods", "tools", "shields",
-  "talents", "traits", "psychic-powers", "tech-powers", "chemistry", "mutations"];
+  "talents", "traits", "psychic-powers", "tech-powers", "chemistry", "mutations", "diseases"];
 export const GRANTABLE_CATEGORIES = GRANTABLE_PACKS.map(pack => ({
   pack, label: CATEGORIES.find(c => c.sources.length === 1 && c.sources[0].pack === pack)?.label || pack
 }));

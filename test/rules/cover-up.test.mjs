@@ -14,7 +14,8 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   COVER_UP_TABLE, COVER_UP_FLAG,
-  hasCoverUp, readCells, cellStats, coverUpSummary, clampInf,
+  hasCoverUp, readCells, cellStats, coverUpSummary, clampInf, infOnSheet, infRemaining,
+  freeCellAllowed, effectiveCells,
   withAddedCell, withChangedCell, withoutCell
 } from "../../module/rules/cover-up.mjs";
 import { packDocuments, PACKS_SRC, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
@@ -72,43 +73,114 @@ describe("чтение ячеек из флага", () => {
   it("запись приводится к {name, inf}: пустое имя остаётся пустым, Inf прижимается к 1…4", () => {
     const cells = readCells(actorWith([], [{ name: "Гильдия", inf: 3 }, { inf: 9 }, null, "x", { name: 5, inf: "2" }]));
     expect(cells).toEqual([
-      { name: "Гильдия", inf: 3 },
-      { name: "", inf: 4 },
-      { name: "5", inf: 2 }
+      { name: "Гильдия", inf: 3, free: false },
+      { name: "", inf: 4, free: false },
+      { name: "5", inf: 2, free: false }
     ]);
+  });
+  it("галочка «бесплатная ячейка»: только настоящее true, у старых записей без поля — не бесплатная", () => {
+    const cells = readCells(actorWith([], [{ name: "А", inf: 2, free: true }, { name: "Б", inf: 2 }, { name: "В", inf: 2, free: "yes" }]));
+    expect(cells.map(c => c.free)).toEqual([true, false, false]);
   });
 });
 
 describe("правка списка — чистые функции, исходный список не меняют", () => {
-  const base = [{ name: "А", inf: 1 }, { name: "Б", inf: 4 }];
-  it("добавить: новая ячейка в конце, по умолчанию Inf 1 и пустое имя", () => {
+  const base = [{ name: "А", inf: 1, free: false }, { name: "Б", inf: 4, free: false }];
+  it("добавить: новая ячейка в конце, по умолчанию Inf 1, пустое имя, платная", () => {
     const next = withAddedCell(base);
-    expect(next).toEqual([...base, { name: "", inf: 1 }]);
+    expect(next).toEqual([...base, { name: "", inf: 1, free: false }]);
     expect(base).toHaveLength(2);
   });
   it("добавить с именем и Inf", () => {
-    expect(withAddedCell([], { name: "Сеть Ульев", inf: 3 })).toEqual([{ name: "Сеть Ульев", inf: 3 }]);
+    expect(withAddedCell([], { name: "Сеть Ульев", inf: 3 })).toEqual([{ name: "Сеть Ульев", inf: 3, free: false }]);
   });
   it("изменить имя и Inf по индексу; несуществующий индекс — без изменений", () => {
-    expect(withChangedCell(base, 0, { name: "Новая" })[0]).toEqual({ name: "Новая", inf: 1 });
-    expect(withChangedCell(base, 1, { inf: 2 })[1]).toEqual({ name: "Б", inf: 2 });
+    expect(withChangedCell(base, 0, { name: "Новая" })[0]).toEqual({ name: "Новая", inf: 1, free: false });
+    expect(withChangedCell(base, 1, { inf: 2 })[1]).toEqual({ name: "Б", inf: 2, free: false });
     expect(withChangedCell(base, 1, { inf: 77 })[1].inf).toBe(4);
     expect(withChangedCell(base, 5, { name: "x" })).toEqual(base);
-    expect(base[0]).toEqual({ name: "А", inf: 1 });
+    expect(base[0]).toEqual({ name: "А", inf: 1, free: false });
+  });
+  it("галочка «бесплатная»: ставится и снимается, остальное в ячейке цело", () => {
+    const on = withChangedCell(base, 1, { free: true });
+    expect(on[1]).toEqual({ name: "Б", inf: 4, free: true });
+    expect(withChangedCell(on, 1, { free: false })[1].free).toBe(false);
+    expect(base[1].free).toBe(false);
   });
   it("удалить по индексу; несуществующий индекс — без изменений", () => {
-    expect(withoutCell(base, 0)).toEqual([{ name: "Б", inf: 4 }]);
+    expect(withoutCell(base, 0)).toEqual([{ name: "Б", inf: 4, free: false }]);
     expect(withoutCell(base, 9)).toEqual(base);
   });
 });
 
 describe("сводка ведомости", () => {
-  it("число ячеек, вложенный Inf и Уровни Реквизиции — справочно", () => {
+  it("число ячеек, вложенный Inf (всего и платный) и высший Уровень Реквизиции", () => {
     const s = coverUpSummary([{ name: "А", inf: 1 }, { name: "Б", inf: 4 }, { name: "В", inf: 3 }]);
-    expect(s).toEqual({ count: 3, totalInf: 8, maxRequisition: 2 });
+    expect(s).toEqual({ count: 3, totalInf: 8, paidInf: 8, freeInf: 0, maxRequisition: 2 });
+  });
+  it("бесплатные ячейки в платный Inf не входят", () => {
+    const s = coverUpSummary([{ name: "А", inf: 2, free: true }, { name: "Б", inf: 4 }, { name: "В", inf: 3, free: true }]);
+    expect(s).toEqual({ count: 3, totalInf: 9, paidInf: 4, freeInf: 5, maxRequisition: 2 });
   });
   it("пусто — нули", () => {
-    expect(coverUpSummary([])).toEqual({ count: 0, totalInf: 0, maxRequisition: 0 });
+    expect(coverUpSummary([])).toEqual({ count: 0, totalInf: 0, paidInf: 0, freeInf: 0, maxRequisition: 0 });
+  });
+});
+
+describe("Inf на листе минус вложено в ячейки (решение владельца 07.11.2026) — показ, не запись", () => {
+  const sheetActor = total => ({ system: { characteristics: { inf: { total } } } });
+  it("infOnSheet читает итог Inf с листа; нет данных — 0", () => {
+    expect(infOnSheet(sheetActor(42))).toBe(42);
+    expect(infOnSheet(sheetActor("17"))).toBe(17);
+    expect(infOnSheet({})).toBe(0);
+    expect(infOnSheet(null)).toBe(0);
+  });
+  it("остаток = Inf листа минус платные ячейки; бесплатные его не уменьшают", () => {
+    const cells = [{ name: "А", inf: 3 }, { name: "Б", inf: 2, free: true }, { name: "В", inf: 4 }];
+    const renegade = { system: { archetype: "renegade", characteristics: { inf: { total: 40 } } } };
+    expect(infRemaining(renegade, cells)).toEqual({ onSheet: 40, paid: 7, left: 33, over: false });
+  });
+  it("вложили больше, чем есть, — остаток отрицательный и помечен перебором", () => {
+    expect(infRemaining(sheetActor(5), [{ name: "А", inf: 4 }, { name: "Б", inf: 3 }])).toEqual({ onSheet: 5, paid: 7, left: -2, over: true });
+  });
+  it("характеристику актора не трогает", () => {
+    const a = sheetActor(30);
+    infRemaining(a, [{ name: "А", inf: 4 }]);
+    expect(a.system.characteristics.inf.total).toBe(30);
+  });
+});
+
+describe("бесплатная ячейка — только Отступник и Аэльдари (решение владельца 08.11.2026)", () => {
+  const who = (archetype, race = "human", band = "") => ({ system: { archetype, race, band, characteristics: { inf: { total: 30 } } } });
+  it("Отступник: по ключу и по имени архетипа, любой регистр", () => {
+    for (const a of ["renegade", "Renegade", "ренегат", " Ренегат ", "отступник"]) expect(freeCellAllowed(who(a)), a).toBe(true);
+  });
+  it("Аэльдари: только банда «Агенты Тишины Миян», остальные расы и банды — нет", () => {
+    for (const r of ["azuriane", "drukhari", "ynnari", "halfEldar", "harlequin", "exodite"]) {
+      expect(freeCellAllowed(who("", r, "miyanAgents")), r).toBe(true);
+      expect(freeCellAllowed(who("", r)), r).toBe(false);
+      expect(freeCellAllowed(who("", r, "diamondClaw")), r).toBe(false);
+    }
+  });
+  it("остальные — нет: другие архетипы и расы, пустой и отсутствующий актор", () => {
+    expect(freeCellAllowed(who("pirate"))).toBe(false);
+    expect(freeCellAllowed(who("renegadePsyker"))).toBe(false);
+    expect(freeCellAllowed(who("", "astartes"))).toBe(false);
+    expect(freeCellAllowed({})).toBe(false);
+    expect(freeCellAllowed(null)).toBe(false);
+  });
+  it("effectiveCells: у не-Отступника free сбрасывается, у Отступника сохраняется", () => {
+    const cells = [{ name: "А", inf: 2, free: true }, { name: "Б", inf: 1, free: false }];
+    expect(effectiveCells(who("pirate"), cells).map(c => c.free)).toEqual([false, false]);
+    expect(effectiveCells(who("renegade"), cells).map(c => c.free)).toEqual([true, false]);
+    expect(cells[0].free).toBe(true);
+  });
+  it("infRemaining: старая ячейка с free у не-Отступника платная, у Отступника — нет", () => {
+    const cells = [{ name: "А", inf: 4, free: true }, { name: "Б", inf: 2 }];
+    expect(infRemaining(who("pirate"), cells)).toEqual({ onSheet: 30, paid: 6, left: 24, over: false });
+    expect(infRemaining(who("renegade"), cells)).toEqual({ onSheet: 30, paid: 2, left: 28, over: false });
+    expect(infRemaining(who("", "azuriane", "miyanAgents"), cells)).toEqual({ onSheet: 30, paid: 2, left: 28, over: false });
+    expect(infRemaining(who("", "azuriane"), cells)).toEqual({ onSheet: 30, paid: 6, left: 24, over: false });
   });
 });
 

@@ -49,6 +49,21 @@ describe("postItemFullCard", () => {
     expect(html).toContain("Снимает штраф.");
   });
 
+  // wdbc-x1nz.4: яд был категорией "misc" таблицы Качества и показывал владельцу
+  // в чате ложное напоминание «тесты с этим снаряжением» — книжная таблица Качества
+  // ядов (Poor +10/Good −10/Best −20) модифицирует тест ЦЕЛИ, а не владельца.
+  it("яд (type: drug) Best.Q — без ложного напоминания «тесты с этим снаряжением»", async () => {
+    const poison = itemFor("drug", {
+      drugCategory: "poison", quality: "best", weight: 0, availability: 0,
+      description: ""
+    }, { name: "Тестовый Яд" });
+
+    await postItemFullCard(poison);
+
+    const html = captured.chat[0].content;
+    expect(html).not.toMatch(/тесты с этим снаряжением/);
+  });
+
   it("тип без заведённого блока цифр — карточка не падает, просто без цифр", async () => {
     const power = itemFor("psychicPower", { description: "<p>Молния.</p>" }, { name: "Chain Lightning" });
 

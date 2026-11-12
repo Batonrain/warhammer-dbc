@@ -150,8 +150,11 @@
       {{#if prof.ranged}}
       {{!-- Свой ствол комби-оружия (wdbc-jho9): своя скорострельность, магазин, перезарядка --}}
       <div class="wprofile-grid wprofile-fire">
+        <label title="Профиль рукопашный (крюк, штык, приклад): окно атаки открывается как ближний бой — тест по WS, Базы и Приёмы, патроны не тратятся. Выбирается в HUD вместе с профилем."><input type="checkbox" class="wprofile-field" data-field="melee" {{#if prof.melee}}checked{{/if}}/> Ближний бой</label>
+        {{#unless prof.melee}}
         <label title="Второй ствол комби-оружия: свой магазин, скорострельность и боеприпасы"><input type="checkbox" class="wprofile-field" data-field="ownFire" {{#if prof.ownFire}}checked{{/if}}/> Свой ствол (Комби)</label>
-        {{#if prof.ownFire}}
+        {{/unless}}
+        {{#if prof.ownFire}}{{#unless prof.melee}}
         <label>RoF S<input type="number" class="wprofile-field" data-field="rof_single" value="{{prof.rof_single}}"/></label>
         <label>RoF кор.<input type="number" class="wprofile-field" data-field="rof_semi" value="{{prof.rof_semi}}"/></label>
         <label>RoF дл.<input type="number" class="wprofile-field" data-field="rof_full" value="{{prof.rof_full}}"/></label>
@@ -159,7 +162,7 @@
         <label>из<input type="number" class="wprofile-field" data-field="magazineMax" value="{{prof.magazineMax}}"/></label>
         <label>Перезар.<input type="text" class="wprofile-field" data-field="reload" value="{{prof.reload}}" placeholder="½"/></label>
         <label title="Тип оружия для подбора боеприпасов (как у предмета: melta, bolt…)">Боеприпас<input type="text" class="wprofile-field" data-field="weaponType" value="{{prof.weaponType}}"/></label>
-        {{/if}}
+        {{/unless}}{{/if}}
       </div>
       {{/if}}
       <div class="wprofile-props">

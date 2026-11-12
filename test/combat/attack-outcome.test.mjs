@@ -270,11 +270,20 @@ describe("bonusDamageDice", () => {
     expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: false })).toBe(0);
   });
 
-  it("Рассеивание, Максимальный режим, полоса и боеприпас складываются", () => {
+  it("Разброс (в упор), Максимальный режим, полоса и боеприпас складываются", () => {
     expect(bonusDamageDice({
       wp: withProps({ scatter: true }), rofMode: "single", hit: true, deg: 1,
-      shortRange: true, maximal: true, band: { dice: 2 }, ammoDice: 1
+      pointBlank: true, maximal: true, band: { dice: 2 }, ammoDice: 1
     })).toBe(5);
+  });
+
+  // Разброс (книга): +1d10 только в Упор и в рукопашной; на Короткой — нет.
+  it("Разброс: +1d10 в упор и в рукопашной, но не на короткой дистанции", () => {
+    const wp = withProps({ scatter: true });
+    const base = { wp, rofMode: "single", hit: true, deg: 1 };
+    expect(bonusDamageDice({ ...base, shortRange: true })).toBe(0);
+    expect(bonusDamageDice({ ...base, pointBlank: true })).toBe(1);
+    expect(bonusDamageDice({ ...base, meleeShot: true })).toBe(1);
   });
 
   // Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2): продлённая лестница

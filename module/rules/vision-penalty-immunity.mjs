@@ -13,11 +13,14 @@
 //   • Djinn Sight / Джинн-Прицел (стр. 171, «(Прицеливание)»): «подсвечивает
 //     силуэты целей в облаках дыма и тумана… позволяя стрелять в них как
 //     обычно» — Дым/туман. Оговорку «кроме Завесовой Бомбы» стол снимает
-//     галочкой сам: зона дыма не помнит, чем её поставили.
+//     галочкой сам: зона дыма не помнит, чем её поставили;
+//   • Omni-Sight / Омни-Прицел — «комбинирует эффекты всех остальных»
+//     (Sahara task-e683): гасит и свет, и дым — rules/sight-effects.mjs.
 //  Чистая логика без Foundry.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemIs } from "./item-marker.mjs";
+import { sightGrants, SIGHT_EFFECT } from "./sight-effects.mjs";
 
 const aimed = aiming => !!aiming && aiming !== "none";
 const shortName = item => String(item?.name ?? "").split("/").pop().trim();
@@ -30,7 +33,7 @@ export function lightPenaltyImmunityReason(actor, installedMods = [], { aiming =
   const visor = items.find(i => itemIs(i, "gear", null, "Preysense Visor") && i.system?.equipped);
   if (visor) return shortName(visor);
   if (aimed(aiming)) {
-    const scope = installedMods.find(m => itemIs(m, "weaponMod", null, "Thermal Sight"));
+    const scope = sightGrants(installedMods, SIGHT_EFFECT.lowLight);
     if (scope) return `${shortName(scope)} (Прицеливание)`;
   }
   return null;
@@ -39,6 +42,6 @@ export function lightPenaltyImmunityReason(actor, installedMods = [], { aiming =
 /** Почему не действует штраф Дыма/тумана, либо null. */
 export function smokePenaltyImmunityReason(actor, installedMods = [], { aiming = "" } = {}) {
   if (!aimed(aiming)) return null;
-  const scope = installedMods.find(m => itemIs(m, "weaponMod", null, "Djinn Sight"));
+  const scope = sightGrants(installedMods, SIGHT_EFFECT.smoke);
   return scope ? `${shortName(scope)} (Прицеливание)` : null;
 }

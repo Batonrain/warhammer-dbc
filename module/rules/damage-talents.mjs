@@ -100,15 +100,25 @@ export function plasmaExpertiseReliability(actor, { isMelee, sys, wProps }) {
  * собственных +1d10/+2 Pen Максимального режима (attack-outcome.mjs).
  *
  * Радиус Blast («может также дать ему +2 к радиусу», «Blast (2), если Blast
- * не было») — необязательный выбор стрелка; ни выбора в окне атаки, ни
- * собственных +2 к радиусу у самого Maximal в движке нет, здесь не считается.
+ * не было») — необязательный выбор стрелка: в окне атаки у плазмы с этим
+ * Талантом своя галочка (attack-dialog.mjs, opts.plasmaBlast), сам радиус
+ * считает rules/maximal-mode.mjs::maximalBlastRating. Здесь — только
+ * доступность выбора (`blast`).
  *
- * @returns {{dmg: number, pen: number}}
+ * @returns {{dmg: number, pen: number, blast: boolean}}
  */
-export function plasmaMasteryBonus(actor, { isMelee, sys, maximalOn }) {
-  const none = { dmg: 0, pen: 0 };
+export function plasmaMasteryBonus(actor, { isMelee, sys, maximalOn, blastChosen = false }) {
+  const none = { dmg: 0, pen: 0, blast: false };
   if (isMelee || !maximalOn || !isPlasmaWeapon(sys)) return none;
-  return hasDamageTalent(actor, "plasmaMastery") ? { dmg: 2, pen: 2 } : none;
+  return hasDamageTalent(actor, "plasmaMastery") ? { dmg: 2, pen: 2, blast: !!blastChosen } : none;
+}
+
+/**
+ * Предлагать ли в окне атаки выбор радиуса Мастерства Плазмы: плазменное
+ * стрелковое оружие с Максимальным режимом у обладателя Таланта.
+ */
+export function plasmaMasteryBlastChoice(actor, { isMelee, sys, maximalAvailable }) {
+  return !isMelee && !!maximalAvailable && isPlasmaWeapon(sys) && hasDamageTalent(actor, "plasmaMastery");
 }
 
 // ── Окно атаки ──────────────────────────────────────────────────────────────
@@ -129,4 +139,34 @@ export function unstablePlatformPenalty(actor, { weaponClass, base }) {
   if (hasDamageTalent(actor, "masterDragoon")) return { value: 0, note: "Мастер-Драгун: штраф нестабильной платформы снят" };
   if (hasDamageTalent(actor, "dragoon")) return { value: Math.min(0, b + 10), note: "Драгун: штраф нестабильной платформы меньше на 10" };
   return { value: b, note: "" };
+}
+
+// ── Пути урона вне основного конвейера атаки ────────────────────────────────
+
+/**
+ * Бонусы Талантов к урону для путей, что считают свою формулу сами (Захват:
+ * когти и укус, ответный удар, атаки Орд с листа), — одна функция вместо
+ * копий в каждом: combat/attack.mjs прибавляет те же crushingBlowBonus и
+ * mightyShotDamage в свой flatBonus.
+ *
+ * @param {object} actor    чьи Таланты (бьющий; у ответного удара — владелец оружия, не носитель S.b)
+ * @param {object} p
+ * @param {boolean} p.isMelee
+ * @param {object} p.chars  characteristics бьющего (ws.bonus / bs.bonus)
+ * @param {object} [p.wp]   свойства оружия (blastRating/spray для Могучего Выстрела)
+ * @returns {{flat: number, crushing: number, mighty: number, centerBonus: number}}
+ *          flat — слагаемое во flatBonus; centerBonus — часть Могучего Выстрела для цели в центре Взрыва (руками)
+ */
+export function talentDamageBonus(actor, { isMelee, chars, wp }) {
+  const crushing = crushingBlowBonus(actor, { isMelee, wsBonus: chars?.ws?.bonus });
+  const mighty = mightyShotDamage(actor, { isMelee, bsBonus: chars?.bs?.bonus, wp });
+  return { flat: crushing + mighty.bonus, crushing, mighty: mighty.bonus, centerBonus: mighty.centerBonus };
+}
+
+/** Подпись для карточки: откуда во flatBonus взялись Таланты (пусто, если ничего). */
+export function talentDamageNote(bonus) {
+  const parts = [];
+  if (bonus?.crushing) parts.push(`Крушащий Удар +${bonus.crushing}`);
+  if (bonus?.mighty) parts.push(`Могучий Выстрел +${bonus.mighty}`);
+  return parts.length ? `${parts.join(", ")} к урону (уже в формуле)` : "";
 }

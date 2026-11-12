@@ -84,7 +84,8 @@ export function prepareArmourDerived(actor, system) {
     // Свойства этого предмета брони (Conductive/Flak/Soft/Rods/Open/Primitive)
     // — распространяются на все локации, куда он реально даёт AP (ap[k] > 0).
     // isPowerArmor — не свойство из properties[], а сам armorType предмета:
-    // силовой шлем даёт 4 AP на глаза даже при Избирательном в Глаз (стр. 34).
+    // силовой шлем даёт 2 AP на глаза даже при Избирательном в Глаз (книга,
+    // «Силовая Броня» — было по ошибке 4, wdbc-x1nz.4).
     // Активный режим поля друкхарийской брони (constants/drukhari-armor-fields.mjs)
     // считается здесь, до свойств: Амортизирующее поле ДАЁТ броне Flak, а
     // Flak — такое же свойство, как вписанное в properties[] (wdbc-j8cn).
@@ -95,6 +96,9 @@ export function prepareArmourDerived(actor, system) {
     }
     const propAuto = aggregateArmorAuto(itemProps, s.propRatings);
     propAuto.isPowerArmor = s.armorType === "power";
+    // Best.Q: +2 AP сочленениям и визорам (constants/quality.mjs, apJoints) —
+    // читает combat/armor-properties.mjs::resolveArmorAbsorptionAP.
+    propAuto.qualityJointAp = qualityEffects(item).auto.apJoints || 0;
     for (const k of Object.keys(ap)) {
       if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
     }

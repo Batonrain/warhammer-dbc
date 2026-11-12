@@ -19,6 +19,7 @@ import { hasFatedPath, fatedEliteName, fatedEliteTaken, eliteTakenForPrice, FATE
   from "../rules/fated-path.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { RACES, AELDARI_RACES } from "../constants/races.mjs";
 
 /** Пак элитных архетипов: библиотека, которую ГМ правит прямо в игре. */
 const ELITE_PACK = "warhammer-dbc.elite-archetypes";
@@ -47,7 +48,7 @@ export function eliteEntries() {
 // Метки рас из книги → ключи рас и субрас листа.
 const RACE_LABELS = {
   "Космодесантник": ["astartes"],
-  "Человек":        ["human", "ogryn", "ratling", "navigator", "squat"],
+  // «Человек» ключами не перечисляется — см. NOT_ASTARTES_LABEL ниже.
   // Метка «Друкхари» покрывает и субрасы — так сказано в книге.
   "Друкхари":       ["drukhari", "truebornDrukhari", "mandrake", "wrack"],
   "Друкхари Истиннорожденный": ["truebornDrukhari"],
@@ -55,6 +56,23 @@ const RACE_LABELS = {
   "Мандрагора":     ["mandrake"],
   "Развалина":      ["wrack"]
 };
+
+/**
+ * «Человек» в требованиях Элитного архетипа (книга, «Расы») — «все расы людей,
+ * аблюдей, мутантов и т. п., т. е. не Космодесантник». Список рас здесь не
+ * ведётся: подходит любая раса, кроме Астартес (решение владельца 03.11.2026;
+ * раньше метка покрывала пять рас, и Зверолюд, Репликант, Йигори, Гарпия, Нага
+ * и Сплайс не видели архетипы «Человека» вовсе).
+ *
+ * Исключены также эльдары (все расы AELDARI_RACES и их субрасы) и сслиты: у них
+ * своя книга архетипов (решение владельца 03.11.2026). Полуэльдар: в «Книге
+ * Аэльдари: Ответвления» сказано лишь «Выбор Архетипа остаётся за игроком и ГМом»
+ * (обычный Архетип из эльдарского и людского), элитные «человеческие» прямо не
+ * разрешены — поэтому они исключены вместе с остальными эльдарами.
+ */
+const NOT_ASTARTES_LABEL = "Человек";
+const NOT_HUMAN_RACES = new Set(["astartes", "sslyth", ...AELDARI_RACES]);
+const NOT_HUMAN_SUBRACES = new Set(AELDARI_RACES.flatMap(k => RACES[k]?.subraces ?? []));
 
 /**
  * Подходит ли метка расы элитного архетипа расе персонажа.
@@ -71,6 +89,7 @@ export function eliteRaceMatch(actor, entry) {
   const sub  = actor.system.subrace || "";
   // Метка может перечислять несколько рас через запятую.
   return r.split(/[,/]/).some(part => {
+    if (part.trim() === NOT_ASTARTES_LABEL) return !NOT_HUMAN_RACES.has(race) && !NOT_HUMAN_SUBRACES.has(sub);
     const keys = RACE_LABELS[part.trim()];
     if (!keys) return false;
     return keys.includes(race) || keys.includes(sub);

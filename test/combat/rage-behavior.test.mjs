@@ -17,10 +17,11 @@ import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 import { _performDodge, _performParry, _performPsychicParry, _performSprayCancel } from "../../module/combat/defense.mjs";
 import { avoidanceVerdict } from "../../module/combat/full-attack-lock.mjs";
 import { actionBlockReason, spendActionPoints } from "../../module/combat/action-economy.mjs";
-import { frenzyEntryBlocked } from "../../module/combat/frenzy.mjs";
+import { frenzyEntryBlocked, frenzyEntryApCost, tryEnterRage } from "../../module/combat/frenzy.mjs";
+import { markCapabilityUsed } from "../../module/rules/cooldown.mjs";
 import {
   attemptRageExit, rerollRageExit, processRageTurnStart, stampRageCombatEnd, clearRageStatePatch,
-  rageSceneCandidates, askRageExit
+  rageSceneCandidates, askRageExit, rideTheBeast
 } from "../../module/combat/rage-behavior.mjs";
 import {
   RAGE_EXIT_TRIED_FLAG, RAGE_EXIT_FAILED_FLAG, RAGE_AFTER_COMBAT_FLAG
@@ -673,5 +674,119 @@ describe("Реестры: метки, карточки и Возможности
     expect(read("module/sheets/tabs/combat.mjs")).toContain("attemptRageExit(actor)");
     expect(read("templates/apps/hud.hbs")).toContain("data-rage-exit");
     expect(read("module/apps/hud.mjs")).toContain("attemptRageExit(actor)");
+  });
+});
+
+describe("Верхом на Звере: свободный выбор цели в Ярости", () => {
+  const RIDING = packDocById(TALENTS, "TnO3FBlEMKgVGHSp");
+  const riding = () => itemOf(RIDING);
+  const withUuid = a => { globalThis.fromUuid = async uuid => (uuid === a.uuid ? a : null); return a; };
+
+  it("носителю в начале Хода под напоминанием лежит кнопка теста и подсказка", async () => {
+    await processRageTurnStart(makeActor({ items: [frenzy(), riding()] }), null);
+    expect(lastCard()).toContain("wh-riding-beast-btn");
+    expect(lastCard()).toContain("Верхом на Звере: тест W+0 позволяет выбрать цель самому");
+  });
+
+  it("без Таланта кнопки нет", async () => {
+    await processRageTurnStart(makeActor({ items: [frenzy()] }), null);
+    expect(lastCard()).not.toContain("wh-riding-beast-btn");
+  });
+
+  it("после провала выхода из Ярости кнопки нет: там приоритет книги, а не ближайший враг", async () => {
+    await processRageTurnStart(makeActor({ items: [frenzy(), riding()], flags: { [RAGE_EXIT_FAILED_FLAG]: true } }), null);
+    expect(lastCard()).not.toContain("wh-riding-beast-btn");
+  });
+
+  it("тест идёт по W с +10 Ярости: Успех — цель по выбору", async () => {
+    const a = withUuid(makeActor({ items: [frenzy(), riding()], wp: 40 }));
+    captured.nextRoll = 50;
+    expect(await rideTheBeast(a.uuid)).toBe(true);
+    expect(thresholdOf(lastCard())).toBe(50);
+    expect(lastCard()).toContain("атаки на цель по выбору");
+  });
+
+  it("Провал — ближайший враг остаётся в силе", async () => {
+    const a = withUuid(makeActor({ items: [frenzy(), riding()], wp: 40 }));
+    captured.nextRoll = 99;
+    await rideTheBeast(a.uuid);
+    expect(lastCard()).toContain("Ярость тянет к ближайшему видимому противнику");
+  });
+
+  it("без Таланта и вне Ярости теста нет", async () => {
+    const plain = withUuid(makeActor({ items: [frenzy()] }));
+    expect(await rideTheBeast(plain.uuid)).toBe(false);
+    expect(captured.rolls).toEqual([]);
+    const calm = withUuid(makeActor({ inRage: false, items: [riding()] }));
+    expect(await rideTheBeast(calm.uuid)).toBe(false);
+    expect(captured.rolls).toEqual([]);
+  });
+
+  it("кнопка идёт через раз-на-карточку", () => {
+    const hooks = fs.readFileSync("module/hooks.mjs", "utf8");
+    expect(hooks).toContain("rideTheBeast(uuid)");
+    expect(hooks).toContain("RIDING_BEAST_CARD_FLAG");
+  });
+});
+
+describe("Вход в Ярость стоит ОД: полное действие, с Огнём в Крови — полудействие", () => {
+  const FIRE = packDocById(TALENTS, "vFq3iMo77WiRapsd");
+  const fire = () => itemOf(FIRE);
+  const nails = () => ({ id: "nails", type: "trait", name: "Butcher's Nails / Гвозди Мясника", system: {}, flags: {}, getFlag: () => undefined });
+  const inCombat = () => { globalThis.game.combat = { id: "C1", started: true, round: 1 }; };
+
+  it("без Огня в Крови — 2 ОД (полное действие)", async () => {
+    inCombat();
+    const a = makeActor({ inRage: false, items: [frenzy()], ap: 3 });
+    expect(frenzyEntryApCost(a)).toBe(2);
+    expect(await tryEnterRage(a)).toMatchObject({ ok: true, cost: 2 });
+    expect(a.system.actionPoints.value).toBe(1);
+  });
+
+  it("с Огнём в Крови — 1 ОД (полудействие)", async () => {
+    inCombat();
+    const a = makeActor({ inRage: false, items: [frenzy(), fire()], ap: 3 });
+    expect(frenzyEntryApCost(a)).toBe(1);
+    expect(await tryEnterRage(a)).toMatchObject({ ok: true, cost: 1 });
+    expect(a.system.actionPoints.value).toBe(2);
+  });
+
+  it("с Гвоздями Мясника — свободно, ОД целы", async () => {
+    inCombat();
+    const a = makeActor({ inRage: false, items: [frenzy(), fire(), nails()], ap: 3 });
+    expect(frenzyEntryApCost(a)).toBe(0);
+    expect(await tryEnterRage(a)).toMatchObject({ ok: true, cost: 0 });
+    expect(a.system.actionPoints.value).toBe(3);
+  });
+
+  it("не хватает ОД — вход закрыт, ОД не списаны", async () => {
+    inCombat();
+    const a = makeActor({ inRage: false, items: [frenzy()], ap: 1 });
+    const r = await tryEnterRage(a);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain("не хватает ОД");
+    expect(a.system.actionPoints.value).toBe(1);
+  });
+
+  it("вне боя вход бесплатен", async () => {
+    const a = makeActor({ inRage: false, items: [frenzy()], ap: 0 });
+    expect(frenzyEntryApCost(a)).toBe(0);
+    expect(await tryEnterRage(a)).toMatchObject({ ok: true, cost: 0 });
+  });
+
+  it("повторный вход в бою закрыт раньше платы", async () => {
+    inCombat();
+    const a = makeActor({ inRage: false, items: [frenzy()], ap: 3 });
+    await markCapabilityUsed(a, "frenzyReentry", "battle");
+    const r = await tryEnterRage(a);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain("повторный вход запрещён");
+    expect(a.system.actionPoints.value).toBe(3);
+  });
+
+  it("владелец Ярости не от Таланта (нет Frenzy) ничего не платит", async () => {
+    inCombat();
+    const a = makeActor({ inRage: false, items: [], ap: 3 });
+    expect(frenzyEntryApCost(a)).toBe(0);
   });
 });
