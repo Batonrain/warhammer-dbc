@@ -62,7 +62,7 @@ export async function resolveHiddenJointsClick(actor) {
     icon: "🦾", title: `Скрытые Сочленения — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Common Lore (War)+0", base, parts: ruleMods.parts, threshold, rv }),
     outcome: success
-      ? `<span class="roll-success">Успех — сочленения цели определены по памяти: штраф «Скрытые Сочленения» (+10) снят для этой атаки.</span>`
+      ? `<span class="roll-success">Успех — сочленения цели определены по памяти: штраф «Скрытые Сочленения» (−10) снят для этой атаки.</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}: штраф «Скрытые Сочленения» остаётся.</span>`
   }, { rolls: [roll] });
   return { success, roll: rv, threshold, deg };

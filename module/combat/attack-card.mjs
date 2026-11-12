@@ -822,12 +822,12 @@ function hiddenJointsSection(outcome) {
     return `
     <div class="roll-defense-section roll-hidden-joints">
       <div class="roll-defense-title">🦾 Скрытые Сочленения: Common Lore (War)+0 — ${outcome.roll} против ${outcome.threshold} — ${
-        outcome.success ? "<b>успех</b>, штраф +10 снят" : "<b>провал</b>, штраф остаётся"}</div>
+        outcome.success ? "<b>успех</b>, штраф −10 снят" : "<b>провал</b>, штраф остаётся"}</div>
     </div>`;
   }
   return `
     <div class="roll-defense-section roll-hidden-joints">
-      <div class="roll-defense-title">Скрытые Сочленения: штраф +10 можно снять, определив их по памяти — только атакующий</div>
+      <div class="roll-defense-title">Скрытые Сочленения: штраф −10 можно снять, определив их по памяти — только атакующий</div>
       <div class="roll-defense-btns">
         <button type="button" class="wh-hidden-joints-btn">🦾 Бросить Common Lore (War)+0</button>
       </div>
