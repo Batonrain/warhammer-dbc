@@ -53,6 +53,8 @@ import { tentacleHandFormButtonHtml, toggleTentacleHandForm } from "../apps/tent
 import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
 import { vampiricPanelHtml, useSatisfyVampiric, useVampiricTest } from "../apps/vampiric-dependency.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
+import { powerArmourBatteryRemainingDisplay, isPowerArmourBatteryDead, chargePowerArmourBattery,
+         checkPowerArmourBattery, powerArmourDressMinutes, powerArmourAssistantsNeeded } from "../rules/power-armour-battery.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { WEAPON_PROPERTIES,
@@ -110,6 +112,21 @@ import { rowsAdd, rowsRemove, rowsPatch, BLANK_VECTOR, BLANK_EFFECT, EFFECT_KIND
 function _typeLabel(map, key) {
   const v = map[key];
   return typeof v === "string" ? v : (v?.label ?? key);
+}
+
+/**
+ * Надевание/снятие силовой брони (стр. 233, wdbc-x1nz.4) двигает
+ * Летоисчисление — тот же приём, что Отдых (sheets/tabs/conditions.mjs::
+ * advanceRestClock): game.time.advance доступен только ГМу (core.time —
+ * мировая настройка), у игрока лист только просит ГМа сдвинуть время сам.
+ */
+async function advancePowerArmourClock(minutes) {
+  const time = globalThis.game?.time;
+  if (globalThis.game?.user?.isGM && typeof time?.advance === "function") {
+    await time.advance(minutes * 60);
+    return `Календарь сдвинут на ${minutes} мин.`;
+  }
+  return `Время двигает ГМ — сдвиньте Календарь на ${minutes} мин.`;
 }
 
 // ── Сохранение Механики и Требований ────────────────────────────────────────
@@ -1191,6 +1208,7 @@ export class WarhammerItemSheet
           // Свой ствол (комби-оружие, wdbc-jho9, combat/weapon-profiles.mjs):
           // поля показываются только у стрелкового оружия.
           ranged: context.system.weaponClass !== "melee",
+          melee: !!prof.melee,
           ownFire: !!prof.ownFire,
           rof_single: prof.rof_single ?? 0, rof_semi: prof.rof_semi ?? 0, rof_full: prof.rof_full ?? 0,
           magazineMax: prof.magazineMax ?? 0, magazineCur: prof.magazineCur ?? 0,
@@ -1692,6 +1710,14 @@ export class WarhammerItemSheet
           breached: !!sys.breached
         };
       }
+
+      // Батарея силовой брони (стр. 233, wdbc-x1nz.4) — только у armorType:"power".
+      if (sys.armorType === "power") {
+        context.powerBattery = {
+          remaining: powerArmourBatteryRemainingDisplay(this.item),
+          dead: isPowerArmourBatteryDead(this.item)
+        };
+      }
     }
 
     // ── Силовой щит ───────────────────────────────────────────────────────────
@@ -2098,7 +2124,8 @@ export class WarhammerItemSheet
 
     // ── Талант «Чёрная Мантия»: усиленный режим Меланохрома (3-b530) ───────
     on(".black-mantle-cb", "change", async ev => {
-      await setBlackMantleOn(this.item, ev.currentTarget.checked);
+      // Отказ (не хватило ОД) — вернуть галочку в то положение, что в флаге.
+      if (!(await setBlackMantleOn(this.item, ev.currentTarget.checked))) this.render(false);
     });
 
     // ── Действия Талантов (3-b530): Предусмотрительность и др. ─────────────
@@ -2296,6 +2323,44 @@ export class WarhammerItemSheet
       await refillVoidArmour(this.item);
     });
 
+    // ── Батарея силовой брони (стр. 233, wdbc-x1nz.4) ───────────────────────
+    on(".power-battery-charge-btn", "click", async ev => {
+      ev.preventDefault();
+      await chargePowerArmourBattery(this.item);
+    });
+    on(".power-battery-check-btn", "click", async ev => {
+      ev.preventDefault();
+      const dead = await checkPowerArmourBattery(this.item);
+      ui.notifications.info(dead
+        ? `«${this.item.name}»: батарея разряжена, броня выключена (как ручным тумблером).`
+        : `«${this.item.name}»: батарея в порядке.`);
+    });
+
+    // ── Надевание/снятие силовой брони (стр. 233, wdbc-x1nz.4): двигает
+    //    Летоисчисление (ГМ) тем же путём, что Отдых — sheets/tabs/conditions.mjs
+    //    (game.time.advance доступен только ГМу). У игрока — просьба в чат. ───
+    on(".power-dress-btn", "click", async ev => {
+      ev.preventDefault();
+      const root = ev.currentTarget.closest(".power-dress-row") ?? el;
+      const ritual = !!root.querySelector(".power-dress-ritual")?.checked;
+      const rack   = !!root.querySelector(".power-dress-rack")?.checked;
+      const action = ev.currentTarget.dataset.dressAction === "doff" ? "doff" : "don";
+      const minutes = powerArmourDressMinutes(action, ritual);
+      const assistants = powerArmourAssistantsNeeded(rack);
+      const verb = action === "doff" ? "Снятие" : "Надевание";
+      const clockLine = await advancePowerArmourClock(minutes);
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: this.item.parent }),
+        content: `<div class="wh-roll-result">
+          <div class="roll-header">⚙️ ${esc(this.item.name)} — ${verb} (${ritual ? "ритуал" : "без ритуала"})</div>
+          <div class="roll-outcome"><span class="roll-threshold">${minutes} мин`
+            + (assistants ? `, нужно ${assistants} ассистента` : ", без ассистентов (специализированная стойка)")
+            + `.</span></div>
+          <div class="roll-threshold" style="font-size:0.85em;">${clockLine}</div>
+        </div>`
+      });
+    });
+
     // ── МЕХАНИКА (единый Конструктор: Характеристика/Черта/Талант/Навык/Код,
     // группы И/ИЛИ) — общая вкладка для всех типов. Кнопки групп и записей —
     // действия [data-action] выше; здесь остались поля записи.
@@ -2339,6 +2404,14 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.corruptionValue = ev.currentTarget.value; saveMech(arr); }
     });
+    // «не выше Cor», «если Порча <», «иначе» — необязательные оговорки Порчи
+    for (const [cls, field] of [["cap", "corruptionCap"], ["below", "corruptionIfBelow"], ["else", "corruptionElse"]]) {
+      on(`.mech-corruption-${cls}`, "change", ev => {
+        const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+        const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+        if (e) { e[field] = ev.currentTarget.value.trim(); saveMech(arr); }
+      });
+    }
     // Раны (kind:"wounds")
     on(".mech-wounds-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -3451,6 +3524,7 @@ export class WarhammerItemSheet
       const NUMERIC = ["penetration", "rof_single", "rof_semi", "rof_full", "magazineMax", "magazineCur"];
       arr[i][field] = ev.currentTarget.type === "checkbox" ? ev.currentTarget.checked
         : NUMERIC.includes(field) ? (parseInt(ev.currentTarget.value) || 0) : ev.currentTarget.value;
+      if (field === "melee" && arr[i].melee) arr[i].ownFire = false;
       await this.item.update({ "system.profiles": arr });
     });
     // Свойства конкретного профиля (свой блок Devastating/Primitive и т.п.)

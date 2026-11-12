@@ -246,10 +246,11 @@ const TYPES = {
     pack: "elite-archetypes",
     defaults: {
       // cost — цена по книге, paidCost — сколько заплатил этот персонаж
-      // (с удвоением за каждый предыдущий Элитный архетип).
-      key: "", cost: 0, paidCost: 0,
+      // (с удвоением за каждый предыдущий Элитный архетип); costNonAstartes —
+      // вторая цена книги для не-Космодесантника (Облитератор: 4500 / 5500).
+      key: "", cost: 0, costNonAstartes: 0, paidCost: 0,
       requirements: { primary: [], secondary: [] },
-      race: "", god: "", req: "", charBonus: "", freeTalents: "",
+      race: "", god: "", req: "", becoming: "", charBonus: "", freeTalents: "",
       gear: "", traits: [], talents: [], description: "", notes: "", bookSource: ""
     }
   },
@@ -519,7 +520,7 @@ const TYPES = {
       // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
       damage: "", damageType: "energy", damageSubtype: "", penetration: "0", xFormula: "", vortexPersistent: false, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
-      resistChar: "", resistMod: 0,
+      resistChar: "", resistMod: 0, mindEffect: false,
       effect: "", isSustained: false, sustainedDegree: null, sustainedEpr: null, sustainedTargetUuid: "",
       hasWeaponShop: false,
       // wdbc-exjp: Руна Сигиллитов — привязана к ЭТОЙ психосиле, не к актору

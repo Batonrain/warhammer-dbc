@@ -52,6 +52,25 @@ export const CORE_RULES = [
     }]
   },
   {
+    // Силовая Броня (стр. 233, та же глава, что core.nimble выше, wdbc-x1nz.4):
+    // «Накладывает штраф –10 на все тонкие манипуляции пальцами. Черный
+    // Панцирь Космодесантников убирает этот штраф». «Тонкая манипуляция» —
+    // тот же набор Навыков, что уже определён для «толстых пальцев» Физиологии
+    // Громилы (ogryn.brutePhysiology.fineManipulation,
+    // module/rules/library/ogryn.mjs) — Крафт/ремонт (Trade), взлом/техника
+    // (Tech-Use, Security) и Ловкость Рук; один и тот же книжный термин не
+    // должен значить два разных списка Навыков в двух правилах. askOnly — тот
+    // же приём: тонкий ли КОНКРЕТНО этот бросок, видно только за столом.
+    id: "core.powerArmourFineManipulation",
+    label: "Силовая Броня: тонкая манипуляция пальцами (толстые перчатки)",
+    when: { wearsPowerArmourWithoutBlackCarapace: true },
+    effects: [{
+      kind: "rollBonus",
+      target: ["skill:trade", "skill:techuse", "skill:security", "skill:sleightofhand"],
+      value: -10, askOnly: true
+    }]
+  },
+  {
     // Миазмы (мутация, core.json, «73 Миазмы»; wdbc-1rno.11): «…дает бонус
     // +40 на попытки отследить его по запаху» — бонус получает ТОТ, КТО
     // выслеживает носителя, а не сам мутант (прежняя запись на предмете была
@@ -168,17 +187,19 @@ export const CORE_RULES = [
     // Кхорна, wdbc-sk8s) — раньше жила своим отдельным источником
     // "avatarOfSlaughter" (rules/sources.mjs), хотя когда-то была
     // зарегистрирована совсем как "core" — статичное when, читающее метку
-    // на самом акторе (rules/predicates.mjs::avatarOfSlaughterOffTarget),
+    // на самом акторе (rules/predicates.mjs::avatarOfSlaughterOnBerserker),
     // без cross-actor обхода. Перенесена сюда (wdbc-shr, находка 1): нет
     // причины заводить отдельный источник ради одного статического правила,
-    // когда основная книга уже отдаёт такие через "core" оптом. Покрывает
-    // только «атаки» (ctx.kind==="attack") — «манёвры» (Состязания,
-    // combat/techniques.mjs) используют другой вид теста, не покрытый
-    // effectAppliesTo, оставлено открытым пробелом.
+    // когда основная книга уже отдаёт такие через "core" оптом. Атаки
+    // (ctx.kind==="attack") и «манёвры» (Состязания, combat/techniques.mjs,
+    // область "contest": ctx.contest ставит окно Состязания) — Sahara 1-54b9.
     id: "avatarOfSlaughter.penalty",
-    label: "Аватар Резни: не тот противник",
-    when: { avatarOfSlaughterOffTarget: true },
-    effects: [{ kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует не Берсерка" }]
+    label: "Аватар Резни: атака на Берсерка",
+    when: { avatarOfSlaughterOnBerserker: true },
+    effects: [
+      { kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует Берсерка" },
+      { kind: "rollBonus", target: "contest", value: -20, label: "Аватар Резни: манёвр против Берсерка" }
+    ]
   },
   // Умелые Руки (Скват) — галочки тонкой работы с отбором по Черте, отдельным
   // файлом: library/squat.mjs.

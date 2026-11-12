@@ -76,6 +76,7 @@
 
 import { isKnownCapability } from "../constants/capabilities.mjs";
 import { entryWhenOk } from "./mech-when.mjs";
+import { gearQualityRollMod } from "../constants/quality.mjs";
 import { RAGE_NO_BS_PENALTY, RAGE_BS_RULE_ID } from "./rage.mjs";
 import { conditionRulesFor, ALT_SENSES_CAPABILITIES } from "./library/conditions.mjs";
 // Лист-модуль (только константы календаря): круга импортов не замыкает (wdbc-795h).
@@ -131,7 +132,7 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // combat/movement-terrain.mjs, ctx.terrain): Barefoot / Босоногий Ратлинга —
   // «+20 и переброс», Cloven One / Копытный Зверолюда — «+20». Не «char:ag»:
   // тот ловил бы любой тест Ловкости.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge", "psychicPower", "psychicMind", "psychicDirect", "interrogation", "requisition"].includes(scope)) return scope;
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge", "psychicPower", "psychicMind", "psychicDirect", "psychicDetect", "interrogation", "requisition"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;
@@ -368,7 +369,12 @@ function ruleFromEntry(item, entry, groupId = null) {
     // (учтено в Пороге)»), как ситуативные штрафы. Только число — «ополовинить
     // штраф» остаётся галочкой.
     if (entry.modAuto && effect.kind === "rollBonus") effect.auto = true;
-    return { id, label: entry.label || item.name, when: {}, effects: [effect] };
+    // Качество «прочего снаряжения» (стр. 165): предмет даёт бонус к тесту —
+    // значит, тест «с этим снаряжением»; rollModsFromRules добавит строку качества
+    // один раз на предмет (constants/quality.mjs::gearQualityRollMod).
+    const qualityMod = effect.kind === "rollBonus" ? gearQualityRollMod(item) : null;
+    return { id, label: entry.label || item.name, when: {}, effects: [effect],
+      ...(qualityMod ? { qualityMod: { ...qualityMod, itemId: item.id ?? item.name, itemName: item.name } } : {}) };
   }
 
   if (entry?.kind === "failDegMod") {

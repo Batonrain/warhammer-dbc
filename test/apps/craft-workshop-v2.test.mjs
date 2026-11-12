@@ -155,3 +155,49 @@ describe("_onRender: разводка кнопок и полей", () => {
     expect(app.projects[0].title).toBe("");
   });
 });
+
+describe("Ремонт: Банк обязателен, таблица создания не подставляется (wdbc-53of9)", () => {
+  const vm = async over => {
+    const app = appLike([newProject({ mode: "craft", repair: true, categoryKey: "wheeled", rarity: 0, baseBank: null, ...over })]);
+    return (await CraftWorkshop.prototype._prepareContext.call(app, {})).projects[0];
+  };
+
+  it("галочка «Ремонт» и пустой Базовый Банк: цели нет, не ГОТОВО, видна просьба вписать Банк", async () => {
+    const p = await vm();
+    expect(p.repairNeedsBank).toBe(true);
+    expect(p.bank).toBeNull();
+    expect(p.baseBankVal).toBeNull();
+    expect(p.done).toBe(false);
+    expect(p.pct).toBe(0);
+    expect(p.notCraftable).toBe(false);
+    expect(p.summary).not.toContain("40");
+  });
+
+  it("Банк ремонта вписан: считается как обычно, подсказка уходит", async () => {
+    const p = await vm({ baseBank: 30 });
+    expect(p.repairNeedsBank).toBe(false);
+    expect(p.bank).toBe(30);
+    expect(p.done).toBe(false);
+  });
+
+  it("без галочки таблица создания по-прежнему подставляется", async () => {
+    const p = await vm({ repair: false });
+    expect(p.repairNeedsBank).toBe(false);
+    expect(p.baseBankVal).toBe(40);
+    expect(p.bank).toBe(40);
+  });
+
+  it("накопленное при пустом Банке не даёт ГОТОВО", async () => {
+    const p = await vm({ project: { accumulated: 500, shifts: 3, fatigue: 3 } });
+    expect(p.done).toBe(false);
+    expect(p.accumulated).toBe(500);
+  });
+
+  it("[name=repair] (change) сбрасывает ручной Банк — ремонту его вписывают заново", () => {
+    const app = appLike([newProject({ baseBank: 42 })]);
+    CraftWorkshop.prototype._onRender.call(app, {}, {});
+    app.element.handlers["[name=repair]:change"](evt({ pid: "p1", checked: true }));
+    expect(app.projects[0].repair).toBe(true);
+    expect(app.projects[0].baseBank).toBeNull();
+  });
+});

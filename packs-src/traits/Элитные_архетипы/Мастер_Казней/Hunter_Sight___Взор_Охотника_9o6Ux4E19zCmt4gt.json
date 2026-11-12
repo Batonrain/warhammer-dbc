@@ -5,7 +5,7 @@
   "folder": "VJkmfzAqWtxtuscp",
   "system": {
     "description": "",
-    "notes": "Авто-распознавание душ и силы существ по книжной таблице — информационная способность без числового модификатора теста/характеристики.",
+    "notes": "Реализовано (Sahara 1-54b9). Кнопка «Взор Охотника» на вкладке БОЙ (combat/master-of-executions.mjs::useHuntersSight): шёпот владельцу и ГМу со списком душ в зоне Unnatural Senses (рейтинг Трейта = P м; отмеченная добыча видна за пределами зоны) и их грубой силой по Inf цели: слабая — ниже 30, заметная — 30–59, могучая — 60–79, великая — 80+. Таблица градации Inf со стр. 437 в данных не лежит — пороги те же, что у Казни и Трофеев Триумфа. Достойна ли душа трофея, решает ГМ.",
     "benefit": "Трейт Unnatural Senses отображает способность видеть души жертв. Автоматически распознаёт души существ, достойных трофея, и их приблизительную силу (по таблице градации Inf).",
     "source": "Элитный архетип: Мастер Казней",
     "hasRating": false,
@@ -34,7 +34,27 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "P8MpXVaxDd36sflM",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "kMkCDxLLlVH9U1mD",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "ability.hunterSight",
+              "label": "Взор Охотника: души в зоне Unnatural Senses и их грубая сила по Inf (шёпот)",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

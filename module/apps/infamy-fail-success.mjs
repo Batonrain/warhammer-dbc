@@ -17,6 +17,7 @@ import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { runCardOnce } from "../combat/card-once.mjs";
+import { revertCardFailure, failUndoLineHtml } from "../combat/fear.mjs";
 
 /**
  * Кнопки для карточки проваленного теста — пустая строка, если ни одна
@@ -58,10 +59,13 @@ export async function spendInfamyForFailSuccess(actor, capability, { testLabel =
     const spend = await spendFromInfamyPool(actor, 1, path);
     if (!spend) return false;
     if (spend.poolSpent) await actor.update({ [path]: spend.poolValue });
+    // Провал заменён успехом — Шок/Ступор, наложенные этим провалом, снимаются (task-e30b).
+    const reverted = await revertCardFailure(message);
     await postTestCard(actor, testCardHtml({
       icon: "⚜ ", title: `${esc(src.label)}${testLabel ? ` — ${esc(testLabel)}` : ""}`,
       lines: [`<div class="roll-threshold" style="font-size:0.85em;">Потрачено Очко Бесчестия${
-        spend.tempSpent ? " (из временного запаса)" : ""}. Осталось: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>.</div>`],
+        spend.tempSpent ? " (из временного запаса)" : ""}. Осталось: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>.</div>`,
+        failUndoLineHtml(reverted)],
       outcome: outcomeHtml(true, "Провал заменён: Успех — 1 Успех")
     }), { sound: false, ignoreRollMode: true });
     return true;

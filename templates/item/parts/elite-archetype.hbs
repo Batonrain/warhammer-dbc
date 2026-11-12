@@ -26,11 +26,21 @@
       <span class="wr-label" title="Базовая цена в опыте. Каждый следующий Элитный архетип персонажа вдвое дороже предыдущего">Цена (опыт)</span>
       <input type="number" name="system.cost" value="{{system.cost}}" min="0"/>
     </label>
+
+    <label class="wr-row">
+      <span class="wr-label" title="Только когда книга называет две цены (Облитератор: 4500 для Космодесантника, 5500 для Человека). Тогда «Цена» — для Космодесантника, это поле — для остальных. 0 — отдельной цены нет">Цена не-Космодесантника</span>
+      <input type="number" name="system.costNonAstartes" value="{{system.costNonAstartes}}" min="0"/>
+    </label>
   </div>
 
   <label class="wr-row wr-row-wide">
     <span class="wr-label" title="Текст требований из книги — для чтения. Машинная проверка живёт в Конструкторе ниже">Требования (текст книги)</span>
     <textarea name="system.req" class="item-textarea" placeholder="A 60, WS 50, Acrobatics+20…">{{system.req}}</textarea>
+  </label>
+
+  <label class="wr-row wr-row-wide">
+    <span class="wr-label" title="Как получить архетип в игре (по книге): что должен совершить персонаж">Становление</span>
+    <textarea name="system.becoming" class="item-textarea" placeholder="Убить трёх чемпионов…">{{system.becoming}}</textarea>
   </label>
 
   <label class="wr-row wr-row-wide">

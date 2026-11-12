@@ -91,6 +91,7 @@ when: {
 | `targetHasFaction` | строка или массив | то же про цель броска | да |
 | `charNotIn` | массив ключей характеристик | характеристика ТЕКУЩЕГО теста (`ctx.char`) не входит в список | да |
 | `charIn` | массив ключей характеристик | характеристика ТЕКУЩЕГО теста (`ctx.char`) входит в список (обратное `charNotIn`) | да |
+| `testSense` | строка или массив (`sight`, `hearing`, `touch`, `smell`, `taste`) | игрок выбрал в окне теста Внимательности/Восприятия это чувство (`ctx.sense`); без выбора не срабатывает | да |
 | `hasCondition` | массив ключей `CONDITIONS_DEF` | у актора есть хотя бы одно из перечисленных Состояний | да |
 | `targetHasCondition` | массив ключей `CONDITIONS_DEF` | то же про цель броска | да |
 | `targetLacksCondition` | массив ключей `CONDITIONS_DEF` | у цели нет НИ ОДНОГО из перечисленных Состояний | да |
@@ -238,10 +239,14 @@ export const PREDICATES = {
 | `psychicPower` | сопротивление психосиле (`ctx.psychicThreat` без `ctx.soulBurn`): Бастион Железной Воли; Выжигание Души сюда не входит, оно ставит `soulBurn` |
 | `psychicMind` | сопротивление психосиле по Воле (`ctx.psychicThreat` и `ctx.char = wp`): Непреклонный («влияющие на разум», решение владельца 25.10.2026, шире книги) |
 | `psychicDirect` | сопротивление психосиле, кроме Непрямых (`ctx.psychicThreat` без `ctx.psychicIndirect`; Выжигание Души входит): Солипсизм |
+| `psychicDetect` | засекание проявления психосилы (Awareness) и распознание психосилы (Forbidden Lore (Psykers)): `ctx.psychicDetect`, который игрок включает галочкой «Засекаю проявление / распознаю психосилу» в окне теста (видна носителю Ведьмоискателя на Awareness и Forbidden Lore с Псайкерами; система не знает, для чего бросается навык). Ведьмоискатель |
 | `interrogation` | сопротивление допросу (`ctx.interrogation`): встречный тест Воли жертвы в диалоге пытки (`apps/torture.mjs`), Ортопрокси |
 | `disease` | тест заражения болезнью (`ctx.diseaseTest`): кнопка «Заражение» на болезни (`combat/disease-infection.mjs`), Порог T±N из `system.vectorTests`; Преимущество Крепкого как Камень и Живучести Сплайса — `rules/squat-traits.mjs::diseaseResistReroll` |
 | `requisition` | тест «достать снаряжение» (`ctx.requisition`): окно реквизиции (`apps/requisition.mjs`) идёт по Inf (или F у Сети Контактов); свой флаг, а не `char:inf` — иначе подхватился бы любой тест Влияния. «+N к Реквизиции» записью Конструктора `testMod` с областью «Реквизиция» |
 | `vacuum` | тест вакуума (`ctx.vacuumTest`): начало Хода без пустотной брони на сцене с флагом «вакуум» (`combat/vacuum.mjs`), T+0 или Trade (Voidfarer)(T)+10; Преимущество Сквата — `vacuumResistReroll` |
+| `fear` | только тест Страха (`ctx.fearTest`, `combat/fear.mjs`) — не Запугивание, Пытки и Подавление, которые тоже тесты Морали (`morale`): Пьянящий Рёв Шумового Десантника (`rules/noise-marine.mjs`) |
+| `suppression` | только тест на Подавление (`ctx.suppressionTest`, `rules/morale-test.mjs`): Стальные Нервы, Пьянящий Рёв |
+| `contest` | приёмы-Состязания (`ctx.contest`, окно `combat/techniques.mjs`: Повалить, Финт, Давление, Напролом, Обезоружить, действия Борьбы) — не атака и не обычный тест навыка: «манёвры» книги. Аватар Резни (`rules/library/core.mjs`) |
 
 Области манифестации, появившиеся на шаге 5.4:
 

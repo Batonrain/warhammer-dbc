@@ -905,3 +905,42 @@ describe("сноска ²: нельзя использовать неизуче�
     expect(captured.warnings).toHaveLength(0);
   });
 });
+
+describe("Целеустремлённый Охотник (Мастер Казней, Sahara 1-54b9): Помеха на Command, Charm, Deceive, Inquiry", () => {
+  const HUNTER = packDocById("packs-src/traits/Элитные_архетипы/Мастер_Казней", "SMFzhi92ZMmAx2pB");
+  const hunterSheet = () => sheet({ items: [{ id: "h1", name: HUNTER.name, type: "trait", system: HUNTER.system, flags: HUNTER.flags, getFlag: (s, k) => HUNTER.flags?.[s]?.[k] }] });
+  const open = (s, skill) => {
+    const p = s._showSkillRollDialog("Тест", 40, "fel", false, { skill });
+    return p;
+  };
+  const roll = async (s, skill, diceChoice) => {
+    const p = open(s, skill);
+    const content = captured.dialog.content;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-char-select": "fel", "#skill-modifier": "0", ".dice-mode-opt:checked": diceChoice
+    }));
+    return { content, result: await p };
+  };
+
+  it("в окне теста Command/Charm/Deceive/Inquiry кубик «Помеха» отмечен заранее, с пояснением", async () => {
+    for (const skill of ["command", "charm", "deceive", "inquiry"]) {
+      resetCaptured();
+      const { content, result } = await roll(hunterSheet(), skill, "disadvantage");
+      expect(content, skill).toMatch(/value="disadvantage" checked/);
+      expect(content, skill).not.toMatch(/value="normal" checked/);
+      expect(content, skill).toContain("Целеустремлённый Охотник");
+      expect(result.reroll, skill).toMatchObject({ mode: "keepWorst" });
+    }
+  });
+
+  it("другие Навыки и актор без Черты — Обычный кубик", async () => {
+    resetCaptured();
+    const { content } = await roll(hunterSheet(), "awareness", "normal");
+    expect(content).toMatch(/value="normal" checked/);
+    expect(content).not.toContain("Целеустремлённый Охотник");
+    resetCaptured();
+    const plain = await roll(sheet({}), "command", "normal");
+    expect(plain.content).toMatch(/value="normal" checked/);
+    expect(plain.result.reroll ?? null).toBeNull();
+  });
+});

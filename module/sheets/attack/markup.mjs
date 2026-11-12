@@ -44,6 +44,8 @@ export function buildAttackContent(v) {
     dyn0,
     fanningActive,
     fanningRofMax,
+    fanningRofLabel = "Быстрый Курок: RoF Длинной очереди",
+    fanningRofHint = "",
     forceMelee,
     isMelee,
     item,
@@ -155,10 +157,10 @@ return `
     </div>
     ${fanningActive ? `
     <div class="av-row">
-      <label>Быстрый Курок: RoF Длинной очереди</label>
+      <label>${esc(fanningRofLabel)}</label>
       <input id="atk-fanning-rof" class="av-input av-num" type="number"
              min="2" max="${fanningRofMax}" value="${fanningRofMax}"
-             title="2..BS.b (${fanningRofMax}) по выбору — заменяет фиксированный RoF револьвера в режиме Длинной очереди. Без бонуса Прицеливания."/>
+             title="${esc(fanningRofHint || `2..BS.b (${fanningRofMax}) по выбору — заменяет фиксированный RoF револьвера в режиме Длинной очереди. Без бонуса Прицеливания.`)}"/>
     </div>` : ""}
     ${aimingBadgeHtml}
     ${sightHtml ?? ""}

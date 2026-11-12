@@ -18,7 +18,7 @@
 //   2. Кнопка открывает окно атаки (techniqueOpts.freeShot = "coveringFire"):
 //      только Короткая/Длинная очередь, −20, без ОД, лимит Атак не проверяется.
 //   3. После очереди ВСЕ запомненные враги (вариант «В» владельца) получают
-//      метку на стрелке (coveringFireMarks: токен → +10/+0), и когда такой враг
+//      метку на стрелке (coveringFireMarks: список {tokenUuid, mod, …}, +10/+0), и когда такой враг
 //      объявляет Натиск (declareCharge), система спрашивает «Натиск на
 //      стрелка?» и бросает Подавление.
 //  Обе метки живут на стрелке и гаснут в начале его следующего Хода
@@ -80,10 +80,30 @@ export async function applyCoveringFireMarks(actor, rofMode) {
   const offer = actor?.getFlag?.(NS, COVERING_FIRE_OFFER_FLAG);
   if (!Array.isArray(offer) || !offer.length) return;
   const mod = coveringFireSuppressionMod(rofMode);
-  const marks = {};
-  for (const e of offer) marks[e.tokenUuid] = { mod, actorUuid: e.actorUuid, name: e.name };
+  const marks = offer.map(e => ({ tokenUuid: e.tokenUuid, mod, actorUuid: e.actorUuid, name: e.name }));
   await actor.setFlag(NS, COVERING_FIRE_MARKS_FLAG, marks);
   await actor.unsetFlag(NS, COVERING_FIRE_OFFER_FLAG);
+}
+
+/**
+ * Метки стрелка списком {tokenUuid, mod, actorUuid, name}. Метки пишутся списком:
+ * uuid токена («Scene.x.Token.y») как ключ объекта setFlag разворачивал по точкам
+ * во вложенные объекты, и поиск по плоским ключам ничего не находил. Читаются и
+ * старые формы — плоский объект «uuid → метка» и уже развёрнутый вложенный.
+ */
+export function coveringFireMarkEntries(raw) {
+  if (!raw || typeof raw !== "object") return [];
+  if (Array.isArray(raw)) return raw.filter(m => m && typeof m === "object");
+  const out = [];
+  const walk = (node, path) => {
+    for (const [key, value] of Object.entries(node)) {
+      if (!value || typeof value !== "object") continue;
+      if ("mod" in value) out.push({ tokenUuid: [...path, key].join("."), ...value });
+      else walk(value, [...path, key]);
+    }
+  };
+  walk(raw, []);
+  return out;
 }
 
 /** Стрелки с живой меткой Прикрывающего Огня против этого врага (по токенам боя). */
@@ -92,10 +112,10 @@ export function coveringFireShootersFor(enemyActor) {
   const out = [];
   for (const c of game.combat?.combatants ?? []) {
     const shooter = c.actor;
-    const marks = shooter?.getFlag?.(NS, COVERING_FIRE_MARKS_FLAG);
-    if (!marks || shooter === enemyActor) continue;
-    const key = Object.keys(marks).find(k => enemyTokens.has(k) || marks[k]?.actorUuid === enemyActor?.uuid);
-    if (key) out.push({ shooter, mod: Number(marks[key].mod) || 0 });
+    if (!shooter || shooter === enemyActor) continue;
+    const marks = coveringFireMarkEntries(shooter.getFlag?.(NS, COVERING_FIRE_MARKS_FLAG));
+    const mark = marks.find(m => enemyTokens.has(m.tokenUuid) || (m.actorUuid && m.actorUuid === enemyActor?.uuid));
+    if (mark) out.push({ shooter, mod: Number(mark.mod) || 0 });
   }
   return out;
 }

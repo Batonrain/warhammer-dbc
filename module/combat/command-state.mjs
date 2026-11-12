@@ -21,7 +21,7 @@ import { registerRuleSource } from "../rules/source-registry.mjs";
 import { commandRulesFor, braveryActive, moraleCommandActive, commandEffectNode,
          syncAssaultBonus, volleySuppressionMod } from "../rules/command-effects.mjs";
 import { commandReachFor } from "../rules/command.mjs";
-import { commandCapacity, warChantSinging } from "../rules/leadership-talents.mjs";
+import { commandCapacity, followerCapacity, warChantSinging } from "../rules/leadership-talents.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { isItemActive } from "../apps/effects.mjs";
@@ -132,6 +132,14 @@ function squadGiver(squad) {
   return { active, willOf };
 }
 
+/** Лимит получателей Отряда: F.b×2 (×20 с Air of Authority) командующего; без командующего лимита нет. */
+const squadCommandCap = active => active ? commandCapacity(active, "fel") : Infinity;
+
+/** Лимит получателей источника: Отряд — squadCommandCap, командир сброда — followerCapacity (Дрессировка: P.b). */
+function recipientCapacityOf(source) {
+  return source?.type === "squad" ? squadCommandCap(squadGiver(source).active) : followerCapacity(source);
+}
+
 /**
  * Pack Consciousness / Сознание Стаи (Йигори): возможность на Черте.
  * hasRuleFlag здесь безопасен — он собирает правила с пустым контекстом, а
@@ -169,6 +177,18 @@ function chantFor(singer, idx) {
   if (!doc) return null;
   const cap = commandCapacity(doc, "wp");
   return { wp: Number(doc.system?.characteristics?.wp?.total) || 0, cap, over: idx >= cap };
+}
+
+/**
+ * Боевая Песнь командующего Отряда (Командир, иначе Лидер — тот же, что раздаёт
+ * Присутствие): для чипа «Песня» на листе Отряда и кнопки «Тройка» (песня даёт
+ * все три эффекта, в том числе Концентрацию огня).
+ * @returns {?{wp:number, cap:number, singer:string}} null — не поёт
+ */
+export function squadChantOf(squad) {
+  const { active } = squadGiver(squad);
+  const chant = chantFor(active, 0);
+  return chant ? { wp: chant.wp, cap: chant.cap, singer: active.name ?? "" } : null;
 }
 
 /**
@@ -219,7 +239,7 @@ export function commandNodesFor(actor) {
     if (idx < 0) continue;
     const { active, willOf } = squadGiver(squad);
     // F.b×2, с Air of Authority F.b×20 (rules/leadership-talents.mjs::commandCapacity).
-    const cap = active ? commandCapacity(active, "fel") : Infinity;
+    const cap = squadCommandCap(active);
     // Стая Йигори — только для бойца, у которого Черта есть сама (packOf
     // проверяет весь состав, включая его, но спросить дешевле с него).
     const pack = hasRuleFlag(actor, PACK_CAPABILITY) ? packOf(squad) : null;
@@ -244,11 +264,9 @@ export function commandNodesFor(actor) {
   const fIdx = followers.findIndex(f => sameActor(actor, f.uuid));
   if (boss && fIdx >= 0) {
     const cmd = boss.system.command ?? {};
-    // Дрессировка: «максимум подчинённых животных — P.b» вместо F.b×2
-    // (Air of Authority эту ветку не меняет — он про Command, не про зверей).
-    const bossCap = cmd.training
-      ? (Number(boss.system?.characteristics?.per?.bonus) || 0)
-      : commandCapacity(boss, "fel");
+    // Дрессировка: P.b вместо F.b×2 (rules/leadership-talents.mjs::followerCapacity —
+    // тот же хелпер даёт число на значке ⚑ вкладки Социум).
+    const bossCap = followerCapacity(boss);
     nodes.push({
       sourceUuid: boss.uuid,
       label: boss.name,
@@ -401,11 +419,17 @@ export async function clearCommandsOnCombatEnd(combat) {
 
 // ── Подчинённые узла ────────────────────────────────────────────────────────
 
-/** Подчинённые-документы источника (Отряда или командира сброда), до кого доходят Команды. */
-export function subordinatesOf(source, { moraleOnly = false } = {}) {
-  const list = source?.type === "squad"
+/**
+ * Подчинённые-документы источника (Отряда или командира сброда), до кого доходят Команды.
+ * capped — только внутри лимита получателей (первые F.b×2 по порядку списка,
+ * тот же отсчёт, что у overCapacity узла): массовые побочки Команды («Храбрость»,
+ * «Особая Тактика») достаются выбранным F.b×2, а не всему составу.
+ */
+export function subordinatesOf(source, { moraleOnly = false, capped = false } = {}) {
+  const entries = source?.type === "squad"
     ? (source.system.members || []).map(m => ({ uuid: m.uuid, moraleLost: !!m.moraleLost }))
     : (source?.system?.followers || []).map(f => ({ uuid: f.uuid, moraleLost: false }));
+  const list = capped ? entries.slice(0, recipientCapacityOf(source)) : entries;
   return list.flatMap(e => liveDocsOf(e.uuid).map(doc => ({ e, doc }))).filter(({ e, doc }) => {
     if (!doc) return false;
     const reach = commandReachFor(doc.type, "", doc, { moraleLost: e.moraleLost || commandLostActive(doc) });
@@ -414,10 +438,14 @@ export function subordinatesOf(source, { moraleOnly = false } = {}) {
   }).map(({ doc }) => doc);
 }
 
-/** «Храбрость»: подчинённые сразу выходят из Подавления и Шока. */
-export async function applyBraveryNow(source) {
+/**
+ * «Храбрость»: подчинённые сразу выходят из Подавления и Шока — внутри лимита
+ * получателей. capped:false — для Полевой Казни («все остальные подчинённые»,
+ * лимита Командования у неё нет).
+ */
+export async function applyBraveryNow(source, { capped = true } = {}) {
   const freed = [];
-  for (const doc of subordinatesOf(source, { moraleOnly: true })) {
+  for (const doc of subordinatesOf(source, { moraleOnly: true, capped })) {
     const c = doc.system?.conditions ?? {};
     const upd = {};
     if (c.pinned)  upd["system.conditions.pinned"] = false;
@@ -429,7 +457,7 @@ export async function applyBraveryNow(source) {
   return freed;
 }
 
-/** «Особая Тактика»: выдать Талант подчинённым на срок Команды. */
+/** «Особая Тактика»: выдать Талант подчинённым (внутри лимита получателей) на срок Команды. */
 export async function grantTacticTalent(source, key) {
   const def = TACTIC_TALENTS.find(t => t.key === key);
   if (!def) return [];
@@ -437,7 +465,7 @@ export async function grantTacticTalent(source, key) {
   if (!talent) { ui.notifications?.warn(`Талант «${def.label}» не найден в компендиуме.`); return []; }
   const stamp = issueStamp();
   const given = [];
-  for (const doc of subordinatesOf(source)) {
+  for (const doc of subordinatesOf(source, { capped: true })) {
     if (doc.items?.some(i => i.type === "talent" && i.name === talent.name)) continue;
     if (!doc.isOwner) continue;               // выдача предметов — только владельцу или ГМу
     const data = talent.toObject();
@@ -600,12 +628,16 @@ export function commandEffectOn(actor, key) {
   return commandEffectNode(actor, commandNodesFor(actor), key, { commandLost: commandLostActive(actor) });
 }
 
-/** Подчинённые-соседи по тому же узлу (Отряду/командиру) — документы. */
-function nodeMatesOf(actor, node) {
+/**
+ * Подчинённые-соседи по тому же узлу (Отряду/командиру) — документы. Только
+ * внутри лимита получателей F.b×2 (×20 с Air of Authority): Синхронный Натиск
+ * и Прикрытие работают между теми, до кого Команда реально дошла.
+ */
+export function nodeMatesOf(actor, node) {
   if (!node?.sourceUuid) return [];
   const source = resolve(node.sourceUuid);
   const me = actorIdentityUuids(actor);
-  return subordinatesOf(source).filter(d => !me.has(d.uuid));
+  return subordinatesOf(source, { capped: true }).filter(d => !me.has(d.uuid));
 }
 
 const tokenOf = actor => actor?.getActiveTokens?.(false)?.[0]?.document ?? actor?.token ?? null;

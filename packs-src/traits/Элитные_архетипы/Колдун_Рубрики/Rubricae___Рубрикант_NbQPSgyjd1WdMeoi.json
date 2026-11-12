@@ -1,0 +1,47 @@
+{
+  "name": "Rubricae / Рубрикант",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "WlglvQbAaTqsgArT",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: запреты (не говорит, не Бегает, не получает Порчу) и распад доспеха при Ранах ниже 0 — оговорки без числового канала; ведутся вручную.",
+    "benefit": "Не может говорить, совершать Бег и не получает Порчу. Когда его Раны опускаются ниже 0, он рассыпается грудой пустых доспехов.",
+    "source": "Элитный архетип: Колдун Рубрики (Голем Рубрики)",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Колдун Рубрики»)"
+  },
+  "_id": "NbQPSgyjd1WdMeoi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1793719006770,
+    "modifiedTime": 1793719006770,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!NbQPSgyjd1WdMeoi"
+}

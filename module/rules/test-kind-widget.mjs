@@ -223,13 +223,14 @@ export function readDifficulty(val) {
 }
 
 /** Разметка Кубика (Обычный/Преимущество/Помеха) отдельно от Вида теста. */
-export function diceModeHtml() {
+export function diceModeHtml({ preset = "normal" } = {}) {
+  const chk = value => (preset === value ? " checked" : "");
   return `<div class="roll-dlg-row">
     <label>Кубик:</label>
     <span class="dice-mode-group">
-      <label class="dice-mode-opt-label"><input type="radio" name="dice-mode" class="dice-mode-opt" value="normal" checked/> Обычный</label>
-      <label class="dice-mode-opt-label"><input type="radio" name="dice-mode" class="dice-mode-opt" value="advantage"/> Преимущество</label>
-      <label class="dice-mode-opt-label"><input type="radio" name="dice-mode" class="dice-mode-opt" value="disadvantage"/> Помеха</label>
+      <label class="dice-mode-opt-label"><input type="radio" name="dice-mode" class="dice-mode-opt" value="normal"${preset === "advantage" || preset === "disadvantage" ? "" : " checked"}/> Обычный</label>
+      <label class="dice-mode-opt-label"><input type="radio" name="dice-mode" class="dice-mode-opt" value="advantage"${chk("advantage")}/> Преимущество</label>
+      <label class="dice-mode-opt-label"><input type="radio" name="dice-mode" class="dice-mode-opt" value="disadvantage"${chk("disadvantage")}/> Помеха</label>
     </span>
   </div>`;
 }

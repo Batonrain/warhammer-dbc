@@ -38,7 +38,13 @@ export function possessionContext(actor) {
   const sym  = Math.max(0, Math.min(5, Number(p.symbiosis) || 0));
   // Симбиоз ограничен min(Inf/15, Cor/15) окр.▼
   const symLimit = Math.max(0, Math.min(5, Math.floor(Math.min(cor, (system.characteristics?.inf?.total ?? 0)) / 15)));
-  const wbDemon = Math.floor((p.demonWounds?.max ?? 0) / 10);
+  // Максимум времени контроля демона (книга, Twin Spirit): «10 − W.b ХОСТА
+  // часов (минимум 1)». Симбиоз даёт хосту +5 к W за пункт именно «в расчёте
+  // попыток демона перехватить контроль и макс. времени контроля». Раны демона
+  // на срок не влияют. «Неограниченно, если W демона выше» не считается —
+  // у демона в системе нет своей Характеристики W (только пул Ран).
+  const hostW  = (system.characteristics?.wp?.total ?? 0) + sym * 5;
+  const wbHost = Math.floor(hostW / 10);
   // Активные Дары на акторе (предметы-таланты «… / Дар: X») и лимит по профилю.
   const activeGiftSet = giftNamesOf(actor);
   return {
@@ -48,7 +54,7 @@ export function possessionContext(actor) {
     symPips: [1,2,3,4,5].map(n => ({ on: n <= sym, over: n > symLimit })),
     socialBonus: sym * 10,
     hostWBonus:  sym * 5,
-    controlHours: Math.max(1, 10 - wbDemon),
+    controlHours: Math.max(1, 10 - wbHost),
     naturalArmour: corB,
     regen: Math.ceil(corB / 2),
     demonWShield: `1-${p.demonWounds?.max ?? 0}`,
@@ -90,6 +96,14 @@ export async function toggleManifest(actor) {
     const roll   = await (new Roll("1d100")).evaluate();
     const success = roll.total <= target;
     if (!success) updates["system.corruption.value"] = Math.min(100, cor + 1);
+    // Дар «Гигант»: «+10 к максимуму И ТЕКУЩЕМУ количеству Ран». Максимум
+    // добавляет сам пересчёт листа (rules/character.mjs), текущие Раны — здесь,
+    // один раз при входе в Проявление; при выходе их срезает ветка выхода ниже.
+    if (giftNamesOf(actor).has("Гигант")) {
+      const w = sys.wounds || {};
+      const cap = (Number(w.max) || 0) + 10;
+      updates["system.wounds.value"] = Math.min(cap, (Number(w.value) || 0) + 10);
+    }
     const body = `
       <div class="wh-poss-card" style="--gc:${meta.color}">
         <div class="wh-poss-card-h">⛧ ПРОЯВЛЕНИЕ — ${meta.label} (${meta.godLabel})</div>
@@ -99,6 +113,19 @@ export async function toggleManifest(actor) {
       </div>`;
     await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: body });
   } else {
+    // Выход из Проявления: Дар «Гигант» отдаёт +10 к максимуму, а производный
+    // кламп character.mjs работает только пока у максимума есть поправка — без
+    // этого среза на листе оставалось бы «20 из 10» (Sahara 20-10). Срезаем
+    // хранимое значение до максимума БЕЗ поправки Дара; Раны ниже него не
+    // трогаем.
+    const w = sys.wounds || {};
+    const giant = (w.maxMods || [])
+      .filter(m => /Гигант/.test(m?.label ?? ""))
+      .reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+    if (giant) {
+      const newMax = Math.max(0, (Number(w.effectiveMax ?? w.max) || 0) - giant);
+      if ((Number(w.value) || 0) > newMax) updates["system.wounds.value"] = newMax;
+    }
     ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-poss-card" style="--gc:${meta.color}"><div class="wh-poss-card-h">Демон заключён — смертная форма</div></div>`

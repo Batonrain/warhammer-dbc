@@ -1,7 +1,7 @@
 // test/rules/avatar-of-slaughter-rule.test.mjs
 //
 // Следствие метки Avatar of Slaughter/Аватар Резни (wdbc-sk8s) через общий
-// реестр правил: rules/predicates.mjs::avatarOfSlaughterOffTarget +
+// реестр правил: rules/predicates.mjs::avatarOfSlaughterOnBerserker +
 // rules/library/core.mjs (правило "avatarOfSlaughter.penalty", отдаётся
 // источником "core" в rules/sources.mjs — раньше был отдельным источником
 // "avatarOfSlaughter", слит в core.mjs, wdbc-shr). Сама выдача метки —
@@ -21,18 +21,26 @@ function markedActor(berserkerUuid) {
   };
 }
 
-describe("avatarOfSlaughterOffTarget через resolveTest", () => {
-  it("атакует НЕ Берсерка — получает −20", () => {
-    const actor = markedActor("Actor.berserker1");
-    const targetActor = { uuid: "Actor.someoneElse" };
-    const { mods } = resolveTest({ actor, kind: "attack", targetActor });
-    expect(mods).toEqual([{ ruleId: "avatarOfSlaughter.penalty", label: "Аватар Резни: атакует не Берсерка", value: -20, halvePenalty: false }]);
-  });
-
-  it("атакует САМОГО Берсерка — штрафа нет", () => {
+describe("avatarOfSlaughterOnBerserker через resolveTest", () => {
+  // Книга (стр. Элитных архетипов, Берсерк Кхорна): «штраф −20 на все атаки и
+  // маневры, направленные НА Берсерка». Раньше правило читалось наоборот.
+  it("атакует САМОГО Берсерка — получает −20", () => {
     const actor = markedActor("Actor.berserker1");
     const targetActor = { uuid: "Actor.berserker1" };
     const { mods } = resolveTest({ actor, kind: "attack", targetActor });
+    expect(mods).toEqual([{ ruleId: "avatarOfSlaughter.penalty", label: "Аватар Резни: атакует Берсерка", value: -20, halvePenalty: false }]);
+  });
+
+  it("атакует НЕ Берсерка — штрафа нет", () => {
+    const actor = markedActor("Actor.berserker1");
+    const targetActor = { uuid: "Actor.someoneElse" };
+    const { mods } = resolveTest({ actor, kind: "attack", targetActor });
+    expect(mods).toEqual([]);
+  });
+
+  it("цель атаки не определена — штрафа нет (нельзя утверждать, что бьёт Берсерка)", () => {
+    const actor = markedActor("Actor.berserker1");
+    const { mods } = resolveTest({ actor, kind: "attack" });
     expect(mods).toEqual([]);
   });
 

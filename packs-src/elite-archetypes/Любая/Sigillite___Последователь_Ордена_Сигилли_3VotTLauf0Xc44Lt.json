@@ -6,7 +6,18 @@
     "key": "3f13b3fc",
     "cost": 4000,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "dbc13r01",
+          "kind": "psyRating",
+          "value": 6
+        },
+        {
+          "id": "dbc13r02",
+          "kind": "other",
+          "text": "For. Lore (Horus Heresy and Long War, Psykers)+30, Schol.Lore (Legend, Occult)+30"
+        }
+      ],
       "secondary": []
     },
     "race": "Любая",

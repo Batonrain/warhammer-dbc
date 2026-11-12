@@ -1,6 +1,6 @@
 // module/rules/ammo-free.mjs
 // ════════════════════════════════════════════════════════════════════════════
-//  «Этот выстрел не тратит патрон» — один вопрос, два книжных источника.
+//  «Этот выстрел не тратит патрон» — один вопрос, два книжных источника и один признак данных.
 //
 //  1. Рука Смерти (wdbc-hftn, стр. 46): сросшееся дальнобойное оружие
 //     генерирует боеприпасы из метаболизма носителя. Отдельного класса
@@ -13,6 +13,11 @@
 //     любое: какое именно вросло — помечено на нём самом (rules/gun-arm.mjs,
 //     wdbc-spsd).
 //
+//  3. Бесконечный магазин («Боезапас: ∞» в особенностях орудий техники и
+//     существ): в паке у такого оружия magazineMax = 0, а ∞ записан только
+//     текстом в special. Отличить его от «0 патронов» можно лишь по этой
+//     паре: magazineMax 0 + знак ∞ в special.
+//
 //  Вынесено из середины расчёта атаки (combat/attack.mjs) отдельной чистой
 //  функцией: правило книжное, проверяется без Foundry и уже имеет два
 //  источника — третий появится тем же способом, а не третьим `||` в длинной
@@ -21,8 +26,18 @@
 
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { gunArmAppliesTo, GUN_ARM_CLASSES } from "./gun-arm.mjs";
+import { isCellDevice } from "./warpsmith.mjs";
 
 export { GUN_ARM_CLASSES };
+
+const INFINITE_MARK = /(?<![\p{L}\d])∞/u;
+
+/** Магазин без дна: magazineMax 0 и ∞ в особенностях (не путать с пустым магазином). */
+export function hasInfiniteMagazine(item) {
+  const sys = item?.system;
+  if (!sys || (Number(sys.magazineMax) || 0) > 0) return false;
+  return INFINITE_MARK.test(String(sys.special ?? ""));
+}
 
 /**
  * Тратит ли этот выстрел патроны из магазина.
@@ -33,6 +48,8 @@ export { GUN_ARM_CLASSES };
  */
 export function ammoIsFree(item, actor) {
   if (isFusedByHandOfDeath(item)) return true;
+  if (isCellDevice(item)) return true;
+  if (hasInfiniteMagazine(item)) return true;
   // Без актора спрашивать возможность не у кого: Дар — свойство стрелка, а не
   // предмета (оружие в компендиуме или в боковой панели ничьё).
   if (!actor) return false;
