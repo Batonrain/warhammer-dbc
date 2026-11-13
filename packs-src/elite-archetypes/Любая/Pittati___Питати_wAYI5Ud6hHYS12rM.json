@@ -12,18 +12,6 @@
           "kind": "notEldar"
         },
         {
-          "id": "dbc14r01",
-          "kind": "characteristic",
-          "charKey": "bs",
-          "value": 45
-        },
-        {
-          "id": "dbc14r02",
-          "kind": "characteristic",
-          "charKey": "wp",
-          "value": 45
-        },
-        {
           "id": "dbc14r03",
           "kind": "trait",
           "key": "",
@@ -34,6 +22,20 @@
           "id": "dbc14r04",
           "kind": "psyRating",
           "value": 4
+        }
+      ],
+      "secondary": [
+        {
+          "id": "dbc14r01",
+          "kind": "characteristic",
+          "charKey": "bs",
+          "value": 45
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 45
         },
         {
           "id": "dbc14r05",
@@ -55,8 +57,7 @@
           "count": 1,
           "label": "Ремесло"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Любая",
     "god": "Неделимый",

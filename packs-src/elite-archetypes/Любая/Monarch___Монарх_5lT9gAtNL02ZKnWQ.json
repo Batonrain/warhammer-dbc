@@ -10,7 +10,9 @@
         {
           "id": "eldarReq307",
           "kind": "notEldar"
-        },
+        }
+      ],
+      "secondary": [
         {
           "id": "dbc14r01",
           "kind": "characteristic",
@@ -51,8 +53,7 @@
           "count": 1,
           "label": "Медицина"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Любая",
     "god": "Неделимый",

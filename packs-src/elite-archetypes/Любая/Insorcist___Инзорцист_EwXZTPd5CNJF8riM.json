@@ -12,18 +12,6 @@
           "kind": "notEldar"
         },
         {
-          "id": "dbc14r01",
-          "kind": "characteristic",
-          "charKey": "int",
-          "value": 50
-        },
-        {
-          "id": "dbc14r02",
-          "kind": "characteristic",
-          "charKey": "wp",
-          "value": 50
-        },
-        {
           "id": "dbc14r03",
           "kind": "trait",
           "key": "",
@@ -34,6 +22,20 @@
           "id": "dbc14r04",
           "kind": "psyRating",
           "value": 6
+        }
+      ],
+      "secondary": [
+        {
+          "id": "dbc14r01",
+          "kind": "characteristic",
+          "charKey": "int",
+          "value": 50
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 50
         },
         {
           "id": "dbc14r05",
@@ -73,8 +75,7 @@
           "count": 1,
           "label": "Язык"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Любая",
     "god": "Неделимый",

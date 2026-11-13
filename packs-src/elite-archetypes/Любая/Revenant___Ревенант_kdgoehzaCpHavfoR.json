@@ -15,7 +15,9 @@
           "id": "dbc14r01",
           "kind": "patron",
           "key": "khorne"
-        },
+        }
+      ],
+      "secondary": [
         {
           "id": "dbc14r02",
           "kind": "skill",
@@ -34,8 +36,7 @@
           "uuid": "Compendium.warhammer-dbc.talents.Item.x4C4FheBkX5nS2Wt",
           "count": 1
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Любая",
     "god": "Кхорн",
