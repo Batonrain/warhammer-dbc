@@ -19,9 +19,22 @@
           "value": 50
         },
         {
-          "id": "dbc13r03",
-          "kind": "other",
-          "text": "Operate (Aeronautica)+20, Two Weapon Wielder (Melee)"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "operate",
+          "specKey": "Полёт",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Вождение"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "talent",
+          "name": "Two Weapon Wielder / Два Оружия",
+          "specialization": "Melee",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.M42c1iRsyj6o7ovi",
+          "count": 1
         }
       ],
       "secondary": []

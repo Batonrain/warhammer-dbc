@@ -514,7 +514,7 @@ export function enemyTalentsOf(actor) {
  */
 export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "attackMelee", "charNotIn", "charIn", "testSense",
-  "targetHasTrait", "targetLacksCondition", "targetHasCondition",
+  "targetHasTrait", "targetHasTalent", "targetIsDaemon", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOnBerserker", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
@@ -680,6 +680,15 @@ export const PREDICATES = {
   // (rules/match-context.mjs) имя `target` занято флагом «бросок нацелен», и на
   // этапе 2 плана оба контекста сошлись в одном объекте.
   targetHasTrait: (actor, ctx, value) => hasNamed(ctx?.targetActor, value),
+
+  // Цель броска — носитель Таланта/Черты (hasNamed ищет и то и другое):
+  // Отверженный — силы на него бьют с −10 (rules/library/core.mjs).
+  targetHasTalent: (actor, ctx, value) => !!ctx?.targetActor && hasNamed(ctx.targetActor, value),
+
+  // Цель броска — демон (тип актора или Черта Daemonic): Отверженный штрафует
+  // Сопротивление силам демонических псайкеров. В ctx.targetActor Сопротивления
+  // лежит кастер (hooks.mjs, genericTest).
+  targetIsDaemon: (actor, ctx, value) => !!ctx?.targetActor && isDaemonActor(ctx.targetActor) === (value !== false),
 
   // Противоположность targetHasTrait по состояниям, не по Чертам: «нет ни
   // одного из перечисленных состояний X» (ключи — CONDITIONS_DEF в

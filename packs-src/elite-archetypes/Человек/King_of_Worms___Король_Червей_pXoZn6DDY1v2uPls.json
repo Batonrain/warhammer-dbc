@@ -37,9 +37,13 @@
           "value": 4
         },
         {
-          "id": "dbc13r06",
-          "kind": "other",
-          "text": "Survival+10"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "survival",
+          "rank": "trained",
+          "count": 1,
+          "label": "Выживание"
         }
       ],
       "secondary": []

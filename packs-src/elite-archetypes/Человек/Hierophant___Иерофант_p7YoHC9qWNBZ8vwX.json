@@ -20,9 +20,67 @@
           "value": 60
         },
         {
-          "id": "dbc13r03",
-          "kind": "other",
-          "text": "Charm+20, Deceive+20, Scrutiny+20, Schol.Lore (Imperial Creed)+20, For.Lore (Heresy)+20, Air of Authority, Inspire Wrath"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "charm",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Очарование"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "deceive",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Обман"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "scrutiny",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Пристальность"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Имперский Культ",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Ученые знания"
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Ересь",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "talent",
+          "name": "Air of Authority / Аура Власти",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.XTXLxoMrhvgfSBDE",
+          "count": 1
+        },
+        {
+          "id": "dbc13s07",
+          "kind": "talent",
+          "name": "Inspire Wrath / Вдохновить Гнев",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.w9lFpVoUDm8pxLb4",
+          "count": 1
         }
       ],
       "secondary": []

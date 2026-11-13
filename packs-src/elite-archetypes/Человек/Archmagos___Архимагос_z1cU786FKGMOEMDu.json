@@ -20,9 +20,52 @@
           "value": 55
         },
         {
-          "id": "dbc13r03",
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Механикум",
+          "rank": "knows",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Археотех",
+          "rank": "knows",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "talent",
+          "name": "Cybernetic Rebirth / Кибернетическое Перерождение",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.DBM307JgYFOWAVIt",
+          "count": 1
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Binary Dominion / Бинарное Владычество",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.fTx8PaNrxtN9dJYo",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
           "kind": "other",
-          "text": "Не Тех-Ассасин, Секутор или Малагра, Трейт Mechanicum Implants, Forbidden Lore (Mechanicum, Archeotech), Cybernetic Rebirth, Binary Dominion"
+          "text": "Не Тех-Ассасин, Секутор или Малагра"
         }
       ],
       "secondary": []

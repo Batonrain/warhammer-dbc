@@ -58,6 +58,7 @@ const TALENT_TYPE = (() => {
 })();
 import { getModEffects }                             from "../combat/weapon-mods.mjs";
 import { qualityEffects }                            from "../constants/quality.mjs";
+import { ammoFitsWeapon }                           from "../rules/ammo-override.mjs";
 import { _buildAmmoModString, shortLabel }           from "../helpers/utils.mjs";
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
@@ -622,12 +623,7 @@ function buildGetDataUncached(actor) {
     const baseBon = melee ? meleeBaseBonus(actor, meleeBaseKey) : 0;   // + Натиск Берсерка (rules/berserker-talents.mjs)
 
     const compatAmmo = melee ? [] : allItems
-      .filter(item =>
-        item.type === "ammo" &&
-        (item.system.weaponTypes || []).some(t =>
-          t === s.weaponType || t === s.weaponClass || t === "any"
-        )
-      )
+      .filter(item => ammoFitsWeapon(item, i))
       .map(item => ({
         id:       item.id,
         name:     item.name,

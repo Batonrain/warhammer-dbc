@@ -2213,7 +2213,7 @@ export const CAPABILITIES = {
   // ── Пси-стойкость
   "psyResist.core.aetherCocoon": {
     label: "За каждую действующую на него психосилу (Вливания, Изменения, Ауры, Призывы с зонами влияния) персонаж уменьшает штраф к W от Daemonic Prese…",
-    source: "Aether Cocoon / Эфирный Кокон", reader: ""
+    source: "Aether Cocoon / Эфирный Кокон", reader: "Правило psyResist.aetherCocoon (module/rules/library/core.mjs): rollBonus psychicDirect, valueFrom.selfPsychicPowersActing ×2 — module/rules/resolve-test.mjs ← warp-effect-guard.mjs::psychicPowersActingOn. Не смоделировано: −2 к штрафу Daemonic Presence, +1 АР против варп-оружия, дары и Одержимость."
   },
   "psyResist.core.bastionOfIronWill": {
     label: "Персонаж получает +тPR×5 на любые встречные тесты против психосил.",
@@ -2227,15 +2227,15 @@ export const CAPABILITIES = {
   },
   "psyResist.core.divineProtection": {
     label: "Раз в Раунд, получая эффект психосилы, демонического дара, варп-оружия, выжигания души или иной полагающийся на Варп эффект,",
-    source: "Divine Protection / Божественная Защита", reader: ""
+    source: "Divine Protection / Божественная Защита", reader: "module/rules/warp-effect-guard.mjs (divineProtectionAvailable/attemptDivineProtection) — гейт Сопротивления психосиле и Выжигание Души (module/hooks.mjs). Не смоделировано: дары, варп-оружие, иные Варп-эффекты."
   },
   "psyResist.core.donTTrustYourEyes": {
     label: "Подвергаясь психосиле, изменяющей восприятие, ГМ тайно проходит за персонажа Awareness−10; при Успехе персонаж узнаёт,",
-    source: "Don't Trust Your Eyes / Не Верь Глазам Своим", reader: ""
+    source: "Don't Trust Your Eyes / Не Верь Глазам Своим", reader: "module/combat/warp-guard.mjs — runWarpOffer(\"perception\"): тайный бросок ГМ Awareness−10 (кнопка карточки сопротивления)."
   },
   "psyResist.core.forsaken": {
     label: "Связанные и несвязанные псайкеры получают −10 на тесты психосил, действующих только на этого персонажа,",
-    source: "Forsaken / Отверженный", reader: ""
+    source: "Forsaken / Отверженный", reader: "Правила psyResist.forsaken.resist (−10 к Сопротивлению силам демонов, авто) и psyResist.forsaken.cast (−10 к силе на Отверженного, галочка) — module/rules/library/core.mjs; предикаты targetIsDaemon/targetHasTalent. Атаки Одержимостью не смоделированы."
   },
   "psyResist.core.gazeIntoAbyss": {
     label: "Персонаж получает на 1 Порчи меньше от эффектов Феноменов, Прорывов, Варп-Шока, Отвращения Варпа, Психосил и Атаки Одержимостью.",
@@ -2249,7 +2249,7 @@ export const CAPABILITIES = {
   },
   "psyResist.core.neuralTriggers": {
     label: "Когда персонаж вынужден действовать против своей воли (контроль разума/тела/бионики, чуждые эмоции, паразитический контроль,",
-    source: "Neural Triggers / Нейральные Триггеры", reader: ""
+    source: "Neural Triggers / Нейральные Триггеры", reader: "module/combat/warp-guard.mjs — postWarpOffers/runWarpOffer (кнопка карточки сопротивления; hooks.mjs, .psy-resist-request-btn и .wh-warp-offer-btn). Контроль тела/бионики и пр. ведёт стол."
   },
   "psyResist.core.orthoproxy": {
     label: "Персонаж получает +20 на тесты сопротивления контролю разума и допросу.",
@@ -2258,11 +2258,11 @@ export const CAPABILITIES = {
   },
   "psyResist.core.psychicCollapse": {
     label: "За полудействие псайкер может развеять психосилу, что поддерживал на себе/оружии (поддержание которой уменьшает его тPR),",
-    source: "Psychic Collapse / Психический Обвал", reader: ""
+    source: "Psychic Collapse / Психический Обвал", reader: "module/combat/warp-guard.mjs — runWarpOffer(\"collapse\"): снимает свою поддерживаемую силу (psychic-sustain.mjs) и бросает Феномен. Чужая сила и Одержимость — стол."
   },
   "psyResist.core.shieldOfContempt": {
     label: "Потратив 1 ОБ и 5 минут на ритуал, персонаж обязан каждый раз, когда на него нацелена психосила (полезная или вредная), пройти W+0.",
-    source: "Shield of Contempt / Щит Презрения", reader: ""
+    source: "Shield of Contempt / Щит Презрения", reader: "module/combat/warp-guard.mjs::tryShieldOfContempt (гейт .psy-resist-request-btn в hooks.mjs); «Щит активен» — тумблер Таланта (manualOff, apps/effects.mjs::isItemActive). Ритуал не смоделирован."
   },
   "psyResist.core.solipsism": {
     label: "Персонаж может перебрасывать все встречные тесты против психосил (кроме непрямых), одержимости или выжигания души. Смоделировано (решение владельца 25.10.2026): переброс «лучший из двух» на Сопротивление психосиле (кроме непрямых; радиокнопка в окне) и автоматически на Выжигание Души; «проиграл социальное взаимодействие» ведёт игрок/ГМ ручным тумблером в строке Таланта. Одержимость — без окна теста, ведёт стол.",

@@ -20,9 +20,58 @@
           "value": 50
         },
         {
-          "id": "dbc13r03",
-          "kind": "other",
-          "text": "Operate (Aeronautica)+10, Stealth+10, Tech-Use+10, Trade (Weaponsmith)+10, Two Weapon Wielder (Ranged), Gunslinger"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "operate",
+          "specKey": "Полёт",
+          "rank": "trained",
+          "count": 1,
+          "label": "Вождение"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "stealth",
+          "rank": "trained",
+          "count": 1,
+          "label": "Скрытность"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "techUse",
+          "rank": "trained",
+          "count": 1,
+          "label": "Технология"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "trade",
+          "specKey": "Оружейник",
+          "rank": "trained",
+          "count": 1,
+          "label": "Ремесло"
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Two Weapon Wielder / Два Оружия",
+          "specialization": "Ranged",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.M42c1iRsyj6o7ovi",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "talent",
+          "name": "Gunslinger / Македонец",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.VrTQB3fL8Vp8oaHu",
+          "count": 1
         }
       ],
       "secondary": []

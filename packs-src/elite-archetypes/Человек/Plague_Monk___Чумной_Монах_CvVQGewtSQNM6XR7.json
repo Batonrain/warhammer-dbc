@@ -25,9 +25,81 @@
           "value": 35
         },
         {
-          "id": "dbc13r04",
-          "kind": "other",
-          "text": "Survival+10, For.Lore (Heresy)+10, Trade (Chymist), Resistance (Disease, Poison), Tireless, True Grit, Unarmed Master, Meditation"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "survival",
+          "rank": "trained",
+          "count": 1,
+          "label": "Выживание"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Ересь",
+          "rank": "trained",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "trade",
+          "specKey": "Химик",
+          "rank": "knows",
+          "count": 1,
+          "label": "Ремесло"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "talent",
+          "name": "Resistance / Сопротивление",
+          "specialization": "Disease",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.KUrEsT190BtUwtW8",
+          "count": 1
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Resistance / Сопротивление",
+          "specialization": "Poison",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.KUrEsT190BtUwtW8",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "talent",
+          "name": "Tireless / Неутомимый",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.7NS7rXERMbxf4WFD",
+          "count": 1
+        },
+        {
+          "id": "dbc13s07",
+          "kind": "talent",
+          "name": "True Grit / Настоящая Выдержка",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.vuyODGyn3N03J8si",
+          "count": 1
+        },
+        {
+          "id": "dbc13s08",
+          "kind": "talent",
+          "name": "Unarmed Master / Безоружный Мастер",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.cYHR4a9xdnIo6KEE",
+          "count": 1
+        },
+        {
+          "id": "dbc13s09",
+          "kind": "talent",
+          "name": "Meditation / Медитация",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.PjYdEZCl7AspsgFT",
+          "count": 1
         }
       ],
       "secondary": []

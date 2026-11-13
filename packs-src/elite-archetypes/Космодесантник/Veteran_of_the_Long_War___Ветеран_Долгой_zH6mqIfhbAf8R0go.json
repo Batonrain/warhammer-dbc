@@ -8,9 +8,12 @@
     "requirements": {
       "primary": [
         {
-          "id": "dbc13r01",
-          "kind": "other",
-          "text": "Hatred (любые 3 Имперские фракции)"
+          "id": "dbc13s01",
+          "kind": "talent",
+          "name": "Hatred / Ненависть",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.x4C4FheBkX5nS2Wt",
+          "count": 3
         }
       ],
       "secondary": []

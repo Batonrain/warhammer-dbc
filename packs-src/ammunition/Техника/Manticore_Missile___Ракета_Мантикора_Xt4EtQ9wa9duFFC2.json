@@ -1,0 +1,67 @@
+{
+  "name": "Manticore Missile / Ракета Мантикора",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
+  "folder": "uJE8Awg6L5kJ6U24",
+  "system": {
+    "description": "Снаряд орудия «Пусковая Установка Мантикора» (Manticore Launcher). Dmg, Pen и Rng снаряда ЗАМЕНЯЮТ профиль орудия, а не складываются с ним. Blast по книге: 15+1d10 м (1d10 бросается отдельно).",
+    "notes": "",
+    "weaponTypes": [
+      "any"
+    ],
+    "ammoCategory": "vehicle_shells",
+    "rarity": 1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageDiceMod": 0,
+    "damageTypeOverride": "blast",
+    "damageSubtypeOverride": "fragmentation",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "damageOverride": "4d10+10",
+    "penetrationOverride": 12,
+    "rangeOverride": 0,
+    "weaponTag": "Manticore Launcher",
+    "special": "Blast по книге: 15+1d10 м (1d10 бросается отдельно).",
+    "properties": [
+      {
+        "key": "concussive",
+        "rating": 5
+      },
+      {
+        "key": "blast",
+        "rating": 15
+      }
+    ],
+    "removeProps": [],
+    "condMods": [],
+    "drukhari": false,
+    "bookSource": "DoomBC — Машины («Мантикора», боеприпасы для орудия «Пусковая Установка Мантикора», стр. 22)",
+    "legion": false,
+    "itemSize": ""
+  },
+  "_id": "Xt4EtQ9wa9duFFC2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1794583108814,
+    "modifiedTime": 1794583108814,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Xt4EtQ9wa9duFFC2"
+}

@@ -97,6 +97,7 @@ import { processFastWeavingCombatStart, handleSignatureFreeClick, handlePsyRerol
 import { VAMPIRE_CARD_FLAG, handleVampireClick } from "./combat/psychic-vampire.mjs";
 import { WARP_LOCK_CARD_FLAG, handleWarpLockClick } from "./combat/warp-lock.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
+import { tryDivineProtection, tryShieldOfContempt, postWarpOffers, runWarpOffer } from "./combat/warp-guard.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -465,6 +466,11 @@ export function registerHooks() {
             { sound: false });
           return;
         }
+        // Божественная Защита (wdbc-nzzgn): раз в Раунд d10, на 10 эффект игнорируется.
+        const gateCaster = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
+        if (await tryShieldOfContempt(targetActor, gateCaster, { indirect: d.psyIndirect === "1" })) return;
+        if (await tryDivineProtection(targetActor, d.label || "Эффект психосилы")) return;
+        await postWarpOffers(targetActor, d.label || "Эффект психосилы");
         const requesterActor = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
         // onFailItemUuid (wdbc-tqfj) — ТОЛЬКО psychic.mjs ставит это поле, у
         // остальных genericTest-запросов (showDelegateTestPicker, кнопка
@@ -510,6 +516,18 @@ export function registerHooks() {
     });
 
     // Вихрь Рока — Реакция другого псайкера, пытающегося перехватить контроль.
+    // Кнопки Талантов Пси-Стойкости (module/combat/warp-guard.mjs::postWarpOffers).
+    html.querySelectorAll(".wh-warp-offer-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const actor = await fromUuid(ds.actorUuid).catch(() => null);
+        if (!actor) return ui.notifications?.warn("Актор не найден (удалён?).");
+        if (!actor.isOwner && !game.user?.isGM) return ui.notifications?.warn(`⚠️ Нет прав на «${actor.name}».`);
+        await runWarpOffer(ds.action, actor);
+      });
+    });
+
     html.querySelectorAll(".wh-vortex-react-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
@@ -4246,6 +4264,8 @@ export async function _executeSoulBurn(attacker, target) {
   if (hasFleshmetalFlag(target, "soulBurnImmunity")) {
     return ui.notifications.warn(`${target.name}: Выжигание Души бесполезно — душа спрятана в Варпе (Странная Неуязвимость).`);
   }
+  // Божественная Защита цели (wdbc-nzzgn): на 10 по d10 эффект игнорируется.
+  if (await tryDivineProtection(target, "Выжигание Души")) return;
   const allRolls = [];
 
   // Встречные тесты Воли обеих сторон — оба через общий сбор (wdbc-ct65.2):

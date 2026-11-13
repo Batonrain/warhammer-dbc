@@ -25,9 +25,91 @@
           "value": 50
         },
         {
-          "id": "dbc13r04",
-          "kind": "other",
-          "text": "Acrobatics+10, Awareness+10, Dodge+10, Trade (Musician), Trade (Dancer), Flip, Hard Target, Step Aside, Sure Strike, Precise Blow"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "acrobatics",
+          "rank": "trained",
+          "count": 1,
+          "label": "Акробатика"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "awareness",
+          "rank": "trained",
+          "count": 1,
+          "label": "Внимательность"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "dodge",
+          "rank": "trained",
+          "count": 1,
+          "label": "Уклонение"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "trade",
+          "specKey": "Музыкант",
+          "rank": "knows",
+          "count": 1,
+          "label": "Ремесло"
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "trade",
+          "specKey": "Танцор",
+          "rank": "knows",
+          "count": 1,
+          "label": "Ремесло"
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "talent",
+          "name": "Flip / Кувырок",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.L46vz575vcVsJ6f8",
+          "count": 1
+        },
+        {
+          "id": "dbc13s07",
+          "kind": "talent",
+          "name": "Hard Target / Трудная Цель",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.OeCK9J0LbqRikxFd",
+          "count": 1
+        },
+        {
+          "id": "dbc13s08",
+          "kind": "talent",
+          "name": "Step Aside / Шаг в Сторону",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.qbE7QyGmIN3a2IGH",
+          "count": 1
+        },
+        {
+          "id": "dbc13s09",
+          "kind": "talent",
+          "name": "Sure Strike / Верный Удар",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.XNb5thmTPU4e8Cd5",
+          "count": 1
+        },
+        {
+          "id": "dbc13s10",
+          "kind": "talent",
+          "name": "Precise Blow / Выверенный Удар",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.hgr4BacJ2x2F3Nwq",
+          "count": 1
         }
       ],
       "secondary": []

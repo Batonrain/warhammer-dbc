@@ -25,9 +25,23 @@
           "value": 45
         },
         {
-          "id": "dbc13r04",
-          "kind": "other",
-          "text": "Medicae+10, Schol.Lore (Occult)+10"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "medicae",
+          "rank": "trained",
+          "count": 1,
+          "label": "Медицина"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Оккультизм",
+          "rank": "trained",
+          "count": 1,
+          "label": "Ученые знания"
         }
       ],
       "secondary": []

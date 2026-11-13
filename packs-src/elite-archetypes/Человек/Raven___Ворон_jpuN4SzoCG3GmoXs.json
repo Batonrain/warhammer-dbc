@@ -25,9 +25,56 @@
           "value": 40
         },
         {
-          "id": "dbc13r04",
-          "kind": "other",
-          "text": "Deceive+10, Medicae+0, For.Lore (Warp)+10, Blind Fighting, Disarm, Double Team"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "deceive",
+          "rank": "trained",
+          "count": 1,
+          "label": "Обман"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "medicae",
+          "rank": "knows",
+          "count": 1,
+          "label": "Медицина"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Варп",
+          "rank": "trained",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "talent",
+          "name": "Blind Fighting / Бой Вслепую",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.pnCwlXjvGlZjoNDs",
+          "count": 1
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Disarm / Обезоружить",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.1WYssoM7RId2SxUJ",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "talent",
+          "name": "Double Team / Гурьбой",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.icosn3iRFLevn5hw",
+          "count": 1
         }
       ],
       "secondary": []

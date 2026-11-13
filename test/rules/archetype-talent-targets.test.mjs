@@ -42,6 +42,16 @@ describe("цели Талантов, выданных Архетипами", () 
     expect(talents(find("archetypes/Люди", "Apostate___"), "Hatred")[0].targetChoiceCount).toBe(2);
     expect(talents(find("archetypes/Люди", "Apostate___"), "Peer")[0].targetChoiceCount).toBe(2);
   });
+  it("Космическая станция, Герольд, Шаман Зверолюдей и Предсказание просят выбрать цель при выдаче", () => {
+    // Книга не называет группу: «Peer (Собственная банда)» (core), «Peer (Племя)» (toad-psykers),
+    // Good Reputation «связанный с тем, кто владел станцией», Peer «повязанные с персонажем».
+    const one = (doc, name) => talents(doc, name).filter(e => e.targetChoiceCount === 1);
+    expect(one(find("homeworlds/Происхождения", "Космическая_станция"), "Good Reputation")).toHaveLength(1);
+    expect(one(find("elite-archetypes/Космодесантник", "Herald___"), "Peer")).toHaveLength(1);
+    expect(one(find("elite-archetypes/Зверолюд", "Beastman_Shaman"), "Peer")).toHaveLength(1);
+    expect(one(find("divinations", "Be_a_Boon"), "Peer")).toHaveLength(1);
+    expect(one(find("divinations", "Be_a_Boon"), "Hatred")).toHaveLength(1);
+  });
   it("фракции «Преступники» и «Пираты» есть в каталоге", () => {
     const dir = path.join(ROOT, "factions/Роли");
     const ks = fs.readdirSync(dir).filter(f => !f.startsWith("_")).map(f => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")).system.key);

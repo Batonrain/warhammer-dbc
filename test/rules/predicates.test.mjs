@@ -548,6 +548,9 @@ describe("общее требование к предикатам", () => {
     weightlessScene: true,
     // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
     targetSerpentine: true,
+    // Цель — носитель Таланта / демон (Отверженный, wdbc-nzzgn) — читают ЦЕЛЬ.
+    targetHasTalent: "Forsaken",
+    targetIsDaemon: true,
     // База рукопашной атаки, держащаяся на акторе (system.meleeBase).
     meleeBaseIs: ["charge"],
     // Чувство, выбранное в окне теста Внимательности (ctx.sense).

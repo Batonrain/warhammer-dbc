@@ -20,9 +20,40 @@
           "value": 50
         },
         {
-          "id": "dbc13r03",
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "talent",
+          "name": "Ambidextrous / Амбидекстр",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.qIvmL073yXLMRqgW",
+          "count": 1
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "talent",
+          "name": "Hatred / Ненависть",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.x4C4FheBkX5nS2Wt",
+          "count": 3
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "talent",
+          "name": "Two Weapon Wielder / Два Оружия",
+          "specialization": "Ranged",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.M42c1iRsyj6o7ovi",
+          "count": 1
+        },
+        {
+          "id": "dbc13s05",
           "kind": "other",
-          "text": "Не Тех-Ассасин, Архимагос или Малагра, Трейт Mechanicum Implants, Ambidextrous, Hatred (любые 3), Two Weapon Wielder (Ranged)"
+          "text": "Не Тех-Ассасин, Архимагос или Малагра"
         }
       ],
       "secondary": []

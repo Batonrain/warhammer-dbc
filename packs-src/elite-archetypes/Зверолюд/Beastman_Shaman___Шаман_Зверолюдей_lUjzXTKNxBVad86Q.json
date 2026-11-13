@@ -32,9 +32,23 @@
           "value": 4
         },
         {
-          "id": "dbc13r05",
-          "kind": "other",
-          "text": "Command+0, Schol.Lore (Occult)+0"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "command",
+          "rank": "knows",
+          "count": 1,
+          "label": "Командование"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Оккультизм",
+          "rank": "knows",
+          "count": 1,
+          "label": "Ученые знания"
         }
       ],
       "secondary": []
@@ -468,7 +482,8 @@
               "label": "",
               "code": "",
               "kind": "talent",
-              "id": "5RTGWKkS9KWyhHut"
+              "id": "5RTGWKkS9KWyhHut",
+              "targetChoiceCount": 1
             },
             {
               "corruptionValue": "1",
