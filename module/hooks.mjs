@@ -4107,9 +4107,11 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       if (resist.resisted) { resistedNotes.push(resist.note); resistedConds.push(cond); continue; }
       Object.assign(update, fields);
       if (cond === "burning") ignitedNow = true;
+      // Подпись — у накладываемого Состояния (Оглушение), а не у свойства оружия (Шоковое).
+      const condLabel = CONDITIONS_DEF[cond]?.label || label;
       applied.push(levelField
-        ? `${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`
-        : (cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : label));
+        ? `${condLabel} (${useRounds ? "раундов" : "ур."}: ${lvl})`
+        : (cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : condLabel));
     }
     if (Object.keys(update).length) await actor.update(update);
     if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;

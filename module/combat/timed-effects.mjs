@@ -38,7 +38,7 @@ export const WAR_CRY_PRIORITY = 100;
  *
  * @param {{key:string, name:string, img?:string, changes:object[], combat?:{id:string, round:number}|null, duration?:object|null, span?:number}} spec
  */
-export function timedEffectData({ key, name, img, changes, combat = null, duration = null, span = 0 }) {
+export function timedEffectData({ key, name, img, changes, combat = null, duration = null, span = 0, start = null }) {
   const round = Number(combat?.round) || 0;
   return {
     name,
@@ -46,6 +46,9 @@ export function timedEffectData({ key, name, img, changes, combat = null, durati
     // type "add" и фаза — по ключу (constants/effect-keys.mjs), как у всех эффектов системы.
     system: { changes: changes.map(c => ({ priority: 0, type: "add", ...c, phase: c.phase ?? expectedPhase(c.key) })) },
     duration: duration ?? { value: 1, units: "rounds", expiry: "turnStart" },
+    // Явный старт: без него ядро берёт game.combat (бой из трекера ГМа, не бой носителя) и Ход «текущий»,
+    // а не Ход носителя — эффект гас сразу или не в тот Ход (живая проверка 13.11, Боевой Клич и Психический Рывок).
+    ...(start ? { start } : {}),
     flags: { [NS]: { [TIMED_EFFECT_FLAG]: { key, combatId: combat?.id ?? "", round, ...(span ? { lastRound: round + span } : {}) } } }
   };
 }
@@ -81,8 +84,28 @@ export async function grantTimedEffect(actor, spec, caster = null) {
   const combat = spec.combat ?? combatOfActor(actor) ?? (caster ? combatOfActor(caster) : null);
   const old = timedEffectsOf(actor, spec.key).map(e => e.id).filter(Boolean);
   if (old.length) await actor.deleteEmbeddedDocuments("ActiveEffect", old);
-  const [effect] = (await actor.createEmbeddedDocuments("ActiveEffect", [timedEffectData({ ...spec, combat })])) ?? [];
+  const start = effectStartOf(actor, combat);
+  const [effect] = (await actor.createEmbeddedDocuments("ActiveEffect", [timedEffectData({ ...spec, combat, start })])) ?? [];
   return effect ?? null;
+}
+
+/**
+ * Старт эффекта в бою носителя: бой, участник-носитель и его Ход в очереди. null — боя нет или он не начат
+ * (тогда ядро заполнит старт само, как для обычного эффекта вне боя).
+ */
+export function effectStartOf(actor, combatRef) {
+  const doc = combatRef?.id ? globalThis.game?.combats?.get?.(combatRef.id) : null;
+  if (!doc?.started) return null;
+  const combatant = doc.getCombatantsByActor?.(actor)?.[0] ?? null;
+  const turn = combatant ? doc.turns?.findIndex(t => t.id === combatant.id) : -1;
+  return {
+    time: globalThis.game?.time?.worldTime ?? 0,
+    combat: doc.id,
+    combatant: combatant?.id ?? null,
+    initiative: combatant?.initiative ?? null,
+    round: doc.round ?? null,
+    turn: turn >= 0 ? turn : null
+  };
 }
 
 /**

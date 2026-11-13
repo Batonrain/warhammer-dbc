@@ -72,6 +72,9 @@ describe("Когнис: допуск и цена", () => {
   it("атака через I стоит 1 Когниции; без Когниции нельзя", () => {
     expect(cognisDecision({ implants: true, onVehicle: false, charKey: "i", cognition: 3 }).spend).toBe(1);
     expect(cognisDecision({ implants: true, onVehicle: false, charKey: "i", cognition: 0 }).blocked).toBe(true);
+    // Живая проверка 13.11: в окне атаки Интеллект — ключ "int", а не "i".
+    expect(cognisDecision({ implants: true, onVehicle: false, charKey: "int", cognition: 3 }).spend).toBe(1);
+    expect(cognisDecision({ implants: true, onVehicle: false, charKey: "int", cognition: 0 }).blocked).toBe(true);
     expect(cognisDecision({ implants: true, onVehicle: false, charKey: "bs", cognition: 0 }).spend).toBe(0);
   });
 });

@@ -39,7 +39,8 @@ export function cognisDecision({ implants, onVehicle, isGM = false, charKey, cog
     warn = "Когнис: дух машины не принимает команд от непосвящённых — нужен Трейт Mechanicum Implants.";
     if (!isGM) return { blocked: true, warn, spend: 0 };
   }
-  if (charKey === "i") {
+  // В системе I — Интеллект, ключ "int" (в окне атаки "i" нет); "i" оставлен для старых вызовов.
+  if (charKey === "int" || charKey === "i") {
     if ((Number(cognition) || 0) < 1) {
       return { blocked: true, warn: "Когнис: атака через I стоит 1 Когниции, а её нет.", spend: 0 };
     }

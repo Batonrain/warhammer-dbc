@@ -3360,10 +3360,11 @@ export class WarhammerCharacterSheet
       // group/specialty (wdbc-1rno.22): групповой Навык приходит без skill
       // (onSkillRoll) — без них исход теста принимал бросок Навигации/Ремесла
       // за тест Характеристики (Инфернальная Воля: «любой тест Навыка»).
-      ctx: { actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
+      // sense: выбранное в окне Чувство — без него Оглохший + Слух не получал автопровал.
+      ctx: withSense({ actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
              group: rollContext?.group || undefined, specialty: rollContext?.specialty || undefined,
              morale: isMoraleOpposedSkill(skillKey),
-             ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }
+             ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }, result.sense)
     });
     if (isMoraleOpposedSkill(skillKey)) {
       await applyLordOfExoditesFailPenalty(this.actor, {
