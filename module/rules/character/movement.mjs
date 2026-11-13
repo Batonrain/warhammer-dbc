@@ -22,6 +22,9 @@ import { flightSpeedOf } from "../flight-speed.mjs";
 import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
 import { speedMultiplierTraitsOf, speedMultipliersFor } from "../speed-multipliers.mjs";
 import { mechRollData } from "../mech-formula.mjs";
+import { VAST_SIZE_FLAG, vastSizeBonus } from "../strange-invulnerability.mjs";
+import { wearsActivePowerArmour } from "../predicates.mjs";
+import { quadrupedMultiplier } from "../quadruped.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -55,10 +58,23 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // намеренно НЕ двигают SPD. Складывается с тем, что уже мог записать
   // легаси-эффект тем же ключом (тот же приём, что traitSizeMod/sizeMod выше).
   const sizeModNoSpd = traitSizeModNoSpd + (Number(system.sizeModNoSpd) || 0);
-  const size    = (system.size ?? 0) + sizeMod;
+  let size = (system.size ?? 0) + sizeMod;
+  // Силовая Броня (стр. 233): «Увеличивает Размер персонажа до 1 (если он не
+  // больше изначально)» — потолок СНИЗУ, а не надбавка: персонаж Размером 2+
+  // (напр. Астартес) не уменьшается, Размером 0/−1 поднимается ровно до 1.
+  // Входит в `size` (а не в sizeModNoSpd) — двигает SPD, как и вклад Черт
+  // выше: громоздкий доспех увеличивает шаг не только на бумаге.
+  if (wearsActivePowerArmour(actor)) size = Math.max(size, 1);
   system.sizeMod   = sizeMod;          // вклад Черт в Размер (двигает SPD)
   system.sizeModNoSpd = sizeModNoSpd;  // вклад в Размер БЕЗ влияния на SPD
   system.sizeTotal = size + sizeModNoSpd; // итоговый Размер (база + оба вклада)
+  // Странная Неуязвимость, 7 «Необъятный» (wdbc-1rno.24): пока персонаж держит
+  // пойманного Захватом, его Размер — на 1 выше Размера атакующего (флаг ставит
+  // combat/grapple.mjs при автозахвате). Размер без SPD — как у Amorphous
+  // («не влияет на его SPD»), поэтому только в итог, не в size для calcMovement.
+  system.sizeTotal += vastSizeBonus(system.sizeTotal,
+    actor?.flags?.["warhammer-dbc"]?.[VAST_SIZE_FLAG] ?? actor?.getFlag?.("warhammer-dbc", VAST_SIZE_FLAG),
+    !!system.conditions?.grappling);
   const stance  = system.meleeStance || "standard";
 
   let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
@@ -108,6 +124,17 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   const piercingSpdMod = (pw.body || pw.leftLeg || pw.rightLeg) ? -1 : 0;
   if (traitSpeedMod || spdBonus || overloadSpdMod || inventoryOverloadSpdMod || piercingSpdMod) {
     spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod + inventoryOverloadSpdMod + piercingSpdMod);
+    halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
+  }
+
+  // Четвероногий (X): «удваивает свой SPD» — весь итоговый SPD вместе с надбавками
+  // (решение владельца 13.11.2026); рейтинг 1 в режиме «прямоходящий» не удваивает
+  // (rules/quadruped.mjs). В полёте скорость целиком заменена Flyer/Hoverer — не множится.
+  const quadMult = flightSpd !== null ? 1 : quadrupedMultiplier(actor);
+  let quadExtra = 0;     // прибавка от множителя — строка разбора SPD (сумма слагаемых = halfMove)
+  if (quadMult !== 1) {
+    quadExtra = spd * (quadMult - 1);
+    spd = spd * quadMult;
     halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
   }
 
@@ -227,6 +254,7 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   if (overloadSpdMod)          spdBreakdown.push({ label: "Перевес выключенной брони",   value: overloadSpdMod });
   if (inventoryOverloadSpdMod) spdBreakdown.push({ label: "Перевес инвентаря",           value: inventoryOverloadSpdMod });
   if (piercingSpdMod)          spdBreakdown.push({ label: "Piercing (снаряд в ране)",     value: piercingSpdMod });
+  if (quadExtra)               spdBreakdown.push({ label: "Четвероногий (SPD ×2)",        value: quadExtra, note: "удваивает весь SPD вместе с надбавками" });
   if (stance === "springing")  spdBreakdown.push({ label: "Пружинящая Стойка",           value: -2 });
   // Минимум SPD — 0.5 (стр. 28): сумма слагаемых может уйти в минус, порог
   // это ловит раньше breakdown. Повален не складывается, а делит пополам —

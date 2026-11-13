@@ -5,7 +5,7 @@
   "folder": "eI14Vbl1EBbwi5Rc",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (3-defiance): (1) «Рейтинг Страха демонов на 1 ниже» — в окне Теста Страха при отмеченной галочке «Демон» рейтинг снижается на 1 (rules/fear-ignore.mjs, combat/fear.mjs); если рейтинг дошёл до 0 — тест не нужен (допущение по образцу Стального Сердца: книга про 0 молчит); складывается со Стальным Сердцем. (2) «−5 к штрафу W от Daemonic Presence» — штраф, который выдаёт аура Daemonic Presence (Daemonic Dread), для носителя на 5 меньше, а если он сошёл на нет — не выдаётся (regions/auras.mjs, rules/defiance-talents.mjs::reduceDaemonicDread); Талант взяли/потеряли — штраф перевыдаётся при следующем пересчёте аур. Не смоделировано: Daemonic Presence как «Рейтинг Страха», выданный вне Окна Страха, и штрафы W, которые стол ставит вручную.",
     "benefit": "Персонаж считает всех демонов имеющими Рейтинг Страха на 1 ниже настоящего и уменьшает штраф к W от Трейта Daemonic Presence на 5.",
     "tier": 1,
     "requirement": "Forbidden Lore (Daemons)+10",
@@ -38,7 +38,29 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "gInfFamil0001Rxq",
+          "operator": "AND",
+          "entries": [
+            {
+              "kind": "capability",
+              "id": "eInfFamil0001Rxq",
+              "capabilityKey": "psyResist.core.infernalFamiliarity",
+              "label": "Инфернальное Знакомство: Страх демонов −1, штраф Daemonic Presence −5",
+              "capabilityMode": "",
+              "capabilityAptScope": "",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

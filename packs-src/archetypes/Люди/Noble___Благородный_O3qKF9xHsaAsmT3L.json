@@ -702,7 +702,16 @@
               "label": "",
               "code": "",
               "id": "O3qKF9xHt3y",
-              "kind": "talent"
+              "kind": "talent",
+              "targets": [
+                {
+                  "kind": "faction",
+                  "ref": "nobility",
+                  "value": "",
+                  "name": "Nobility / Знать",
+                  "img": "icons/svg/aura.svg"
+                }
+              ]
             },
             {
               "corruptionValue": "1",

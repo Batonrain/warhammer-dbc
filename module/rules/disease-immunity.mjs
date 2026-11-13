@@ -31,22 +31,34 @@ import { itemHasName } from "./predicates.mjs";
 import { isStuffOfNightmares } from "./stuff-of-nightmares.mjs";
 
 export const DISEASE_IMMUNE_CAP = "defence.diseaseEffectsImmune";
+export const DISEASE_CARRIER_CAP = "defence.diseaseCarrier";
 
-/**
- * Есть ли у актора действующий источник иммунитета к эффектам болезней.
- * @param {object} actor
- * @param {(item: object) => boolean} [isActive] активность носителя (по умолчанию — любой активен)
- */
-export function actorImmuneToDiseaseEffects(actor, isActive = () => true) {
+function scanDiseaseProtection(actor, isActive, withCarrier) {
   for (const it of actor?.items ?? []) {
     if (!it || it.type === "disease") continue;
     // Струп у копии без записи (до «Обновить мир») — по имени.
-    const carrier = itemHasKey(it, DISEASE_IMMUNE_CAP) || (it.type === "drug" && itemHasName(it, "Scab"));
-    if (carrier && isActive(it)) return true;
+    const protects = itemHasKey(it, DISEASE_IMMUNE_CAP) || (it.type === "drug" && itemHasName(it, "Scab"))
+      || (withCarrier && itemHasKey(it, DISEASE_CARRIER_CAP));
+    if (protects && isActive(it)) return true;
     // Stuff of Nightmares: «иммунитет к … болезням» (rules/stuff-of-nightmares.mjs).
     if (isStuffOfNightmares(it) && isActive(it)) return true;
   }
   return false;
+}
+
+/**
+ * Есть ли у актора действующий источник иммунитета к эффектам болезней.
+ * Носитель болезней (defence.diseaseCarrier, Чумной Десантник) эффектов не чувствует, но заражаться может.
+ * @param {object} actor
+ * @param {(item: object) => boolean} [isActive] активность носителя (по умолчанию — любой активен)
+ */
+export function actorImmuneToDiseaseEffects(actor, isActive = () => true) {
+  return scanDiseaseProtection(actor, isActive, true);
+}
+
+/** Иммунитет к самому заражению: носитель болезней (Чумной Десантник) сюда не входит. */
+export function actorImmuneToInfection(actor, isActive = () => true) {
+  return scanDiseaseProtection(actor, isActive, false);
 }
 
 /** Болезнь на акторе-носителе иммунитета: её эффекты сейчас не действуют. */

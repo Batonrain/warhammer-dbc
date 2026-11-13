@@ -164,6 +164,34 @@
       <input type="number" name="system.strengthBonus"
              value="{{system.strengthBonus}}" min="0" class="wr-input-xs"/>
     </div>
+
+    {{!-- Батарея (стр. 233): 24ч работы, разряд/выключение/Haywire гасят бонус S,
+         нейтрализацию веса и ретинальный дисплей — тем же полем system.active,
+         что ручной тумблер «Включена» выше. --}}
+    <div class="weapon-row power-battery-row" style="margin-top:6px;">
+      <label class="wr-label">Батарея</label>
+      {{#if powerBattery.dead}}
+      <span class="roll-failure">разряжена — нужна подзарядка</span>
+      {{else}}
+      <span>{{powerBattery.remaining.hours}}ч {{powerBattery.remaining.minutes}}м</span>
+      {{/if}}
+      <button type="button" class="power-battery-charge-btn" title="Подзарядить — полный заряд, отсчёт 24ч начинается сейчас">Подзарядить</button>
+      <button type="button" class="power-battery-check-btn" title="Проверить батарею — разряженная выключает броню (system.active), как ручной тумблер">Проверить</button>
+    </div>
+
+    {{!-- Надевание/снятие (стр. 233): ритуал 30 мин + 2 ассистента; без ритуала —
+         15 мин надеть/5 мин снять, ассистенты те же (кроме специализированной
+         стойки, R1) — двигает Летоисчисление (ГМ), как Отдых (wdbc-x1nz.2.95). --}}
+    <div class="weapon-row power-dress-row" style="margin-top:6px;">
+      <label class="wr-label" title="Без галочки — надевание/снятие без ритуала (15/5 мин, ассистенты те же)">
+        <input type="checkbox" class="power-dress-ritual"/> Ритуал (30 мин)
+      </label>
+      <label class="wr-label" style="margin-left:10px;" title="Специализированная стойка (добывается по R1) убирает нужду в ассистентах">
+        <input type="checkbox" class="power-dress-rack"/> Стойка (R1)
+      </label>
+      <button type="button" class="power-dress-btn" data-dress-action="don" style="margin-left:10px;">Надеть</button>
+      <button type="button" class="power-dress-btn" data-dress-action="doff">Снять</button>
+    </div>
   </div>
 
   {{!-- Разгрузка (стр. 27): 12 магнитных замков и пояс — правится JSON'ом

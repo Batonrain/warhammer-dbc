@@ -16,6 +16,7 @@ import { actorInfamyPath, actorInfamyValue, spendFromInfamyPool } from "../apps/
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { runCardOnce } from "./card-once.mjs";
+import { revertCardFailure, failUndoLineHtml } from "./fear.mjs";
 import {
   SUS_AN_ACTIVE_FLAG, hasLegionSurgery, legionSurgeryCanRescue, susAnWakeEligible
 } from "../rules/legion-surgery.mjs";
@@ -90,10 +91,12 @@ export async function offerSusAnWake(medic, patient) {
 export async function legionSurgeryOnCard(actor, label, message) {
   return runCardOnce(message, "legionSurgeryUsed", async () => {
     if (!(await spendOne(actor))) return false;
+    // Провал засчитан успехом — наложенный им Шок/Ступор снимается (task-e30b).
+    const reverted = await revertCardFailure(message);
     await postTestCard(actor, {
       icon: rollIcon("heart", "#ff8a8a"),
       title: `Хирургия Легиона — ${esc(actor.name)}`,
-      lines: [`<div class="roll-threshold">Тест «${esc(label)}» проваленный — засчитан успешным.</div>`],
+      lines: [`<div class="roll-threshold">Тест «${esc(label)}» проваленный — засчитан успешным.</div>`, failUndoLineHtml(reverted)],
       outcome: `<span class="roll-success">Успех — 1 Успех (потрачено Очко Бесчестия)</span>`
     }, { sound: false });
     return true;

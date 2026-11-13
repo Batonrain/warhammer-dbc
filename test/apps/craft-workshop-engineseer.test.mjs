@@ -186,6 +186,22 @@ describe("Мастер-Технопровидец: ремонт и «без за
     expect(captured.chat.some(m => String(m.content).includes("починено"))).toBe(true);
   });
 
+  it("пустой Банк ремонта: смена копит Успехи, но ГОТОВО и снятие «Уничтожено» не срабатывают", async () => {
+    const gun = brokenGun();
+    crafter = crafterActor({ items: [engineseer(), gun] });
+    globalThis.game.actors = { get: () => crafter };
+    const app = newApp();
+    Object.assign(app.projects[0], { repair: true, repairWeaponId: "w1", baseBank: null });
+    captured.confirmAnswer = true;
+    await app._rollShift("p1");
+    expect(app.projects[0].project.accumulated).toBe(4);
+    expect(gun.system.destroyed).toBe(true);
+    const html = captured.chat.at(-1).content;
+    expect(html).not.toContain("ГОТОВО");
+    expect(html).not.toContain("починено");
+    expect(html).toContain("Впишите Базовый Банк ремонта");
+  });
+
   it("без выбранного оружия готовый ремонт ничего не трогает", async () => {
     const gun = brokenGun();
     crafter = crafterActor({ items: [engineseer(), gun] });

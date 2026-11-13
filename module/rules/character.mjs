@@ -48,7 +48,7 @@ import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { trophyMax } from "./trophy-points.mjs";
 import { spliceExtraAdaptations, fastLearnerWithAdaptations } from "./splice-adaptations.mjs";
-import { itemHasName, giftNamesOf } from "./predicates.mjs";
+import { itemHasName, giftNamesOf, canManifestPossession } from "./predicates.mjs";
 import { applyParasiteFusion, fusedParasite, fuseParasiteCharacteristic } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { rageCharBonus, woundedBeastBonus } from "./rage.mjs";
@@ -62,6 +62,7 @@ import { sharedFormationInitBonus } from "./combat-formation.mjs";
 import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 import { woundSustainSplit } from "./wound-in-reality.mjs";
+import { quadrupedMultiplier } from "./quadruped.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -394,7 +395,11 @@ export function prepareCharacterDerived(actor, system) {
     // Всё вливается в общий конвейер трейтов — снимается автоматически при
     // заключении демона. Синхронизировано с Cor и составом Даров на акторе.
     system.possessionActive = null;
-    if (system.possessed && system.possession?.manifested && system.alignment === "heretic") {
+    // Дар «Гигант»: +10 к максимуму Ран (читает блок wounds.maxMods ниже).
+    let possessionGiantWounds = 0;
+    // Мировоззрение не проверяется: Архетип Одержимого — «Раса: Любая», книга
+    // (DoomBC 129-132) Проявление «еретиком» не ограничивает.
+    if (canManifestPossession(actor) && system.possession?.manifested) {
       const cor  = system.corruption?.value ?? 0;
       const corB = Math.floor(cor / 10);
       const prof = manifestProfile(cor);
@@ -407,7 +412,10 @@ export function prepareCharacterDerived(actor, system) {
       // Активные Дары (предметы-таланты «… / Дар: X») с числовыми эффектами
       const giftNames = giftNamesOf(actor);
       if (giftNames.has("Панцирь"))               { traitArmourAll += corB; applied.push(`Панцирь: Natural Armour ${corB}`); }
-      if (giftNames.has("Гигант"))                { traitSizeMod += 1; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер, +10 S"); }
+      // Книга: «+1 к Размеру, +10 S и +10 к максимуму и текущему количеству Ран,
+      // но это увеличение Размера не даёт обычный бонус +1 к SPD» — поэтому
+      // Размер идёт в traitSizeModNoSpd, а не в traitSizeMod (тот двигает SPD).
+      if (giftNames.has("Гигант"))                { traitSizeModNoSpd += 1; possessionGiantWounds = 10; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер (без +1 SPD), +10 S, +10 Ран"); }
       if (giftNames.has("Демоническая Скорость")) { const a = Math.floor(corB / 2); traitCharBonus.ag = (traitCharBonus.ag || 0) + a; applied.push(`Демон. Скорость: Unnatural A +${a}`); }
       system.possessionActive = { prof, corB, applied };
     }
@@ -480,8 +488,15 @@ export function prepareCharacterDerived(actor, system) {
     const armorCharBonus = { s: 0, wp: 0, ag: 0 };
     for (const item of actor.items) {
       if (item.type !== "armor" || !item.system.equipped) continue;
-      armorCharBonus.s  += item.system.strengthBonus || 0;
-      armorCharBonus.wp += item.system.wpBonus       || 0;
+      // Выключенная силовая броня (стр. 233): «не даёт три предыдущих бонуса»
+      // (бонус S, нейтрализация веса, ретинальный дисплей) — нейтрализация
+      // веса уже проверяла active (documents/actor.mjs), бонус S/WP раньше
+      // начислялся всегда, пока броня надета, даже выключенной (wdbc-x1nz.4).
+      const powerBonusActive = item.system.armorType !== "power" || item.system.active !== false;
+      if (powerBonusActive) {
+        armorCharBonus.s  += item.system.strengthBonus || 0;
+        armorCharBonus.wp += item.system.wpBonus       || 0;
+      }
       const penalty = Math.max(0, (item.system.agilityPenalty || 0)
         - armourTrainingPenaltyReduction(actor, item.system.armorType));
       armorCharBonus.ag -= penalty;
@@ -818,6 +833,8 @@ export function prepareCharacterDerived(actor, system) {
         // Крепкое Телосложение (глава 3, rules/resilience-talents.mjs): +1 Рана
         // за каждую копию Таланта, потолок T.b (+2 не-Космодесантнику).
         ...soundConstitutionWoundsMods(actor, tb),
+        // Дар Одержимого «Гигант»: +10 к максимуму Ран, пока демон проявлен.
+        ...(possessionGiantWounds ? [{ label: "Дар «Гигант» (Одержимый)", value: possessionGiantWounds }] : []),
         // Отвращение к Порядку (Зверолюд): −2 Раны за каждую бионику/кибернетику (выше).
         ...(system.orderRejection?.wounds ? [{ label: "Отвращение к Порядку", value: system.orderRejection.wounds }] : [])
       ];
@@ -1086,7 +1103,11 @@ export function prepareCharacterDerived(actor, system) {
     // не трогаем — она посчитана как «ёмкость при 1G», штраф/бонус
     // гравитации применяется к текущему весу снаряжения, а не к ней.
     const envScene = actor.token?.parent ?? canvas?.scene ?? game.scenes?.current ?? null;
-    const gravity  = envScene ? (Number(readEnvForScene(envScene).gravity) || 1) : 1;
+    // 0 G (невесомость) — честный ноль, не «нет данных»: прежнее `|| 1` превращало
+    // его в 1 G, и вес снаряжения оставался полным (0-g-1-g-rules-character-mjs-992).
+    // Подставляем 1 G только когда число не читается вовсе.
+    const rawGravity = envScene ? Number(readEnvForScene(envScene).gravity) : 1;
+    const gravity  = Number.isFinite(rawGravity) ? rawGravity : 1;
     system.encumbrance.gravity          = gravity;
     system.encumbrance.effectiveCurrent = Math.round(totalWeight * gravity * 100) / 100;
 
@@ -1107,7 +1128,9 @@ export function prepareCharacterDerived(actor, system) {
     // .carry/.lift/.push/.max, которые сами производные и берут "final").
     const ib = system.encumbrance.indexBonus || {};
     const baseIdx = sb + tb + hwCarry + (ib.all || 0);
-    system.encumbrance.carry = carryRow(baseIdx + (ib.carry || 0)).carry;
+    // Четвероногий (X): «удваивает… вес Ношения» (rules/quadruped.mjs); Подъём и
+    // Толкание книга не упоминает — не трогаются.
+    system.encumbrance.carry = carryRow(baseIdx + (ib.carry || 0)).carry * quadrupedMultiplier(actor);
     system.encumbrance.lift  = carryRow(baseIdx + (ib.lift  || 0)).lift;
     system.encumbrance.push  = carryRow(baseIdx + (ib.push  || 0)).push;
     system.encumbrance.max = system.encumbrance.carry;

@@ -30,6 +30,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { RAGE_SOURCE_OPTION } from "./frenzy.mjs";
 
 /**
  * Десять исходов книги (1d10) — index 0 = грань «1». `mechanic` — что
@@ -69,7 +70,7 @@ export async function rollHallucinogenicEffect(actor) {
   const roll  = await new Roll("1d10").evaluate();
   const entry = HALLUCINOGENIC_TABLE[roll.total - 1];
   const update = { [`flags.warhammer-dbc.hallucinationEffect`]: roll.total, ...mechanicFields(entry.mechanic, actor) };
-  await actor.update(update);
+  await actor.update(update, { [RAGE_SOURCE_OPTION]: "drug" });
   return { roll, entry };
 }
 

@@ -85,6 +85,7 @@ Object.assign(EFFECT_KEY_LABELS, {
   "system.initiative":  "Инициатива",
   "system.speed":       "Скорость",
   "system.incomingDamageReduction": "Снижение входящего урона",
+  "system.extraHands":  "Руки (прибавка к числу)",
   // Экономика действий (стр. 12, module/combat/action-economy.mjs) — надбавка
   // к максимуму пула, складывается с базой 2 ОД / 1 Реакция. Пример: Eldar
   // Agility «+1 ОД в начале каждого хода, до 3 взятий» — берётся Талантом
@@ -128,6 +129,7 @@ const INITIAL_PHASE_KEYS = [
                                      // хранимое поле того же семейства, что sizeMod выше,
                                      // но rules/character.mjs сознательно не пускает его
                                      // в size, который уходит в calcMovement
+  "system.extraHands",               // временная прибавка к числу рук (rules/hands.mjs)
   "system.incomingDamageReduction",  // плоское снижение урона (combat/damage.mjs читает
                                       // ХРАНИМОЕ поле напрямую, не производное)
   "system.wounds.ablativeMax",       // максимум аблативного пула (kind:"poolMax") —

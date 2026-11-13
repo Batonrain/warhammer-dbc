@@ -19,13 +19,13 @@ beforeEach(() => {
 describe("isFrontArcHit", () => {
   it("центр считается по width/height, не по левому верхнему углу (2×2 токен)", () => {
     // Защитник 2×2 клетки в (0,0) → центр (100,100). Атакующий прямо к северу от ЦЕНТРА.
-    const defender = token({ x: 0, y: 0, width: 2, height: 2, rotation: 0 });
-    const attacker = token({ x: 50, y: -300, width: 1, height: 1, rotation: 0 });
+    const defender = token({ x: 0, y: 0, width: 2, height: 2, rotation: 180 });
+    const attacker = token({ x: 50, y: -300, width: 1, height: 1, rotation: 180 });
     expect(isFrontArcHit(defender, attacker)).toBe(true);
   });
 
   it("разворот защитника меняет переднюю дугу", () => {
-    const defender = token({ x: 0, y: 0, rotation: 90 }); // смотрит на восток
+    const defender = token({ x: 0, y: 0, rotation: 270 }); // смотрит на восток
     const eastAttacker = token({ x: 300, y: 0 });
     const northAttacker = token({ x: 0, y: -300 });
     expect(isFrontArcHit(defender, eastAttacker)).toBe(true);
@@ -39,7 +39,7 @@ describe("isFrontArcHit", () => {
   });
 
   it("нестандартная ширина арки — параметр", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0 });
+    const defender = token({ x: 0, y: 0, rotation: 180 });
     const sideAttacker = token({ x: 300, y: 0 }); // строго сбоку (90° от курса)
     expect(isFrontArcHit(defender, sideAttacker, 90)).toBe(false);
     expect(isFrontArcHit(defender, sideAttacker, 210)).toBe(true);
@@ -48,7 +48,7 @@ describe("isFrontArcHit", () => {
 
 describe("isTargetWithinVehicleArc (wdbc-m38e)", () => {
   it("корпусное орудие (узкий сектор) — цель спереди попадает, сбоку нет", () => {
-    const vehicle = token({ x: 0, y: 0, rotation: 0 });
+    const vehicle = token({ x: 0, y: 0, rotation: 180 });
     const front = token({ x: 0, y: -300 });
     const side  = token({ x: 300, y: 0 });
     expect(isTargetWithinVehicleArc(vehicle, "−25°..+25°", front)).toBe(true);
@@ -70,31 +70,31 @@ describe("isTargetWithinVehicleArc (wdbc-m38e)", () => {
 
 describe("isOutsideDefenderView (Скрытная Атака, wdbc-1rno.3)", () => {
   it("атакующий спереди, в дефолтном секторе 210° — не вне обзора", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0 });
+    const defender = token({ x: 0, y: 0, rotation: 180 });
     const attacker = token({ x: 0, y: -300 });
     expect(isOutsideDefenderView(defender, attacker)).toBe(false);
   });
 
   it("атакующий строго сзади — вне обзора даже с широким дефолтным 210°", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0 });
+    const defender = token({ x: 0, y: 0, rotation: 180 });
     const attacker = token({ x: 0, y: 300 });
     expect(isOutsideDefenderView(defender, attacker)).toBe(true);
   });
 
   it("в мёртвой зоне 150° (вне 210°-сектора, но не строго сзади) — вне обзора", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0 }); // смотрит на север, сектор −105°..+105°
+    const defender = token({ x: 0, y: 0, rotation: 180 }); // смотрит на север, сектор −105°..+105°
     const attacker = token({ x: -300, y: 260 }); // пеленг ≈ −131° от курса — за пределами половины 105°
     expect(isOutsideDefenderView(defender, attacker)).toBe(true);
   });
 
   it("явно заданный узкий sight.angle защитника сужает сектор относительно дефолта", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 90 } });
+    const defender = token({ x: 0, y: 0, rotation: 180, sight: { angle: 90 } });
     const sideAttacker = token({ x: 260, y: -150 }); // ≈60° от курса — в 210°, но не в 90°
     expect(isOutsideDefenderView(defender, sideAttacker)).toBe(true);
   });
 
   it("sight.angle ≥360 — истинно круговой обзор, никогда не вне обзора", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 360 } });
+    const defender = token({ x: 0, y: 0, rotation: 180, sight: { angle: 360 } });
     const rearAttacker = token({ x: 0, y: 300 });
     expect(isOutsideDefenderView(defender, rearAttacker)).toBe(false);
   });
@@ -114,25 +114,25 @@ describe("isOutsideDefenderView (Скрытная Атака, wdbc-1rno.3)", () 
   });
 
   it("граница дефолтных 210°: ±104° в обзоре, ±106° — вне", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0 });
+    const defender = token({ x: 0, y: 0, rotation: 180 });
     for (const d of [104, -104]) expect(isOutsideDefenderView(defender, at(d))).toBe(false);
     for (const d of [106, -106]) expect(isOutsideDefenderView(defender, at(d))).toBe(true);
   });
 
   it("sight.angle 0 — не настроен, работает как дефолтные 210°", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 0 } });
+    const defender = token({ x: 0, y: 0, rotation: 180, sight: { angle: 0 } });
     expect(isOutsideDefenderView(defender, at(104))).toBe(false);
     expect(isOutsideDefenderView(defender, at(106))).toBe(true);
   });
 
   it("sight.angle 1 — видит только прямо по курсу", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 1 } });
+    const defender = token({ x: 0, y: 0, rotation: 180, sight: { angle: 1 } });
     expect(isOutsideDefenderView(defender, at(0))).toBe(false);
     expect(isOutsideDefenderView(defender, at(10))).toBe(true);
   });
 
   it("sight.angle 359 — слепое пятно только строго сзади", () => {
-    const defender = token({ x: 0, y: 0, rotation: 0, sight: { angle: 359 } });
+    const defender = token({ x: 0, y: 0, rotation: 180, sight: { angle: 359 } });
     expect(isOutsideDefenderView(defender, at(178))).toBe(false);
     expect(isOutsideDefenderView(defender, at(180))).toBe(true);
   });
@@ -209,15 +209,15 @@ describe("tokenDistance (wdbc-y33b, Пустотные Щиты)", () => {
 describe("isOutsideDefenderView: Безголовый (wdbc-1rno.20)", () => {
   const headlessActor = { items: [{ type: "mutation", name: "Headless / Безголовый", system: {} }] };
   it("сбоку (~60° от курса) — в обычных 210° видно, у Безголового уже нет", () => {
-    const plain = token({ x: 0, y: 0, rotation: 0 });
-    const headless = { ...token({ x: 0, y: 0, rotation: 0 }), actor: headlessActor };
+    const plain = token({ x: 0, y: 0, rotation: 180 });
+    const headless = { ...token({ x: 0, y: 0, rotation: 180 }), actor: headlessActor };
     const side = token({ x: 260, y: -150 });
     expect(isOutsideDefenderView(plain, side)).toBe(false);
     expect(isOutsideDefenderView(headless, side)).toBe(true);
   });
 
   it("даже круговой sight.angle у токена Безголового сужается до 120°", () => {
-    const headless = { ...token({ x: 0, y: 0, rotation: 0, sight: { angle: 360 } }), actor: headlessActor };
+    const headless = { ...token({ x: 0, y: 0, rotation: 180, sight: { angle: 360 } }), actor: headlessActor };
     expect(isOutsideDefenderView(headless, token({ x: 0, y: 300 }))).toBe(true);
   });
 });

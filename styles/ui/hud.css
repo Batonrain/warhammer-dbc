@@ -324,12 +324,13 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 /* ── Прицеливание (wdbc-1rno.5) — всегда на виду рядом с ОД/Реакциями, не
      вкладка: было радио в диалоге атаки без расхода ОД, теперь настоящее
      HUD-действие (combat/aiming-action.mjs, aimMenuItems). ── */
-.wh-hud-aiming { display: flex; gap: 4px; margin-top: 2px; }
+.wh-hud-aiming { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; min-width: 0; max-width: 100%; }
 .wh-hud-aim-btn {
   display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
   font-size: 11px; font-weight: 700; letter-spacing: .02em; color: #d8ffe8;
   border: 1px solid var(--cg-line); border-radius: 3px; padding: 3px 8px;
-  background: rgba(0,0,0,.2); white-space: nowrap;
+  background: rgba(0,0,0,.2); white-space: nowrap; max-width: 100%; box-sizing: border-box;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .wh-hud-aim-btn:hover { color: var(--cg); border-color: var(--cg); background: rgba(77,255,166,.1); }
 .wh-hud-aim-btn.active { color: #1a1006; border-color: #ffb84d; background: #ffb84d; }
@@ -606,3 +607,17 @@ body.wh-hud-on #chat-notifications { display: none !important; }
   color: #ff6b6b; border-color: #ff6b6b; font-weight: bold;
   animation: wh-ship-blink 1.4s ease-in-out infinite;
 }
+
+/* Плашка тумблера «следующий сдвиг — вынужденный» (combat/forced-next-move-indicator.mjs) */
+.wh-forced-next-chip {
+  position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); z-index: 1000;
+  display: flex; align-items: center; gap: 10px; max-width: 90vw;
+  padding: 6px 12px; font-size: .85em;
+  background: #3a1f0c; border: 1px solid #ffb347; border-radius: 4px; color: #ffd9a0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+.wh-forced-next-chip button {
+  cursor: pointer; padding: 1px 8px; font-size: .9em; line-height: 1.4;
+  background: #5a2d0e; border: 1px solid #ffb347; border-radius: 3px; color: #ffd9a0;
+}
+.wh-forced-next-chip button:hover { background: #ffb347; color: #2a1405; }

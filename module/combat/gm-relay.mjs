@@ -29,7 +29,18 @@
 //      Причастие (до 3 ⚡), пачка J (Sahara 3-2501): клиент присылает только число,
 //      ГМ сам пересчитывает по данным цели (свободное место, потолок ½I.b за Раунд,
 //      Апокрифа цели); нужен соответствующий Талант у инициатора, а для ⚙ — цель,
-//      подключённая к Ноосфере. Расстояние и согласие цели ведёт стол.
+//      подключённая к Ноосфере. Расстояние и согласие цели ведёт стол. Записи по одной
+//      цели идут по очереди (SERIAL_KINDS), чтобы две одновременные передачи складывались.
+//    • singForMeDamage / singForMeBoon / wallPush — Шумовой Десантник (Sahara 1-54b9): «Спой Мне!»
+//      (2d10 непоглощаемого R урона жертве; +1 Очко Бесчестия и снятие Усталости палачу и наблюдателям —
+//      поклонникам Слаанеш) и Стена Диссонанса (отброс токена цели; дальность ограничена Cor.b×3 м
+//      инициатора, сверяет ГМ). Нужен соответствующий Талант у инициатора.
+//    • harbingerMark / litanyBlessing / layOnHands / martyrSummon — Тёмный Апостол (Sahara 1-54b9): метка обращения
+//      или Правоверного, Литания Хаоса подчинённому, Порча и мутация по Возложению Рук, демон на месте Мученика.
+//      Нужен соответствующий Талант или Черта у инициатора; предметы, Порчу и демона собирает сам ГМ.
+//    • saviorSwap — Спаситель Туманов (Мастер Казней, Sahara 1-54b9): токен союзника встаёт на прежнее место
+//      инициатора (обмен местами). Нужен Талант Mist Savior у инициатора; ГМ сверяет, что инициатор уже стоит на месте
+//      союзника и что цель переноса не дальше предела (P.b или Полудвижение инициатора).
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -37,8 +48,20 @@
 //  оставляет игрока в Захвате в одиночку.
 // ════════════════════════════════════════════════════════════════════════
 
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasInspireWrath, inspiredHatredData, HATRED_PACK_ID } from "../rules/inspire-wrath.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
+import {
+  hasHarbingerOfHeresy, hasLitanyOfChaos, hasLayOnHands, hasMartyr, litanyOptions, isSubordinateOf, isFaithfulOf,
+  LAY_ON_HANDS_USAGE
+} from "../rules/dark-apostle.mjs";
+import { isThrottleReady } from "../rules/cooldown.mjs";
+import { hasMistSavior } from "../rules/master-of-executions.mjs";
+import {
+  hasIronCage, hasCellOfShame, hasEmpyreanWhip, hasRunDown, brokenOf, flagSmithIs, isBrokenBySmith, runDownMarkOf, clampRoll,
+  RUN_DOWN_STRUCTURE_MAX, RUN_DOWN_HELPLESS_MAX, RUN_DOWN_WP_MAX
+} from "../rules/warpsmith.mjs";
+import { mutationCatalog } from "../constants/mutations.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
 import { hasCloudCognition, hasMotiveEucharist, hasApocryphaCoil, planCloudCognition, planMotiveEucharist,
@@ -67,7 +90,7 @@ export const TARGET_WRITE_ACTION = "targetActorWrite";
 /** Флаги Захвата/Жокея, которые разрешено писать в цель (имена — grapple.mjs, jockey.mjs; сверяет тест). */
 export const RELAY_TARGET_FLAGS = Object.freeze([
   "grapplePartnerUuid", "grappleRole", "grappleHands", "grappleHeldHands", "grappleTail",
-  "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold",
+  "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold", "vastGrappleSize",
   "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner"
 ]);
 /** Состояния, которые можно наложить/снять на цель из этих приёмов. */
@@ -145,6 +168,107 @@ export function checkTargetWrite(op, ctx = {}) {
     return { ok: true };
   }
 
+  // Спой Мне! (Шумовой Десантник): урон — одно целое 2…20 (2d10), награда — без полезной нагрузки и только палачу
+  // или поклоннику Слаанеш; Стена Диссонанса: токен и точка, дальность сверяет ГМ при исполнении.
+  if (op.kind === "singForMeDamage") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "amount")) return { ok: false, reason: "singForMeDamage: лишние поля" };
+    if (!Number.isInteger(op.amount) || op.amount < 2 || op.amount > 20) return { ok: false, reason: "singForMeDamage: урон вне 2…20" };
+    if (!hasAbility(ctx.initiator, "ability.singForMe", "Sing For Me!", "talent")) return { ok: false, reason: "у инициатора нет Sing For Me" };
+    return { ok: true };
+  }
+  if (op.kind === "singForMeBoon") {
+    if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "singForMeBoon: лишние поля" };
+    if (!hasAbility(ctx.initiator, "ability.singForMe", "Sing For Me!", "talent")) return { ok: false, reason: "у инициатора нет Sing For Me" };
+    const self = ctx.target && ctx.initiator && ctx.target.uuid === ctx.initiator.uuid;
+    if (!self && !hasRuleFlag(ctx.target, "dreadWail.immune")) return { ok: false, reason: "получатель не поклонник Слаанеш" };
+    return { ok: true };
+  }
+  if (op.kind === "wallPush") {
+    if (Object.keys(op).some(k => !["kind", "tokenUuid", "x", "y"].includes(k))) return { ok: false, reason: "wallPush: лишние поля" };
+    if (typeof op.tokenUuid !== "string" || op.tokenUuid.length > 200) return { ok: false, reason: "wallPush: нет токена" };
+    if (!Number.isFinite(op.x) || !Number.isFinite(op.y)) return { ok: false, reason: "wallPush: точка вне числа" };
+    if (!hasAbility(ctx.initiator, "ability.wallOfDiscord", "Wall of Discord", "talent")) return { ok: false, reason: "у инициатора нет Wall of Discord" };
+    return { ok: true };
+  }
+
+  if (op.kind === "warpsmith") {
+    const allowed = { cage: ["action"], cageRelease: ["action"], cell: ["action", "deviceName"], cellFree: ["action"], whip: ["action"],
+      runDown: ["action"], runDownPay: ["action", "structure", "helpless", "wp"] }[op.action];
+    if (!allowed) return { ok: false, reason: `warpsmith: действие вне списка: ${op.action}` };
+    if (Object.keys(op).some(k => k !== "kind" && !allowed.includes(k))) return { ok: false, reason: "warpsmith: лишние поля" };
+    const me = ctx.initiator;
+    const same = flag => flagSmithIs(flag, me, a => new Set([a?.uuid].filter(Boolean)));
+    const mine = target => isBrokenBySmith(target, me, a => new Set([a?.uuid].filter(Boolean)));
+    if (op.action === "cage") return hasIronCage(me) ? { ok: true } : { ok: false, reason: "у инициатора нет Iron Cage" };
+    if (op.action === "cageRelease") {
+      if (!hasIronCage(me)) return { ok: false, reason: "у инициатора нет Iron Cage" };
+      const flag = brokenOf(ctx.target);
+      return flag?.state === "caged" && same(flag) ? { ok: true } : { ok: false, reason: "цель не заарканена инициатором" };
+    }
+    if (op.action === "cell") {
+      if (!hasCellOfShame(me)) return { ok: false, reason: "у инициатора нет Cell of Shame" };
+      if (op.deviceName !== undefined && (typeof op.deviceName !== "string" || op.deviceName.length > 200)) return { ok: false, reason: "cell: имя устройства" };
+      return mine(ctx.target) && !brokenOf(ctx.target)?.cell ? { ok: true } : { ok: false, reason: "цель не Сломлена инициатором или уже в ячейке" };
+    }
+    if (op.action === "cellFree") {
+      if (!hasCellOfShame(me)) return { ok: false, reason: "у инициатора нет Cell of Shame" };
+      return brokenOf(ctx.target)?.cell ? { ok: true } : { ok: false, reason: "цель не в ячейке" };
+    }
+    if (op.action === "whip") {
+      if (!hasEmpyreanWhip(me)) return { ok: false, reason: "у инициатора нет Empyrean Whip" };
+      return mine(ctx.target) ? { ok: true } : { ok: false, reason: "цель не Сломлена инициатором" };
+    }
+    if (op.action === "runDown") {
+      if (!hasRunDown(me)) return { ok: false, reason: "у инициатора нет Run Down" };
+      return mine(ctx.target) ? { ok: true } : { ok: false, reason: "цель не Сломлена инициатором" };
+    }
+    if (!hasRunDown(me)) return { ok: false, reason: "у инициатора нет Run Down" };
+    const mark = runDownMarkOf(ctx.target);
+    if (!mark || !same({ smithUuid: mark.smithUuid, smithUuids: mark.smithUuids })) return { ok: false, reason: "цель не загнана инициатором" };
+    if (clampRoll(op.structure, RUN_DOWN_STRUCTURE_MAX) == null || clampRoll(op.helpless, RUN_DOWN_HELPLESS_MAX) == null
+      || clampRoll(op.wp, RUN_DOWN_WP_MAX) == null) return { ok: false, reason: "runDownPay: число вне потолка" };
+    return { ok: true };
+  }
+  if (op.kind === "saviorSwap") {
+    if (Object.keys(op).some(k => !["kind", "tokenUuid", "x", "y"].includes(k))) return { ok: false, reason: "saviorSwap: лишние поля" };
+    if (typeof op.tokenUuid !== "string" || op.tokenUuid.length > 200) return { ok: false, reason: "saviorSwap: нет токена" };
+    if (!Number.isFinite(op.x) || !Number.isFinite(op.y)) return { ok: false, reason: "saviorSwap: точка вне числа" };
+    if (!hasMistSavior(ctx.initiator)) return { ok: false, reason: "у инициатора нет Mist Savior" };
+    return { ok: true };
+  }
+
+  // Тёмный Апостол (Sahara 1-54b9): метка обращения/Правоверного, Литания, Возложение Рук, Мученик.
+  // Полезная нагрузка — узкая: имя Бога, имя мутации из таблицы, число Порчи, имя демона; предметы и Порчу собирает ГМ сам.
+  if (op.kind === "harbingerMark") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "mark")) return { ok: false, reason: "harbingerMark: лишние поля" };
+    if (op.mark !== "convert" && op.mark !== "faithful") return { ok: false, reason: "harbingerMark: метка вне списка" };
+    if (!hasHarbingerOfHeresy(ctx.initiator)) return { ok: false, reason: "у инициатора нет Harbinger of Heresy" };
+    return { ok: true };
+  }
+  if (op.kind === "litanyBlessing") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "god")) return { ok: false, reason: "litanyBlessing: лишние поля" };
+    if (!hasLitanyOfChaos(ctx.initiator)) return { ok: false, reason: "у инициатора нет Litany of Chaos" };
+    if (!litanyOptions(ctx.initiator).some(g => g.key === op.god)) return { ok: false, reason: "литания этого Бога недоступна инициатору" };
+    if (!isSubordinateOf(ctx.initiator, ctx.target, ctx.allActors ?? [])) return { ok: false, reason: "цель не под Командным Присутствием инициатора" };
+    return { ok: true };
+  }
+  if (op.kind === "layOnHands") {
+    if (Object.keys(op).some(k => !["kind", "corruption", "mutation"].includes(k))) return { ok: false, reason: "layOnHands: лишние поля" };
+    if (!hasLayOnHands(ctx.initiator)) return { ok: false, reason: "у инициатора нет Lay On Hands" };
+    if (!Number.isInteger(op.corruption) || op.corruption < 1 || op.corruption > 100) return { ok: false, reason: "layOnHands: Порча вне 1…100" };
+    if (op.corruption > (Number(ctx.initiator?.system?.corruption?.value) || 0)) return { ok: false, reason: "layOnHands: Порча выше Cor инициатора" };
+    if (typeof op.mutation !== "string" || !mutationCatalog().common.some(m => m.name === op.mutation)) return { ok: false, reason: "layOnHands: мутации нет в общей таблице" };
+    if (!isThrottleReady(ctx.target, LAY_ON_HANDS_USAGE, "month")) return { ok: false, reason: "layOnHands: цель уже благословлена в этом месяце" };
+    return { ok: true };
+  }
+  if (op.kind === "martyrSummon") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "name")) return { ok: false, reason: "martyrSummon: лишние поля" };
+    if (typeof op.name !== "string" || !op.name.trim() || op.name.length > 200) return { ok: false, reason: "martyrSummon: нет имени демона" };
+    if (!hasMartyr(ctx.initiator)) return { ok: false, reason: "у инициатора нет Martyr" };
+    if (!isFaithfulOf(ctx.target, ctx.initiator)) return { ok: false, reason: "цель не Правоверный инициатора" };
+    return { ok: true };
+  }
+
   // Облачная Когниция / Мотивное Причастие: полезная нагрузка — одно целое число; сколько реально
   // дойдёт (место у цели, потолок Раунда, Апокрифа), ГМ пересчитывает по данным цели в performTargetWrite.
   if (op.kind === "grantCognition" || op.kind === "grantEnergy") {
@@ -212,8 +336,33 @@ export async function hatredTemplate() {
   } catch { return null; }
 }
 
+/**
+ * «Прочитать значение цели и записать прибавленное» — виды записи, которые на ГМ-клиенте
+ * нельзя гонять вперемешку: обе передачи прочтут одно и то же старое число и вторая
+ * затрёт первую (wdbc-ekrk2). Листовых вызовов вглубь (writeToTarget) у этих видов нет,
+ * поэтому очередь не может запереться сама на себе.
+ */
+const SERIAL_KINDS = new Set(["apDebt", "grantCognition", "grantEnergy"]);
+const WRITE_CHAINS = new Map();
+
+/** Записи по одной цели идут друг за другом; отказ одной не глушит следующие. */
+function serialWrite(target, task) {
+  const key = target.uuid ?? target.id;
+  const run = (WRITE_CHAINS.get(key) ?? Promise.resolve()).then(task);
+  const tail = run.catch(() => {});
+  WRITE_CHAINS.set(key, tail);
+  tail.then(() => { if (WRITE_CHAINS.get(key) === tail) WRITE_CHAINS.delete(key); });
+  return run;
+}
+
 /** Исполнить запись на клиенте, у которого есть право (ГМ или владелец цели). */
-export async function performTargetWrite(target, op, initiator = null) {
+export function performTargetWrite(target, op, initiator = null) {
+  return SERIAL_KINDS.has(op?.kind)
+    ? serialWrite(target, () => _performTargetWrite(target, op, initiator))
+    : _performTargetWrite(target, op, initiator);
+}
+
+async function _performTargetWrite(target, op, initiator) {
   if (op.kind === "update") return target.update(op.data);
   if (op.kind === "addFatigue") {
     const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
@@ -254,9 +403,25 @@ export async function performTargetWrite(target, op, initiator = null) {
       ...(plan.toApoc ? { "system.apocryphaEnergy.value": (Number(ap.value) || 0) + plan.toApoc } : {})
     });
   }
+  if (op.kind === "singForMeDamage" || op.kind === "singForMeBoon" || op.kind === "wallPush") {
+    const { performNoiseMarineWrite } = await import("./noise-marine.mjs");
+    return performNoiseMarineWrite(target, op, initiator);
+  }
+  if (op.kind === "harbingerMark" || op.kind === "litanyBlessing" || op.kind === "layOnHands" || op.kind === "martyrSummon") {
+    const { performDarkApostleWrite } = await import("./dark-apostle.mjs");
+    return performDarkApostleWrite(target, op, initiator);
+  }
+  if (op.kind === "warpsmith") {
+    const { performWarpsmithWrite } = await import("./warpsmith.mjs");
+    return performWarpsmithWrite(target, op, initiator);
+  }
+  if (op.kind === "saviorSwap") {
+    const { performSaviorSwapWrite } = await import("./master-of-executions.mjs");
+    return performSaviorSwapWrite(target, op, initiator);
+  }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");
-    return grantDreadWailFear(target);
+    return grantDreadWailFear(target, initiator);
   }
   if (op.kind === "inspireHatred") {
     const item = inspiredHatredData(op.target, { uuid: initiator?.uuid ?? "", name: initiator?.name ?? "" }, await hatredTemplate());
@@ -314,7 +479,7 @@ export async function applyTargetWriteRelay(data, requester) {
   // Борьба: цель — партнёр инициатора (флаг на любом из двух), нужно для урона источника «grapple».
   const partners = initiator.getFlag?.(NS, "grapplePartnerUuid") === targetActor.uuid
     || targetActor.getFlag?.(NS, "grapplePartnerUuid") === initiator.uuid;
-  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator, partners, target: targetActor });
+  const verdict = checkTargetWrite(data?.op, { initiatorOwned, initiator, partners, target: targetActor, allActors: [...(game.actors ?? [])] });
   if (!verdict.ok) {
     console.warn(`Warhammer DBC | ${TARGET_WRITE_ACTION} отклонён: ${verdict.reason}`, data?.op);
     return false;

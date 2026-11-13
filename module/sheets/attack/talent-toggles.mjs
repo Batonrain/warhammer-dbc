@@ -14,10 +14,12 @@
 
 import { esc } from "../../helpers/utils.mjs";
 import { hasGunnerTalent, eyeOfVengeanceAvailable, EYE_OF_VENGEANCE_FLAG } from "../../rules/gunner-talents.mjs";
-import { killingStrikeOffered } from "../../rules/berserker-talents.mjs";
+import { killingStrikeOffered, oneWillGoDownOffered } from "../../rules/berserker-talents.mjs";
+import { haymakerOffered, goadingStrikeOffered } from "../../rules/pugilist-talents.mjs";
 import { hasGunsmithTalent, weaponTechAvailable, WEAPON_TECH_SPENT_FLAG, lensTuningAvailable, LENS_CHARGES_FLAG,
   litanyCoversWeapon, litanyReliability, litanyUnresolved, LITANY_CLEANED_FLAG } from "../../rules/gunsmith-talents.mjs";
 
+import { grenadeCookingOffered } from "../../rules/throwing-talents.mjs";
 import { torrentOffered, torrentWorkedShifts, torrentBlastRadius, torrentMaxDistance } from "../../rules/flamer-talents.mjs";
 
 const NS = "warhammer-dbc";
@@ -37,16 +39,42 @@ export function talentTogglesHtml(actor, item, { isMelee, wProps = [], sys = {} 
   if (isMelee) {
     // Смертельный Удар (Берсерк, rules/berserker-talents.mjs): База выбирается в этом же окне, поэтому
     // галочка видна всегда, а срабатывает только на Полной Атаке (проверяет бросок, attack.mjs).
-    if (!killingStrikeOffered(actor, { isMelee })) return "";
+    const meleeOut = [];
+    if (killingStrikeOffered(actor, { isMelee })) {
+      meleeOut.push(check("killingStrike",
+        "Смертельный Удар (−1 Очко Бесчестия: Избегания цели от Полной Атаки невозможны; раз в Ход)",
+        "Смертельный Удар: атака с Базой «Полная Атака» — потратив Очко Бесчестия, вы делаете любые тесты на Избегание цели от этой атаки проваленными. Очко уходит при попадании, раз в Ход; на другой Базе галочка ничего не делает."));
+    }
+    if (oneWillGoDownOffered(actor, { isMelee })) {
+      meleeOut.push(check("oneWillGoDown",
+        "Один Из Нас Падёт (Полная Атака по Ненавистной цели: Dmg ×2; цена — 1d5 в руку и Усталость)",
+        "Один Из Нас Падёт: атака с Базой «Полная Атака» по Ненавистной цели (выделите её на сцене) — Dmg ×2 до Поглощения. Цена при любом исходе, даже при промахе: 1d5 непоглощаемого урона в руку; Усталость — 1, если удар убил или вывел цель из строя, иначе T.b+W.b и потеря сознания (итог — кнопка на карточке). На другой Базе или по не-Ненавистной цели ничего не стоит и ничего не даёт."));
+    }
+    if (haymakerOffered(actor, item)) {
+      meleeOut.push(check("haymaker",
+        "Тяжёлый Хук (отказ от второй руки в этот Ход: +½T.b Dmg; попавшая цель проходит S+0 vs S+0 или Ничком)",
+        "Тяжёлый Хук: атака кулаком — вы отказываетесь от атаки второй рукой в этот Ход («Обе руки» закрываются) и получаете +½T.b к Dmg (окр. вниз). Если цель получила попадание, в карточке урона появится кнопка встречного теста S+0 vs S+0: проигравшая цель Сбивается с ног."));
+    }
+    if (goadingStrikeOffered(actor, item)) {
+      meleeOut.push(check("goadingStrike",
+        "Направляющий Удар (−20 к атаке кулаком; при Успехе — свободное Давление, даже если цель Избежит)",
+        "Направляющий Удар: атака кулаком получает штраф −20 (он сразу в пороге ниже); при Успехе на карточке атаки появится кнопка Давления против цели за свободное действие — даже если цель потом Избежит самого удара."));
+    }
+    if (!meleeOut.length) return "";
     return `
     <div class="av-section atk-talent-toggles">
-      <div class="av-sec-lbl">Таланты</div>${check("killingStrike",
-        "Смертельный Удар (−1 Очко Бесчестия: Избегания цели от Полной Атаки невозможны; раз в Ход)",
-        "Смертельный Удар: атака с Базой «Полная Атака» — потратив Очко Бесчестия, вы делаете любые тесты на Избегание цели от этой атаки проваленными. Очко уходит при попадании, раз в Ход; на другой Базе галочка ничего не делает.")}
+      <div class="av-sec-lbl">Таланты</div>${meleeOut.join("")}
     </div>`;
   }
   const has = key => wProps.some(p => (p?.key ?? p) === key);
   const out = [];
+
+  // Выдержка Гранаты (rules/throwing-talents.mjs): тест Logic(I)+0 перед броском гранаты.
+  if (grenadeCookingOffered(actor, { sys: { ...item?.system, ...sys }, isMelee })) {
+    out.push(check("grenadeCooking",
+      "Выдержка Гранаты (Logic(I)+0 до броска: Успех — Уклонение −5 за Успех; Провал — граната Очень Ненадёжна)",
+      "Выдержка Гранаты: перед броском гранаты проходится Logic(I)+0. Успех — все тесты Уклонения от этой гранаты получают −5 за каждый Успех; Провал — граната получает Очень Ненадёжное, но её всё равно нужно метнуть."));
+  }
 
   // Верный Выстрел: только одиночный выстрел, трата Очка — при успехе.
   if (hasGunnerTalent(actor, "sureShot")) {

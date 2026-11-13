@@ -50,6 +50,7 @@
     },
     "resistChar": "t",
     "resistMod": 0,
+    "mindEffect": true,
     "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («МАГИЯ КРОВИ» стр. 366)"
   },
   "_id": "X44Fl1Fr2eWcdNAx",

@@ -52,6 +52,12 @@ const candidatesFor = (rows, doc) => [...new Set(nameKeys(doc.name).flatMap(k =>
   .filter(r => r.dice === normDice(doc.system?.damage))
   .filter(r => NAME_COLLISIONS.get(doc.name) !== r.book);
 
+// Оружие, чьи режимы — не из книжной таблицы: Удар головой несёт режимы от
+// Трейтов («Горящая Голова», «Unarmed Warrior + Укреплённые Рога»). Строка
+// «Headbutt» в таблице безоружных атак появилась после вычитки core.json
+// (dbc-115) и до того с предметом не сопоставлялась.
+const MODES_BEYOND_BOOK = new Set(["Headbutt / Удар головой"]);
+
 describe("тип и подвид урона — как в книжной таблице (wdbc-yk0e)", () => {
   it("предметы с тем же именем и броском урона, что книжная строка, несут её тип и подвид", () => {
     const rows = bookRows();
@@ -116,6 +122,7 @@ describe("тип и подвид урона — как в книжной таб�
       for (const { doc } of allPackDocuments(pack)) {
         const s = doc.system ?? {};
         if (!s.damage || !s.damageType) continue;
+        if (MODES_BEYOND_BOOK.has(doc.name)) continue;
         const groups = [...new Set(candidatesFor(rows, doc).map(r => r.group))];
         if (!groups.length) continue;
         const profiles = Array.isArray(s.profiles) ? s.profiles : [];
