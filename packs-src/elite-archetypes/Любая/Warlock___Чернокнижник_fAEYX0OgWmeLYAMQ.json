@@ -10,11 +10,6 @@
         {
           "id": "eldarReq313",
           "kind": "notEldar"
-        },
-        {
-          "id": "dbc14r01",
-          "kind": "corruption",
-          "value": 20
         }
       ],
       "secondary": [
@@ -37,6 +32,11 @@
           "rank": "veteran",
           "count": 1,
           "label": "Ученые знания"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "corruption",
+          "value": 20
         }
       ]
     },

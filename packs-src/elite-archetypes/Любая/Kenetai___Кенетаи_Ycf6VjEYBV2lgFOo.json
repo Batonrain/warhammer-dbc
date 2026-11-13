@@ -19,11 +19,6 @@
           "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
         },
         {
-          "id": "dbc14r04",
-          "kind": "psyRating",
-          "value": 4
-        },
-        {
           "id": "dbc14r06",
           "kind": "other",
           "text": "Психосилы: Mind Link, Precognitive Strike (должны быть изучены)"
@@ -51,6 +46,11 @@
           "rank": "trained",
           "count": 1,
           "label": "Ученые знания"
+        },
+        {
+          "id": "dbc14r04",
+          "kind": "psyRating",
+          "value": 4
         }
       ]
     },
