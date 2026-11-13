@@ -23,8 +23,8 @@ beforeEach(resetCaptured);
 
 describe("опознание Трейта", () => {
   it("по любой половине двуязычного имени; Талант того же имени — нет", () => {
-    expect(hasStampede(makeActor([trait("Stampede / Затоптать")]))).toBe(true);
-    expect(hasStampede(makeActor([trait("Затоптать")]))).toBe(true);
+    expect(hasStampede(makeActor([trait("Stampede / Затопот")]))).toBe(true);
+    expect(hasStampede(makeActor([trait("Затопот")]))).toBe(true);
     expect(hasStampede(makeActor([{ type: "talent", name: "Stampede", system: {} }]))).toBe(false);
     expect(stampedeNoteHtml(makeActor())).toBe("");
   });

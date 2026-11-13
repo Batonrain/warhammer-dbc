@@ -21,7 +21,7 @@ import { itemHasName } from "./predicates.mjs";
 /** Есть ли у актора Черта Затоптать. */
 export function hasStampede(actor) {
   return [...(actor?.items ?? [])].some(i => i?.type === "trait"
-    && (itemHasName(i, "Stampede") || itemHasName(i, "Затоптать")));
+    && (itemHasName(i, "Stampede") || itemHasName(i, "Затопот")));
 }
 
 /**
