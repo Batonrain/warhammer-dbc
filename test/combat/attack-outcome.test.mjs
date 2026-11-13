@@ -232,6 +232,8 @@ describe("damageFormulaFor", () => {
 
   it("тип урона, затёкший в формулу, отбрасывается — иначе бросок падает на букве", () => {
     expect(damageFormulaFor({ damage: "1d10+4 R", flatBonus: 0, chars, wp: noProps })).toBe("1d10+4");
+    // Укус: тип «X» приклеен к «+» без пробела — не должен ронять бросок
+    expect(damageFormulaFor({ damage: "1d5+X", flatBonus: 0, chars, wp: noProps })).toBe("1d5");
     expect(damageFormulaFor({ damage: "1d10+3 E(Ls)", flatBonus: 0, chars, wp: noProps })).toBe("1d10+3");
   });
 

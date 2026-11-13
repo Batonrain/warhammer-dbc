@@ -825,8 +825,9 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
   const ctrlThreshold = riderHit ? null : control.value + testMod(STAY_MOD, mount);
   // Драконий Рыцарь: метка скакуна «+3×Успехи на все Избегания» (rules/dragon-knight.mjs)
   // прибавляется к итоговому порогу — это общий для пары бросок, мимо общих правил.
-  // Попадание по всаднику — его собственное Уклонение, не Избегание скакуна.
-  const dragonBonus = riderHit ? 0 : dragonKnightEvasionBonus(mount);
+  // Решение владельца 26.10.2026: бонус идёт ОБОИМ исходам — и при попадании по
+  // скакуну, и по всаднику.
+  const dragonBonus = dragonKnightEvasionBonus(mount);
   const baseThreshold = ctrlThreshold === null ? dodgeThreshold : combinedThreshold(dodgeThreshold, ctrlThreshold);
   const threshold = baseThreshold + dragonBonus;
 

@@ -57,6 +57,8 @@ describe("Разрубить: чистые правила окна", () => {
   it("свободная атака: ни ОД, ни Лимита Атак, ни ворот Натиска", () => {
     expect(freeMeleeFlags({ cleave: true })).toEqual({ noAp: true, uncounted: true, skipChargeGate: true });
     expect(freeMeleeFlags({})).toEqual({ noAp: false, uncounted: false, skipChargeGate: false });
+    // Рипост (1-c9a4): «не тратит реакций или действий»
+    expect(freeMeleeFlags({ riposte: true })).toEqual({ noAp: true, uncounted: true, skipChargeGate: true });
   });
   it("«базовой атакой»: другая База не выбирается, Стандартная — можно", () => {
     const o = { cleave: true, forceBase: "standard" };
