@@ -266,6 +266,12 @@ describe("rulesFromItemMechanics: kind:\"script\" → scriptAbility", () => {
     expect(rulesFromItemMechanics([item("Дар", [script()])])).toEqual([]);
   });
 
+  it("scriptOnPanel без цены и частоты — правило есть (Перевертыш, wdbc-tkeh1)", () => {
+    const rules = rulesFromItemMechanics([item("Дар", [script({ scriptOnPanel: true })])]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0].kind).toBe("scriptAbility");
+  });
+
   it("пустой код — правила нет, даже если частота задана", () => {
     expect(rulesFromItemMechanics(
       [item("Дар", [script({ code: "", scriptThrottleUnit: "battle" })])])).toEqual([]);

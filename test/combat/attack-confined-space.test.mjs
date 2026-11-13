@@ -90,7 +90,7 @@ describe("Тесное помещение: Рвущее для E Dmg (wdbc-x1nz.
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, { confinedSpace: true });
 
-    expect(card()).toContain("Рвущее");
+    expect(card()).toContain("Терзающее");
   });
 
   it("без confinedSpace — Рвущего нет", async () => {
@@ -103,7 +103,7 @@ describe("Тесное помещение: Рвущее для E Dmg (wdbc-x1nz.
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
 
-    expect(card()).not.toContain("Рвущее");
+    expect(card()).not.toContain("Терзающее");
   });
 
   it("confinedSpace + damageType impact (не energy) — Рвущего нет", async () => {
@@ -116,7 +116,7 @@ describe("Тесное помещение: Рвущее для E Dmg (wdbc-x1nz.
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, { confinedSpace: true });
 
-    expect(card()).not.toContain("Рвущее");
+    expect(card()).not.toContain("Терзающее");
   });
 });
 

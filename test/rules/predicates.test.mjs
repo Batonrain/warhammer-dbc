@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PREDICATES, wearsGasProtection } from "../../module/rules/predicates.mjs";
+import { PREDICATES, wearsGasProtection, wearsActivePowerArmour, wearsPowerArmourWithoutBlackCarapace } from "../../module/rules/predicates.mjs";
 
 /** Подставной актор: обычный литерал, никакого Foundry. */
 const actor = ({ items = [], ...system } = {}) => ({
@@ -10,6 +10,26 @@ const actor = ({ items = [], ...system } = {}) => ({
 const talent = name => ({ type: "talent", name });
 const trait  = name => ({ type: "trait",  name });
 const chars  = obj => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, { total: v }]));
+
+// actor.items в живой игре — Foundry EmbeddedCollection (Map-based, полифиллит
+// .some() сама); ritual-cast.test.mjs симулирует её настоящим `Map` без .some()
+// — wdbc-x1nz.4: wearsPowerArmour/wearsActivePowerArmour падали TypeError на
+// таком акторе при любом hasRuleFlag-вызове, даже не про броню вовсе.
+describe("предикаты силовой брони не падают на Map-подобных actor.items", () => {
+  const powerArmourItem = { type: "armor", system: { equipped: true, armorType: "power", active: true } };
+  const mapActor = items => ({ system: {}, items: new Map(items.map((it, i) => [`i${i}`, it])) });
+
+  it("wearsActivePowerArmour: Map без .some() не роняет расчёт", () => {
+    expect(() => wearsActivePowerArmour(mapActor([powerArmourItem]))).not.toThrow();
+    expect(wearsActivePowerArmour(mapActor([powerArmourItem]))).toBe(true);
+    expect(wearsActivePowerArmour(mapActor([]))).toBe(false);
+  });
+
+  it("wearsPowerArmourWithoutBlackCarapace: Map без .some() не роняет расчёт", () => {
+    expect(() => wearsPowerArmourWithoutBlackCarapace(mapActor([powerArmourItem]))).not.toThrow();
+    expect(wearsPowerArmourWithoutBlackCarapace(mapActor([powerArmourItem]))).toBe(true);
+  });
+});
 
 describe("race", () => {
   const race = PREDICATES.race;
@@ -459,11 +479,15 @@ describe("общее требование к предикатам", () => {
     sizeMax: 1, charMin: { s: 40 }, charBonusMin: { s: 5 },
     woundTier: ["heavy"],
     // В Ярости (wdbc-wyr3) — читает actor.system.inRage, значение из `when`
-    // не участвует (тот же случай, что avatarOfSlaughterOffTarget ниже).
+    // не участвует (тот же случай, что avatarOfSlaughterOnBerserker ниже).
     inRage: undefined,
     // Герметичная броня (wdbc-1rno) — читает actor.items, значение из `when`
     // не участвует, тот же случай, что inRage выше.
     wearsSealedArmour: undefined,
+    // Силовая Броня без Чёрного Панциря (стр. 233, wdbc-x1nz.4): тот же
+    // случай, что wearsSealedArmour — читает actor.items, значение из `when`
+    // не участвует.
+    wearsPowerArmourWithoutBlackCarapace: undefined,
     // Градация Пути Азуриан (wdbc-4e60): значение — объект-отбор.
     pathGradeMin: { group: "Путь Воина", grade: "next" },
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
@@ -496,7 +520,7 @@ describe("общее требование к предикатам", () => {
     hasFaction: "chaos", targetHasFaction: "chaos",
     // Метка Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — читает флаг самого
     // актора, значение из `when` не участвует.
-    avatarOfSlaughterOffTarget: undefined,
+    avatarOfSlaughterOnBerserker: undefined,
     // Метка Hex-Marked Prey/Проклятая Метка (wdbc-xxb7) — читает флаг ЦЕЛИ
     // (ctx.targetActor); значение из `when` — необязательный фильтр по god
     // (wdbc-w8z4, см. describe("hexMarkedPreyAllyBonus") выше), undefined
@@ -509,7 +533,7 @@ describe("общее требование к предикатам", () => {
     hasHatredTarget: undefined,
     // Защитник, Оружие Наследия (wdbc-1rno.35) — читает флаг ЦЕЛИ
     // (ctx.targetActor), значение из `when` не участвует, тот же случай, что
-    // avatarOfSlaughterOffTarget/hexMarkedPreyAllyBonus выше.
+    // avatarOfSlaughterOnBerserker/hexMarkedPreyAllyBonus выше.
     legacyGuardianMarked: undefined,
     // Подавляющее поле друкхарийской брони цели (wdbc-j8cn) — читает
     // system.fieldPsyMod ЦЕЛИ, значение из `when` не участвует.
@@ -518,12 +542,19 @@ describe("общее требование к предикатам", () => {
     targetLacksSealedArmour: undefined,
     // Обут ли (Barefoot / Босоногий Ратлинга): false — «босиком».
     wearsFootwear: false,
+    // Терминаторская броня (dbc-10, Чемпион-Терминатор).
+    wearsTerminatorArmour: true,
     // Сцена в невесомости/микро-гравитации (Пустота в Венах Сквата, wdbc-9tpng).
     weightlessScene: true,
     // Змееподобная цель (Безграничное Тщеславие Наги) — читает ЦЕЛЬ.
     targetSerpentine: true,
+    // Цель — носитель Таланта / демон (Отверженный, wdbc-nzzgn) — читают ЦЕЛЬ.
+    targetHasTalent: "Forsaken",
+    targetIsDaemon: true,
     // База рукопашной атаки, держащаяся на акторе (system.meleeBase).
-    meleeBaseIs: ["charge"]
+    meleeBaseIs: ["charge"],
+    // Чувство, выбранное в окне теста Внимательности (ctx.sense).
+    testSense: ["hearing"]
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

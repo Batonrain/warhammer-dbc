@@ -46,13 +46,18 @@ async function chat(actor, header, body, rolls = []) {
 // ── Гипно-Шрамы ─────────────────────────────────────────────────────────────
 
 /**
- * Ступор на 1 Раунд. Возвращает строку для карточки теста (пусто — иммунитет).
+ * Ступор на 1 Раунд. Возвращает строку для карточки теста (пусто — иммунитет) и откат (task-e30b): если провал
+ * потом засчитают успехом, Ступор снимается (rules/fail-undo.mjs). Откат — только когда Ступор наложен нами:
+ * уже Оглушённого персонажа успех не должен «протрезвлять».
+ * @returns {Promise<{html:string, undo:?{conditions:string[]}}>}
  */
 export async function applyHypnoScarsStun(actor) {
+  const hadStupor = !!actor?.system?.conditions?.dazed;
   const ok = await applyConditionWithDuration(actor, "dazed", { value: 1, unit: "rounds" });
-  return ok
+  const html = ok
     ? `<div class="roll-threshold">🌀 Гипно-Шрамы: Критический Провал теста I — <b>Ступор на 1 Раунд</b> (хаотичные галлюцинации)</div>`
     : `<div class="roll-threshold">🌀 Гипно-Шрамы: Ступор не наложен (иммунитет)</div>`;
+  return { html, undo: (ok && !hadStupor) ? { conditions: ["dazed"] } : null };
 }
 
 // ── Крючок Сывороток ───────────────────────────────────────────────────────

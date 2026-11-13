@@ -21,6 +21,7 @@ import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 import { SURE_TREAD, sureTreadTerrainBase, sureTreadIgnoresTerrain } from "../rules/squat-traits.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { litanyAutoPassesTerrain } from "../rules/dark-apostle.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -157,6 +158,14 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
 
 async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels,
                                        base = { char: "ag", skill: null, label: "Ag" }) {
+  if (litanyAutoPassesTerrain(actor)) {
+    await postTestCard(actor, {
+      icon: rollIcon("burst","#8fbf3a"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
+      lines: [`<div class="roll-threshold">Литания Нургла (Тёмный Апостол): подчинённые автоматически проходят тесты Трудного Ландшафта до конца боя.</div>`],
+      outcome: outcomeHtml(true, "Автоуспех — устоял на ногах")
+    }, { sound: false });
+    return;
+  }
   const totalMod  = terrainMod + extraMod;
   // Общий сбор модификаторов (wdbc-1xtl): Порог складывался из Ловкости,
   // модификатора ландшафта и ручной поправки — ни Усталости, ни Перевеса,

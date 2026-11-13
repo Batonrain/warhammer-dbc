@@ -58,7 +58,7 @@
     "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы», стр. 131)",
     "weaponClass": "melee",
     "weaponType": "primitive",
-    "range": 0,
+    "range": 2,
     "balance": -2,
     "damage": "2d10+3",
     "damageType": "rending",

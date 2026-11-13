@@ -16,6 +16,7 @@ import { hasAbility } from "./ability-by-key.mjs";
 import { heldWeapons } from "./dual-wield-talents.mjs";
 import { talentSpecs } from "./dual-wield.mjs";
 import { fmtMeters, PATH_EPS } from "./movement-path.mjs";
+import { baseIsCharge, baseIsFullAttack } from "./melee-base.mjs";
 
 /** Ключи Возможностей (module/constants/capabilities.mjs) и имена Талантов. */
 export const MELEE_TALENTS = Object.freeze({
@@ -156,7 +157,7 @@ export function blademasterRerollOffered(actor, { item, isMelee, rv, threshold, 
  * @returns {number} рейтинг Felling (0 — Талант не действует)
  */
 export function unstoppableChargeFelling(actor, { isMelee, baseKey, mounted, wsBonus }) {
-  if (!isMelee || baseKey !== "charge" || !mounted) return 0;
+  if (!isMelee || !baseIsCharge(baseKey) || !mounted) return 0;
   if (!hasMeleeTalent(actor, "unstoppableCharge")) return 0;
   return Math.ceil((Number(wsBonus) || 0) / 2);
 }
@@ -250,18 +251,20 @@ export function reaperMeasure({ charge, halfMove, walked, initialToNext, attacke
  * Упорство и Рисовка — свободные и атакой не считаются; Жнец — продолжение Натиска: ОД не
  * списываются (Натиск уже оплачен), а сама атака — дополнительная Атака Таланта (карточка «Жнец»), в лимит Хода не идёт.
  * Яростный Штурм — «еще одна атака ... за свободное действие» (её цена — Реакция, payOnRoll окна).
+ * Разрубить — «за свободное действие атаковать базовой атакой ещё одного персонажа».
  * @returns {{noAp:boolean, uncounted:boolean, skipChargeGate:boolean}}
  */
 export function freeMeleeFlags(opts) {
-  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault);
+  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault || opts?.kneeStrike || opts?.executionFollow || opts?.cleave
+    || opts?.riposte); // Рипост — «не тратит реакций или действий» (книга)
   return { noAp: free, uncounted: free, skipChargeGate: free };
 }
 
 /**
  * Свободные атаки Талантов не должны давать бесплатно поднять Базу или Приём (ОД и лимит с них сняты):
  * Рисовка — «базовая рукопашная атака» (Стандартная База, Обычная Атака); Упорство — «с той же базой
- * и приемом»; Жнец — тот же Натиск (Приём свободный).
- * @param {object} opts  techniqueOpts окна (showOffFree/tenacityRepeat/reaperFollow/furiousAssault, forceBase, technique)
+ * и приемом»; Жнец — тот же Натиск (Приём свободный); Разрубить — «базовой атакой» (Стандартная База).
+ * @param {object} opts  techniqueOpts окна (showOffFree/tenacityRepeat/reaperFollow/furiousAssault/cleave, forceBase, technique)
  * @param {{baseKey:string, maneuverKey:string}} sel  выбранное в окне
  * @returns {string} причина отказа или ""
  */
@@ -275,10 +278,19 @@ export function freeAttackLockProblem(opts, { baseKey, maneuverKey }) {
     if (maneuverKey !== (opts.technique || "standard")) return "Упорство: повтор идёт с тем же Приёмом, что и первая атака";
   }
   if (opts?.furiousAssault) {
-    if (baseKey !== "fullatk") return "Яростный Штурм: ещё одна атака — с Базой Полная Атака";
+    if (!baseIsFullAttack(baseKey)) return "Яростный Штурм: ещё одна атака — с Базой Полная Атака";
     if (maneuverKey !== (opts.technique || "standard")) return "Яростный Штурм: ещё одна атака — с тем же Приёмом";
   }
-  if (opts?.reaperFollow && baseKey !== "charge") return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
+  if (opts?.cleave && baseKey !== "standard") return "Разрубить: свободная атака — Стандартная База";
+  if (opts?.kneeStrike) {
+    if (baseKey !== "standard") return "Удар с Колена: пинок — Стандартная База";
+    if (maneuverKey !== "standard") return "Удар с Колена: пинок — Обычная Атака (без Приёма)";
+  }
+  if (opts?.executionFollow) {
+    if (opts.forceBase && baseKey !== opts.forceBase) return "Казнь: дополнительная атака идёт с той же Базой, что и первая";
+    if (maneuverKey !== "standard") return "Казнь: дополнительная атака — Обычная Атака (без Приёма)";
+  }
+  if (opts?.reaperFollow && !baseIsCharge(baseKey)) return "Жнец: атака по следующей цели — это тот же Натиск; выберите Базу «Натиск»";
   return "";
 }
 

@@ -1,6 +1,7 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
+import { offHandParryPenalty } from "../rules/off-hand.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
@@ -436,7 +437,12 @@ export function _tokenRelationshipOf(attacker, defender) {
   return (a && d) ? tokenRelationship(a.disposition, d.disposition) : null;
 }
 
-export async function _performSprayCancel(actor, { attacker = null } = {}) {
+// Спаренное + Спрей (книга): при удвоении расхода боеприпасов цели получают −20 на тест A+0
+// для отмены попадания, а на 3+ Провала — 2 попадания (Уклоняться от них — как обычно).
+export const TWIN_SPRAY_CANCEL_PENALTY = -20;
+export const TWIN_SPRAY_DOUBLE_HIT_FAILS = 3;
+
+export async function _performSprayCancel(actor, { attacker = null, doubled = false } = {}) {
   // Ярость: «не может совершать Избегания» — отмена попадания Акробатикой тоже Избегание.
   if (await rageAvoidanceRefusal(actor, "evade", "Отмена попадания (Spray)")) return;
   const agTotal  = actor.system.characteristics.ag?.total ?? 0;
@@ -451,7 +457,8 @@ export async function _performSprayCancel(actor, { attacker = null } = {}) {
   const sprayerMod = (attacker && hasTalentCapability(attacker, SPRAYER_CAPABILITY)) ? SPRAYER_CANCEL_PENALTY : 0;
   // Дружественный Огонь (rules/flamer-talents.mjs): +30 всем, кто не враг стрелка по расположению токенов.
   const friendlyMod = attacker ? friendlyFireBonus(attacker, { relationship: _tokenRelationshipOf(attacker, actor) }) : 0;
-  const threshold = agTotal + rankBonus + cloneBonus + ruleMods.total + sprayerMod + friendlyMod;
+  const doubledMod = doubled ? TWIN_SPRAY_CANCEL_PENALTY : 0;
+  const threshold = agTotal + rankBonus + cloneBonus + ruleMods.total + sprayerMod + friendlyMod + doubledMod;
 
   const roll = await new Roll("1d100").evaluate();
   const rv     = roll.total;
@@ -466,10 +473,13 @@ export async function _performSprayCancel(actor, { attacker = null } = {}) {
   modParts.push(...ruleMods.parts);
   if (sprayerMod) modParts.push(`Sprayer / Распылитель ${SPRAYER_CANCEL_PENALTY}`);
   if (friendlyMod) modParts.push(`Friendly Fire / Дружественный Огонь +${friendlyMod}`);
+  if (doubledMod) modParts.push(`Спаренное: удвоенный расход ${TWIN_SPRAY_CANCEL_PENALTY}`);
+  const doubleHitNote = (doubled && !passed && deg >= TWIN_SPRAY_DOUBLE_HIT_FAILS)
+    ? ` <b>Спаренное: ${TWIN_SPRAY_DOUBLE_HIT_FAILS}+ Провала — цель получает 2 попадания</b> (от них можно Уклоняться как обычно).` : "";
 
   const outcomeHtml = passed
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}! Попадание отменено (если шаблон не накрывает Базу целиком — иначе годится только Отскок ниже, стр. 12).</span>`
-    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Попадание проходит.</span>`;
+    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Попадание проходит.${doubleHitNote}</span>`;
 
   const recoilSection = passed ? recoilButtonHtml(actor) : "";
 
@@ -571,8 +581,10 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
     : null;
   const crossBonus = crossWeapon ? weaponParryPropBonus(actor, crossWeapon) : 0;
 
+  // Неосновная рука (rules/off-hand.mjs): −20, если парирующее оружие в неосновной руке.
+  const offHand = offHandParryPenalty(actor, meleeWeapon, pwp);
   const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod
-                  + ruleMods.total + dtfBonus + crossBonus;
+                  + ruleMods.total + dtfBonus + crossBonus + offHand.value;
 
   const modParts = [];
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
@@ -585,6 +597,7 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
   modParts.push(...ruleMods.parts);
   if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
   if (crossBonus !== 0)  modParts.push(`Крестовой Блок: «${crossWeapon.name}» +${crossBonus}`);
+  if (offHand.value !== 0) modParts.push(`${offHand.label} ${offHand.value}`);
 
   return { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp,
            crossblock: crossblock ? { weapon: crossWeapon, bonus: crossBonus,
@@ -711,6 +724,8 @@ export async function _performParry(actor, {
   extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false,
   attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "", attackId = "",
   chomper = false, forAlly = "",
+  // Запрещённый Приём (Cheap Shot): каждое снятое попадание стоит evadeCost Успехов.
+  evadeCost = 1,
   attackBaseKey = "" // База атаки (opts.baseKey карточки): Пересилить действует только против Полной Атаки
 } = {}) {
   // Полная Атака (core, «Полная Атака»): Физические Избегания закрыты до начала
@@ -953,7 +968,8 @@ export async function _performParry(actor, {
   // СТРЕЛЬБЫ дистанционно, «Щитом Клинков». В рукопашной, включая парирование
   // выстрела В КОНТАКТЕ (contactParry — та же строка стр. 12, что и разрешает
   // сам приём выше), работает общее правило стр. 12 (по попаданию за степень).
-  const effectiveDeg = (isMelee || contactParry || deflectMode) ? deg : Math.min(deg, 1);
+  const parryCost = Math.max(1, Number(evadeCost) || 1);
+  const effectiveDeg = Math.floor(((isMelee || contactParry || deflectMode) ? deg : Math.min(deg, 1)) / parryCost);
   const { total: totalHits, negated, remaining } = negatedHits(passed, effectiveDeg, hitsCount);
   const parried = passed;
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
@@ -961,7 +977,7 @@ export async function _performParry(actor, {
   // При Парировании СТРЕЛЬБЫ банковать нечего: книга даёт ровно одно снятое
   // попадание независимо от числа Успехов, значит «излишка» в её смысле не
   // возникает. В рукопашной пул работает как раньше.
-  const leftover = passed && isMelee ? deg - negated : 0;
+  const leftover = passed && isMelee ? deg - negated * parryCost : 0;
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   if (picked.dropped.length) {
@@ -994,7 +1010,9 @@ export async function _performParry(actor, {
   // на 1–75 оружие противника (без Power Field / Reinforced) уничтожено.
   const allRolls = [roll];
   let powerFieldNote = "";
-  if (parried && pwp.powerField) {
+  // Независимое оружие (книга, Independent): парирование силовым полем «отображает
+  // толчки и удары в торс и плечи» — на разрушение не бросается.
+  if (parried && pwp.powerField && !attackerWp?.independent) {
     const pfRoll = await new Roll("1d100").evaluate();
     allRolls.push(pfRoll);
     const destroyed = pfRoll.total <= 75;
@@ -1062,6 +1080,25 @@ export async function _performParry(actor, {
         ${rollIcon("bolt","#6fe6ff")}Силовое поле противника — бросок: <b>${pfRoll2.total}</b> → <span class="roll-success">безоружная защита выдержала (76+).</span>
       </div>`;
     }
+  }
+
+  // Силовое Поле, обратная сторона (книга): «когда им успешно парируют оружие
+  // без этого свойства, ИЛИ его парируют оружием без этого свойства» — 1d100,
+  // на 1–75 второе оружие уничтожается. Выше — поле у парирующего; здесь —
+  // поле у АТАКУЮЩЕГО, а парирует оружие без Power Field/Reinforced.
+  // Безоружная защита разобрана отдельной веткой выше.
+  let attackerPowerFieldNote = "";
+  if (parried && isMelee && !defenderUnarmed && meleeWeapon
+      && attackerWp?.powerField && !pwp.powerField && !pwp.reinforced) {
+    const pfRoll3 = await new Roll("1d100").evaluate();
+    allRolls.push(pfRoll3);
+    attackerPowerFieldNote = `
+      <div class="roll-defense-note">
+        ${rollIcon("bolt","#6fe6ff")}Силовое поле противника — бросок: <b>${pfRoll3.total}</b> →
+        ${pfRoll3.total <= 75
+          ? `<span class="roll-failure">парирующее оружие «${esc(meleeWeapon.name)}» <b>уничтожено</b>!</span>`
+          : `<span class="roll-success">парирующее оружие уцелело (76+).</span>`}
+      </div>`;
   }
 
   // Контратака (стр. 12, Талант Counter Attack): «успешно Парировав, персонаж
@@ -1173,7 +1210,7 @@ export async function _performParry(actor, {
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
     outcome: outcomeHtml,
-    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, bladeBindingHtml, riposteHtml]
+    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, attackerPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, bladeBindingHtml, riposteHtml]
   }, { rolls: allRolls });
 }
 

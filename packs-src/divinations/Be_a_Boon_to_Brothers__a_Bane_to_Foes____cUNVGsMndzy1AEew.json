@@ -75,7 +75,8 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "",
-              "code": ""
+              "code": "",
+              "targetChoiceCount": 1
             },
             {
               "id": "n7u2X7JafMXPlCeq",
@@ -117,7 +118,8 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "",
-              "code": ""
+              "code": "",
+              "targetChoiceCount": 1
             }
           ]
         }

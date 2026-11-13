@@ -10,6 +10,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { itemHasKey } from "../rules/item-marker.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { powerSettingEffects } from "../rules/power-setting.mjs";
+import { sightEffectsOf, sightGrants, SIGHT_EFFECT } from "../rules/sight-effects.mjs";
 
 /** Все установленные на данное оружие модификации (среди предметов актора). */
 export function getInstalledMods(actor, weapon) {
@@ -131,11 +132,16 @@ export function getModEffects(actor, weapon, { profile = null } = {}) {
     clipMod: 0, clipMult: 1, rofSemiMod: 0, rofFullMod: 0,
     rofSingleAttackMod: 0, rofSemiAttackMod: 0, rofFullAttackMod: 0,
     reliabilityMod: 0, balanceMod: 0, weightPct: 0,
-    addProps: [], removeProps: [], names: []
+    addProps: [], removeProps: [], names: [],
+    // Лазерная точка (Лазерный/Омни-Прицел, rules/laser-sight.mjs): после атаки ГМу уходит шёпот с тестом обнаружения стрелка.
+    laserDot: false
   };
   const activeMods = getActiveMods(actor, weapon, { profile });
+  fx.laserDot = !!sightGrants(activeMods, SIGHT_EFFECT.laserDot);
   for (const mod of activeMods) {
-    const e = mod.system.effects || {};
+    // Омни-Прицел «комбинирует эффекты всех остальных прицелов»: его поля дополнены
+    // числами остальных (rules/sight-effects.mjs); у прочих модов — их собственные.
+    const e = sightEffectsOf(mod);
     fx.attackMod      += e.attackMod      || 0;
     // Подстройка под конкретного персонажа (Custom Grip и т.п.): бонус только
     // для актора, под которого модификация подстроена, зеркальный штраф всем

@@ -26,7 +26,7 @@
     "availability": 5,
     "weight": 22,
     "attackBonus": 0,
-    "special": "Обойма/перезарядка — особые (†).",
+    "special": "Обойма ∞ (питание от реактора брони); перезарядка — особая (†).",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [

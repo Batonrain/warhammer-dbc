@@ -36,6 +36,7 @@ import { itemHasName, hatredTargetsOf } from "./predicates.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { relationByDisposition } from "./warp-touched.mjs";
+import { harbingerTargetMult } from "./dark-apostle.mjs";
 
 // Геометрия токенов (дистанция центров, рукопашный контакт, поле зрения) —
 // НЕ импортируется из combat/facing.mjs / rules/vision-target.mjs /
@@ -99,7 +100,10 @@ function hasLeadershipTalent(actor, names) {
 // Authority). Живёт здесь, а не в combat/command-state.mjs: command-state
 // импортирует этот файл (не наоборот), а этот файл тянет sources.mjs — обратный
 // импорт замкнул бы круг (см. шапку и AGENTS.md, «Источники правил»).
-// Ветка Дрессировки (P.b вместо F.b×2) хелпера не касается.
+// Ветка Дрессировки (P.b вместо F.b×2) commandCapacity не касается — её выбирает followerCapacity ниже.
+// Вторая половина Таланта — «+10 Лояльности Миньонам-людям» — читается в
+// rules/minion-build.mjs::minionLoyalty через hasAirOfAuthority ниже
+// (air-of-authority-10); minion-build импортирует этот файл, не наоборот.
 
 const AIR_OF_AUTHORITY_NAMES = ["Air of Authority", "Аура Власти"];
 const COMMAND_CAPACITY_MULT = 2;
@@ -116,12 +120,26 @@ export function hasAirOfAuthority(actor) {
  */
 export function commandCapacity(actor, charKey = "fel") {
   const bonus = Math.max(0, Number(actor?.system?.characteristics?.[charKey]?.bonus) || 0);
-  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT);
+  return bonus * (hasAirOfAuthority(actor) ? AIR_OF_AUTHORITY_CAPACITY_MULT : COMMAND_CAPACITY_MULT) * harbingerTargetMult(actor);
 }
 
-/** Лимит целей Command/Intimidate «на подчинённых» — F.b×2, F.b×20 с Air of Authority. */
-export function commandTargetLimit(actor) {
+/**
+ * Сколько подчинённых («Под моим Присутствием») держит командир: Дрессировка —
+ * «максимум подчинённых животных — P.b» вместо F.b×2 (Air of Authority эту
+ * ветку не меняет — он про Command, не про зверей); иначе commandCapacity(fel).
+ * Один источник и для узла командования (combat/command-state.mjs), и для
+ * значка ⚑ на вкладке Социум — раньше значок всегда считал F.b×2.
+ */
+export function followerCapacity(actor) {
+  if (actor?.system?.command?.training) {
+    return Math.max(0, Number(actor.system?.characteristics?.per?.bonus) || 0);
+  }
   return commandCapacity(actor, "fel");
+}
+
+/** Лимит целей Command/Intimidate «на подчинённых» — F.b×2, F.b×20 с Air of Authority; с Дрессировкой — P.b. */
+export function commandTargetLimit(actor) {
+  return followerCapacity(actor);
 }
 
 // ── Rancor / Злопамятность ───────────────────────────────────────────────────
@@ -554,13 +572,18 @@ export function protegeActivationPatch(actor, recipientUuid) {
 //
 // РЕШЕНИЕ ВЛАДЕЛЬЦА 19.10.2026: вместо автоматического скана поля зрения —
 // галочка в самих диалогах тестов Морали (Страх/Подавление/встречная часть
-// Запугивания), тем же приёмом, что уже существующие ручные условия там
-// («Демон», «Заведомо безопасно» — ГМ решает на глаз, код не переизобретает
-// геометрию). «Видит ИЛИ слышит союзника/нейтрального с этим Талантом» —
-// целиком решение стола за галочкой, код просто прибавляет +10, когда она
-// отмечена. anyRadiantPresenceHolderExists — только чтобы решить, показывать
-// ли галочку вообще (нет смысла предлагать её, если ни у кого в мире нет
-// этого Таланта).
+// Запугивания/Полевая Казнь). Уточнено wdbc-051qb (07.11.2026): «ВИДИТ»
+// теперь проставляется самой галочкой по геометрии сцены — союзный или
+// нейтральный носитель Таланта в поле зрения токена цели
+// (combat/radiant-presence.mjs → rules/radiant-presence-sight.mjs, та же
+// приближённая видимость без стен, что у Вдохновляющего Присутствия);
+// «СЛЫШИТ» код не считает — стол отмечает галочку руками, и снять
+// проставленную тоже может. Сам +10 по-прежнему даёт ctx.radiantPresence ниже
+// — одна логика на все диалоги, геометрия только решает, отмечена ли галочка.
+// anyRadiantPresenceHolderExists — чтобы решить, показывать ли галочку вообще
+// (нет смысла предлагать её, если ни у кого в мире нет этого Таланта).
+// Файл не импортирует геометрию: rules/vision-target.mjs замкнул бы круг
+// импортов с sources.mjs (AGENTS.md → «Источники правил»).
 
 const RADIANT_PRESENCE_NAMES = ["Radiant Presence", "Блистательное Присутствие"];
 
@@ -582,12 +605,13 @@ export function radiantPresenceBonus(checked) {
 // Книжный текст: «Если персонаж сражается рядом с подчинёнными, все они
 // автоматически проходят тесты Морали, кроме вызванных им самим.»
 //
-// РЕШЕНИЕ ВЛАДЕЛЬЦА 19.10.2026: та же галочка, что у Radiant Presence выше —
-// во ВСЕХ трёх диалогах тестов Морали (Страх/Подавление/Запугивание),
-// включая Тест Страха, который раньше был честно пропущен за неимением
-// надёжного источника угрозы в коде: галочка снимает саму причину пропуска —
-// «кроме вызванных им самим» теперь тоже решает ГМ, отмечая галочку, а не
-// код, вычисляющий источник.
+// РЕШЕНИЕ ВЛАДЕЛЬЦА 19.10.2026: галочка во ВСЕХ трёх диалогах тестов Морали
+// (Страх/Подавление/Запугивание), включая Тест Страха, который раньше был
+// честно пропущен за неимением надёжного источника угрозы в коде: галочка
+// снимает саму причину пропуска — «кроме вызванных им самим» решает ГМ,
+// отмечая галочку, а не код, вычисляющий источник. В отличие от Radiant
+// Presence (wdbc-051qb) галочка остаётся ЦЕЛИКОМ ручной: книга не даёт числа
+// для «рядом», геометрию строить не из чего — ждём число от владельца.
 
 const INTO_THE_JAWS_NAMES = ["Into the Jaws of Hell", "В Самое Пекло"];
 
@@ -863,9 +887,11 @@ export function leadershipTalentRules(actor, ctx = {}, allActors = []) {
   rules.push(...ironDisciplineRerollRules(actor, allActors, ctx));
   rules.push(...frontlineCommanderRerollRules(actor, allActors));
   // Radiant Presence/Блистательное Присутствие: ctx.radiantPresence —
-  // галочка диалога теста Морали (Страх/Подавление/Запугивание), не скан
-  // сцены. auto:true — галочка САМА и есть подтверждение «видит/слышит»,
-  // второй галочки в общем списке модификаторов не нужно.
+  // галочка диалога теста Морали (Страх/Подавление/Запугивание); «видит»
+  // ставит её само combat/radiant-presence.mjs, «слышит» — стол руками, сюда
+  // приходит уже готовое значение. auto:true — галочка САМА и есть
+  // подтверждение «видит/слышит», второй галочки в общем списке модификаторов
+  // не нужно.
   const radiantBonus = radiantPresenceBonus(ctx?.radiantPresence);
   if (radiantBonus > 0) {
     rules.push({

@@ -58,6 +58,7 @@ const TALENT_TYPE = (() => {
 })();
 import { getModEffects }                             from "../combat/weapon-mods.mjs";
 import { qualityEffects }                            from "../constants/quality.mjs";
+import { ammoFitsWeapon }                           from "../rules/ammo-override.mjs";
 import { _buildAmmoModString, shortLabel }           from "../helpers/utils.mjs";
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
@@ -96,6 +97,8 @@ import { addictionTestParts, parseFrequency, readWithdrawalEntries, addictionRec
 import { hasOverclock } from "../rules/technomystic-talents.mjs";
 import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist } from "../rules/technomystic-resources.mjs";
 import { diseaseVectors, vectorLabel } from "../rules/disease-infection.mjs";
+import { isExpendableOrdnance, tracksMagazine } from "../rules/no-magazine.mjs";
+import { hasInfiniteMagazine } from "../rules/ammo-free.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -174,6 +177,12 @@ function groupTip(key, def) {
   const head = `Основа: ${base} · Склонность: ${apt2}`;
   const body = [SKILL_DESCRIPTIONS[key], skillActionOf(key)].filter(Boolean).join("<br><br>");
   return body ? `${head}<br><br>${body}` : head;
+}
+
+function magazineLabel(item, effectiveMax = null) {
+  if (hasInfiniteMagazine(item)) return "∞";
+  const tracked = effectiveMax == null ? tracksMagazine(item) : effectiveMax > 0 && !isExpendableOrdnance(item);
+  return tracked ? "" : "—";
 }
 
 export function buildSkillDisplay(key, system) {
@@ -614,12 +623,7 @@ function buildGetDataUncached(actor) {
     const baseBon = melee ? meleeBaseBonus(actor, meleeBaseKey) : 0;   // + Натиск Берсерка (rules/berserker-talents.mjs)
 
     const compatAmmo = melee ? [] : allItems
-      .filter(item =>
-        item.type === "ammo" &&
-        (item.system.weaponTypes || []).some(t =>
-          t === s.weaponType || t === s.weaponClass || t === "any"
-        )
-      )
+      .filter(item => ammoFitsWeapon(item, i))
       .map(item => ({
         id:       item.id,
         name:     item.name,
@@ -644,7 +648,7 @@ function buildGetDataUncached(actor) {
 
     const magLow   = !melee && (s.magazineCur || 0) > 0
                      && (s.magazineCur || 0) <= Math.ceil((effClipMax || 1) * 0.25);
-    const magEmpty = !melee && (s.magazineCur || 0) === 0 && (effClipMax || 0) > 0;
+    const magEmpty = !melee && (s.magazineCur || 0) === 0 && (effClipMax || 0) > 0 && !isExpendableOrdnance(i);
 
     return {
       id: i.id, name: i.name,
@@ -674,6 +678,7 @@ function buildGetDataUncached(actor) {
       modNames:        modFx.names.join(", "),
       attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + baseBon + stBon + (modFx.attackMod || 0) + qTestMod,
       compatAmmo, magLow, magEmpty,
+      magLabel:     magazineLabel(i, effClipMax || 0),
       // Заклинило (wdbc-vwfk) — блокирует «Атака» тем же приёмом, что magEmpty;
       // «Расклинить» показывается только пока canClearJam не лжив (см.
       // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
@@ -735,6 +740,7 @@ function buildGetDataUncached(actor) {
       groupLabel:  WEAPON_MOD_GROUPS[cat]?.[i.system.modGroup] ?? "",
       weight:      i.system.weight ?? 0,
       quality:     i.system.quality || "common",
+      stored:      !!i.system.stored,
       benefit:     i.system.description || "",
       installedOn: i.system.installedOn || ""
     };
@@ -748,6 +754,7 @@ function buildGetDataUncached(actor) {
       powerSystem: cat === "powerSystem",
       activatable: !!i.system.activatable,
       active:      !!i.system.active,
+      stored:      !!i.system.stored,
       benefit:     i.system.description || "",
       installedOn: i.system.installedOn || ""
     };
@@ -771,6 +778,7 @@ function buildGetDataUncached(actor) {
     damageType:  DAMAGE_TYPES[i.system.damageType] ?? i.system.damageType,
     magazineCur: i.system.magazineCur,
     magazineMax: i.system.magazineMax,
+    magLabel:    magazineLabel(i),
     weight:      i.system.weight,
     infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null,
     mods:        allWeaponMods.filter(m => m.system.installedOn === i.id).map(weaponModView)

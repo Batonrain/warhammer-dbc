@@ -813,9 +813,28 @@ describe("проведение ритуала (castRitual)", () => {
     // в оружие Ритуалиста, а не встаёт Миньоном (Инфернальный Оруженосец —
     // «может тем же ритуалом призвать его в своё оружие»).
     describe("asWeapon — тот же ритуал вселяет демона в оружие, а не в Миньона", () => {
+      // Настоящий Foundry EmbeddedCollection (common/utils/collection.mjs) —
+      // Map ПЛЮС Array-подобные методы (some/find/filter/map/every/forEach) и
+      // итератор по значениям, не по [key,value] парам. Голый `new Map(...)`
+      // этого не несёт — безобидно, пока ничего не звало их на этом акторе.
+      // core.powerArmourFineManipulation (wdbc-x1nz.4) — правило источника
+      // «core», отбирается по предикату wearsPowerArmourWithoutBlackCarapace
+      // (читает actor.items.some(...)) у КАЖДОГО hasRuleFlag независимо от
+      // расы/предмета актора, и первым прогнало этот путь на данном моке —
+      // голый Map ронял тест TypeError'ом, хотя в реальном Foundry всё было
+      // бы штатно (Collection.some есть). Чиним верность мока, а не предикат.
+      class FakeItemsCollection extends Map {
+        [Symbol.iterator]() { return this.values(); }
+        some(fn)    { return [...this.values()].some(fn); }
+        find(fn)    { return [...this.values()].find(fn); }
+        filter(fn)  { return [...this.values()].filter(fn); }
+        map(fn)     { return [...this.values()].map(fn); }
+        every(fn)   { return [...this.values()].every(fn); }
+        forEach(fn) { return [...this.values()].forEach(fn); }
+      }
       const actorWithWeapon = (weapon) => {
         const a = actor(); a.uuid = "Actor.act-1";
-        a.items = new Map(weapon ? [["w1", weapon]] : []); // как настоящая EmbeddedCollection — Map, .get() + итерируема
+        a.items = new FakeItemsCollection(weapon ? [["w1", weapon]] : []);
         return a;
       };
 

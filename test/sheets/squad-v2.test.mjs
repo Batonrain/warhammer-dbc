@@ -72,6 +72,25 @@ describe("_prepareContext: командная вертикаль", () => {
     expect(ctx.capacity).toBe(8);
   });
 
+  it("Боевая Песнь Командира: чип «Песня» и кнопка «Тройка» без выбора эффекта 2", async () => {
+    const singer = pers("Ворн");
+    singer.uuid = "Actor.b";
+    singer.items = [{ type: "talent", name: "War Chant / Боевая Песнь", system: {} }];
+    singer.flags = { warChantSinging: true };
+    singer.getFlag = (_ns, k) => singer.flags[k];
+    singer.system.characteristics.wp.bonus = 5;
+    resolveAs({ "Actor.b": singer });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.b" } }, presence: { active: false, benefit: "" } });
+    let ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.chant).toEqual({ wp: 40, cap: 10, singer: "Ворн" });
+    expect(ctx.focusActive).toBe(true);
+
+    singer.flags.warChantSinging = false;
+    ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.chant).toBe(null);
+    expect(ctx.focusActive).toBe(false);
+  });
+
   it("состав сверх вместимости помечается", async () => {
     resolveAs({ "Actor.a": pers("Крейн", { characteristics: { fel: { total: 30, bonus: 1 } } }) });
     const members = [1, 2, 3].map(i => ({ id: `m${i}`, uuid: `Actor.m${i}`, name: `Боец ${i}` }));

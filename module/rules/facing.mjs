@@ -10,11 +10,19 @@
 //  Cloak (сама механика уже готова, wdbc-sg57); тот же примитив годится и
 //  для Blinders, и для арок техники/корабля позже (wdbc-m38e/wdbc-jr93).
 //
-//  Соглашение по углам — как у Foundry TokenDocument.rotation: 0° — «на
-//  север» (вверх по экрану, отрицательный Y в канвасных координатах),
-//  положительные градусы — по часовой стрелке. Канвасные координаты сами по
-//  себе с Y вниз, поэтому пеленг считается atan2(dx, -dy), а не привычным
-//  atan2(dy, dx) — иначе направления вышли бы зеркальными.
+//  Два разных отсчёта, не путать:
+//   • ПЕЛЕНГ (bearingDegrees) — 0° на север (вверх по экрану, отрицательный Y
+//     в канвасных координатах), растёт по часовой. Канвасные координаты сами
+//     по себе с Y вниз, поэтому пеленг считается atan2(dx, -dy), а не
+//     привычным atan2(dy, dx) — иначе направления вышли бы зеркальными.
+//   • rotation токена Foundry (TokenDocument.rotation) — 0° токен смотрит ВНИЗ
+//     экрана (на юг), растёт по часовой: 90° — запад, 180° — север, 270° —
+//     восток. Исходники Foundry 14: client/canvas/placeables/token.mjs
+//     (автоповорот: rotation = toDegrees(ray.angle) − 90) и
+//     client/canvas/geometry/shapes/limited-angle-polygon.mjs
+//     (aMin = rotation + 90 − angle/2). Замер живьём: Sahara 180-rotation-0.
+//   Мост между ними — facingBearing(rotation); любой код, сравнивающий
+//   rotation с пеленгом, обязан идти через него.
 //
 //  Foundry-обвязка (чтение x/y/rotation живого токена, canvas) —
 //  combat/facing.mjs.
@@ -42,6 +50,16 @@ export function normalizeAngle180(deg) {
  */
 export function pixelDistance(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+/**
+ * Пеленг взгляда токена по его rotation Foundry: rotation 0 смотрит на юг
+ * (пеленг 180), 90 — на запад (270), 180 — на север (0), 270 — на восток (90).
+ * @param {number} rotation  TokenDocument.rotation, градусы
+ * @returns {number} [0, 360)
+ */
+export function facingBearing(rotation) {
+  return normalizeAngle360((Number(rotation) || 0) + 180);
 }
 
 /**
@@ -93,28 +111,29 @@ export function nearestPointBehindOnRay(originPos, throughPos, candidates, corri
 }
 
 /**
- * Насколько пеленг отклоняется от текущего разворота наблюдателя: 0 — прямо
- * по курсу, ±90 — строго сбоку, ±180/-180 — строго сзади. Знак — по часовой
- * (положительный = правее курса), но большинству вызывающих нужен только
- * модуль (ширина дуги симметрична).
- * @param {number} observerRotation  токена-наблюдателя, градусы (0-360)
- * @param {number} bearing           пеленг до другой точки, градусы (0-360)
+ * Насколько пеленг отклоняется от курса наблюдателя: 0 — прямо по курсу, ±90 —
+ * строго сбоку, ±180/-180 — строго сзади. Знак — по часовой (положительный =
+ * правее курса), но большинству вызывающих нужен только модуль (ширина дуги
+ * симметрична).
+ * @param {number} observerBearing  курс наблюдателя КАК ПЕЛЕНГ, градусы (0-360);
+ *   для токена — facingBearing(token.rotation), не сам rotation
+ * @param {number} bearing          пеленг до другой точки, градусы (0-360)
  * @returns {number} (-180, 180]
  */
-export function relativeBearing(observerRotation, bearing) {
-  return normalizeAngle180(bearing - observerRotation);
+export function relativeBearing(observerBearing, bearing) {
+  return normalizeAngle180(bearing - observerBearing);
 }
 
 /**
  * Попадает ли пеленг в симметричную дугу заданной ширины, отсчитанную от
- * разворота наблюдателя. Ширина 90 — «передняя арка 90°» Плаща (по 45° на
+ * курса наблюдателя. Ширина 90 — «передняя арка 90°» Плаща (по 45° на
  * сторону от курса); ширина 210 — базовый угол обзора персонажа (стр. …).
- * @param {number} observerRotation
+ * @param {number} observerBearing  курс как ПЕЛЕНГ (для токена — facingBearing(rotation))
  * @param {number} bearing
  * @param {number} arcWidthDegrees  полная ширина дуги (не половина)
  */
-export function isWithinArc(observerRotation, bearing, arcWidthDegrees) {
-  return Math.abs(relativeBearing(observerRotation, bearing)) <= arcWidthDegrees / 2;
+export function isWithinArc(observerBearing, bearing, arcWidthDegrees) {
+  return Math.abs(relativeBearing(observerBearing, bearing)) <= arcWidthDegrees / 2;
 }
 
 /**
@@ -122,12 +141,12 @@ export function isWithinArc(observerRotation, bearing, arcWidthDegrees) {
  * Cloak/Плащу («не защищает от атак с передней арки 90°»). Считает пеленг
  * ОТ защищающегося К атакующему и сравнивает с разворотом защищающегося.
  * @param {{x:number,y:number}} defenderPos
- * @param {number}               defenderRotation
+ * @param {number}               defenderRotation  TokenDocument.rotation
  * @param {{x:number,y:number}} attackerPos
  * @param {number}               [arcWidthDegrees] по умолчанию 90 — как у Cloak
  */
 export function isFrontArcHit(defenderPos, defenderRotation, attackerPos, arcWidthDegrees = 90) {
-  return isWithinArc(defenderRotation, bearingDegrees(defenderPos, attackerPos), arcWidthDegrees);
+  return isWithinArc(facingBearing(defenderRotation), bearingDegrees(defenderPos, attackerPos), arcWidthDegrees);
 }
 
 /**
@@ -196,12 +215,12 @@ export function parseMountArc(spec) {
  * В секторе ли горизонтальной/вертикальной наводки орудия техники цель, с
  * учётом разворота машины (wdbc-m38e — та же геометрия, что у Cloak,
  * подключённая к vehicleMount.hArc/vArc вместо брони).
- * @param {number} vehicleRotation  разворот техники (0-360, «на север»=0)
+ * @param {number} vehicleRotation  TokenDocument.rotation техники (0 = нос на юг, см. шапку)
  * @param {number} bearing          пеленг от техники к цели (bearingDegrees)
  * @param {string} arcSpec          vehicleMount.hArc (или vArc, если наводка уже спроецирована в плоскость)
  */
 export function isWithinMountArc(vehicleRotation, bearing, arcSpec) {
   const arc = parseMountArc(arcSpec);
   if (!arc) return true;
-  return isWithinArc(vehicleRotation + arc.center, bearing, arc.width);
+  return isWithinArc(facingBearing(vehicleRotation) + arc.center, bearing, arc.width);
 }

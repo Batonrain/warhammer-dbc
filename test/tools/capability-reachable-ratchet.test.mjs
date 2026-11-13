@@ -47,7 +47,6 @@ const ALLOWED = {
   // они заведены про запас — ГМ ставит эффектом (см. их же `source`).
   "weaponPropertyImmunity.piercing": "иммунитет про запас, ставится эффектом ГМа",
   "weaponPropertyImmunity.haywire":  "иммунитет про запас, ставится эффектом ГМа",
-  "weaponPropertyImmunity.snare":    "иммунитет про запас, ставится эффектом ГМа",
 
   // Иммунитет по подвиду урона (wdbc-q0q8): инфраструктура заведена раньше
   // контента. laser выдаётся Живым Зеркалом, flame — Био-Плавильней на Best.Q
@@ -89,7 +88,6 @@ const ALLOWED = {
   // запасной путь для предметов «даёт Трейт Sonar Sense» (Sonar Visor,
   // импланты), которые его пока не несут.
   "trait.sonarSense":      "включается по имени Черты (Sonar Sense / Сонарное Чувство), ключ Конструктора — запасной путь",
-  "trait.unnaturalSenses": "включается по имени Черты (Unnatural Senses (X)), ключ Конструктора — запасной путь",
 
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат
@@ -146,7 +144,31 @@ const ALLOWED = {
   // попадает в withReader вовсе — строка-исключение ему не нужна.
   "occultist.core.eruditeInfernal": "включается по имени Таланта (Erudite-Infernal) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
   "occultist.core.infernalMaster": "включается по имени Таланта (Infernal Master) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
-  "occultist.core.gloriousPurpose": "включается по имени Таланта (Glorious Purpose) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт"
+  "occultist.core.gloriousPurpose": "включается по имени Таланта (Glorious Purpose) через модульный массив имён в occultist-talents.mjs::hasOccultistTalent — анализатор такую форму не распознаёт",
+  // Fallbacks / Instructor (Sahara fallbacks-instructor, 30.10.2026): тот же
+  // приём — hasFallbacks/hasInstructor читают имя Таланта через
+  // hasOccultistTalent и массивы имён; включают список ассистентов-акторов
+  // в диалоге ритуала (rules/ritual-assistants.mjs).
+  "occultist.core.fallbacks": "включается по имени Таланта (Fallbacks) через модульный массив имён в occultist-talents.mjs::hasFallbacks — анализатор такую форму не распознаёт",
+  // Трейты, которые работают по ИМЕНИ Черты (wdbc-dbc-114, 13.11.2026): флага-
+  // возможности у них нет и не нужен; запись в capabilities.mjs оставлена ради
+  // указателя `reader` на настоящий код. Скакуны (mount) читают имена Черт
+  // из rules/mount.mjs / combat/mount.mjs, остальные — по именам в своих модулях.
+  "trait.multipleArms": "включается по имени Черты (Multiple Arms / Многорукий), rules/hands.mjs isMultipleArmsTrait — флага нет",
+  "trait.brutalCharge":"включается по имени Черты (Brutal Charge / Жестокий Натиск), combat/attack.mjs brutalChargeDamageBonus — флага нет",
+  "trait.hoverer":"включается по имени Черты (Flyer / Hoverer), rules/flight-speed.mjs flightSpeedOf — флага нет",
+  "trait.maneuverable": "включается по имени Черты скакуна (Maneuverable), rules/mount.mjs maneuverMods — флага нет",
+  "trait.ablativePlating":"включается по имени Черты (Ablative Plating), rules/mount.mjs ablativeDamage — флага нет",
+  "trait.allTerrain": "включается по имени Черты скакуна (All-Terrain), combat/mount.mjs — флага нет",
+  "trait.bladesX": "включается по имени Черты скакуна (Blades), combat/mount.mjs showBladesDialog — флага нет",
+  "trait.boneHead": "включается по имени Черты (BONE-Head), rules/library/ogryn.mjs + combat/bone-head.mjs — флага нет",
+  "trait.nimble": "включается по имени Черты (Nimble), rules/resolve-test.mjs traitRatingSum — флага нет",
+  "trait.nimble10": "включается по имени Черты (Nimble (10)), rules/resolve-test.mjs traitRatingSum — флага нет",
+  "trait.stand": "включается по имени Черты скакуна (Stand), rules/mount.mjs — флага нет",
+  "trait.unruly": "включается по имени Черты скакуна (Unruly), combat/mount.mjs — флага нет",
+  "trait.warTrained": "включается по имени Черты скакуна (War-Trained), rules/mount.mjs handsNeeded — флага нет",
+  "trait.treytyRas.unnaturalX": "включается по имени предмета (Unnatural …), rules/unnatural-characteristic.mjs — как trait.unnaturalCharacteristic выше",
+  "occultist.core.instructor": "включается по имени Таланта (Instructor) через модульный массив имён в occultist-talents.mjs::hasInstructor — анализатор такую форму не распознаёт"
 };
 
 describe("возможности с читателем должны быть достижимы из игры", () => {

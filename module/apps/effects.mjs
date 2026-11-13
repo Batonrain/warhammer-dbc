@@ -12,6 +12,7 @@ import { visionAidBlocked } from "../rules/vision-aids.mjs";
 import { diseaseEffectsSuppressed } from "../rules/disease-immunity.mjs";
 import { activeRunicWeaveId, siblingRunicWeaves } from "../rules/runic-weave.mjs";
 import { isImplantActive } from "../rules/item-gates.mjs";
+import { entryWhenOk } from "../rules/mech-when.mjs";
 
 /**
  * Активен ли предмет прямо сейчас (по его собственным полям состояния) —
@@ -228,6 +229,52 @@ export async function syncOrphanedModEffects(actor, hostId) {
   }
 }
 
+/**
+ * Эффект записи Конструктора с условием «Когда» (Чемпион-Терминатор: +5 к WS
+ * только в Терминаторской броне, sahara 5-5134) включён, лишь пока условие
+ * выполнено. Эффекты ИЛИ-выбора пересборка syncMechanicsEffects не трогает —
+ * их создаёт один раз диалог выдачи, — поэтому условие проверяется здесь, при
+ * каждой сверке disabled. Эффект без метки записи или записи без «Когда» —
+ * всегда проходит.
+ */
+// Своя копия поиска записи по id (apps/mechanics.mjs::findMechEntryById):
+// импорт mechanics.mjs отсюда замыкает круг в графе источников правил
+// (test/rules/source-registry-acyclic.test.mjs).
+function findEntry(groups, id) {
+  for (const g of groups || []) {
+    for (const e of g.entries || []) {
+      if (e.id === id) return e;
+      const nested = e.kind === "group" && e.group ? findEntry([e.group], id) : null;
+      if (nested) return nested;
+    }
+  }
+  return null;
+}
+
+function effectEntry(item, fx) {
+  const entryId = fx.getFlag?.("warhammer-dbc", "mechEntry");
+  if (!entryId || !(item.parent instanceof Actor)) return null;
+  const mechanics = item.getFlag?.("warhammer-dbc", "mechanics");
+  const entry = findEntry(Array.isArray(mechanics) ? mechanics : [], entryId);
+  return entry?.when && Object.keys(entry.when).length ? entry : null;
+}
+
+function effectWhenOk(item, fx) {
+  const entry = effectEntry(item, fx);
+  return !entry || entryWhenOk(item.parent, entry, item);
+}
+
+/**
+ * Пересверяет эффекты предметов актора, чьё включение зависит от состояния
+ * АКТОРА (условие «Когда» записи): сняли/надели броню — бонус гаснет/возвращается.
+ */
+export async function syncWhenGatedEffects(actor) {
+  for (const item of actor?.items ?? []) {
+    const fxs = item.effects?.contents ?? item.effects ?? [];
+    if (fxs.some(fx => effectEntry(item, fx))) await syncItemEffectsDisabled(item);
+  }
+}
+
 export async function syncItemEffectsDisabled(item, activeOverride) {
   const active = activeOverride !== undefined ? activeOverride : isItemActive(item);
   // item.effects.contents ?? item.effects ?? [] (wdbc-s9dj): настоящая
@@ -236,8 +283,9 @@ export async function syncItemEffectsDisabled(item, activeOverride) {
   // item.effects как простой массив без .contents вовсе — оба варианта
   // должны отработать одинаково.
   const updates = (item.effects?.contents ?? item.effects ?? [])
-    .filter(fx => fx.disabled === active)
-    .map(fx => ({ _id: fx.id, disabled: !active }));
+    .map(fx => ({ fx, enable: active && effectWhenOk(item, fx) }))
+    .filter(({ fx, enable }) => fx.disabled === enable)
+    .map(({ fx, enable }) => ({ _id: fx.id, disabled: !enable }));
   if (updates.length) await item.updateEmbeddedDocuments("ActiveEffect", updates);
 }
 

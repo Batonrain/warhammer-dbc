@@ -1,0 +1,23 @@
+{
+  "name": "Техника",
+  "type": "Item",
+  "folder": null,
+  "sorting": "m",
+  "_id": "uJE8Awg6L5kJ6U24",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1794583108814,
+    "modifiedTime": 1794583108814,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!folders!uJE8Awg6L5kJ6U24"
+}

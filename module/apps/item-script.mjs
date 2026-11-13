@@ -63,6 +63,8 @@ import { grantStartingDisorder } from "../sheets/tabs/disorders.mjs";
 import { shareCombatFormation } from "../combat/combat-formation.mjs";
 import { tzeentchMarkBindUpdate } from "../rules/psyker.mjs";
 import { useShapeshift } from "../combat/shapeshift.mjs";
+import { linkPsyberToMaster } from "./psyber-link.mjs";
+import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -239,7 +241,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
-    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift",
+    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode",
     ...extraNames,
     code
   );
@@ -259,7 +261,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
-    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift,
+    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode,
     ...extraNames.map(k => extra[k])
   );
 }

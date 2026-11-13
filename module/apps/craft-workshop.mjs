@@ -36,7 +36,8 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
          monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, masterEngineseerAutoEligible,
          masterEngineseerAutoSuccesses, masterEngineseerNoParts, hasMasterEngineseer, destroyedWeaponsOf,
-         craftShiftTitle } from "../rules/craft-advantage.mjs";
+         craftShiftTitle, hasPrototyping, prototypingEffects } from "../rules/craft-advantage.mjs";
+import { CRAFTED_ITEMS_FLAG, craftedItemsOf, recordCreation, recordAssist, normalizeItemName } from "../rules/craft-memory.mjs";
 import { repairDestroyedWeapon } from "../combat/weapon-repair.mjs";
 import { spendFromInfamyPool, actorInfamyPath } from "./infamy-points.mjs";
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
@@ -217,21 +218,29 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const toolMod = proj.mode === "craft" ? fabricatorToolMod(crafter, baseToolMod) : baseToolMod;
     // Редкость и Качество НЕ модифицируют бросок (только Банк). К Пределу — инструменты,
     // ГМ-мод и −20 за Улучшение.
-    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: proj.improve ? -20 : 0,
+    // Прототипирование (Талант, 3-3a64): по журналу уже созданного (rules/craft-memory.mjs)
+    // снимает -20 Улучшения у предмета, что создал/ассистировал, и вдвое режет множитель Банка.
+    const proto = prototypingEffects(crafter, proj);
+    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: proj.improve && !proto.noImprovePenalty ? -20 : 0,
       hookUpMod: hookUpCraftMod(crafter, proj) };
     const combined = computeCombined(selectedOpts, mods);
 
-    const tableBank = isResearch ? null : bankFromTable(category, proj.rarity);
-    const notCraftable = !isResearch && tableBank === null && proj.baseBank == null;
-    const baseBank = proj.baseBank ?? (isResearch ? 20 : (tableBank ?? 10));
+    // Ремонт (wdbc-53of9): книга Банка ремонта не называет, таблица создания к нему не относится —
+    // Банк вписывает игрок, пока он пуст, цели нет (bank = null) и ГОТОВО не наступает.
+    const isRepair = proj.mode === "craft" && !!proj.repair;
+    const repairNeedsBank = isRepair && proj.baseBank == null;
+    const tableBank = isResearch || isRepair ? null : bankFromTable(category, proj.rarity);
+    const notCraftable = !isResearch && !isRepair && tableBank === null && proj.baseBank == null;
+    const baseBank = proj.baseBank ?? (isResearch ? 20 : repairNeedsBank ? null : (tableBank ?? 10));
     const isMachine = !!category?.machine && !isResearch;
     // Машины: итоговый Банк ×(Размер+1) — раньше подсказка просила учесть это
     // руками (wdbc-5il7), теперь размер вводится тут же и множится сразу.
     const machineSize = isMachine ? Math.max(0, Number(proj.machineSize) || 0) : 0;
-    const bank = bankFor(baseBank, proj.quality, proj.improve) * (isMachine ? machineSize + 1 : 1);
+    const bank = repairNeedsBank ? null
+      : bankFor(baseBank, proj.quality, proj.improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
 
-    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable,
-      machineNote: isMachine, machineSize, crafter, isResearch, isStudy };
+    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable, repairNeedsBank,
+      machineNote: isMachine, machineSize, crafter, isResearch, isStudy, proto };
   }
 
 
@@ -347,6 +356,23 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     };
   }
 
+  /**
+   * Строка-подсказка Прототипирования для панели Банка: что именно сейчас даёт память
+   * Крафта этому проекту. Пусто — у крафтера нет Таланта или он не применим к проекту.
+   * Безымянный проект Талант не получает — подсказка говорит почему.
+   */
+  _prototypingNote(proj, R) {
+    if (proj.mode !== "craft" || proj.repair || !hasPrototyping(R.crafter)) return "";
+    if (!normalizeItemName(proj.title)) return "Прототипирование: назовите проект (поле вверху) — по названию система узнаёт уже созданный предмет.";
+    const p = R.proto;
+    if (!p.known) return "Прототипирование: этот предмет ещё не создавался — запомнится, когда проект будет готов.";
+    const parts = [];
+    if (p.reroll) parts.push("переброс (лучший из двух кубиков смены)");
+    if (p.halveBank) parts.push("мультипликатор Банка от Качества вдвое");
+    if (p.noImprovePenalty) parts.push("без −20 на Улучшение");
+    return `Прототипирование: предмет уже создавался${parts.length ? " — " + parts.join(", ") : ", но в этом Качестве выгоды нет"}.`;
+  }
+
   _projectVM(proj) {
     const R = this._resolve(proj);
     const crafterName = R.crafter?.name || "";
@@ -355,7 +381,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       : proj.mode === "training" ? ""
       : (R.category?.label || "");
     const accum = proj.project.accumulated;
-    const pct = proj.mode === "training" ? 0 : Math.max(0, Math.min(100, Math.round((accum / R.bank) * 100)));
+    const pct = proj.mode === "training" ? 0 : Math.max(0, Math.min(100, Math.round((accum / (R.bank ?? Infinity)) * 100)));
     const training = proj.mode === "training" ? this._trainingVM(proj) : null;
 
     const testRows = R.slots.map((s, i) => {
@@ -371,7 +397,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       title: proj.title, autoTitle: `${modeLabel}${crafterName ? " · " + crafterName : ""}${catLabel ? " · " + catLabel : ""}`,
       summary: proj.mode === "bio" ? `цикл ${proj.bioCycle || 0}`
         : proj.mode === "training" ? `сеанс ${proj.sessionCount || 0}/${TRAINING_SESSIONS_PER_COURSE}`
-        : `${accum}/${R.bank}`,
+        : `${accum}/${R.bank ?? "?"}`,
       isCraft: proj.mode === "craft", isResearch: proj.mode === "research",
       isBio: proj.mode === "bio", bio: proj.mode === "bio" ? this._bioVM(proj) : null,
       isTraining: proj.mode === "training", training,
@@ -418,14 +444,16 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       // крафтера, минус сам крафтер (не ассистирует себе).
       assistantChoices: _crafterChoices().filter(a => a.id !== proj.crafterId),
       assistantId: proj.assistantId || "",
+      prototypingNote: this._prototypingNote(proj, R),
       baseBankVal: R.baseBank, machineNote: R.machineNote, machineSize: R.machineSize, notCraftable: R.notCraftable,
+      repairNeedsBank: R.repairNeedsBank,
 
       testRows, limit,
       limitCls: limit >= 50 ? "good" : limit >= 20 ? "mid" : "bad",
       toolModVal: R.mods.toolMod, gmModVal: R.mods.gmMod, improveMod: R.mods.improveMod,
 
-      bank: R.bank, accumulated: accum, shifts: proj.project.shifts, fatigue: proj.project.fatigue,
-      pct, done: accum >= R.bank
+      bank: R.bank, bankText: R.bank ?? "—", accumulated: accum, shifts: proj.project.shifts, fatigue: proj.project.fatigue,
+      pct, done: R.bank != null && accum >= R.bank
     };
   }
 
@@ -480,7 +508,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=slowshift]", "change", e => upd(e.currentTarget, p => p.slowShift = e.target.checked));
     on("[name=assistant-actor]", "change", e => upd(e.currentTarget, p => p.assistantId = e.target.value));
     on("[name=torrent-weapon]", "change", e => upd(e.currentTarget, p => p.torrentWeaponUuid = e.target.value));
-    on("[name=repair]", "change", e => upd(e.currentTarget, p => p.repair = e.target.checked));
+    on("[name=repair]", "change", e => upd(e.currentTarget, p => { p.repair = e.target.checked; p.baseBank = null; }));
     on("[name=repair-weapon]", "change", e => upd(e.currentTarget, p => p.repairWeaponId = e.target.value));
     on("[name=noparts]", "change", e => upd(e.currentTarget, p => p.noParts = e.target.checked));
 
@@ -632,7 +660,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       else if (!held) proj.engineseerAutoAt = null;
     }
 
-    const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor);
+    const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor, R.proto.reroll);
     let rolls = [], roll = null, rv = null, dos, diceNote = "", crit;
     if (autoSuccess) {
       // Броска нет: смена идёт на I.b Успехов, критов нет.
@@ -654,11 +682,11 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const poly = polymathCrit(crafter, crit.success, chain);
 
     const gain = Math.max(0, dos) + assist;
-    const wasDone = proj.project.accumulated >= R.bank;
+    const wasDone = R.bank != null && proj.project.accumulated >= R.bank;
     proj.project.shifts += 1;
     proj.project.fatigue += 1;
     proj.project.accumulated += gain;
-    const done = proj.project.accumulated >= R.bank;
+    const done = R.bank != null && proj.project.accumulated >= R.bank;
 
     // Через addFatigue (wdbc-x1nz.2.95): смена работы у порога T.b+W.b роняет
     // мастера без сознания, Саркофаг держит иммунитет — прямой записью ни
@@ -703,6 +731,19 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       torrentNote = await this._markTorrentShift(proj.torrentWeaponUuid);
     }
 
+    // Память Крафта (Прототипирование, 3-3a64): проект-СОЗДАНИЕ закрылся этой сменой — крафтер
+    // запоминает предмет и Качество, именованный ассистент — что ассистировал. Улучшение и ремонт
+    // не «создание» (книга: «однажды создав предмет»), безымянный проект запомнить нечем.
+    let memoryNote = "";
+    // Не «done && !wasDone»: Банк считается по журналу и может опуститься ниже накопленного без
+    // броска (параллельный проект того же предмета в Качестве ниже) — тогда проект «уже готов» и
+    // запись пропала бы навсегда. Метка memoryRecorded на самом проекте (сброс проекта её стирает);
+    // ставится, только если было что запоминать (есть название).
+    if (proj.mode === "craft" && !proj.repair && !proj.improve && done && proj.project.memoryRecorded !== `${normalizeItemName(proj.title)}|${proj.quality}`) {
+      memoryNote = await this._rememberCrafted(proj, crafter, assistantActor);
+      if (normalizeItemName(proj.title)) proj.project.memoryRecorded = `${normalizeItemName(proj.title)}|${proj.quality}`;
+    }
+
     // Ремонт (Мастер-Технопровидец): готовый проект снимает «Уничтожено» с выбранного оружия.
     let repairNote = "";
     if (proj.mode === "craft" && proj.repair && proj.repairWeaponId && done && !wasDone) {
@@ -744,10 +785,13 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${engineseerBonus ?`<div class="wh-craft-roll-line ok">Мастер-Технопровидец: +${engineseerBonus} к тесту (Tech-Use)</div>` : ""}
           ${workaholicNote ? `<div class="wh-craft-roll-line ok">Трудоголик: штраф за монотонность не применяется</div>` : ""}
           ${noPartsNote ? `<div class="wh-craft-roll-line ok">${noPartsNote}</div>` : ""}
+          ${R.proto.reroll ? `<div class="wh-craft-roll-line ok">Прототипирование: предмет уже создавался в этом Качестве — переброс (лучший из двух кубиков).</div>` : ""}
+          ${R.proto.halveBank ? `<div class="wh-craft-roll-line ok">Прототипирование: раньше создавался в Качестве ниже — множитель Банка от Качества вдвое.</div>` : ""}
+          ${memoryNote ? `<div class="wh-craft-roll-line ok">${memoryNote}</div>` : ""}
           ${repairNote ? `<div class="wh-craft-roll-line ok">${repairNote}</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
           ${torrentNote ? `<div class="wh-craft-roll-line ok">${torrentNote}</div>` : ""}
-          <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
+          <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank ?? "?"}${R.repairNeedsBank ? " · <b style='color:#f0c88a'>Впишите Базовый Банк ремонта (в книге формулы нет)</b>" : ""}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,
       rolls: [roll, polyFatigueRoll].filter(Boolean), sound: CONFIG.sounds.dice
@@ -757,6 +801,34 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Вторая смена — после карточки первой, чтобы в чате они шли по порядку.
     if (polyContinue) await this._rollShift(pid, chain + 1);
+  }
+
+  /**
+   * Записать завершённое создание в память Крафта (rules/craft-memory.mjs).
+   * Крафтер — всегда; именованный ассистент (assistantId) — как «ассистировал»:
+   * обычные безымянные ассистенты (просто число) памяти не имеют. Нет прав на
+   * чужого актора — не падаем, ассистента отметит Мастер. Возвращает строку для карточки.
+   */
+  async _rememberCrafted(proj, crafter, assistantActor) {
+    const name = String(proj.title ?? "").trim();
+    if (!normalizeItemName(name)) {
+      return hasPrototyping(crafter) ? "Прототипирование: проект без названия — предмет не запомнен." : "";
+    }
+    const lines = [];
+    try {
+      await crafter.setFlag("warhammer-dbc", CRAFTED_ITEMS_FLAG, recordCreation(craftedItemsOf(crafter), name, proj.quality));
+      lines.push(`Запомнено: «${esc(name)}» создан(а) в Качестве ${esc(CRAFT_QUALITY[proj.quality]?.label ?? proj.quality)}.`);
+    } catch (e) { console.warn("warhammer-dbc | craft memory (crafter)", e); }
+    if (assistantActor && assistantActor !== crafter) {
+      try {
+        await assistantActor.setFlag("warhammer-dbc", CRAFTED_ITEMS_FLAG, recordAssist(craftedItemsOf(assistantActor), name));
+        lines.push(`${esc(assistantActor.name)} запомнил(а), что ассистировал(а).`);
+      } catch (e) {
+        console.warn("warhammer-dbc | craft memory (assistant)", e);
+        lines.push(`Отметить ассистента ${esc(assistantActor.name)} не удалось (нет прав) — пусть отметит Мастер.`);
+      }
+    }
+    return lines.join(" ");
   }
 
   /**
