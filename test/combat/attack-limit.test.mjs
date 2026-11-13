@@ -92,3 +92,24 @@ describe("canTakeAttackAction / takeAttackAction", () => {
     expect(canTakeAttackAction(actor)).toBe(true);
   });
 });
+
+describe("Многорукий: +1 Атака за каждую пару рук сверх первой (dbc-114)", () => {
+  const arms = rating => ({ type: "trait", name: "Multiple Arms / Многорукий (X)", system: { rating } });
+  it("без Черты — прежние 1 (две руки пары не добавляют)", () => {
+    expect(attackActionLimit(actorFor())).toBe(1);
+  });
+  it("2 руки по Черте — 1; 3 (нечётная лишняя) — 2; 4 — 2; 6 — 3", () => {
+    expect(attackActionLimit(actorFor({ items: [arms(2)] }))).toBe(1);
+    expect(attackActionLimit(actorFor({ items: [arms(3)] }))).toBe(2);
+    expect(attackActionLimit(actorFor({ items: [arms(4)] }))).toBe(2);
+    expect(attackActionLimit(actorFor({ items: [arms(6)] }))).toBe(3);
+  });
+  it("потерянная рука считается: 4 руки, одна потеряна → 3 доступных → 2 Атаки", () => {
+    const a = actorFor({ items: [arms(4)] });
+    a.system.conditions = { lostArmsCount: 1 };
+    expect(attackActionLimit(a)).toBe(2);
+  });
+  it("лишние руки без самой Черты Атаку не добавляют", () => {
+    expect(attackActionLimit(actorFor({ extraHands: 2 }))).toBe(1);
+  });
+});

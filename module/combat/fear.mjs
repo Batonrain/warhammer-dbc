@@ -33,6 +33,7 @@ import { fearIgnore, FEAR_IGNORE_LABELS }          from "../rules/fear-ignore.mj
 import { moraleAutoPass }                          from "../rules/morale-auto.mjs";
 import { JADED_CAP }                               from "../rules/courage-talents.mjs";
 import { INFERNAL_FAMILIARITY_CAP }                from "../rules/defiance-talents.mjs";
+import { stampedeNoteHtml }                        from "../rules/stampede.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -218,6 +219,9 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   if (!success) {
     const { handleMoraleFailure } = await import("./command-state.mjs");
     moraleUndo = await handleMoraleFailure(actor);
+    // Затоптать (Stampede): провал теста Воли → безумная скачка; только подсказка
+    // Мастеру (rules/stampede.mjs). Машина без свободы воли тестирует Int, не Волю.
+    if (charKey === "wp") shockHtml += stampedeNoteHtml(actor);
   }
   // 5+ степеней провала Страха → Ментальная Травма (в конце сцены)
   if (!success && dof >= 5) {

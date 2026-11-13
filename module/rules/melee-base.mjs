@@ -26,6 +26,14 @@ export const baseAspects = baseKey => ASPECTS[baseKey] ?? [baseKey];
 /** Эта База — Натиск (в том числе составной Безрассудный Натиск). */
 export const baseIsCharge = baseKey => baseAspects(baseKey).includes("charge");
 
+/**
+ * Эта База — Верховая Атака (ключ "mounted", constants/combat.mjs). Отдельно от
+ * baseIsCharge нарочно: Натиск-логику (движение, Безрассудный Натиск) на неё
+ * распространять нельзя; нужна только тем, кто пишет «Натиск или Верховая
+ * Атака» (Брутальный Натиск).
+ */
+export const baseIsMountedAttack = baseKey => baseKey === "mounted";
+
 /** Эта База — Полная Атака (в том числе составной Безрассудный Натиск). */
 export const baseIsFullAttack = baseKey => baseAspects(baseKey).includes("fullatk");
 

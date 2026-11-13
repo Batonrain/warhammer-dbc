@@ -62,6 +62,7 @@ import { sharedFormationInitBonus } from "./combat-formation.mjs";
 import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 import { woundSustainSplit } from "./wound-in-reality.mjs";
+import { quadrupedMultiplier } from "./quadruped.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -1127,7 +1128,9 @@ export function prepareCharacterDerived(actor, system) {
     // .carry/.lift/.push/.max, которые сами производные и берут "final").
     const ib = system.encumbrance.indexBonus || {};
     const baseIdx = sb + tb + hwCarry + (ib.all || 0);
-    system.encumbrance.carry = carryRow(baseIdx + (ib.carry || 0)).carry;
+    // Четвероногий (X): «удваивает… вес Ношения» (rules/quadruped.mjs); Подъём и
+    // Толкание книга не упоминает — не трогаются.
+    system.encumbrance.carry = carryRow(baseIdx + (ib.carry || 0)).carry * quadrupedMultiplier(actor);
     system.encumbrance.lift  = carryRow(baseIdx + (ib.lift  || 0)).lift;
     system.encumbrance.push  = carryRow(baseIdx + (ib.push  || 0)).push;
     system.encumbrance.max = system.encumbrance.carry;

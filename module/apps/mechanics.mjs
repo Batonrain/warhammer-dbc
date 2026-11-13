@@ -486,6 +486,7 @@ import { INTEGRAL_CHOSEN_FLAG, RATING_TEMPLATE_FLAG, sourceRating, ratingTemplat
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
+import { dreadUuidForRating, isDreadUuid }    from "../rules/daemonic-dread.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
 import { anySpecCount, talentSpecOptions, withPickedSpecs } from "../rules/talent-spec-choice.mjs";
@@ -2813,7 +2814,11 @@ export async function syncAuraFlag(item) {
     if (cur?.managed) await item.unsetFlag(FLAG, "aura");
     return;
   }
-  const rd = mechRollData(actor);
+  // «rating»/«rating2» — рейтинги самой Черты-источника: радиус и величина ауры
+  // «Демоническое Присутствие X/Y» (X — штраф, Y — радиус) задаются формулами
+  // «rating» и «rating2» и живут вместе с рейтингом предмета (dbc-114, 13.11.2026).
+  const rd = { ...mechRollData(actor),
+    rating: Number(item.system?.rating) || 0, rating2: Number(item.system?.rating2) || 0 };
   const first = entries[0];
   // {uuid, rating} — не голый uuid: «Аура Жизни» выдаёт Regeneration(1), а
   // шаблон в паке хранит Regeneration(3) — без рейтинга запись auras.mjs
@@ -2825,10 +2830,14 @@ export async function syncAuraFlag(item) {
     affects: first.auraAffects === "enemies" || first.auraAffects === "all" ? first.auraAffects : "allies",
     includesSelf: !!first.auraIncludesSelf,
     immuneTraitNames: String(first.auraImmuneTraits || "").split(",").map(s => s.trim()).filter(Boolean),
-    grant: entries.filter(e => e.sourceUuid).map(e => ({
-      uuid: e.sourceUuid,
-      rating: (e.rating !== "" && e.rating != null) ? mechFormulaTotalSafe(e.rating, rd) : null
-    }))
+    grant: entries.filter(e => e.sourceUuid).map(e => {
+      const rating = (e.rating !== "" && e.rating != null) ? mechFormulaTotalSafe(e.rating, rd) : null;
+      // Ступень «Демонического Ужаса» выбирается по рейтингу (rules/daemonic-dread.mjs);
+      // любой другой источник или запись без рейтинга — как есть.
+      // Рейтинг при этом не передаётся: ступень уже выбрана, а клону-Ужасу
+      // (hasRating:false) «рейтинг X» приписывать не нужно.
+      return { uuid: dreadUuidForRating(e.sourceUuid, rating), rating: isDreadUuid(e.sourceUuid) ? null : rating };
+    })
   };
   const same = cur && cur.managed === want.managed && cur.radius === want.radius && cur.affects === want.affects
     && cur.includesSelf === want.includesSelf
