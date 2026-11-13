@@ -102,7 +102,9 @@ export function hatredRules(actor, ctx = {}) {
     {
       id: "hatred.meleeBonus", label: "Ненависть: рукопашная атака по Ненавистной цели",
       when: {},
-      effects: [{ kind: "rollBonus", target: "weapon:melee", value: 10 }]
+      // auto: гейт («цель Ненавистная») уже пройден выше, спрашивать игрока нечего —
+      // бонус учитывается в Пороге сам (решение владельца 13.11.2026).
+      effects: [{ kind: "rollBonus", target: "weapon:melee", value: 10, auto: true }]
     },
     {
       id: "hatred.socialReroll", label: "Ненависть: встречный социальный тест против Ненавистной цели",
