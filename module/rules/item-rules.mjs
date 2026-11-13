@@ -504,7 +504,9 @@ function ruleFromEntry(item, entry, groupId = null) {
     const cost = entry.capabilityCostPool
       ? { pool: entry.capabilityCostPool, amount: Math.max(1, Number(entry.capabilityCostAmount) || 1) }
       : null;
-    if (!unit && !cost) return null;
+    // scriptOnPanel — явная отметка «показывать на панели» для способности без
+    // цены и без частоты (Перевертыш: ОД списывает сам скрипт, wdbc-tkeh1).
+    if (!unit && !cost && !entry.scriptOnPanel) return null;
     return { id, label: entry.label || item.name, when: {},
              effects: [{ kind: "scriptAbility", itemId: item.id, groupId, entryId: entry.id }] };
   }

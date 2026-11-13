@@ -255,7 +255,8 @@ export function reaperMeasure({ charge, halfMove, walked, initialToNext, attacke
  * @returns {{noAp:boolean, uncounted:boolean, skipChargeGate:boolean}}
  */
 export function freeMeleeFlags(opts) {
-  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault || opts?.kneeStrike || opts?.executionFollow || opts?.cleave);
+  const free = !!(opts?.tenacityRepeat || opts?.showOffFree || opts?.reaperFollow || opts?.furiousAssault || opts?.kneeStrike || opts?.executionFollow || opts?.cleave
+    || opts?.riposte); // Рипост — «не тратит реакций или действий» (книга)
   return { noAp: free, uncounted: free, skipChargeGate: free };
 }
 

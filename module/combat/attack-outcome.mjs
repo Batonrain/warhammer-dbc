@@ -201,7 +201,10 @@ export function attackPenetration({ base, wp, hit, deg, shortRange = false, maxi
  * Проверенное (минимум на кубе).
  */
 export function damageFormulaFor({ damage, flatBonus = 0, chars = {}, corruptionBonus = 0, wp, isMelee = false }) {
-  const rawDmg  = String(damage || "").replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
+  // «1d5+X» (Укус): тип без пробела после «+» — отбрасываем вместе с плюсом.
+  const rawDmg  = String(damage || "")
+    .replace(/\s*\+\s*[REIXРЕИ]\s*$/i, "")
+    .replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
   const baseDmg = rawDmg || (isMelee ? "" : "1d10");
 
   const formula = flatBonus !== 0
