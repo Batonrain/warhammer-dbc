@@ -10,6 +10,112 @@
         {
           "id": "eldarReq304",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "characteristic",
+          "charKey": "ws",
+          "value": 50
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "characteristic",
+          "charKey": "s",
+          "value": 40
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "characteristic",
+          "charKey": "t",
+          "value": 40
+        },
+        {
+          "id": "dbc14r04",
+          "kind": "characteristic",
+          "charKey": "ag",
+          "value": 40
+        },
+        {
+          "id": "dbc14r05",
+          "kind": "characteristic",
+          "charKey": "fel",
+          "value": 35
+        },
+        {
+          "id": "dbc14r06",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "athletics",
+          "rank": "trained",
+          "count": 1,
+          "label": "Атлетика"
+        },
+        {
+          "id": "dbc14r07",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "acrobatics",
+          "rank": "trained",
+          "count": 1,
+          "label": "Акробатика"
+        },
+        {
+          "id": "dbc14r08",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "dodge",
+          "rank": "trained",
+          "count": 1,
+          "label": "Уклонение"
+        },
+        {
+          "id": "dbc14r09",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "parry",
+          "rank": "trained",
+          "count": 1,
+          "label": "Парирование"
+        },
+        {
+          "id": "dbc14r10",
+          "kind": "talent",
+          "name": "Die Hard / Крепкий Орешек",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.PCBBjPSdgOqewLCR",
+          "count": 1
+        },
+        {
+          "id": "dbc14r11",
+          "kind": "talent",
+          "name": "Everything a Weapon / Всё – Оружие",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.pNgPyrpb4Moi6jzd",
+          "count": 1
+        },
+        {
+          "id": "dbc14r12",
+          "kind": "talent",
+          "name": "Iron Jaw / Стальная Челюсть",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.MwsgkXBIE7WyHWlH",
+          "count": 1
+        },
+        {
+          "id": "dbc14r13",
+          "kind": "talent",
+          "name": "Sure Strike / Верный Удар",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.XNb5thmTPU4e8Cd5",
+          "count": 1
+        },
+        {
+          "id": "dbc14r14",
+          "kind": "talent",
+          "name": "Precise Blow / Выверенный Удар",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.hgr4BacJ2x2F3Nwq",
+          "count": 1
         }
       ],
       "secondary": []

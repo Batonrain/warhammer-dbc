@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
   "folder": "uJE8Awg6L5kJ6U24",
   "system": {
-    "description": "Снаряд орудия «Ускорительная Пушка» (Accelerator Cannon). Dmg, Pen и Rng снаряда ЗАМЕНЯЮТ профиль орудия, а не складываются с ним.",
+    "description": "Снаряд орудия «Спаренная Ускорительная Пушка» (Twin Accelerator Cannon). Dmg, Pen и Rng снаряда ЗАМЕНЯЮТ профиль орудия, а не складываются с ним.",
     "notes": "",
     "weaponTypes": [
       "any"
@@ -25,7 +25,7 @@
     "damageOverride": "2d10+11",
     "penetrationOverride": 8,
     "rangeOverride": 0,
-    "weaponTag": "Accelerator Cannon",
+    "weaponTag": "Twin Accelerator Cannon",
     "special": "",
     "properties": [
       {

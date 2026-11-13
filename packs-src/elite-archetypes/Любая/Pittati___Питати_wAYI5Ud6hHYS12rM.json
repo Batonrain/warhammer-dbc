@@ -10,6 +10,50 @@
         {
           "id": "eldarReq309",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "characteristic",
+          "charKey": "bs",
+          "value": 45
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 45
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "trait",
+          "key": "",
+          "name": "Psyker / Псайкер",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
+        },
+        {
+          "id": "dbc14r04",
+          "kind": "psyRating",
+          "value": 4
+        },
+        {
+          "id": "dbc14r05",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Оккультизм",
+          "rank": "trained",
+          "count": 1,
+          "label": "Ученые знания"
+        },
+        {
+          "id": "dbc14r06",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "trade",
+          "specKey": "Резчик",
+          "rank": "knows",
+          "count": 1,
+          "label": "Ремесло"
         }
       ],
       "secondary": []

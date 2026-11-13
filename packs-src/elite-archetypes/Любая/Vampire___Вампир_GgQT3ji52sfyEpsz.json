@@ -10,6 +10,11 @@
         {
           "id": "eldarReq312",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "patron",
+          "key": "slaanesh"
         }
       ],
       "secondary": []

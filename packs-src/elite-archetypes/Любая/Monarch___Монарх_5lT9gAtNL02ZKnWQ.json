@@ -10,6 +10,46 @@
         {
           "id": "eldarReq307",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "characteristic",
+          "charKey": "int",
+          "value": 50
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 50
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "techUse",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Технология"
+        },
+        {
+          "id": "dbc14r04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Псайкеры",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc14r05",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "medicae",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Медицина"
         }
       ],
       "secondary": []

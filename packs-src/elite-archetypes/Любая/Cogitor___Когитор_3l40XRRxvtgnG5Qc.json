@@ -10,6 +10,30 @@
         {
           "id": "eldarReq315",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "patron",
+          "key": "tzeentch"
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "characteristic",
+          "charKey": "int",
+          "value": 50
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "other",
+          "text": "Ученые и/или Запретные знания — любые 3 специализации суммарно, на уровне Тренированное"
+        },
+        {
+          "id": "dbc14r04",
+          "kind": "talent",
+          "name": "Workaholic / Трудоголик",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.6NQog8TKkPoLgq2w",
+          "count": 1
         }
       ],
       "secondary": []

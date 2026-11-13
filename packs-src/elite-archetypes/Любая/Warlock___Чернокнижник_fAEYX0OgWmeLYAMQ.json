@@ -10,6 +10,31 @@
         {
           "id": "eldarReq313",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "corruption",
+          "value": 20
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Псайкеры",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Оккультизм",
+          "rank": "veteran",
+          "count": 1,
+          "label": "Ученые знания"
         }
       ],
       "secondary": []
