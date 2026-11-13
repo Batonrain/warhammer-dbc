@@ -10,7 +10,9 @@
         {
           "id": "eldarReq304",
           "kind": "notEldar"
-        },
+        }
+      ],
+      "secondary": [
         {
           "id": "dbc14r01",
           "kind": "characteristic",
@@ -117,8 +119,7 @@
           "uuid": "Compendium.warhammer-dbc.talents.Item.hgr4BacJ2x2F3Nwq",
           "count": 1
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Любая",
     "god": "Неделимый",
