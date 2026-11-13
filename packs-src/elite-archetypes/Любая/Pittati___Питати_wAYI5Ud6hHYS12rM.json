@@ -17,11 +17,6 @@
           "key": "",
           "name": "Psyker / Псайкер",
           "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
-        },
-        {
-          "id": "dbc14r04",
-          "kind": "psyRating",
-          "value": 4
         }
       ],
       "secondary": [
@@ -56,6 +51,11 @@
           "rank": "knows",
           "count": 1,
           "label": "Ремесло"
+        },
+        {
+          "id": "dbc14r04",
+          "kind": "psyRating",
+          "value": 4
         }
       ]
     },
