@@ -43,6 +43,21 @@ const hasRof = s => (Number(s?.rof_single) || 0) > 0 || (Number(s?.rof_semi) || 
 /** Бонус режима огня второй стороны к порогу (без модификаций и Импульса — упрощение, см. шапку dialog.mjs). */
 export const FULL_FIRE_ROF_BONUS = Object.freeze({ single: 10, semi: 0, full: -10 });
 
+/**
+ * Бонус режима огня ВТОРОЙ стороны пары (вторая рука «Обе руки», task-f67c): режим из таблицы выше плюс
+ * «Попадание» её собственных модификаций (Целеуказатель, getModEffects(actor, второе оружие)). Рукопашному
+ * ("melee") и незнакомому режиму — 0. Бонус режима огня ОСНОВНОГО оружия сюда не входит.
+ *
+ * @param {string} mode  "single" | "semi" | "full" | "melee"
+ * @param {object} modFx getModEffects(actor, второе оружие) — читаются rofSingle/Semi/FullAttackMod
+ */
+export function secondRofBonus(mode, modFx = {}) {
+  const base = FULL_FIRE_ROF_BONUS[mode];
+  if (base === undefined) return 0;
+  const mod = { single: modFx.rofSingleAttackMod, semi: modFx.rofSemiAttackMod, full: modFx.rofFullAttackMod }[mode];
+  return base + (Number(mod) || 0);
+}
+
 /** Стволы-профили предмета (свой магазин и скорострельность, стрелковые). */
 export function ownBarrels(item) {
   const list = Array.isArray(item?.system?.profiles) ? item.system.profiles : [];

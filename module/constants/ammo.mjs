@@ -10,5 +10,6 @@ export const AMMO_CATEGORIES = {
   arrows:         { label: "Стрелы",                 weaponTypes: ["lowtech"] },
   exotic:         { label: "Экзотические",           weaponTypes: ["exotic"] },
   mechanus:       { label: "Боеприпасы Механикум",   weaponTypes: ["exotic"] },
+  vehicle_shells: { label: "Снаряды орудий техники", weaponTypes: ["any"] },
   splinter_crystals: { label: "Ядокристаллы (осколочное)", weaponTypes: ["splinter"] }
 };

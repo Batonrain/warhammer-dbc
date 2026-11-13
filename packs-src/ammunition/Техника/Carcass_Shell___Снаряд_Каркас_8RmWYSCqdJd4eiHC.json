@@ -1,0 +1,82 @@
+{
+  "name": "Carcass Shell / Снаряд Каркас",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
+  "folder": "uJE8Awg6L5kJ6U24",
+  "system": {
+    "description": "Снаряд орудия «Бомбарда Морбус» (Morbus Bombard). Dmg, Pen и Rng снаряда ЗАМЕНЯЮТ профиль орудия, а не складываются с ним. Toxic этого орудия наносит 2d10 вместо 1d10 урона. Существа, видевшие смерть от этого снаряда, проходят тест против Страха 2 (земной ужас), считая стрелявшую машину источником страха.",
+    "notes": "",
+    "weaponTypes": [
+      "any"
+    ],
+    "ammoCategory": "vehicle_shells",
+    "rarity": 1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageDiceMod": 0,
+    "damageTypeOverride": "chemical",
+    "damageSubtypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "damageOverride": "2d10+2",
+    "penetrationOverride": 2,
+    "rangeOverride": 0,
+    "weaponTag": "Morbus Bombard",
+    "special": "Toxic этого орудия наносит 2d10 вместо 1d10 урона. Существа, видевшие смерть от этого снаряда, проходят тест против Страха 2 (земной ужас), считая стрелявшую машину источником страха.",
+    "properties": [
+      {
+        "key": "blast",
+        "rating": 10
+      },
+      {
+        "key": "corrosive",
+        "rating": 2
+      },
+      {
+        "key": "flush"
+      },
+      {
+        "key": "linger",
+        "rating": "1d5"
+      },
+      {
+        "key": "toxic",
+        "rating": 3,
+        "rating2": "2d10"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
+    "removeProps": [],
+    "condMods": [],
+    "drukhari": false,
+    "bookSource": "DoomBC — Машины («Аркитор», боеприпасы для орудия «Бомбарда Морбус», стр. 50)",
+    "legion": false,
+    "itemSize": ""
+  },
+  "_id": "8RmWYSCqdJd4eiHC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1794583108814,
+    "modifiedTime": 1794583108814,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!8RmWYSCqdJd4eiHC"
+}

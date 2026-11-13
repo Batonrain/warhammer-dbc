@@ -14,7 +14,12 @@
 //  предмета показывает диалог выбора, и применяется только ОДНА запись.
 //
 //  Виды записи (entry.kind):
-//    corruption: { op:"add"|"subtract", corruptionValue }
+//    corruption: { op:"add"|"subtract", corruptionValue,
+//                  corruptionCap?, corruptionIfBelow?, corruptionElse? }
+//      Необязательные поля (rules/corruption-entry.mjs): «не выше N»
+//      (corruptionCap — Одержимый: +3d5, но не выше Cor 90) и «если Порчи
+//      меньше N» (corruptionIfBelow; при Порче ≥ N бросается corruptionElse,
+//      пусто — ничего). Пусто — прежнее поведение.
 //      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.corruption.value (хранимое
 //      состояние, не производное — как .advance/.supernatural у
 //      характеристик, ActiveEffect тут не подходит). corruptionValue —
@@ -441,6 +446,7 @@ import { masteryTargets, masteryTarget, masteryAptitudes, masteryLabel } from ".
 import { statAtLeast, itemsNamed, rankAtLeast } from "../rules/req-atom.mjs";
 import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
+import { planCorruption, capCorruptionGain, corruptionLimitsSuffix } from "../rules/corruption-entry.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
 import { hasSubmutations }                     from "../rules/submutations.mjs";
 import { rollSubmutation, chooseSubmutation }  from "./submutations.mjs";
@@ -727,6 +733,8 @@ const REROLL_SCOPES = [
   ["morale",     "тесты Морали"],
   // Только тест на Подавление (Стальные Нервы, Sahara 3-scope) — уже «Морали».
   ["suppression", "тест на Подавление"],
+  // Только тест Страха (ctx.fearTest) — Пьянящий Рёв Шумового Десантника (Sahara 1-54b9).
+  ["fear",        "тест Страха"],
   ["climbing",   "Карабканье"],
   ["terrain",    "тест Трудного Ландшафта"],
   // Импланты Механикум (сверка Архетипов 28.09.2026): «тесты работы с
@@ -743,6 +751,12 @@ const REROLL_SCOPES = [
   ["psychicMind", "сопротивление психосиле по Воле («на разум»)"],
   ["psychicDirect", "сопротивление психосиле, кроме непрямых (и Выжигание Души)"],
   ["interrogation", "сопротивление допросу"],
+  // Засекание проявления психосилы (Awareness) и распознание психосилы
+  // (Forbidden Lore (Psykers)) — Ведьмоискатель; цель броска игрок отмечает
+  // галочкой в окне теста (ctx.psychicDetect).
+  // Работает ТОЛЬКО для kind:"reroll": галочка окна меняет контекст блока
+  // перебросов, а не расчёта Порога (модификатор с этой областью не сработает).
+  ["psychicDetect", "засекание/распознание психосилы (галочка в окне теста; только переброс)"],
   // Тест «достать снаряжение» (apps/requisition.mjs, ctx.requisition): «+N к
   // Реквизиции» данными, без отдельного Таланта (docs/rules-format.md).
   ["requisition", "Реквизиция («достать снаряжение»)"],
@@ -974,6 +988,8 @@ export function blankMechEntry(kind = "characteristic") {
     group: kind === "group" ? blankMechGroup("AND") : null,
     // corruption (op — общее поле с characteristic)
     corruptionValue: "1",
+    // необязательные: «не выше N», «только если Порча < N», «иначе» (corruption-entry.mjs)
+    corruptionCap: "", corruptionIfBelow: "", corruptionElse: "",
     // wounds (op — общее поле)
     woundsValue: "1",
     // cohesion (op — общее поле)
@@ -1155,7 +1171,7 @@ export function describeMechEntry(entry) {
     case "corruption": {
       if (entry.corruptionValue === "" || entry.corruptionValue == null) return "Порча: (не задано)";
       const sign = OP_SIGN[entry.op] ?? "+";
-      return `Порча: ${sign}${entry.corruptionValue}`;
+      return `Порча: ${sign}${entry.corruptionValue}${corruptionLimitsSuffix(entry)}`;
     }
     case "wounds": {
       if (entry.woundsValue === "" || entry.woundsValue == null) return "Раны: (не задано)";
@@ -2077,6 +2093,18 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     entry = resolved[0];
   }
 
+  // Талант с целями «на выбор» (Peer/Hatred/Good Reputation: Придворный, Отступник,
+  // Предсказание — dbc-152): игрок выбирает targetChoiceCount целей до выдачи,
+  // они ложатся в system.targets (читатели rules/hatred.mjs, social-talents.mjs).
+  if (entry.kind === "talent" && Number(entry.targetChoiceCount) > 0 && !entry.targets?.length) {
+    const { promptTargetChoices, targetChoiceLabel } = await import("./target-choice.mjs");
+    const src = await resolveMechSource(entry);
+    const title = String(src?.name || entry.sourceName || "Талант").split("/").pop().trim();
+    const picked = await promptTargetChoices(title, Number(entry.targetChoiceCount), "Выберите, к кому относится Талант");
+    if (!picked) return;
+    entry = { ...entry, targets: picked, specialization: picked.map(targetChoiceLabel).join(", ") };
+  }
+
   // Талант «любые N» (rules/talent-spec-choice.mjs) — выбор специализаций до
   // выдачи, тем же диалогом/коллектором Мастера, что у Навыков.
   if (entry.kind === "talent" && anySpecCount(entry.specialization) != null) {
@@ -2086,7 +2114,11 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   }
 
   if (entry.kind === "corruption") {
-    const formula = String(entry.corruptionValue || "0").trim();
+    const cur = Number(actor.system.corruption?.value) || 0;
+    // «Если Порчи меньше N» (corruptionIfBelow): при Порче ≥ N бросается
+    // «иначе» (пусто — запись ничего не даёт); без условия — основная формула.
+    const { formula, branch } = planCorruption(entry, cur);
+    if (!formula) return;
     let total = 0, roll = null;
     try {
       roll = await new Roll(formula).evaluate();
@@ -2094,8 +2126,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     } catch (e) {
       total = Number(formula) || 0;
     }
-    const signed = entry.op === "subtract" ? -total : total;
-    const cur = Number(actor.system.corruption?.value) || 0;
+    const rolled = entry.op === "subtract" ? -total : total;
+    // «Не выше N» (corruptionCap): прибавка урезается до предела.
+    const signed = capCorruptionGain(entry, cur, rolled);
     await actor.update({ "system.corruption.value": Math.max(0, cur + signed) });
     // {pool, amount} — тот же формат, что раньше писали скрипт-шаблоны «± Очки
     // пула»: общий откат в Hooks.on("deleteItem", ...) читает его сам, без
@@ -2103,9 +2136,10 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     await sourceItem.setFlag(FLAG, "poolApplied", { pool: "corruption", amount: signed });
     // Бросок XdY — в чат, для прозрачности (флэт-число просто применяется тихо).
     if (roll && /d\s*\d/i.test(formula)) {
+      const note = signed !== rolled ? ` (выпало ${rolled >= 0 ? "+" : ""}${rolled}, предел Cor ${Number(entry.corruptionCap)})` : "";
       await roll.toMessage({
         speaker: ChatMessage.getSpeaker({ actor }),
-        flavor: `${sourceItem.name}: Порча ${signed >= 0 ? "+" : ""}${signed}`
+        flavor: `${sourceItem.name}: Порча ${signed >= 0 ? "+" : ""}${signed}${note}${branch === "else" ? " (Порча уже не меньше порога)" : ""}`
       });
     }
     return;
@@ -2293,6 +2327,7 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     delete data._id;
     const qty = Math.max(1, parseInt(entry.equipQty) || 1);
     if ("quantity" in (data.system || {})) data.system.quantity = qty;
+    if (data.type === "disease") data.system.active = true;
     // «Narthecium (Good.Q)» — качество часть выдачи, а не украшение: от него
     // зависят и Надёжность, и модификаторы. Ставим только там, где поле есть.
     if (entry.equipQuality && entry.equipQuality !== "common"
@@ -2335,7 +2370,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // необязательно: пустое значение означает «любой тип».
     const amount = (entry.loyaltyOp === "subtract" ? -1 : 1) * (Number(entry.loyaltyValue) || 0);
     const targets = minionsOf(actor, [...(game.actors ?? [])])
-      .filter(m => !entry.loyaltyMinionType || m.system.minionType === entry.loyaltyMinionType);
+      .filter(m => !entry.loyaltyMinionType || m.system.minionType === entry.loyaltyMinionType)
+      .filter(m => !m.getFlag?.(FLAG, "rubricGolem"));
     for (const minion of targets) {
       await minion.update({ "system.loyalty.value": loyaltyAfterChange(minion, amount) });
     }
@@ -2861,6 +2897,7 @@ export async function syncGrantedEquipment(sourceItem) {
     delete data._id;
     const qty = Math.max(1, parseInt(e.equipQty) || 1);
     if ("quantity" in (data.system || {})) data.system.quantity = qty;
+    if (data.type === "disease") data.system.active = true;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id, equipEntryId: e.id } };
     toCreate.push(data);
   }
@@ -3631,7 +3668,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "corruption") {
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-corruption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
-      <input type="text" class="mech-corruption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionValue ?? "")}" placeholder="напр. 5 или 2d10" ${dis}/>`;
+      <input type="text" class="mech-corruption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionValue ?? "")}" placeholder="напр. 5 или 2d10" ${dis}/>
+      <input type="text" class="mech-corruption-cap" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionCap ?? "")}" placeholder="не выше Cor" title="Предел: итоговая Порча не поднимется выше этого числа (Одержимый: 90). Пусто — без предела." ${dis}/>
+      <input type="text" class="mech-corruption-below" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionIfBelow ?? "")}" placeholder="если Порча &lt;" title="Условие: основная формула бросается, только если текущая Порча меньше этого числа. Пусто — всегда." ${dis}/>
+      <input type="text" class="mech-corruption-else" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.corruptionElse ?? "")}" placeholder="иначе (напр. 1d5)" title="Что получить, если Порча уже не меньше порога. Пусто — ничего." ${dis}/>`;
   }
 
   if (ent.kind === "wounds") {

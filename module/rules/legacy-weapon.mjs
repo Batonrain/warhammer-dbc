@@ -21,6 +21,7 @@ import { itemHasName, hatredTargetsOf } from "./predicates.mjs";
 import { anyTargetMatches } from "./talent-targets.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "./cooldown.mjs";
+import { baseIsCharge } from "./melee-base.mjs";
 
 // ВОССТАНОВЛЕНО 21.09.2026 после потери незакоммиченных правок (параллельная
 // сессия влила origin/main в эту же рабочую копию и откатила отслеживаемые
@@ -296,7 +297,7 @@ export function bloodLegacyDamageBonus({ weapon, hit }) {
  */
 export function bloodthirstyLegacyMeleeActive(actor, weapon) {
   if (weapon?.system?.weaponClass !== "melee") return false;
-  return actor?.system?.meleeBase === "charge" && takenMutationNames(weapon).has("Кровожадное");
+  return baseIsCharge(actor?.system?.meleeBase) && takenMutationNames(weapon).has("Кровожадное");
 }
 
 /**
@@ -1224,6 +1225,6 @@ export async function consumePatienceLegacyOverwatchPending(actor) {
 export function patienceLegacyMeleeChargeInterruptActive({ actor, weapon, defenderActor }) {
   if (!actor || !weapon || !defenderActor) return false;
   if (!takenMutationNames(weapon).has("Терпение")) return false;
-  if (defenderActor.system?.meleeBase !== "charge") return false;
+  if (!baseIsCharge(defenderActor.system?.meleeBase)) return false;
   return (Number(actor.system?.actionPoints?.value) || 0) === 1;
 }

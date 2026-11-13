@@ -994,7 +994,8 @@
               "label": "",
               "code": "",
               "id": "2H0ZfOy5t5v",
-              "kind": "talent"
+              "kind": "talent",
+              "targetChoiceCount": 2
             },
             {
               "corruptionValue": "1",
@@ -1029,7 +1030,8 @@
               "label": "",
               "code": "",
               "id": "2H0ZfOy5t5w",
-              "kind": "talent"
+              "kind": "talent",
+              "targetChoiceCount": 2
             },
             {
               "corruptionValue": "1",

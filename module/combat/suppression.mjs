@@ -87,8 +87,10 @@ function actorInCoverNow(actor) {
  * safeOverride (стр. 33, wdbc-x1nz.2.62) — ГМ отметил галочку «Заведомо
  * безопасно» на карточке атаки: тест проходит автоматически, без броска.
  * radiantPresence/intoTheJawsOfHell (Sahara 3-ac78, 19.10.2026) — галочки
- * на карточке атаки (combat/attack-card.mjs), решение стола — код только
- * переносит их в бросок, не вычисляет сам.
+ * на карточке атаки (combat/attack-card.mjs): «В Самое Пекло» — решение стола,
+ * Блистательное Присутствие (wdbc-051qb) ставится по видимости токена цели
+ * (hooks.mjs → combat/radiant-presence.mjs), или руками; сюда приходит уже
+ * готовое значение.
  */
 export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", sourceActor = null, safeOverride = false,
                                                      radiantPresence = false, intoTheJawsOfHell = false } = {}) {

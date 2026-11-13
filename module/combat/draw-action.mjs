@@ -38,6 +38,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { hasSpeedTalent } from "../rules/speed-talents.mjs";
+import { spendExpendable } from "./spend-expendable.mjs";
 
 /**
  * Общее ядро «граната взрывается прямо на/у стрелка»: один бросок урона,
@@ -109,9 +110,7 @@ async function resolveGrenadeSelfDamage(actor, item, { title, warnLine, sound = 
     ]
   }, { rolls, sound });
 
-  const qty = Number(item.system?.quantity) || 1;
-  if (qty > 1) await item.update({ "system.quantity": qty - 1 });
-  else await item.delete();
+  await spendExpendable(item);
 }
 
 /**

@@ -51,9 +51,12 @@ export const PATH_LIMIT_ACTOR_TYPES = Object.freeze(["character", "daemon", "dem
  * клавиши; всё прочее (api — скрипты и сдвиги, которые делает сама система
  * через displaceToken; hud, undo, paste, config) лимитом не стопорится.
  * ВАЖНО: толчок Роундхауса, перевозка и т.п. руками стола — это обычное
- * перетаскивание (method «dragging»), система его не отличит; ГМ не
- * блокируется и бюджета не ест (walkedMeters с isGMUser), а игроку на такой
- * сдвиг нужно выбрать в HUD действие «Телепорт» (blink) либо ГМ снимает лимит.
+ * перетаскивание (method «dragging»), система само по себе его не отличит. ГМ
+ * не блокируется и бюджета не ест (walkedMeters с isGMUser); игрок перед таким
+ * сдвигом включает в меню Движения тумблер «Следующий сдвиг — вынужденный»
+ * (combat/forced-next-move.mjs): хук пометит ровно один следующий сдвиг
+ * принудительным (isForcedMove) и сгорит. Запасные пути — действие «Телепорт»
+ * (blink) в HUD токена либо снятие лимита ГМ-ом.
  */
 export const PATH_LIMITED_METHODS = Object.freeze(["dragging", "keyboard"]);
 
@@ -70,7 +73,11 @@ export const PATH_LIMITED_METHODS = Object.freeze(["dragging", "keyboard"]);
 //  2. флаг в опциях апдейта `{ whDBC: { forcedMove: true } }` — его видит хук
 //     preMoveToken (3-й аргумент) и moveToken (operation) на клиенте инициатора:
 //     лимит пути такой сдвиг не блокирует и не метит «подвигался».
-// Двигать токен системе — только через displaceToken.
+// Двигать токен системе — только через displaceToken. Ручное перетаскивание
+// стола (толчок, перевозка) так пометить нельзя, пока игрок сам не включил
+// тумблер «следующий сдвиг — вынужденный» (combat/forced-next-move.mjs): тогда
+// preMoveToken дописывает тот же флаг в опции апдейта на лету, а movementId
+// сдвига запоминается, чтобы его отрезки не считались в путь следующих шагов.
 
 /** Ключ опций апдейта, под которым система кладёт свои пометки о перемещении. */
 export const MOVE_OPTION_KEY = "whDBC";
@@ -210,6 +217,10 @@ const samePoint = (a, b) => Math.abs((a?.x ?? 0) - (b?.x ?? 0)) < 0.5 && Math.ab
  * всё подряд, а лимиту нужно только то, что игрок прошёл ногами:
  *  - отрезки, сделанные ГМ-ом (`isGMUser(userId)`), не едят бюджет игрока;
  *  - телепорт (blink/displace) — не путь;
+ *  - сдвиги, помеченные игроком вынужденными (тумблер «следующий сдвиг —
+ *    вынужденный», combat/forced-next-move.mjs): их movementId передаётся в
+ *    skipMovementIds — у ручного перетаскивания action обычная ходьба, по
+ *    записи в истории толчок от шага не отличить;
  *  - чистое изменение высоты на месте (Смена Высоты Летуна, HUD) — не путь
  *    по земле: ядро считает расстояние в 3D, и подъём на 10 м иначе съел бы
  *    10 м бюджета;
@@ -221,8 +232,9 @@ const samePoint = (a, b) => Math.abs((a?.x ?? 0) - (b?.x ?? 0)) < 0.5 && Math.ab
  *   (иначе первая точка списка — она сама отрезка не даёт)
  * @param {Function} [o.isGMUser]  userId → true для ГМ-а; не задан — не фильтруем
  * @param {object} [o.actions]     CONFIG.Token.movement.actions (teleport, costMultiplier)
+ * @param {Set<string>} [o.skipMovementIds]  movementId отрезков, которые не считаются (вынужденные сдвиги)
  */
-export function walkedMeters(waypoints, { start = null, isGMUser = null, actions = {} } = {}) {
+export function walkedMeters(waypoints, { start = null, isGMUser = null, actions = {}, skipMovementIds = null } = {}) {
   const list = Array.isArray(waypoints) ? waypoints : [];
   let prev = start ?? list[0] ?? null;
   let sum = 0;
@@ -232,6 +244,7 @@ export function walkedMeters(waypoints, { start = null, isGMUser = null, actions
     prev = w;
     const cfg = actions?.[w?.action] ?? {};
     if (cfg.teleport) continue;
+    if (skipMovementIds?.size && w?.movementId && skipMovementIds.has(w.movementId)) continue;
     if (isGMUser && w?.userId && isGMUser(w.userId)) continue;
     if (before && samePoint(before, w)) continue;
     const cost = Number(w?.cost);

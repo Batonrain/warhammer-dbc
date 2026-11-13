@@ -234,6 +234,15 @@ describe("baseHandsFromTraits / maxHands", () => {
     expect(baseHandsFromTraits(a)).toBe(4);
     expect(maxHands(a)).toBe(4);
   });
+  it("system.extraHands (временный эффект) прибавляется к числу рук", () => {
+    const a = actor([]);
+    a.system.extraHands = 2;
+    expect(baseHandsFromTraits(a)).toBe(4);
+    expect(maxHands(a)).toBe(4);
+    const b = actor([trait("Multiple Arms (4) / Множество Рук (4)", 4)]);
+    b.system.extraHands = 2;
+    expect(maxHands(b)).toBe(6);
+  });
   it("lostHandsCount/lostArmsCount срезают бюджет", () => {
     const a = actor([], { lostHandsCount: 1 });
     expect(maxHands(a)).toBe(1);

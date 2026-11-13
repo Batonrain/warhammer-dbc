@@ -26,10 +26,13 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
 import { infernalWillReduction, infernalWillShockTotal } from "../rules/infernal-will.mjs";
+import { failUndoOf, failUndoLabels, FAIL_UNDO_SETTLED_FLAG } from "../rules/fail-undo.mjs";
+import { cardOnceUsed, markCardOnce } from "./card-once.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }            from "../constants/skills.mjs";
 import { fearIgnore, FEAR_IGNORE_LABELS }          from "../rules/fear-ignore.mjs";
 import { moraleAutoPass }                          from "../rules/morale-auto.mjs";
 import { JADED_CAP }                               from "../rules/courage-talents.mjs";
+import { INFERNAL_FAMILIARITY_CAP }                from "../rules/defiance-talents.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -77,6 +80,8 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   //    или меньшего рейтинга игнорируются». Сравнивается настоящий рейтинг,
   //    не пониженный Стальным Сердцем; переброс Демона (opts.free) — тот же
   //    тест, не новая встреча;
+  //  • Инфернальное Знакомство (Талант, 3-defiance): против демона рейтинг на 1
+  //    меньше (rules/fear-ignore.mjs), на 0 — автоуспех;
   //  • автоуспех Важного по Infamy или своему Страху (стр. 53) — ниже, в autoPass.
   // properties.unignorable — «не может игнорировать этот Страх» (Затронутый
   // Варпом, субмутация 1, wdbc-1rno.26; ставит диалог sheets/tabs/
@@ -84,10 +89,13 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // бесплатный переброс Демона (hooks.mjs, ctx.properties) получил его сам.
   const important = type === "important";
   const faced = Number(actor.getFlag?.("warhammer-dbc", FEAR_FACED_FLAG)) || 0;
+  const infernalFamiliar = !!properties.demon && hasTalentCapability(actor, INFERNAL_FAMILIARITY_CAP);
   const ignore = fearIgnore({
     rating: ratingKey, important, infamy, faced,
     ownFear: Number(actor.system.fearRating) || 0,
     steelHeart: hasRuleFlag(actor, "mutation.heartOfSteel"),
+    // Инфернальное Знакомство: «всех демонов» — источник отмечен галочкой «Демон».
+    infernal: infernalFamiliar,
     free: !!opts.free, unignorable: !!properties.unignorable
   });
   const r  = FEAR_RATINGS[ignore.rating] || FEAR_RATINGS[1];
@@ -155,6 +163,10 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const autoParts = [];
   if (moraleAuto && moraleAuto.by !== "rage") autoParts.push(moraleAuto.label);
   if (jadedAuto) autoParts.push("Пресыщенный: земной ужас — автоуспех");
+  // Видимая причина сниженного рейтинга: иначе игрок видит «Страх 1» у демона Страха 2.
+  if (infernalFamiliar && !properties.unignorable) {
+    autoParts.push(`Инфернальное Знакомство: демон — Страх ${Number(ratingKey)} → ${Math.max(0, ignore.rating)}${ignore.autoPass && ignore.rating <= 0 ? ", тест не нужен" : ""}`);
+  }
   // Видимая причина: игрок с Infamy 60 иначе не поймёт, почему автоуспеха нет.
   const ignoreNote = ignore.cancelled.length
     ? `<div class="roll-threshold">Этот Страх нельзя игнорировать — не действуют: ${ignore.cancelled.map(k => FEAR_IGNORE_LABELS[k]).join(", ")}.</div>`
@@ -222,7 +234,8 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const faithCtx = faithLabel ? { actorId: actor.id, actorUuid: actor.uuid, label: faithLabel } : null;
   // Что отменить, если провал потом станет успехом (переброс Демона, «Вера
   // в прошлое»): наложенный Шок и потерянное Командование.
-  const failUndo = (shockUndo || moraleUndo) ? { shock: shockUndo, morale: moraleUndo } : null;
+  const failUndo = (shockUndo || moraleUndo || outcome.failUndo)
+    ? { shock: shockUndo, morale: moraleUndo, ...(outcome.failUndo ?? {}) } : null;
 
   const canReroll = !!properties.demon && !success && !opts.free;
   await _postFearMsg(actor, "Тест Страха", r.label, wp, ratingMod + mod, rv, eff, success, dof, shockHtml, allRolls, {
@@ -359,16 +372,26 @@ export async function applyShockRow(actor, row) {
  * владельца 02.10.2026: Infamy не вычитается; вместо неё — снижение на Cor
  * (rules/infernal-will.mjs::infernalWillReduction), автоматическое; строки
  * про «источник Страха» применяются как есть, источник — предмет
- * проваленного теста. Отката нет: `undo` от applyShockRow не сохраняется, и
- * провал, засчитанный успехом уже после карточки (Очко Бесчестия → Успех,
- * Хирургия Легиона) или переброшенный за Очко, Шок не снимает — пробел записан
- * в label mutation.infernalWill (constants/capabilities.mjs).
+ * проваленного теста. Откат (task-e30b): `undo` от applyShockRow уходит в
+ * outcome.failUndo (rules/kind-outcome.mjs) → флаг карточки → снимается, если
+ * провал позже засчитан успехом (revertCardFailure). Состояния, уже висевшие до этого
+ * броска (Шок после Страха и т.п.), откат не снимает. Не покрыто: переброс, который
+ * провалился снова, нового Шока не бросает (переброс идёт мимо общего исхода) —
+ * оба пробела записаны в label mutation.infernalWill (constants/capabilities.mjs).
  *
  * @param {Actor} actor
  * @param {{deg:number, ctx?:{skill?:string, group?:string, specialty?:string}}} info
  * @returns {Promise<string>} html для карточки теста
  */
-export async function rollInfernalWillShock(actor, { deg, ctx = {} } = {}) {
+export async function rollInfernalWillShock(actor, info = {}) {
+  return (await rollInfernalWillShockDetailed(actor, info)).html;
+}
+
+/**
+ * То же, что rollInfernalWillShock, но вместе с откатом наложенной строки Шока.
+ * @returns {Promise<{html:string, undo:?object}>}
+ */
+export async function rollInfernalWillShockDetailed(actor, { deg, ctx = {} } = {}) {
   const reduction = infernalWillReduction(actor, ctx);
   const sRoll = await new Roll("1d100").evaluate();
   const total = infernalWillShockTotal(sRoll.total, deg, reduction.value);
@@ -379,8 +402,8 @@ export async function rollInfernalWillShock(actor, { deg, ctx = {} } = {}) {
   // почему Cor не помог.
   const why = `<div class="roll-threshold">${esc(reduction.label)}</div>`;
   if (total <= 0) {
-    return `<div class="roll-damage-section">${head}${why}
-      <div class="roll-outcome"><span class="roll-success">${rollIcon("shield","#4dffa6")}Шок предотвращён (Cor)</span></div></div>`;
+    return { html: `<div class="roll-damage-section">${head}${why}
+      <div class="roll-outcome"><span class="roll-success">${rollIcon("shield","#4dffa6")}Шок предотвращён (Cor)</span></div></div>`, undo: null };
   }
   const row = lookupTable(SHOCK_TABLE, total);
   // Q-6: «источник Страха» строк 41–60/81–100 — то, на чём персонаж провалил тест.
@@ -388,10 +411,18 @@ export async function rollInfernalWillShock(actor, { deg, ctx = {} } = {}) {
   const skillLabel = skillDef ? `${skillDef.label}${ctx.specialty ? `: ${ctx.specialty}` : ""}` : "";
   const sourceNote = /источник/i.test(row?.text ?? "")
     ? `<div class="roll-threshold">Источник Страха — предмет проваленного теста${skillLabel ? ` (${esc(skillLabel)})` : ""}.</div>` : "";
+  // Что уже висело до этого броска, откат не трогает: персонаж, бывший в Шоке после Страха, не должен
+  // потерять его вместе с новым, когда провал засчитают успехом (applyShockRow кладёт в undo всё наложенное).
+  const before = Object.fromEntries(["shocked", "unconscious", "helpless"].map(k => [k, !!actor.system?.conditions?.[k]]));
   const applied = await applyShockRow(actor, row);
-  return `<div class="roll-damage-section">${head}${why}
+  const undo = applied.undo
+    ? { ...applied.undo, conditions: (applied.undo.conditions ?? []).filter(k => !before[k]) } : null;
+  return {
+    html: `<div class="roll-damage-section">${head}${why}
     <div class="roll-threshold">${row?.text ?? "—"}</div>${sourceNote}
-    ${row?.text ? deathButtonHtml(row.text, actor.uuid) : ""}</div>${applied.html}`;
+    ${row?.text ? deathButtonHtml(row.text, actor.uuid) : ""}</div>${applied.html}`,
+    undo
+  };
 }
 
 /**
@@ -401,10 +432,41 @@ export async function rollInfernalWillShock(actor, { deg, ctx = {} } = {}) {
 export async function revertFearFailure(actor, failUndo) {
   if (!failUndo) return;
   await revertShock(actor, failUndo.shock);
+  // Последствия общего исхода любого теста (task-e30b): Шок Инфернальной Воли и Ступор Гипно-Шрамов.
+  await revertShock(actor, failUndo.infernalWillShock);
+  await revertShock(actor, failUndo.hypno);
   if (failUndo.morale) {
     const { revertMoraleFailure } = await import("./command-state.mjs");
     await revertMoraleFailure(failUndo.morale);
   }
+}
+
+/**
+ * Провал теста, брошенного с карточки `message`, засчитан успехом (переброс за Очко, «+10», «Провал → Очко
+ * Бесчестия → Успех», Хирургия Легиона, Мастерство) — снять то, что этот провал уже наложил (task-e30b).
+ * Откат лежит во флаге карточки (rules/fail-undo.mjs). Раз на карточку: снят — помечена, второй вызов ничего
+ * не делает (иначе устаревший откат снял бы новый Шок от другого события).
+ * @param {ChatMessage} message
+ * @param {{keep?:boolean}} [opts]  keep — откат не выполнять, а лишь пометить карточку (переброс провалился снова
+ *   и откат ушёл на новую карточку)
+ * @returns {Promise<string[]>} подписи снятых последствий (пусто — откатывать было нечего)
+ */
+export async function revertCardFailure(message, { keep = false } = {}) {
+  const failUndo = failUndoOf(message);
+  if (!failUndo || cardOnceUsed(message, FAIL_UNDO_SETTLED_FLAG)) return [];
+  await markCardOnce(message, FAIL_UNDO_SETTLED_FLAG);
+  if (keep) return [];
+  const actor = failUndo.actorUuid ? await fromUuid(failUndo.actorUuid).catch(() => null) : null;
+  if (!actor) return [];
+  try { await revertFearFailure(actor, failUndo); }
+  catch (e) { console.error("Warhammer DBC | не удалось снять последствия провала:", e); return []; }
+  return failUndoLabels(failUndo);
+}
+
+/** Строка карточки о снятых последствиях ("" — ничего не снято). */
+export function failUndoLineHtml(labels) {
+  return labels?.length
+    ? `<div class="roll-threshold">↩ Провал засчитан успехом — сняты последствия: <b>${labels.map(esc).join(", ")}</b></div>` : "";
 }
 
 /**
@@ -430,7 +492,7 @@ export async function revertShock(actor, undo) {
     if (undo.prevScene) patch[`flags.warhammer-dbc.${SHOCK_SCENE_FLAG}`] = undo.prevScene;
     else patch[`flags.warhammer-dbc.-=${SHOCK_SCENE_FLAG}`] = null;
   }
-  for (const key of ["unconscious", "helpless"]) {
+  for (const key of ["unconscious", "helpless", "dazed"]) {
     if (!undo.conditions?.includes(key)) continue;
     await clearConditionDuration(actor, key);
     Object.assign(patch, conditionRemoveFields(key));

@@ -12,7 +12,7 @@ const WEAPON_CLASS_ICON = {
 };
 const AMMO_CAT_ICON = {
   batteries: "ammo-battery", bolts: "ammo-bolt",
-  shotgun_shells: "ammo-shell", auto_shells: "ammo-shell",
+  shotgun_shells: "ammo-shell", auto_shells: "ammo-shell", vehicle_shells: "ammo-shell",
   plasma_fuel: "ammo-fuel", melta_fuel: "ammo-fuel", flame_fuel: "ammo-fuel",
   arrows: "ammo-arrow"
 };

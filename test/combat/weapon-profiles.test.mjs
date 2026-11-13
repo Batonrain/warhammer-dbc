@@ -11,7 +11,7 @@
 import { describe, it, expect } from "vitest";
 
 import { weaponProfiles, improvisedMeleeProfile, canStrikeWithGun,
-         isMeleeProfile, attackIsMelee, IMPROVISED_MELEE_LABEL }
+         isMeleeProfile, attackIsMelee, sysWithMeleeProfileReach, IMPROVISED_MELEE_LABEL }
   from "../../module/combat/weapon-profiles.mjs";
 import { MELEE_CATEGORIES, MELEE_TRAINING_EXEMPT }
   from "../../module/constants/weapon-categories.mjs";
@@ -213,8 +213,28 @@ describe("attackIsMelee: окно и бросок обязаны решать о
     expect(attackIsMelee({ weaponClass: "thrown" }, { forceMelee: true })).toBe(true);
   });
 
+  it("авторский профиль с галочкой «Ближний бой» (Крюк Паджиги) — рукопашная", () => {
+    expect(attackIsMelee(ranged, { profile: { label: "Крюк", damage: "1d10+5", range: "2", melee: true } })).toBe(true);
+  });
+
   it("обычный авторский профиль стрельбу рукопашной не делает", () => {
     expect(attackIsMelee(ranged, { profile: { label: "Подавительный" } })).toBe(false);
+  });
+
+  it("досягаемость рукопашного профиля у ствола заменяет Rng ствола (rng-475)", () => {
+    const sys = { weaponClass: "heavy", range: 100, rangeMin: 0 };
+    expect(sysWithMeleeProfileReach(sys, { melee: true, range: "2" })).toMatchObject({ range: 2, rangeMin: 0 });
+    expect(sysWithMeleeProfileReach(sys, { melee: true, range: "2-4" })).toMatchObject({ range: 4, rangeMin: 2 });
+    expect(sysWithMeleeProfileReach(sys, { melee: true, generated: true, range: 3 })).toMatchObject({ range: 3 });
+    expect(sysWithMeleeProfileReach(sys, { melee: true, range: "" })).toMatchObject({ range: 0 });
+  });
+
+  it("стрелковый профиль и рукопашное оружие не меняют sys", () => {
+    const sys = { weaponClass: "heavy", range: 100 };
+    expect(sysWithMeleeProfileReach(sys, { range: "2" })).toBe(sys);
+    expect(sysWithMeleeProfileReach(sys, null)).toBe(sys);
+    const melee = { weaponClass: "melee", range: 3 };
+    expect(sysWithMeleeProfileReach(melee, { melee: true, range: "9" })).toBe(melee);
   });
 
   it("пустые входы не роняют расчёт", () => {

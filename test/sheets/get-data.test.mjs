@@ -381,7 +381,7 @@ describe("Одержимый", () => {
       items,
       alignment: "heretic", possessed: true,
       corruption: { value: 60 },
-      characteristics: { inf: char(45) },
+      characteristics: { inf: char(45), wp: char(40) },
       possession: { demon: "bloodletter", symbiosis: 4, demonWounds: { max: 25 } },
       ...over
     });
@@ -405,7 +405,10 @@ describe("Одержимый", () => {
     const p = possessed().possession;
     expect(p.socialBonus).toBe(40);          // Симбиоз ×10
     expect(p.hostWBonus).toBe(20);           // Симбиоз ×5
-    expect(p.controlHours).toBe(8);          // 10 − Ранения демона ÷ 10
+    // Книга: «10 − W.b ХОСТА часов (минимум 1)»; Симбиоз даёт хосту +5 к W за
+    // пункт. Хост W 40 + Симбиоз 4 × 5 = 60 → W.b 6 → 4 часа. Раны демона
+    // (25) на срок контроля не влияют.
+    expect(p.controlHours).toBe(4);
     expect(p.naturalArmour).toBe(6);         // Бонус Порчи
     expect(p.regen).toBe(3);                 // половина Бонуса Порчи, окр. ▲
   });

@@ -21,6 +21,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasResilienceTalent } from "../rules/resilience-talents.mjs";
+import { hasUnstoppableWrath, wrathKeeps } from "../rules/khorne-berserker.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 
@@ -29,12 +30,15 @@ export const CRIT_EFFECT_SELECTOR =
   ".wh-crit-apply-btn, .wh-char-dmg-btn, .wh-crit-drop-btn, .wh-crit-death-btn, .wh-shock-death-btn";
 
 /** Кнопки самих Талантов. */
-export const CRIT_TALENT_SELECTOR = ".wh-final-push-btn, .wh-never-die-btn, .wh-pain-illusion-btn";
+export const CRIT_TALENT_SELECTOR = ".wh-final-push-btn, .wh-never-die-btn, .wh-pain-illusion-btn, .wh-unstoppable-wrath-btn";
 
 /** Флаги сообщения (все — в белом списке card-once.mjs::CARD_ONCE_FLAGS). */
 export const CRIT_TALENT_FLAGS = {
   finalPushUsed: "finalPushUsed", neverDieUsed: "neverDieUsed", painIllusionUsed: "painIllusionUsed",
-  finalPushApplied: "finalPushApplied"
+  finalPushApplied: "finalPushApplied",
+  // Неостановимый Гнев (Черта Берсерка Кхорна): попытка (persist:false), успех, и что Смерть игнорирована этим успехом.
+  unstoppableWrathTried: "unstoppableWrathTried", unstoppableWrathUsed: "unstoppableWrathUsed",
+  unstoppableWrathDeath: "unstoppableWrathDeath"
 };
 
 /**
@@ -67,6 +71,11 @@ export function critTalentsHtml(actor, { level = 0, damageType = "", hitLocation
       title="Боль — Лишь Иллюзия: тест W+0 — эффект слабеет на число Успехов (не ниже уровня 1)">
       ${rollIcon("shield", "#8fd0ff")} Боль — Лишь Иллюзия (W+0)</button>`);
   }
+  if (hasUnstoppableWrath(actor)) {
+    btns.push(`<button type="button" class="wh-unstoppable-wrath-btn" data-actor-uuid="${uuid}"
+      title="Неостановимый Гнев: раз в Раунд тест T+0 — игнорировать Критические Эффекты ранений, Оглушения, Усталости и Смерти (но не Кровотечение); Смерть — только раз за бой">
+      ${rollIcon("spark", "#ff5a5a")} Неостановимый Гнев (T+0)</button>`);
+  }
   return btns.length ? `<div class="wh-crit-pills wh-crit-talents">${btns.join("")}</div>` : "";
 }
 
@@ -83,10 +92,11 @@ function dim(btn, reason) {
  * @param {Element} block блок `.dmg-critical-block`
  * @returns {number} сколько кнопок-эффектов погашено
  */
-export function dimCritEffects(block, reason) {
+export function dimCritEffects(block, reason, { keep = null } = {}) {
   if (!block?.querySelectorAll) return 0;
   let n = 0;
   for (const btn of block.querySelectorAll(CRIT_EFFECT_SELECTOR)) {
+    if (keep?.(btn)) continue;
     if (!btn.disabled) n++;
     dim(btn, reason);
   }
@@ -136,6 +146,10 @@ export function applyCritTalentState(message, root) {
     if (flag(CRIT_TALENT_FLAGS.neverDieUsed)) dimCritEffects(block, "Проигнорировано: Не Умирать");
     else if (flag(CRIT_TALENT_FLAGS.finalPushUsed)) dimCritEffects(block, "Отложено до конца Хода: Последний Рывок");
     else if (flag(CRIT_TALENT_FLAGS.painIllusionUsed)) dimCritEffects(block, "Эффект ослаблен: Боль — Лишь Иллюзия");
+    else if (flag(CRIT_TALENT_FLAGS.unstoppableWrathUsed)) {
+      const deathIgnored = flag(CRIT_TALENT_FLAGS.unstoppableWrathDeath);
+      dimCritEffects(block, "Проигнорировано: Неостановимый Гнев", { keep: btn => wrathKeeps(btn, { deathIgnored }) });
+    }
   }
   // Напоминание конца Хода (Последний Рывок): «Применить отложенные эффекты» нажата — раз на карточку.
   if (flag(CRIT_TALENT_FLAGS.finalPushApplied)) {

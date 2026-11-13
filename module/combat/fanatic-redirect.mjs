@@ -12,16 +12,15 @@
 //  полудвижения, и если это позволяет встать на пути атаки — получает это
 //  попадание и урон от него вместо союзника.»
 //
-//  Перенос самого попадания остаётся ручным решением стола: movement и
-//  геометрия «встал на пути атаки» не моделируются — но и не нужны отдельным
-//  кодом. module/combat/attack-card.mjs::applyDamageSection уже умеет
-//  применять урон НЕ той цели, по которой стреляли: кнопка «Применить урон»
-//  (кроме случаев с data-force-target — Орда/рикошет/встречная атака, где
-//  цель известна на 100%) резолвит актора из нацеленных/выделенных токенов
-//  СЦЕНЫ В МОМЕНТ КЛИКА (hooks.mjs, тот же общий механизм, что у любого
-//  применения урона). Поэтому «перенести попадание на Fanatic» ничем не
-//  отличается от обычного ручного решения ГМа: выделить токен носителя
-//  Fanatic вместо исходной цели и нажать существующую кнопку.
+//  Перехват — выбор стола (Fanatic «может» потратить Реакцию): movement и
+//  геометрия «встал на пути атаки» не моделируются, а решение «перехватывать
+//  ли» остаётся за игроком. Выбор — кнопка «Перехват» у каждого попадания в
+//  карточке атаки (attack-card.mjs::applyDamageSection): она несёт
+//  data-force-target носителя и data-mirror-hit — hooks.mjs берёт число и
+//  свойства урона с главной кнопки «Применить урон» той же группы (с учётом
+//  правок Кубик→Успехи/Искры) и применяет урон носителю без выделения токена.
+//  Ручной путь (выделить токен носителя и нажать обычную «Применить урон»)
+//  остаётся, но Реакцию и счётчик «раз в Раунд» тогда стол отмечает сам.
 //
 //  УСИЛЕННАЯ АВТОМАТИЗАЦИЯ (19.10.2026, решение владельца — «нужно сильнее
 //  автоматизировать»): раньше ГМ должен был САМ заметить, что рядом с целью
@@ -40,10 +39,10 @@
 //      (rules/cooldown.mjs::isCapabilityAvailable/markCapabilityUsed, unit
 //      "round", тот же механизм, что у Assassin Strike/Соблазнения Стаи).
 //      Карточка показывает, свободен ли перехват у каждого кандидата, и
-//      даёт кнопку «Отметить перехват» — отмечает счётчик потраченным, когда
-//      стол воспользовался бесплатным перехватом (сам перенос урона всё
-//      равно через обычную кнопку «Применить урон», см. выше — две кнопки
-//      не связаны программно, связь — только в том, что делает стол).
+//      даёт кнопку «Отметить перехват» — отмечает счётчик потраченным при
+//      ручном переносе; кнопка «Перехват» у попадания делает это сама
+//      (payFanaticIntercept: бесплатный раз в Раунд у любого носителя Fanatic,
+//      иначе Реакция).
 //      Исчерпанный бесплатный перехват НЕ блокирует Трейт Fanatic как
 //      таковой — обычная версия (за Реакцию) всегда доступна, это
 //      ограничение только добавки от Таланта.
@@ -53,6 +52,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { hasBackToBack, backToBackGrantCap } from "../rules/leadership-talents.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
+import { worldAndTokenActors } from "../migrations/unlinked-tokens.mjs";
 
 const BACK_TO_BACK_FREE_USE_FLAG = "backToBackFreeUse";
 const MELEE_REACH_MULT = 1.5; // combat/rig-steal.mjs::inMeleeContact — своя копия, см. заголовок файла.
@@ -86,25 +86,54 @@ export function hasFanatic(actor) {
     i?.type === "trait" && FANATIC_NAMES.some(n => itemHasName(i, n)));
 }
 
+/**
+ * Все uuid, под которыми актор встречается в списках: сам и — у актора
+ * несвязанного токена — его базовый мировой актор (в посту Отряда мог лежать
+ * любой из двух).
+ */
+function identityUuids(actor) {
+  const ids = new Set();
+  if (actor?.uuid) ids.add(actor.uuid);
+  if (actor?.isToken && actor.token?.baseActor?.uuid) ids.add(actor.token.baseActor.uuid);
+  return ids;
+}
+
 /** Отряды, которыми actor командует (Командир ИЛИ Лидер) — тот же лёгкий обход, что field-execution.mjs. */
 function squadsLedBy(actor, allActors) {
-  const uuid = actor?.uuid;
-  if (!uuid) return [];
+  const ids = identityUuids(actor);
+  if (!ids.size) return [];
   return (allActors ?? []).filter(a => a?.type === "squad"
-    && (a.system?.posts?.commander?.uuid === uuid || a.system?.posts?.leader?.uuid === uuid));
+    && (ids.has(a.system?.posts?.commander?.uuid) || ids.has(a.system?.posts?.leader?.uuid)));
+}
+
+/**
+ * Живые документы записи Отряда: мировой актор несвязанного токена
+ * (prototypeToken.actorLink === false) раскрывается в акторов его токенов из
+ * списка — Черта должна лечь в дельту токена, а не на шаблон; нет токенов —
+ * остаётся сам мировой актор.
+ */
+function liveDocsOfMember(doc, allActors) {
+  if (doc.isToken || doc.prototypeToken?.actorLink !== false) return [doc];
+  const tokens = (allActors ?? []).filter(a => a?.isToken && a.token?.baseActor?.uuid === doc.uuid);
+  return tokens.length ? tokens : [doc];
 }
 
 /** Подчинённые во всех Отрядах, которыми командует actor (без дублей, кроме него самого). */
 function subordinatesLedBy(actor, allActors) {
+  const self = identityUuids(actor);
   const seen = new Set(), out = [];
   const index = new Map();
   for (const a of allActors ?? []) if (a?.uuid) index.set(a.uuid, a);
   for (const squad of squadsLedBy(actor, allActors)) {
     for (const m of squad.system?.members ?? []) {
-      if (!m.uuid || m.uuid === actor.uuid || seen.has(m.uuid)) continue;
-      seen.add(m.uuid);
+      if (!m.uuid || self.has(m.uuid)) continue;
       const doc = index.get(m.uuid);
-      if (doc) out.push(doc);
+      if (!doc) continue;
+      for (const live of liveDocsOfMember(doc, allActors)) {
+        if (!live.uuid || self.has(live.uuid) || seen.has(live.uuid)) continue;
+        seen.add(live.uuid);
+        out.push(live);
+      }
     }
   }
   return out;
@@ -112,10 +141,11 @@ function subordinatesLedBy(actor, allActors) {
 
 /** Снять предыдущий грант этого источника (книга: «до повторного использования»). */
 async function clearPreviousGrant(commanderActor, allActors) {
+  const sources = identityUuids(commanderActor);
   const candidates = [commanderActor, ...subordinatesLedBy(commanderActor, allActors)];
   for (const doc of candidates) {
-    const ids = (doc.items ?? [])
-      .filter(i => i.flags?.[NS]?.[FANATIC_GRANT_FLAG]?.source === commanderActor.uuid)
+    const ids = [...(doc.items ?? [])]
+      .filter(i => sources.has(i.flags?.[NS]?.[FANATIC_GRANT_FLAG]?.source))
       .map(i => i.id);
     if (ids.length && doc.isOwner) await doc.deleteEmbeddedDocuments("Item", ids);
   }
@@ -123,11 +153,17 @@ async function clearPreviousGrant(commanderActor, allActors) {
 
 /**
  * Конец боя (книга: Fanatic — «до конца боя»): снять все розданные Fanatic.
+ * allActors по умолчанию — мировые акторы и акторы несвязанных токенов.
  * ponytail: снимает гранты любого источника на конце любого боя — при двух
  * боях разом сгорят и гранты второго; станет важно — сверять source с комбатантами.
  */
-export async function clearFanaticGrants(allActors) {
+export async function clearFanaticGrants(allActors = worldAndTokenActors()) {
+  const seen = new Set();
   for (const doc of allActors ?? []) {
+    if (doc?.uuid) {
+      if (seen.has(doc.uuid)) continue;
+      seen.add(doc.uuid);
+    }
     const ids = [...(doc.items ?? [])].filter(i => i.flags?.[NS]?.[FANATIC_GRANT_FLAG]).map(i => i.id);
     if (ids.length && doc.isOwner) await doc.deleteEmbeddedDocuments("Item", ids);
   }
@@ -135,9 +171,10 @@ export async function clearFanaticGrants(allActors) {
 
 /**
  * Раздать Fanatic себе и до backToBackGrantCap(commanderActor) подчинённых.
+ * allActors по умолчанию — мировые акторы и акторы несвязанных токенов.
  * @returns {string[]} имена, кто получил
  */
-export async function grantFanaticTrait(commanderActor, allActors) {
+export async function grantFanaticTrait(commanderActor, allActors = worldAndTokenActors()) {
   const trait = await fromUuid(`Compendium.warhammer-dbc.traits.Item.${FANATIC_TRAIT_COMPENDIUM_ID}`).catch(() => null);
   if (!trait) { ui.notifications?.warn("Трейт «Fanatic» не найден в компендиуме."); return []; }
 
@@ -173,19 +210,40 @@ export function fanaticCandidates(allActors, { excludeUuids = [] } = {}) {
 }
 
 /**
- * Носители Fanatic (кроме excludeUuids), чей активный токен сейчас в
- * базовом контакте с targetToken — геометрия вместо «искать глазами на
- * сцене». Нет targetToken (атака не в рукопашной/токен не выделен) —
- * список пуст: перехват в базовом контакте не книжный случай для дистанции.
+ * Носители Fanatic (кроме excludeUuids) среди токенов сцены, стоящие в базовом
+ * контакте с targetToken — геометрия вместо «искать глазами на сцене». Берутся
+ * токены сцены и актор токена (t.actor), поэтому Fanatic в дельте несвязанного
+ * токена виден, а токен предлагается именно тот, что стоит в контакте. Связанный
+ * актор с несколькими токенами даёт одного кандидата (первый токен в контакте),
+ * несвязанные токены — каждый отдельно. Нет targetToken (атака не в
+ * рукопашной/токен не выделен) — список пуст: перехват в базовом контакте не
+ * книжный случай для дистанции.
+ * @returns {{actor: Actor, token: Token}[]}
  */
-export function fanaticInterceptCandidates(targetToken, allActors, { excludeUuids = [] } = {}) {
+export function fanaticInterceptCandidates(targetToken, tokens = globalThis.canvas?.tokens?.placeables ?? [], { excludeUuids = [] } = {}) {
   if (!targetToken) return [];
   const exclude = new Set(excludeUuids.filter(Boolean));
-  return fanaticCandidates(allActors, { excludeUuids: [...exclude] }).filter(a => {
-    const token = a.getActiveTokens?.()[0];
-    return token && token !== targetToken && inMeleeContact(token, targetToken);
-  });
+  const targetId = targetToken.document?.id;
+  const seen = new Set();
+  const out = [];
+  for (const t of tokens ?? []) {
+    const a = t?.actor;
+    if (!a?.uuid || t === targetToken || (targetId && t.document?.id === targetId)) continue;
+    if (exclude.has(a.uuid) || seen.has(a.uuid) || !hasFanatic(a) || !inMeleeContact(t, targetToken)) continue;
+    seen.add(a.uuid);
+    out.push({ actor: a, token: t });
+  }
+  return out;
 }
+
+/**
+ * Кто платит за перехват: актор токена носителя. Токены несвязанные
+ * (actorLink:false) по умолчанию: у актора токена своя дельта — Реакции,
+ * отметка «раз в Раунд», Черты, — и урон перехвата идёт именно ему. Актор
+ * несвязанного токена возвращается как есть; мировой актор заменяется актором
+ * своего активного токена (task-ed4e).
+ */
+export const fanaticPayer = actor => actor?.isToken ? actor : (actor?.getActiveTokens?.()[0]?.actor ?? actor);
 
 /** Свободен ли у actor бесплатный (без Реакции) перехват этим Раундом — Спиной к Спине. */
 export function backToBackFreeUseAvailable(actor) {
@@ -195,4 +253,32 @@ export function backToBackFreeUseAvailable(actor) {
 /** Отметить бесплатный перехват actor потраченным в этом Раунде. */
 export async function markBackToBackFreeUseUsed(actor) {
   await markCapabilityUsed(actor, BACK_TO_BACK_FREE_USE_FLAG, "round");
+}
+
+const FANATIC_PAID_FLAG = "fanaticPaid";
+const paidIntercepts = new Set();
+
+/**
+ * Заплатить за перехват попадания Фанатиком: бесплатный раз в Раунд (любой
+ * носитель Fanatic), иначе Реакция. Один носитель платит один раз за карточку
+ * атаки — остальные попадания очереди он перехватывает в ту же Реакцию.
+ * @returns {Promise<{ok: boolean, free?: boolean, already?: boolean}>}
+ */
+export async function payFanaticIntercept(fanatic, message = null) {
+  const key = `${message?.id ?? ""}:${fanatic.uuid}`;
+  const paidOnCard = message ? (message.getFlag?.(NS, FANATIC_PAID_FLAG) ?? []) : [];
+  if (message && (paidIntercepts.has(key) || paidOnCard.includes(fanatic.uuid))) return { ok: true, already: true };
+  let free = false;
+  if (backToBackFreeUseAvailable(fanatic)) {
+    await markBackToBackFreeUseUsed(fanatic);
+    free = true;
+  } else {
+    const { spendReaction } = await import("./action-economy.mjs");
+    if (!await spendReaction(fanatic)) return { ok: false };
+  }
+  if (message) {
+    paidIntercepts.add(key);
+    if (message.isOwner) await message.setFlag?.(NS, FANATIC_PAID_FLAG, [...paidOnCard, fanatic.uuid]);
+  }
+  return { ok: true, free };
 }

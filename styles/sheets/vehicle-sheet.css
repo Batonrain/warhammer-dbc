@@ -181,6 +181,7 @@
   padding: 2px 6px; border: 1px solid var(--wh-border-light); border-radius: 3px; font-size: 0.82em; }
 .warhammer-dbc .veh-fire-item .veh-reload-weapon:hover { color: #fff; background: var(--wh-panel-mid); }
 .warhammer-dbc .veh-fire-mag { flex: 0 0 auto; font-size: 0.78em; color: var(--wh-panel-mid); }
+.warhammer-dbc .veh-fire-ammo { flex: 0 1 auto; font-size: 0.78em; color: var(--wh-panel-mid); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Действия ── */
 .warhammer-dbc .veh-action-btns { display: flex; gap: 6px; flex-wrap: wrap; }

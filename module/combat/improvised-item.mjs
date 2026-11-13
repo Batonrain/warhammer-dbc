@@ -25,6 +25,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { _targetDamageSection } from "./grapple.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { clobberOfferFor, clobberOfferHtml } from "./clobber.mjs";
 
 const TIER_LABEL = { light: "лёгкий", medium: "средний", heavy: "тяжёлый" };
 
@@ -172,7 +173,9 @@ export async function useThrowItem(actor, item) {
     outcome: outcomeHtml(true, `Попадание — ${deg} степеней`),
     sections: [
       knockNote,
-      _targetDamageSection(dmgTotal, `Метнуть (${item.name})`, actor)
+      _targetDamageSection(dmgTotal, `Метнуть (${item.name})`, actor),
+      // Поколотить (Талант Метания): тяжёлый снаряд ≥¼ веса цели — S-тест цели (combat/clobber.mjs).
+      clobberOfferHtml(clobberOfferFor(actor, { projectileKg: itemWeightOf(item), target }), actor.uuid || "")
     ]
   }, { rolls: [roll, dmgRoll] });
 }

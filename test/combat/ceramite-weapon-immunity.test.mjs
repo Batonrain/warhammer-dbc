@@ -65,8 +65,10 @@ describe("Керамит: иммунитет к свойству оружия De
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
 
-    expect(card()).toContain("выгор.");
-    expect(hitDamage()).toBe(8 + 5 + 5 + 4); // база (8+5) + довесок Выгорания (5+4)
+    // Выгорание (книга): взрыв 1d10+X идёт по СОСЕДЯМ, а не по цели — в урон
+    // попадания он не входит; кубик взрыва (5+4 = 9) показан отдельной подписью.
+    expect(card()).toContain("выгор.: взрыв 9");
+    expect(hitDamage()).toBe(8 + 5);
   });
 
   it("цель с Керамитом — доп. кубик Выгорания не бросается вовсе", async () => {
@@ -91,8 +93,8 @@ describe("Керамит: иммунитет к свойству оружия De
 
     await _executeAttackRoll(attacker, weapon, "bs", 45, "single", null, {});
 
-    expect(card()).toContain("выгор.");
-    expect(hitDamage()).toBe(8 + 5 + 5 + 4);
+    expect(card()).toContain("выгор.: взрыв 9");
+    expect(hitDamage()).toBe(8 + 5);
   });
 });
 

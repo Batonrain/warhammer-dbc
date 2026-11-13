@@ -195,6 +195,17 @@ describe("требуемые Таланты", () => {
     })).warn).toBe(true);
   });
 
+  it("двуязычное имя из перетаскивания («Frenzy / Ярость») находит Талант и Черту по любой половине", () => {
+    const req = { ...blankEliteReq(), secondary: [
+      { kind: "talent", name: "Frenzy / Ярость" },
+      { kind: "trait", name: "Psyker / Псайкер" }
+    ] };
+    for (const [t, r] of [["Frenzy / Ярость", "Psyker / Псайкер"], ["Frenzy", "Psyker"], ["Ярость", "Псайкер"]]) {
+      expect(checkEliteRequirements(req, who({ talents: [{ name: t }], traits: [{ name: r }] })).warn).toBe(false);
+    }
+    expect(checkEliteRequirements(req, who()).secondaryUnmet).toHaveLength(2);
+  });
+
   it("подпись счётчика читается человеком", () => {
     expect(describeEliteReq({ kind: "talent", name: "Hatred", count: 3 })).toBe("Hatred — любые 3");
   });

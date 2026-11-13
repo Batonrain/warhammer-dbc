@@ -144,7 +144,8 @@
               "weightMode": "kg",
               "weightValue": 1,
               "label": "",
-              "code": ""
+              "code": "",
+              "targetChoiceCount": 1
             }
           ]
         }

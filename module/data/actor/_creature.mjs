@@ -203,6 +203,8 @@ export function creatureSchema({ granted = false } = {}) {
     isTechpriest:  bool(false, "Техножрец"),
     isRogueTrader: bool(false, "Вольный торговец"),
     meleeStance:   str("standard", "Стойка"),
+    // Основная рука ("right"/"left"): оружие в другой руке парирует с −20 (rules/off-hand.mjs).
+    mainHand:      str("right", "Основная рука"),
     meleeBase:     str("standard", "База"),
     // Ярость (Frenzy) — ручной тумблер состояния боя, тот же приём, что
     // meleeStance: полная механика Ярости (+10 WS/S/W, −20 BS/I/F, стр. 15)
@@ -495,6 +497,7 @@ export function creatureSchema({ granted = false } = {}) {
     // эффекты целятся сюда в фазе "initial", несколько источников суммируются
     // сами (см. combat/damage.mjs).
     incomingDamageReduction: num(0, "Снижение входящего урона"),
+    extraHands: num(0, "Доп. руки (временная прибавка к числу рук)"),
     movement: new SchemaField({
       halfMove: num(0, "Полуход"), move: num(0, "Ход"),
       charge:   num(0, "Натиск"),  run:  num(0, "Бег"),

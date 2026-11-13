@@ -244,8 +244,8 @@ export const ELITE_ARCHETYPES = [
     name: "Варп-Кузнец", god: "Неделимый", race: "Космодесантник",
     req: "I 45, Tech-Use+10, For.Lore (Daemons), Trade (Armourer, Weaponsmith), 2000 xp",
     charBonus: "+5 T, +5 I, +1d5 Cor",
-    freeTalents: "Mechandendrite Use (Weapon), Strange Technique",
-    gear: "Omnissiah Axe, 4 Механодендрита (до R2)",
+    freeTalents: "Mechadendrite Use (Weapon), Strange Technique",
+    gear: "Omnissiah Axe, 4 Мехадендрита (до R2)",
     traits: ["Mechanicum Implants / Импланты Механикум", "Warpforged Plate / Закалённые Варпом Латы", "Iron Cage / Железная Клеть"],
     talents: ["Sigil of Dominion / Печать Владычества", "Cell of Shame / Ячейка Позора", "Empyrean Whip / Эмпирейная Плеть", "Forge of One / Кузница Одного", "Run Down / Загнать"]
   },
@@ -256,14 +256,14 @@ export const ELITE_ARCHETYPES = [
     freeTalents: "Hatred (Dark Mechanicum, Adeptus Mechanicus, Vehicles)",
     gear: "Hell Stalker (оболочка)",
     traits: ["Machine Spirit Thief / Вор Духов Машины", "Corrupted Noosphere / Порченная Ноосфера", "Daemonic Uplink / Демоническое Подключение"],
-    talents: ["Discordant Duo / Дискордантный Дуэт", "Stalkersmith / Кузнец Сталкеров", "Hellbound / Адсвязанный", "Tortured Spirit / Истерзанный Дух"]
+    talents: ["Discordant Duo / Дискордантный Дуэт", "Stalkersmith / Кузнец Сталкеров", "Hellbound / Адосвязанный", "Tortured Spirit / Истерзанный Дух"]
   },
   {
     name: "Чемпион-Терминатор", god: "Неделимый", race: "Космодесантник",
     req: "WS 50, BS 50, Inf 40, 2500 xp",
     charBonus: "+5 WS или +5 BS, +5 W или +5 F",
     freeTalents: "",
-    gear: "Terminator Armour (только при старте с Архетипом)",
+    gear: "Mk I Saturnyne или Mk II Cataphractii или Mk III Indominus или Mk IV Tartaros (Terminator Armour; только при старте с Архетипом)",
     note: "Все преимущества, Трейты и Таланты этого Архетипа работают только когда персонаж носит Терминаторскую броню.",
     traits: ["Graceful Giant / Изящный Гигант", "Legendary Plate / Легендарные Латы"],
     talents: ["Anointed / Помазанник", "Atramentar / Атраментар", "Death Shroud / Саван Смерти", "Devourer / Поглотитель", "Justaerin / Юстаэринец", "Lernean / Лернеец", "Phoenician / Фениксиец", "Tyranthikos / Тирантикос"]
@@ -294,7 +294,7 @@ export const ELITE_ARCHETYPES = [
     freeTalents: "Peer (Собственная банда)",
     gear: "",
     traits: ["Delegate / Делегат", "Living Banner / Живой Стяг", "Noblesse Oblige / Благородство Обязывает"],
-    talents: ["Ancient / Древний", "Tip Of The Spear / Остриё Копья", "Stand Your Ground / Ни Шагу Назад", "Villainous Honour / Честь Злодеев", "Greater Herald / Высший Герольд"]
+    talents: ["Ancient / Древний", "Tip Of The Spear / Острие Копья", "Stand Your Ground / Ни Шагу Назад", "Villainous Honour / Честь Злодеев", "Greater Herald / Высший Герольд"]
   },
 
   // ═══ Твари Варпа (стр. 127-128; Одержимый — см. possession.mjs, стр. 129-132) ═══
@@ -420,7 +420,7 @@ export const ELITE_ARCHETYPES = [
     req: "W 40, A 40, For.Lore (Mechanicum)+10, Трейт Mechanicum Implants, Техночудеса: Voltagheist Shield, Luminen Shock, Electroepithany, 2500 xp",
     charBonus: "+5 S, +5 A, +5 T",
     freeTalents: "",
-    gear: "",
+    gear: "Luminen Capacitors (Best.Q), Ferric Lure Implants (Best.Q)",
     freeTraits: "Blind, Nimble (10)",
     traits: ["Electropriest Coils / Катушки Электрожреца", "Power From Flesh / Сила Из Плоти", "Motive Stimulation / Мотивирующая Стимуляция"],
     talents: ["Voltagheist Blast / Вольтагейст Взрыв", "Voltagheist Bubble / Вольтагейст Пузырь", "Voltaic Absorption / Вольтаическое Поглощение", "Voltaic Confluence / Вольтаическое Слияние", "Motive Sight / Мотивное Зрение", "Conduit March / Проводниковый Марш"]
@@ -482,7 +482,7 @@ export const ELITE_ARCHETYPES = [
     charBonus: "+5 I, +5 F, +1d5 Cor",
     freeTalents: "",
     gear: "",
-    traits: ["Rite of Eight Specks / Ритуал Восьми Спиц", "Veil of Lies / Вуаль Лжи", "Hypno-Programming / Гипно-Программирование"],
+    traits: ["Ritual of Eight Spokes / Ритуал Восьми Спиц", "Veil of Lies / Вуаль Лжи", "Hypno-Programming / Гипно-Программирование"],
     talents: ["Perfect Mask / Совершенная Маска", "Proxy Veil / Замещающая Вуаль", "Corrupted Call / Искаженный Зов", "Thousand Papercuts / Тысяча Бумажных Порезов", "Teacher / Учитель"]
   },
   {
@@ -577,9 +577,31 @@ export const ELITE_ARCHETYPES = [
     freeTalents: "",
     gear: "",
     freeTraits: "From Beyond, Regeneration (½Cor.b, окр.▲), Stuff of Nightmares, Undying, Unnatural T (+2)",
-    note: "Таблица Стадий Пакта (Стадия 0/1/2/3/4/5) — Макс. пациентов: 3/3/4/5/6/7; Аблативные Раны: 7/8/9/10/11/12; Сверхукрепление: нет/14/16/18/20/22; Regeneration: +1/+1/+2/+2/+3/+3; Бонус регенерации: нет/+10/+15/+20/+30/Авто; Инъекции: 7/7/9/11/12/14; Макс. Культивации: 3/3/4/5/6/7.",
+    note: "Таблица Стадий Пакта (Стадия 0/1/2/3/4/5) — Макс. пациентов: 3/3/4/5/6/7; Аблативные Раны: 7/8/9/10/11/12; Сверхукрепление: нет/14/16/18/20/22; Regeneration: +1/+1/+2/+2/+3/+3; Бонус регенерации: нет/+10/+15/+20/+30/Авто; Инъекции: 7/8/9/10/12/14; Макс. Культивации: 3/3/4/5/6/7.",
     traits: ["Pact Protection / Защита Пакта (Мейстер)", "Savant of Life and Death / Савант Жизни и Смерти", "Life Virus / Вирус Жизни", "Cultivation / Культивация", "Deathless Oath / Несмертная Клятва"],
     talents: ["Maester Pact Stage 1 / Стадия Пакта 1 (Мейстер)", "Maester Pact Stage 2 / Стадия Пакта 2 (Мейстер)", "Maester Pact Stage 3 / Стадия Пакта 3 (Мейстер)", "Maester Pact Stage 4 / Стадия Пакта 4 (Мейстер)", "Maester Pact Stage 5 / Стадия Пакта 5 (Мейстер)"]
+  },
+  {
+    name: "Ревенант", god: "Кхорн", race: "Любая",
+    req: "Покровительство Кхорна, Trade (Weaponsmith)+10, Hatred, 2000 xp",
+    charBonus: "+5 WS или BS, +1d5 Cor",
+    freeTalents: "",
+    gear: "",
+    freeTraits: "From Beyond, Stuff of Nightmares, Undying, Unnatural WS или BS (+2)",
+    note: "Таблица Стадий Пакта (Стадия 0/1/2/3/4/5) — Х-ки Духа: 30/34/38/42/46/50; Навыки Духа: +0/+0/+10/+10/+20/+30; Очки Мести: 3/4/5/6/7/8; Мутации Оружия Наследия: 1/1/2/2/3/3; Свойства Демонического Оружия: 0/1/1/2/2/3.",
+    traits: ["Pact Protection / Защита Пакта (Ревенант)", "Vengeance Weapon / Оружие Отмщения", "Shadow of Vengeance / Тень Отмщения", "Vengeful Spirit / Мстительный Дух", "Vengeful One / Мстительный"],
+    talents: ["Revenant Pact Stage 1 / Стадия Пакта 1 (Ревенант)", "Revenant Pact Stage 2 / Стадия Пакта 2 (Ревенант)", "Revenant Pact Stage 3 / Стадия Пакта 3 (Ревенант)", "Revenant Pact Stage 4 / Стадия Пакта 4 (Ревенант)", "Revenant Pact Stage 5 / Стадия Пакта 5 (Ревенант)"]
+  },
+  {
+    name: "Когитор", god: "Тзинч", race: "Любая",
+    req: "Покровительство Тзинча, I 50, Schol. и/или For.Lore (любые 3)+10, Workaholic, 2000 xp",
+    charBonus: "+5 I, +5 W, −3 WS, −3 BS, +1d5 Cor",
+    freeTalents: "",
+    gear: "",
+    freeTraits: "From Beyond, Stuff of Nightmares, Undying, Unnatural I (+2), Unnatural W (+2)",
+    note: "Таблица Стадий Пакта (Стадия 0/1/2/3/4/5) — Вдохновение: 4/5/6/7/8/9; Восстановление Вдохновения: 1/1/1/2/2/3; Machine: —/+1/+2/+3/+4/+5; Штраф на ментальные действия при ускорении: —/−20/−15/−10/−5/нет; Штраф на не-ментальные действия при ускорении: —/−10/−10/−5/−5/нет.",
+    traits: ["Pact Protection / Защита Пакта (Когитор)", "Heart of Stone / Каменное Сердце", "Infernal Inspiration / Инфернальное Вдохновение", "Dream Chaser / Гоняющийся за Мечтой"],
+    talents: ["Cogitor Pact Stage 1 / Стадия Пакта 1 (Когитор)", "Cogitor Pact Stage 2 / Стадия Пакта 2 (Когитор)", "Cogitor Pact Stage 3 / Стадия Пакта 3 (Когитор)", "Cogitor Pact Stage 4 / Стадия Пакта 4 (Когитор)", "Cogitor Pact Stage 5 / Стадия Пакта 5 (Когитор)"]
   },
 
   // ── Зверолюды ──
