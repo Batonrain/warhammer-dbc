@@ -156,8 +156,10 @@ describe("Гвозди Мясника: в Ярости Hatred (Все!)", () => 
   it("через resolveTest: +10 на рукопашную атаку по любой цели только в Ярости", () => {
     const target = { uuid: "Actor.t", type: "character", system: {}, items: [] };
     const raging = resolveTest({ actor: actorOf([nails()], { inRage: true }), kind: "attack", weaponClass: "melee", isMelee: true, targetActor: target });
-    expect(raging.mods.some(m => m.ruleId === "hatred.meleeBonus" && m.value === 10)).toBe(true);
+    // Ненависть +10 — auto (с 13.11.2026): едет в autoMods, а не галочкой в mods
+    expect(raging.autoMods.some(m => m.ruleId === "hatred.meleeBonus" && m.value === 10)).toBe(true);
     const calm = resolveTest({ actor: actorOf([nails()]), kind: "attack", weaponClass: "melee", isMelee: true, targetActor: target });
+    expect(calm.autoMods.some(m => m.ruleId === "hatred.meleeBonus")).toBe(false);
     expect(calm.mods.some(m => m.ruleId === "hatred.meleeBonus")).toBe(false);
   });
 
