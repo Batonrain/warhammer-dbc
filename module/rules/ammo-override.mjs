@@ -71,5 +71,11 @@ export function shellDroppedProps(ammoSys, baseProps) {
   if (!String(ammoSys?.weaponTag ?? "").trim()) return [];
   const own = new Set((ammoSys.properties || []).map(p => typeof p === "string" ? p : p?.key).filter(Boolean));
   return (baseProps || []).map(p => typeof p === "string" ? p : p?.key)
-    .filter(k => k && !own.has(k));
+    .filter(k => k && !own.has(k) && !SHELL_KEEPS.has(k));
 }
+
+/**
+ * Свойства самого орудия, а не профиля: снаряд их не снимает (решение владельца 13.11.2026 —
+ * Twin-Linked сдвоенного орудия работает и с бронебойным снарядом).
+ */
+const SHELL_KEEPS = new Set(["twinLinked"]);

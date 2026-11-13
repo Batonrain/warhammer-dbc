@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, char } from "../support/combat-fixtures.mjs";
-import { snareEscapeButtonsHtml, resolveSnareButton } from "../../module/combat/snare.mjs";
+import { snareEscapeButtonsHtml, resolveSnareButton, bondCutters, isBladeWeapon } from "../../module/combat/snare.mjs";
 import { _performSprayCancel } from "../../module/combat/defense.mjs";
 
 const card = () => captured.chat.at(-1)?.content ?? "";
@@ -51,7 +51,30 @@ describe("Связывающее: кнопки освобождения", () => 
     const a = bound();
     await resolveSnareButton(a, { kind: "cut" });
     expect(a.updates.some(u => u["system.conditions.helpless"] === false)).toBe(true);
-    expect(card()).toContain("перерезал");
+    expect(card()).toContain("перерезаны");
+  });
+});
+
+describe("Связывающее: кто может перерезать путы (решение владельца 13.11.2026)", () => {
+  const bound = { id: "b", x: 0, y: 0, width: 1, height: 1, disposition: 1 };
+  const at = (id, x, over = {}) => ({ id, name: id, x, y: 0, width: 1, height: 1, disposition: 1, blade: true, ...over });
+
+  it("сосед в базовом контакте с клинком — подходит", () => {
+    expect(bondCutters(bound, [at("ally", 100)])).toEqual(["ally"]);
+  });
+  it("без клинка, далеко или это сам связанный — не подходит", () => {
+    expect(bondCutters(bound, [at("noBlade", 100, { blade: false })])).toEqual([]);
+    expect(bondCutters(bound, [at("far", 500)])).toEqual([]);
+    expect(bondCutters(bound, [at("b", 100)])).toEqual([]);
+  });
+  it("враждебный по диспозиции не режет", () => {
+    expect(bondCutters(bound, [at("foe", 100, { disposition: -1 })])).toEqual([]);
+    expect(bondCutters(bound, [at("neutral", 100, { disposition: 0 })])).toEqual(["neutral"]);
+  });
+  it("клинок — рукопашное оружие с Режущим уроном", () => {
+    expect(isBladeWeapon({ system: { weaponClass: "melee", damageType: "rending" } })).toBe(true);
+    expect(isBladeWeapon({ system: { weaponClass: "melee", damageType: "impact" } })).toBe(false);
+    expect(isBladeWeapon({ system: { weaponClass: "ranged", damageType: "rending" } })).toBe(false);
   });
 });
 

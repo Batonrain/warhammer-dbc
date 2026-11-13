@@ -88,6 +88,10 @@ describe("shellDroppedProps — снаряд заменяет профиль ц�
     const smoke = { weaponTag: "Battle Cannon", properties: [{ key: "ordnance" }, { key: "smoke", rating: 15 }] };
     expect(shellDroppedProps(smoke, base).sort()).toEqual(["blast", "concussive"]);
   });
+  it("Twin-Linked сдвоенного орудия снаряд не снимает (решение владельца 13.11)", () => {
+    const ap = { weaponTag: "Twin Accelerator Cannon", properties: [{ key: "ordnance" }] };
+    expect(shellDroppedProps(ap, [{ key: "twinLinked" }, { key: "blast", rating: 8 }])).toEqual(["blast"]);
+  });
   it("обычный боеприпас (без тега) ничего не снимает", () => {
     expect(shellDroppedProps({ weaponTag: "", properties: [] }, base)).toEqual([]);
     expect(shellDroppedProps(undefined, base)).toEqual([]);
