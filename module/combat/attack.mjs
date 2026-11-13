@@ -141,7 +141,7 @@ import { SKY_PREDATOR, activeDieResults, isChargeFromFlight, swapDiceFor } from 
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 import { singleCombatBonus } from "./single-combat.mjs";
 import { butcherStatus } from "./beastman-subrace.mjs";
-import { baseIsCharge, baseIsFullAttack } from "../rules/melee-base.mjs";
+import { baseIsCharge, baseIsFullAttack, baseIsMountedAttack } from "../rules/melee-base.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -248,10 +248,9 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
  *     фиксированное число в system.rating.
  *   - «Brutal Charge (WS.b) / Жестокий Натиск» — Суккуба, hasRating:false,
  *     величина = текущий Бонус Оружейного Мастерства актора.
- * Вызывающая сторона гейтит по rofMode==="charge" (только Натиск) — «или
- * Верховая Атака» из текста общей Черты сюда не входит: отдельное понятие
- * (actor.system.mount.uuid, module/sheets/attack-dialog.mjs:342), не
- * исследовано, оставлено как отдельный открытый пробел, не решается тут.
+ * Вызывающая сторона гейтит по Базе: «Натиск» (baseIsCharge) или «Верховая
+ * Атака» (baseIsMountedAttack, база "mounted") — как в тексте общей Черты
+ * (dbc-114/55-15, 13.11.2026: Верховая Атака добавлена).
  */
 export function brutalChargeDamageBonus(actor) {
   let total = 0;
@@ -1458,10 +1457,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // вписывает число вручную — напр. Экстремальный урон правила, разовая
   // ситуативная надбавка без отдельного галочки в реестре модификаторов).
   const dmgBonus    = Number(opts.dmgBonus) || 0;
-  // Brutal Charge/Брутальный Натиск — только при Базе «Натиск». rofMode у
+  // Brutal Charge/Брутальный Натиск — при Базе «Натиск» или «Верховая Атака»
+  // (текст Черты: «при совершении Натиска или Верховой Атаки»). rofMode у
   // рукопашной всегда "melee" (база живёт в opts.baseKey из диалога) —
   // прежний гейт rofMode==="charge" не срабатывал никогда.
-  const chargeBonus = (isMelee && baseIsCharge(opts.baseKey)) ? brutalChargeDamageBonus(actor) : 0;
+  const chargeBonus = (isMelee && (baseIsCharge(opts.baseKey) || baseIsMountedAttack(opts.baseKey)))
+    ? brutalChargeDamageBonus(actor) : 0;
   // Кровавое Пламя (wdbc-1rno): +2 Dmg за каждого убитого этим оружием с
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.

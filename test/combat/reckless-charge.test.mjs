@@ -104,3 +104,14 @@ describe("окно атаки: пилюля Базы и Приёмы", () => {
   });
 });
 
+
+describe("Верховая Атака — отдельная База для Брутального Натиска (dbc-114)", () => {
+  it("«mounted» — Верховая Атака, но не Натиск и не Полная Атака", async () => {
+    const { baseIsMountedAttack } = await import("../../module/rules/melee-base.mjs");
+    expect(baseIsMountedAttack("mounted")).toBe(true);
+    expect(baseIsCharge("mounted")).toBe(false);
+    expect(baseIsFullAttack("mounted")).toBe(false);
+    expect(baseIsMountedAttack("charge")).toBe(false);
+    expect(baseIsMountedAttack(undefined)).toBe(false);
+  });
+});

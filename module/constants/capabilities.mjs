@@ -140,7 +140,7 @@ export const CAPABILITIES = {
   },
   "weaponPropertyImmunity.snare": {
     label: "Иммунитет к свойству оружия Snare (не обездвиживается)",
-    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас (см. weaponPropertyImmunityInRage.snare)",
+    source: "Трейт: Amorphous / Аморфный (запись Конструктора в паке, dbc-114, 13.11.2026); ранее заведена про запас (см. weaponPropertyImmunityInRage.snare)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"pinned\")"
   },
   // Deflagrate/Melta (wdbc-nquc, книга стр. 231, Керамит): гасят конкретную
@@ -5451,7 +5451,7 @@ export const CAPABILITIES = {
   },
   "trait.ablativePlating": {
     label: "При полном запасе любой непоглощённый урон уменьшается до 1.",
-    source: "Ablative Plating / Аблативное Бронирование", reader: ""
+    source: "Ablative Plating / Аблативное Бронирование", reader: "module/rules/mount.mjs ablativeDamage() — module/combat/damage.mjs, module/combat/vehicle.mjs (по имени Черты, не по флагу)"
   },
   "trait.abominablePhysiology": {
     label: "Нага (не путать с «Отвратной Физиологией» Чумного Десантника — trait.elitnyeArhetipy.chumnoyDesantnik.abominablePhysiology). Реализовано записями Черты: иммунитет к ядам (poison.immune + kind:\"condition\" immunity Отравления), к пост-эффектам и зависимости (drugs.afterEffectAddictionImmune), лечение как Космодесантник (healing.astartes), +1 Рана в сутки (healing.extraWoundDaily), тест T+0 на Кровотечение в начале Хода (bleeding.selfStanchTurnStart). Не смоделировано: яды «через еду» отдельно от препаратов — такого пути в системе нет, яд в еде применяется той же кнопкой препарата",
@@ -5483,7 +5483,7 @@ export const CAPABILITIES = {
   },
   "trait.allTerrain": {
     label: "Нет верхового штрафа −20 на трудный и опасный ландшафт.",
-    source: "All-Terrain / Вездеход", reader: ""
+    source: "All-Terrain / Вездеход", reader: "module/combat/mount.mjs (диалог Трудного Ландшафта скакуна: верховой штраф −20 обнуляется) — по имени Черты скакуна"
   },
   "trait.amorphous": {
     label: "−SPD; иммунитет к путам; легко вырывается из Борьбы.",
@@ -5523,7 +5523,7 @@ export const CAPABILITIES = {
   },
   "trait.bladesX": {
     label: "Свободным действием — попадание с профилем X по врагу на пути.",
-    source: "Blades (X) / Лезвия (X)", reader: ""
+    source: "Blades (X) / Лезвия (X)", reader: "module/combat/mount.mjs showBladesDialog() — кнопка на module/sheets/tabs/mount-panel.mjs (только скакуны)"
   },
   "trait.blind": {
     label: "Перманентно Ослеплён.",
@@ -5539,19 +5539,19 @@ export const CAPABILITIES = {
   },
   "trait.boneHead": {
     label: "Импланты интеллекта (с оговорками).",
-    source: "BONE-Head / Костеголов", reader: ""
+    source: "BONE-Head / Костеголов", reader: "module/rules/library/ogryn.mjs + module/combat/bone-head.mjs (тест Int, Haywire, ступор)"
   },
   "trait.braggingWealth": {
     label: "+15 на оценку ценности, поиск трофеев и взлом замков. При провале поиска ценностей — находит 1d5+1 расходников. До I.",
     source: "Bragging Wealth / Бахвальное Богатство", reader: ""
   },
   "trait.brutalCharge": {
-    label: "+X урона при Натиске/Верховой атаке.",
-    source: "Brutal Charge / Брутальный Натиск (X)", reader: ""
+    label: "+X урона при Натиске или Верховой Атаке.",
+    source: "Brutal Charge / Брутальный Натиск (X)", reader: "module/combat/attack.mjs brutalChargeDamageBonus() — гейт baseIsCharge || baseIsMountedAttack (module/rules/melee-base.mjs)"
   },
   "trait.brutePhysiology": {
-    label: "+15 Ран; штрафы на немодифицированное оружие.",
-    source: "Brute Physiology / Физиология Громилы", reader: ""
+    label: "+15 Ран; штрафы на немодифицированное оружие. Зонтичная запись: реальные возможности — brutePhysiology.passiveRegen / .bleedingNoDeath / .shakeOffStun и weapons.ogryn.",
+    source: "Brute Physiology / Физиология Громилы", reader: "module/rules/ogryn-fit.mjs ogrynAttackPenalty() (−10/−20), module/combat/ogryn-weapon-break.mjs (слом 1–3), module/combat/ogryn-regen.mjs, module/combat/condition-ticks.mjs; тесты test/rules/ogryn-*.test.mjs"
   },
   "trait.burrower": {
     label: "Роет тоннели со скоростью SPD×X.",
@@ -5609,8 +5609,8 @@ export const CAPABILITIES = {
     source: "Daemonic Armament / Демоническое Вооружение", reader: ""
   },
   "trait.daemonicPresence": {
-    label: "Аура: −X к тестам W в радиусе Y.",
-    source: "Daemonic Presence / Демоническое Присутствие (X/Y)", reader: ""
+    label: "Аура: враги в радиусе Y получают штраф −X к W (ступень Daemonic Dread 5/10/15/20 по X). Шаблон Черты несёт запись kind:aura; у существ бестиария — своя готовая запись.",
+    source: "Daemonic Presence / Демоническое Присутствие (X/Y)", reader: "запись kind:aura в паке Черты → module/apps/mechanics.mjs syncAuraFlag (радиус по rating2, ступень — module/rules/daemonic-dread.mjs) → module/regions/auras.mjs sweepAurasOnScene; тест test/rules/daemonic-dread.test.mjs"
   },
   "trait.darkPrinceSChild": {
     label: "Покровитель Слаанеш ставится сам и не меняется (patronage.lockedSlaanesh); на 30/60/90 Inf — окно выбора: Многорукий +2 или +2 к максимуму Очков Бесчестия (infamy.darkPrinceMilestones, system.infamyMaxMod)",
@@ -5644,7 +5644,7 @@ export const CAPABILITIES = {
   },
   "trait.digitigrade": {
     label: "+X к SPD; +5×X на группирование.",
-    source: "Digitigrade / Двусоставный (X)", reader: ""
+    source: "Digitigrade / Двусоставный (X)", reader: "module/rules/digitigrade.mjs + запись kind:movement в паке Черты — module/combat/movement-actions.mjs"
   },
   "trait.divinelyGifted": {
     label: "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар. Реализовано без возможности: Возможность данными не выдаётся: выбор — ИЛИ-группа Конструктора Архетипа Нумен (kind:\"equipment\" по паку мутаций, equipChoiceIds без Доспехов Богов и Знаний Веков, submutationChoice; ветки Даров — с when.patronGod, лишние из выбора убирает module/apps/mechanics.mjs::orChoiceEntries).",
@@ -5676,7 +5676,7 @@ export const CAPABILITIES = {
   },
   "trait.fanatic": {
     label: "Может перехватить атаку по союзнику.",
-    source: "Fanatic / Фанатик", reader: ""
+    source: "Fanatic / Фанатик", reader: "module/combat/fanatic-redirect.mjs — module/combat/attack.mjs fanaticIntercepts, attack-card.mjs (кнопки перехвата)"
   },
   "trait.fastLearner": {
     label: "+X% к опыту за сессию (прибавка опыта на листе и награды сессии). НЕ реализовано: +X% к СТАРТОВОМУ опыту — Этап 4 Мастера создания (constants/start-levels.mjs::startLevelValues) процент не читает.",
@@ -5736,8 +5736,8 @@ export const CAPABILITIES = {
     reader: "module/rules/hollow-bones.mjs::hollowBonesTb → module/combat/damage.mjs applyDamageToActor (подвид crushing), пометка в карточке урона. Падение (обычный I без Cr) не затрагивает — решение владельца 01.10.2026"
   },
   "trait.hoverer": {
-    label: "Парение со скоростью SPD X.",
-    source: "Hoverer / Парящий (X)", reader: ""
+    label: "Парение со скоростью SPD X (по имени Черты Flyer/Hoverer; без Flyer — только Приземная высота).",
+    source: "Hoverer / Парящий (X)", reader: "module/rules/flight-speed.mjs flightSpeedOf() → module/rules/character/movement.mjs; гейт высот — module/combat/movement-actions.mjs actorHasFlyer()"
   },
   "trait.hypnoScars": {
     label: "Критический Провал теста на Интеллекте (Характеристика или Навык на ней) — Ступор на 1 Раунд сам; Предел Крит. Провала таких тестов 86+ (правило replicant.hypnoScars.critRange). НЕ сделано: тесты I, которые идут не через общий расчёт исхода (свои окна Техночудес, Крафта и т.п.), Ступор не накладывают.",
@@ -5791,8 +5791,8 @@ export const CAPABILITIES = {
     reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс в диалоге теста)"
   },
   "trait.maneuverable": {
-    label: "+20 на тесты поворотов и Заноса.",
-    source: "Maneuverable / Манёвренный", reader: ""
+    label: "+20 всаднику на тесты поворотов и Заноса (только скакуны/байки, как в книге).",
+    source: "Maneuverable / Манёвренный", reader: "module/rules/mount.mjs maneuverMods() (:330), turnOptions/skidInfo; UI — module/sheets/tabs/mount-panel.mjs"
   },
   "trait.masterOfMachines": {
     label: "Игнорирует требования по Inf для Миньонов-машин. Черта выдаёт общую возможность minion.ignoreInfamy.machine — этот ключ ею не используется (сверка Архетипов 28.09.2026).",
@@ -5815,8 +5815,8 @@ export const CAPABILITIES = {
     source: "Monodevotant / Монозависимый", reader: ""
   },
   "trait.multipleArms": {
-    label: "Доп. конечности → доп. атаки/манипуляции.",
-    source: "Multiple Arms / Многорукий (X)", reader: ""
+    label: "Рейтинг = общее число рук (бюджет рук) и +1 Атака за Ход на каждую пару рук сверх первой (нечётная лишняя рука — пара). Не автоматизировано: потолок 2+P.b рук за Ход, независимые пары (выстрел + рукопашная в один Ход), счёт по парам для Талантов «Два оружия».",
+    source: "Multiple Arms / Многорукий (X)", reader: "module/rules/hands.mjs baseHandsFromTraits()/maxHands() (бюджет рук) + multipleArmsAttackBonus() → module/combat/attack-limit.mjs attackActionLimit(); тесты test/combat/attack-limit.test.mjs"
   },
   "trait.mutant": {
     label: "Имеет X мутаций.",
@@ -5864,11 +5864,11 @@ export const CAPABILITIES = {
   },
   "trait.nimble10": {
     label: "Штраф атакующим по нему (−X, Рейтинг Черты).",
-    source: "Nimble (10) / Проворный", reader: ""
+    source: "Nimble (10) / Проворный", reader: "module/rules/resolve-test.mjs traitRatingSum() — считает по имени Черты, суммируя Рейтинги"
   },
   "trait.nimble": {
     label: "Штраф атакующим по нему (−X, Рейтинг Черты).",
-    source: "Nimble / Проворный", reader: ""
+    source: "Nimble / Проворный", reader: "module/rules/resolve-test.mjs traitRatingSum() + module/rules/library/core.mjs + module/rules/character/armour.mjs (по имени Черты)"
   },
   "trait.nobleEugenics": {
     label: "Выбирает 2 Характеристики — они становятся дружественными в плане продвижений и остаются такими, независимо от Покровительства. Реализовано диалогом выбора при выдаче Архетипа (записи aptOverride), этот ключ не используется.",
@@ -5879,8 +5879,8 @@ export const CAPABILITIES = {
     reader: ""
   },
   "trait.ogryn": {
-    label: "+15 S и T, −15 Ag и Int, +15 Ран, набор Трейтов и Талантов огрина.",
-    source: "Ogryn / Огрин", reader: ""
+    label: "+15 S и T, −15 Ag и Int, +15 Ран, набор Трейтов и Талантов огрина — работает и у Миньона: данные самого предмета Огрин (charValueBonuses + каскад Трейтов/Талантов в Механике).",
+    source: "Ogryn / Огрин", reader: "пак-предмет Огрин (flags.mechanics + system.effects) + module/rules/library/ogryn.mjs OGRYN_TRAIT_RULES (по Трейтам Brute Physiology/BONE-Head); тест test/rules/library/ogryn-traits.test.mjs"
   },
   "trait.packConsciousness": {
     label: "Стая (Отряд, где у всех бойцов эта Черта): бонусы Команд вдвое, все три эффекта Командного Присутствия даже без Командира (W — наибольшая в стае), Реакция члена стаи в 3 м на Уклонение. Текстом: невербальный язык стаи.",
@@ -5910,16 +5910,16 @@ export const CAPABILITIES = {
     source: "Preferred Strike / Предпочтительный Удар", reader: ""
   },
   "trait.psyber": {
-    label: "Связь хозяин↔псайбер; манифестация психосил.",
-    source: "Psyber / Псайбер (X)", reader: ""
+    label: "Связь хозяин↔псайбер: кнопка «Связать с хозяином» назначает псайбера носителем манифестации хозяина (Путь «Псайбер-Фамильяр»). Чувства, телепатия, направление и расстояние — текстом.",
+    source: "Psyber / Псайбер (X)", reader: "запись kind:script на Черте → module/apps/psyber-link.mjs linkPsyberToMaster() → module/rules/psychic-vessel.mjs setPsychicVessel; заметка — module/sheets/tabs/psychic.mjs; тест test/apps/psyber-link.test.mjs"
   },
   "trait.psyker": {
-    label: "Является псайкером.",
-    source: "Psyker / Псайкер", reader: ""
+    label: "Является псайкером. Миньон с этой Чертой считается псайкером (system.isPsyker, PR ≥ 1) — у персонажей и рас флаг ведёт чарген.",
+    source: "Psyker / Псайкер", reader: "module/rules/psyker.mjs minionHasPsykerTrait() → module/rules/character/final-pools.mjs prepareFinalPools (только Миньоны)"
   },
   "trait.quadruped": {
-    label: "Удваивает SPD и Ношение.",
-    source: "Quadruped / Четвероногий (X)", reader: ""
+    label: "SPD и вес Ношения ×2 (весь SPD вместе с надбавками; Подъём и Толкание не меняются). Рейтинги 0 и 2 — всегда; рейтинг 1 — на четвереньках (×2) или прямоходящий (как без Трейта), кнопка режима на Черте. Руки по рейтингу — текстом.",
+    source: "Quadruped / Четвероногий (X)", reader: "module/rules/quadruped.mjs quadrupedMultiplier() → module/rules/character/movement.mjs (SPD) и module/rules/character.mjs (Ношение); режим — module/apps/quadruped-mode.mjs; тест test/rules/quadruped.test.mjs"
   },
   "trait.quietElimination": {
     label: "РЕАЛИЗОВАНО (wdbc-1rno.3): два независимых пункта. (1) «Атакует Врасплох» — attack.mjs::targetSurprised (per-attack галочка «Цель Врасплох», любое оружие) → +1 куб урона (attack-outcome.mjs::bonusDamageDice) + строка в карточке «цель не издаёт звука» (честно без детектора смерти). (2) «Только ножи/игольчатые/осколочные пистолеты» — +10 к атаке независимо от Врасплох, situational-мод sheets/attack/mods.mjs (isQuietEliminationWeapon). Игольчатое оружие без единого структурного признака в данных (разные фракции — разный weaponType) — распознаётся по имени предмета, честная граница.",
@@ -6005,12 +6005,12 @@ export const CAPABILITIES = {
     source: "Soul-Bound / Душесвязанный", reader: ""
   },
   "trait.stampede": {
-    label: "Паническая скачка при Страхе.",
-    source: "Stampede / Затопот", reader: ""
+    label: "Паническая скачка при провале теста Воли — ТОЛЬКО подсказка Мастеру в карточке проваленного теста Страха; сдвиг токена на Натиск, Напролом по всем на пути и цепная реакция соседей с Трейтом не автоматизированы (тесты Воли бросаются в десятках мест).",
+    source: "Stampede / Затопот", reader: "module/rules/stampede.mjs stampedeNoteHtml() → module/combat/fear.mjs _executeFearRoll (карточка провала Страха); тест test/combat/stampede-note.test.mjs"
   },
   "trait.stand": {
     label: "Всадник стоит: руки свободны, попадания делятся по чётности.",
-    source: "Stand / Стойка", reader: ""
+    source: "Stand / Стойка", reader: "module/rules/mount.mjs (попадание по чётности кубика, руки «Стойка») — по имени Черты скакуна"
   },
   "trait.steed": {
     label: "На Миньоне можно ездить верхом; открывает Трейты скакунов.",
@@ -6093,8 +6093,8 @@ export const CAPABILITIES = {
     source: "Thrall-Wyrd / Тралл-Вирд", reader: ""
   },
   "trait.toxic": {
-    label: "Естественное оружие получает Toxic (X).",
-    source: "Toxic / Токсичный (X)", reader: ""
+    label: "Естественное оружие получает Toxic (X): запись Механики kind:attackProp на самой Черте (apScope:unarmed).",
+    source: "Toxic / Токсичный (X)", reader: "запись kind:attackProp в паке Черты → module/rules/item-rules.mjs grantWeaponProp → module/rules/resolve-test.mjs weaponPropsFromRules; побочный эффект — module/combat/damage.mjs"
   },
   "trait.undying": {
     label: "Иммунитет ядам/болезням; не умирает мгновенно.",
@@ -6112,7 +6112,7 @@ export const CAPABILITIES = {
   },
   "trait.unruly": {
     label: "Непоглощённый урон скакуну — тест Акробатики или выпадение из седла.",
-    source: "Unruly / Непослушный", reader: ""
+    source: "Unruly / Непослушный", reader: "module/combat/mount.mjs (тест Акробатики при непоглощённом уроне скакуну), module/rules/mount.mjs — по имени Черты"
   },
   "trait.unstableGenome": {
     label: "Урон в Характеристики усиливается на +1 (плюс ещё +1 за каждую доп. адаптацию).",
@@ -6133,12 +6133,12 @@ export const CAPABILITIES = {
     source: "Warp Instability / Варп-Нестабильность", reader: ""
   },
   "trait.warpWeapon": {
-    label: "Естественное оружие игнорирует броню.",
-    source: "Warp Weapon / Варп-Оружие", reader: ""
+    label: "Естественное оружие получает свойство Warp Weapon (поглощение по W.b вместо брони): запись Механики kind:attackProp на самой Черте.",
+    source: "Warp Weapon / Варп-Оружие", reader: "запись kind:attackProp в паке Черты → module/rules/item-rules.mjs grantWeaponProp → module/rules/resolve-test.mjs weaponPropsFromRules; урон — module/combat/damage.mjs; тест test/rules/natural-weapon-traits.test.mjs"
   },
   "trait.warTrained": {
     label: "Управление без рук, кроме скорости Натиска и Бега.",
-    source: "War-Trained / Боевая Тренировка", reader: ""
+    source: "War-Trained / Боевая Тренировка", reader: "module/rules/mount.mjs (handsNeeded: 0 рук, кроме Натиска и Бега) — по имени Черты скакуна"
   },
   // ── Черты: packs-src/traits/Книга_Пустоты — Фаза 2, capability-документация ──
   "trait.knigaPustoty.navigatorSGen": {
@@ -6178,11 +6178,11 @@ export const CAPABILITIES = {
   },
   "trait.treytyRas.druchiiten": {
     label: "Доп. Реакция; +4 к Инициативе (3 броска, лучший); избегает атак Орды/«Троек» как одиночные (теряется при Размере 2+).",
-    source: "Druchiiten / Друкхарийское Тело", reader: ""
+    source: "Druchiiten / Друкхарийское Тело", reader: "module/rules/initiative.mjs (3 броска) + эффект +1 Реакция в паке Черты"
   },
   "trait.treytyRas.eldarten": {
     label: "Доп. Реакция; инициатива — 3 броска, лучший, +4 к Инициативе. Psyniscience с ½ штрафов (Mastery → трейт Warp Sight).",
-    source: "Eldarten / Эльдарское Тело", reader: ""
+    source: "Eldarten / Эльдарское Тело", reader: "module/rules/initiative.mjs (3 броска) + эффект +1 Реакция в паке Черты"
   },
   "trait.treytyRas.godless": {
     label: "Нет Очков Судьбы и Очков Бесчестья (нет Покровительства). Для талантов, требующих ОБ, тратит Очки Боли по уровню таланта.",
@@ -6244,7 +6244,7 @@ export const CAPABILITIES = {
   },
   "trait.treytyRas.unnaturalX": {
     label: "+X к Бонусу выбранной из S/T/A/P; дополнительно +½X (окр.▼) степени успеха на все успешные тесты по ней. Укажите в авто-эффектах.",
-    source: "Unnatural (выбор) (X) / Сверхъестественная (выбор) (X)", reader: ""
+    source: "Unnatural (выбор) (X) / Сверхъестественная (выбор) (X)", reader: "module/rules/unnatural-characteristic.mjs + module/rules/kind-outcome.mjs; +X к Бонусу — rules/character.mjs traitCharBonus"
   },
   "trait.treytyRas.untouchable": {
     label: "Иммунитет к ритуалам, феноменам и прорывам. Душу нельзя схватить, удержать или выжечь — её спасает Цегорах.",
