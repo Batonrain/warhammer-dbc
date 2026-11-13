@@ -77,6 +77,7 @@ import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs"
 import { markedPreyActive } from "../combat/marked-prey.mjs";
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
+import { effectiveAmmoRange, ammoOverrides, shellDroppedProps } from "../rules/ammo-override.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { weaponProfiles, attackIsMelee, sysWithProfileFire, sysWithMeleeProfileReach } from "../combat/weapon-profiles.mjs";
 import { conductiveMeleeOf } from "../rules/conductive.mjs";
@@ -233,7 +234,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   {
     const _ammo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
     // Боеприпас бывает и отнимает свойство (Инферно Тзинча гасит Tearing).
-    const _drop = new Set((_ammo?.system?.removeProps || []).map(k => String(k)));
+    const _drop = new Set([...(_ammo?.system?.removeProps || []),
+      ...shellDroppedProps(_ammo?.system, item.system?.weaponProps)].map(k => String(k)));
     if (_drop.size) _entries = _entries.filter(e => !_drop.has(e.key));
     for (const p of (_ammo?.system?.properties || [])) {
       const key = typeof p === "string" ? p : p.key;
@@ -1100,9 +1102,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   let rangeInfoHtml = "";
   if (!isMelee && sys.range > 0) {
     const rng     = gripRange;
-    const rngMult = ammoSys?.rangeMultiplier ?? 1;
-    const rngAdd  = ammoSys?.rangeMod ?? 0;
-    const effRng  = Math.round(rng * rngMult) + rngAdd;
+    // Снаряд техники с rangeOverride заменяет дальность орудия (rules/ammo-override.mjs).
+    const rngOver = ammoOverrides(ammoSys).range;
+    const rngMult = rngOver !== null ? 1 : (ammoSys?.rangeMultiplier ?? 1);
+    const rngAdd  = rngOver !== null ? 0 : (ammoSys?.rangeMod ?? 0);
+    const effRng  = effectiveAmmoRange(rng, ammoSys);
     // У короткоствольного оружия (Rng ≤ 6) «короткая»/«боевая» вырождены упором
     // (см. rangeBandBoundaries) — их границы совпадают, строку не показываем,
     // иначе игрок увидит бессмысленное "Короткая: 3–3м".

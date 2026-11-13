@@ -1,0 +1,63 @@
+{
+  "name": "Cluster Shell / Кассетный Снаряд",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
+  "folder": "uJE8Awg6L5kJ6U24",
+  "system": {
+    "description": "Снаряд орудия «Тяжёлая Мортира Грифон» (Griffon Heavy Mortar). Dmg, Pen и Rng снаряда ЗАМЕНЯЮТ профиль орудия, а не складываются с ним. Наносит попадание сверху.",
+    "notes": "",
+    "weaponTypes": [
+      "any"
+    ],
+    "ammoCategory": "vehicle_shells",
+    "rarity": -1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": -1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageDiceMod": 0,
+    "damageTypeOverride": "impact",
+    "damageSubtypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "damageOverride": "2d10+4",
+    "penetrationOverride": 2,
+    "rangeOverride": 0,
+    "weaponTag": "Griffon Heavy Mortar",
+    "special": "Наносит попадание сверху.",
+    "properties": [
+      {
+        "key": "blast",
+        "rating": 20
+      }
+    ],
+    "removeProps": [],
+    "condMods": [],
+    "drukhari": false,
+    "bookSource": "DoomBC — Машины («Грифон», боеприпасы для орудия «Тяжёлая Мортира Грифон», стр. 20)",
+    "legion": false,
+    "itemSize": ""
+  },
+  "_id": "ZyJklOePOpGV0O24",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1794583108814,
+    "modifiedTime": 1794583108814,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!ZyJklOePOpGV0O24"
+}

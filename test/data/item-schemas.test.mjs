@@ -454,6 +454,8 @@ const TYPES = {
       stored: false,
       damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", damageSubtypeOverride: "", penetrationMod: 0,
       rangeMod: 0, rangeMultiplier: 1, special: "", properties: [], condMods: [],
+      // Снаряд орудия техники (wdbc-nzzgn): абсолютные значения взамен базы орудия.
+      damageOverride: "", penetrationOverride: null, rangeOverride: 0, weaponTag: "",
       // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
       // поля не было, и замена держалась на одном тексте «Особенностей».
       removeProps: [],

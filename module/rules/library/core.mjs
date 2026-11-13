@@ -201,6 +201,39 @@ export const CORE_RULES = [
       { kind: "rollBonus", target: "contest", value: -20, label: "Аватар Резни: манёвр против Берсерка" }
     ]
   },
+  {
+    // Aether Cocoon / Эфирный Кокон (Пси-Стойкость, wdbc-nzzgn): «за каждую
+    // действующую на него психосилу (Вливания, Изменения, Ауры, Призывы)
+    // +2 на встречные тесты W против психосил (кроме непрямых), демонических
+    // даров и атак Одержимостью». Число сил считает valueFrom.selfPsychicPowersActing.
+    // Дары и Одержимость — без окна теста Сопротивления, их ведёт стол.
+    // Остальные части Таланта (−2 к штрафу Daemonic Presence, +1 АР против
+    // варп-оружия) не смоделированы.
+    id: "psyResist.aetherCocoon",
+    label: "Эфирный Кокон: +2 за каждую действующую психосилу",
+    when: { hasTalent: "Aether Cocoon", charIn: ["wp"] },
+    effects: [{ kind: "rollBonus", target: "psychicDirect", auto: true,
+                valueFrom: { selfPsychicPowersActing: true, multiplier: 2 } }]
+  },
+  {
+    // Forsaken / Отверженный (Пси-Стойкость, wdbc-nzzgn), две половины.
+    // 1) Сам носитель: −10 на Сопротивление силам демонических псайкеров
+    //    (в ctx.targetActor Сопротивления лежит кастер). Атаки Одержимостью —
+    //    без окна теста, ведёт стол.
+    id: "psyResist.forsaken.resist",
+    label: "Отверженный: −10 к Сопротивлению силам демонов",
+    when: { hasTalent: "Forsaken", targetIsDaemon: true },
+    effects: [{ kind: "rollBonus", target: "psychicPower", value: -10, auto: true }]
+  },
+  {
+    // 2) Чужие псайкеры: −10 на манифестацию силы, нацеленной на Отверженного.
+    //    «Действующих ТОЛЬКО на этого персонажа» (не по области) система не
+    //    различает — поэтому галочка в окне, а не автомат.
+    id: "psyResist.forsaken.cast",
+    label: "Цель — Отверженный: −10 к тесту силы, действующей только на него",
+    when: { targetHasTalent: "Forsaken" },
+    effects: [{ kind: "rollBonus", target: "power", value: -10, askOnly: true }]
+  },
   // Умелые Руки (Скват) — галочки тонкой работы с отбором по Черте, отдельным
   // файлом: library/squat.mjs.
   ...SQUAT_TRAIT_RULES

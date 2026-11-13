@@ -20,9 +20,16 @@
           "value": 45
         },
         {
-          "id": "dbc13r03",
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s02",
           "kind": "other",
-          "text": "Не Секутор, Архимагос или Малагра, Трейт Mechanicum Implants"
+          "text": "Не Секутор, Архимагос или Малагра"
         }
       ],
       "secondary": []

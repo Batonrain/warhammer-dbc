@@ -13,9 +13,44 @@
           "value": 6
         },
         {
-          "id": "dbc13r02",
-          "kind": "other",
-          "text": "For. Lore (Horus Heresy and Long War, Psykers)+30, Schol.Lore (Legend, Occult)+30"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Ересь Хоруса и Долгая Война",
+          "rank": "expert",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Псайкеры",
+          "rank": "expert",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Легенды",
+          "rank": "expert",
+          "count": 1,
+          "label": "Ученые знания"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Оккультизм",
+          "rank": "expert",
+          "count": 1,
+          "label": "Ученые знания"
         }
       ],
       "secondary": []

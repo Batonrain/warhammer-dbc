@@ -20,9 +20,29 @@
           "value": 40
         },
         {
-          "id": "dbc13r03",
-          "kind": "other",
-          "text": "Трейт Mechanicum Implants, Medicae, Tech-Use+10"
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "medicae",
+          "rank": "knows",
+          "count": 1,
+          "label": "Медицина"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "techUse",
+          "rank": "trained",
+          "count": 1,
+          "label": "Технология"
         }
       ],
       "secondary": []

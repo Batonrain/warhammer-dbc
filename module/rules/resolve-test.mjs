@@ -25,6 +25,7 @@ import { conditionLevelField } from "../constants/conditions.mjs";
 import { itemHasName, hitSizeOf } from "./predicates.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
+import { psychicPowersActingOn } from "./warp-effect-guard.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
@@ -330,7 +331,9 @@ function rawEffectValue(effect, ctx, ruleId) {
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
   const { targetCharBonus, selfCharBonus, masterCharBonus, targetTraitRating, targetSize, selfSize,
-          selfConditionLevel, targetFieldPsyMod, multiplier = 1 } = effect.valueFrom;
+          selfConditionLevel, targetFieldPsyMod, selfPsychicPowersActing, multiplier = 1 } = effect.valueFrom;
+  // Эфирный Кокон (wdbc-nzzgn): число психосил, действующих на самого бросающего.
+  if (selfPsychicPowersActing) return psychicPowersActingOn(ctx?.actor) * multiplier || 0;
   // Уровень своего Состояния со счётчиком (wdbc-x1nz.2.92, «Раны и Урон»,
   // «Статусы»: «За каждый уровень Обескровливания … –5 на все тесты T»).
   // Поле счётчика — из реестра Состояний (conditionLevelField), тот же ключ,

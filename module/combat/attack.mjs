@@ -34,6 +34,7 @@ import { fanaticInterceptCandidates, backToBackFreeUseAvailable, fanaticPayer } 
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
 import { ammoIsFree, hasInfiniteMagazine } from "../rules/ammo-free.mjs";
+import { ammoOverrides, shellDroppedProps } from "../rules/ammo-override.mjs";
 import { hasNoMagazine, isExpendableOrdnance } from "../rules/no-magazine.mjs";
 import { spendExpendable } from "./spend-expendable.mjs";
 import { weaponSnapshot } from "./attack-snapshot.mjs";
@@ -322,7 +323,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (isBiteName(item) && hasRuleFlag(actor, VENOM_BITE_CAPABILITY)) effDamage = venomBiteDamage(effDamage);
   const effDmgType = eff.damageType;
   const effDmgSubtype = eff.damageSubtype;
-  const effPen0    = eff.penetration;
+  let   effPen0    = eff.penetration;
 
   // ── Особые свойства оружия (+ от установленных модификаций) ───────────────
   //   Если выбран доп. профиль со своими свойствами (Крюк/Посох) — берём их
@@ -330,6 +331,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const modFx     = getModEffects(actor, item, { profile: P });
   // Заряженный боеприпас нужен уже здесь: он может добавлять свойства оружия.
   const loadedAmmo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
+  // Снаряд орудия техники (wdbc-nzzgn): абсолютные Dmg/Pen из книги ЗАМЕНЯЮТ базу
+  // орудия (rules/ammo-override.mjs); у обычного боеприпаса полей нет — без изменений.
+  if (!isMelee) {
+    const ammoOv = ammoOverrides(loadedAmmo?.system);
+    if (ammoOv.damage !== null)      effDamage = ammoOv.damage;
+    if (ammoOv.penetration !== null) effPen0   = ammoOv.penetration;
+  }
   // Тандем: у встроенного оружия свойства СВОИ, даже пустые — иначе оно подхватило бы свойства тяжёлого носителя.
   const _propSource = (P && Array.isArray(P.weaponProps) && (P.weaponProps.length || P.tandem))
     ? { system: { weaponProps: P.weaponProps } }
@@ -343,7 +351,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     // Свойства от правила (wdbc-w8z4): уже отобраны диалогом атаки по `when`
     // (см. attack-dialog.mjs, resolveTest(...).weaponProps) — здесь только долив.
     ruleProps:   opts.ruleProps || [],
-    removeProps: loadedAmmo?.system?.removeProps || []
+    removeProps: [...(loadedAmmo?.system?.removeProps || []),
+      // Снаряд техники заменяет профиль орудия целиком (wdbc-nzzgn).
+      ...shellDroppedProps(loadedAmmo?.system, _propSource.system?.weaponProps)]
   });
   // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на Encounter
   // (флаг на предмете, module/combat/witchs-edge.mjs) добавляет свои записи.

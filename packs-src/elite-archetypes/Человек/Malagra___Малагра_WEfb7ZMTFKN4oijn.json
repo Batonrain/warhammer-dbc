@@ -20,9 +20,33 @@
           "value": 55
         },
         {
-          "id": "dbc13r03",
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "stealth",
+          "rank": "trained",
+          "count": 1,
+          "label": "Скрытность"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "talent",
+          "name": "Total Recall / Идеальная Память",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.ttzHNu39HbCICfk8",
+          "count": 1
+        },
+        {
+          "id": "dbc13s04",
           "kind": "other",
-          "text": "Не Тех-Ассасин, Секутор или Архимагос, Трейт Mechanicum Implants, Stealth+10, Total Recall"
+          "text": "Не Тех-Ассасин, Секутор или Архимагос"
         }
       ],
       "secondary": []

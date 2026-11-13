@@ -8,9 +8,45 @@
     "requirements": {
       "primary": [
         {
-          "id": "dbc13r01",
+          "id": "dbc13s01",
+          "kind": "characteristic",
+          "charKey": "int",
+          "value": 60
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 60
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "characteristic",
+          "charKey": "fel",
+          "value": 60
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Ересь Хоруса и Долгая Война",
+          "rank": "expert",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Mastery / Мастерство",
+          "specialization": "Запретные знания (Демоны)",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.2OBfo5PO1q8hIKDJ",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
           "kind": "other",
-          "text": "Раса: Любая, 60 I, 60 WP, 60 F, 1 Scholastic Lore и 1 Forbidden Lore на уровне Mastery, Horus Heresy and Long War+30, Mastery Daemons, Отсутствие Метки Хаоса"
+          "text": "1 Scholastic Lore и 1 Forbidden Lore на уровне Mastery (без учёта остальных в Требованиях); Не-Хаосит, Отсутствие Метки Хаоса"
         }
       ],
       "secondary": []

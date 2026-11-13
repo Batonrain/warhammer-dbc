@@ -25,9 +25,24 @@
           "value": 45
         },
         {
-          "id": "dbc13r04",
-          "kind": "other",
-          "text": "For.Lore (Daemons)+10, Trade (Weaponsmith)+10"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Демоны",
+          "rank": "trained",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "trade",
+          "specKey": "Оружейник",
+          "rank": "trained",
+          "count": 1,
+          "label": "Ремесло"
         }
       ],
       "secondary": []

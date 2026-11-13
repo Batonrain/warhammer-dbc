@@ -20,9 +20,57 @@
           "value": 40
         },
         {
-          "id": "dbc13r03",
-          "kind": "other",
-          "text": "Charm+10, Command+10, Logic+10, Schol.Lore (Heraldry), Air of Authority, Iron Discipline"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "charm",
+          "rank": "trained",
+          "count": 1,
+          "label": "Очарование"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "command",
+          "rank": "trained",
+          "count": 1,
+          "label": "Командование"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "logic",
+          "rank": "trained",
+          "count": 1,
+          "label": "Логика"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Геральдика",
+          "rank": "knows",
+          "count": 1,
+          "label": "Ученые знания"
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Air of Authority / Аура Власти",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.XTXLxoMrhvgfSBDE",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "talent",
+          "name": "Iron Discipline / Железная Дисциплина",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.cZSwCrYZhZkt18iF",
+          "count": 1
         }
       ],
       "secondary": []
@@ -536,7 +584,8 @@
               "label": "",
               "code": "",
               "kind": "talent",
-              "id": "eaPeer1"
+              "id": "eaPeer1",
+              "targetChoiceCount": 1
             }
           ]
         }

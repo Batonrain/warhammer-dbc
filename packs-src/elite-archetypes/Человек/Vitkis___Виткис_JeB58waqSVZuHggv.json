@@ -25,9 +25,56 @@
           "value": 35
         },
         {
-          "id": "dbc13r04",
-          "kind": "other",
-          "text": "Athletics+10, Command+0, Com.Lore (War)+10, Resistance (Fear), Frenzy, Unshakeable Will"
+          "id": "dbc13s01",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "athletics",
+          "rank": "trained",
+          "count": 1,
+          "label": "Атлетика"
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "command",
+          "rank": "knows",
+          "count": 1,
+          "label": "Командование"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "commonLore",
+          "specKey": "Война",
+          "rank": "trained",
+          "count": 1,
+          "label": "Общие знания"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "talent",
+          "name": "Resistance / Сопротивление",
+          "specialization": "Fear",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.KUrEsT190BtUwtW8",
+          "count": 1
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Frenzy / Ярость",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.FP1xN9yNXHr9vWw8",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "talent",
+          "name": "Unshakeable Will / Несокрушимая Воля",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.enmMIBVPZhTWvwRp",
+          "count": 1
         }
       ],
       "secondary": []

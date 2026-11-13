@@ -34,6 +34,15 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
       penetrationMod:     num(0, "Пробитие"),
       rangeMod:           num(0, "Дальность"),
       rangeMultiplier:    num(1, "Дальность, множитель"),
+      // Снаряд орудия техники (wdbc-nzzgn): АБСОЛЮТНЫЕ Dmg/Pen/Rng из книги,
+      // ЗАМЕНЯЮТ базу орудия, а не складываются с ней (rules/ammo-override.mjs).
+      // Пусто / null / 0 — «не задано»: боеприпас правит профиль, как прежде.
+      damageOverride:      new StringField({ initial: "", label: "Урон взамен (кубы)" }),
+      penetrationOverride: new NumberField({ initial: null, nullable: true, label: "Пробитие взамен" }),
+      rangeOverride:       num(0, "Дальность взамен"),
+      // Имя орудия (английская часть), которому снаряд принадлежит; пусто —
+      // подбор по типу оружия, как у боеприпасов персонажей.
+      weaponTag:           new StringField({ initial: "", label: "Орудие (тег)" }),
       special:            new StringField({ initial: "", label: "Особенности" }),
       properties:         new ArrayField(new ObjectField(), { label: "Свойства" }),
       // Свойства, которые боеприпас у оружия ОТНИМАЕТ: Инферно Тзинча гасит
