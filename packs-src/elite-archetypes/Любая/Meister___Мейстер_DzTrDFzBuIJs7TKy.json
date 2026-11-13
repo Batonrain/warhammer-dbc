@@ -10,6 +10,30 @@
         {
           "id": "eldarReq306",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "patron",
+          "key": "nurgle"
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "skill",
+          "scope": "plain",
+          "skillKey": "medicae",
+          "rank": "trained",
+          "count": 1,
+          "label": "Медицина"
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Химия",
+          "rank": "trained",
+          "count": 1,
+          "label": "Ученые знания"
         }
       ],
       "secondary": []

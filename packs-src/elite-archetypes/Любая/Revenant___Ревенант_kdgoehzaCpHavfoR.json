@@ -10,6 +10,29 @@
         {
           "id": "eldarReq314",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "patron",
+          "key": "khorne"
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "trade",
+          "specKey": "Оружейник",
+          "rank": "trained",
+          "count": 1,
+          "label": "Ремесло"
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "talent",
+          "name": "Hatred / Ненависть",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.x4C4FheBkX5nS2Wt",
+          "count": 1
         }
       ],
       "secondary": []

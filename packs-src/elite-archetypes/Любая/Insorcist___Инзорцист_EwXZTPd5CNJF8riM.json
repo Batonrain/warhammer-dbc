@@ -10,6 +10,68 @@
         {
           "id": "eldarReq303",
           "kind": "notEldar"
+        },
+        {
+          "id": "dbc14r01",
+          "kind": "characteristic",
+          "charKey": "int",
+          "value": 50
+        },
+        {
+          "id": "dbc14r02",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 50
+        },
+        {
+          "id": "dbc14r03",
+          "kind": "trait",
+          "key": "",
+          "name": "Psyker / Псайкер",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
+        },
+        {
+          "id": "dbc14r04",
+          "kind": "psyRating",
+          "value": 6
+        },
+        {
+          "id": "dbc14r05",
+          "kind": "talent",
+          "name": "Total Recall / Идеальная Память",
+          "specialization": "",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.ttzHNu39HbCICfk8",
+          "count": 1
+        },
+        {
+          "id": "dbc14r06",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "scholasticLore",
+          "specKey": "Оккультизм",
+          "rank": "trained",
+          "count": 1,
+          "label": "Ученые знания"
+        },
+        {
+          "id": "dbc14r07",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Демоны",
+          "rank": "expert",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc14r08",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "linguistics",
+          "specKey": "Истинный Язык",
+          "rank": "knows",
+          "count": 1,
+          "label": "Язык"
         }
       ],
       "secondary": []
