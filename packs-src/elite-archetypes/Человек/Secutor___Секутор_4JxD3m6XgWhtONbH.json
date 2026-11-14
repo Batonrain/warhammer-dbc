@@ -52,8 +52,8 @@
         },
         {
           "id": "dbc13s05",
-          "kind": "other",
-          "text": "Не Тех-Ассасин, Архимагос или Малагра"
+          "kind": "notElite",
+          "text": "Tech-Assassin, Archmagos, Malagra"
         }
       ],
       "secondary": []

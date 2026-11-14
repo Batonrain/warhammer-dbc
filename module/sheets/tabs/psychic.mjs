@@ -1488,6 +1488,7 @@ export async function executePsychotest(actor, item, opts) {
            data-target-uuid="${esc(targetActor.uuid)}" data-caster-uuid="${esc(actor.uuid)}"
            data-char-key="${esc(sys.resistChar)}" data-mod="${resistMod}"
            data-discipline="${esc(sys.discipline || "")}"
+           data-subtype="${esc(sys.subtype || "")}"
            data-target-token-uuid="${esc(targetToken?.document?.uuid || "")}"
            data-item-uuid="${esc(item.uuid)}"
            data-psy-indirect="${isIndirectPower(item.system) ? 1 : ""}"

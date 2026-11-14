@@ -540,6 +540,14 @@ export async function rollBurningPanicTest(actor) {
     });
     return { success: true, rv: null, eff: wp };
   }
+  // Не От Мира Сего (From Beyond): «автоматически проходит тесты на … Панику».
+  if (hasRuleFlag(actor, "panic.immune")) {
+    await postTestCard(actor, {
+      icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Не От Мира Сего: иммунитет к Панике — теста нет</span>`
+    });
+    return { success: true, rv: null, eff: wp };
+  }
   // Пожарный (Sahara 3-scope): «не паникует от Горения» — теста нет вовсе
   // (в отличие от автоуспеха Бесстрашного, у которого бросок идёт).
   if (hasTalentCapability(actor, FIREMAN_CAP)) {

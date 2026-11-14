@@ -1,4 +1,8 @@
 import { _tokenRelationshipOf, _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { clearBloodOfHeroes } from "./combat/fate-abilities.mjs";
+import { clearMomentum } from "./combat/momentum.mjs";
+import { warpInstabilityTurnEnd } from "./combat/warp-instability.mjs";
+import { clearBloodGodKills } from "./combat/demon-god-traits.mjs";
 import { refreshParasiteHosts } from "./rules/parasite-trait.mjs";
 import { repickBornForWar } from "./migrations/born-for-war-fix.mjs";
 import { _performUnseenDetect, _performUnseenBypass } from "./combat/unseen-attack.mjs";
@@ -97,6 +101,7 @@ import { processFastWeavingCombatStart, handleSignatureFreeClick, handlePsyRerol
 import { VAMPIRE_CARD_FLAG, handleVampireClick } from "./combat/psychic-vampire.mjs";
 import { WARP_LOCK_CARD_FLAG, handleWarpLockClick } from "./combat/warp-lock.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
+import { mindImmunityBlocksPower } from "./rules/mind-immunity.mjs";
 import { tryDivineProtection, tryShieldOfContempt, postWarpOffers, runWarpOffer } from "./combat/warp-guard.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -465,6 +470,22 @@ export function registerHooks() {
             </div>`,
             { sound: false });
           return;
+        }
+        // Не От Мира Сего (From Beyond): иммунитет к силам на разум (Телепатия:
+        // Мезмеризм/Иллюзионизм), «если сам не пожелает» — спрашиваем, пустить ли.
+        if (mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
+          const allow = await foundry.applications.api.DialogV2.confirm({
+            window: { title: `Не От Мира Сего — ${targetActor.name}` },
+            content: `<p>${esc(d.label || "Психосила")} влияет на разум. Иммунитет гасит её. Пожелает ли ${esc(targetActor.name)}, чтобы сила подействовала?</p>`,
+            yes: { label: "Пустить силу" }, no: { label: "Игнорировать (иммунитет)" }, rejectClose: false
+          });
+          if (!allow) {
+            await postTestCard(targetActor, `<div class="wh-roll-result">
+              <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Не От Мира Сего — ${esc(targetActor.name)}</div>
+              <div class="roll-threshold">Иммунитет к психосилам на разум: эффекты игнорируются, тест Сопротивления не нужен.</div>
+              </div>`, { sound: false });
+            return;
+          }
         }
         // Божественная Защита (wdbc-nzzgn): раз в Раунд d10, на 10 эффект игнорируется.
         const gateCaster = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
@@ -2285,6 +2306,7 @@ export function registerHooks() {
           // они не читаются и ни на что не влияют.
           blast:        parseInt(ds.blast || "0"),
           flame:        ds.flame      === "1",
+          scatter:      ds.scatter    === "1",
           powerField:   ds.powerField === "1",
           spray:        ds.spray      === "1",
           devastating:  parseInt(ds.devastating || "0"),
@@ -4906,6 +4928,9 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolvePendingSusAnHeals(combat, { force: true });
+    await clearBloodGodKills(combat);
+    await clearMomentum(combat);
+    await clearBloodOfHeroes(combat);
     _lastTurnCombatant.delete(combat.id);
     // «На поле боя X ходов стрелка» вне боя не имеет смысла — считать больше не от чего.
     await clearAllLingerZones();
@@ -5299,6 +5324,8 @@ function _attachFateContextMenu(message, html) {
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
         // Хода», не в начале следующего.
         await processConditionTurnEnd(prevActor);
+        // Варп-Нестабильность демона: тест W+0 в конце Хода, если получал урон и сам не наносил.
+        await warpInstabilityTurnEnd(prevActor);
         // Сроки в Раундах, наложенные в ЭТОТ Ход, кончаются в его конце — у
         // кого бы они ни висели (книга, «Длительность Эффектов», wdbc-x1nz.2.84).
         await sweepApplierTurnEnd(combat, prevId);

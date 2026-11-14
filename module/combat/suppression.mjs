@@ -104,6 +104,15 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
     });
     return { success: true, rv: null, threshold: null, immune: true };
   }
+  // Не От Мира Сего (From Beyond): «автоматически проходит тесты на … Подавление».
+  if (hasRuleFlag(actor, "suppression.immune")) {
+    await postTestCard(actor, {
+      icon: rollIcon("target","#8fd0ff"),
+      title: `Тест Подавления${sourceLabel ? ` — ${esc(sourceLabel)}` : ""} → ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Иммунитет к Подавлению (Не От Мира Сего) — тест не нужен</span>`
+    });
+    return { success: true, rv: null, threshold: null, immune: true };
+  }
   if (safeOverride) {
     await postTestCard(actor, {
       icon: rollIcon("target","#8fd0ff"),

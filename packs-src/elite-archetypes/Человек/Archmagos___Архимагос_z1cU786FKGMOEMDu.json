@@ -64,8 +64,8 @@
         },
         {
           "id": "dbc13s06",
-          "kind": "other",
-          "text": "Не Тех-Ассасин, Секутор или Малагра"
+          "kind": "notElite",
+          "text": "Secutor, Malagra, Tech-Assassin"
         }
       ],
       "secondary": []

@@ -14,6 +14,7 @@
 // Функции принимают актора, а не лист. Свёртка «Состязаний» осталась на листе:
 // это состояние окна, а не актора.
 
+import { sturdyResistMods } from "../../rules/sturdy.mjs";
 import { MELEE_CONTESTS, parseGrips, gripManeuverBonus } from "../../constants/combat.mjs";
 import { equippedMeleeWeapon } from "../../combat/equipped-melee.mjs";
 import { currentMeleeGrip } from "../../rules/hands.mjs";
@@ -484,7 +485,7 @@ export function activateCombatListeners(root, actor) {
       return _showContestDialog(actor, { ...base, onSuccess: resolveBulldozeSuccess,
         resistMods: (opp, me) => {
           const p = bulldozeSizePenalty(me, opp);
-          return p ? [{ label: "меньше Размером", value: p }] : [];
+          return [...(p ? [{ label: "меньше Размером", value: p }] : []), ...sturdyResistMods(opp, "knockdown")];
         } });
     }
     _showContestDialog(actor, base);

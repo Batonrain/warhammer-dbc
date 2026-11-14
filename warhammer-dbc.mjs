@@ -2739,7 +2739,10 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   const poolApplied = item.getFlag("warhammer-dbc", "poolApplied");
   if (poolApplied?.pool && poolApplied.amount) {
     const cur = actor.system[poolApplied.pool]?.value || 0;
-    await actor.update({ [`system.${poolApplied.pool}.value`]: cur - poolApplied.amount });
+    const upd = { [`system.${poolApplied.pool}.value`]: cur - poolApplied.amount };
+    // max:true — Черта подняла и максимум пула (Подхалим: Лояльность Миньона), откатываем и его.
+    if (poolApplied.max) upd[`system.${poolApplied.pool}.max`] = (actor.system[poolApplied.pool]?.max || 0) - poolApplied.amount;
+    await actor.update(upd);
   }
 
   // {amount} — kind:"wounds" Конструктора (module/apps/mechanics.mjs): разовая

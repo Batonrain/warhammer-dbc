@@ -75,7 +75,9 @@ export function mechRollData(actor) {
     // файла), поэтому raw-значение получает отдельный ключ.
     corv: Number(actor?.system?.corruption?.value) || 0,
     subtier: Math.max(1, Number(actor?.system?.subraceTier) || 1),
-    wound: woundFreeCount(actor)
+    wound: woundFreeCount(actor),
+    // Момент Гладиатора (rules/momentum.mjs): очки из флага актора; у остальных — 0.
+    momentum: Math.max(0, Number(actor?.flags?.["warhammer-dbc"]?.momentum ?? actor?.getFlag?.("warhammer-dbc", "momentum")) || 0)
   };
   for (const k of CHAR_KEYS) {
     data[k] = bonus(k);

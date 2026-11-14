@@ -57,7 +57,7 @@ export function blankEntry(kind = "race") {
     case "or":       return { ...base, items: [] };
     case "notEldar": return { ...base };
     case "patron":   return { ...base, key: "" };
-    case "other":  return { ...base, text: "" };
+    case "other": case "notElite": return { ...base, text: "" };
     case "corruption": case "infamy": case "xp": case "psyRating": return { ...base, value: 0 };
     case "characteristic": return { ...base, charKey: Object.keys(CHARACTERISTICS)[0], value: 0 };
     default:       return { ...base, key: "", name: "", uuid: "" };  // раса, субраса, Черта
@@ -142,6 +142,10 @@ function fieldsHtml(e, dis) {
     case "other":
       return `<input type="text" class="elite-req-field elite-req-text" data-field="text"
         value="${esc(e.text || "")}" placeholder="Своё требование — читает ГМ" ${dis}/>`;
+
+    case "notElite":
+      return `<input type="text" class="elite-req-field elite-req-text" data-field="text"
+        value="${esc(e.text || "")}" placeholder="Названия архетипов через запятую" ${dis}/>`;
 
     case "or":
       return "";   // содержимое ИЛИ-группы рисуется отдельно, вложенными строками

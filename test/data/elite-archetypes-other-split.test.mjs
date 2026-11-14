@@ -85,9 +85,8 @@ describe("Архимагос и Секутор: трейт и Таланты с�
     expect(r.find(e => e.kind === "trait").name).toMatch(/Mechanicum Implants/);
     expect(r.filter(e => e.kind === "talent").map(e => e.name.split(" / ")[0]).sort())
       .toEqual(["Binary Dominion", "Cybernetic Rebirth"]);
-    const other = r.filter(e => e.kind === "other");
-    expect(other).toHaveLength(1);
-    expect(other[0].text).toBe("Не Тех-Ассасин, Секутор или Малагра");
+    expect(r.filter(e => e.kind === "other")).toHaveLength(0);
+    expect(r.find(e => e.kind === "notElite").text).toBe("Secutor, Malagra, Tech-Assassin");
   });
   it("Секутор: Hatred любые 3 со счётчиком, Two Weapon Wielder (Ranged)", () => {
     const r = flat(byName("Secutor").system.requirements);
@@ -99,5 +98,25 @@ describe("Архимагос и Секутор: трейт и Таланты с�
     expect(r.filter(e => e.kind === "characteristic").map(e => `${e.charKey}${e.value}`)).toEqual(["int60", "wp60", "fel60"]);
     expect(r.find(e => e.kind === "skill").rank).toBe("expert");
     expect(r.find(e => e.kind === "talent").specialization).toBe("Запретные знания (Демоны)");
+  });
+});
+
+describe("Взаимоисключающие архетипы Механикус — «не взят» вместо текста", () => {
+  const NAMES = ["Archmagos", "Malagra", "Secutor", "Tech-Assassin"];
+  for (const n of NAMES) {
+    it(`${n}: запись notElite перечисляет трёх остальных`, () => {
+      const e = flat(byName(n).system.requirements).find(x => x.kind === "notElite");
+      expect(e, n).toBeTruthy();
+      const listed = e.text.split(",").map(s => s.trim()).sort();
+      expect(listed).toEqual(NAMES.filter(x => x !== n).sort());
+    });
+  }
+  it("Малагра закрыта тому, у кого уже есть Секутор; свободна без него", () => {
+    const req = byName("Malagra").system.requirements;
+    const secutor = { eliteArchetypes: [{ name: "Secutor / Секутор" }] };
+    const has = checkEliteRequirements(req, who(secutor)).unmet.some(m => /Не взят архетип/.test(m));
+    const none = checkEliteRequirements(req, who({ eliteArchetypes: [] })).unmet.some(m => /Не взят архетип/.test(m));
+    expect(has).toBe(true);
+    expect(none).toBe(false);
   });
 });

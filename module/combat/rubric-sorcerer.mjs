@@ -20,6 +20,7 @@
 //   • Инфернальные Снаряды — useInfernalShells.
 // ════════════════════════════════════════════════════════════════════════
 
+import { hasRuleFlag } from "../rules/flags.mjs";
 import {
   REBORN_TEST_MOD, GOLEM_FLAG, GOLEM_LOYALTY, GOLEM_PROFILE_NAME, GOLEM_POSSESSION_HOURS, GOLEM_SOULS,
   SHIELD_FLAG, SHIELD_RATING, ECHO_USAGE_FLAG, ECHO_PENDING_FLAG, STUPOR_FLAG,
@@ -77,13 +78,14 @@ const confirm = (title, text, yes, no) => foundry.applications.api.DialogV2.conf
 export async function rollPeril(actor, rolls = []) {
   const first = await new Roll("1d100").evaluate();
   rolls.push(first);
-  if (!hasRubricOfAhriman(actor)) return { total: first.total, note: "" };
+  const soulBound = hasRuleFlag(actor, "psychic.perilTwoRolls");
+  if (!hasRubricOfAhriman(actor) && !soulBound) return { total: first.total, note: "" };
   const second = await new Roll("1d100").evaluate();
   rolls.push(second);
   const { keep, drop } = pickMilderPeril(first.total, second.total);
   return {
     total: keep,
-    note: ` <i>(Рубрика Аримана: два броска ${first.total} и ${second.total} — взят меньший, отброшен ${drop}: ${esc(getPeril(drop).label)})</i>`
+    note: ` <i>(${soulBound && !hasRubricOfAhriman(actor) ? "Душесвязанный" : "Рубрика Аримана"}: два броска ${first.total} и ${second.total} — взят меньший, отброшен ${drop}: ${esc(getPeril(drop).label)})</i>`
   };
 }
 

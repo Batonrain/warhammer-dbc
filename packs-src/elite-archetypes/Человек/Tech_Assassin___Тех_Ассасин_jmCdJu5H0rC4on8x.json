@@ -28,8 +28,8 @@
         },
         {
           "id": "dbc13s02",
-          "kind": "other",
-          "text": "Не Секутор, Архимагос или Малагра"
+          "kind": "notElite",
+          "text": "Secutor, Archmagos, Malagra"
         }
       ],
       "secondary": []

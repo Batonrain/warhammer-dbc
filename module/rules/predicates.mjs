@@ -5,6 +5,8 @@
 // иначе правило не проверить тестом без запуска Foundry, а ради этого всё и
 // затевалось. Формат записи — docs/rules-format.md.
 
+import { momentumPoints } from "./momentum.mjs";
+import { isIncorporealNow } from "./incorporeal.mjs";
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
 import { raceMatches } from "./race.mjs";
@@ -738,6 +740,10 @@ export const PREDICATES = {
   // core.mjs): без него строка с «(+0)» лезла бы в чек-лист на каждом броске
   // против обычного человека, а не только там, где Размер реально что-то даёт.
   hasSize:       (actor, ctx) => hitSizeOf(actor) !== 0,
+  // Момент Гладиатора (rules/momentum.mjs): очков не меньше N — правило +5 за очко не лезет в чужие тесты.
+  momentumMin:   (actor, ctx, value) => momentumPoints(actor) >= (Number(value) || 1),
+  // Бестелесный (rules/incorporeal.mjs): состояние «на бестелесном плане» сейчас.
+  incorporeal:   (actor, ctx, value) => isIncorporealNow(actor) === !!value,
   targetHasSize: (actor, ctx) => hitSizeOf(ctx?.targetActor) !== 0,
   // Атака рукопашная (true) или стрелковая (false) — по режиму самой атаки (ctx.isMelee), а не по классу оружия:
   // у винтовки есть рукопашный профиль (приклад, штык), и Верный/Выверенный Удар должны работать на нём

@@ -1,4 +1,9 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
+import { reliableSoldierChoice } from "../apps/reliable-soldier.mjs";
+import { RELIABLE_SOLDIER_CAP, reliableSoldierBonus } from "../rules/reliable-soldier.mjs";
+import { STRUCTURAL_ANALYSIS_CAP, structuralAnalysisBonus } from "../rules/mechanicus-monk-traits.mjs";
+import { momentumOnAttackMiss } from "./momentum.mjs";
+import { bloodGodBonusOf } from "./demon-god-traits.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { resonanceCap, resonanceAfterHits, multiplyDamageDice } from "../rules/resonance.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
@@ -1181,6 +1186,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Запрещённый Приём (Cheap Shot, книга): Избегания от него тратят вдвое больше Успехов
   // на отмену каждого попадания; множится с Огневой Клетью.
   wp.evadeCost = (cageFiring ? CAGE_FIRING_EVADE_COST : 1) * (isMelee && wp.cheapShot ? 2 : 1);
+  // Момент Гладиатора: промах рукопашной/метательной атаки — −1 очко (rules/momentum.mjs).
+  if (!hit) await momentumOnAttackMiss(actor, { isMelee, weaponClass: sys.weaponClass });
   const hitCountSys = wideBurst
     ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - WIDE_BURST_RATING_CUT - (cageFiring ? CAGE_FIRING_RATING_CUT : 0)) }
     : fanningSys;
@@ -1372,6 +1379,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const pr        = actor.system.psyker?.currentRating ?? 0;
   // Психосиловое в руках псайкера: +PR к урону и Pen (макс +10)
   const forceBonus = (wp.forcePR && isPsyker) ? Math.min(pr, 10) : 0;
+  // Надёжный Вояка: выбранный тип оружия — +2 Dmg, +1 Pen (rules/reliable-soldier.mjs).
+  const reliable = hasRuleFlag(actor, RELIABLE_SOLDIER_CAP)
+    ? reliableSoldierBonus({ ...reliableSoldierChoice(actor), weapon: item, isMelee }) : { dmg: 0, pen: 0 };
 
   // Перемены (Change, стр. 74 Книги Аэльдари): +X Pen, если цель отмечена
   // бездушной/техникой в диалоге атаки (галочка, не авто — трейта «бездушный»
@@ -1429,7 +1439,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const tankHunter = tankHunterForAttack(actor, { isMelee, targetActor: defenderActor });
   const pen = attackPenetration({
     base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen,
-    wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen
+    wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen + reliable.pen
   });
 
   const corVal   = Number(actor.system?.corruption?.value ?? 0);
@@ -1467,6 +1477,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
   const bloodFlameBonus = bloodFlameDamageBonus(item);
+  // Кровь Богу Крови (демон Кхорна): +2 за каждое убийство, до +8, ко ВСЕМУ рукопашному урону до конца боя.
+  const bloodGodBonus = isMelee ? bloodGodBonusOf(actor) : 0;
+  // Структурный Анализ (Секутор): одиночная Избирательная атака — +I.b к Dmg (rules/mechanicus-monk-traits.mjs).
+  const structuralBonus = hasRuleFlag(actor, STRUCTURAL_ANALYSIS_CAP)
+    ? structuralAnalysisBonus({ selective: !!aimTarget?.value, single: isMelee || rofMode === "single", intBonus: chars.int?.bonus })
+    : 0;
   // Метательное (стр. 40, wdbc-x1nz.2.58): «+S.b к урону» — даже брошенное
   // (не рукопашное использование), в отличие от прочего стрелкового, которое
   // S.b к урону никогда не получает.
@@ -1595,7 +1611,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const coupDeGrace = hit && coupDeGraceActive({
     actor, weapon: item, gripKey: opts.gripKey, aimValue: aimTarget?.value, targetActor: defenderActor, isMelee });
   const skullBonus = skullOfferingBonus(actor, { isMelee, combatId: combatIdOf(actor) });
-  const flatBonus = razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  const flatBonus = razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
   // Сварщик (rules/gunsmith-talents.mjs): признак на кнопки «Применить урон» — доп.

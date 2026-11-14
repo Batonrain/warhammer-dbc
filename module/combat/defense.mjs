@@ -1,4 +1,5 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
+import { momentumOnEvade } from "./momentum.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
 import { offHandParryPenalty } from "../rules/off-hand.mjs";
@@ -49,6 +50,7 @@ import { tokenRect } from "./horde-tokens.mjs";
 import { contactType } from "../rules/tactical-map.mjs";
 import { handOfKhorneAttackSizeBonus } from "../rules/hand-of-khorne.mjs";
 import { phantomCopiesDodgePenalty } from "../rules/wrapped-in-chaos.mjs";
+import { alluringPresencePenalty } from "../rules/alluring-presence.mjs";
 import { hasGazeOfInevitability } from "../rules/gaze-of-inevitability.mjs";
 import { rageAvoidanceRefusal } from "./rage-behavior.mjs";
 import { isTokenInSight } from "../rules/vision-target.mjs";
@@ -295,8 +297,11 @@ export async function _performDodge(actor, {
   // attackerUuid — штрафа нет, тот же честный дефолт, что и там).
   const attackerActor = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
   const wicDodgePenalty = phantomCopiesDodgePenalty(attackerActor, isMelee);
-  const preGazeThreshold = baseThreshold + wicDodgePenalty;
+  // Чарующее Присутствие (Слаанеш): −10 на Избегания против атак демона.
+  const alluringPenalty = alluringPresencePenalty(attackerActor);
+  const preGazeThreshold = baseThreshold + wicDodgePenalty + alluringPenalty;
   if (wicDodgePenalty !== 0) modParts.push(`Фантомные Копии атакующего ${wicDodgePenalty}`);
+  if (alluringPenalty !== 0) modParts.push(`Чарующее Присутствие атакующего ${alluringPenalty}`);
   // Взор Неизбежности (стр. …, wdbc-1rno.3): защищающийся видит глаза
   // атакующего-носителя Дара — Комбинированный Порог с W−10, провал снимает
   // все Реакции (после самого броска ниже).
@@ -358,6 +363,8 @@ export async function _performDodge(actor, {
   // боя или без attackerUuid (кнопки контратаки/старые вызовы его не несут).
   // При удвоенной цене (Огневая Клеть) снятое попадание стоит cost Успехов.
   const leftover = passed ? deg - negated * cost : 0;
+  // Момент Гладиатора: успешное Избегание — +1 очко.
+  if (passed) await momentumOnEvade(actor);
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   if (picked.dropped.length) {
@@ -857,7 +864,10 @@ export async function _performParry(actor, {
   // (кроме мастера: «Безоружный Мастер» считает его вооружённым).
   const armedVsUnarmedBonus = (isMelee && attackerUnarmedKnown && (!defenderUnarmed || unarmedMasterArmed)) ? ARMED_VS_UNARMED_PARRY_BONUS : 0;
   if (armedVsUnarmedBonus) modParts.push(`вооружён против безоружной атаки +${armedVsUnarmedBonus}`);
-  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty + armedVsUnarmedBonus;
+  // Чарующее Присутствие (Слаанеш): −10 на Избегания против атак демона (Парирование — тоже Избегание).
+  const alluringParryPenalty = alluringPresencePenalty(attackerActor);
+  if (alluringParryPenalty) modParts.push(`Чарующее Присутствие атакующего ${alluringParryPenalty}`);
+  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty + armedVsUnarmedBonus + alluringParryPenalty;
 
   // Взор Неизбежности (стр. …, wdbc-1rno.3) — тот же приём, что у Уклонения
   // (_performDodge): защищающийся видит глаза атакующего-носителя Дара —
@@ -972,6 +982,8 @@ export async function _performParry(actor, {
   const effectiveDeg = Math.floor(((isMelee || contactParry || deflectMode) ? deg : Math.min(deg, 1)) / parryCost);
   const { total: totalHits, negated, remaining } = negatedHits(passed, effectiveDeg, hitsCount);
   const parried = passed;
+  // Момент Гладиатора: успешное Парирование — +1 очко.
+  if (passed) await momentumOnEvade(actor);
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
   // в этом Ходу (стр. 12, module/combat/evasion-pool.mjs). См. _performDodge.
   // При Парировании СТРЕЛЬБЫ банковать нечего: книга даёт ровно одно снятое

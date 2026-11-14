@@ -53,6 +53,7 @@ export const REQ_KINDS = [
   { key: "notEldar",       label: "Не эльдар (расы Основной книги)" },
   { key: "trait",          label: "Черта",           drop: "trait"   },
   { key: "talent",         label: "Талант",          drop: "talent"  },
+  { key: "notElite",       label: "Не взят архетип"  },
   { key: "patron",         label: "Покровительство"  },
   { key: "skill",          label: "Умение"           },
   { key: "corruption",     label: "Порча"            },
@@ -72,6 +73,9 @@ export const blankEliteReq = () => ({ primary: [], secondary: [] });
 
 /** Расы группы «Аэльдари» (races/Аэльдари) — для требования «Не эльдар». */
 export const ELDAR_RACE_KEYS = ["azuriane", "drukhari", "exodite", "ynnari", "harlequin", "halfEldar"];
+
+/** Имена запрещённых архетипов записи «notElite» — строка через запятую. */
+export const notEliteNames = e => String(e?.text || "").split(",").map(x => x.trim()).filter(Boolean);
 
 const num = v => Number(v) || 0;
 /** Сколько предметов требуется: пусто и 0 значат «один». */
@@ -163,6 +167,11 @@ function entryOk(entry, who) {
     // Арлекин/Полуэльдар). Сслит в этот список не входит (races помечает его
     // «раса не-эльдар»), поэтому «Любая» ему доступна.
     case "notEldar": return !ELDAR_RACE_KEYS.includes(who.race);
+    case "notElite": {
+      // «Не Секутор, Архимагос или Малагра»: имена через запятую, любая половина «Eng / Рус».
+      const banned = notEliteNames(entry);
+      return !(who.eliteArchetypes || []).some(a => banned.some(b => hasWantedName(a, b)));
+    }
     case "trait": {
       const want = String(entry.name || "").trim();
       return !want || (who.traits || []).some(t => hasWantedName(t, want));
@@ -203,6 +212,7 @@ export function describeEliteReq(entry) {
     case "race":    return `Раса: ${entry.name || entry.key || "?"}`;
     case "subrace": return `Субраса: ${entry.name || entry.key || "?"}`;
     case "notEldar": return "Раса: не эльдар (Основная книга)";
+    case "notElite": return `Не взят архетип: ${notEliteNames(entry).join(", ") || "?"}`;
     case "trait":   return `Черта: ${entry.name || "?"}`;
     case "patron":  return `Покровительство: ${PATRON_OPTIONS.find(p => p.key === entry.key)?.label || "?"}`;
     case "talent": {
@@ -298,7 +308,8 @@ export function eliteWho(actor) {
     // Бесчестие — Характеристика inf, отдельного поля у него нет.
     infamy: statValue(actor, "inf"),
     psyRating: statValue(actor, "psyRating"),
-    spentXP: num(s.experience?.spent)
+    spentXP: num(s.experience?.spent),
+    eliteArchetypes: items.filter(i => i.type === "eliteArchetype").map(i => ({ name: i.name }))
   };
 }
 

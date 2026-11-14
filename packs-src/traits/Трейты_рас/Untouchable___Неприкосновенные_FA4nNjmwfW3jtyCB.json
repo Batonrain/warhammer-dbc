@@ -5,7 +5,7 @@
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
-    "notes": "Список из ~5 разных иммунитетов/защит (ритуалы, феномены, прорывы, психосилы-принуждения, Fear демонов) — не сводится к одному числовому полю.",
+    "notes": "Автоматизировано (dbc-114, 14.11.2026): атака Одержимостью по носителю не начинается; чародейские щиты демонов-целей атаки носителя не срабатывают. Не автоматизировано: иммунитет к ритуалам, феноменам и прорывам; игнор Fear демонов; игнор их Черт/свойств (Dreaming, Bane, Challenge…); защита души.",
     "benefit": "Иммунитет к ритуалам, феноменам и прорывам. Душу нельзя схватить, удержать или выжечь — её спасает Цегорах. Игнорирует Fear демонов/демонических сущностей, силовые щиты демонов и их трейты/свойства (Dreaming, Bane, Challenge и т.п.). Не может быть одержим.",
     "source": "раса",
     "hasRating": false,
@@ -30,7 +30,39 @@
   "sort": 0,
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "IlXGhpfStFYssNn7",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "BgQIPizl9rE22ILu",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "possession.immune",
+              "label": "Не может быть одержим",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "GvLjMsSbnNtnD7kV",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "shield.ignoreDaemon",
+              "label": "Игнорирует силовые (чародейские) щиты демонов",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

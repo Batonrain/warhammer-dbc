@@ -5,7 +5,7 @@
   "folder": "mp80UDDbesh2I1kr",
   "system": {
     "description": "",
-    "notes": "Даёт свойства Toxic/Corrosive безоружным атакам + условное перенесение на оружие полным действием — модификация профиля атаки/оружия по условию, канала нет (тот же класс, что Toxic(X)/Razor Talons).",
+    "notes": "Автоматизировано (dbc-114, 14.11.2026): безоружные (интегральные) атаки носителя получают свойства Toxic (2) и Corrosive (2). Не автоматизировано: за полное действие измазать оружие ближнего боя на Cor.b Раундов.",
     "benefit": "Безоружные атаки Монаха получают свойства Toxic (2) и Corrosive (2). Может за полное действие измазать одно своё оружие ближнего боя в трупном гное, сочащемся из его рук, дав ему эти же свойства на Cor.b Раундов.",
     "source": "Элитный архетип: Чумной Монах",
     "hasRating": false,
@@ -34,7 +34,33 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "nUA1IR45xrW7WgxB",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3nmoDos6Dca3BhBf",
+              "kind": "attackProp",
+              "label": "Безоружные атаки Монаха получают Toxic (2)",
+              "apScope": "unarmed",
+              "apKey": "toxic",
+              "apRating": "2",
+              "apRating2": ""
+            },
+            {
+              "id": "pykdsZL1hu5xTRZZ",
+              "kind": "attackProp",
+              "label": "Безоружные атаки Монаха получают Corrosive (2)",
+              "apScope": "unarmed",
+              "apKey": "corrosive",
+              "apRating": "2",
+              "apRating2": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

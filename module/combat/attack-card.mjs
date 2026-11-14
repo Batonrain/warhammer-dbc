@@ -310,6 +310,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-sanctified="${wp.sanctified ? 1 : 0}"
     data-blast="${wp.blastRating ?? 0}"
     data-flame="${wp.flame ? 1 : 0}"
+    data-scatter="${wp.scatter ? 1 : 0}"
     data-power-field="${wp.powerField ? 1 : 0}"
     data-spray="${wp.spray ? 1 : 0}"
     data-devastating="${wp.devastatingRating ?? 0}"

@@ -514,6 +514,10 @@ describe("общее требование к предикатам", () => {
     charNotIn: ["t", "inf", "cor"],
     charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
+    // Бестелесный (rules/incorporeal.mjs, dbc-114): состояние актора, значение из `when` — «да/нет».
+    incorporeal: true,
+    // Момент Гладиатора (rules/momentum.mjs, dbc-114): очки из флага актора.
+    momentumMin: 1,
     targetSizeMax: -1,
     attackMelee: true,
     // Принадлежность к фракции — своя и у цели (дерево фракций).

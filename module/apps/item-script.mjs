@@ -23,6 +23,11 @@
 //  Ничего не песочница — контекст (actor/item/token) передаётся как есть.
 // ════════════════════════════════════════════════════════════════════════
 
+import { chooseReliableTypes } from "./reliable-soldier.mjs";
+import { useBloodOfHeroes, usePerformance } from "../combat/fate-abilities.mjs";
+import { spendMomentum } from "../combat/momentum.mjs";
+import { absorbPain } from "./absorb-pain.mjs";
+import { togglePhase } from "./phase-shift.mjs";
 import { woundLossUpdates, woundDeathThreshold } from "../rules/wounds.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
@@ -65,6 +70,7 @@ import { tzeentchMarkBindUpdate } from "../rules/psyker.mjs";
 import { useShapeshift } from "../combat/shapeshift.mjs";
 import { linkPsyberToMaster } from "./psyber-link.mjs";
 import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
+import { shiftAmorphousSize } from "./amorphous-size.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -241,7 +247,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
-    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode",
+    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
     ...extraNames,
     code
   );
@@ -261,7 +267,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
-    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode,
+    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
     ...extraNames.map(k => extra[k])
   );
 }

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Демоны Тзинча защищены мерцающим барьером разноцветного колдовского пламени, что порой вспыхивает вокруг них, отражая атаки.",
-    "notes": "Активируемый щит-купол с рейтингом поглощения и ручным вкл/выкл — новая механика активного щита (отдельная от брони/Shield-предметов), нет готового канала.",
+    "notes": "Автоматизировано (dbc-114, 14.11.2026): Черта выдаёт щит «Чародейский Барьер» (купол, чародейский, 1-35, не перегружается); включается и выключается переключателем статуса щита на листе.",
     "benefit": "Не перегружающийся колдовской щит-купол 1-35. Включается и выключается за свободное действие.",
     "source": "Демон Тзинча",
     "hasRating": false,
@@ -33,7 +33,33 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "rpy1koirA50wPMqG",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "FbHygM4tLdTedisW",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.shields.Item.WnxFnXZ0poEzYYKR",
+              "equipSourceName": "Sorcerous Barrier / Чародейский Барьер",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "1"
+                ],
+                "negateSub": false
+              },
+              "label": "Колдовской щит-купол 1-35 (не перегружается)"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

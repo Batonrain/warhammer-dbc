@@ -28,6 +28,7 @@
 //  _doThrow ниже.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { sturdyResistMods } from "../rules/sturdy.mjs";
 import { _showContestDialog } from "./techniques.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -357,6 +358,25 @@ export function grappleTakeoverAutoFails(actor) {
 }
 
 /**
+ * Аморфный: «автоматически выигрывает тесты на высвобождение из Борьбы». Вырваться/Выкрутиться без
+ * броска: тратит Полное действие и сразу разрывает Захват. true — обработано, обычного теста нет.
+ */
+export async function attemptAutoEscape(actor, key) {
+  if (!hasRuleFlag(actor, "grapple.autoEscape") || !["breakFree", "twistFree"].includes(key)) return false;
+  const def = TARGET_TESTS[key];
+  if (!(await spendActionPoints(actor, def.apCost, { physical: true }))) {
+    ui.notifications.warn(`⚠️ ${def.label}: не хватает ОД (Полное действие).`);
+    return true;
+  }
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: `${def.label} — ${esc(actor.name)}`,
+    outcome: outcomeHtml(true, `Аморфный: высвобождение удаётся без теста.`)
+  }, { sound: false });
+  await _resolveEscapeSuccess(actor);
+  return true;
+}
+
+/**
  * Попытка «Перехватить Контроль»: если она проваливается сама (Необъятный) — тратит Полное действие и пишет
  * карточку без броска, возвращает true («обработано»); иначе false — обычный встречный тест.
  */
@@ -661,7 +681,7 @@ export function grappleTechDef(actor, def) {
     forcedRerollLabel: "Помеха: Благословенный Гноем",
     escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
     slipAway: char === "ag" && !def.jockey && hasDodgeTalent(actor, "slipAway"),
-    resistMods: (opp, me) => grappleTestMods(opp, me),
+    resistMods: (opp, me) => [...grappleTestMods(opp, me), ...sturdyResistMods(opp, "grapple")],
     resistRolls: opp => (isGrappleAttacker(opp) ? grappleHands(opp) : 1)
   };
 }
@@ -1596,6 +1616,7 @@ export function showGrappleDialog(actor) {
           dialog.close();
           return showGrappleDialog(actor);
         }
+        else if (await attemptAutoEscape(actor, key)) { /* Аморфный: без теста */ }
         else if (key === "takeover" && await attemptTakeover(actor)) { /* Необъятный: провал без броска */ }
         else if (ALL_TESTS[key]) await _showContestDialog(actor, grappleTechDef(actor, ALL_TESTS[key]));
         dialog.close();

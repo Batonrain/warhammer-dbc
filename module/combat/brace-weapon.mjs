@@ -20,6 +20,7 @@
 //  ВСЕ тяжёлые считаются «для большинства» (±45°, обычная установка).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { spendActionPoints } from "./action-economy.mjs";
 import { tokenCenter, tokenRotation } from "./facing.mjs";
 import { normalizeAngle180 } from "../rules/facing.mjs";
@@ -48,6 +49,8 @@ function actorToken(actor) {
  * честным дефолтом, чем «слетело».
  */
 export function isBraced(actor, weapon) {
+  // Авто-Стабилизированный (dbc-114): гироскопическая стабилизация — тяжёлое оружие всегда Закреплено.
+  if (weapon && hasRuleFlag(actor, "weapon.autoBraced")) return true;
   const state = actor?.getFlag?.(NS, FLAG_KEY);
   if (!state || state.weaponId !== weapon?.id) return false;
   const token = actorToken(actor);

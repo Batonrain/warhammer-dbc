@@ -13,6 +13,7 @@
 //  +10 S/T и +1d10+3 Ран.
 // ════════════════════════════════════════════════════════════════════════
 
+import { hasRuleFlag } from "../rules/flags.mjs";
 import {
   possessionStep, possessionBarredRemaining, possessionBarKey, possessionInRange, POSSESSION_GOAL,
   POSSESSION_ATTACK_FLAG, POSSESSION_BARRED_FLAG, POSSESSION_HOST_FLAG
@@ -61,6 +62,10 @@ export async function attemptPossessionAttack(actor) {
   const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
   if (!actor || !target) {
     ui.notifications?.warn("Выберите цель Атаки Одержимостью.");
+    return null;
+  }
+  if (hasRuleFlag(target, "possession.immune")) {
+    ui.notifications?.warn(`${target.name} не может быть одержим (Неприкосновенные).`);
     return null;
   }
   if (actor.getFlag(NS, POSSESSION_HOST_FLAG) || controlOf(target)) {

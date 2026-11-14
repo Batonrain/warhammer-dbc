@@ -1,5 +1,12 @@
 // module/combat/damage.mjs
 
+import { momentumOnDamage } from "./momentum.mjs";
+import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
+import { isDaemonActor } from "../rules/predicates.mjs";
+import { SWARM_CAP, swarmDamage } from "../rules/swarm.mjs";
+import { WARP_INSTABILITY_CAP, shouldBanish } from "../rules/warp-instability.mjs";
+import { warpInstabilityOnHurt, warpInstabilityOnDealt, banishToWarp } from "./warp-instability.mjs";
+import { mockeryOfLifeOnDamage, bloodGodOnKill } from "./demon-god-traits.mjs";
 import { HIT_LOCATIONS }  from "../constants/combat.mjs";
 import { DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { _degWord, esc }       from "../helpers/utils.mjs";
@@ -501,6 +508,13 @@ export function _shieldCoversLocation(shieldItem, hitLocation) {
   return !Array.isArray(locs) || !locs.length || locs.includes(hitLocation);
 }
 
+/** Неприкосновенные: «игнорирует силовые щиты демонов» — атакующий-носитель, цель — демон. */
+async function _attackerIgnoresDaemonShield(attackerUuid, target) {
+  if (!attackerUuid || !isDaemonActor(target)) return false;
+  const attacker = await fromUuid(attackerUuid).catch(() => null);
+  return !!attacker && hasRuleFlag(attacker, "shield.ignoreDaemon");
+}
+
 async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "", attackerUuid = "", isRetaliation = false, ignoreDomeShields = false } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
   // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
@@ -863,6 +877,11 @@ export async function applyDamageToActor(actor, damageData) {
   // Отвратная Физиология Чумного Десантника: Реакция + T+30 — урон от этого противника уменьшается на Успехи.
   damageData = await abominableOnHit(actor, damageData);
 
+  // Рой (rules/swarm.mjs): обычные атаки (без Blast/Flame/Spray/Scatter) наносят половину урона до Поглощения.
+  if (hasRuleFlag(actor, SWARM_CAP)) {
+    damageData = { ...damageData, rawDamage: swarmDamage(damageData.rawDamage, {
+      blast: damageData.blast, flame: damageData.flame, spray: damageData.spray, scatter: damageData.scatter }) };
+  }
   const {
     rawDamage,       // число — урон до поглощения
     penetration,     // число — бронепробитие
@@ -928,7 +947,7 @@ export async function applyDamageToActor(actor, damageData) {
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
   // варп-природные (чародейские) щиты пропускаются.
-  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation, attackerUuid, isRetaliation, ignoreDomeShields });
+  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified || await _attackerIgnoresDaemonShield(attackerUuid, actor), melee, damageSubtype, hitLocation, attackerUuid, isRetaliation, ignoreDomeShields });
 
   // Если щит заблокировал — урон аннулирован, выходим
   if (shieldResult?.blocked) return;
@@ -1464,8 +1483,33 @@ export async function applyDamageToActor(actor, damageData) {
     mortalShieldNote = shield.note;
   }
 
-  const { currentWounds, newWounds, newCritical, gotCritical } =
-    await applyWoundLoss(actor, netDamage);
+  // Насмешка над Жизнью (Нургл): тест Т+10 раз в Раунд — остаться с 0 Ран (священное оружие обходит).
+  const mockery = await mockeryOfLifeOnDamage(actor, { netDamage, sanctified });
+  netDamage = mockery.net;
+  // Идущие на Смерть (Гладиатор, rules/morituri.mjs): место с носимой бронёй AP ≤ 2 — урон после поглощения ÷3 (окр. вверх).
+  if (netDamage > 0 && hasRuleFlag(actor, MORITURI_CAP)) {
+    const wornAp = Number(actor.system?.absorption?.wornOnly?.[LOCATION_TO_ARMOR[hitLocation] || "body"]) || 0;
+    netDamage = morituriDamage(netDamage, wornAp);
+  }
+
+  const woundLoss = await applyWoundLoss(actor, netDamage);
+  let { currentWounds, newWounds, newCritical, gotCritical } = woundLoss;
+  // Рой: Критических Эффектов нет — при Ранах ниже 0 уничтожен (метка «погиб», Критические не копятся).
+  let swarmDestroyedNote = "";
+  if (hasRuleFlag(actor, SWARM_CAP) && gotCritical) {
+    await actor.update({ "system.wounds.critical": Number(woundLoss.currentCritical) || 0, "flags.warhammer-dbc.deceased": true });
+    gotCritical = false;
+    newCritical = Number(woundLoss.currentCritical) || 0;
+    swarmDestroyedNote = `<div class="dmg-tb-note">Рой уничтожен: Раны ниже 0 — Критических Эффектов нет.</div>`;
+  }
+  // Варп-Нестабильность: цель получила урон / атакующий нанёс урон; Раны ниже 0 — изгнание в Варп.
+  await warpInstabilityOnHurt(actor, netDamage);
+  await warpInstabilityOnDealt(attackerUuid, netDamage);
+  if (hasRuleFlag(actor, WARP_INSTABILITY_CAP) && shouldBanish(woundLoss)) await banishToWarp(actor, woundLoss);
+  // Момент Гладиатора: попадание дошло до урона — атакующему +1, цели −1 (одно очко на карточку атаки).
+  await momentumOnDamage({ attackerUuid, target: actor, weaponUuid, melee, sourceMessageId });
+  // Кровь Богу Крови (Кхорн): убийство атакующим-демоном — +2 к рукопашному урону до конца боя.
+  const bloodGodNote = await bloodGodOnKill(attackerUuid, currentWounds, newWounds);
 
   // Боль Это Наслаждение (Талант Шумового Десантника, combat/noise-marine.mjs): непоглощённый урон снимает
   // 1 Усталости и даёт +10 на все тесты до конца следующего Хода (макс. +30).
@@ -1887,7 +1931,10 @@ export async function applyDamageToActor(actor, damageData) {
           · Место: <b>${hitLocation}</b> · Тип: <b>${dtLabel}${dSubLabel ? ` (${dSubLabel})` : ""}</b> · Урон: <b>${rawDamage}</b>
         </div>`,
       armorBreakdown,
-      shieldFailNote
+      shieldFailNote,
+      mockery.note,
+      bloodGodNote,
+      swarmDestroyedNote
     ],
     sections: [
       `<div class="roll-damage-section">

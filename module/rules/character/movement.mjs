@@ -25,6 +25,7 @@ import { mechRollData } from "../mech-formula.mjs";
 import { VAST_SIZE_FLAG, vastSizeBonus } from "../strange-invulnerability.mjs";
 import { wearsActivePowerArmour } from "../predicates.mjs";
 import { quadrupedMultiplier } from "../quadruped.mjs";
+import { amorphousSpd, AMORPHOUS_SPD_CAP, AMORPHOUS_SIZE_CAP, amorphousSizeShiftOf } from "../amorphous.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -75,6 +76,8 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   system.sizeTotal += vastSizeBonus(system.sizeTotal,
     actor?.flags?.["warhammer-dbc"]?.[VAST_SIZE_FLAG] ?? actor?.getFlag?.("warhammer-dbc", VAST_SIZE_FLAG),
     !!system.conditions?.grappling);
+  // Аморфный: смена Размера раз в Ход (apps/amorphous-size.mjs) — только в итог, SPD не трогает.
+  if (hasRuleFlag(actor, AMORPHOUS_SIZE_CAP)) system.sizeTotal += amorphousSizeShiftOf(actor);
   const stance  = system.meleeStance || "standard";
 
   let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
@@ -135,6 +138,16 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   if (quadMult !== 1) {
     quadExtra = spd * (quadMult - 1);
     spd = spd * quadMult;
+    halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
+  }
+
+  // Аморфный: «вдвое (окр. вверх) уменьшает SPD пешком» — после Четвероногого и
+  // надбавок, до Стойки и Поваленного. В полёте SPD задан Flyer/Hoverer — не делится.
+  let amorphousDelta = 0;
+  if (flightSpd === null && hasRuleFlag(actor, AMORPHOUS_SPD_CAP)) {
+    const halved = amorphousSpd(spd);
+    amorphousDelta = halved - spd;
+    spd = halved;
     halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
   }
 
@@ -255,6 +268,7 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   if (inventoryOverloadSpdMod) spdBreakdown.push({ label: "Перевес инвентаря",           value: inventoryOverloadSpdMod });
   if (piercingSpdMod)          spdBreakdown.push({ label: "Piercing (снаряд в ране)",     value: piercingSpdMod });
   if (quadExtra)               spdBreakdown.push({ label: "Четвероногий (SPD ×2)",        value: quadExtra, note: "удваивает весь SPD вместе с надбавками" });
+  if (amorphousDelta)          spdBreakdown.push({ label: "Аморфный (SPD ÷2, вверх)",      value: amorphousDelta });
   if (stance === "springing")  spdBreakdown.push({ label: "Пружинящая Стойка",           value: -2 });
   // Минимум SPD — 0.5 (стр. 28): сумма слагаемых может уйти в минус, порог
   // это ловит раньше breakdown. Повален не складывается, а делит пополам —

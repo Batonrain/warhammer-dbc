@@ -161,6 +161,21 @@ export const CORE_RULES = [
     effects: [{ kind: "rollBonus", target: "attack", value: 10 }]
   },
   {
+    // Момент Гладиатора (dbc-114, 14.11.2026): «+5 на все тесты WS, S и A за каждое очко Момента».
+    // Очки — переменная «momentum» формулы (rules/mech-formula.mjs); у кого Момента нет, она 0.
+    id: "gladiator.momentum",
+    label: "Момент: +5 за очко к WS, S, A",
+    when: { charIn: ["ws", "s", "ag"], momentumMin: 1 },
+    effects: [{ kind: "rollBonus", target: "all", formula: "momentum*5", label: "Момент", auto: true }]
+  },
+  {
+    // Бестелесный (dbc-114, 14.11.2026): «+30 на тесты Stealth» — пока персонаж на бестелесном плане.
+    id: "plane.incorporealStealth",
+    label: "Бестелесен: +30 Скрытность",
+    when: { incorporeal: true },
+    effects: [{ kind: "rollBonus", target: "skill:stealth", value: 30 }]
+  },
+  {
     // Та же таблица, обратный столбец: Размер даёт МИНУС к собственным тестам
     // Скрытности (крупнее — заметнее), знак противоположен столбцу попадания.
     id: "core.sizeStealth",

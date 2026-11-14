@@ -45,8 +45,8 @@
         },
         {
           "id": "dbc13s04",
-          "kind": "other",
-          "text": "Не Тех-Ассасин, Секутор или Архимагос"
+          "kind": "notElite",
+          "text": "Tech-Assassin, Secutor, Archmagos"
         }
       ],
       "secondary": []

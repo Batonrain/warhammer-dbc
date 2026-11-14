@@ -14,6 +14,9 @@
 //  остальное нельзя, — заведён там, где направление одностороннее.
 // ══════════════════════════════════════════════════════════════════════════
 
+import { NO_ENERGY_WEAPON_CAP, isEnergyWeapon } from "../../rules/mechanicus-monk-traits.mjs";
+import { hasRuleFlag } from "../../rules/flags.mjs";
+import { planeAttackBlockReason } from "../../rules/incorporeal.mjs";
 import { FAST_MOVE_FLAG } from "../../rules/hard-target.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -249,6 +252,31 @@ export function openAttackDialog(ctx) {
           // Борьбы из combat/grapple.mjs) недоступна, пока актор в Захвате.
           // С wdbc-x1nz.2.75 — по роли: держащий бьёт третьих свободно, цель —
           // ножом/пистолетом; удерживаемый — только свободными руками.
+          // Бестелесный (dbc-114): атаковать и быть атакованным можно только на одном плане.
+          // Отвергни Пламя (Чумной Монах): руки не слушаются при оружии с E Dmg.
+          if (hasRuleFlag(actor, NO_ENERGY_WEAPON_CAP) && isEnergyWeapon(item)) {
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: actor }),
+              content: `<div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
+                <div class="roll-outcome">
+                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Отвергни Пламя: руки не слушаются — оружие с E Dmg использовать нельзя.</span>
+                </div></div>`
+            });
+            return false;
+          }
+          const planeWhy = planeAttackBlockReason(actor, targetActor);
+          if (planeWhy) {
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: actor }),
+              content: `<div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
+                <div class="roll-outcome">
+                  <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Разные планы: ${esc(planeWhy)}.</span>
+                </div></div>`
+            });
+            return false;
+          }
           const grappleWhy = isGrappled(actor)
             ? grappleAttackBlockReason(actor, item, targetActor, { isMelee, baseKey: sel.baseKey })
             : "";
