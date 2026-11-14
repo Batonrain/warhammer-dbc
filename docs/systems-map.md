@@ -247,6 +247,24 @@
   `apps/quadruped-mode.mjs`); **Затопот** — только подсказка в карточке проваленного
   Страха (`rules/stampede.mjs`). Не сделано: Амфибия (нет «воды»), «Слепой» (нет
   постоянного Состояния), руки по рейтингу Четвероногого, сам сдвиг Затопота.
+- Трейты, пачки 1–11 (dbc-114, 14.11.2026): **Аморфный** — SPD÷2 вверх (`rules/amorphous.mjs`,
+  `movement.mjs`), «Вырваться/Выкрутиться» без теста (`grapple.mjs::attemptAutoEscape`), действие
+  «Сменить Размер» (`apps/amorphous-size.mjs`); **Не От Мира Сего** — Подавление
+  (`suppression.immune`), Паника (`panic.immune`), силы на разум (`rules/mind-immunity.mjs`, гейт в
+  `hooks.mjs`; подтип «Влияющие на разум» у Тзинча и Слаанеш — пустая категория под разметку);
+  **демоны** — Кровь Богу Крови и Насмешка над Жизнью (`combat/demon-god-traits.mjs`), Варп-Нестабильность
+  (`combat/warp-instability.mjs`), Бестелесный/Фаза (`rules/incorporeal.mjs`, `apps/phase-shift.mjs`, запрет
+  атак между планами в `sheets/attack/dialog.mjs`), Чародейский Барьер (щит в `packs-src/shields`),
+  Чарующее Присутствие (`rules/alluring-presence.mjs`), Рой (`rules/swarm.mjs`), Крепкий (`rules/sturdy.mjs`);
+  **расовые** — Через Боль (`apps/absorb-pain.mjs`), Неприкосновенные, Сслит/Искажённое Тело/Житель Тьмы/
+  Перерождённые на готовых способностях; **архетипы** — Момент Гладиатора (`combat/momentum.mjs`,
+  переменная `momentum` в формулах), Идущие на Смерть (`rules/morituri.mjs`), Daemonic (+N) как бонус к T.b,
+  Структурный Анализ и Отвергни Пламя (`rules/mechanicus-monk-traits.mjs`), Надёжный Вояка
+  (`rules/reliable-soldier.mjs`), Кровь Героев и Выступление (`combat/fate-abilities.mjs`), взаимоисключающие
+  архетипы Механикус (вид требования `notElite`, `rules/elite-requirements.mjs`). Остальные Черты:
+  кнопка-памятка в чате («правило стола») или пометка «ждёт задачу» — список и задачи Sahara в
+  `docs/dbc-114-remaining-traits.md`; у каждой Черты в реестре способностей непустой читатель
+  (`test/data/trait-capabilities-all-read.test.mjs`).
 - Общие Таланты (стр. 62, сверка главы 3, 17.10.2026): девять Талантов группы
   «Общие» сверены с книгой — полный текст в `system.benefit`, честные `notes`.
   Инициативные (Боевое Построение, Чувство Боя, Молниеносные Рефлексы,
