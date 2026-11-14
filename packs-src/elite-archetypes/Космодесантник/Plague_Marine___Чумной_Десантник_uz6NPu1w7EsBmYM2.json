@@ -22,8 +22,8 @@
         },
         {
           "id": "g1Pl0003",
-          "kind": "other",
-          "text": "Ран: 21 (проверяет ГМ)"
+          "kind": "wounds",
+          "value": 21
         },
         {
           "id": "g1Pl0004",

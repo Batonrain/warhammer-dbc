@@ -44,9 +44,26 @@
           "count": 1
         },
         {
+          "id": "dbc13s08",
+          "kind": "talent",
+          "name": "Mastery / Мастерство",
+          "specialization": "",
+          "specPrefix": "Запретные знания|Forbidden Lore",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.2OBfo5PO1q8hIKDJ",
+          "count": 2
+        },
+        {
+          "id": "dbc13s07",
+          "kind": "talent",
+          "name": "Mastery / Мастерство",
+          "specialization": "",
+          "specPrefix": "Ученые знания|Scholastic Lore",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.2OBfo5PO1q8hIKDJ",
+          "count": 1
+        },
+        {
           "id": "dbc13s06",
-          "kind": "other",
-          "text": "1 Scholastic Lore и 1 Forbidden Lore на уровне Mastery (без учёта остальных в Требованиях); Не-Хаосит, Отсутствие Метки Хаоса"
+          "kind": "notHeretic"
         }
       ],
       "secondary": []

@@ -34,6 +34,7 @@ import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { specCovers, matchSpec } from "../constants/skill-specializations.mjs";
 import { itemHasName } from "./predicates.mjs";
+import { GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { rankAtLeast, statValue } from "./req-atom.mjs";
 
 /** Покровительства для выбора: боги Варпа плюс «любое». */
@@ -54,6 +55,12 @@ export const REQ_KINDS = [
   { key: "trait",          label: "Черта",           drop: "trait"   },
   { key: "talent",         label: "Талант",          drop: "talent"  },
   { key: "notElite",       label: "Не взят архетип"  },
+  { key: "notHas",         label: "Нет Черты/предмета" },
+  { key: "power",          label: "Изучена сила (психосила/техночудо)" },
+  { key: "notHeretic",     label: "Не Хаосит"        },
+  { key: "sex",            label: "Пол"              },
+  { key: "skillPool",      label: "Специализации суммарно" },
+  { key: "wounds",         label: "Ран (максимум)"   },
   { key: "patron",         label: "Покровительство"  },
   { key: "skill",          label: "Умение"           },
   { key: "corruption",     label: "Порча"            },
@@ -76,6 +83,9 @@ export const ELDAR_RACE_KEYS = ["azuriane", "drukhari", "exodite", "ynnari", "ha
 
 /** Имена запрещённых архетипов записи «notElite» — строка через запятую. */
 export const notEliteNames = e => String(e?.text || "").split(",").map(x => x.trim()).filter(Boolean);
+
+/** Имена записей «notHas» / «power» — строка через запятую. */
+export const listNames = e => notEliteNames(e);
 
 const num = v => Number(v) || 0;
 /** Сколько предметов требуется: пусто и 0 значат «один». */
@@ -127,8 +137,12 @@ function talentOk(entry, who) {
   const want = String(entry?.name || "").trim();
   if (!want) return true;
   const spec = String(entry?.specialization || "").toLowerCase();
+  // specPrefix: «Mastery в любом Ученом знании» — специализация начинается с «Ученые знания (».
+  // Несколько вариантов через «|»: игрок пишет специализацию и по-русски, и по-английски.
+  const prefixes = String(entry?.specPrefix || "").toLowerCase().split("|").map(x => x.trim()).filter(Boolean);
   const hits = (who.talents || []).filter(t => hasWantedName(t, want)
-    && (!spec || String(t?.specialization || "").toLowerCase() === spec));
+    && (!spec || String(t?.specialization || "").toLowerCase() === spec)
+    && (!prefixes.length || prefixes.some(p => String(t?.specialization || "").toLowerCase().startsWith(p))));
   const need = wantCount(entry);
   if (need <= 1) return hits.length > 0;
   // Без специализации в требовании считаем разные специализации найденного.
@@ -172,6 +186,32 @@ function entryOk(entry, who) {
       const banned = notEliteNames(entry);
       return !(who.eliteArchetypes || []).some(a => banned.some(b => hasWantedName(a, b)));
     }
+    case "notHas": {
+      // «Нет Blunted», «Без Лат Скитарии или Имплантов Механикум»: ни одного предмета с такими именами.
+      const banned = listNames(entry);
+      return !(who.items || []).some(i => banned.some(b => hasWantedName(i, b)));
+    }
+    case "power": {
+      // Все названные психосилы должны быть изучены (предметы psychicPower).
+      const need = listNames(entry);
+      return need.every(n => (who.powers || []).some(p => hasWantedName(p, n)));
+    }
+    // Пол — system.bodyType (тот же источник, что у Предопределённого, strange-invulnerability.mjs).
+    // «Не-Хаосит, без Метки Хаоса»: Хаосит — Мировоззрение «heretic» (владелец, 14.11.2026: Метка Хаоса отдельно не ведётся).
+    case "notHeretic": return who.alignment !== "heretic";
+    case "sex":    return !entry.key || who.bodyType === entry.key;
+    case "skillPool": {
+      // «Ученые и/или Запретные знания — любые 3 специализации суммарно»: разные специализации по всем названным группам.
+      const keys = listNames(entry);
+      const seen = new Set();
+      for (const k of keys) {
+        for (const e of who.groupSkills?.[k] || []) {
+          if (rankAtLeast(e.rank, entry.rank)) seen.add(`${k}:${e.specKey || e.specialty}`);
+        }
+      }
+      return seen.size >= wantCount(entry);
+    }
+    case "wounds": return num(who.maxWounds) >= num(entry.value);
     case "trait": {
       const want = String(entry.name || "").trim();
       return !want || (who.traits || []).some(t => hasWantedName(t, want));
@@ -213,11 +253,21 @@ export function describeEliteReq(entry) {
     case "subrace": return `Субраса: ${entry.name || entry.key || "?"}`;
     case "notEldar": return "Раса: не эльдар (Основная книга)";
     case "notElite": return `Не взят архетип: ${notEliteNames(entry).join(", ") || "?"}`;
+    case "notHas":  return `Нет: ${listNames(entry).join(", ") || "?"}`;
+    case "power":   return `Изучены силы: ${listNames(entry).join(", ") || "?"}`;
+    case "notHeretic": return "Мировоззрение: не Хаосит";
+    case "sex":     return `Пол: ${entry.key === "female" ? "женский" : entry.key === "male" ? "мужской" : "?"}`;
+    case "skillPool": {
+      const names = listNames(entry).map(k => GROUP_SKILLS_DEF[k]?.label || k);
+      return `Любые ${wantCount(entry)} специализации суммарно (${names.join(" / ")}), ${SKILL_RANKS[entry.rank]?.label || ""}`.trim();
+    }
+    case "wounds":  return `Ран (максимум) ${entry.value}`;
     case "trait":   return `Черта: ${entry.name || "?"}`;
     case "patron":  return `Покровительство: ${PATRON_OPTIONS.find(p => p.key === entry.key)?.label || "?"}`;
     case "talent": {
       const name = entry.name || "?";
       if (entry.specialization) return `${name} (${entry.specialization})`;
+      if (entry.specPrefix) return `${name} (${entry.specPrefix.split("|")[0]}…)${n > 1 ? ` — любые ${n}` : ""}`;
       return n > 1 ? `${name} — любые ${n}` : name;
     }
     case "skill": {
@@ -303,12 +353,15 @@ export function eliteWho(actor) {
     traits:  items.filter(i => i.type === "trait").map(i => ({ name: i.name })),
     talents: items.filter(i => i.type === "talent")
       .map(i => ({ name: i.name, specialization: i.system?.specialization || "" })),
-    skills, groupSkills, chars,
+    skills, groupSkills, chars, bodyType: s.bodyType || "", alignment: s.alignment || "",
     corruption: statValue(actor, "corruption"),
     // Бесчестие — Характеристика inf, отдельного поля у него нет.
     infamy: statValue(actor, "inf"),
     psyRating: statValue(actor, "psyRating"),
     spentXP: num(s.experience?.spent),
+    items:  items.map(i => ({ name: i.name })),
+    powers: items.filter(i => i.type === "psychicPower" || i.type === "techPower").map(i => ({ name: i.name })),
+    maxWounds: num(s.wounds?.max),
     eliteArchetypes: items.filter(i => i.type === "eliteArchetype").map(i => ({ name: i.name }))
   };
 }

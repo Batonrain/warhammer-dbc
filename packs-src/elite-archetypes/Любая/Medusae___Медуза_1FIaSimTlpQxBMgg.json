@@ -9,8 +9,8 @@
       "primary": [
         {
           "id": "dbc13r01",
-          "kind": "other",
-          "text": "Отсутствие Blunted"
+          "kind": "notHas",
+          "text": "Blunted"
         }
       ],
       "secondary": []

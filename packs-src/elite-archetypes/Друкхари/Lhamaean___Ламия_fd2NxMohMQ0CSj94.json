@@ -18,8 +18,8 @@
       "secondary": [
         {
           "id": "eldarReq208",
-          "kind": "other",
-          "text": "Только женщины (Друкхари)"
+          "kind": "sex",
+          "key": "female"
         }
       ]
     },

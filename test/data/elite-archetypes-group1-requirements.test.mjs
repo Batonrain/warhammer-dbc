@@ -202,11 +202,12 @@ describe("пикер: eliteAvailability по настоящим записям",
   });
 });
 
-describe("ручные строки: Становление и Раны не проверяются машиной", () => {
-  it("Становление и 21 Рана попадают в manual, а не в unmet", () => {
-    const res = check("plague", { patron: "nurgle", chars: { t: 50 } });
-    expect(res.manual).toEqual(expect.arrayContaining([expect.stringMatching(/^Ран: 21/), expect.stringMatching(/^Становление:/)]));
+describe("ручные строки: Становление не проверяется машиной, Раны — проверяются", () => {
+  it("Становление попадает в manual, 21 Рана — проверяются сами", () => {
+    const res = check("plague", { patron: "nurgle", chars: { t: 50 }, maxWounds: 21 });
+    expect(res.manual).toEqual([expect.stringMatching(/^Становление:/)]);
     expect(res.unmet).toEqual([]);
+    expect(check("plague", { patron: "nurgle", chars: { t: 50 }, maxWounds: 20 }).unmet).toEqual(["Ран (максимум) 21"]);
   });
   it("подпись записи читается человеком", () => {
     const e = doc("rubric").system.requirements.secondary.find(x => x.kind === "psyRating");

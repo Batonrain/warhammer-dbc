@@ -20,8 +20,8 @@
         },
         {
           "id": "dbc13r03",
-          "kind": "other",
-          "text": "Без Лат Скитарии или Имплантов Механикум"
+          "kind": "notHas",
+          "text": "Skitarii War Plate, Mechanicum Implants"
         }
       ],
       "secondary": []

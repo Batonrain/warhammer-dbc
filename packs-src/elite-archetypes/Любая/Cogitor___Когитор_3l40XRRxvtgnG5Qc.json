@@ -18,8 +18,10 @@
         },
         {
           "id": "dbc14r03",
-          "kind": "other",
-          "text": "Ученые и/или Запретные знания — любые 3 специализации суммарно, на уровне Тренированное"
+          "kind": "skillPool",
+          "text": "scholasticLore, forbiddenLore",
+          "rank": "trained",
+          "count": 3
         }
       ],
       "secondary": [
