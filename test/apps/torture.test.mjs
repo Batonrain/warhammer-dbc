@@ -124,3 +124,43 @@ describe("кандидаты в Мучители и иммунитет", () => {
     expect(isTortureImmune(actor("v"))).toBe(true);
   });
 });
+
+describe("resolveTorture: Ярость жертвы (пытка — тест Морали, автоуспех)", () => {
+  beforeEach(() => { resetCaptured(); game.combat = undefined; });
+  afterEach(() => { captured.dice = null; });
+
+  it("жертва в Ярости при проваленном броске получает успех: равная степень — выстояла по Порогу", async () => {
+    const t = actor("t"), v = actor("v");
+    v.system.inRage = true;
+    captured.dice = [15, 90];
+    const res = await resolveTorture(t, v, {});
+    expect(res.winner).toBe("theirs");
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("Жертва выстояла");
+    expect(html).toContain("Ярость: автоуспех");
+  });
+
+  it("тот же бросок без Ярости — жертва проиграла", async () => {
+    const t = actor("t"), v = actor("v");
+    captured.dice = [15, 90];
+    const res = await resolveTorture(t, v, {});
+    expect(res.winner).toBe("mine");
+    expect(captured.chat.at(-1).content).not.toContain("автоуспех");
+  });
+
+  it("автоуспех не отменяет победу пытающего с большей степенью", async () => {
+    const t = actor("t"), v = actor("v");
+    v.system.inRage = true;
+    captured.dice = [5, 90];
+    const res = await resolveTorture(t, v, {});
+    expect(res.winner).toBe("mine");
+  });
+
+  it("жертва с удачным броском в Ярости: подпись автоуспеха не добавляется", async () => {
+    const t = actor("t"), v = actor("v");
+    v.system.inRage = true;
+    captured.dice = [90, 5];
+    await resolveTorture(t, v, {});
+    expect(captured.chat.at(-1).content).not.toContain("автоуспех");
+  });
+});

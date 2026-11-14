@@ -153,3 +153,37 @@ export function readTargetChoice(h, ch, state) {
 export function targetChoiceLabel(target) {
   return target ? targetLabel(target) : "";
 }
+
+/**
+ * Окно «выберите N целей» для Таланта, выданного записью Конструктора
+ * (kind:"talent", targetChoiceCount): Придворный — «3 организации на выбор»,
+ * Отступник — «любые 2», Предсказание — «любая». Каждая строка — вид+значение
+ * (как у Родных миров), фракция — через Обозреватель.
+ * @returns {Promise<object[]|null>} список целей; null — отмена / не все строки выбраны
+ */
+export async function promptTargetChoices(title, count, hint = "") {
+  const { openCompendiumBrowser } = await import("./compendium-browser.mjs");
+  const rows = Array.from({ length: Math.max(1, count) }, (_, i) =>
+    ({ key: `pick${i}`, label: count > 1 ? `Цель ${i + 1} из ${count}` : "Цель", hint }));
+  const state = { factionTargets: {} };
+  const $ = globalThis.$;
+  const picked = await foundry.applications.api.DialogV2.wait({
+    window: { title },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content: `<div class="wh-holo-dialog">${rows.map(targetChoiceHtml).join("")}</div>`,
+    render: (_event, dialog) => rows.forEach(ch => wireTargetChoice($(dialog.element), ch, state,
+      prompt => openCompendiumBrowser(false, { filters: { type: "faction" }, prompt }))),
+    buttons: [
+      { action: "ok", label: "Принять", default: true,
+        callback: (_e, _b, dialog) => rows.map(ch => readTargetChoice($(dialog.element), ch, state)) },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  if (!Array.isArray(picked)) return null;
+  if (picked.some(t => !t)) {
+    ui.notifications?.warn("Выберите все цели (для фракции нажмите «Выбрать фракцию…»).");
+    return null;
+  }
+  return picked;
+}

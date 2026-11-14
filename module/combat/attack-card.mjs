@@ -22,6 +22,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { isCompressibleLocation, normalizeCompressibleLocation } from "../rules/compression.mjs";
 import { testCardHtml, statLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { arcExtraAttrs } from "../rules/arc-extra.mjs";
+import { hasLinger } from "./weapon-properties.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
 const signed = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -79,7 +80,9 @@ function hitLines(hits, { blastRating = 0 } = {}) {
     const bonusStr = d.bonusNote
       ? `<span class="roll-bonus-dice">+${d.bonusNote} доп.</span>` : "";
     const deflStr = d.deflagrateNote
-      ? `<span class="roll-bonus-dice">+${d.deflagrateNote} выгор.</span>` : "";
+      ? `<span class="roll-bonus-dice" title="Выгорание: если AP части тела цели ≥ 2 — взрыв по всем вокруг, кроме цели (Pen 0); если меньше — цель получает X непоглощаемого E Dmg. Решается при «Применить урон».">выгор.: взрыв ${d.deflagrateNote}</span>` : "";
+    const resStr = d.resonance > 0
+      ? `<span class="roll-bonus-dice" title="Резонанс цели: кубики урона ×${d.resonance}; −${10 * d.resonance} к Восприятию">〰️ Резонанс ${d.resonance}</span>` : "";
     const msStr = d.msPenalty
       ? `<span class="roll-hit-pen">−${d.msPenalty} мульти-удар</span>` : "";
     const idxLabel = blastRating > 0 ? `Взрыв ${i + 1}` : `Попадание ${i + 1}`;
@@ -87,7 +90,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
       <span class="roll-hit-idx">${idxLabel}</span>
       <span class="roll-hit-dmg">${d.total}</span>
       <span class="roll-hit-loc">${d.loc}</span>
-      ${bonusStr || deflStr || msStr ? `<span class="roll-hit-extra">${bonusStr}${deflStr}${msStr}</span>` : ""}
+      ${bonusStr || deflStr || msStr || resStr ? `<span class="roll-hit-extra">${bonusStr}${deflStr}${resStr}${msStr}</span>` : ""}
     </div>${extStr}`;
   }).join("");
 }
@@ -102,7 +105,8 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  */
 function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
-                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0, pyromaniac = false, torrent = null }) {
+                                    attackerUuid = "", itemUuid = "", hordeHits = null, deadlyTrapLegacyDelta = 0, fangVenomDose = "", butcherDice = 0, pyromaniac = false, torrent = null,
+                                    fanaticIntercepts = [] }) {
   if (!hits.length) return "";
   // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
   // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
@@ -116,7 +120,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // в зоне следующие data-linger ходов стрелка. lingerDrift (Y, второй
   // рейтинг свойства) — на сколько метров зона дрейфует каждый такой ход
   // по розе смещения (0 — не дрейфует).
-  const lingerAttrs = (wp.lingerRating > 0 && hits.length) ? `
+  const lingerAttrs = (hasLinger(wp) && hits.length) ? `
       data-linger="${wp.lingerRating}"
       data-linger-drift="${wp.lingerDrift ?? 0}"
       data-damage="${hits[0].total}"
@@ -158,7 +162,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // Region на всю атаку, Распыление — один конус, не «попадание» в этом
   // смысле вовсе), их это НЕ касается — там по-прежнему одна кнопка.
   const perHitBlastTemplates = wp.blastRating > 0 && !wp.spray
-    && !(wp.lingerRating > 0) && !(wp.shrinkTemplate > 0) && hits.length > 1;
+    && !hasLinger(wp) && !(wp.shrinkTemplate > 0) && hits.length > 1;
   // Поток (rules/flamer-talents.mjs): вместо конуса Распыления — круг Blast(Rng/5+1); data-torrent-max —
   // предел размещения (2×Rng), его проверяет обработчик кнопки (hooks.mjs) вместе с прямой видимостью.
   const torrentOn = !!torrent && !!wp.spray;
@@ -171,7 +175,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       data-item-uuid="${itemUuid}"${lingerAttrs}${gravitonAttrs}${pyromaniac ? ` data-pyromaniac="1" data-attacker="${actorName}"` : ""}>
       🎯 ${torrentOn
         ? `Поток: разместить шаблон Blast(${torrent.radius} м) — до ${torrent.maxDistance} м, в прямой видимости — и отметить цели`
-        : wp.lingerRating > 0
+        : hasLinger(wp)
         ? `Разместить зону «Остаётся» (${wp.lingerRating} раунд.) и отметить цели`
         : wp.shrinkTemplate > 0
           ? "Разместить Гравитонную зону (тает 1м/ход, Ландшафт−30) и отметить цели"
@@ -185,7 +189,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
   // токен на сцене и кликнуть, до того как жать «Применить урон» этому токену.
   const sprayCancelBtn = (!isMelee && wp.spray) ? `
     <div class="roll-defense-section">
-      <button class="wh-spray-cancel-btn" type="button" data-attacker-uuid="${attackerUuid}">
+      <button class="wh-spray-cancel-btn" type="button" data-attacker-uuid="${attackerUuid}" data-doubled="${wp.extraHits === "twinLinked" ? 1 : 0}">
         ${rollIcon("run")} Тест на отмену (Распыление, Acrobatics A+0) — выберите токен цели
       </button>
       <div class="roll-defense-note">Свободное действие, Реакция не тратится. Если шаблон полностью накрывает Базу цели — годится только Отскок в исходе теста, не сама отмена (стр. 12).</div>
@@ -211,7 +215,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     <button class="wh-arc-btn" type="button"
       data-arc-damage="${wp.arcDamage}" data-weapon-name="${weaponName}"
       data-attacker="${actorName}" data-attacker-uuid="${attackerUuid}"${arcExtraAttrs(wp)}>
-      ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcPen ?? wp.arcDamage})
+      ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcPen ?? 0})
     </button>` : "";
   const buttons = hits.map((d, i) => {
     // «Прячась в Орде»: попадание, уведённое в союзную Орду, применяется к ней,
@@ -306,6 +310,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-sanctified="${wp.sanctified ? 1 : 0}"
     data-blast="${wp.blastRating ?? 0}"
     data-flame="${wp.flame ? 1 : 0}"
+    data-scatter="${wp.scatter ? 1 : 0}"
     data-power-field="${wp.powerField ? 1 : 0}"
     data-spray="${wp.spray ? 1 : 0}"
     data-devastating="${wp.devastatingRating ?? 0}"
@@ -319,6 +324,8 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-piercing="${wp.piercing ? 1 : 0}"
     data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
     data-haywire-dmg2="${wp.haywireDamage2 || ""}"
+    data-deflagrate="${wp.deflagrate ? (wp.deflagrateRating ?? 0) : 0}"
+    data-deflagrate-roll="${d.deflagrateNote || 0}"
     data-through-shot="${wp.throughShot ? 1 : 0}"
     data-has-extreme="${d.hasExtreme ? 1 : 0}"
     data-opportunist-floor="${d.opportunistFloor ? 1 : 0}"
@@ -329,10 +336,13 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-cleave-child="${wp.cleaveChild ? 1 : 0}"
     data-hamstring="${wp.hamstring ? 1 : 0}"
     data-charge-base="${wp.chargeBase ? 1 : 0}"
+    data-final-execution="${wp.finalExecution ? 1 : 0}"
+    data-owgd="${wp.oneWillGoDown ? 1 : 0}"
+    data-haymaker="${wp.haymaker ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
-  </button>${wp.warpSoak ? `
+  </button>${toHorde ? "" : fanaticRedirectButtons(fanaticIntercepts, hits.length > 1 ? i + 1 : 0)}${wp.warpSoak ? `
   <button class="wh-pain-absorb-btn" type="button" data-damage="${d.total}" title="Друкхари с Очками Боли: выбранный токен цели поглощает урон Болью вместо Ран (3 урона за 1 Боль)">
     🔥 Поглотить Болью ${i + 1}: <b>${d.total}</b>
   </button>` : ""}${swapBtn}${sparksBtn}${deadlyTrapBtn}${butcherDice > 0 ? `
@@ -419,21 +429,57 @@ function betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype 
   </div>`;
 }
 
+function fanaticButtonNames(fanaticIntercepts) {
+  const sameName = f => fanaticIntercepts.filter(g => g.name === f.name);
+  const numbered = new Map();
+  return fanaticIntercepts.map(f => {
+    if (sameName(f).length < 2) return f.name;
+    const tokenName = f.tokenName && f.tokenName !== f.name ? f.tokenName : "";
+    if (tokenName && sameName(f).filter(g => g.tokenName === tokenName).length === 1) return `${f.name} (${tokenName})`;
+    const n = (numbered.get(f.name) ?? 0) + 1;
+    numbered.set(f.name, n);
+    return `${f.name} #${n}`;
+  });
+}
+
+/**
+ * Кнопки «Перехват» внутри группы попадания (рядом с «Применить урон»):
+ * по одной на носителя Fanatic. Без своих data-damage — hooks.mjs берёт
+ * число и свойства урона с главной кнопки той же группы (data-mirror-hit),
+ * поэтому правки Кубик→Успехи/Искры доходят и сюда. Класс не
+ * wh-apply-dmg-btn: порядковые номера тех кнопок хранят правки урона
+ * (combat/damage-override.mjs). data-force-target — токен носителя, чтобы
+ * применение урона не просило выделить его на сцене.
+ */
+function fanaticRedirectButtons(fanaticIntercepts, hitNo) {
+  const names = fanaticButtonNames(fanaticIntercepts);
+  return fanaticIntercepts.map((f, idx) => `
+  <button class="wh-fanatic-redirect-btn" type="button" data-mirror-hit="1"
+    data-fanatic-uuid="${f.uuid}" data-force-target="${f.tokenUuid || f.uuid}"
+    title="Fanatic перехватывает это попадание вместо цели: урон применится ему, спишется бесплатный перехват (Спиной к Спине, раз в Раунд) или Реакция">
+    ${rollIcon("shield", "#ffb347")}Перехват${hitNo ? ` ${hitNo}` : ""}: ${esc(names[idx])}
+  </button>`).join("");
+}
+
 /**
  * Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
  * Fanatic в базовом контакте с целью уже найдены геометрией attack.mjs —
  * показ кандидатов и остатка «раз в Раунд без Реакции» (rules/cooldown.mjs).
- * Сам перенос урона — выделить токен названного носителя и нажать обычную
- * «Применить урон» выше; кнопка здесь только отмечает бесплатный перехват
- * потраченным, когда стол решил им воспользоваться.
+ * Перенос урона — кнопка «Перехват» у каждого попадания (fanaticRedirectButtons,
+ * платит бесплатным перехватом или Реакцией сама); кнопка здесь только
+ * отмечает бесплатный перехват потраченным при ручном переносе (выделить
+ * токен носителя и нажать обычную «Применить урон»).
  */
 function fanaticInterceptSection(fanaticIntercepts) {
   if (!fanaticIntercepts.length) return "";
   const rows = fanaticIntercepts.map(f => `
-    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: выделите его токен и примените урон туда вместо цели.
+    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: «Перехват» у попадания выше переносит урон на него (или выделите его токен и примените урон вручную).
       ${f.freeUse
         ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
         : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
+      ${f.savior && f.targetTokenUuid
+        ? ` Спаситель Туманов: <button type="button" class="wh-mist-savior-swap" data-fanatic-uuid="${f.uuid}" data-target-token-uuid="${f.targetTokenUuid}">Поменяться местами с целью</button>`
+        : ""}
     </div>`).join("");
   return rows;
 }
@@ -634,7 +680,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                title="Незримая атака (стр. 32): Парирование недоступно, пока не засечена альтернативными методами — Психочутьем/Технологиям (кнопки ниже).">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""} — не засечена
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"${isMelee ? "" : ` title="Стрельбу без Базового контакта со стрелком парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-evade-cost="${wp?.evadeCost ?? 1}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"${isMelee ? "" : ` title="Стрельбу без Базового контакта со стрелком парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
@@ -730,6 +776,21 @@ function locShiftSection({ max, current = 0 }, actorName) {
 }
 
 /**
+ * Тирантикос на карточке второй руки: сколько кубов лежит сейчас и кнопка
+ * «Пересчитать» — если первую руку перебросили уже после этого броска, +2d10
+ * надо добавить или снять. Правит эту же карточку (hooks.mjs), как locShift.
+ */
+function tyranthikosSection({ applied = 0 }) {
+  return `
+    <div class="roll-defense-section roll-tyranthikos">
+      <div class="roll-defense-title">Тирантикос: ${applied ? `+${applied}d10 Dmg к первому попаданию` : "+2d10 не начислены"}</div>
+      <div class="roll-defense-btns">
+        <button type="button" class="wh-tyranthikos-btn" title="Первую руку перебросили после этого броска? Сверить с её последней карточкой: если попали обе — +2d10 добавятся, если первая теперь промах — снимутся (урон этой карточки бросается заново)">↻ Пересчитать по первой руке</button>
+      </div>
+    </div>`;
+}
+
+/**
  * Кнопка Горжета (стр. 228, wdbc-8b5): случайное попадание в голову можно
  * попытаться перевести в Торс броском 1d10 против рейтинга X свойства.
  * Правит эту же карточку (см. hooks.mjs) — тем же приёмом, что locShift выше.
@@ -751,14 +812,37 @@ function gorgetSection({ rating, outcome }) {
     </div>`;
 }
 
+/**
+ * Кнопка «Скрытые Сочленения» (core.json, «Броня», wdbc-x1nz.4): атакующий
+ * может бросить Common Lore (War)+0, «определяя сочленения по памяти», чтобы
+ * снять штраф +10 постфактум. Правит эту же карточку (см. hooks.mjs) — тем же
+ * приёмом, что Горжет выше, только меняет ПОРОГ, не место/локацию попадания.
+ */
+function hiddenJointsSection(outcome) {
+  if (outcome) {
+    return `
+    <div class="roll-defense-section roll-hidden-joints">
+      <div class="roll-defense-title">🦾 Скрытые Сочленения: Common Lore (War)+0 — ${outcome.roll} против ${outcome.threshold} — ${
+        outcome.success ? "<b>успех</b>, штраф −10 снят" : "<b>провал</b>, штраф остаётся"}</div>
+    </div>`;
+  }
+  return `
+    <div class="roll-defense-section roll-hidden-joints">
+      <div class="roll-defense-title">Скрытые Сочленения: штраф −10 можно снять, определив их по памяти — только атакующий</div>
+      <div class="roll-defense-btns">
+        <button type="button" class="wh-hidden-joints-btn">🦾 Бросить Common Lore (War)+0</button>
+      </div>
+    </div>`;
+}
+
 /** Заряженный боеприпас, остаток магазина и расход за этот выстрел. */
-function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0,
+function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", magInfinite = false, magNone = false, spent = 0,
                      special = "", condLabels = [], warning = "" }) {
   return `
       <div class="roll-ammo-block${!name ? " roll-ammo-none" : ""}">
         Боеприпасы: <b>${name || "стандартные"}</b>
         ${mods ? `<span class="roll-ammo-mods">(${mods})</span>` : ""}
-        | Магазин: <b>${magCur}/${magMax}</b>
+        | Магазин: <b>${magInfinite ? "∞" : magNone ? "—" : `${magCur}/${magMax}`}</b>
         ${spent > 0 ? `<span class="roll-ammo-spent">(израсходовано: ${spent})</span>` : ""}
         ${special ? `<div class="roll-ammo-special">${special}</div>` : ""}
         ${condLabels.length
@@ -775,6 +859,9 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
  * @param {object[]} d.hits          попадания с уже посчитанным местом: { total, loc, ... }
  * @param {object}   [d.locShift]    { max, current } — кнопки сдвига места, либо null
  * @param {object}   [d.gorget]      { rating, outcome } — кнопка Горжета (wdbc-8b5), либо null
+ * @param {?{applied:number}} [d.tyranthikos] вторая рука пары Терминатора: сколько кубов Тирантикоса на карточке; null — не его случай
+ * @param {object}   [d.hiddenJoints] { outcome } — кнопка Скрытых Сочленений
+ *                                     (wdbc-x1nz.4), либо null
  * @param {object}   [d.ammo]        блок боеприпасов (только стрелковое), либо null
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
  * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
@@ -800,7 +887,7 @@ export function attackCard({
   hitsCount = 0, hits = [],
   // Сколько «попаданий» учесть кнопкам Избегания вместо hitsCount (На Лезвии Бритвы); null — hitsCount.
   evasionHits = null,
-  hitLocLabel = "", locRoll = 0, locShift = null, gorget = null,
+  hitLocLabel = "", locRoll = 0, locShift = null, gorget = null, tyranthikos = null, hiddenJoints = null,
   isMelee = false, dtLabel = "", damageType = "", damageSubtype = "", pen = 0,
   // Assassin Strike / Удар Ассасина (wdbc-qpcg): доступность кнопки уже
   // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
@@ -810,12 +897,18 @@ export function attackCard({
   tankHunterOffer = null,
   // Штыковая Атака (combat/free-shot.mjs::bayonetShotButtonsHtml): готовая разметка кнопок выстрела в упор.
   bayonetShotHtml = "",
+  // Независимое оружие (combat/free-shot.mjs::independentShotOfferHtml): кнопка выстрела раз в Раунд после любой атаки.
+  independentShotHtml = "",
   // Яростный Штурм (combat/furious-assault.mjs): готовая разметка кнопки доп. атаки.
   furiousAssaultHtml = "",
   // Упорство (combat/tenacity.mjs): готовая разметка кнопки повтора.
   tenacityHtml = "",
+  // Казнь (combat/execution.mjs): готовая разметка кнопки доп. атаки.
+  executionHtml = "",
   // Снайпер Ужаса (combat/terror-sniper.mjs): {targetTokenUuid} или null.
   terrorSniperOffer = null,
+  // Поколотить (combat/clobber.mjs::clobberOfferHtml): готовая разметка кнопки или пояснения.
+  clobberHtml = "",
   sbEff = 0, sbHalf = false, reverseThrustBonus = 0, taintedAdd = 0, vehicleSide = "",
   ammo = null, band = null, suppression = null, allGunsBlazing = null,
   corVal = 0, corEffects = [],
@@ -838,9 +931,10 @@ export function attackCard({
   grappleCoverHits = [],
   // Спиной к Спине/Back to Back (combat/fanatic-redirect.mjs): носители
   // Fanatic в базовом контакте с целью — уже найдены геометрией attack.mjs
-  // ([{uuid, name, freeUse}]); перенос урона — выбор стола через обычную
-  // кнопку «Применить урон» (эта секция только показывает кандидатов и
-  // остаток «раз в Раунд без Реакции», ничего не переносит сама).
+  // ([{uuid, name, freeUse, tokenUuid}]); перенос урона — выбор
+  // стола кнопкой «Перехват» у попадания (fanaticRedirectButtons) или вручную
+  // через обычную «Применить урон»; секция показывает кандидатов и остаток
+  // «раз в Раунд без Реакции».
   fanaticIntercepts = [],
   // Нечестивая Преданность (combat/unholy-devotion.mjs): Миньоны Хозяина-цели,
   // способные принять попадание ([{uuid, name, distance, bonus, threshold,
@@ -968,12 +1062,14 @@ export function attackCard({
   // урон не бросается автоматически — карточка подсказывает их число.
   //
   // Radiant Presence/Блистательное Присутствие и Into the Jaws of Hell/
-  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — решение владельца: галочки
-  // на самой карточке, тем же приёмом, что «Заведомо безопасно» выше — ГМ
-  // решает «видит/слышит союзника с Талантом» или «рядом сражается
-  // командующий с Талантом» на глаз, код только переносит флаг в бросок.
+  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — галочки на самой карточке,
+  // тем же приёмом, что «Заведомо безопасно» выше. «Рядом сражается
+  // командующий с Талантом» решает ГМ на глаз, код только переносит флаг в
+  // бросок. Блистательное Присутствие (wdbc-051qb): галочка стартует в
+  // «прочерке» (hooks.mjs ставит indeterminate), и при броске +10 даёт
+  // видимость союзного или нейтрального носителя токену цели; «слышит» и снятие — руками.
   const leadershipCheckboxesHtml = `
-      <label class="wh-suppression-safe-label" title="Блистательное Присутствие: цель видит или слышит союзника/нейтрального, обладающего этим Талантом — +10 на этот тест Морали. Решает ГМ.">
+      <label class="wh-suppression-safe-label" title="Блистательное Присутствие: цель видит или слышит союзника или нейтрального, обладающего этим Талантом — +10 на этот тест Морали. Пока галочка в прочерке, при броске +10 ставится само, если токен цели видит союзного или нейтрального носителя; отметьте галочку, если цель его слышит, или снимите, чтобы отключить.">
         <input type="checkbox" class="wh-radiant-presence-cb"/> Блистательное Присутствие (+10)
       </label>
       <label class="wh-suppression-safe-label" title="В Самое Пекло: рядом с целью сражается её командующий, обладающий этим Талантом — тест Морали проходит автоматически. Решает ГМ.">
@@ -1071,13 +1167,16 @@ export function attackCard({
       🎯 Опознать модель «${esc(tankHunterOffer.targetName)}» — Common Lore (War)−10
     </button>` : "",
       isMelee && bayonetShotHtml ? bayonetShotHtml : "",
+      independentShotHtml || "",
       isMelee && furiousAssaultHtml ? furiousAssaultHtml : "",
       isMelee && tenacityHtml ? tenacityHtml : "",
+      isMelee && executionHtml ? executionHtml : "",
       !isMelee && terrorSniperOffer ? `
     <button class="wh-terror-sniper-btn" type="button" data-attacker-uuid="${attackerUuid}" data-target-token-uuid="${esc(terrorSniperOffer.targetTokenUuid)}"
       title="Избирательное попадание Accurate-оружием после Прицеливания: Intimidate(BS)+0 → при Успехе враги в радиусе «Успехи» м, видевшие попадание, проходят Подавление (+0, −20 если знают, где стрелок)">
       💀 Снайпер Ужаса — Intimidate(BS)+0
     </button>` : "",
+      !isMelee && clobberHtml ? clobberHtml : "",
       notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : "",
       notes.quietElimination ? `<div class="roll-allout-note">${notes.quietElimination}</div>` : "",
       notes.damageTalents ? `<div class="roll-allout-note">${notes.damageTalents}</div>` : "",
@@ -1093,6 +1192,8 @@ export function attackCard({
       notes.grenadeSelfImmune ? `<div class="roll-wprop-note">💥 ${notes.grenadeSelfImmune}</div>` : "",
       locShift ? locShiftSection(locShift, actorName) : "",
       gorget ? gorgetSection(gorget) : "",
+      tyranthikos ? tyranthikosSection(tyranthikos) : "",
+      hiddenJoints ? hiddenJointsSection(hiddenJoints.outcome) : "",
       notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : "",
       notes.blastScatter ? `
     <div class="roll-allout-note">
@@ -1111,7 +1212,7 @@ export function attackCard({
       notes.mount ? `<div class="roll-aim-note">${notes.mount}</div>` : "",
       damageSection,
       notes.maximal
-        ? `<div class="roll-allout-note">Максимальный режим: +1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка.</div>` : "",
+        ? `<div class="roll-allout-note">Максимальный режим: +10 Rng, +1d10 урона, +2 Проб., ×2 расход, Перезарядка.${notes.maximalBlast ? ` ${notes.maximalBlast}` : ""}</div>` : "",
       notes.off ? `<div class="roll-wprop-note">${notes.off}</div>` : "",
       // Молотильщик (стр. 62, wdbc-pb60) — напоминание защищающемуся: успешное
       // Парирование этого удара сжигает его неиспользованные Успехи, а второе
@@ -1151,7 +1252,8 @@ export function attackCard({
             sixthSenseBypassAvailable, musicOfBattleBypassAvailable, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
-                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice, pyromaniac, torrent }),
+                                            attackerUuid, itemUuid, hordeHits, deadlyTrapLegacyDelta, fangVenomDose, butcherDice, pyromaniac, torrent,
+                                            fanaticIntercepts }),
       misfireHitsSection(misfireHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(betrayalHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid }),
       betrayalHitsSection(grappleCoverHits, { wp, pen, damageType, damageSubtype, weaponName, actorUuid: attackerUuid, itemUuid },

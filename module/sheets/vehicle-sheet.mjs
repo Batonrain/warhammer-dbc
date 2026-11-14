@@ -16,6 +16,7 @@ import { measureTokens } from "../combat/tactical-map.mjs";
 import { rangeBandKey } from "../rules/tactical-map.mjs";
 import { vehicleWeaponProfile } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { _getCompatibleAmmo, _showAmmoSelectDialog } from "../combat/reload.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
@@ -380,6 +381,8 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
           vArc: vm.vArc || "",
           standard: !!vm.standard,
           reloads:  vm.reloads ?? 10,
+          // Заряженный снаряд (wdbc-nzzgn): имя боеприпаса в стволе, если он ещё на машине.
+          ammoName: (s.loadedAmmoId && this.actor.items.get(s.loadedAmmoId)?.name) || "",
           // Варианты орудия для этого разъёма (свап на месте).
           options:   (vm.options || []).map(n => ({ name: n, sel: n === i.name })),
           hasOptions:(vm.options || []).length > 1
@@ -538,6 +541,14 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
 
     if (magMax <= 0) return ui.notifications.info(`${item.name}: у орудия не задан магазин (Магазин макс.).`);
     if (magCur >= magMax) return ui.notifications.info(`${item.name}: магазин уже полон (${magCur}/${magMax}).`);
+
+    // Снаряды орудия (wdbc-nzzgn): если на машине лежат подходящие боеприпасы
+    // (снаряды с тегом этого орудия), заряжаем выбранный и списываем его запас —
+    // тем же приёмом, что у персонажа (combat/reload.mjs). Нет снарядов — прежний
+    // боекомплект vehicleMount.reloads.
+    const shells = _getCompatibleAmmo(this.actor, item);
+    if (shells.length) return this._reloadVehicleShell(item, shells, { magMax });
+
     if (reloads <= 0) return ui.notifications.warn(`${item.name}: боекомплект пуст — нечем перезаряжать.`);
 
     await item.update({ "system.magazineCur": magMax, "system.vehicleMount.reloads": reloads - 1 });
@@ -551,6 +562,28 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
         <div class="roll-header">🔄 Перезарядка — ${esc(item.name)}</div>
         <div class="roll-outcome"><span class="roll-success">Магазин <b>${magMax}/${magMax}</b> · Боекомплект осталось: <b>${reloads - 1}</b></span></div>
         ${reloads - 1 === 0 ? `<div class="roll-allout-note">Боекомплект этого орудия исчерпан — перезарядка возможна только снаружи/в снабжении.</div>` : ""}
+      </div>`
+    }, rollMode));
+  }
+
+  // Заряжание выбранного снаряда: запас — quantity самого боеприпаса, а не vehicleMount.reloads.
+  async _reloadVehicleShell(item, shells, { magMax }) {
+    const stocked = shells.filter(a => (Number(a.system.quantity) || 0) > 0);
+    if (!stocked.length) return ui.notifications.warn(`${item.name}: снарядов нет — нечем перезаряжать.`);
+    const shell = stocked.length === 1 ? stocked[0] : await _showAmmoSelectDialog(item, shells);
+    if (!shell) return;
+    const qty = Number(shell.system.quantity) || 0;
+    if (qty <= 0) return ui.notifications.warn(`${shell.name}: снарядов нет!`);
+    await item.update({ "system.magazineCur": magMax, "system.loadedAmmoId": shell.id });
+    await shell.update({ "system.quantity": qty - 1 });
+    const rollMode = game.settings.get("core", "rollMode");
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">🔄 Перезарядка — ${esc(item.name)}</div>
+        <div class="roll-damage-meta">Снаряд: <b>${esc(shell.name)}</b></div>
+        <div class="roll-outcome"><span class="roll-success">Магазин <b>${magMax}/${magMax}</b> · Снарядов этого типа осталось: <b>${qty - 1}</b></span></div>
+        ${qty - 1 === 0 ? `<div class="roll-allout-note">Снаряды <b>${esc(shell.name)}</b> закончились.</div>` : ""}
       </div>`
     }, rollMode));
   }

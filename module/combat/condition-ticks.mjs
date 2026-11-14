@@ -19,6 +19,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { hasWarpforgedPlate } from "../rules/warpsmith.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "../rules/wounds.mjs";
 import { addFatigue, conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
@@ -41,6 +42,7 @@ import { rollShieldAgainstConditionTick, burningGraceSourceItem } from "./damage
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
 // "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
 import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
+import { stunTaintStep, STUN_TAINT_ACTOR_FLAG } from "../rules/stun-taint.mjs";
 import { BLESSED_FITS_PENDING_FLAG, blessedFitsRefundDue } from "../rules/blessed-fits.mjs";
 import { changeActorInfamy } from "../apps/infamy-points.mjs";
 // Parasite/Паразит (Трейт — общий, wdbc-ux8a): parasiticContact — тот же
@@ -456,6 +458,12 @@ function fireproofBurningApBonus(actor) {
   return best;
 }
 
+export function warpforgedBurningAp(actor) {
+  if (!hasWarpforgedPlate(actor)) return 0;
+  const abs = actor.system?.absorption;
+  return Math.max(0, (Number(abs?.body) || 0) - (Number(abs?.toughnessBonus) || 0));
+}
+
 // Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце, «даёт улучшение
 // Cooler, пока активен»): книжный порог «пламя, которым объят персонаж,
 // наносит не больше 1d10 урона» — 10, не повторный бросок 1d10 (это разбор
@@ -532,6 +540,14 @@ export async function rollBurningPanicTest(actor) {
     });
     return { success: true, rv: null, eff: wp };
   }
+  // Не От Мира Сего (From Beyond): «автоматически проходит тесты на … Панику».
+  if (hasRuleFlag(actor, "panic.immune")) {
+    await postTestCard(actor, {
+      icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Не От Мира Сего: иммунитет к Панике — теста нет</span>`
+    });
+    return { success: true, rv: null, eff: wp };
+  }
   // Пожарный (Sahara 3-scope): «не паникует от Горения» — теста нет вовсе
   // (в отличие от автоуспеха Бесстрашного, у которого бросок идёт).
   if (hasTalentCapability(actor, FIREMAN_CAP)) {
@@ -554,6 +570,30 @@ export async function rollBurningPanicTest(actor) {
       : `<span class="roll-failure">Провал — Ход потерян в панике (ОД обнулены)</span>`
   }, { rolls: [roll] });
   return { success, rv, eff };
+}
+
+/**
+ * Порча Струпа на начале Хода: метка stunTaint на акторе (ставит
+ * drugs.mjs::triggerAfterEffect). Порча пишется отдельным update, чтобы
+ * preUpdateActor мог перенаправить её в Безумие («Считает Cor как Безумие»);
+ * снятие метки докладывается в общий патч `updates`.
+ * @returns {Promise<string>} строка для карточки Состояний или ""
+ */
+async function applyStunTaint(actor, updates) {
+  const taint = actor.getFlag?.(NS, STUN_TAINT_ACTOR_FLAG);
+  if (!taint) return "";
+  const stunned = !!actor.system?.conditions?.stunned;
+  const rounds = Number(actor.system?.conditions?.stunnedRounds) || 0;
+  const { amount, clear } = stunTaintStep(taint, {
+    stunned,
+    ending: rounds === 1 && !hasConditionDuration(actor, "stunned"),
+    patronGod: actor.system?.patronGod || ""
+  });
+  if (clear) updates[`flags.${NS}.-=${STUN_TAINT_ACTOR_FLAG}`] = null;
+  if (amount <= 0) return "";
+  const cur = Number(actor.system?.corruption?.value) || 0;
+  await actor.update({ "system.corruption.value": Math.min(100, cur + amount) });
+  return `<div class="roll-threshold">${rollIcon("warn", "#8fbf3a")}${esc(taint.source || "Оглушение")}: Ход Оглушения без Покровительства Нургла — Порча <b>+${amount}</b></div>`;
 }
 
 /**
@@ -602,6 +642,12 @@ export async function processConditionTurnStart(actor) {
   // не дублируем — только называем, что кончилось.
   const swept = await sweepConditionDurations(actor, { round: game.combat?.round, turn: game.combat?.turn });
   for (const key of swept.expired) lines.push(conditionExpiryLine(key));
+
+  // Порча за Ход Оглушения (Струп, стр. 283, wdbc-777vf): считается ДО общего
+  // цикла ниже — счётчик Раундов ещё не уменьшен, и последний Ход Оглушения
+  // (1 → 0) тоже Ход Оглушения.
+  const taintLine = await applyStunTaint(actor, updates);
+  if (taintLine) lines.push(taintLine);
 
   for (const { key, field, label } of ROUND_CONDITIONS) {
     // Удушье (стр. 30-31, wdbc-r5o7.6, wdbc-x1nz.2.94) — особый случай, не
@@ -743,6 +789,16 @@ export async function processConditionTurnEnd(actor) {
     }
   }
 
+  // Резонанс (свойство оружия Resonant): «в конце каждого своего Хода цель
+  // теряет 1 пункт Резонанса» (rules/resonance.mjs).
+  if (conds.resonance) {
+    const lvl = Number(conds.resonanceLevel) || 0;
+    if (lvl > 0) {
+      await actor.update(conditionAdjustFields(actor, "resonance", -1));
+      lines.push(`<div class="roll-threshold">〰️ Резонанс: <b>${lvl}</b> → <b>${lvl - 1}</b></div>`);
+    }
+  }
+
   // Предел Обескровливания — и без Кровотечения: уровень остаётся после
   // остановки, пока не сойдёт по часу.
   if (!actor.getFlag?.(NS, "deceased")) await processHaemorrhageLimit(actor, lines);
@@ -796,14 +852,17 @@ export async function processConditionTurnEnd(actor) {
     const formula = burningTickFormula(actor);
     const roll = await new Roll(formula).evaluate();
     const tb = Number(actor.system?.characteristics?.t?.bonus) || 0;
-    const fireAp = fireproofBurningApBonus(actor);
+    const fireproofAp = fireproofBurningApBonus(actor);
+    const plateAp = warpforgedBurningAp(actor);
+    const fireAp = Math.max(fireproofAp, plateAp);
+    const apTag = plateAp > fireproofAp ? "AP" : "AP(×2)";
     const net = Math.max(0, roll.total - tb - fireAp);
     if (net > 0) {
       const loss = await applyWoundLoss(actor, net);
       const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } = loss;
       await addFatigue(actor, 1);
       const destroyed = gotCritical && newCritical >= woundDeathThreshold(maxWounds);
-      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> − T.b ${tb}${fireAp ? ` − AP(×2) ${fireAp}` : ""} = <b>${net}</b> урона E(Fl)${fireAp ? "" : ", игнор брони"}. Раны: ${currentWounds} → ${newWounds}${gotCritical ? ` (крит. <b>${newCritical}</b>)` : ""} · 😓 Усталость +1${destroyed ? ` — <b>уничтожен</b>` : ""}</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> − T.b ${tb}${fireAp ? ` − ${apTag} ${fireAp}` : ""} = <b>${net}</b> урона E(Fl)${fireAp ? "" : ", игнор брони"}. Раны: ${currentWounds} → ${newWounds}${gotCritical ? ` (крит. <b>${newCritical}</b>)` : ""} · 😓 Усталость +1${destroyed ? ` — <b>уничтожен</b>` : ""}</div>`);
       // Горение в минус — Крит. Эффект по таблице Энергии (E(Fl)), место не
       // названо книгой — Торс (wdbc-x1nz.2.85).
       const burnCrit = await secondaryCritHtml(actor, loss, { damageType: "energy", hitLocation: "Торс" });
@@ -815,7 +874,7 @@ export async function processConditionTurnEnd(actor) {
     } else {
       const t = await rollConditionCharTest(actor, "t");
       if (!t.success) await addFatigue(actor, 1);
-      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> целиком в T.b${fireAp ? ` + AP(×2) ${fireAp}` : ""} — ${charTestText("T+0", t)} ${t.success ? `<span class="roll-success">успех</span>` : `<span class="roll-failure">провал → 😓 Усталость +1</span>`}</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: ${esc(formula)} <b>${roll.total}</b> целиком в T.b${fireAp ? ` + ${apTag} ${fireAp}` : ""} — ${charTestText("T+0", t)} ${t.success ? `<span class="roll-success">успех</span>` : `<span class="roll-failure">провал → 😓 Усталость +1</span>`}</div>`);
     }
   }
   // Погасшее Горение не должно отдать свою формулу следующему пожару.

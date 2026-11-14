@@ -79,7 +79,8 @@ describe("hatredRules", () => {
   it("даёт +10 на рукопашную атаку по Ненавистной цели", () => {
     const rules = hatredRules(orkActor, { kind: "attack", isMelee: true, targetActor: { system: { race: "ork" } } });
     const melee = rules.find(r => r.id === "hatred.meleeBonus");
-    expect(melee.effects).toEqual([{ kind: "rollBonus", target: "weapon:melee", value: 10 }]);
+    // auto: бонус учитывается в Пороге сам, без галочки (решение владельца 13.11.2026)
+    expect(melee.effects).toEqual([{ kind: "rollBonus", target: "weapon:melee", value: 10, auto: true }]);
   });
 
   it("не даёт рукопашный бонус на встречный социальный тест (область не совпадает — отсекает effectAppliesTo)", () => {

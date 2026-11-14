@@ -68,7 +68,10 @@ describe("grantArmourOfTheGods", () => {
     expect(res.reason).toContain("не найден");
   });
 
-  it("успех: предмет Архетипа создан, основное поле шапки заполнено, +1d10 Порчи, выдана броня AP", async () => {
+  // Броню и «+1d10 Порчи» теперь отдаёт createItem-хук самого предмета Архетипа
+  // (см. test/apps/ironclad-divine-plate-hook.test.mjs и запись kind:"corruption"
+  // в Конструкторе Ironclad) — здесь код Мутации их НЕ дублирует.
+  it("успех: предмет Архетипа создан, основное поле шапки заполнено; Порчу и броню сам не выдаёт", async () => {
     globalThis.game.packs.set("warhammer-dbc.elite-archetypes",
       stubPack([{ _id: "arch1", name: IRONCLAD_ARCHETYPE_NAME, type: "eliteArchetype", system: {} }]));
     const { actor, created } = makeActor({ corruption: 10 });
@@ -77,13 +80,11 @@ describe("grantArmourOfTheGods", () => {
     const res = await grantArmourOfTheGods(actor);
 
     expect(res.ok).toBe(true);
-    expect(res.corGain).toBe(6);
-    expect(created).toHaveLength(2); // предмет Архетипа + броня
+    expect(created).toHaveLength(1); // только предмет Архетипа
     expect(created[0].name).toBe(IRONCLAD_ARCHETYPE_NAME);
-    expect(created[1]).toMatchObject({ type: "armor", system: { head: 8, body: 10, leftArm: 8, rightArm: 8, leftLeg: 8, rightLeg: 8 } });
 
     expect(actor.system.eliteArchetype).toBe(IRONCLAD_ARCHETYPE_NAME);
-    expect(actor.system.corruption.value).toBe(16); // 10 + 6
+    expect(actor.system.corruption.value).toBe(10); // Порча — из Конструктора Ironclad, не отсюда
   });
 
   it("уже есть ДРУГОЙ архетип — Ironclad уходит в eliteArchetypesExtra, не перетирает основной", async () => {
@@ -98,7 +99,7 @@ describe("grantArmourOfTheGods", () => {
     expect(actor.system.eliteArchetypesExtra).toEqual([IRONCLAD_ARCHETYPE_NAME]);
   });
 
-  it("Порча капируется потолком 100", async () => {
+  it("Порчу сама не трогает (иначе она удвоилась бы с записью Конструктора)", async () => {
     globalThis.game.packs.set("warhammer-dbc.elite-archetypes",
       stubPack([{ _id: "arch1", name: IRONCLAD_ARCHETYPE_NAME, type: "eliteArchetype", system: {} }]));
     const { actor } = makeActor({ corruption: 95 });
@@ -106,6 +107,6 @@ describe("grantArmourOfTheGods", () => {
 
     await grantArmourOfTheGods(actor);
 
-    expect(actor.system.corruption.value).toBe(100);
+    expect(actor.system.corruption.value).toBe(95);
   });
 });

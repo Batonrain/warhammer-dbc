@@ -36,13 +36,27 @@ const TALENTS = path.join(ROOT, "packs-src", "talents");
 const packTalentWith = (() => {
   const files = fs.readdirSync(TALENTS, { recursive: true }).filter(f => String(f).endsWith(".json"));
   const cache = new Map();
-  return key => {
-    if (cache.has(key)) return cache.get(key);
-    const needle = `"capabilityKey": "${key}"`;
+  // Один проход по файлам вместо прохода на каждую строку таблицы: при 150+
+  // строках и 1000+ файлов прежний поиск читал их ~170 тысяч раз и шёл дольше
+  // лимита теста (28 с при 20 с). Порядок файлов и условие `"capabilityKey":
+  // "<ключ>"` прежние — первым берётся первый по порядку файл-Талант.
+  let filesByKey = null;
+  const KEY_IN_TEXT = /"capabilityKey": "([^"]*)"/g;
+  const indexFiles = () => {
+    filesByKey = new Map();
     for (const f of files) {
       const raw = fs.readFileSync(path.join(TALENTS, f), "utf8");
-      if (!raw.includes(needle)) continue;
-      const doc = JSON.parse(raw);
+      for (const m of new Set([...raw.matchAll(KEY_IN_TEXT)].map(x => x[1]))) {
+        if (!filesByKey.has(m)) filesByKey.set(m, []);
+        filesByKey.get(m).push(f);
+      }
+    }
+  };
+  return key => {
+    if (cache.has(key)) return cache.get(key);
+    if (!filesByKey) indexFiles();
+    for (const f of filesByKey.get(key) ?? []) {
+      const doc = JSON.parse(fs.readFileSync(path.join(TALENTS, f), "utf8"));
       if (doc.type !== "talent") continue;
       cache.set(key, doc);
       return doc;

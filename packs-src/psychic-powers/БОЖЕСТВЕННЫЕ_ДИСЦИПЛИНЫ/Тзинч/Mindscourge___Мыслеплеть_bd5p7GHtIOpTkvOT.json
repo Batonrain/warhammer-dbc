@@ -35,6 +35,7 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
+    "mindEffect": true,
     "effect": "Атака · Психический Снаряд · Стрельба. Только на разумных. Профиль: PR×25м, 1d10+PR E, Pen 0, Shocking, Warp Weapon. Выжившая цель: <Успехи> Ходов в начале Хода 1d5 в I, W и F (один бросок на три).",
     "isSustained": false,
     "effects": {

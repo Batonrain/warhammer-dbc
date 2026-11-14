@@ -390,6 +390,60 @@ describe("ГМ-релей: grantCognition / grantEnergy", () => {
     expect(t.system.cognition.value).toBe(2);
   });
 
+  const slow = a => {
+    const orig = a.update;
+    a.update = async u => { await new Promise(r => setTimeout(r, 5)); return orig(u); };
+    return a;
+  };
+
+  it("две одновременные передачи ⚙ одной цели складываются, а не затирают друг друга (wdbc-ekrk2)", async () => {
+    const t = slow(tgt({ system: { cognition: { value: 3, max: 10, regen: 1 } } }));
+    await Promise.all([
+      performTargetWrite(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD)),
+      performTargetWrite(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD))
+    ]);
+    expect(t.system.cognition.value).toBe(7);
+  });
+
+  it("одновременные передачи ⚙ в бою: потолок Раунда считается по записи первой передачи", async () => {
+    globalThis.game.combat = { started: true };
+    const t = slow(tgt({ system: { cognition: { value: 1, max: 9, regen: 1 }, characteristics: { int: { bonus: 8 } } } }));
+    await Promise.all([
+      performTargetWrite(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD)),
+      performTargetWrite(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD))
+    ]);
+    expect(t.system.cognition.value).toBe(5);
+    expect(t.getFlag("warhammer-dbc", "cloudCognitionReceived")).toEqual({ combat: "", n: 4 });
+  });
+
+  it("одновременные передачи ⚡ складываются", async () => {
+    const e = slow(tgt({ system: { energy: { value: 3, max: 0, maxTotal: 8 } } }));
+    await Promise.all([
+      performTargetWrite(e, { kind: "grantEnergy", amount: 2 }, ini(MOTIVE)),
+      performTargetWrite(e, { kind: "grantEnergy", amount: 2 }, ini(MOTIVE))
+    ]);
+    expect(e.system.energy.value).toBe(7);
+  });
+
+  it("очередь у каждой цели своя: передача другой цели не ждёт зависшую запись", async () => {
+    const stuck = tgt({ uuid: "Actor.stuck", system: { cognition: { value: 1, max: 9, regen: 1 } } });
+    stuck.update = () => new Promise(() => {});
+    const free = tgt({ uuid: "Actor.free", system: { cognition: { value: 1, max: 9, regen: 1 } } });
+    performTargetWrite(stuck, { kind: "grantCognition", amount: 2 }, ini(CLOUD));
+    await performTargetWrite(free, { kind: "grantCognition", amount: 2 }, ini(CLOUD));
+    expect(free.system.cognition.value).toBe(3);
+  });
+
+  it("сбой записи не глушит следующие передачи той же цели", async () => {
+    const t = tgt({ system: { cognition: { value: 1, max: 9, regen: 1 } } });
+    const orig = t.update;
+    let n = 0;
+    t.update = async u => { if (n++ === 0) throw new Error("нет прав"); return orig(u); };
+    await expect(performTargetWrite(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD))).rejects.toThrow("нет прав");
+    await performTargetWrite(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD));
+    expect(t.system.cognition.value).toBe(3);
+  });
+
   it("свой/ГМ пишет сам, без сокета", async () => {
     const t = tgt({ system: { cognition: { value: 1, max: 9, regen: 1 } } });
     expect(await writeToTarget(t, { kind: "grantCognition", amount: 2 }, ini(CLOUD))).toBe(true);

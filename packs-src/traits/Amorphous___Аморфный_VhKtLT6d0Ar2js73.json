@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Форма непостоянна, не связана жёстким скелетом: вдвое (окр.▲) уменьшает SPD пешком. Раз в Ход может увеличить или уменьшить свой Размер на 1 или 2 — это не влияет на SPD, но может влиять на сложность попадания по нему, протискивание в узкие проходы и бонусы/штрафы в Борьбе. Автоматически выигрывает тесты на высвобождение из Борьбы; иммунен к Snare и прочим эффектам пут и оков.",
-    "notes": "Было перепутано с «−1/−2 к SPD» и вовсе без упоминания смены Размера — поправлено по книге (wdbc, сверка гл.3 Трейтов). SPD÷2 (окр.▲) и переключаемый раз в Ход Размер ±1/±2 не имеют полей в system.effects (только статичный addend speedMod/sizeMod); иммунитет к Snare/путам и авто-победа при высвобождении из Борьбы тоже не читаются кодом.",
+    "notes": "Автоматизировано (dbc-114, 14.11.2026): иммунитет к Snare/путам, SPD пешком ÷2 (вверх), Вырваться/Выкрутиться без теста, действие «Сменить Размер» (±1/±2, раз в Ход, на SPD не влияет — кнопка «▶ Запустить» на Черте).",
     "benefit": "SPD пешком ÷2 (окр.▲); раз в Ход ±1/±2 к Размеру по желанию; иммунитет к Snare/путам; авто-победа при высвобождении из Борьбы.",
     "source": "форма тела",
     "hasRating": false,
@@ -34,7 +34,160 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "NunccbKzpFlBP01x",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "NEfrUQ43zVMXlUvx",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "weaponPropertyImmunity.snare",
+              "label": "Иммунитет к Snare и путам: свойство оружия Snare не действует",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "TUkYwgfADU3UcBTe",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "movement.walkHalved",
+              "label": "SPD пешком вдвое меньше (окр. вверх)",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "lIZUtjYVfvGiIz7R",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "grapple.autoEscape",
+              "label": "Вырваться/Выкрутиться из Борьбы удаются без теста",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "2MFj2Rco75y9cl5b",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "size.amorphousShift",
+              "label": "Раз в Ход менять Размер на 1 или 2 (SPD не меняется)",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "uageLHYiARNfqii0",
+              "kind": "script",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "minionGroup": "",
+              "minionTier": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "armourLocation": "body",
+              "armourValue": 1,
+              "ignoreTerrainProps": [],
+              "rerollScope": "all",
+              "rerollChar": "ag",
+              "rerollMode": "keepBest",
+              "modScope": "all",
+              "modValueMode": "flat",
+              "modCharBonus": "inf",
+              "rerollWho": "self",
+              "capabilityKey": "",
+              "capabilityCostPool": "",
+              "capabilityCostAmount": 1,
+              "capabilityMode": "flag",
+              "capabilityAptScope": "skill",
+              "capabilityAptMatch": "",
+              "capabilityAptAlign": "ally",
+              "fatigueAction": "threshold",
+              "fatigueThresholdChar": "t",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "equipQuality": "common",
+              "equipTalentTier": "",
+              "equipMaxPsyRating": "",
+              "equipImplantCategory": "",
+              "equipPrRequiredDelta": 0,
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1,
+              "loyaltyMinionType": "",
+              "loyaltyOp": "add",
+              "loyaltyValue": 1,
+              "auraRadius": "1",
+              "auraAffects": "allies",
+              "auraIncludesSelf": false,
+              "auraImmuneTraits": "",
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "Сменить Размер (±1/±2, раз в Ход)",
+              "code": "// Аморфный: сменить свой Размер на 1 или 2, раз в Ход (правило — rules/amorphous.mjs).\nawait shiftAmorphousSize(actor);",
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

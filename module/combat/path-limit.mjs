@@ -29,20 +29,30 @@
 //
 //  Принудительные сдвиги (толчок Роундхауса, перевозка, Пересилить партнёра):
 //  система токены сама НЕ двигает — их тянет стол руками (method="dragging"),
-//  отличить такой шаг от хода игрока нельзя. Руками ГМ — не едят бюджет (ГМ
-//  отфильтрован); руками игрока — выбрать в HUD «Телепорт» (blink) или снять
-//  лимит актору (меню Движения, ГМ). Если система начнёт двигать чужой токен
-//  программно — только через displaceToken.
+//  и сам по себе такой шаг от хода игрока не отличить. Руками ГМ — не едят
+//  бюджет (ГМ отфильтрован). Руками игрока — тумблер «Следующий сдвиг —
+//  вынужденный» в меню Движения (combat/forced-next-move.mjs): пока он
+//  включён, первое же перетаскивание (все его отрезки) onPreMoveToken
+//  помечает принудительным (опции апдейта whDBC.forcedMove), запоминает его
+//  movementId — отрезки в истории ядра пути следующих шагов не считаются — и
+//  тумблер гаснет; гаснет он и на любой смене Хода/Раунда, а при перезагрузке
+//  страницы пропадает вовсе. Запасные пути: «Телепорт» (blink) в HUD токена и
+//  снятие лимита актору (меню Движения, ГМ). Если система начнёт двигать чужой
+//  токен программно — только через displaceToken.
 // ════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { SURE_TREAD, sureTreadWalkCeiling } from "../rules/squat-traits.mjs";
 import {
   PATH_LIMIT_SETTING, PATH_LIMIT_DEFAULT, PATH_LIMIT_ACTOR_TYPES, PATH_LIMITED_METHODS,
-  MOVE_ALLOWANCE_FLAG, PATH_LIMIT_OFF_FLAG, RAN_METERS_FLAG, isForcedMove,
+  MOVE_ALLOWANCE_FLAG, PATH_LIMIT_OFF_FLAG, RAN_METERS_FLAG, isForcedMove, forcedMoveOptions,
   normalizePathLimitMode, evaluatePath, moveDegreeFromPath, fmtMeters, pathLimitMessage, walkedMeters
 } from "../rules/movement-path.mjs";
 import { IN_FLIGHT_ALTITUDES, markMoveDegreeThisTurn } from "./movement-actions.mjs";
+import {
+  isNextMoveForced, setNextMoveForced, rememberForcedMovement, forcedMovementIds, clearNextMoveForced
+} from "./forced-next-move.mjs";
+import { initForcedNextIndicator } from "./forced-next-move-indicator.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -81,17 +91,18 @@ function isTeleportOnly(movement, actions) {
  * удвоенная цена climb/crawl/jump; разбор по отрезкам — rules/movement-path.mjs::
  * walkedMeters. Нет отрезков в movement (старая форма) — запасной путь по
  * итоговой стоимости.
- * @param {{skipGM?:boolean, actions?:object}} o  skipGM — отрезки ГМ-а не едят бюджет игрока
+ * @param {{skipGM?:boolean, actions?:object, forcedIds?:Set<string>}} o  skipGM — отрезки ГМ-а не едят
+ *   бюджет игрока; forcedIds — movementId вынужденных сдвигов (тумблер), их отрезки не считаются
  */
-export function measureMovement(movement, { skipGM = false, actions = {} } = {}) {
+export function measureMovement(movement, { skipGM = false, actions = {}, forcedIds = null } = {}) {
   const passedWps = movement?.passed?.waypoints;
   const perSegment = Array.isArray(passedWps) && passedWps.some(w => w && w.cost !== undefined);
   if (!perSegment) return { used: pathCost(movement?.history), step: pathCost(movement?.passed) };
   const history = [...(movement.history?.recorded?.waypoints ?? []), ...(movement.history?.unrecorded?.waypoints ?? [])];
   const isGMUser = skipGM ? (id => !!globalThis.game?.users?.get?.(id)?.isGM) : null;
   return {
-    used: walkedMeters(history, { isGMUser, actions }),
-    step: walkedMeters(passedWps, { start: history.at(-1) ?? movement.origin ?? null, actions })
+    used: walkedMeters(history, { isGMUser, actions, skipMovementIds: forcedIds }),
+    step: walkedMeters(passedWps, { start: history.at(-1) ?? movement.origin ?? null, actions, skipMovementIds: forcedIds })
   };
 }
 
@@ -135,7 +146,7 @@ export function checkPreMove(tokenDoc, movement, env = {}) {
   const { ownTurn } = turnState(tokenDoc);
   const allowance = actor.getFlag?.(NS, MOVE_ALLOWANCE_FLAG) ?? null;
   const actions = env.actions ?? globalThis.CONFIG?.Token?.movement?.actions;
-  const { used, step } = measureMovement(movement, { skipGM: true, actions });
+  const { used, step } = measureMovement(movement, { skipGM: true, actions, forcedIds: forcedMovementIds(actor.uuid) });
   const verdict = evaluatePath({
     mode: env.mode ?? pathLimitMode(),
     gm: !!env.gm,
@@ -157,15 +168,34 @@ export function checkPreMove(tokenDoc, movement, env = {}) {
 }
 
 /**
+ * Тумблер «следующий сдвиг — вынужденный» (forced-next-move.mjs): если он
+ * включён у актора токена и это перетаскивание/клавиши, сдвиг помечается
+ * принудительным прямо в опциях апдейта (дальше их видят moveToken и
+ * updateToken), его movementId запоминается, а тумблер гаснет — когда
+ * перетаскивание закончилось (нет отрезков pending; многоотрезковое тянется
+ * несколькими вызовами хука). Другие способы (api, hud…) тумблер не тратят.
+ * @returns {boolean} этот сдвиг вынужденный по тумблеру
+ */
+function takeManualForcedMove(tokenDoc, movement, options) {
+  const key = tokenDoc?.actor?.uuid;
+  if (!isNextMoveForced(key) || !movement || !PATH_LIMITED_METHODS.includes(movement.method)) return false;
+  if (options && typeof options === "object") Object.assign(options, forcedMoveOptions(options));
+  rememberForcedMovement(key, movement.id);
+  if (!(movement.pending?.waypoints?.length > 0)) setNextMoveForced(key, false);
+  return true;
+}
+
+/**
  * Хук preMoveToken: false — перемещение запрещено (лимит пути исчерпан).
  * @param {TokenDocument} tokenDoc
  * @param {object} movement  TokenPreMovementOperation
  * @param {object} [options] опции апдейта (client/documents/token.mjs: Hooks.call("preMoveToken", doc, move, options))
  */
 export function onPreMoveToken(tokenDoc, movement, options) {
+  const manualForced = takeManualForcedMove(tokenDoc, movement, options);
   const mode = pathLimitMode();
   if (mode === "off") return;
-  const verdict = checkPreMove(tokenDoc, movement, { mode, gm: !!game.user?.isGM, forced: isForcedMove(options) });
+  const verdict = checkPreMove(tokenDoc, movement, { mode, gm: !!game.user?.isGM, forced: manualForced || isForcedMove(options) });
   if (!verdict?.applies) return;
   if (verdict.gmBypass) {
     // ГМ не блокируется (двигает за игрока, обходит правило намеренно), но
@@ -193,7 +223,9 @@ export async function onMoveToken(tokenDoc, movement, operation, user) {
   if (!turnState(tokenDoc).ownTurn) return;
   // Здесь отрезки ГМ-а не отфильтровываем: ГМ двигает NPC своей рукой, и
   // «подвигался дальше Полудвижения» для Выстрела Навскидку это всё равно.
-  const { used, step } = measureMovement(movement, { actions: globalThis.CONFIG?.Token?.movement?.actions });
+  const { used, step } = measureMovement(movement, {
+    actions: globalThis.CONFIG?.Token?.movement?.actions, forcedIds: forcedMovementIds(actor.uuid)
+  });
   const total = used + step;
   if (moveDegreeFromPath(total, actor.system?.movement?.halfMove) === "full") {
     await markMoveDegreeThisTurn(actor, "full");
@@ -210,4 +242,10 @@ export async function onMoveToken(tokenDoc, movement, operation, user) {
 export function initPathLimitHooks() {
   Hooks.on("preMoveToken", onPreMoveToken);
   Hooks.on("moveToken", onMoveToken);
+  // История пути ядра стирается на начале любого Хода — вместе с ней гаснут и
+  // забытые тумблеры вынужденного сдвига (обход лимита не должен жить дольше Хода).
+  Hooks.on("updateCombat", (_combat, changes) => {
+    if (changes && ("turn" in changes || "round" in changes)) clearNextMoveForced();
+  });
+  initForcedNextIndicator();
 }

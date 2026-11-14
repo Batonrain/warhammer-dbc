@@ -201,6 +201,13 @@ function promptAptitudeChoice(cfg, label) {
             const chars = [], skills = [];
             h.find(".sub-apt-char").each((_, el) => { if (el.value) chars.push(el.value); });
             h.find(".sub-apt-skill").each((_, el) => { if (el.value) skills.push(el.value); });
+            // Недобор не пропускаем: пустой дропдаун раньше молча отбрасывался, и персонаж
+            // получал меньше Дружественных, чем обещает книга (task-979b). Отказаться от
+            // выбора целиком можно только «Пропустить»/закрытием окна. Исключение, а не
+            // return — по той же причине, что у проверки дубля ниже.
+            if (chars.length < (cfg.charCount || 0) || skills.length < (cfg.skillCount || 0)) {
+              throw new Error("Выберите все пункты — остались незаполненные списки. Чтобы отказаться от выбора, нажмите «Пропустить».");
+            }
             // Дубль не пропускаем: Set в aptitudeOverrideMechanicsGroup схлопнул бы его
             // молча, и вместо двух Дружественных осталась бы одна (task-7b94).
             // Исключение (а не return) оставляет окно открытым: Dialog закрывается

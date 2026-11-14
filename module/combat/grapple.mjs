@@ -28,6 +28,7 @@
 //  _doThrow ниже.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { sturdyResistMods } from "../rules/sturdy.mjs";
 import { _showContestDialog } from "./techniques.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -35,6 +36,7 @@ import { itemHasName, sizeOf } from "../rules/predicates.mjs";
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
+import { talentDamageBonus, talentDamageNote } from "../rules/damage-talents.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
@@ -56,8 +58,10 @@ import { grantMoveAllowance } from "../rules/movement-path.mjs";
 import { maxHands, handsOccupied, weaponHandsRequired, twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.mjs";
 import { bearingDegrees, relativeBearing } from "../rules/facing.mjs";
 import { hasDodgeTalent, grappleCoverHalfAngle } from "../rules/dodge-talents.mjs";
+import { hasBlessedWithPus } from "../rules/plague-marine.mjs";
 import { canTakeAttackAction, takeAttackAction } from "./attack-limit.mjs";
 import { hasPugilistTalent, pinDownHoldOf, pinDownPenaltyValue, PIN_DOWN_FLAG } from "../rules/pugilist-talents.mjs";
+import { kneeStrikeButtonsHtml } from "./pugilist-strikes.mjs";
 import { jockeySizeBlocked, jockeyChoiceOffered, chooseJockeyMode, resolveJockeySuccess } from "./jockey.mjs";
 import { applyChokehold, chokeholdWrenchFatigue, chokeholdGrappleFatigue, slamOffered, pounceOffered, pounceGrabOffered }
   from "./grapple-talents.mjs";
@@ -65,6 +69,7 @@ import {
   CONSTRICTOR_CAPABILITY, GRAPPLE_TAIL_FLAG, CONSTRICTOR_TAIL_HANDS, CONSTRICTOR_ATHLETICS_BONUS,
   constrictorTailSb, VENOM_BITE_CAPABILITY, venomBiteDamage
 } from "../rules/naga-traits.mjs";
+import { VAST_CAPABILITY, VAST_SIZE_FLAG, vastGrappleSize, vastCanEnvelop } from "../rules/strange-invulnerability.mjs";
 
 const NS = "warhammer-dbc";
 export const PARTNER_FLAG = "grapplePartnerUuid";
@@ -238,6 +243,11 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
     return;
   }
 
+  // Странная Неуязвимость, 7 «Необъятный» (wdbc-1rno.24): попытка взять персонажа в Захват — без
+  // встречного теста; вместо этого он сам обволакивает и держит атакующего.
+  // Выведенный из строя (Оглушён/Ступор/Беспомощен/Без сознания) не обволакивает — тогда обычный Захват ниже.
+  if (hasRuleFlag(target, VAST_CAPABILITY) && vastCanEnvelop(target)) return _resolveVastGrab(actor, target);
+
   await _showContestDialog(actor, grappleTechDef(actor, {
     label: "Захват", defaultChar: "s", opponent: target,
     note: "Athletics(S)+0 vs Athletics(S)+0 цели. Победа: оба персонажа связаны Захватом (состояние «Борьба»). Поражение цели: она успешно отбивает попытку Захвата.",
@@ -260,10 +270,13 @@ export async function resolveGrappleSuccess(actor, { target, margin: rawMargin =
   // не должен оставить игрока в Захвате в одиночку.
   const targetWritten = await writeToTarget(target, { kind: "update", data: {
     ...conditionApplyFields("grappling", null, target), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid,
-    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands } }, actor);
+    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands,
+    // Устаревшая форма Необъятного (Захват снят тегом, а не endGrapple) в новый обычный Захват не переходит.
+    [`flags.${NS}.-=${VAST_SIZE_FLAG}`]: null } }, actor);
   if (!targetWritten) return;
   await actor.update({ ...conditionApplyFields("grappling", null, actor), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid,
-    [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields });
+    [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields,
+    [`flags.${NS}.-=${VAST_SIZE_FLAG}`]: null });
 
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Захват — ${esc(actor.name)} ↔ ${esc(target.name)}`,
@@ -293,9 +306,92 @@ export async function resolveGrappleSuccess(actor, { target, margin: rawMargin =
       ]
     }, { sound: false });
   }
+  // Удар с Колена / Knee Strike (Талант Пугилиста, стр. 62): взяв цель в Захват минимум 2 руками — автоматическое попадание
+  // ногой профилем пинка; на 5+ Успехов — в голову с Concussive (0). Число рук растёт в окне Борьбы после взятия в Захват,
+  // поэтому «2+ руки», свободная нога и профиль проверяются при нажатии кнопки (combat/pugilist-strikes.mjs::startKneeStrike).
+  if (hasPugilistTalent(actor, "kneeStrike")) {
+    await postTestCard(actor, {
+      icon: rollIcon("sword","#e08a3a"), title: `Удар с Колена — ${esc(actor.name)}`,
+      sections: [
+        `<div class="roll-threshold" style="font-size:0.85em;">Захват${margin ? ` (победа на ${margin} Успехов)` : ""}: если ${esc(actor.name)} держит ${esc(target.name)} минимум 2 руками, можно немедленно, за свободное действие, ударить коленом ногой, которой ещё не били в этом Ходу — автоматическое попадание профилем пинка. Руки добавляются в окне Борьбы.</div>`,
+        kneeStrikeButtonsHtml({ actorUuid: actor.uuid, margin })
+      ]
+    }, { sound: false });
+  }
   // Удушение (Талант Пугилиста): победа в Захвате на 5+ Успехов — по 1 Усталости за каждые полные 5.
   const choke = hasPugilistTalent(actor, "chokehold") ? chokeholdGrappleFatigue(margin) : 0;
   if (choke > 0) await applyChokehold(actor, target, choke, "Захват (победа на 5+ Успехов)");
+}
+
+/**
+ * Странная Неуязвимость, 7 «Необъятный» (wdbc-1rno.24): «Если кто-то пытается взять персонажа в Захват, он
+ * превращается в бесформенное месиво плоти, обволакивающее атакующего ... увеличивает его Размер на 1 выше
+ * Размера атакующего. Атакующий автоматически оказывается взятым в Захват персонажем». Роли наоборот:
+ * держит персонаж (Атакующий Борьбы), пойманный — Цель; встречного теста нет. Размер ложится флагом на
+ * персонажа (лист читает его в rules/character/movement.mjs), флаг уходит вместе с Захватом.
+ */
+async function _resolveVastGrab(attacker, vast) {
+  const hold = attackerHoldFields(vast);
+  const size = vastGrappleSize(sizeOf(attacker));
+  // Сперва персонаж — через ГМ, если он чужой (combat/gm-relay.mjs): отказ не должен оставить пойманного в одиночку.
+  const written = await writeToTarget(vast, { kind: "update", data: {
+    ...conditionApplyFields("grappling", null, vast), [`flags.${NS}.${PARTNER_FLAG}`]: attacker.uuid,
+    [`flags.${NS}.${ROLE_FLAG}`]: "attacker", ...hold.fields, [`flags.${NS}.${VAST_SIZE_FLAG}`]: size } }, attacker);
+  if (!written) return;
+  await attacker.update({ ...conditionApplyFields("grappling", null, attacker), [`flags.${NS}.${PARTNER_FLAG}`]: vast.uuid,
+    [`flags.${NS}.${ROLE_FLAG}`]: "target", [`flags.${NS}.${GRAPPLE_HELD_HANDS_FLAG}`]: 2 * hold.hands });
+  await postTestCard(attacker, {
+    icon: rollIcon("sword","#e08a3a"), title: `Необъятный — ${esc(vast.name)} ↔ ${esc(attacker.name)}`,
+    outcome: outcomeHtml(false, `${esc(attacker.name)} пытается взять ${esc(vast.name)} в Захват — плоть вздувается и обволакивает его: держит ${esc(vast.name)}.`),
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Встречного теста нет. Размер ${esc(vast.name)} на время Захвата — ${size} (Размер атакующего + 1). «Перехватить Контроль» у ${esc(attacker.name)} автоматически проваливается; Вырваться/Выкрутиться — обычными тестами. Когда ${esc(attacker.name)} выберется или будет отпущен, форма вернётся.</div>`]
+  }, { sound: false });
+}
+
+/**
+ * «Его попытки перехватить контроль автоматически проваливаются» (Необъятный, 7): пойманный (Цель) партнёром,
+ * раздутым Необъятным. Признак — запомненный Размер на партнёре (ставит _resolveVastGrab, снимает конец Захвата).
+ */
+export function grappleTakeoverAutoFails(actor) {
+  if (!isGrappleTarget(actor)) return false;
+  const partner = grapplePartner(actor);
+  return partner != null && flagOf(partner, VAST_SIZE_FLAG) != null;
+}
+
+/**
+ * Аморфный: «автоматически выигрывает тесты на высвобождение из Борьбы». Вырваться/Выкрутиться без
+ * броска: тратит Полное действие и сразу разрывает Захват. true — обработано, обычного теста нет.
+ */
+export async function attemptAutoEscape(actor, key) {
+  if (!hasRuleFlag(actor, "grapple.autoEscape") || !["breakFree", "twistFree"].includes(key)) return false;
+  const def = TARGET_TESTS[key];
+  if (!(await spendActionPoints(actor, def.apCost, { physical: true }))) {
+    ui.notifications.warn(`⚠️ ${def.label}: не хватает ОД (Полное действие).`);
+    return true;
+  }
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: `${def.label} — ${esc(actor.name)}`,
+    outcome: outcomeHtml(true, `Аморфный: высвобождение удаётся без теста.`)
+  }, { sound: false });
+  await _resolveEscapeSuccess(actor);
+  return true;
+}
+
+/**
+ * Попытка «Перехватить Контроль»: если она проваливается сама (Необъятный) — тратит Полное действие и пишет
+ * карточку без броска, возвращает true («обработано»); иначе false — обычный встречный тест.
+ */
+export async function attemptTakeover(actor) {
+  if (!grappleTakeoverAutoFails(actor)) return false;
+  const partner = grapplePartner(actor);
+  if (!(await spendActionPoints(actor, TARGET_TESTS.takeover.apCost, { physical: true }))) {
+    ui.notifications.warn("⚠️ Перехватить Контроль: не хватает ОД (Полное действие).");
+    return true;
+  }
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: `Перехватить Контроль — ${esc(actor.name)}`,
+    outcome: outcomeHtml(false, `Попытка проваливается сама: ${esc(partner.name)} (Необъятный) не выпускает контроль.`)
+  }, { sound: false });
+  return true;
 }
 
 /** Партнёр по Борьбе (или null, если флаг протух — цель распалась/сменила сцену). */
@@ -316,7 +412,9 @@ function grappleClearFields() {
     [`flags.${NS}.-=${GRAPPLE_TAIL_FLAG}`]: null,
     [`flags.${NS}.-=${SQUEEZE_PENDING_FLAG}`]: null,
     [`flags.${NS}.-=${SQUEEZE_ACTIVE_FLAG}`]: null,
-    [`flags.${NS}.-=${PIN_DOWN_FLAG}`]: null
+    [`flags.${NS}.-=${PIN_DOWN_FLAG}`]: null,
+    // Необъятный (7): конец Захвата — персонаж возвращается к обычной форме.
+    [`flags.${NS}.-=${VAST_SIZE_FLAG}`]: null
   };
 }
 
@@ -423,8 +521,10 @@ async function _resolveWrenchSuccess(actor) {
     // deg=1 не подключается (первый Успех книгой прямо исключён).
     const wp = aggregateAuto(resolveWeaponProps(claws));
     const sbEff = meleeStrengthBonus({ sb, wp });
+    // Крушащий Удар (+½WS.b «ко всему своему рукопашному урону») — как в основной атаке (rules/damage-talents.mjs).
+    const talentBonus = talentDamageBonus(actor, { isMelee: true, chars: actor.system.characteristics, wp });
     const dmgFormula = damageFormulaFor({
-      damage: claws.system.damage, flatBonus: sbEff, chars: actor.system.characteristics,
+      damage: claws.system.damage, flatBonus: sbEff + talentBonus.flat, chars: actor.system.characteristics,
       corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
     });
     const roll = await new Roll(dmgFormula).evaluate();
@@ -437,7 +537,8 @@ async function _resolveWrenchSuccess(actor) {
     }, actor, "grapple");
     if (clawsDealt) await postTestCard(actor, {
       icon: rollIcon("sword","#e08a3a"), title: `Заломить: урон ${esc(partner.name)}`,
-      lines: [`<div class="roll-dice">Когти (${esc(claws.name)}): <b>${roll.total}</b> Dmg</div>`]
+      lines: [`<div class="roll-dice">Когти (${esc(claws.name)}): <b>${roll.total}</b> Dmg</div>`,
+        talentDamageNote(talentBonus) ? `<div class="roll-threshold">${talentDamageNote(talentBonus)}</div>` : ""]
     }, { rolls: [roll] });
   } else if (choice.dmg) {
     const roll = await new Roll("1d5").evaluate();
@@ -554,6 +655,10 @@ export function tentacleTechDef(actor, techDef) {
  * Захвата), сопротивляется Athletics(S); обе стороны получают свои Щупальце
  * и штраф Размера; Атакующий с лишними руками бросает лучший из N.
  */
+export function blessedWithPusDisadvantage(actor, partner) {
+  return !!partner && hasBlessedWithPus(partner) && !hasBlessedWithPus(actor);
+}
+
 export function grappleTechDef(actor, def) {
   const partner = def.opponent ?? grapplePartner(actor);
   const char = def.defaultChar || "s";
@@ -572,9 +677,11 @@ export function grappleTechDef(actor, def) {
     // Таланты Избегания (глава 3): Освобождение от Пут — штрафы вычитаются,
     // Успехи ×2 (только Выкрутиться); Ускользнуть — +30 или переброс раз в
     // Раунд на любом тесте A в Борьбе (combat/techniques.mjs).
+    forcedRerollMode: blessedWithPusDisadvantage(actor, partner) ? "keepWorst" : "",
+    forcedRerollLabel: "Помеха: Благословенный Гноем",
     escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
     slipAway: char === "ag" && !def.jockey && hasDodgeTalent(actor, "slipAway"),
-    resistMods: (opp, me) => grappleTestMods(opp, me),
+    resistMods: (opp, me) => [...grappleTestMods(opp, me), ...sturdyResistMods(opp, "grapple")],
     resistRolls: opp => (isGrappleAttacker(opp) ? grappleHands(opp) : 1)
   };
 }
@@ -809,8 +916,10 @@ async function _doBite(actor, { aim = null } = {}) {
   // Адаптивная Отрава Наги: «Укус Наги использует кубик 1d10 вместо 1d5».
   const biteDamage = hasRuleFlag(actor, VENOM_BITE_CAPABILITY)
     ? venomBiteDamage(biteWeapon.system.damage) : biteWeapon.system.damage;
+  // Крушащий Удар (+½WS.b рукопашному урону) — укус тоже рукопашный (rules/damage-talents.mjs).
+  const talentBonus = talentDamageBonus(actor, { isMelee: true, chars: actor.system.characteristics, wp });
   const dmgFormula = damageFormulaFor({
-    damage: biteDamage, flatBonus: sbEff + invocationAdd.dmg, chars: actor.system.characteristics,
+    damage: biteDamage, flatBonus: sbEff + invocationAdd.dmg + talentBonus.flat, chars: actor.system.characteristics,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee: true
   });
   const dmgRoll = await new Roll(dmgFormula).evaluate();
@@ -823,7 +932,8 @@ async function _doBite(actor, { aim = null } = {}) {
   if (biteDealt) await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Борьба: Укус (${esc(biteWeapon.name)})`,
     outcome: `${esc(actor.name)} ${aimRoll ? "попадает" : "автоматически наносит"} ${esc(partner.name)} (${aimDef.loc}): <b>${dmgRoll.total}</b> Dmg.`,
-    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Свободное действие${aimRoll ? `. ${aimLine}` : ". Автоматическое попадание в Торс"} — доступно только пока цель удержана Захватом.</div>`]
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Свободное действие${aimRoll ? `. ${aimLine}` : ". Автоматическое попадание в Торс"} — доступно только пока цель удержана Захватом.</div>`,
+      ...(talentDamageNote(talentBonus) ? [`<div class="roll-threshold" style="font-size:0.85em;">${talentDamageNote(talentBonus)}</div>`] : [])]
   }, { rolls: aimRoll ? [aimRoll, dmgRoll] : [dmgRoll], sound: false });
 }
 
@@ -1506,6 +1616,8 @@ export function showGrappleDialog(actor) {
           dialog.close();
           return showGrappleDialog(actor);
         }
+        else if (await attemptAutoEscape(actor, key)) { /* Аморфный: без теста */ }
+        else if (key === "takeover" && await attemptTakeover(actor)) { /* Необъятный: провал без броска */ }
         else if (ALL_TESTS[key]) await _showContestDialog(actor, grappleTechDef(actor, ALL_TESTS[key]));
         dialog.close();
       }));

@@ -5,7 +5,7 @@
   "folder": "7dE5c2LfUfzblshX",
   "system": {
     "description": "",
-    "notes": "Рейтинг Daemonic не имеет соответствующего поля в system.effects/kind Механики (не путать с общими legacy-полями Unnatural/armourAll/etc.) — не проверено, какое поле актора его читает; применять вслепую рискованно.",
+    "notes": "Автоматизировано (dbc-114, 14.11.2026): +4 к Бонусу Стойкости носителя (как Unnatural T, соглашение бестиария «Daemonic → T.b»). Остальные эффекты Daemonic — вручную.",
     "benefit": "+4 к рейтингу Daemonic.",
     "source": "Элитный архетип: Житель Бездны",
     "hasRating": false,
@@ -26,7 +26,54 @@
     "bookSource": "DoomBC — Книга Аэльдари: Ответвления, ЭЛИТНЫЕ АРХЕТИПЫ ДРУКХАРИ («Элитные архетипы: Житель Бездны»)"
   },
   "_id": "se5UrAFJ4rC4mGVn",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Daemonic (+4) / Демонический (бонус T)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.t.bonusFx",
+            "type": "add",
+            "value": 4,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "ZXYyReZVEQnMeZA9",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786121961173,
+        "modifiedTime": 1786121961173,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!se5UrAFJ4rC4mGVn.ZXYyReZVEQnMeZA9"
+    }
+  ],
   "sort": 0,
   "ownership": {
     "default": 0,

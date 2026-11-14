@@ -211,3 +211,86 @@ describe("Затронутый Варпом (1): враг в Ярости — С
     expect(captured.chat.at(-1).content).toContain("Не требуется");
   });
 });
+
+// task-ab3f: предпросмотр Порога в окне Страха считал по настоящему рейтингу,
+// а бросок (combat/fear.mjs → rules/fear-ignore.mjs) у владельца Стального
+// Сердца снижает рейтинг на 1 — игрок видел одно число, в чате получал другое.
+// Предпросмотр читается через ту же ленту, что видит игрок: «⚠ Порог N»
+// появляется при N ≥ 70, поэтому W = 70 и Важный: Страх 3 → без Сердца 60
+// (подписи нет), со Сердцем (рейтинг 2, модификатор 0) → 70 (подпись есть).
+describe("openFearDialog: предпросмотр Порога учитывает Стальное Сердце (task-ab3f)", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  const withSteelHeart = () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.steel", when: {}, effects: [{ kind: "grantFlag", target: "mutation.heartOfSteel" }] }
+    ]);
+  };
+  const actor70 = () => {
+    const a = makeActor();
+    a.system.characteristics.wp.total = 70;
+    return a;
+  };
+
+  /** Подставной корень диалога: элементы по id, querySelectorAll понимает «#a, #b, .c». */
+  function mountDialog({ rating = "3", unignorable = false } = {}) {
+    const mk = (extra = {}) => ({ checked: false, value: "", handlers: [], addEventListener(t, fn) { if (t === "change") this.handlers.push(fn); }, ...extra });
+    // Как в настоящем DOM: присваивание textContent стирает прежнюю разметку.
+    const note = { innerHTML: "", set textContent(v) { this.innerHTML = String(v); }, get textContent() { return this.innerHTML; } };
+    const els = {
+      "#fear-rating": mk({ value: rating }), "#fear-type": mk({ value: "important" }),
+      "#fear-mod": mk({ value: "0" }), "#fear-prop-radiant": mk(),
+      "#fear-prop-unignorable": mk({ checked: unignorable })
+    };
+    const root = {
+      querySelector: sel => (sel === "#auto-outcome-note" ? note : els[sel] ?? null),
+      querySelectorAll: sel => sel.split(",").map(s => s.trim()).map(s => els[s]).filter(Boolean)
+    };
+    const html = fakeHtml({ "#fear-rating": rating, "#fear-type": "important", "#fear-mod": "0" });
+    html[0] = root;
+    captured.dialog.render(html);
+    return { els, note, refresh: () => els["#fear-prop-unignorable"].handlers.forEach(fn => fn()) };
+  }
+
+  it("без Стального Сердца Страх 3 даёт Порог 60 — подписи нет (контроль)", () => {
+    openFearDialog(actor70());
+    const { note } = mountDialog();
+    expect(note.innerHTML).toBe("");
+  });
+
+  it("со Стальным Сердцем Страх 3 считается как Страх 2 — Порог 70, как в карточке", () => {
+    withSteelHeart();
+    openFearDialog(actor70());
+    const { note } = mountDialog();
+    expect(note.innerHTML).toContain("<b>70</b>");
+  });
+
+  it("отметка «Нельзя игнорировать» возвращает настоящий рейтинг: Порог 60, подпись уходит", () => {
+    withSteelHeart();
+    openFearDialog(actor70());
+    const { els, note, refresh } = mountDialog();
+    expect(note.innerHTML).toContain("<b>70</b>");
+    els["#fear-prop-unignorable"].checked = true;
+    refresh();
+    expect(note.innerHTML).toBe("");
+  });
+
+  it("слушатель change висит на галочке «Нельзя игнорировать»", () => {
+    withSteelHeart();
+    openFearDialog(actor70());
+    const { els } = mountDialog();
+    expect(els["#fear-prop-unignorable"].handlers.length).toBeGreaterThan(0);
+  });
+
+  it("галочка отмечена с самого начала — предпросмотр сразу по настоящему рейтингу", () => {
+    withSteelHeart();
+    openFearDialog(actor70());
+    const { note } = mountDialog({ unignorable: true });
+    expect(note.innerHTML).toBe("");
+  });
+});

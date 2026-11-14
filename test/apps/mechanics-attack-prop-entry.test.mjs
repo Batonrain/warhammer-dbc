@@ -24,7 +24,7 @@ describe("describeMechEntry — kind:attackProp", () => {
 
   it("без рейтингов — только имя свойства", () => {
     expect(describeMechEntry(entry({ apKey: "shocking" })))
-      .toBe("Свойство атаки: Безоружные атаки (Кулак/Пинок/…, интегральные) — Шокирующее");
+      .toBe("Свойство атаки: Безоружные атаки (Кулак/Пинок/…, интегральные) — Шоковое");
   });
 
   it("свойство не выбрано", () => {
@@ -37,6 +37,6 @@ describe("describeMechEntry — kind:attackProp", () => {
 
   it("рукопашная область", () => {
     expect(describeMechEntry(entry({ apScope: "melee", apKey: "tearing" })))
-      .toBe("Свойство атаки: Рукопашные атаки — Рвущее");
+      .toBe("Свойство атаки: Рукопашные атаки — Терзающее");
   });
 });

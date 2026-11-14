@@ -1,0 +1,35 @@
+{
+  "name": "Snare / Связывающее",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Опутывает свою цель. При попадании цель должна пройти тест на A−10×X или S−10×X (по выбору цели), или будет связана и Беспомощна. Связанная цель в свой Ход может за полное действие повторить этот тест и при Успехе выбраться из пут или разорвать их. Другой персонаж в базовом контакте со связанным может за полудействие разрезать путы любым клинковым рукопашным оружием, если у него в руках такое есть.",
+    "reminder": "🕸️ Связывающее (X): цель — тест A−10×X или S−10×X, иначе связана и Беспомощна",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "snare",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "LPndp9a4NwVzgIu3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353821,
+    "modifiedTime": 1786224353826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!LPndp9a4NwVzgIu3"
+}

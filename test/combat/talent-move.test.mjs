@@ -32,7 +32,8 @@ const DOCS = {
   mercenary:  () => packDoc("traits", "YEaypvwq2nUSsNwu"),
   faolchu:    () => packDoc("talents", "N2wZL3ldU4Rme9Hn"),
   mistLeap:   () => packDoc("talents", "GT0mCLQ13cgAwr9y"),
-  mistwalker: () => packDoc("traits", "jCGAtzhmoeqgUbbC")
+  mistwalker: () => packDoc("traits", "jCGAtzhmoeqgUbbC"),
+  senses:     () => { const d = packDoc("traits", "7x1jLzfRKXuA0vew"); return { ...d, system: { ...d.system, rating: 30 } }; }
 };
 
 function fighter(docs = [], { ap = 2, reactions = 2, spd = 3, trophy = 2 } = {}) {
@@ -191,6 +192,17 @@ describe("teleport: Туманоходец и Туманный Прыжок — 
     actor.getActiveTokens = () => [tokenDoc];
     return tokenDoc;
   }
+  const preyAt = (tok, x = 2000) => ({ id: "p1", uuid: "Scene.s.Token.p1", x, y: 0, width: 1, height: 1, parent: tok.parent,
+    actor: { name: "Добыча", uuid: "Actor.p1", getFlag: () => undefined, system: {} } });
+  const aimAtPrey = async tok => {
+    globalThis.canvas = { ready: true, grid: { size: 100 }, regions: { placeRegion: async () => null } };
+    globalThis.game.user.targets = new Set([{ document: preyAt(tok) }]);
+  };
+  const decideWorthy = async promise => {
+    for (let i = 0; i < 40 && !captured.dialog; i++) await new Promise(r => setTimeout(r, 0));
+    await captured.press("ok", {});
+    return promise;
+  };
   const pickAt = (x, y) => { globalThis.canvas = { ready: true, grid: { size: 100 }, regions: { placeRegion: async () => ({ shapes: [{ x, y }], delete: async () => {} }) } }; };
 
   it("Туманоходец (P.b 4): телепорт на 3 м — blink, без записи бюджета, раз в Раунд", async () => {
@@ -233,18 +245,25 @@ describe("teleport: Туманоходец и Туманный Прыжок — 
     expect(captured.warnings.at(-1)).toContain("стена");
   });
 
-  it("отмена выбора точки — ничего не потрачено; Туманный Прыжок платит 2 ОД только после переноса", async () => {
-    const a = fighter([DOCS.mistLeap()], { ap: 2 });
+  it("Туманный Прыжок без выцеленной добычи не телепортирует и ничего не тратит; ОД Натиска при прыжке не списываются (их спишет бросок атаки)", async () => {
+    const a = fighter([DOCS.mistLeap(), DOCS.mistwalker(), DOCS.senses()], { ap: 2 });
     const tok = sceneFor(a);
+    const prey = preyAt(tok);
     globalThis.canvas = { ready: true, grid: { size: 100 }, regions: { placeRegion: async () => null } };
+    globalThis.game.user.targets = new Set();
     expect(await declareTalentMove(a, "mistLeap", "leap")).toBe(false);
     expect(a.system.actionPoints.value).toBe(2);
-    pickAt(2050, 50); // 20 м — потолка нет
-    expect(await declareTalentMove(a, "mistLeap", "leap")).toBe(true);
-    expect(a.system.actionPoints.value).toBe(0);
+    expect(tok.moves).toHaveLength(0);
+    globalThis.game.user.targets = new Set([{ document: prey }]);
+    const p = declareTalentMove(a, "mistLeap", "leap");
+    for (let i = 0; i < 40 && !captured.dialog; i++) await new Promise(r => setTimeout(r, 0));
+    await captured.press("ok", {});
+    expect(await p).toBe(true);
+    expect(a.system.actionPoints.value).toBe(2);
     expect(a.system.trophyPoints.value).toBe(1); // Очко Трофеев списано (было 2)
     expect(tok.moves[0].destination.action).toBe("blink");
     expect(captured.chat.at(-1).content).toContain("Трофеев");
+    globalThis.game.user.targets = new Set();
   });
 
   it("без Очка Трофеев Туманный Прыжок отказывает до выбора точки: ничего не списано, токен на месте", async () => {
@@ -260,11 +279,13 @@ describe("teleport: Туманоходец и Туманный Прыжок — 
   });
 
   it("отказ ядра: Очко Трофеев не списывается", async () => {
-    const a = fighter([DOCS.mistLeap()], { ap: 2, trophy: 1 });
-    sceneFor(a, { result: false });
-    pickAt(450, 50);
-    await declareTalentMove(a, "mistLeap", "leap");
+    const a = fighter([DOCS.mistLeap(), DOCS.mistwalker(), DOCS.senses()], { ap: 2, trophy: 1 });
+    const tok = sceneFor(a, { result: false });
+    await aimAtPrey(tok);
+    expect(await decideWorthy(declareTalentMove(a, "mistLeap", "leap"))).toBe(false);
+    expect(tok.moves).toHaveLength(1); // ядро спросили — и оно отказало
     expect(a.system.trophyPoints.value).toBe(1);
+    expect(captured.warnings.at(-1)).toContain("стена");
   });
 
   it("стена остановила токен на полпути — перенос засчитан, карточка называет стену", async () => {
@@ -276,11 +297,12 @@ describe("teleport: Туманоходец и Туманный Прыжок — 
   });
 
   it("ядро отклонило перемещение — цена и «раз в Раунд» не тратятся", async () => {
-    const a = fighter([DOCS.mistLeap()], { ap: 2 });
-    sceneFor(a, { result: false });
+    const a = fighter([DOCS.mistwalker()]);
+    const tok = sceneFor(a, { result: false });
     pickAt(450, 50);
-    expect(await declareTalentMove(a, "mistLeap", "leap")).toBe(false);
-    expect(a.system.actionPoints.value).toBe(2);
+    expect(await declareTalentMove(a, "mistwalker", "mist")).toBe(false);
+    expect(tok.moves).toHaveLength(1);
+    expect(a.getFlag(NS, "talentMove.mistwalker.mist")).toBeUndefined();
   });
 });
 

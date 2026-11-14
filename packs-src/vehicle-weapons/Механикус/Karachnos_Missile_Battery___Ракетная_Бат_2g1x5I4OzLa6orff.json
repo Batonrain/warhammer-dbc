@@ -38,6 +38,10 @@
         "key": "flush"
       },
       {
+        "key": "rad",
+        "rating": "1d10"
+      },
+      {
         "key": "tearing"
       },
       {

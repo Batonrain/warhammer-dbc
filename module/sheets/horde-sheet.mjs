@@ -31,6 +31,7 @@ import { FEAR_RATINGS } from "../constants/fear-tables.mjs";
 import { spendActionPoints } from "../combat/action-economy.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../combat/attack-limit.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
+import { talentDamageBonus, talentDamageNote } from "../rules/damage-talents.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -729,7 +730,9 @@ async function rollHordeAttackOn(actor, w, key, threshold, isMelee, targets, { a
   // Могучее ×2, Сдержанное 0 — общее правило с обычной атакой. Хватов у Орды
   // нет, поэтому sbHalf не передаётся.
   const sbEff = meleeStrengthBonus({ sb, wp });
-  const flat = (isMelee ? sbEff : 0) + (modFx.damageMod || 0);
+  // Крушащий Удар / Могучий Выстрел у Орды с этими Талантами — как в основной атаке (rules/damage-talents.mjs).
+  const talentBonus = talentDamageBonus(actor, { isMelee, chars, wp });
+  const flat = (isMelee ? sbEff : 0) + (modFx.damageMod || 0) + talentBonus.flat;
   const rawDmg = String(sys.damage || "").replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
   const baseDmg = rawDmg || (isMelee ? "0" : "1d10");
   let formula = flat !== 0 ? `${baseDmg} + ${flat}` : baseDmg;
@@ -812,7 +815,7 @@ async function rollHordeAttackOn(actor, w, key, threshold, isMelee, targets, { a
         ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}, шквал накрывает цель</span>`
         : `<span class="roll-failure">Промах = попадание без бонусов Магнитуды (можно Избегать)</span>`}</div>
       <div class="roll-damage-section">
-        <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${isMelee ? `, S.b +${sbEff}` : ""}${magNote}</div>
+        <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${isMelee ? `, S.b +${sbEff}` : ""}${magNote}${talentDamageNote(talentBonus) ? ` · ${talentDamageNote(talentBonus)}` : ""}</div>
         ${ext.hasExtreme ? `<div class="roll-extreme-block"><b>Экстремальный урон</b> · d5: ${ext.extremeLevel}${ext.critEffect ? `<div class="roll-crit-effect">${ext.critEffect}</div>` : ""}</div>` : ""}
         <div class="roll-damage-line"><b>${hitLoc}</b>: <b class="roll-dmg-big">${totalDamage}</b> <span class="horde-dmg-formula">= ${formula}${magDice ? ` + ${magDice}d10` : ""}${diceParts ? ` → ${diceParts}` : ""}</span></div>
       </div>
