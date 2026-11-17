@@ -1070,7 +1070,7 @@ Hooks.once("ready", () => {
       if (data.action === "createGolem") {
         // Голем Рубрики (Повелитель Големов, module/combat/rubric-sorcerer.mjs) — тот же приём, что summonDemon:
         // Бестиарий скрыт от игрока, актора-Миньона и токен создаёт активный ГМ по плану из диалога игрока.
-        const res = await spawnGolem(data.plan ?? {});
+        const res = await spawnGolem(data.plan ?? {}, { requester });
         if (!res.ok) console.warn("Warhammer DBC | Голем Рубрики:", res.reason);
         return;
       }

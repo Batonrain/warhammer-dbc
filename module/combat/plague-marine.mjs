@@ -196,12 +196,21 @@ export async function activateInfectiousMiasma(actor) {
   return true;
 }
 
+const toxicDs = (victim, label) => ({
+  wpLabel: label, wpKey: "toxic", wpCondition: "poisoned", wpTestChar: "t", wpTestMod: "0", wpDamage: "1d10",
+  wpRating: "0", wpOnBreach: "0", wpForceActorUuid: victim.uuid, wpDmgType: "chemical", wpHitLocation: "Торс"
+});
+
 async function toxicEffect(victim, label) {
   const { _applyWeaponPropEffect } = await import("../hooks.mjs");
-  return _applyWeaponPropEffect({
-    wpLabel: label, wpKey: "toxic", wpCondition: "poisoned", wpTestChar: "t", wpTestMod: "0", wpDamage: "1d10",
-    wpRating: "0", wpOnBreach: "0", wpForceActorUuid: victim.uuid, wpDmgType: "chemical", wpHitLocation: "Торс"
-  }, { force: true });
+  return _applyWeaponPropEffect(toxicDs(victim, label), { force: true });
+}
+
+/** Кнопка того же Toxic(0) для ГМа (hooks.mjs, .wh-wprop-apply-btn): урон ушёл ему по релею, потерю Ран видит только он. */
+function toxicButton(victim, label) {
+  const attrs = Object.entries(toxicDs(victim, label))
+    .map(([k, v]) => `data-${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}="${esc(v)}"`).join(" ");
+  return `<button class="wh-wprop-apply-btn" type="button" ${attrs}>${esc(label)} → ${esc(victim.name)}</button>`;
 }
 
 export async function processMiasmaTurnStart(actor, tokenDoc, combat = combatOfActor(actor)) {
@@ -342,12 +351,16 @@ export async function blessedTouch(actor) {
     rawDamage: dmg.total, penetration: 0, damageType: "chemical", damageSubtype: "toxic", hitLocation: "Торс",
     melee: true, attackerName: actor.name, attackerUuid: actor.uuid, weaponName: BLESSED_WEAPON_NAME
   }, actor, "contact");
-  if (dealt && game.user?.isGM && Number.isFinite(wasBefore) && Number(victim.system?.wounds?.value) < wasBefore) {
-    await toxicEffect(victim, "Благословенный Гноем: Toxic (0)");
+  // Тот же выбор, что у writeToTarget: свой/ГМ — урон применён здесь, иначе ушёл ГМу по релею.
+  const local = game.user?.isGM || victim.isOwner !== false;
+  const label = "Благословенный Гноем: Toxic (0)";
+  if (dealt && local && Number.isFinite(wasBefore) && Number(victim.system?.wounds?.value) < wasBefore) {
+    await toxicEffect(victim, label);
   }
   await postTestCard(actor, {
     icon: ICON(), title: `Благословенный Гноем — ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">${esc(victim.name)} коснулся(ась) голой кожи: <b>${dmg.total}</b> (${BLESSED_TOUCH_DAMAGE}) C Toxic(0)${dealt ? "" : " — применить некому (нет ГМа)"}.</div>`]
+    lines: [`<div class="roll-threshold">${esc(victim.name)} коснулся(ась) голой кожи: <b>${dmg.total}</b> (${BLESSED_TOUCH_DAMAGE}) C Toxic(0)${dealt ? "" : " — применить некому (нет ГМа)"}.</div>`,
+      dealt && !local ? `<div class="roll-wprop-effects"><div class="roll-section-head">Урон применяет Мастер — если он прошёл в Раны:</div>${toxicButton(victim, label)}</div>` : ""]
   }, { sound: false, rolls: [dmg] });
   return dealt;
 }

@@ -210,9 +210,12 @@ export function buildGolemData(src, { masterUuid, slotId = "", terminatorArmour 
  * Сторона ГМ: создаёт Голема из профиля бестиария и токен рядом с хозяином.
  * @param {{masterUuid:string, slotId?:string, terminatorArmour?:object, weapons?:object[]}} plan
  */
-export async function spawnGolem(plan) {
+export async function spawnGolem(plan, { requester = null } = {}) {
   const master = await actorOfUuid(plan.masterUuid);
   if (!master) return { ok: false, reason: "Хозяин Голема не найден." };
+  if (requester && !requester.isGM && !master.testUserPermission?.(requester, "OWNER")) {
+    return { ok: false, reason: "Запросивший не владеет хозяином Голема." };
+  }
   const src = await findBestiaryActor(GOLEM_PROFILE_NAME);
   if (!src) return { ok: false, reason: `Профиль «${GOLEM_PROFILE_NAME}» не найден в Бестиарии — создайте Голема вручную.` };
   const masterToken = canvas?.tokens?.placeables?.find(t => t.actor?.uuid === master.uuid);
@@ -235,6 +238,10 @@ export async function spawnGolem(plan) {
     }));
   }
   await syncRubricShield(golem);
+  // Снаряжение списывается здесь, после того как Голем создан: у игрока план
+  // идёт по сокету, и списать заранее значило бы потерять его, если ГМ не создаст Голема.
+  const spent = (plan.spentItemIds ?? []).filter(id => ["armor", "weapon"].includes(master.items?.get?.(id)?.type));
+  if (spent.length) await master.deleteEmbeddedDocuments("Item", spent);
 
   const scene = currentScene();
   if (scene) {
@@ -355,9 +362,9 @@ export async function startGolemCreation(master) {
   const plan = {
     masterUuid: master.uuid, slotId: st.slot?.id ?? "",
     terminatorArmour: (picked.terminator && armour) ? armour.toObject() : null,
-    weapons: chosenWeapons.map(w => w.toObject())
+    weapons: chosenWeapons.map(w => w.toObject()),
+    spentItemIds: [...(armour ? [armour.id] : []), ...chosenWeapons.map(w => w.id)]
   };
-  const spent = [...(armour ? [armour.id] : []), ...chosenWeapons.map(w => w.id)];
   const res = await defaultSpawnGolemFn(plan);
   if (res?.ok === false) {
     await postTestCard(master, {
@@ -367,12 +374,11 @@ export async function startGolemCreation(master) {
     }, { rolls });
     return res;
   }
-  if (spent.length) await master.deleteEmbeddedDocuments("Item", spent);
 
   const lines = [
     `<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов. Потрачено: ${armour ? esc(armour.name) : "комплект брони не отмечен"}${chosenWeapons.length ? `; оружие Голема: ${chosenWeapons.map(w => esc(w.name)).join(", ")}` : ""}.</div>`,
     `<div class="roll-threshold">Свободных душ осталось: <b>${Math.max(0, st.free - 1)}</b> из ${st.max}. Лояльность Голема ${GOLEM_LOYALTY}${plan.terminatorArmour ? "; Терминаторский Голем: +10 WS и S, Regeneration 6" : ""}.</div>`,
-    res?.relayed ? `<div class="roll-threshold">Токен Голема создаёт Мастер.</div>` : ""
+    res?.relayed ? `<div class="roll-threshold">Голема и токен создаёт Мастер; снаряжение спишется с листа, только когда Голем будет создан.</div>` : ""
   ];
   await postTestCard(master, {
     icon: ICON(), title: `Повелитель Големов — ${esc(master.name)}`, threshold: statLine, lines,

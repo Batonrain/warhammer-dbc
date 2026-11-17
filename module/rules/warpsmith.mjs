@@ -89,6 +89,9 @@ export const resistThreshold = (target, modsTotal = 0) => charTotal(target, "wp"
 
 export const cageRange = actor => Math.max(0, charBonus(actor, "int"));
 
+/** Эмпирейная Плеть: «в радиусе I м» — полное Int, не I.b (у Железной Клети — I.b). */
+export const whipRange = actor => Math.max(0, charTotal(actor, "int"));
+
 export const cageHours = target => Math.max(1, charBonus(target, "wp"));
 
 export const brokenOf = target => {
@@ -201,7 +204,9 @@ export function regenPlan({ elapsed, carry = 0, interval, missing }) {
   return { heal, carry: total - ticks * interval };
 }
 
-export function runDownChanges() {
+/** У Техники (vehicle) из Характеристик в схеме есть только Сила шасси — +30 идёт в неё. */
+export function runDownChanges(vehicle = false) {
+  if (vehicle) return [{ key: "system.chassis.strength", type: "add", value: RUN_DOWN_BONUS }];
   return RUN_DOWN_CHAR_KEYS.map(k => ({ key: `system.characteristics.${k}.totalFx`, type: "add", value: RUN_DOWN_BONUS }));
 }
 

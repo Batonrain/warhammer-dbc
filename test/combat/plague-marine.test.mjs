@@ -21,7 +21,7 @@ import { applyDamageToActor } from "../../module/combat/damage.mjs";
 import {
   abominableOnHit, activateInfectiousMiasma, processMiasmaTurnStart, plagueMarineOnDamage, resolvePlagueMarineCombatEnd,
   bileSpitPenBonus, processWastelandRequest, onWastelandEnter, rotsmithClock, gloriousRustClock, infectVictims,
-  infectiousMiasmaStatus, wastelandZonesOf
+  infectiousMiasmaStatus, wastelandZonesOf, blessedTouch
 } from "../../module/combat/plague-marine.mjs";
 import { blessedWithPusDisadvantage, grappleTechDef } from "../../module/combat/grapple.mjs";
 import { applyItemMechanics } from "../../module/apps/mechanics.mjs";
@@ -599,5 +599,40 @@ describe("ревью: заражение Миазмами и конец боя",
     expect(pm.items.find(i => i.name === stack.name).system.quantity).toBe(4);
     expect(pm.items.find(i => i.name === stack.name).flags[NS].rotsmith).toBeUndefined();
     expect(pm.items.map(i => i.name)).toContain(plagueKnife.name);
+  });
+});
+
+describe("Благословенный Гноем: Toxic(0) после касания", () => {
+  const touch = victim => {
+    const pm = body({ uuid: "Actor.pm", name: "Чумной", docs: [TALENT("Blessed with Pus")] });
+    globalThis.game.user = { isGM: false, id: "u2", targets: new Set([{ actor: victim }]) };
+    return pm;
+  };
+  afterEach(() => { delete globalThis.game.socket; });
+
+  it("игрок бьёт свою цель: урон прошёл в Раны — Toxic(0) наложен, как у ГМа", async () => {
+    const victim = body({ uuid: "Actor.victim", name: "Жертва" });
+    const pm = touch(victim);
+    captured.dice = [8];
+    expect(await blessedTouch(pm)).toBe(true);
+    expect(victim.system.wounds.value).toBeLessThan(20);
+    expect(toxic.calls).toHaveLength(1);
+    expect(toxic.calls[0].ds.wpForceActorUuid).toBe("Actor.victim");
+  });
+
+  it("игрок бьёт чужую цель: урон уходит ГМу, в карточке — кнопка Toxic(0) по этой цели", async () => {
+    const victim = body({ uuid: "Actor.victim", name: "Жертва" });
+    victim.isOwner = false;
+    const emitted = [];
+    globalThis.game.socket = { emit: (_c, p) => emitted.push(p) };
+    const pm = touch(victim);
+    captured.dice = [8];
+    expect(await blessedTouch(pm)).toBe(true);
+    expect(emitted).toHaveLength(1);
+    expect(toxic.calls).toHaveLength(0);
+    const card = String(captured.chat.at(-1).content);
+    expect(card).toContain("wh-wprop-apply-btn");
+    expect(card).toContain('data-wp-key="toxic"');
+    expect(card).toContain('data-wp-force-actor-uuid="Actor.victim"');
   });
 });

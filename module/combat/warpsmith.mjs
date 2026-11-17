@@ -5,7 +5,7 @@ import {
   RUN_DOWN_STRUCTURE, RUN_DOWN_HELPLESS, RUN_DOWN_WP_LOSS, RUN_DOWN_BONUS,
   CELL_DEVICE_TYPES,
   hasIronCage, hasWarpforgedPlate, hasSigilOfDominion, hasCellOfShame, hasEmpyreanWhip, hasForgeOfOne, hasRunDown,
-  cageThreshold, cellThreshold, whipThreshold, resistThreshold, daemonLoreTotal, techUseTotal, cageRange,
+  cageThreshold, cellThreshold, whipThreshold, resistThreshold, daemonLoreTotal, techUseTotal, cageRange, whipRange,
   brokenOf, isCaged, isBrokenBySmith, flagSmithIs, cageFlag, cageMatured, brokenFlagMatured, cellFlag, cellBrokenFree,
   sigilItemData, findBrokenDominionTarget, regenIntervalSeconds, regenPlan, runDownChanges, runDownMarkOf, isCellDevice
 } from "../rules/warpsmith.mjs";
@@ -290,7 +290,7 @@ export async function releaseCellDemon(item) {
 export function whipCandidates(actor) {
   const token = tokenOfActor(actor);
   if (!token) return [];
-  return tokensWithinRadius(token, cageRange(actor)).map(t => t.actor)
+  return tokensWithinRadius(token, whipRange(actor)).map(t => t.actor)
     .filter(a => a && isBrokenBySmith(a, actor, uuidsOf));
 }
 
@@ -302,7 +302,7 @@ export async function useEmpyreanWhip(actor) {
   }
   const machines = whipCandidates(actor);
   if (!machines.length) {
-    ui.notifications?.warn(`В радиусе I = ${cageRange(actor)} м нет Сломленных вами демонических машин.`);
+    ui.notifications?.warn(`В радиусе I = ${whipRange(actor)} м нет Сломленных вами демонических машин.`);
     return false;
   }
   const loreMods = collectTestMods(actor, { kind: "skill", group: "forbiddenLore", specialty: "Daemons", char: "int" });
@@ -323,7 +323,7 @@ export async function useEmpyreanWhip(actor) {
     icon: ICON(), title: `Эмпирейная Плеть — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "наименьший из For.Lore (Daemons)−20 и Command(I)−10", base: null, parts: loreMods.parts.map(esc), threshold, rv }),
     rerollNote,
-    lines: [`<div class="roll-threshold">В радиусе ${cageRange(actor)} м: ${names}.${note}</div>`],
+    lines: [`<div class="roll-threshold">В радиусе ${whipRange(actor)} м: ${names}.${note}</div>`],
     outcome: outcomeHtml(success, success ? `Успех (${deg}) — плеть держит машины` : "Провал — машины остаются сами по себе")
   }, { rolls });
   return success;
@@ -341,6 +341,28 @@ export async function clearWhipOnCombatEnd() {
     }
     await actor.unsetFlag(NS, WHIP_FLAG);
   }
+  // Загнать тоже живёт в рамках боя; hooks.mjs (deleteCombat) уже зовёт эту функцию.
+  await clearRunDownOnCombatEnd();
+}
+
+/** Конец боя: следующего Хода Кузнеца в этом бою не будет — +30, временное Очко и метка снимаются без расплаты. */
+export async function clearRunDownOnCombatEnd() {
+  let cleared = 0;
+  const seen = new Set();
+  for (const target of [...worldActors(), ...sceneTokenActors()]) {
+    if (!target?.uuid || seen.has(target.uuid)) continue;
+    seen.add(target.uuid);
+    if (!runDownMarkOf(target) || !target.isOwner) continue;
+    await removeRunDownEffects(target);
+    await clearTempInfamy(target);
+    await target.unsetFlag(NS, RUN_DOWN_FLAG);
+    await postTestCard(target, {
+      icon: ICON(), title: `Загнать — ${esc(target.name)}`,
+      lines: [`<div class="roll-threshold">Бой окончен: +${RUN_DOWN_BONUS} и Очко Бесчестия от «Загнать» сняты. Расплата (${RUN_DOWN_STRUCTURE} Структуры, Беспомощность ${RUN_DOWN_HELPLESS} Раундов, −${RUN_DOWN_WP_LOSS} W) по книге наступает в начале следующего Хода Кузнеца, а в этом бою его уже не будет — если стол считает иначе, внесите вручную.</div>`]
+    }, { sound: false });
+    cleared++;
+  }
+  return cleared;
 }
 
 export async function useForgeOfOne(actor) {
@@ -399,11 +421,16 @@ export async function useRunDown(actor, target = targetedActor()) {
   const ok = await writeToTarget(target, { kind: "warpsmith", action: "runDown" }, actor);
   if (!ok) return false;
   await markThrottleUsed(actor, RUN_DOWN_THROTTLE, "round");
+  const vehicle = target.type === "vehicle";
   await postTestCard(actor, {
     icon: ICON(), title: `Загнать — ${esc(actor.name)} → ${esc(target.name)}`,
     lines: [
-      `<div class="roll-threshold">Потрачено: Очко Бесчестия. ${esc(target.name)}: +${RUN_DOWN_BONUS} ко всем Характеристикам и 1 Очко Бесчестия до начала следующего Хода Кузнеца.</div>`,
-      `<div class="roll-threshold">В начале следующего Хода Кузнеца машина теряет ${RUN_DOWN_STRUCTURE} Структуры, становится Беспомощной на ${RUN_DOWN_HELPLESS} Раундов, а демон внутри навсегда теряет ${RUN_DOWN_WP_LOSS} W — это произойдёт само.</div>`
+      vehicle
+        ? `<div class="roll-threshold">Потрачено: Очко Бесчестия. ${esc(target.name)}: +${RUN_DOWN_BONUS} к Силе шасси (других Характеристик у Техники в системе нет — +${RUN_DOWN_BONUS} к тестам демона-пилота вручную) и 1 Очко Бесчестия до начала следующего Хода Кузнеца.</div>`
+        : `<div class="roll-threshold">Потрачено: Очко Бесчестия. ${esc(target.name)}: +${RUN_DOWN_BONUS} ко всем Характеристикам и 1 Очко Бесчестия до начала следующего Хода Кузнеца.</div>`,
+      vehicle
+        ? `<div class="roll-threshold">В начале следующего Хода Кузнеца машина сама потеряет ${RUN_DOWN_STRUCTURE} Структуры. Беспомощность на ${RUN_DOWN_HELPLESS} Раундов и потерю ${RUN_DOWN_WP_LOSS} W демоном внутри система Технике не ведёт — карточка расплаты назовёт числа, внесите вручную.</div>`
+        : `<div class="roll-threshold">В начале следующего Хода Кузнеца машина теряет ${RUN_DOWN_STRUCTURE} Структуры, становится Беспомощной на ${RUN_DOWN_HELPLESS} Раундов, а демон внутри навсегда теряет ${RUN_DOWN_WP_LOSS} W — это произойдёт само.</div>`
     ],
     outcome: outcomeHtml(true, "Узы впились в дух демона")
   }, { sound: false });
@@ -419,13 +446,15 @@ export async function runDownTurnStart(actor) {
     seen.add(target.uuid);
     const mark = runDownMarkOf(target);
     if (!mark || !(mark.smithUuids ?? [mark.smithUuid]).some(u => uuidsOf(actor).has(u))) continue;
+    if (mark.combatId && mark.combatId !== combatId()) continue;
     const structure = await roll(RUN_DOWN_STRUCTURE);
     const helpless = await roll(RUN_DOWN_HELPLESS);
     const wp = await roll(RUN_DOWN_WP_LOSS);
     const ok = await writeToTarget(target, { kind: "warpsmith", action: "runDownPay", structure, helpless, wp }, actor);
     await postTestCard(actor, {
       icon: ICON(), title: `Загнать — расплата ${esc(target.name)}`,
-      lines: [`<div class="roll-threshold">${esc(target.name)} теряет <b>${structure}</b> Структуры (${RUN_DOWN_STRUCTURE}), Беспомощна <b>${helpless}</b> Раунд(ов), демон навсегда теряет <b>${wp}</b> W.${ok ? "" : " Записать некому (нет ГМа) — внесите вручную."}</div>`]
+      lines: [`<div class="roll-threshold">${esc(target.name)} теряет <b>${structure}</b> Структуры (${RUN_DOWN_STRUCTURE}), Беспомощна <b>${helpless}</b> Раунд(ов), демон навсегда теряет <b>${wp}</b> W.${ok ? "" : " Записать некому (нет ГМа) — внесите вручную."}</div>`,
+        target.type === "vehicle" ? `<div class="roll-threshold">Записана только Структура: Состояний и W у Техники в системе нет — Беспомощность ${helpless} Раунд(ов) отметьте на столе, −${wp} W внесите вручную демону-пилоту.</div>` : ""]
     }, { sound: false });
     paid++;
   }
@@ -463,10 +492,11 @@ export async function performWarpsmithWrite(target, op, initiator) {
     }
     case "runDown": {
       await removeRunDownEffects(target);
-      if (isCreature(target)) {
+      const vehicle = target.type === "vehicle";
+      if (isCreature(target) || vehicle) {
         await target.createEmbeddedDocuments("ActiveEffect", [{
-          name: "Загнать: +30 ко всем Характеристикам", img: "icons/svg/upgrade.svg",
-          system: { changes: runDownChanges().map(c => ({ priority: 0, ...c, phase: "initial" })) },
+          name: vehicle ? "Загнать: +30 к Силе шасси" : "Загнать: +30 ко всем Характеристикам", img: "icons/svg/upgrade.svg",
+          system: { changes: runDownChanges(vehicle).map(c => ({ priority: 0, ...c, phase: "initial" })) },
           flags: { [NS]: { [RUN_DOWN_FLAG]: true } }
         }]);
       }
