@@ -21,8 +21,10 @@ import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { hasTalentCapability } from "./ability-by-key.mjs";
 import { hasInfernalMaster } from "./occultist-talents.mjs";
+import { hasAirOfAuthority } from "./leadership-talents.mjs";
 import { itemHasName } from "./predicates.mjs";
 import { effectiveMinionGroup } from "./binary-dominion.mjs";
+import { GOLEM_LOYALTY } from "./rubric-sorcerer.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -369,8 +371,13 @@ export function minionCorruption(group) {
  * Infernal Master / Инфернальный Владыка (occultist-talents.mjs, Sahara
  * 3-2a39): «Его Миньоны-демоны получают +10 Лояльности» — тем же
  * безусловным приёмом, что Beloved Leader, но только для группы "daemon".
+ * Air of Authority / Аура Власти (leadership-talents.mjs, Sahara
+ * air-of-authority-10): «Его Миньоны-люди также получают +10 Лояльности» —
+ * тот же приём для группы "human".
  */
 export function minionLoyalty(master, group, minion = null) {
+  // Голем Рубрики (Повелитель Големов): «фиксированная Лояльность 30, которая не изменяется никакими Талантами».
+  if (minion?.golem) return GOLEM_LOYALTY;
   const charKey = MINION_GROUPS[group]?.masterChar;
   if (!charKey) return 0;
   let value = num(master?.system?.characteristics?.[charKey]?.total);
@@ -379,6 +386,7 @@ export function minionLoyalty(master, group, minion = null) {
   }
   if (hasRuleFlag(master, "minion.core.belovedLeader")) value += 10;
   if (group === "daemon" && hasInfernalMaster(master)) value += 10;
+  if (group === "human" && hasAirOfAuthority(master)) value += 10;
   // Ancient Warrior / Древний Воин (arsenal.core.ancientWarrior): «+10 к
   // Лояльности Миньонов-Космодесантников» — признак на самом Миньоне
   // (system.isAstartes), у человека того же group:"human" его не отличить.

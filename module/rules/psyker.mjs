@@ -17,6 +17,17 @@ import { itemHasName } from "./predicates.mjs";
  * Math.max(rating, 1) на каждый предмет читает оба варианта одинаково верно,
  * не требуя миграции старых листов.
  */
+/**
+ * Миньон с Чертой «Psyker / Псайкер» (комплексная Черта Миньона, «Даёт Psyker
+ * (PR 1)») — псайкер, хотя флаг system.isPsyker ему никто не ставил
+ * (dbc-114/55-15, 13.11.2026). Только Миньоны: у персонажей и рас флаг ведёт
+ * чарген, а Метка Тзинча выдаёт ту же Черту и не должна делать «был псайкером».
+ */
+export function minionHasPsykerTrait(actor) {
+  if (actor?.type !== "minion") return false;
+  return [...(actor.items ?? [])].some(i => i?.type === "trait" && (itemHasName(i, "Psyker") || itemHasName(i, "Псайкер")));
+}
+
 export function psyRatingFromTalents(items) {
   const matches = [...(items ?? [])].filter(i => i?.type === "talent" && itemHasName(i, "Psy Rating"));
   if (!matches.length) return null;

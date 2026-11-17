@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { coveringFireWeapon, offerCoveringFire, applyCoveringFireMarks, coveringFireShootersFor,
-  coveringFireChargeCheck, activateCoveringFire } from "../../module/combat/covering-fire.mjs";
+  coveringFireChargeCheck, activateCoveringFire, coveringFireMarkEntries } from "../../module/combat/covering-fire.mjs";
 import { COVERING_FIRE_OFFER_FLAG, COVERING_FIRE_MARKS_FLAG } from "../../module/rules/gunner-talents.mjs";
 import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
 
@@ -20,6 +20,23 @@ const byKey = key => ({
     { id: "e", kind: "capability", capabilityKey: key, label: "" }] }] } }
 });
 const byName = name => ({ id: "t-" + name, name, type: "talent", system: {} });
+
+/**
+ * Как Foundry хранит флаг: update разворачивает точки в КЛЮЧАХ значения во вложенные
+ * объекты (expandObject), поэтому ключ «Scene.s.Token.f1» лежит как {Scene:{s:{Token:{f1:…}}}}.
+ */
+function expandKeys(value) {
+  if (Array.isArray(value)) return value.map(expandKeys);
+  if (!value || typeof value !== "object") return value;
+  const out = {};
+  for (const [key, v] of Object.entries(value)) {
+    let node = out;
+    const path = key.split(".");
+    for (const k of path.slice(0, -1)) node = (node[k] ??= {});
+    node[path.at(-1)] = expandKeys(v);
+  }
+  return out;
+}
 
 /** Токен-документ: ровно те поля, что читает enemyContactTokenDocs (x/y/размер/disposition) + uuid. */
 function tokenDoc({ id, x = 0, y = 0, disposition = -1, actor = { type: "character", system: {} } }) {
@@ -33,7 +50,7 @@ function who(items, { token = null } = {}) {
   a.uuid = "Actor.shooter"; a.name = "Стрелок"; a.type = "character";
   const store = {};
   a.getFlag = (s, k) => store[`${s}.${k}`];
-  a.setFlag = async (s, k, v) => { store[`${s}.${k}`] = v; };
+  a.setFlag = async (s, k, v) => { store[`${s}.${k}`] = expandKeys(structuredClone(v)); };
   a.unsetFlag = async (s, k) => { delete store[`${s}.${k}`]; };
   a.update = async () => {};
   a.store = store;
@@ -94,15 +111,15 @@ describe("метки Подавления: на ВСЕХ бывших проти
 
   it("короткая очередь: +10 обоим, предложение снято", async () => {
     const a = await seed("semi");
-    const marks = a.store[`warhammer-dbc.${COVERING_FIRE_MARKS_FLAG}`];
-    expect(Object.keys(marks)).toHaveLength(2);
-    expect(Object.values(marks).map(m => m.mod)).toEqual([10, 10]);
+    const marks = coveringFireMarkEntries(a.store[`warhammer-dbc.${COVERING_FIRE_MARKS_FLAG}`]);
+    expect(marks.map(m => m.tokenUuid)).toEqual(["Scene.s.Token.f1", "Scene.s.Token.f2"]);
+    expect(marks.map(m => m.mod)).toEqual([10, 10]);
     expect(a.store[`warhammer-dbc.${COVERING_FIRE_OFFER_FLAG}`]).toBeUndefined();
   });
 
   it("длинная очередь: +0", async () => {
     const a = await seed("full");
-    expect(Object.values(a.store[`warhammer-dbc.${COVERING_FIRE_MARKS_FLAG}`]).map(m => m.mod)).toEqual([0, 0]);
+    expect(coveringFireMarkEntries(a.store[`warhammer-dbc.${COVERING_FIRE_MARKS_FLAG}`]).map(m => m.mod)).toEqual([0, 0]);
   });
 
   it("без предложения метки не появляются", async () => {
@@ -136,6 +153,31 @@ describe("Натиск бывшего противника", () => {
     globalThis.game.combat = { combatants: [{ actor: s }] };
     expect(coveringFireShootersFor(e)).toEqual([{ shooter: s, mod: 10 }]);
     expect(coveringFireShootersFor(enemy("Scene.s.Token.other", "Actor.other"))).toEqual([]);
+  });
+
+  it("метки, записанные через setFlag (точки в uuid не разворачивают ключи), находятся при Натиске", async () => {
+    const a = who([rifle(), byName(COVER.name)]);
+    a.store[`warhammer-dbc.${COVERING_FIRE_OFFER_FLAG}`] = [
+      { tokenUuid: "Scene.s.Token.f1", actorUuid: "Actor.f1", name: "Враг 1" },
+      { tokenUuid: "Scene.s.Token.f2", actorUuid: "Actor.f2", name: "Враг 2" }
+    ];
+    await applyCoveringFireMarks(a, "semi");
+    globalThis.game.combat = { combatants: [{ actor: a }] };
+    expect(coveringFireShootersFor(enemy("Scene.s.Token.f1", "Actor.f1"))).toEqual([{ shooter: a, mod: 10 }]);
+    expect(coveringFireShootersFor(enemy("Scene.s.Token.x", "Actor.f2"))).toEqual([{ shooter: a, mod: 10 }]);
+    expect(coveringFireShootersFor(enemy("Scene.s.Token.x", "Actor.x"))).toEqual([]);
+  });
+
+  it("метки старой записи (мир до правки): плоский объект и уже развёрнутый вложенный", () => {
+    const flat = { "Scene.s.Token.f1": { mod: 10, actorUuid: "Actor.f1", name: "Враг" } };
+    const nested = expandKeys(flat);
+    expect(nested.Scene).toBeDefined();
+    for (const raw of [flat, nested]) {
+      const s = shooterWithMarks(raw);
+      globalThis.game.combat = { combatants: [{ actor: s }] };
+      expect(coveringFireShootersFor(enemy("Scene.s.Token.f1", "Actor.f1"))).toEqual([{ shooter: s, mod: 10 }]);
+      expect(coveringFireShootersFor(enemy("Scene.s.Token.q", "Actor.q"))).toEqual([]);
+    }
   });
 
   it("Натиск на стрелка: тест Подавления бросается, 'нет' — не бросается", async () => {

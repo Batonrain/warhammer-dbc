@@ -59,6 +59,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { conditionApplyFields, removeFatigue } from "../sheets/tabs/conditions.mjs";
 import { buildTargetEffectButtons, resolveWeaponPropsList } from "./weapon-properties.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { RAGE_SOURCE_OPTION } from "./frenzy.mjs";
 
 const GOD_KEYS = ["khorne", "nurgle", "slaanesh", "tzeentch"];
 const ICON = "#c9a24b";
@@ -218,7 +219,7 @@ export async function applyPrimalHowl(actor, casterToken) {
     if (god === "khorne") {
       changes.push({ key: charFxKey("s"), type: "add", value: 10 });
       changes.push({ key: charFxKey("ws"), type: "add", value: 10 }); // замена бонуса к T
-      if (!a.system?.inRage) await a.update({ "system.inRage": true });
+      if (!a.system?.inRage) await a.update({ "system.inRage": true }, { [RAGE_SOURCE_OPTION]: "psychic" });
     } else if (god === "nurgle") {
       changes.push({ key: charFxKey("t"), type: "add", value: 10 }); // бонус к S заменён на аблатив
       const roll = await new Roll("1d10").evaluate();

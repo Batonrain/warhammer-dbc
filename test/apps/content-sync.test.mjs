@@ -61,6 +61,57 @@ describe("matchPackSource", () => {
   });
 });
 
+describe("matchPackSource: неоднозначное имя (task-8d6a)", () => {
+  // Граната «Rad / Рад» и ракета «Rad / Ракета: Рад» отзываются на половину «rad».
+  const grenade = doc("u-gren", "Rad / Рад", "weapon", { dmg: "2d10" });
+  const rocket  = doc("u-rock", "Rad / Ракета: Рад", "weapon", { dmg: "4d10" });
+
+  it("копия с коротким именем «Rad» без uuid источника НЕ сопоставляется ни с одним из двух", () => {
+    for (const docs of [[grenade, rocket], [rocket, grenade]]) {
+      const index = buildPackIndex(docs);
+      expect(matchPackSource(item({ name: "Rad", type: "weapon" }), index)).toBe(null);
+    }
+  });
+
+  it("попадает в «Без соответствия» отчёта, а не в строки замены", () => {
+    const actor = { id: "a1", name: "Тест", items: [item({ name: "Rad", type: "weapon", system: { dmg: "9d10" } })] };
+    const report = buildSyncReport([actor], buildPackIndex([grenade, rocket]));
+    expect(report.rows).toEqual([]);
+    expect(report.unmatched.map(u => u.itemName)).toEqual(["Rad"]);
+  });
+
+  it("полное имя однозначно и находит свой документ, даже когда половина общая", () => {
+    const index = buildPackIndex([grenade, rocket]);
+    expect(matchPackSource(item({ name: "Rad / Рад", type: "weapon" }), index)).toBe(grenade);
+    expect(matchPackSource(item({ name: "Rad / Ракета: Рад", type: "weapon" }), index)).toBe(rocket);
+  });
+
+  it("однозначная вторая половина по-прежнему работает: «Рад» только у гранаты", () => {
+    const index = buildPackIndex([grenade, rocket]);
+    expect(matchPackSource(item({ name: "Ракета: Рад", type: "weapon" }), index)).toBe(rocket);
+  });
+
+  it("compendiumSource решает без оглядки на неоднозначность имени", () => {
+    const index = buildPackIndex([grenade, rocket]);
+    expect(matchPackSource(item({ name: "Rad", type: "weapon", src: rocket.uuid }), index)).toBe(rocket);
+  });
+
+  it("два документа с общей половиной, но ОДИНАКОВЫМ содержимым, не мешают (дубль в двух паках)", () => {
+    const a = doc("u-a", "Radium Jezzail", "weapon", { dmg: "1d10" });
+    const b = doc("u-b", "Radium Jezzail", "weapon", { dmg: "1d10" });
+    const index = buildPackIndex([a, b]);
+    expect(matchPackSource(item({ name: "Radium Jezzail", type: "weapon" }), index)).toBe(a);
+  });
+
+  it("тот же ключ у документов РАЗНЫХ типов — не неоднозначность", () => {
+    const w = doc("u-w", "Rad", "weapon", { dmg: "2d10" });
+    const g = doc("u-g", "Rad", "gear", {});
+    const index = buildPackIndex([w, g]);
+    expect(matchPackSource(item({ name: "Rad", type: "weapon" }), index)).toBe(w);
+    expect(matchPackSource(item({ name: "Rad", type: "gear" }), index)).toBe(g);
+  });
+});
+
 describe("diffItemAgainstPack", () => {
   it("пак не менял поле относительно опоры — не показываем, даже если поле правили локально", () => {
     const pack = doc("u1", "Болтер", "weapon", { dmg: "1d10+4", cost: 100 });
@@ -333,6 +384,68 @@ describe("Механика Конструктора участвует в све
     expect(shown).not.toContain("{");
     expect(shown).toContain("1");
     expect(describeValue(MECH_PATH, [])).toBe("—");
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PR #568: в паке у уже купленного архетипа появились НОВЫЕ разовые записи
+//  (Порча, Раны, выдача снаряжения). Перенос механики на существующую копию
+//  будит updateItem → applyItemMechanics, и они отыгрались бы по второму
+//  разу поверх того, что ГМ уже внёс по книге руками.
+// ════════════════════════════════════════════════════════════════════════════
+
+describe("сверка не отыгрывает новые разовые записи на уже купленной копии", () => {
+  const oldMech = [{ id: "g1", operator: "AND", entries: [{ id: "cap1", kind: "capability" }] }];
+  const newMech = [{ id: "g1", operator: "AND", entries: [
+    { id: "cap1", kind: "capability" },
+    { id: "cap2", kind: "capability" },
+    { id: "cor1", kind: "corruption", corruptionValue: "1d10" },
+    { id: "g2", kind: "group", group: { operator: "AND", entries: [
+      { id: "eq1", kind: "equipment", equipMode: "direct", equipSourceUuid: "Compendium.x.Item.r" },
+      { id: "tal1", kind: "talent" }
+    ] } }
+  ] }];
+
+  const run = async (applied) => {
+    const pack = mechDoc("u5", "Чумной Десантник", "eliteArchetype", newMech);
+    const it0 = mechItem({ id: "e5", name: "Чумной Десантник", type: "eliteArchetype", src: "u5",
+                           mechanics: oldMech, mechBaseline: oldMech });
+    if (applied !== undefined) it0.flags["warhammer-dbc"].mechanicsApplied = applied;
+    it0.getFlag = (scope, key) => it0.flags[scope]?.[key];
+    const report = buildSyncReport([{ id: "a5", name: "Ветеран", items: [it0] }], buildPackIndex([pack]));
+    const row = report.rows.find(r => r.path === MECH_PATH);
+    const calls = [];
+    globalThis.game = { actors: { get: id => ({ id, items: { get: () => it0 },
+      updateEmbeddedDocuments: async (t, u) => calls.push(...u) }) } };
+    await applySyncReport(report, new Set([row.entries[0].entryKey]));
+    return calls[0];
+  };
+
+  it("id новых Порчи и выдачи — в mechanicsApplied того же update, постоянные не трогаются", async () => {
+    const upd = await run(["cap1"]);
+    expect(upd["flags.warhammer-dbc.mechanics"]).toEqual(newMech);
+    expect(upd["flags.warhammer-dbc.mechanicsApplied"]).toEqual(["cap1", "cor1", "eq1"]);
+  });
+
+  it("прямая выдача снаряжения не создаётся и живой пересинхронизацией", async () => {
+    const upd = await run(["cap1"]);
+    expect(upd["flags.warhammer-dbc.equipWaived"]).toEqual(["eq1"]);
+  });
+
+  it("старое булево true читается как «всё прежнее применено»", async () => {
+    const upd = await run(true);
+    expect(upd["flags.warhammer-dbc.mechanicsApplied"]).toEqual(["cap1", "cor1", "eq1"]);
+  });
+
+  it("новых разовых нет — mechanicsApplied не пишется", async () => {
+    const pack = mechDoc("u6", "Т", "talent", mech("Новое"));
+    const it0 = mechItem({ id: "m6", src: "u6", mechanics: mech("Старое"), mechBaseline: mech("Старое") });
+    const report = buildSyncReport([{ id: "a6", name: "В", items: [it0] }], buildPackIndex([pack]));
+    const calls = [];
+    globalThis.game = { actors: { get: id => ({ id, items: { get: () => it0 },
+      updateEmbeddedDocuments: async (t, u) => calls.push(...u) }) } };
+    await applySyncReport(report, new Set([report.rows[0].entries[0].entryKey]));
+    expect(Object.keys(calls[0])).not.toContain("flags.warhammer-dbc.mechanicsApplied");
   });
 });
 

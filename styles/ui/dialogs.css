@@ -912,6 +912,10 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-atk-v2 .av-mod-col { display: flex; flex-direction: column; gap: 1px; }
 .wh-atk-v2 .attack-mod-check { display: flex; align-items: flex-start; gap: 5px; font-size: .82em; color: #b8ffd8; cursor: pointer; padding: 1px 0; line-height: 1.3; }
 .wh-atk-v2 .attack-mod-check input { accent-color: #4dffa6; margin-top: 2px; }
+.wh-atk-v2 .attack-mod-check.atk-wide-burst-on { color: #ffb84d; font-weight: 600; }
+.wh-atk-v2 .atk-wide-burst-text { font-size: .78em; line-height: 1.3; color: #ffb84d; padding: 1px 0 3px 20px; }
+.wh-atk-v2 .atk-wide-burst-text[hidden] { display: none; }
+.wh-atk-v2 .atk-wide-burst-text.atk-wide-burst-idle { color: #ff8a8a; }
 .wh-atk-v2 .atk-mod-auto span { color: #ffb84d; }
 
 /* Кнопка «Бросок!» — зелёный акцент */

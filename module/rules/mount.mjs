@@ -31,7 +31,7 @@
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
-import { findGroupEntry, specChar } from "../constants/skill-specializations.mjs";
+import { findGroupEntry, specChar, specDef } from "../constants/skill-specializations.mjs";
 import { itemHasName } from "./predicates.mjs";
 
 const num = v => Number(v) || 0;
@@ -220,6 +220,32 @@ export function mountControlSkill(mount, traits = null) {
       ? { scope: "skill", key: "techUse", char: "int", label: "Tech-Use" }
       : null
   };
+}
+
+/**
+ * Контекст верхового теста для общего исхода (rules/kind-outcome.mjs::resolveKindOutcome, task-55d0).
+ * Тест верхом — тест Навыка (Operate / Survival / Tech-Use / Акробатика), поэтому исход обязан знать, каким:
+ * по ключу Навыка/группы работают правила областей `skill:operate`, `skill:survival`, `anyskill` (Крит. диапазон,
+ * доп. Провалы, авто-скрипты по Криту, «N+ Провала» — Инфернальная Воля). Без `info` (тест Характеристики, как
+ * «Удержаться в седле» по Ловкости) Навыка в контексте нет — только `char`.
+ *
+ * @param {object} rider  бросающий
+ * @param {?{scope?:string,key?:string,specKey?:string,char?:string}} [info]  Навык: `mountControlSkill()` / `riderControl().info`
+ *   либо `{scope:"skill", key, char}` для Навыка вне управления
+ */
+export function mountTestContext(rider, info = null) {
+  const ctx = { actor: rider, kind: "skill" };
+  if (!info) return ctx;
+  if (info.char) ctx.char = info.char;
+  if (info.scope === "group") {
+    ctx.group = info.key;
+    // Специализация — как её записал бы лист (onSkillRoll): подпись записи персонажа, иначе подпись каталога.
+    const spec = findGroupEntry(rider, info.key, info.specKey)?.specialty || specDef(info.key, info.specKey)?.label;
+    if (spec) ctx.specialty = spec;
+  } else if (info.scope === "skill" && info.key) {
+    ctx.skill = info.key;
+  }
+  return ctx;
 }
 
 /**

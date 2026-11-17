@@ -38,6 +38,7 @@ import { itemHasName } from "./predicates.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { isHaemonculus } from "../constants/haemonculus.mjs";
 import { POLYMATH_CHAIN_MAX } from "../constants/craft.mjs";
+import { craftedItemsOf, prototypingFor } from "./craft-memory.mjs";
 
 const hasItem = (actor, type, name) =>
   !!actor?.items?.some(i => i.type === type && itemHasName(i, name));
@@ -87,6 +88,22 @@ export function polymathCrit(crafter, critSuccess, step = 1) {
 export const hasWorkaholic = actor => hasTalent(actor, "Workaholic");
 /** Fabricator / Фабрикатор (3-3a64) — Талант Крафта. */
 export const hasFabricator = actor => hasTalent(actor, "Fabricator");
+/** Prototyping / Прототипирование (3-3a64) — Талант Крафта. */
+export const hasPrototyping = actor => hasTalent(actor, "Prototyping");
+
+/**
+ * Прототипирование для ЭТОГО проекта: переброс, Банк с вдвое меньшим
+ * мультипликатором Качества, без −20 Улучшения — по журналу уже созданного
+ * (rules/craft-memory.mjs). Только Крафт предмета: Исследование, ремонт
+ * («Крафт предметов, которые он уже создавал») и безымянный проект — нет.
+ * Без Таланта — всё false.
+ */
+export function prototypingEffects(crafter, proj) {
+  const none = { known: false, reroll: false, halveBank: false, noImprovePenalty: false };
+  if (!hasPrototyping(crafter) || proj?.mode !== "craft" || proj?.repair) return none;
+  return prototypingFor(craftedItemsOf(crafter), proj?.title, proj?.quality);
+}
+
 /** Master Engineseer / Мастер-Технопровидец (3-cc96, п.11) — Талант Механикума. */
 export const hasMasterEngineseer = actor => hasTalent(actor, "Master Engineseer");
 
@@ -194,7 +211,11 @@ export function cyberpreacherApplies(crafter, categoryKey) {
  * (wdbc-1rno — раньше это был флаг на слово стола, теперь проверяется по
  * инвентарю), иначе — то, что выбрано вручную (rawMode).
  */
-export function effectiveDiceMode(rawMode, crafter, categoryKey, slowShiftChosen, assistantActor = null) {
+export function effectiveDiceMode(rawMode, crafter, categoryKey, slowShiftChosen, assistantActor = null, prototypingReroll = false) {
+  // Переброс Прототипирования в системе — «лучший из двух» (rules/reroll-pick.mjs,
+  // умолчание переброса), то есть те же два кубика, что у Преимущества; вместе
+  // с другим источником Преимущества кубиков не становится больше.
+  if (prototypingReroll) return "advantage";
   if (cyberpreacherApplies(crafter, categoryKey)) return "advantage";
   if (slowShiftChosen && hasSlowShiftTalent(crafter)) return "advantage";
   if (hasJourneyman(assistantActor)) return "advantage";

@@ -28,6 +28,7 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
+    "mindEffect": true,
     "effect": "Аура. Поддержание: Полудействие. Треб.: Terrify. Все в ауре считают псайкера имеющим рейтинг Страха <½PR окр.▲, макс. 4>. Авто-проходящие Страх всё равно проходят тест, но с +20.",
     "isSustained": false,
     "effects": {

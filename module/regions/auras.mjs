@@ -32,6 +32,10 @@
 import { isItemActive } from "../apps/effects.mjs";
 import { rescaleTraitByRating } from "../apps/mechanics.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
+import {
+  INFERNAL_FAMILIARITY_CAP, INFERNAL_FAMILIARITY_DREAD_REDUCTION, isDaemonicDread, reduceDaemonicDread
+} from "../rules/defiance-talents.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -111,6 +115,16 @@ export function targetIsAuraImmune(targetActor, immuneTraitNames) {
   if (!immuneTraitNames?.length || !targetActor) return false;
   const items = [...(targetActor.items ?? [])];
   return immuneTraitNames.some(name => items.some(it => itemHasName(it, name)));
+}
+
+/**
+ * На сколько цель смягчает выданный аурой штраф Daemonic Dread: Инфернальное
+ * Знакомство — «уменьшает штраф к W от Трейта Daemonic Presence на 5». 0 — не
+ * смягчает. Выданная копия помнит применённое смягчение (флаг auraReduce), чтобы
+ * прогон мог заметить, что Талант взяли или потеряли, и выдать штраф заново.
+ */
+export function dreadReductionFor(targetActor) {
+  return hasTalentCapability(targetActor, INFERNAL_FAMILIARITY_CAP) ? INFERNAL_FAMILIARITY_DREAD_REDUCTION : 0;
 }
 
 /** Плоская (2D) дистанция центров токенов-документов, в метрах сцены. */
@@ -213,7 +227,12 @@ export async function sweepAurasOnScene(scene) {
     if (seenActors.has(actor.uuid)) continue;   // связанный актор двумя токенами — один проход
     seenActors.add(actor.uuid);
     const want = desired.get(actor.uuid) ?? new Set();
+    // Смягчение считается лениво и один раз на актора: проверка Таланта вне пересчёта листа
+    // собирает правила актора целиком, а нужна она только при Daemonic Dread.
+    let dreadCutCache = null;
+    const dreadCut = () => (dreadCutCache ??= dreadReductionFor(actor));
     const have = new Map(); // sourceItemUuid -> [itemId,...]
+    const staleSources = new Set();
     for (const item of actor.items) {
       const src = item.getFlag(FLAG, "auraSource");
       if (!src) continue;
@@ -222,11 +241,17 @@ export async function sweepAurasOnScene(scene) {
       // сцены (легаси) считаем своими.
       const markScene = item.getFlag(FLAG, "auraScene");
       if (markScene && markScene !== scene.id) continue;
+      // Штраф Daemonic Dread, выданный при другом смягчении (Инфернальное
+      // Знакомство взяли или потеряли после выдачи), — устарел: убираем, и ниже
+      // он выдаётся заново уже с нынешним значением.
+      if (isDaemonicDread(item) && (Number(item.getFlag(FLAG, "auraReduce")) || 0) !== dreadCut()) staleSources.add(src);
       if (!have.has(src)) have.set(src, []);
       have.get(src).push(item.id);
     }
 
+    // Источник с устаревшим штрафом выдаётся заново целиком (все его гранты).
     const toDelete = [];
+    for (const src of staleSources) { toDelete.push(...(have.get(src) ?? [])); have.delete(src); }
     for (const [src, ids] of have) if (!want.has(src)) toDelete.push(...ids);
     if (toDelete.length) await actor.deleteEmbeddedDocuments("Item", toDelete);
 
@@ -237,8 +262,14 @@ export async function sweepAurasOnScene(scene) {
       for (const g of descriptor?.grant ?? []) {
         const source = await fromUuid(g.uuid).catch(() => null);
         if (!source) continue;
-        const data = source.toObject();
+        let data = source.toObject();
         delete data._id;
+        // Инфернальное Знакомство: штраф Daemonic Dread на 5 меньше, а если он
+        // сошёл на нет — не выдаётся вовсе.
+        if (isDaemonicDread(data)) {
+          data = reduceDaemonicDread(data, dreadCut());
+          if (!data) continue;
+        }
         // Тот же пересчёт, что у kind:"trait" в Конструкторе (wdbc-1pa.2) —
         // шаблонная Черта «(X)» несёт эффект, равный своему базовому рейтингу.
         if (g.rating != null && data.system) {
@@ -247,6 +278,7 @@ export async function sweepAurasOnScene(scene) {
           data.system.rating = g.rating;
         }
         data.flags = foundry.utils.mergeObject(data.flags || {}, { [FLAG]: { auraSource: src, auraScene: scene.id } });
+        if (isDaemonicDread(data)) data.flags[FLAG].auraReduce = dreadCut();
         toCreate.push(data);
       }
     }

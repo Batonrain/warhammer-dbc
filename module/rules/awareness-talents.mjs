@@ -88,6 +88,29 @@ export function heightenedSensesOf(actor) {
   return [...out.values()];
 }
 
+/**
+ * Нужен ли в окне теста необязательный выбор чувства: Внимательность, Пристальность
+ * или любой тест Восприятия (P). Чувство (ctx.sense) нужно правилам, которые различают
+ * слух и зрение: Оглох, Резонанс, Усиленные Чувства.
+ */
+export function sensePickerShown(ctx) {
+  const skill = String(ctx?.skill ?? "").toLowerCase();
+  return skill === "awareness" || skill === "scrutiny" || String(ctx?.char ?? "").toLowerCase() === "per";
+}
+
+/** Разметка выпадающего списка чувств (первый пункт — «без уточнения»). */
+export function senseSelectHtml() {
+  return `<select id="sense-select"><option value="">— любое / не уточнять —</option>${SENSES.map(s => `<option value="${s.key}">${s.label}</option>`).join("")}</select>`;
+}
+
+/** Копия контекста с выбранным чувством (пусто — без поля). */
+export function withSense(ctx, key) {
+  const next = { ...ctx };
+  const k = String(key ?? "").trim();
+  if (SENSES.some(s => s.key === k)) next.sense = k; else delete next.sense;
+  return next;
+}
+
 // ── Правила-галочки для окна теста ─────────────────────────────────────────
 
 const isAwarenessCtx = ctx => ctx?.kind === "skill" && String(ctx.skill ?? "").toLowerCase() === "awareness";

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Клыки, когти, клешни или щупальца — больше, чем мышцы: естественное оружие проходит сквозь броню, поражая саму душу. Естественное оружие получает свойство Warp Weapon (игнорирует броню).",
-    "notes": "Естественное оружие игнорирует броню — свойство оружия, выданного другим предметом (тот же класс, что Toxic/Razor Talons — канала «менять свойство чужого оружия» нет).",
+    "notes": "Естественное оружие (интегральные атаки) получает свойство Warp Weapon записью kind:attackProp (apScope:unarmed), как у Токсичного (dbc-114/55-15, 13.11.2026). Оружие, добавленное предметом без метки интегральной атаки, свойства не получает.",
     "benefit": "Естественное оружие игнорирует броню.",
     "source": "Варп",
     "hasRating": false,
@@ -34,7 +34,24 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "liZUcri4n2nnOLy9",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "4jvLQowMMYEhTNPR",
+              "kind": "attackProp",
+              "label": "Естественное оружие получает свойство Warp Weapon (поглощение по W.b вместо брони)",
+              "apScope": "unarmed",
+              "apKey": "warpWeapon",
+              "apRating": "",
+              "apRating2": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

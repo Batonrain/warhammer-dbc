@@ -2,7 +2,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  Блок «ЯЧЕЙКИ АГЕНТОВ» на вкладке СОЦИУМ — ведомость Таланта Cover Up / Работа
 //  под Прикрытием (решение владельца 26.10.2026). Правила, таблица книги и
-//  причины, почему Inf персонажа здесь не списывается, — rules/cover-up.mjs.
+//  причины, почему Inf персонажа здесь не списывается (а остаток «Inf на листе
+//  минус вложено» только показывается), — rules/cover-up.mjs.
 //
 //  Блок видит только носитель Таланта. Ячейки лежат флагом актора
 //  `flags.warhammer-dbc.coverUpCells`, а не полем схемы: список коротких
@@ -13,7 +14,7 @@
 
 import {
   COVER_UP_FLAG, COVER_UP_INF_MIN, COVER_UP_INF_MAX,
-  hasCoverUp, readCells, cellStats, coverUpSummary,
+  hasCoverUp, readCells, cellStats, coverUpSummary, infRemaining, freeCellAllowed, effectiveCells,
   withAddedCell, withChangedCell, withoutCell
 } from "../../rules/cover-up.mjs";
 import { rootEl } from "../v2-helpers.mjs";
@@ -25,20 +26,27 @@ const INF_VALUES = Array.from({ length: COVER_UP_INF_MAX - COVER_UP_INF_MIN + 1 
 /** Контекст блока; без Таланта — только `hasCoverUp: false` (панель в шаблоне скрыта). */
 export function coverUpPanelContext(actor) {
   if (!hasCoverUp(actor)) return { hasCoverUp: false };
-  const cells = readCells(actor);
+  const cells = effectiveCells(actor, readCells(actor));
   const sum = coverUpSummary(cells);
+  const inf = infRemaining(actor, cells);
   return {
     hasCoverUp: true,
+    coverUpFreeAllowed: freeCellAllowed(actor),
     coverUpCells: cells.map((c, idx) => {
       const stats = cellStats(c.inf);
       return {
-        idx, name: c.name, inf: c.inf,
+        idx, name: c.name, inf: c.inf, free: c.free,
         agents: stats?.agents ?? "—", requisition: stats?.requisition ?? "—",
         infOptions: INF_VALUES.map(value => ({ value, label: String(value), selected: value === c.inf }))
       };
     }),
     coverUpCount: sum.count,
     coverUpTotalInf: sum.totalInf,
+    coverUpPaidInf: sum.paidInf,
+    coverUpFreeInf: sum.freeInf,
+    coverUpInfSheet: inf.onSheet,
+    coverUpInfLeft: inf.left,
+    coverUpInfOver: inf.over,
     coverUpMaxRequisition: sum.maxRequisition
   };
 }
@@ -64,11 +72,12 @@ export function addCoverUpCell(actor) {
   return enqueue(actor, () => save(actor, withAddedCell(readCells(actor))));
 }
 
-/** Правка названия и/или Inf ячейки `index`. Чужой индекс — ничего не пишет. */
+/** Правка названия, Inf и/или галочки «бесплатная» ячейки `index`. Чужой индекс — ничего не пишет. */
 export function changeCoverUpCell(actor, index, patch) {
   return enqueue(actor, async () => {
     const cells = readCells(actor);
-    const next = withChangedCell(cells, index, patch);
+    const allowed = patch.free === true && !freeCellAllowed(actor) ? { ...patch, free: false } : patch;
+    const next = withChangedCell(cells, index, allowed);
     if (next !== cells) await save(actor, next);
   });
 }
@@ -98,6 +107,10 @@ export function activateCoverUpPanelListeners(root, actor, { editable = true } =
   el.querySelectorAll(".cover-up-inf").forEach(select =>
     select.addEventListener("change", ev =>
       changeCoverUpCell(actor, Number(ev.currentTarget.dataset.index), { inf: ev.currentTarget.value })));
+
+  el.querySelectorAll(".cover-up-free").forEach(box =>
+    box.addEventListener("change", ev =>
+      changeCoverUpCell(actor, Number(ev.currentTarget.dataset.index), { free: ev.currentTarget.checked })));
 
   el.querySelectorAll(".cover-up-remove").forEach(btn =>
     btn.addEventListener("click", ev =>

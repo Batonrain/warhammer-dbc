@@ -110,21 +110,30 @@ export function gearObjects(doc, { quality = null, legion = false, runic = false
  * @param {object}   o
  * @param {(spec) => (object|null)} o.find  поиск именной заявки в индексе
  * @param {Set<string>} o.owned  normName имён, что уже лежат на листе
+ * @param {Set<string>} o.covered  normName предметов, которые выдаёт запись
+ *   Конструктора «Снаряжение» (equipmentCoverage): второй раз по тексту не даём
+ * @param {boolean} o.coverNonNamed  у архетипа есть запись-выбор/категория: то,
+ *   что в тексте категорией или «или», она уже предлагает игроку — не шепчем ГМу
  * @returns {{grant: {spec: object, ref: object}[], skipped: string[], manual: string[]}}
  *   grant — именные заявки, найденные в компендиумах; skipped — уже на листе;
  *   manual — всё, что выдать само нельзя (выбор «или», категория, правило,
  *   ненайденное имя): строка для ГМа.
  */
-export function planEliteGear(text, { find, owned = new Set() } = {}) {
+export function planEliteGear(text, { find, owned = new Set(), covered = new Set(), coverNonNamed = false } = {}) {
   const grant = [], skipped = [], manual = [];
   const entries = String(text ?? "").trim() ? splitGearTopLevel(String(text)) : [];
   for (const entry of entries) {
     // Выбор между предметами — игрок решает сам, Обозреватель здесь не открываем.
-    if (gearChoiceOptions(entry).length > 1) { manual.push(`выбрать: ${entry}`); continue; }
+    if (gearChoiceOptions(entry).length > 1) {
+      if (coverNonNamed) skipped.push(entry);
+      else manual.push(`выбрать: ${entry}`);
+      continue;
+    }
     for (const spec of parseGearEntry(entry)) {
       if (spec.kind === "named") {
         const key = normName(spec.name);
         if (key && owned.has(key)) { skipped.push(spec.raw || spec.name); continue; }
+        if (key && isCoveredByMechanics(key, covered)) { skipped.push(spec.raw || spec.name); continue; }
         const ref = find?.(spec) ?? null;
         if (ref) grant.push({ spec, ref });
         else manual.push(`не найдено в компендиумах: ${spec.raw || spec.name}`);
@@ -132,6 +141,8 @@ export function planEliteGear(text, { find, owned = new Set() } = {}) {
         // «+N очков снаряжения» и прочие правила Мастера к покупке Элитного
         // архетипа отношения не имеют — пула Очков у персонажа уже нет.
         manual.push(`правило: ${spec.raw || describeGearSpec(spec)}`);
+      } else if (coverNonNamed) {
+        skipped.push(String(spec.raw || entry));
       } else {
         manual.push(describeGearSpec(spec) ? `${spec.raw}: ${describeGearSpec(spec)}` : String(spec.raw || entry));
       }
@@ -147,6 +158,40 @@ export function hasEquipmentMechanics(doc) {
 }
 
 /**
+ * Что из текста снаряжения уже выдают записи Конструктора «Снаряжение».
+ * `names` — normName каждой половины имени прямых записей (именной предмет);
+ * `anyChoice` — есть запись-выбор/категория/бюджет: игроку она сама предложит
+ * то, что в тексте записано категорией или «или».
+ * Читается из данных, а не с листа: хук createItem выдаёт Механику асинхронно, и
+ * к моменту выдачи по тексту предметы записей на листе могут ещё не лежать.
+ */
+export function equipmentCoverage(doc) {
+  const names = new Set();
+  let anyChoice = false;
+  const mech = doc?.flags?.["warhammer-dbc"]?.mechanics ?? doc?.getFlag?.("warhammer-dbc", "mechanics");
+  for (const g of Array.isArray(mech) ? mech : []) for (const e of g?.entries ?? []) {
+    if (e?.kind !== "equipment") continue;
+    if ((e.equipMode ?? "direct") !== "direct") { anyChoice = true; continue; }
+    for (const part of String(e.equipSourceName ?? "").split("/")) {
+      const k = normName(part.trim());
+      if (k) names.add(k);
+    }
+  }
+  return { names, anyChoice };
+}
+
+/**
+ * Покрыт ли именной предмет текста записью: совпадение имени или по границе слова
+ * («blight grenades» из текста ← «Blight / Моровая» из записи).
+ */
+function isCoveredByMechanics(key, covered) {
+  for (const c of covered) {
+    if (key === c || key.startsWith(`${c} `) || c.startsWith(`${key} `)) return true;
+  }
+  return false;
+}
+
+/**
  * Выдать снаряжение купленного Элитного Архетипа.
  * @param {Actor} actor
  * @param {Item}  doc    документ архетипа из компендиума (там лежит system.gear)
@@ -155,15 +200,19 @@ export function hasEquipmentMechanics(doc) {
 export async function grantEliteGear(actor, doc) {
   const text = String(doc?.system?.gear ?? "").trim();
   if (!actor || !text) return { granted: [], manual: [] };
-  // Механика архетипа уже выдаёт своё снаряжение — второй раз по тексту не даём.
-  if (hasEquipmentMechanics(doc)) return { granted: [], manual: [] };
+  // Механика архетипа уже выдаёт своё снаряжение — второй раз по тексту не даём,
+  // но ТО, чего записи не покрывают, по-прежнему выдаётся по тексту (раньше
+  // одна запись «Снаряжение» отключала весь текст: Инкуб терял Incubus Warsuit).
+  const cov = hasEquipmentMechanics(doc) ? equipmentCoverage(doc) : { names: new Set(), anyChoice: false };
 
   const { index } = await buildGearIndex();
   const owned = new Set();
   for (const it of actor.items ?? []) for (const part of String(it.name).split("/")) {
     const k = normName(part.trim()); if (k) owned.add(k);
   }
-  const plan = planEliteGear(text, { find: spec => findGearNamed(spec, index), owned });
+  const plan = planEliteGear(text, {
+    find: spec => findGearNamed(spec, index), owned, covered: cov.names, coverNonNamed: cov.anyChoice
+  });
 
   const granted = [];
   const grantedKeys = new Set();

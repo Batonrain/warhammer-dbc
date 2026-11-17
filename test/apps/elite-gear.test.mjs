@@ -66,3 +66,85 @@ describe("hasEquipmentMechanics", () => {
     expect(hasEquipmentMechanics(null)).toBe(false);
   });
 });
+
+// Sahara task-e21e: grantEliteGear целиком пропускал текст снаряжения, если у
+// архетипа есть ХОТЬ ОДНА запись Конструктора «Снаряжение». Где запись заведена
+// на часть предметов, остальное терялось молча (Инкуб: Klaive — записью,
+// «Incubus Warsuit» — только текстом). Теперь выдаётся то, что записями НЕ
+// покрыто; покрытое Механикой второй раз не даётся.
+import { equipmentCoverage } from "../../module/apps/gear-grant.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
+
+describe("planEliteGear + покрытие записями Конструктора", () => {
+  const findAny = spec => spec.name ? { pack: {}, id: spec.name, name: spec.name } : null;
+
+  it("именной предмет, покрытый записью, не выдаётся второй раз", () => {
+    const plan = planEliteGear("Plague Knife, 7 Blight Grenades",
+      { find: findAny, covered: new Set(["plague knife", "blight"]) });
+    expect(plan.grant).toEqual([]);
+    expect(plan.skipped).toHaveLength(2);
+    expect(plan.manual).toEqual([]);
+  });
+
+  it("не покрытое записью выдаётся по тексту", () => {
+    const plan = planEliteGear("Klaive, Incubus Warsuit",
+      { find: findAny, covered: new Set(["klaive"]) });
+    expect(plan.grant.map(g => g.spec.name)).toEqual(["Incubus Warsuit"]);
+  });
+
+  it("категория и выбор «или» молчат, если их покрывает запись-выбор; без неё — ГМу, как раньше", () => {
+    const text = "Omnissiah Axe, 4 Мехадендрита (до R2)";
+    const covered = new Set(["omnissiah axe"]);
+    const withChoice = planEliteGear(text, { find: findAny, covered, coverNonNamed: true });
+    expect(withChoice.manual).toEqual([]);
+    expect(withChoice.grant).toEqual([]);
+    const without = planEliteGear(text, { find: findAny, covered });
+    expect(without.manual).toHaveLength(1);
+  });
+
+  it("без покрытия поведение прежнее", () => {
+    const plan = planEliteGear("Ghostplate Armor", { find });
+    expect(plan.grant.map(g => g.spec.name)).toEqual(["Ghostplate Armor"]);
+  });
+});
+
+describe("equipmentCoverage", () => {
+  const withMech = entries => ({ flags: { "warhammer-dbc": { mechanics: [{ entries }] } } });
+
+  it("имена прямых записей — по каждой половине двуязычного имени; выбор и категория — отдельным признаком", () => {
+    const cov = equipmentCoverage(withMech([
+      { kind: "equipment", equipMode: "direct", equipSourceName: "Plague Knife / Чумной Нож" },
+      { kind: "equipment", equipMode: "choice", equipSourceName: "" },
+      { kind: "trait" }
+    ]));
+    expect([...cov.names].sort()).toEqual(["plague knife", "чумной нож"].sort());
+    expect(cov.anyChoice).toBe(true);
+  });
+
+  it("без записей Снаряжение — пусто", () => {
+    expect(equipmentCoverage(withMech([{ kind: "trait" }]))).toEqual({ names: new Set(), anyChoice: false });
+    expect(equipmentCoverage(null)).toEqual({ names: new Set(), anyChoice: false });
+  });
+});
+
+describe("данные архетипов: текст снаряжения против записей Конструктора", () => {
+  const archetype = (dir, id) => packDocById(`packs-src/elite-archetypes/${dir}`, id);
+  const findAny = spec => ({ pack: {}, id: spec.name, name: spec.name });
+  const plan = doc => {
+    const cov = equipmentCoverage(doc);
+    return planEliteGear(doc.system.gear, { find: findAny, covered: cov.names, coverNonNamed: cov.anyChoice });
+  };
+
+  it("Инкуб: Клэйв выдаёт запись, «Incubus Warsuit» — по тексту (раньше терялся)", () => {
+    const p = plan(archetype("Друкхари", "ManXi5ZzE0ZTjo5O"));
+    expect(p.grant.map(g => g.spec.name)).toEqual(["Incubus Warsuit"]);
+  });
+
+  it("Чумной Десантник, Варп-Кузнец, Электрожрец: всё покрыто записями — по тексту ничего не дублируется и шёпота нет", () => {
+    for (const [dir, id] of [["Космодесантник", "uz6NPu1w7EsBmYM2"], ["Космодесантник", "XvWY6lfVnNdCSJ46"], ["Человек", "yybk1faGxSF2volp"]]) {
+      const p = plan(archetype(dir, id));
+      expect(p.grant, id).toEqual([]);
+      expect(p.manual, id).toEqual([]);
+    }
+  });
+});

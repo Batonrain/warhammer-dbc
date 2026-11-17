@@ -60,7 +60,7 @@ export async function rollInfectionTest(actor, item, { vector = null } = {}) {
     return null;
   }
   const vectors = diseaseVectors(item);
-  if (!vectors.length) {
+  if (!vectors.length && !vector) {
     ui.notifications?.info(`${item.name}: книга не даёт Порога заражения (на усмотрение МИ или авто-заражение) — включите болезнь вручную (▶).`);
     return null;
   }

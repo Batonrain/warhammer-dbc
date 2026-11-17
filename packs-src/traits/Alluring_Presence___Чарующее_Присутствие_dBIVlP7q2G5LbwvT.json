@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Чарующая аура витает вокруг демонов Слаанеш, привлекая внимание наблюдателя к их неземной грации и отвлекая его от атак демона.",
-    "notes": "Эффект действует на ВРАГОВ демона (штраф на их Избегание), а не на самого носителя — Механика Черты применяется к актору-владельцу, канала «эффект на противника» нет.",
+    "notes": "Автоматизировано (dbc-114, 14.11.2026): −10 к порогу Уклонения и Парирования цели против атак носителя.",
     "benefit": "Все враги получают штраф −10 на Избегания против атак демона.",
     "source": "Демон Слаанеш",
     "hasRating": false,
@@ -33,7 +33,27 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "8OKFXmd2W2VXx4y9",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "KaBb9vKPIYEFN5E9",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.enemyEvasionPenalty",
+              "label": "Враги: −10 на Избегания против атак носителя",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

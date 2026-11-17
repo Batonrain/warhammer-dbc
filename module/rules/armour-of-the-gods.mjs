@@ -8,8 +8,9 @@
 //
 //  «Становится Броненосцем без траты опыта» — Элитный Архетип «Ironclad /
 //  Броненосец» (packs-src/elite-archetypes) уже несёт РЕАЛЬНЫЕ записи
-//  Конструктора kind:"trait"/kind:"talent" (Size(1), Unnatural S(4)/T(4),
-//  Divine Plate, 9 Талантов) — Hooks.on("createItem", ...) в
+//  Конструктора kind:"trait" (Size(1), Unnatural S(4)/T(4), Divine Plate;
+//  9 Дополнительных Талантов с 03.11.2026 покупаются за опыт отдельно, а не
+//  выдаются) — Hooks.on("createItem", ...) в
 //  warhammer-dbc.mjs (apps/mechanics.mjs::applyItemMechanics) выдаёт их
 //  ВСЕ автоматически в момент, когда предмет архетипа попадает на актора,
 //  тем же трактом, что и обычная платная покупка (apps/elite-buy.mjs::
@@ -42,6 +43,17 @@ export const ARMOUR_OF_THE_GODS_CAPABILITY = "mutation.armourOfTheGods";
 
 /** Точное имя предмета архетипа в компендиуме (packs-src/elite-archetypes). */
 export const IRONCLAD_ARCHETYPE_NAME = "Ironclad / Броненосец";
+
+/** Предмет — Элитный Архетип «Ironclad / Броненосец» (откуда бы он ни попал на актора). */
+export function isIroncladArchetypeItem(item) {
+  return item?.type === "eliteArchetype" && item?.name === IRONCLAD_ARCHETYPE_NAME;
+}
+
+/** Лежит ли уже на акторе броня «Божественные Латы» (идемпотентность выдачи). */
+export function hasDivinePlateArmour(items) {
+  const name = divinePlateArmourData().name;
+  return Array.from(items ?? []).some(i => i?.type === "armor" && i?.name === name);
+}
 
 /** Уже взят ли этот Архетип (первым или дополнительным) — не выдавать дважды. */
 export function hasIroncladArchetype(system) {

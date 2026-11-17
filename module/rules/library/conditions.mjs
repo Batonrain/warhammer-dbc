@@ -235,6 +235,33 @@ export const CONDITION_RULES = [
     when: { hasCondition: "haemorrhaging" },
     effects: [{ kind: "rollBonus", target: "basedon:t", label: "💔 Обескровливание",
                 valueFrom: { selfConditionLevel: "haemorrhaging", multiplier: -5 }, auto: true }]
+  },
+  {
+    // «Оглох»: автопровал тестов на слух (книга, «Статусы»). Срабатывает, когда игрок указал в окне
+    // теста Внимательности/Восприятия чувство «Слух»; без выбора чувства тест общий — решает ГМ.
+    id: "conditions.deafened.hearing",
+    label: "Оглох — тест на слух",
+    when: { hasCondition: "deafened", testSense: "hearing" },
+    effects: [{ kind: "autoFail", target: ["skill:awareness", "basedon:per"], label: "🙉 Оглох — тест на слух" }]
+  },
+  {
+    // Резонирующее оружие (Resonant), вторая половина: «−20×Резонанс на тесты Слуха» —
+    // к общим −10×Резонанс на P (conditions.resonance) добавляется ещё −10×Резонанс.
+    id: "conditions.resonance.hearing",
+    label: "Резонанс — Слух",
+    when: { hasCondition: "resonance", testSense: "hearing" },
+    effects: [{ kind: "rollBonus", target: "basedon:per", label: "〰️ Резонанс (Слух)",
+                valueFrom: { selfConditionLevel: "resonance", multiplier: -10 }, auto: true }]
+  },
+  {
+    // Резонирующее оружие (Resonant): «штраф −10×Резонанс на все тесты P
+    // (−20×Резонанс на тесты Слуха)». Здесь — общая половина на Восприятие;
+    // Слух — правило conditions.resonance.hearing выше (чувство выбирается в окне теста).
+    id: "conditions.resonance",
+    label: "Резонанс",
+    when: { hasCondition: "resonance" },
+    effects: [{ kind: "rollBonus", target: "basedon:per", label: "〰️ Резонанс",
+                valueFrom: { selfConditionLevel: "resonance", multiplier: -10 }, auto: true }]
   }
 ];
 

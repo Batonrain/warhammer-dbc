@@ -26,8 +26,9 @@
 //      атаки — тем же приёмом, что «Скрыть трусость» у command-state.mjs.
 //      Снимает Шок/Подавление («запуган»/«отступает» не хранятся данными —
 //      см. заголовок rules/leadership-talents.mjs) — переиспользует
-//      applyBraveryNow (то же снятие, что у «Храбрости»), по каждому Отряду,
-//      которым командует исполнитель.
+//      applyBraveryNow (то же снятие, что у «Храбрости», но без лимита
+//      получателей F.b×2 — у Таланта «все остальные подчинённые»), по каждому
+//      Отряду, которым командует исполнитель.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { moraleThreshold } from "./intimidate.mjs";
@@ -40,6 +41,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { applyBraveryNow } from "./command-state.mjs";
 import { rootEl } from "../sheets/v2-helpers.mjs";
 import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive } from "../rules/leadership-talents.mjs";
+import { radiantPresenceSeenBy, radiantPresenceHint } from "./radiant-presence.mjs";
 
 /** Intimidate(W) исполнителя — та же формула ранга/правок, что обычный Intimidate(F), характеристика заменена на W. */
 function fieldExecutionAttackerThreshold(attacker, mod = 0) {
@@ -57,7 +59,7 @@ function fieldExecutionAttackerThreshold(attacker, mod = 0) {
 export async function rollFieldExecutionContest(attacker, target, { attackerMod = 0, targetMod = 0,
                                                                        radiantPresence = false, intoTheJawsOfHell = false } = {}) {
   const atkMods = collectTestMods(attacker, { kind: "skill", skill: "intimidate", char: "wp", morale: true });
-  // radiantPresence — галочка диалога (решение стола), только на стороне цели.
+  // radiantPresence — галочка диалога (по видимости или руками), только на стороне цели.
   const tgtMods = collectTestMods(target, { kind: "skill", char: "wp", morale: true, radiantPresence });
   const atkThreshold = fieldExecutionAttackerThreshold(attacker, attackerMod) + atkMods.total;
   const tgtThreshold = moraleThreshold(target, targetMod) + tgtMods.total;
@@ -108,7 +110,7 @@ function squadsLedBy(actor, allActors) {
 export async function applyFieldExecutionClear(executionerActor, allActors) {
   const freed = [];
   for (const squad of squadsLedBy(executionerActor, allActors ?? [])) {
-    freed.push(...(await applyBraveryNow(squad)));
+    freed.push(...(await applyBraveryNow(squad, { capped: false })));
   }
   return freed;
 }
@@ -118,8 +120,12 @@ export async function fieldExecutionDialog(actor, target) {
   if (!target) return;
   const base = fieldExecutionAttackerThreshold(actor);
   const targetBase = moraleThreshold(target);
+  // Блистательное Присутствие (wdbc-051qb) проставляется само, если союзный или
+  // нейтральный носитель в поле зрения токена цели (источник — казнящий, его собственное
+  // Присутствие не считается); «слышит» и снятие — руками. «В Самое Пекло» — руками.
+  const radiantSeen = radiantPresenceSeenBy(target, { sourceActor: actor });
   const radiantPresenceHtml = anyRadiantPresenceHolderExists(game.actors ?? [])
-    ? `<div class="atk-dlg-row"><label title="Цель видит или слышит союзника/нейтрального с Блистательным Присутствием — +10 на её тест Морали"><input id="fex-radiant" type="checkbox"/> Блистательное Присутствие (+10 цели)</label></div>` : "";
+    ? `<div class="atk-dlg-row"><label title="${esc(radiantPresenceHint(radiantSeen))}"><input id="fex-radiant" type="checkbox"${radiantSeen.seen ? " checked" : ""}/> Блистательное Присутствие (+10 цели)</label></div>` : "";
   const jawsOfHellHtml = anyIntoTheJawsOfHellHolderExists(game.actors ?? [])
     ? `<div class="atk-dlg-row"><label title="Рядом с целью сражается её командующий с В Самое Пекло — тест цели проходит автоматически"><input id="fex-jaws" type="checkbox"/> В Самое Пекло (авто-успех цели)</label></div>` : "";
 

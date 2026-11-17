@@ -49,6 +49,7 @@
     },
     "resistChar": "wp",
     "resistMod": 0,
+    "mindEffect": true,
     "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Телепатия — Разное» стр. 318)"
   },
   "_id": "aMAbRmFv5fiSxJVh",

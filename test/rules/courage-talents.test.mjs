@@ -123,6 +123,18 @@ describe("Бесстрашный: тесты Морали на месте", () =
     expect((await rollMoraleTest(person("И", { idolNearby: false }), 10)).success).toBe(false);
   });
 
+  it("правило-галочка (askOnly, как −30 Идолопоклонника против кумира) в Мораль молча не попадает", async () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.askOnlyMorale", when: {}, effects: [{ kind: "rollBonus", target: "all", value: -30, askOnly: true, label: "галочка" }] }
+    ]);
+    captured.nextRoll = 5;
+    const r = await rollMoraleTest(person(), 10);
+    expect(r.bonus).toBe(0);
+    expect(r.eff).toBe(10);
+    expect(r.parts.join(" ")).not.toMatch(/галочка/);
+  });
+
   it("тест Страха — «выстоял» без Infamy", async () => {
     grant(FEARLESS_CAP);
     captured.nextRoll = 99;

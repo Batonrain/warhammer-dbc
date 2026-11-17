@@ -51,6 +51,9 @@ import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { healMistrustRules } from "./warp-touched.mjs";
 import { woundAuraRules } from "./wound-in-reality.mjs";
+import { noiseMarineRules } from "./noise-marine.mjs";
+import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
+import { darkApostleRules } from "./dark-apostle.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -164,7 +167,7 @@ registerRuleSource("opposedTarget", (a, ctx) => opposedTargetRerollRules(a, ctx,
 //
 // Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — раньше был здесь отдельным
 // источником "avatarOfSlaughter" со статичным when (читает метку на самом
-// акторе, rules/predicates.mjs::avatarOfSlaughterOffTarget, без cross-actor
+// акторе, rules/predicates.mjs::avatarOfSlaughterOnBerserker, без cross-actor
 // обхода). Перенесён в library/core.mjs → источник "core" (wdbc-shr,
 // находка 1): отдельный источник ради одного статического правила не нужен,
 // когда "core" уже отдаёт такие оптом.
@@ -364,6 +367,18 @@ registerRuleSource("psychicSustainTarget", a => psychicSustainTargetRules(a));
 // Аура Раны в Реальности (Талант Псайканы, пачка I2): −5 Пси-чутьё и +10 Варп-Нестабильность за каждую
 // бесплатную силу псайкера для каждого, на ком лежит метка ауры (rules/wound-in-reality.mjs).
 registerRuleSource("woundAura", a => woundAuraRules(a));
+
+// Шумовой Десантник (Sahara 1-54b9): Пьянящий Рёв (+2 за каждого другого участника боя на T/Страх/Подавление)
+// и Боль Это Наслаждение (+10 за уровень на все тесты) — rules/noise-marine.mjs.
+registerRuleSource("noiseMarine", a => noiseMarineRules(a));
+
+// Берсерк Кхорна (Sahara 1-54b9): Гвозди Мясника вне Ярости (−10 на социальные тесты и манифестацию) и
+// Закалённое в Крови (оружие нельзя выбить) — rules/khorne-berserker.mjs.
+registerRuleSource("khorneBerserker", a => [...khorneBerserkerRules(a), ...temperedRules(a, globalThis.game?.combat?.id ?? "")]);
+
+// Тёмный Апостол (Sahara 1-54b9): литания Слаанеш — +30 на тесты Командования Апостола, пока она действует
+// (rules/dark-apostle.mjs). Остальные литании читают метку на подчинённом (атака, Трудный Ландшафт).
+registerRuleSource("darkApostle", a => darkApostleRules(a));
 
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];

@@ -173,7 +173,8 @@
           <div class="veh-fire-item" data-item-id="{{w.id}}">
             <button type="button" class="veh-fire-weapon" data-action="fireWeapon" title="Открыть окно стрельбы"><i class="fas fa-crosshairs"></i> {{w.name}}</button>
             {{#unless w.isMelee}}<a class="veh-reload-weapon" data-action="reloadWeapon" title="Перезарядка из боекомплекта"><i class="fas fa-redo"></i></a>
-            <span class="veh-fire-mag" title="Магазин · Боекомплект">{{w.mag}} · БК {{w.reloads}}</span>{{/unless}}
+            <span class="veh-fire-mag" title="Магазин · Боекомплект">{{w.mag}} · БК {{w.reloads}}</span>
+            {{#if w.ammoName}}<span class="veh-fire-ammo" title="Заряженный снаряд">{{w.ammoName}}</span>{{/if}}{{/unless}}
           </div>
           {{else}}
           <div class="veh-empty">Нет орудий. Добавьте их на вкладке «Бой».</div>
@@ -281,6 +282,7 @@
               <span title="Пробитие">Пр {{w.pen}}</span>
               {{#unless w.isMelee}}<span title="Дальность">{{w.range}}м</span>
               <span title="Магазин">{{w.mag}}</span>
+              {{#if w.ammoName}}<span title="Заряженный снаряд">{{w.ammoName}}</span>{{/if}}
               <span title="Скорострельность">RoF {{w.rof}}</span>{{/unless}}
             </div>
             <div class="veh-weapon-btns">

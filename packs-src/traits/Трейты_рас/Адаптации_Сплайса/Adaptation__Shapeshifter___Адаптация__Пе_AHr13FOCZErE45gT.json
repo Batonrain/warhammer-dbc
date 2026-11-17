@@ -42,6 +42,7 @@
             {
               "id": "Shp1ftBtn0a7K3xQ",
               "kind": "script",
+              "scriptOnPanel": true,
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",

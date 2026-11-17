@@ -214,3 +214,60 @@ export function tyranthikosSecondAttackDice(actor, main, off, target, firstHit) 
   if (!hasRuleFlag(actor, CAP_TYRANTHIKOS)) return 0;
   return TYRANTHIKOS_BONUS_DICE;
 }
+
+// ── Тирантикос: связь карточки второй руки с карточкой первой ────────────────
+// Окно атаки решает про +2d10 один раз — до броска второй руки (выше). Но
+// первую руку можно перебросить за Очко Судьбы / +10 / Огневую Точку уже ПОСЛЕ
+// броска второй: переброс создаёт НОВУЮ карточку первой руки, а условие
+// «попадает из обоих» к тому времени могло и появиться (промах стал попаданием),
+// и пропасть (попадание стало промахом). Поэтому обе карточки пары несут общий
+// dualPairId (опции атаки, они переезжают на карточку-перебросок сами), первая —
+// dualHand "main", вторая — "off"; вторая ещё и tyranthikosEligible (всё, что
+// книга требует кроме попадания первой). Попала ли первая рука СЕЙЧАС — берётся
+// по самой свежей её карточке (firstHandHitNow), на каждом броске второй руки
+// (combat/attack.mjs) и по кнопке «Пересчитать Тирантикос» на её карточке
+// (module/hooks.mjs → recalcPlan).
+
+export const DUAL_HAND_MAIN = "main";
+export const DUAL_HAND_OFF  = "off";
+
+/**
+ * Попала ли основная рука пары в её последней карточке (переброс = новая карточка).
+ * @param {Iterable<object>} messages сообщения чата (game.messages)
+ * @param {string} pairId общий идентификатор пары рук
+ * @returns {?boolean} null — карточки первой руки нет (чат почищен), решать нечем
+ */
+export function firstHandHitNow(messages, pairId) {
+  if (!pairId) return null;
+  let latest = null;
+  for (const m of messages ?? []) {
+    const atk = m?.flags?.["warhammer-dbc"]?.attack;
+    if (atk?.opts?.dualPairId !== pairId || atk.opts.dualHand !== DUAL_HAND_MAIN) continue;
+    // Равные метки времени (переброс в ту же миллисекунду) — побеждает более поздняя в порядке чата.
+    if (!latest || (Number(m.timestamp) || 0) >= (Number(latest.timestamp) || 0)) latest = m;
+  }
+  return latest ? !!latest.flags["warhammer-dbc"].attack.hit : null;
+}
+
+/**
+ * Сколько кубов Тирантикоса положить второй руке сейчас.
+ * @param {object} p
+ * @param {number} p.eligible  кубы, которые дала бы первая рука-попадание (окно атаки, TYRANTHIKOS_BONUS_DICE или 0)
+ * @param {?boolean} p.firstHit попала ли первая рука сейчас (firstHandHitNow); null — неизвестно
+ * @param {number} p.fallback  то, что окно решило при броске (если чат первой руки не найден)
+ */
+export function tyranthikosDiceNow({ eligible, firstHit, fallback = 0 }) {
+  if (!(eligible > 0)) return Math.max(0, Number(fallback) || 0);
+  if (firstHit == null) return Math.max(0, Number(fallback) || 0);
+  return firstHit ? eligible : 0;
+}
+
+/**
+ * Что делать по кнопке «Пересчитать Тирантикос» на карточке второй руки.
+ * @returns {{change:boolean, dice:number}} change — карточку стоит перебросить заново
+ *   (урон на ней пересчитается), dice — сколько кубов будет после пересчёта
+ */
+export function tyranthikosRecalcPlan({ eligible, applied, firstHit }) {
+  const dice = tyranthikosDiceNow({ eligible, firstHit, fallback: applied });
+  return { change: dice !== (Number(applied) || 0), dice };
+}

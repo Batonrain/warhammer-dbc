@@ -16,6 +16,15 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, sheetOf, fakeHtml } from "../support/foundry-stub.mjs";
 import { rollMutationOrGift, mutationPool } from "../../module/sheets/tabs/mutations.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
+
+const AHRIMAN = packDocById("packs-src/traits/Элитные_архетипы/Колдун_Рубрики", "9sJhwVzdna4nEq1K");
+
+// Рубрика Аримана (Sahara 1-54b9): настоящая Черта из пака на акторе с покровителем Тзинчем.
+function rubricMutant() {
+  const item = { id: "trait-ahriman", name: AHRIMAN.name, type: "trait", system: AHRIMAN.system, flags: AHRIMAN.flags };
+  return sheetOf(class {}, { patronGod: "tzeentch", characteristics: { inf: { bonus: 0 } }, items: [item] }).actor;
+}
 
 /** Еретик с Бонусом Влияния 3 и заданным покровителем. */
 function mutant(patronGod = "khorne") {
@@ -82,6 +91,22 @@ describe("бросок Мутации / Дара Бога", () => {
     await submit({ "#mg-type": "mutation", "#mg-pick-name": "Рука Смерти" });
 
     expect(captured.created[0].name).toBe("Рука Смерти");
+  });
+
+  it("Рубрика Аримана бросает дважды при любом покровителе: выбор между двумя записями", async () => {
+    captured.dice = [42, 77];
+    await rollMutationOrGift(rubricMutant());
+    expect(captured.rolls).toEqual(["1d100", "1d100"]);
+    await submit({ "#mg-type": "mutation", "#mg-pick-name": "Рука Смерти" });
+    expect(captured.created[0].name).toBe("Рука Смерти");
+    expect(captured.chat[0].content).toContain("42, 77");
+    expect(captured.dialog.content).toContain("mg-rubric-test");
+  });
+
+  it("без Рубрики кнопки теста W−30 в окне нет", async () => {
+    captured.dice = [42];
+    await rollMutationOrGift(mutant("tzeentch"));
+    expect(captured.dialog.content).not.toContain("mg-rubric-test");
   });
 
   it("у прочих покровителей бросок один", async () => {

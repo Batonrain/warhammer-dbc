@@ -23,6 +23,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { expectedPhase } from "../constants/effect-keys.mjs";
+import { combatOfActor } from "./actor-combat.mjs";
 
 const NS = "warhammer-dbc";
 /** Метка на эффекте: { key, combatId, round }. key — какая способность его выдала. */
@@ -32,18 +33,23 @@ export const WAR_CRY_EFFECT_KEY = "warCry";
 export const WAR_CRY_PRIORITY = 100;
 
 /**
- * Данные эффекта на один Раунд «до начала следующего Хода» (чистая функция).
+ * Данные эффекта на один Раунд «до начала следующего Хода» (чистая функция); `duration` задаёт другой срок,
+ * `span` — на сколько Раундов после выдачи эффект переживает подметание (Психический Рывок: срок до конца Хода в следующем Раунде).
  *
- * @param {{key:string, name:string, img?:string, changes:object[], combat?:{id:string, round:number}|null}} spec
+ * @param {{key:string, name:string, img?:string, changes:object[], combat?:{id:string, round:number}|null, duration?:object|null, span?:number}} spec
  */
-export function timedEffectData({ key, name, img, changes, combat = null }) {
+export function timedEffectData({ key, name, img, changes, combat = null, duration = null, span = 0, start = null }) {
+  const round = Number(combat?.round) || 0;
   return {
     name,
     img: img || "icons/svg/upgrade.svg",
     // type "add" и фаза — по ключу (constants/effect-keys.mjs), как у всех эффектов системы.
     system: { changes: changes.map(c => ({ priority: 0, type: "add", ...c, phase: c.phase ?? expectedPhase(c.key) })) },
-    duration: { value: 1, units: "rounds", expiry: "turnStart" },
-    flags: { [NS]: { [TIMED_EFFECT_FLAG]: { key, combatId: combat?.id ?? "", round: Number(combat?.round) || 0 } } }
+    duration: duration ?? { value: 1, units: "rounds", expiry: "turnStart" },
+    // Явный старт: без него ядро берёт game.combat (бой из трекера ГМа, не бой носителя) и Ход «текущий»,
+    // а не Ход носителя — эффект гас сразу или не в тот Ход (живая проверка 13.11, Боевой Клич и Психический Рывок).
+    ...(start ? { start } : {}),
+    flags: { [NS]: { [TIMED_EFFECT_FLAG]: { key, combatId: combat?.id ?? "", round, ...(span ? { lastRound: round + span } : {}) } } }
   };
 }
 
@@ -57,26 +63,49 @@ export function timedEffectsOf(actor, key) {
 
 /**
  * Пора ли снять эффект в начале Хода хозяина (чистая функция): он выдан в
- * другом бою или в Раунде раньше текущего. Вне боя (combat нет) «до следующего
+ * другом бою или его последний Раунд (выдача + span) раньше текущего. Вне боя (combat нет) «до следующего
  * Хода» наступить не может — эффект живёт, пока не начнётся бой.
  */
 export function timedEffectStale(flag, combat) {
   if (!flag || !combat) return false;
   if (flag.combatId && flag.combatId !== combat.id) return true;
-  return Number(combat.round) > Number(flag.round);
+  return Number(combat.round) > Number(flag.lastRound ?? flag.round);
 }
 
 /**
  * Выдать эффект актору; повторная выдача той же способности заменяет прежний
  * эффект (рейтинг Страха от двух кличей подряд не складывается).
+ * Бой — начатый бой самого актора, а не game.combat (бой из трекера того, кто пишет, у ГМа он
+ * может быть чужим); актор вне боя — бой `caster`, если он передан (game-combat-dread-wail).
+ * `spec.combat` ({id, round}) — явный бой: Психический Рывок, ждавший начала боя, выдаётся в миг старта.
  * @returns {Promise<object|null>} созданный эффект
  */
-export async function grantTimedEffect(actor, spec) {
-  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
+export async function grantTimedEffect(actor, spec, caster = null) {
+  const combat = spec.combat ?? combatOfActor(actor) ?? (caster ? combatOfActor(caster) : null);
   const old = timedEffectsOf(actor, spec.key).map(e => e.id).filter(Boolean);
   if (old.length) await actor.deleteEmbeddedDocuments("ActiveEffect", old);
-  const [effect] = (await actor.createEmbeddedDocuments("ActiveEffect", [timedEffectData({ ...spec, combat })])) ?? [];
+  const start = effectStartOf(actor, combat);
+  const [effect] = (await actor.createEmbeddedDocuments("ActiveEffect", [timedEffectData({ ...spec, combat, start })])) ?? [];
   return effect ?? null;
+}
+
+/**
+ * Старт эффекта в бою носителя: бой, участник-носитель и его Ход в очереди. null — боя нет или он не начат
+ * (тогда ядро заполнит старт само, как для обычного эффекта вне боя).
+ */
+export function effectStartOf(actor, combatRef) {
+  const doc = combatRef?.id ? globalThis.game?.combats?.get?.(combatRef.id) : null;
+  if (!doc?.started) return null;
+  const combatant = doc.getCombatantsByActor?.(actor)?.[0] ?? null;
+  const turn = combatant ? doc.turns?.findIndex(t => t.id === combatant.id) : -1;
+  return {
+    time: globalThis.game?.time?.worldTime ?? 0,
+    combat: doc.id,
+    combatant: combatant?.id ?? null,
+    initiative: combatant?.initiative ?? null,
+    round: doc.round ?? null,
+    turn: turn >= 0 ? turn : null
+  };
 }
 
 /**
@@ -116,9 +145,13 @@ export function dreadWailFearEffectData(combat = null) {
 const dreadWailFearEffectsOf = actor => [...(actor?.effects ?? [])].filter(e =>
   (e.getFlag?.(NS, DREAD_WAIL_FEAR_FLAG) ?? e.flags?.[NS]?.[DREAD_WAIL_FEAR_FLAG]));
 
-/** Наложить Страх 2 на цель до конца текущего боя; повторное попадание заменяет прежний эффект. */
-export async function grantDreadWailFear(actor) {
-  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
+/**
+ * Наложить Страх 2 на цель до конца её боя; повторное попадание заменяет прежний эффект.
+ * Бой — начатый бой цели, а не game.combat (бой из трекера того, кто пишет, у ГМа он может быть
+ * чужим); цели вне боя — бой заклинателя `caster`, чтобы волна по прохожим снималась с его концом.
+ */
+export async function grantDreadWailFear(actor, caster = null) {
+  const combat = combatOfActor(actor) ?? (caster ? combatOfActor(caster) : null);
   const old = dreadWailFearEffectsOf(actor).map(e => e.id).filter(Boolean);
   if (old.length) await actor.deleteEmbeddedDocuments("ActiveEffect", old);
   await actor.createEmbeddedDocuments("ActiveEffect", [dreadWailFearEffectData(combat)]);

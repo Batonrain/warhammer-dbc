@@ -28,6 +28,7 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
+    "mindEffect": true,
     "effect": "Изменение (PR) · Цикл (6). Треб.: Mind Link, Resistance (Fear). Все цели и псайкер мгновенно преодолевают Подавление и +5×PR на все тесты Морали.",
     "isSustained": false,
     "effects": {

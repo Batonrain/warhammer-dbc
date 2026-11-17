@@ -19,6 +19,13 @@ import { esc } from "../helpers/utils.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
 import { friendlySpecKey } from "../rules/friendly-specialties.mjs";
+import { factionTarget } from "../rules/talent-targets.mjs";
+
+/** Талант выдачи мира → фракция-цель (ключи — из компендиума factions). */
+const HOMEWORLD_TALENT_FACTIONS = {
+  "Peer (Criminals)": { key: "criminals", name: "Преступники" },
+  "Peer (Pirates)":   { key: "pirates",   name: "Пираты" }
+};
 import { targetChoiceHtml, wireTargetChoice, readTargetChoice, targetChoiceLabel } from "./target-choice.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { postTestCard, testCardHtml } from "../helpers/test-card.mjs";
@@ -366,6 +373,13 @@ async function grantHomeworld(actor, hw, picks) {
       const list = picks.many?.[ch.key] || [];
       if (list.length) chosenLabels[ch.label] = list.map(s => `${GROUP_SKILLS_DEF[s.group]?.label || s.group} (${s.specialty})`).join(", ");
     }
+  }
+
+  // Таланты с готовой целью-фракцией (Мир-тюрьма: Peer среди Преступников/Пиратов).
+  // Без этого Peer выдавался с targets=[] и +10 Связей не срабатывал (живая проверка 13.11).
+  for (const name of grants.talents) {
+    const f = HOMEWORLD_TALENT_FACTIONS[name];
+    if (f && !talentTargets[name]) talentTargets[name] = factionTarget(f);
   }
 
   // ── Предмет-мир: несёт модификаторы Характеристик ──

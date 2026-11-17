@@ -624,7 +624,8 @@
               "label": "",
               "code": "",
               "id": "NXnmMBC9t3g",
-              "kind": "talent"
+              "kind": "talent",
+              "targetChoiceCount": 3
             },
             {
               "corruptionValue": "1",

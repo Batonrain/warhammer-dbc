@@ -5,7 +5,7 @@
   "folder": "8SlJTJ2G7mk6CBdm",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Реализовано (Sahara 1-54b9). +20 на Полную Атаку, пока Берсерк кровоточит, — прибавка к бонусу Базы (rules/berserker-talents.mjs::meleeBaseBonus ← rules/khorne-berserker.mjs::forHeCaresNotBonus), видна в окне атаки и в колонке «Порог». Дополнительная Реакция «только на Яростный Штурм» — combat/khorne-berserker.mjs::payFuriousReaction (sheets/attack/dialog.mjs): за Яростный Штурм сначала списывается она (метка forHeCaresNotUsed гаснет с началом следующего Хода), потом обычная Реакция; на пул Реакций листа она не добавляется.",
     "benefit": "Кхорн награждает дарящих кровью — как врагов, так и последователей. Когда Берсерк страдает от Кровотечения, получает +20 на Полные Атаки и одну дополнительную Реакцию, которую можно потратить только на дополнительную атаку от Таланта Furious Assault.",
     "tier": 1,
     "requirement": "Furious Assault",
@@ -24,7 +24,7 @@
       "fearRating": 0,
       "speedMod": 0
     },
-    "bookSource": "Домашнее правило (не из официальной книги)"
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Берсерк Кхорна»)"
   },
   "_id": "wlETrJdL11jm8Oe9",
   "effects": [],
@@ -35,7 +35,27 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "9xmLmJZAIGcpFYJv",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "mM5JxS8ovNTsmlK5",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "ability.forHeCaresNot",
+              "label": "Ему Не Важно: +20 на Полную Атаку при Кровотечении, доп. Реакция на Яростный Штурм",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

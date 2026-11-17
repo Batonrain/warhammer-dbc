@@ -15,14 +15,14 @@ import {
 
 const grid = { size: 100, distance: 2 };
 
-function noiseMarine({ hasTrait = true, hasCacophony = false, corBonus = 3, perBonus = 4, fate = 2 } = {}) {
+function noiseMarine({ hasTrait = true, hasCacophony = false, corBonus = 3, corValue = corBonus * 10, perBonus = 4, fate = 2 } = {}) {
   const flags = {};
   const items = [];
   if (hasTrait) items.push({ type: "trait", name: "Dread Wail / Грозный Вопль" });
   if (hasCacophony) items.push({ type: "talent", name: "Sweet Cacophony / Сладкая Какофония" });
   const data = {
     name: "Шумовой", items,
-    system: { corruptionBonus: corBonus, characteristics: { per: { bonus: perBonus } }, fate: { value: fate, max: 5 } },
+    system: { corruptionBonus: corBonus, corruption: { value: corValue }, characteristics: { per: { bonus: perBonus } }, fate: { value: fate, max: 5 } },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; },
     unsetFlag: async (scope, key) => { delete flags[`${scope}.${key}`]; }
@@ -144,6 +144,24 @@ describe("applyDreadWailWave", () => {
     expect(inRange.system.conditions.stunned).toBe(true);
     expect(slaanesh.system.conditions.stunned).toBeUndefined();
     expect(farAway.system.conditions.stunned).toBeUndefined();
+  });
+
+  // Книга: «поражающую всех в радиусе ½ Cor м» — от САМОЙ Порчи, не от её Бонуса
+  // (до сверки 03.11.2026 радиус считался от Cor.b, то есть в 10 раз меньше).
+  it("радиус волны — половина Cor в метрах, а не Cor.b", async () => {
+    globalThis.game.combat = { id: "combat-1" };
+    const caster = noiseMarine({ corValue: 30 }); // Cor.b 3 → радиус 15 м (а не 1,5 м)
+    const casterToken = token("c1", caster, 0);
+    const near = targetActor({ uuid: "Actor.near", wpTotal: 40 });
+    const far  = targetActor({ uuid: "Actor.far2", wpTotal: 40 });
+    const s = scene([casterToken, token("t1", near, 500), token("t2", far, 2000)]); // ~8 м и ~38 м
+    casterToken.parent = s;
+
+    captured.nextRoll = 90;
+    await applyDreadWailWave(caster, casterToken, "stunned");
+    expect(near.system.conditions.stunned).toBe(true);
+    expect(far.system.conditions.stunned).toBeUndefined();
+    expect(captured.chat.at(-1).content).toContain("радиус 15 м");
   });
 
   it("успешный тест цели — эффект не применяется", async () => {

@@ -28,6 +28,7 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
+    "mindEffect": true,
     "effect": "Атака · Длительное (½ Успехи Раундов окр.▲) · Изменение. Психотест W−30 vs W+0. Треб.: Compel. Жертва не может физ. действия и считается Беспомощной.",
     "isSustained": false,
     "effects": {

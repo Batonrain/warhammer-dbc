@@ -11,9 +11,9 @@ import { confirmXpSpend } from "../apps/xp-afford.mjs";
 import { talentCostXP, charAptitudeSet, ALIGN_LABEL,
          raceAllyTalent, dynamicAptKind, CHAR_APTITUDES,
          resolveTalentAptitudes, resolveCharCat, resolveSkillCat, resolveTalentCat } from "../constants/advancement.mjs";
-import { isEliteTalent } from "../constants/patronage.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { resolveAptitudeOverride } from "../rules/aptitude-overrides.mjs";
+import { talentPriceReason } from "../rules/advance-category.mjs";
 import { checkRequirement, checkBeyondHumanChar, checkMasteryTarget } from "../constants/talent-requirements.mjs";
 import { isBeyondHuman, BEYOND_HUMAN_CHARS, BEYOND_HUMAN_MIN_CHAR } from "../rules/beyond-human.mjs";
 import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
@@ -413,9 +413,9 @@ export async function openItemPicker(actor, kind) {
               { specialization: d.system.specialization });
             const xp  = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts, forced,
               { name: d.name, patron: actor.system.patronGod, actor, specialization: d.system.specialization });
-            const why = isEliteTalent(d.name, d.system.specialization)
-              ? "Таланты Элитных Архетипов нейтральны по Склонностям (стр. 24)"
-              : `совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}`;
+            // Причина — по тому же режиму цены, что и категория выше (task-bd8d):
+            // при Покровительстве цена считается по Покровителю, а не по Склонностям.
+            const why = talentPriceReason(actor, d, charApts, { forced });
             cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — ${why}">${xp} XP</span>`;
           }
         }

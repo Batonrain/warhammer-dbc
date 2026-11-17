@@ -154,11 +154,17 @@ describe("источники по умолчанию", () => {
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "commandSubstitution",
                 "conditions", "core",
-                "daemonInevitability", "devourerOfKnowledge", "dreadnought",
+                "daemonInevitability",
+                // darkApostle (Тёмный Апостол, Sahara 1-54b9) — Литания Слаанеш: +30 на Командование Апостола.
+                "darkApostle", "devourerOfKnowledge", "dreadnought",
                 // drugWithdrawal (wdbc-gyqf2, 25.10.2026) — штраф зависимого наркотика, пока доза просрочена.
                 "drugWithdrawal", "hatred", "homeworld", "items",
+                // khorneBerserker (Берсерк Кхорна, Sahara 1-54b9) — Гвозди Мясника вне Ярости и Закалённое в Крови.
+                "khorneBerserker",
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
-                "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath", "nullZones",
+                "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath",
+                // noiseMarine (Шумовой Десантник, Sahara 1-54b9) — Пьянящий Рёв (+2 за участника боя) и Боль Это Наслаждение (+10 за уровень).
+                "noiseMarine", "nullZones",
                 "occultistTalents", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».
                 "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia",

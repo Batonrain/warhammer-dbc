@@ -15,7 +15,7 @@
 //  связывает разделы общими накопителями, а разбиение их развязывает.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { psyRatingFromTalents } from "../psyker.mjs";
+import { psyRatingFromTalents, minionHasPsykerTrait } from "../psyker.mjs";
 import { hasRuleFlag, ruleFlagLabels } from "../flags.mjs";
 import { initiativeCharKey, fastestHandBonus, initiativeHint,
          INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
@@ -117,6 +117,15 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
   // статблоком, без Таланта). Если на акторе есть Талант «Psy Rating /
   // Пси-Рейтинг» — он замещает хранимое значение, предмет становится
   // источником истины (psyRatingFromTalents в module/rules/psyker.mjs).
+  // Миньон, купивший комплексную Черту «Psyker / Псайкер» (minion-traits.mjs:
+  // «Даёт Psyker (PR 1)»), раньше псайкером не считался: все читатели смотрят
+  // флаг system.isPsyker, а Черта его не ставила (dbc-114/55-15, 13.11.2026).
+  // Только для Миньонов — у персонажей/рас флаг ведёт чарген, а wasPsykerBefore
+  // (Метка Тзинча) должна по-прежнему отличать «был псайкером до Метки».
+  if (!system.isPsyker && system.psyker && minionHasPsykerTrait(actor)) {
+    system.isPsyker = true;
+    if (!system.psyker.rating) system.psyker.rating = 1;
+  }
   if (system.psyker) {
     const derivedPR = psyRatingFromTalents(actor.items);
     system.psyker.ratingFromTalent = derivedPR !== null;

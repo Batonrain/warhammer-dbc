@@ -69,6 +69,7 @@ import { itemHasName } from "./predicates.mjs";
 import { isInRage } from "./rage.mjs";
 import { dragonKnightRules } from "./dragon-knight.mjs";
 import { passengerTestMod } from "./mount.mjs";
+import { armorQualityAgilityPenalty } from "../constants/quality.mjs";
 
 /**
  * Тесты, которых Усталость не касается. Книга («Раны и Урон» → «Статусы»,
@@ -251,6 +252,15 @@ export function springingStrengthPenalty(actor, charKey) {
 }
 
 /**
+ * Низкое качество брони (стр. 165): «Poor.Q — −10 на все тесты A». Читается
+ * широко — любой тест характеристикой Ловкости (как «Пружинящая Стойка» у S).
+ */
+export function poorArmourAgilityPenalty(actor, charKey) {
+  if (String(charKey ?? "").toLowerCase() !== "ag") return 0;
+  return armorQualityAgilityPenalty(actor?.items);
+}
+
+/**
  * Снятый шлем силовой брони: +5 ко всем тестам на основе Товарищества.
  * Раньше жил методом листа (`_getHelmetlessBonus`) — единственный из пяти,
  * у кого своей функции вне листа не было вовсе.
@@ -352,6 +362,8 @@ export function situationalRules(actor, ctx = {}) {
   }
   add("situational.springingStance", "🐸 Пружинящая Стойка",
       springingStrengthPenalty(actor, charKey));
+  add("situational.poorArmourAgility", "🛡️ Низкое качество брони: тесты Ловкости",
+      poorArmourAgilityPenalty(actor, charKey));
   add("situational.grappleSqueeze", "🤼 Сжат в Захвате",
       grappleSqueezePenalty(actor, ctx, skillKey));
   add("situational.pinDown", "🤼 Прижат", pinDownPenalty(actor, ctx, skillKey));

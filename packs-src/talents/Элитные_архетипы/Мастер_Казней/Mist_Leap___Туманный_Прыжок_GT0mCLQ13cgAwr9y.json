@@ -5,7 +5,7 @@
   "folder": "F3sLK04PM0hXUP7f",
   "system": {
     "description": "",
-    "notes": "Движение подключено пунктом «Движение по Таланту» в меню Движения (module/rules/talent-moves.mjs, combat/talent-move.mjs, 27.10.2026): телепорт токена (стены учитываются, бюджет пути не трогается), 2 ОД и 1 Очко Трофеев (пул system.trophyPoints, списывается автоматически); базовый контакт с добычей и «считать Натиском» — вручную.",
+    "notes": "Реализовано (Sahara 1-54b9). Пункт «Движение по Таланту» (combat/master-of-executions.mjs::prepareMistLeap): нужен Трейт Mistwalker; цель — выцеленный токен в зоне Unnatural Senses (P м, у отмеченной добычи P км); «достойна ли добыча» решает ГМ диалогом (у отмеченной добычи уже решено); Очко Трофеев списывается само; токен встаёт в базовый контакт с добычей. «Считать Натиском»: выбрана База «Натиск» (system.meleeBase), метка «Натиск этого Хода», тест Подавления Прикрывающего Огня; 2 ОД Полного действия списываются на броске атаки, как у обычного Натиска, поэтому при прыжке ОД не списываются (но 2 ОД должны быть).",
     "benefit": "За полное действие может потратить очко Трофеев и телепортироваться Трейтом Mistwalker в базовый контакт с достойной трофея добычей в пределах действия Unnatural Senses, считая это Натиском.",
     "tier": 2,
     "requirement": "Forbidden Lore (Warp)+30",
@@ -24,7 +24,7 @@
       "fearRating": 0,
       "speedMod": 0
     },
-    "bookSource": "Домашнее правило (не из официальной книги)"
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Мастер Казней»)"
   },
   "_id": "GT0mCLQ13cgAwr9y",
   "effects": [],
@@ -35,7 +35,27 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "DDhe4jHo4dEQybG8",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "jpOiSQtlpxp7MEMi",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "ability.mistLeap",
+              "label": "Туманный Прыжок: телепорт в базовый контакт с добычей из зоны Unnatural Senses за Очко Трофеев, считается Натиском",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

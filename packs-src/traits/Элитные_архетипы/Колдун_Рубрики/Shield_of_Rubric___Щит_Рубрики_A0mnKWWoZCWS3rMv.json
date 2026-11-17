@@ -5,7 +5,7 @@
   "folder": "WlglvQbAaTqsgArT",
   "system": {
     "description": "",
-    "notes": "Тот же класс, что Sorcerous Barrier — активный щит-купол с диапазоном рейтинга, новая механика без готового канала.",
+    "notes": "Реализовано (Sahara 1-54b9). Пока на акторе есть Черта, у него есть встроенный предмет-щит «Щит Рубрики» (чародейский купол 1-50, без перегрузки, включён) — combat/rubric-sorcerer.mjs::syncRubricShield, хук createItem/deleteItem. Его читает обычный конвейер урона щитов.",
     "benefit": "Рубрика одарила персонажа мистической защитой, отражающей вражеские болты и клинки. Даёт не перегружающий чародейский щит-купол с рейтингом 1-50.",
     "source": "Элитный архетип: Колдун Рубрики",
     "hasRating": false,
@@ -34,7 +34,27 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "kyYbvAuhWu0lgzsE",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "I6Auqf3Eop6qclPq",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "ability.shieldOfRubric",
+              "label": "Щит Рубрики: встроенный чародейский щит-купол 1-50 без перегрузки",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

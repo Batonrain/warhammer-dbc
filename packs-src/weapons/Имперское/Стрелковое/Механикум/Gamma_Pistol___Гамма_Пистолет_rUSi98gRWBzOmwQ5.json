@@ -26,7 +26,7 @@
     "availability": 4,
     "weight": 3,
     "attackBonus": 0,
-    "special": "Моды: 5), Tearing. Rad (1d10",
+    "special": "Rad: 1d10+5",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
@@ -35,7 +35,14 @@
         "rating": 14
       },
       {
+        "key": "rad",
+        "rating": "1d10+5"
+      },
+      {
         "key": "reliable"
+      },
+      {
+        "key": "tearing"
       }
     ],
     "needsRecharge": false,

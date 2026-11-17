@@ -13,6 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemIs } from "../rules/item-marker.mjs";
+import { PSYCHIC_SPRINT_KEY, psychicSprintPendingOf } from "../rules/psychic-sprint.mjs";
 import { isInspireWrathItem } from "../rules/inspire-wrath.mjs";
 import { FORESIGHT_READY_FLAG } from "../rules/situational.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
@@ -50,6 +51,8 @@ export const BLESSING_OF_STEEL_KEY = "mechanicum.core.blessingOfSteel";
 // Предметы у игроков — снимки: Талант, купленный до появления записи, ключа не несёт, поэтому и по имени.
 export const isBlessingOfSteelItem = item => itemIs(item, "talent", BLESSING_OF_STEEL_KEY, "Blessing of Steel");
 
+export const isPsychicSprintItem = item => itemIs(item, "talent", PSYCHIC_SPRINT_KEY, "A Psychic Sprint");
+
 /** Панель(и) для листа Таланта; пусто у прочих Талантов и у предмета вне актора. */
 export function talentActionsHtml(item, actor) {
   if (!actor) return "";
@@ -59,6 +62,20 @@ export function talentActionsHtml(item, actor) {
         title="Полудействие, всадник и скакун в одну Инициативу: Survival−10 — скакун получает +3×Успехи на все Атаки или все Избегания до начала следующего Хода.">
         ${rollIcon("shield", "#ffb84d")}Вдохновить скакуна (Survival−10)
       </button>
+    </div>`;
+  }
+  if (isPsychicSprintItem(item)) {
+    const pending = psychicSprintPendingOf(actor);
+    const note = pending
+      ? `<div class="talent-action-note" style="font-size:0.85em;opacity:0.85;">${pending.success
+        ? `Рывок удался: SPD +${pending.bonus} ждёт боя и начнётся с 1-го Раунда.`
+        : "Рывок брошен и провален: Талант на ближайший бой потрачен."} Повторить нельзя, пока не начнётся бой.</div>`
+      : "";
+    return `<div class="talent-action-panel">
+      <button type="button" class="talent-action-btn" data-talent-action="psychicSprint" data-item-id="${esc(item.id)}"
+        title="Тест W−30+3×эPR (эPR — текущий Пси-Рейтинг). Успех: +эPR к SPD на этот и следующий Раунд, Полное Движение, Натиск и Бег на это время — на 1 ОД меньше. Раз за бой; попытка засчитывается, даже если провалена. Вне боя бросок разрешён: эффект ждёт и начнётся с началом боя.">
+        ${rollIcon("run", "#9a7dff")}Психический Рывок (W−30+3×эPR)
+      </button>${note}
     </div>`;
   }
   if (isBlessingOfSteelItem(item)) {
@@ -135,6 +152,11 @@ export async function runTalentAction(action, item, actor) {
     if (!isDragonKnightItem(item)) return false;
     const { dragonKnightTest } = await import("../combat/mount.mjs");
     return !!(await dragonKnightTest(actor));
+  }
+  if (action === "psychicSprint") {
+    if (!isPsychicSprintItem(item)) return false;
+    const { startPsychicSprint } = await import("../combat/psychic-sprint.mjs");
+    return !!(await startPsychicSprint(actor));
   }
   if (action === "blessingOfSteel") {
     if (!isBlessingOfSteelItem(item)) return false;

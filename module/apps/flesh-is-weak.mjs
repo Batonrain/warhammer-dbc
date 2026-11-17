@@ -16,11 +16,23 @@ import { planFleshIsWeak, planFleshIsWeakAfterSync, contribOf, FIW_CONTRIB_FLAG 
 
 const FLAG = "warhammer-dbc";
 
+/**
+ * Записи changes эффекта как чистые данные. У живого ActiveEffect записи
+ * system.changes хранят обратную ссылку effect на сам эффект: клон такого
+ * массива циклический, и updateEmbeddedDocuments падает «Maximum depth exceeded».
+ */
+function plainChanges(effect) {
+  const src = typeof effect.toObject === "function"
+    ? effect.toObject()?.system?.changes
+    : (effect.system?.changes ?? effect.changes);
+  return (src ?? []).map(({ effect: _effect, parent: _parent, ...change }) => structuredClone(change));
+}
+
 /** Эффекты брони Трейта — пересчитать под новый рейтинг (значение, равное старому рейтингу, → новому). */
 async function rescaleMachineEffects(target, oldRating, nextRating) {
   const effects = [...(target.effects ?? [])];
   if (!effects.length || !oldRating || !nextRating || oldRating === nextRating) return;
-  const data = { system: { rating: oldRating }, effects: effects.map(e => ({ _id: e.id ?? e._id, system: { changes: structuredClone(e.system?.changes ?? e.changes ?? []) } })) };
+  const data = { system: { rating: oldRating }, effects: effects.map(e => ({ _id: e.id ?? e._id, system: { changes: plainChanges(e) } })) };
   rescaleTraitByRating(data, nextRating);
   await target.updateEmbeddedDocuments("ActiveEffect",
     data.effects.map(e => ({ _id: e._id, "system.changes": e.system.changes })));

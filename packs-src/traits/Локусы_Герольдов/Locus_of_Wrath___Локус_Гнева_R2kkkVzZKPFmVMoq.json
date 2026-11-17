@@ -109,7 +109,16 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "",
-              "code": ""
+              "code": "",
+              "targets": [
+                {
+                  "kind": "all",
+                  "ref": "",
+                  "value": "",
+                  "name": "Все!",
+                  "img": ""
+                }
+              ]
             }
           ]
         }

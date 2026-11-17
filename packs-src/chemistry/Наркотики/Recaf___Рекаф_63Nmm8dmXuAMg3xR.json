@@ -9,7 +9,7 @@
     "deliveryMethod": "liquid",
     "quantity": 1,
     "weight": 0,
-    "availability": -2,
+    "availability": -4,
     "quality": "common",
     "duration": "",
     "effect": "8 часов: штраф Усталости с −10 до −5; игнор штрафов нехватки сна; −10 vs наркотики/Усталость; +10 vs одержимость/психоз.",

@@ -1,0 +1,53 @@
+{
+  "name": "Moritat Power Pack / Силовой ранец Моритата",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Силовой ранец Моритата включает интегрированный прыжковый ранец паттерна Фаэтон (дающий Трейт Flyer(10) и маневрирование без тестов) и кабели питания для энергетических оружий. Собирается из прыжкового ранца паттерна Фаэтон и ранца силовой брони с бесконечным источником питания (см. «Становление» Элитного архетипа Моритат).",
+    "notes": "Не смоделировано целиком: Трейт Flyer(10) и кабели питания для Цепного Выстрела — текстом. Вес, Редкость и Размер в книге не указаны.",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 0,
+    "quality": "common",
+    "gearCategory": "mobility",
+    "worn": "Спина",
+    "effect": "Трейт Flyer(10); маневрирование без тестов. Кабели питания: пистолет, присоединённый к кабелю, может вести Цепной Выстрел (Трейт «Chain Shot» Моритата).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы: Моритат»)"
+  },
+  "folder": "lstGztLQleXZ8xfd",
+  "_id": "d7f57ag3kR3DFEue",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1793730422221,
+    "modifiedTime": 1793730422221,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!d7f57ag3kR3DFEue"
+}

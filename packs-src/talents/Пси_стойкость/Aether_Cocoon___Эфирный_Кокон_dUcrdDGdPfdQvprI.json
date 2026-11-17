@@ -5,7 +5,7 @@
   "folder": "eI14Vbl1EBbwi5Rc",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Смоделировано (wdbc-nzzgn): +2 к W за каждую действующую психосилу (Вливание/Изменение/Аура/Призыв) на тесте Сопротивления психосиле, кроме Непрямых — правило psyResist.aetherCocoon (rules/library/core.mjs). Не смоделировано: −2 к штрафу Daemonic Presence за силу, +1 АР против варп-оружия, дары и Одержимость (нет окна теста).",
     "benefit": "За каждую действующую на него психосилу (Вливания, Изменения, Ауры, Призывы с зонами влияния) персонаж уменьшает штраф к W от Daemonic Presence на 2, получает +2 на встречные тесты W против психосил (кроме непрямых), демонических даров и атак Одержимостью, и +1 АР против варп-оружия.",
     "tier": 2,
     "requirement": "For.Lore (Warp)+20",
@@ -38,7 +38,26 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "gAether_Cocoon01",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "eAether_Cocoon01",
+              "kind": "capability",
+              "capabilityKey": "psyResist.core.aetherCocoon",
+              "capabilityMode": "flag",
+              "label": "Эфирный Кокон: +2 к W за каждую действующую психосилу (правило psyResist.aetherCocoon)",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

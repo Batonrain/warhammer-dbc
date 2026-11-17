@@ -8,10 +8,13 @@
 //  достаточная для «Икона Богохульства» (wdbc-1rno: «Имперцы видящие...»),
 //  не полноценная система LoS.
 //
-//  ВАЖНО: конвенция rotation Foundry (0° = «на север»/вверх экрана, растёт
-//  ПО ЧАСОВОЙ) взята из документированного поведения ядра — этот модуль НЕ
-//  проверен на живом Foundry-канвасе (см. doombc-gm-login в памяти проекта).
-//  Перед боевым применением стоит живьём повернуть токен и свериться.
+//  ВАЖНО: конвенция rotation Foundry 14 — 0° токен смотрит ВНИЗ экрана (юг),
+//  растёт ПО ЧАСОВОЙ: 90° запад, 180° север, 270° восток (token.mjs: автоповорот
+//  rotation = toDegrees(ray.angle) − 90; limited-angle-polygon.mjs: сектор
+//  начинается с rotation + 90 − angle/2). Перевод rotation → пеленг — единый
+//  rules/facing.mjs::facingBearing. Конвенция подтверждена исходниками и
+//  замером канваса (Sahara 180-rotation-0), но сам модуль целиком (дальность +
+//  сектор поверх live-токенов) на живом канвасе после правки не проверен.
 //
 //  Переиспользует ЧИСТУЮ функцию замера module/regions/auras.mjs::
 //  tokenDocDistance — второй копии той же формулы дистанции в проекте по
@@ -19,6 +22,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { tokenDocDistance } from "../regions/auras.mjs";
+import { isWithinArc, bearingDegrees, facingBearing } from "./facing.mjs";
 
 /** Центр токена в пикселях сцены (та же формула, что tokenDocDistance внутри). */
 function tokenCenter(t, gridSize) {
@@ -66,14 +70,7 @@ export function isTokenInSight(observerToken, targetToken, grid) {
   const tc = tokenCenter(targetToken, size);
   if (oc.x === tc.x && oc.y === tc.y) return true; // та же клетка — сектор ни при чём
 
-  // atan2 в экранных координатах (Y вниз) даёт 0°=вправо, растёт по часовой;
-  // rotation Foundry 0°=вверх, тоже по часовой — сдвиг на −90° переводит
-  // rotation в ту же систему отсчёта, что и atan2 (см. шапку файла).
-  const toTargetDeg = (Math.atan2(tc.y - oc.y, tc.x - oc.x) * 180 / Math.PI + 360) % 360;
-  const facingDeg = (((Number(observerToken?.rotation) || 0) - 90) % 360 + 360) % 360;
-  let diff = Math.abs(toTargetDeg - facingDeg);
-  if (diff > 180) diff = 360 - diff;
-  return diff <= angle / 2;
+  return isWithinArc(facingBearing(observerToken?.rotation), bearingDegrees(oc, tc), angle);
 }
 
 /** Подмножество candidateTokens, которым виден targetToken (см. isTokenInSight). */

@@ -21,7 +21,7 @@ const warCry = () => ({
 function actor(fearRating = 0) {
   const flags = {};
   const a = {
-    id: "a", name: "Горлопан", items: [], effects: [],
+    id: "a", uuid: "Actor.a", name: "Горлопан", items: [], effects: [],
     system: { fearRating, fatigue: { value: 0, max: 0 }, characteristics: { t: { total: 40, bonus: 4 }, wp: { total: 40, bonus: 4 } }, conditions: {} },
     getFlag: (ns, k) => flags[`${ns}.${k}`],
     setFlag: async (ns, k, v) => { flags[`${ns}.${k}`] = v; },
@@ -111,13 +111,15 @@ describe("временный эффект: срок", () => {
 
   it("sweepTimedEffects в начале Хода снимает только устаревшие метки", async () => {
     const a = actor();
-    globalThis.game.combat = { id: "c1", round: 3, started: true };
+    globalThis.game.combat = { id: "c1", round: 3, started: true, combatants: [{ actor: a }] };
+    globalThis.game.combats = [globalThis.game.combat];
     await runTalentAction("warCry", warCry(), a);
     expect(await sweepTimedEffects(a, { id: "c1", round: 3 })).toBe(0);
     expect(a.effects).toHaveLength(1);
     expect(await sweepTimedEffects(a, { id: "c1", round: 4 })).toBe(1);
     expect(a.effects).toEqual([]);
     delete globalThis.game.combat;
+    delete globalThis.game.combats;
   });
 
   it("onTimedEffectExpired: только по отметке ядра, только активный ГМ, только в бою", async () => {

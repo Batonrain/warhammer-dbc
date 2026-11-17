@@ -116,6 +116,45 @@ describe("featureTarget", () => {
     expect(targetMatches(featureTarget("possessed"), { targetActor: { system: { isPsyker: true } } }, map)).toBe(false);
   });
 
+  // Sahara talent-targets-possessed-flag: покупка архетипа «Одержимый» флаг
+  // system.possessed не ставит, а вкладка и Проявление его уже считают
+  // Одержимым (predicates.canManifestPossession). Цель «Одержимый» у Таланта
+  // (Ненависть к Одержимым) читала только флаг — у купившего архетип молчала.
+  describe("цель «Одержимый»: флаг ИЛИ купленный Элитный архетип", () => {
+    const possessed = () => featureTarget("possessed");
+    const actorWith = (sys = {}, items = []) => ({ system: sys, items });
+    const archetypeItem = name => ({ type: "eliteArchetype", name });
+    const hit = a => targetMatches(possessed(), { targetActor: a }, map);
+
+    it("архетип лежит предметом, флага нет", () => {
+      expect(hit(actorWith({}, [archetypeItem("Possessed / Одержимый")]))).toBe(true);
+    });
+    it("архетип записан в шапку листа (основной и дополнительные), флага нет", () => {
+      expect(hit(actorWith({ eliteArchetype: "Possessed / Одержимый" }))).toBe(true);
+      expect(hit(actorWith({ eliteArchetype: "Raven / Ворон", eliteArchetypesExtra: ["Possessed / Одержимый"] }))).toBe(true);
+      expect(hit(actorWith({ eliteArchetype: "[WIP] Possessed / Одержимый" }))).toBe(true);
+    });
+    it("флаг по-прежнему работает без архетипа", () => {
+      expect(hit(actorWith({ possessed: true }))).toBe(true);
+    });
+    it("чужой архетип и пустой лист не подходят", () => {
+      expect(hit(actorWith({ eliteArchetype: "Raven / Ворон" }, [archetypeItem("Raven / Ворон")]))).toBe(false);
+      expect(hit(actorWith({}))).toBe(false);
+      expect(hit(null)).toBe(false);
+    });
+    it("цель и Проявление определяют Одержимого одинаково", async () => {
+      const { canManifestPossession } = await import("../../module/rules/predicates.mjs");
+      const cases = [
+        actorWith({}), actorWith({ possessed: true }),
+        actorWith({}, [archetypeItem("Possessed / Одержимый")]),
+        actorWith({ eliteArchetype: "Possessed / Одержимый" }),
+        actorWith({ eliteArchetype: "Raven / Ворон" }, [archetypeItem("Raven / Ворон")]),
+        actorWith({ eliteArchetypesExtra: ["Possessed / Одержимый"] })
+      ];
+      for (const a of cases) expect(hit(a), JSON.stringify(a)).toBe(canManifestPossession(a));
+    });
+  });
+
   it("без цели броска не срабатывает", () => {
     expect(targetMatches(psyker, {}, map)).toBe(false);
   });

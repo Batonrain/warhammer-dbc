@@ -5,7 +5,7 @@
   "folder": "VJkmfzAqWtxtuscp",
   "system": {
     "description": "",
-    "notes": "Грант прогрессирующего ментального расстройства + Помеха (не число) на определённые тесты — оба вне числового testMod.",
+    "notes": "Реализовано (Sahara 1-54b9). «Психопатия» выдаётся при получении Черты скриптом «При выдаче» (sheets/tabs/disorders.mjs::grantStartingDisorder, name): Тяжесть 0, нижний предел 0 (system.severityMin), неизлечимо; уже лежащая Психопатия получает тот же предел. Помеха на Command, Charm, Deceive и Inquiry стоит заранее в окне теста Навыка (sheets/actor-sheet.mjs) и в окне Команды Отряда (sheets/squad-sheet.mjs, по выбранному отдающему) — радиокнопка «Помеха» (rules/master-of-executions.mjs::hunterHindranceApplies). Игрок может переключить её руками: так в системе устроена любая Помеха/Преимущество.",
     "benefit": "Ритуалы перманентно изменяют разум. Получает ментальное расстройство «Психопатия» на Тяжести 0, и его Тяжесть не может опуститься ниже 0. Получает Помеху на все тесты Command, Charm, Deceive и Inquiry.",
     "source": "Элитный архетип: Мастер Казней",
     "hasRating": false,
@@ -34,7 +34,42 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "JwHdcNqOwN26gZot",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "aZhfXyVAlJSeWK1L",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "ability.singleMindedHunter",
+              "label": "Целеустремлённый Охотник: Психопатия на Тяжести 0 (не ниже 0), Помеха на тесты Command, Charm, Deceive и Inquiry",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "0dxWpOehHEZh35iv",
+              "kind": "script",
+              "group": null,
+              "capabilityKey": "",
+              "label": "Стартовое расстройство «Психопатия»",
+              "code": "// Целеустремлённый Охотник (корбук, Мастер Казней): «Психопатия» на Тяжести 0, и Тяжесть не может опуститься ниже 0.\n// Повторный запуск расстройство не дублирует — только подтягивает нижний предел (sheets/tabs/disorders.mjs).\nconst res = await grantStartingDisorder(actor, item, { name: \"Психопатия\", severityMin: 0, incurable: true, label: \"Целеустремлённый Охотник\" });\nif (!res.ok) ui.notifications?.info(res.reason);",
+              "when": {
+                "negate": false,
+                "conditions": []
+              },
+              "scriptOnGrant": true,
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 1
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

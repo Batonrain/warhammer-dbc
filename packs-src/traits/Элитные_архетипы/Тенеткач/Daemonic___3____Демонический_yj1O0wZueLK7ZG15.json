@@ -5,7 +5,7 @@
   "folder": "iEDEFAendOS9kPKY",
   "system": {
     "description": "",
-    "notes": "Дубликат записи выше в третьем слоте архетипа — та же причина.",
+    "notes": "Автоматизировано (dbc-114, 14.11.2026): +3 к Бонусу Стойкости носителя (как Unnatural T, соглашение бестиария «Daemonic → T.b»). Остальные эффекты Daemonic — вручную.",
     "benefit": "+3 к рейтингу Daemonic.",
     "source": "Элитный архетип: Ночной Демон",
     "hasRating": false,
@@ -27,7 +27,54 @@
     "bookSource": "DoomBC — Книга Аэльдари: Ответвления, ЭЛИТНЫЕ АРХЕТИПЫ ДРУКХАРИ («Элитные архетипы: Тенеткач»)"
   },
   "_id": "yj1O0wZueLK7ZG15",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Daemonic (+3) / Демонический (бонус T)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.t.bonusFx",
+            "type": "add",
+            "value": 3,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "Fh4M3qPgP3Z9HBBD",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786121961173,
+        "modifiedTime": 1786121961173,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!yj1O0wZueLK7ZG15.Fh4M3qPgP3Z9HBBD"
+    }
+  ],
   "sort": 0,
   "ownership": {
     "default": 0,

@@ -133,3 +133,43 @@ describe("focusRollResult — итог броска психофокуса", () 
     expect(focusRollResult({ pass: false, double: false }, good).itemBonus).toBe(0);
   });
 });
+
+describe("focusQualityEffect — Путь «считается Best.Q Психофокусом на все Дисциплины»", () => {
+  const power = d => ({ system: { discipline: d } });
+  const runes = { focusQuality: "best", focusAllDisciplines: true };
+  const noItem = actorWith([], {});
+
+  it("без предмета: +5 на любой Дисциплине и игнор крит. провала", () => {
+    for (const d of ["telepathy", "divination", ""])
+      expect(focusQualityEffect(noItem, power(d), runes))
+        .toMatchObject({ item: null, resonates: true, bonus: 5, ignoresCritFail: true });
+  });
+  it("Путь без этих полей ведёт себя как раньше", () => {
+    expect(focusQualityEffect(noItem, power("telepathy"), { focusTest: true }))
+      .toMatchObject({ resonates: false, bonus: 0, ignoresCritFail: false });
+    expect(focusQualityEffect(noItem, power("telepathy"), null))
+      .toMatchObject({ resonates: false, bonus: 0, ignoresCritFail: false });
+  });
+  it("с реальным Best.Q предметом бонус не суммируется: +5, а не +10", () => {
+    const a = actorWith([focus("best")], { focusItemId: "f1", focusResonance: "telepathy" });
+    const r = focusQualityEffect(a, power("telepathy"), runes);
+    expect(r.bonus).toBe(5);
+    expect(r.item).toBe(a.items[0]);
+    expect(r.ignoresCritFail).toBe(true);
+  });
+  it("с предметом Good.Q Путь всё равно даёт Best.Q", () => {
+    const a = actorWith([focus("good")], { focusItemId: "f1", focusResonance: "divination" });
+    expect(focusQualityEffect(a, power("telepathy"), runes))
+      .toMatchObject({ bonus: 5, ignoresCritFail: true });
+  });
+  it("Путь с Good.Q на все Дисциплины: +5, но крит. провал не снимает", () => {
+    expect(focusQualityEffect(noItem, power("telepathy"), { focusQuality: "good", focusAllDisciplines: true }))
+      .toMatchObject({ bonus: 5, ignoresCritFail: false });
+  });
+  it("итог броска: крит. провал даёт 0, успех +15, крит. успех +20", () => {
+    const eff = focusQualityEffect(noItem, power("telepathy"), runes);
+    expect(focusRollResult({ pass: false, double: true }, eff).mod).toBe(0);
+    expect(focusRollResult({ pass: true, double: false }, eff).mod).toBe(15);
+    expect(focusRollResult({ pass: true, double: true }, eff).mod).toBe(20);
+  });
+});

@@ -38,7 +38,7 @@ async function onSyncLoyalty() {
   // Группа счёта: отмеченный в генераторе «считать как машину» (Бинарная Паства) — по Int.
   const base = minionLoyalty(master, loyaltyGroupOf(master, this.actor),
     { uuid: this.actor.uuid, slotTalentId: this.actor.system?.slotTalentId || "",
-      astartes: !!this.actor.system?.isAstartes });
+      astartes: !!this.actor.system?.isAstartes, golem: !!this.actor.getFlag?.("warhammer-dbc", "rubricGolem") });
   // Проверяем группу, а не результат: Пушечное Мясо может честно опустить Лояльность до 0.
   if (!MINION_GROUPS[this.actor.system?.minionType]?.masterChar) return ui.notifications?.warn("У Миньона не выбрана группа — не от чего считать Лояльность.");
   await this.actor.update({ "system.loyalty.max": base, "system.loyalty.value": base });

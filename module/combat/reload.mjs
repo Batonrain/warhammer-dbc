@@ -5,6 +5,7 @@ import { hasSpeedTalent, rapidReloadApCost } from "../rules/speed-talents.mjs";
 import { fullyArmedReloadApCost } from "./fully-armed.mjs";
 import { profileHasOwnFire, sysWithProfileFire, profileFireUpdate } from "./weapon-profiles.mjs";
 import { chamberInAvailable, chamberInBlockReason, CHAMBER_IN_FLAG } from "../rules/gunner-talents.mjs";
+import { ammoFitsWeapon } from "../rules/ammo-override.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
 
 /**
@@ -31,16 +32,8 @@ export function reloadApCost(reloadField) {
 }
 
 export function _getCompatibleAmmo(actor, weapon, sysOverride = null) {
-  const sys        = sysOverride ?? weapon.system;
-  const weaponType = sys.weaponType;
-  const weapClass  = sys.weaponClass;
-  return actor.items.filter(i => {
-    if (i.type !== "ammo") return false;
-    const aTypes = i.system.weaponTypes || [];
-    return aTypes.includes(weaponType) ||
-           aTypes.includes(weapClass)  ||
-           aTypes.includes("any");
-  });
+  // Правило отбора (тип оружия + тег орудия у снарядов техники) — одно на лист и перезарядку.
+  return actor.items.filter(i => ammoFitsWeapon(i, weapon, sysOverride));
 }
 
 export async function _showAmmoSelectDialog(weapon, compatAmmo) {

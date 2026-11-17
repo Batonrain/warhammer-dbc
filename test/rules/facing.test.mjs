@@ -1,8 +1,9 @@
 // test/rules/facing.test.mjs
 //
 // Facing / угол обзора (wdbc-p5el): пеленг, дуга, передняя арка Cloak.
-// Соглашение — как у Foundry TokenDocument.rotation: 0° = на север (вверх),
-// по часовой стрелке.
+// Пеленг: 0° = на север (вверх), по часовой стрелке. rotation токена Foundry
+// иначе: 0° = на юг (вниз), 90° запад, 180° север, 270° восток — перевод
+// facingBearing, см. rotation-convention.test.mjs.
 
 import { describe, it, expect } from "vitest";
 import {
@@ -79,26 +80,26 @@ describe("isFrontArcHit — передняя арка 90° Плаща (Cloak)", 
   const defender = { x: 0, y: 0 };
 
   it("атакующий строго спереди (защитник смотрит на север, атакующий выше) — фронтальный хит", () => {
-    expect(isFrontArcHit(defender, 0, { x: 0, y: -10 })).toBe(true);
+    expect(isFrontArcHit(defender, 180, { x: 0, y: -10 })).toBe(true);
   });
 
   it("атакующий строго сзади — не фронтальный хит, Плащ защищает", () => {
-    expect(isFrontArcHit(defender, 0, { x: 0, y: 10 })).toBe(false);
+    expect(isFrontArcHit(defender, 180, { x: 0, y: 10 })).toBe(false);
   });
 
   it("атакующий сбоку (90° от курса) — вне арки 90° (граница ровно на краю не входит)", () => {
-    expect(isFrontArcHit(defender, 0, { x: 10, y: 0 })).toBe(false);
+    expect(isFrontArcHit(defender, 180, { x: 10, y: 0 })).toBe(false);
   });
 
   it("разворот защитника меняет, что считается «спереди»", () => {
-    // Защитник развернулся на восток (90°): атакующий с востока — теперь спереди.
-    expect(isFrontArcHit(defender, 90, { x: 10, y: 0 })).toBe(true);
+    // Защитник развернулся на восток (rotation 270): атакующий с востока — теперь спереди.
+    expect(isFrontArcHit(defender, 270, { x: 10, y: 0 })).toBe(true);
     // А тот же атакующий с севера — теперь сбоку, вне арки.
-    expect(isFrontArcHit(defender, 90, { x: 0, y: -10 })).toBe(false);
+    expect(isFrontArcHit(defender, 270, { x: 0, y: -10 })).toBe(false);
   });
 
   it("нестандартная ширина арки — параметр, не захардкожен", () => {
-    expect(isFrontArcHit(defender, 0, { x: 10, y: 0 }, 210)).toBe(true);
+    expect(isFrontArcHit(defender, 180, { x: 10, y: 0 }, 210)).toBe(true);
   });
 });
 
@@ -215,9 +216,9 @@ describe("parseMountArc — канарейка: дуга, записанная �
     // корму) вместо верных 40°/10° (через нос) — и цель точно по курсу
     // машины (bearing 0) ложно попадала бы «вне сектора наводки», хотя
     // орудие как раз и должно бить вперёд.
-    expect(isWithinMountArc(0, 0, "350°..+30°")).toBe(true);
-    expect(isWithinMountArc(0, 20, "350°..+30°")).toBe(true);
-    expect(isWithinMountArc(0, 90, "350°..+30°")).toBe(false);
+    expect(isWithinMountArc(180, 0, "350°..+30°")).toBe(true);
+    expect(isWithinMountArc(180, 20, "350°..+30°")).toBe(true);
+    expect(isWithinMountArc(180, 90, "350°..+30°")).toBe(false);
   });
 
   it("«+170°..−170°» — широкая дуга 340° через нос (книжная конвенция «читать как есть»), не узкая через корму", () => {
@@ -235,16 +236,16 @@ describe("isWithinMountArc", () => {
     expect(isWithinMountArc(0, 179, "—")).toBe(true);
   });
   it("узкий корпусной сектор (±25°) — цель строго спереди попадает, сбоку нет", () => {
-    expect(isWithinMountArc(0, 10, "−25°..+25°")).toBe(true);
-    expect(isWithinMountArc(0, 90, "−25°..+25°")).toBe(false);
+    expect(isWithinMountArc(180, 10, "−25°..+25°")).toBe(true);
+    expect(isWithinMountArc(180, 90, "−25°..+25°")).toBe(false);
   });
   it("левый спонсон (центр −90°) — попадает цель слева, не попадает справа", () => {
-    expect(isWithinMountArc(0, -90, "−135°..−45°")).toBe(true);
-    expect(isWithinMountArc(0, 90, "−135°..−45°")).toBe(false);
+    expect(isWithinMountArc(180, -90, "−135°..−45°")).toBe(true);
+    expect(isWithinMountArc(180, 90, "−135°..−45°")).toBe(false);
   });
   it("разворот машины сдвигает сектор вместе с ней", () => {
-    // Машина развернулась на восток (90) — «левый» спонсон (центр −90 от курса) теперь смотрит на север (0).
-    expect(isWithinMountArc(90, 0, "−135°..−45°")).toBe(true);
+    // Машина развернулась на восток (rotation 270) — «левый» спонсон (центр −90 от курса) теперь смотрит на север (0).
+    expect(isWithinMountArc(270, 0, "−135°..−45°")).toBe(true);
   });
 });
 

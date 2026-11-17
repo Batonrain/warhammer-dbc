@@ -14,6 +14,7 @@
 //  тот же предел, что у bulldozeSizePenalty.
 // ════════════════════════════════════════════════════════════════════════
 
+import { sturdyResistMods } from "../rules/sturdy.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
@@ -37,7 +38,7 @@ export function knockdownSizeDiff(actor, target) {
  */
 export function knockdownResistMods(actor, target) {
   const diff = knockdownSizeDiff(actor, target);
-  return diff > 0 ? [{ label: "меньше Размером", value: -10 * diff }] : [];
+  return [...(diff > 0 ? [{ label: "меньше Размером", value: -10 * diff }] : []), ...sturdyResistMods(target, "knockdown")];
 }
 
 /** «Нельзя против целей на 2+ Размера больше персонажа» — жёсткий запрет. */

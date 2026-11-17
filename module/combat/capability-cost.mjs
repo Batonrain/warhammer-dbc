@@ -31,6 +31,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
+import { actorInfamyMax } from "../apps/infamy-points.mjs";
 
 /** label — пункт выпадающего списка в Конструкторе; genitive — для «N Очков <genitive>» на листе. */
 export const CAPABILITY_COST_POOLS = {
@@ -76,11 +77,11 @@ export function capabilityPoolValue(actor) {
   const sys = actor?.system ?? {};
   return Math.max(0, actor?.type === "demonPrince" ? (Number(sys.dp?.ip) || 0) : (Number(sys.fate?.value) || 0));
 }
+// Максимум берётся из того же геттера, что у листа/HUD/восполнения пула: у Хаосита
+// он включает сдвиг system.infamyMaxMod (Наследник, Эльданар, Избранный Судьбой) —
+// голый Inf.b занижал его в карточке траты (task-4e9e).
 export function capabilityPoolMax(actor) {
-  const sys = actor?.system ?? {};
-  return (actor?.type === "demonPrince" || sys.alignment === "heretic")
-    ? Math.max(0, Number(sys.characteristics?.inf?.bonus) || 0)
-    : Math.max(0, Number(sys.fate?.max) || 0);
+  return actorInfamyMax(actor);
 }
 
 /** {disabled, title} для кнопки списания — гейт виден ДО клика (wdbc-qjnk, apSpendGate). */

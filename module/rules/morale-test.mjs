@@ -32,8 +32,9 @@ import { moraleAutoPass } from "./morale-auto.mjs";
  * @param {string} [opts.char="wp"] — характеристика теста: машина без свободы
  *   воли проходит Страх и Шок на Int (стр. 53, «Страх и Машины»).
  * @param {boolean} [opts.radiantPresence] — галочка «видит/слышит союзника
- *   с Radiant Presence» (rules/leadership-talents.mjs) — решение стола,
- *   код просто передаёт её в ctx для источника «leadershipTalents».
+ *   с Radiant Presence» (rules/leadership-talents.mjs) — проставляется
+ *   по видимости токена или руками (combat/radiant-presence.mjs), код просто
+ *   передаёт её в ctx для источника «leadershipTalents».
  * @param {boolean} [opts.suppression] — это именно тест на Подавление (не
  *   Страх/Шок/Паника): едет в ctx как suppressionTest — область «suppression»
  *   правил (Стальные Нервы). Тест на ПРЕОДОЛЕНИЕ Подавления флаг не ставит.
@@ -54,7 +55,10 @@ export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null,
   // знает только стол, а спросить здесь негде. Подставлять −20 молча значило
   // бы штрафовать и того, кто уже убежал, — выход из этого Шока книга как раз
   // разрешает только вдали от источника.
-  const applied = [...resolved.autoMods, ...resolved.mods.filter(m => m.ruleId !== "situational.shockNoEscape")];
+  // Любой askOnly — только для галочки в диалоге (так же roll-mods.mjs и бросок
+  // без диалога): Шок «нет пути к побегу» входит сюда же, но оставлен явно ради
+  // комментария выше. Идолопоклонник (−30 против кумира) молча не применяется.
+  const applied = [...resolved.autoMods, ...resolved.mods.filter(m => !m.askOnly && m.ruleId !== "situational.shockNoEscape")];
   const bonus = applied.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
   const parts = applied.map(m => `${m.label} ${m.value > 0 ? "+" : ""}${m.value}`);
   const eff = baseThreshold + bonus;

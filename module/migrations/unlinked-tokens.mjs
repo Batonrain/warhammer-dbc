@@ -28,6 +28,22 @@ export function* unlinkedTokens() {
 }
 
 /**
+ * Акторы мира вместе с синтетическими акторами несвязанных токенов — тех в
+ * game.actors нет. Без дублей по uuid.
+ */
+export function worldAndTokenActors() {
+  const seen = new Set(), out = [];
+  for (const actor of [...(game.actors ?? []), ...Array.from(unlinkedTokens(), t => t.actor)]) {
+    if (actor?.uuid) {
+      if (seen.has(actor.uuid)) continue;
+      seen.add(actor.uuid);
+    }
+    out.push(actor);
+  }
+  return out;
+}
+
+/**
  * Идентификаторы предметов, которые лежат в дельте токена: заведённые на
  * токене или правленные на нём. Надгробия (_tombstone — предмет базового
  * актора, удалённый на токене) не в счёт: предмета у токена нет.

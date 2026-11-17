@@ -66,4 +66,28 @@ describe("вложенные предметы: _key указывает на св
     expect(seen).toBeGreaterThan(500);
     expect(wrong, wrong.join("\n")).toEqual([]);
   });
+
+  // Тот же класс, на уровень ниже: у эффекта вложенного предмета `_key` —
+  // `!actors.items.effects!<актор>.<предмет>.<эффект>`. Скопированный с
+  // донорской записи компендиума `!items.effects!<id донора>.<эффект>` у двух
+  // существ с одной и той же Чертой совпадает, и `npm run packs:build` падает
+  // «already packed» (так упала сборка 03.11.2026 на Големе Рубрики и Твари Ночи).
+  it("ни один _key у эффекта вложенного предмета не скопирован от донора", () => {
+    const wrong = [];
+    for (const file of FILES) {
+      let doc;
+      try { doc = JSON.parse(fs.readFileSync(file, "utf8")); } catch { continue; }
+      if (!doc || typeof doc !== "object" || !doc._id) continue;
+      for (const item of doc.items ?? []) {
+        for (const eff of item?.effects ?? []) {
+          if (!eff?._key) continue;
+          const want = `!actors.items.effects!${doc._id}.${item._id}.${eff._id}`;
+          if (eff._key !== want) {
+            wrong.push(`${doc.name} / ${item.name}: ${eff._key} — ожидалось ${want}`);
+          }
+        }
+      }
+    }
+    expect(wrong, wrong.join("\n")).toEqual([]);
+  });
 });

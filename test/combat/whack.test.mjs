@@ -129,11 +129,11 @@ describe("whackStrike / recordWhackSeen: память «видел» на бой
 
   it("токен противника, отвернувшегося (узкий сектор), атакующего не видит", async () => {
     const { actor } = setup();
-    // Конвенция rotation: 0° — вверх, по часовой. Токен справа от атакующего,
-    // смотрящий на восток (90°), уходит от него; токен слева, смотрящий на
+    // Конвенция rotation Foundry: 0° — вниз (юг), по часовой; восток — 270°.
+    // Токен справа от атакующего, смотрящий на восток (270°), уходит от него; токен слева, смотрящий на
     // восток, смотрит на него.
-    const back = tok("back", 200, 0, { rotation: 90, sight: { range: 30, angle: 90 } });
-    const facing = tok("facing", -200, 0, { rotation: 90, sight: { range: 30, angle: 90 } });
+    const back = tok("back", 200, 0, { rotation: 270, sight: { range: 30, angle: 90 } });
+    const facing = tok("facing", -200, 0, { rotation: 270, sight: { range: 30, angle: 90 } });
     globalThis.canvas = { scene: { tokens: [back, facing], grid: { size: 100, distance: 1 } }, grid: { size: 100 } };
     await recordWhackSeen(actor, tok("me", 0, 0, { disposition: 1 }), { id: "tgt" });
     const seen = actor.getFlag(NS, WHACK_SEEN_FLAG);

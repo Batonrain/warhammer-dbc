@@ -41,7 +41,7 @@ import { ITEM_QUALITY, ITEM_QUALITY_LIST } from "../constants/quality.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import {
-  REQUISITION_PACKS, NODE_PACKS, NODE_TYPES, nodeTypeOf, itemRarity, isConsumableItem, requisitionPlan,
+  REQUISITION_PACKS, NODE_PACKS, NODE_TYPES, nodeTypeOf, itemRarity, isConsumableItem, quantityUnitNote, requisitionPlan,
   requisitionSummaryLines, hasRequisitionTalent
 } from "../rules/requisition.mjs";
 import { REQUISITION_PLACES, DEFAULT_PLACE } from "../constants/requisition-places.mjs";
@@ -121,7 +121,8 @@ async function askDetails(actor, item, { node = false } = {}) {
       <label title="Книга Пустоты, таблица Реквизиции узлов (вместо Количества). Спорные узлы — двигатели, Поля Геллера, астропатические, окулумы, мостики — считаются структурными; ГМ может выбрать иначе.">
         Тип узла <select name="nodeType">${optionsHtml(Object.entries(NODE_TYPES).map(([k, t]) => [k, `${t.label} (${t.mod > 0 ? "+" : (t.mod < 0 ? "−" : "")}${Math.abs(t.mod)})`]), nodeTypeOf(item))}</select></label>
       ${placeBlock}` : `
-      <label>Количество <input type="number" name="quantity" value="1" min="1" step="1"/></label>
+      <label title="${esc(quantityUnitNote(item))}">Количество${item?.type === "ammo" ? " (магазинов)" : ""} <input type="number" name="quantity" value="1" min="1" step="1"/></label>
+      ${quantityUnitNote(item) ? `<p class="hint" style="margin:0;font-size:0.85em;opacity:.85;">${esc(quantityUnitNote(item))}</p>` : ""}
       <label title="Гранаты, магазины, медикаменты: книга считает их на 2 ступени Количества легче (стр. 165)">
         <input type="checkbox" name="consumable"${(item ? isConsumableItem(item) : false) ? " checked" : ""}/> Расходное (гранаты, магазины, медикаменты)</label>`}
       ${manual ? `

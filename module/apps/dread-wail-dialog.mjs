@@ -29,7 +29,7 @@ export async function showDreadWailDialog(actor) {
           ${WAVE_EFFECTS.map(e => `<option value="${e.key}">${esc(e.label)}</option>`).join("")}
         </select>
       </div>
-      <div style="font-size:0.82em;color:#8a8a8a;margin-top:6px;">Волна: радиус ½ Cor.b м от вашего токена на сцене, не задевает посвящённых Слаанеш. Каждая цель проходит W−20; при провале получает выбранный эффект.</div>
+      <div style="font-size:0.82em;color:#8a8a8a;margin-top:6px;">Волна: радиус ½ Cor м от вашего токена на сцене, не задевает посвящённых Слаанеш. Каждая цель проходит W−20; при провале получает выбранный эффект.</div>
     </div>`;
 
   return foundry.applications.api.DialogV2.wait({

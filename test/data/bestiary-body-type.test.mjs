@@ -42,8 +42,10 @@ const BEASTS = [
  * Нелюди без пола. Медуза — варп-паразит без хоста («Прислужник … варп-паразит из
  * свиты Архонтов — питается эмоциями», Книга Аэльдари: Ответвления, «Медузы
  * являются … паразитами»): имя женского рода, но это не женщина.
+ * Голем Рубрики — оживлённая душа в пустом доспехе, Извивающийся Рой — аморфный
+ * конструкт из плоти (Основная книга, Элитные архетипы: Колдун Рубрики / Король Червей).
  */
-const NONHUMAN = ["Medusae"];
+const NONHUMAN = ["Medusae", "Rubric Golem", "Writhing Swarm"];
 
 /**
  * Явно женские. Кровавая Невеста — Книга Аэльдари: Ответвления, «Элитные
@@ -65,14 +67,14 @@ const UNSPECIFIED_HUMANOIDS = [
   "Sybarite", "Trueborn", "Wrack", "Klaivex", "Mandrake",
   "Cultist Demagogue", "Cultist Devotee", "Cultist Militant", "Cultist Mutant", "Cultist Priest",
   "Cultist Rabble", "Cultist Scout", "Cultist Witch", "Cultist Zealot",
-  "Master Servant", "Porter", "Slave", "Valet"
+  "Master Servant", "Porter", "Slave", "Valet", "Tech-Thrall"
 ];
 
 describe("Бестиарий: поле «Телосложение» (task-5fe7)", () => {
-  it("найдено ровно 36 существ с полем — перечни выше покрывают всех", () => {
+  it("найдено ровно 39 существ с полем — перечни выше покрывают всех", () => {
     const listed = [...BEASTS, ...NONHUMAN, ...FEMALE, ...UNSPECIFIED_HUMANOIDS].sort();
     expect([...BY_NAME.keys()].sort()).toEqual(listed);
-    expect(BESTIARY.length).toBe(36);
+    expect(BESTIARY.length).toBe(39);
   }, PACK_SCAN_TIMEOUT);
 
   it("значение у каждого — допустимый вариант списка «Телосложение»", () => {

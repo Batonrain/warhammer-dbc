@@ -1,8 +1,8 @@
 // test/combat/frenzy.test.mjs
 //
-// module/combat/frenzy.mjs (wdbc-sk8s) — Frenzy/Ярость: «однажды выйдя,
-// нельзя войти снова до конца боя», снимается Чертой Butcher's Nails/
-// Гвозди Мясника. Сам тумблер system.inRage (UI-интеграция в
+// module/combat/frenzy.mjs (wdbc-sk8s, wdbc-sh3qt) — Ярость: «однажды выйдя,
+// нельзя войти снова до конца боя» (любому, не только владельцам Frenzy),
+// снимается Чертой Butcher's Nails/Гвозди Мясника. Сам тумблер system.inRage (UI-интеграция в
 // module/sheets/tabs/combat.mjs) не тестируется отдельно — только примитив.
 
 import "../support/foundry-stub.mjs";
@@ -25,11 +25,11 @@ function actor({ hasFrenzy = true, hasNails = false } = {}) {
 afterEach(() => { globalThis.game.combat = undefined; });
 
 describe("frenzyEntryBlocked / markFrenzyExited", () => {
-  it("без Таланта Frenzy — вход никогда не блокируется (лимит только для его владельцев)", async () => {
+  it("без Таланта Frenzy лимит тот же — он общий для любой Ярости (wdbc-sh3qt)", async () => {
     globalThis.game.combat = { id: "combat-1" };
     const a = actor({ hasFrenzy: false });
     await markFrenzyExited(a);
-    expect(frenzyEntryBlocked(a)).toBe(false);
+    expect(frenzyEntryBlocked(a)).toBe(true);
   });
 
   it("первый вход/выход — второй вход в том же бою заблокирован", async () => {

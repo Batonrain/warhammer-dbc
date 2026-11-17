@@ -68,7 +68,7 @@ describe("таблица Движения по Таланту — привязк
     expect(by("speedOfTheFaolchu").moves.map(m => [m.cost.reactions, m.distance.of, m.noFreeAttack])).toEqual([[1, "halfMove", true], [2, "move", true]]);
     expect(by("mercenaryOfTheMatter").moves[0]).toMatchObject({ limit: { unit: "battle" }, onlyRound: 1, distance: { of: "move" } });
     expect(by("mistwalker").moves[0]).toMatchObject({ mode: "teleport", limit: { unit: "round" }, distance: { pb: 1 } });
-    expect(by("mistLeap").moves[0]).toMatchObject({ mode: "teleport", cost: { ap: 2 } });
+    expect(by("mistLeap").moves[0]).toMatchObject({ mode: "teleport", cost: { trophy: 1 }, needAp: 2 });
   });
 });
 
@@ -135,8 +135,9 @@ describe("talentMoveGate", () => {
     expect(talentMoveGate(half, { inCombat: true, reactions: 1, ap: 0 }).ok).toBe(true);
   });
 
-  it("Туманный Прыжок: 2 ОД и Очко Трофеев; ОД вне боя не проверяются, Очко Трофеев — всегда", () => {
+  it("Туманный Прыжок: Очко Трофеев платится, 2 ОД Натиска должны быть в запасе; ОД вне боя не проверяются, Очко — всегда", () => {
     const leap = by("mistLeap", "leap");
+    expect(leap.cost.ap).toBeUndefined();
     expect(talentMoveGate(leap, { inCombat: true, ap: 1, trophy: 1 }).ok).toBe(false);
     expect(talentMoveGate(leap, { inCombat: true, ap: 2, trophy: 0 }).reason).toContain("Трофеев");
     expect(talentMoveGate(leap, { inCombat: false, ap: 0, trophy: 1 }).ok).toBe(true);
@@ -155,7 +156,7 @@ describe("talentMoveGate", () => {
   });
 
   it("подписи цены и ключ ограничителя", () => {
-    expect(talentMoveCostLabel(by("mistLeap", "leap"))).toBe("2 ОД + 1 Очко Трофеев");
+    expect(talentMoveCostLabel(by("mistLeap", "leap"))).toBe("1 Очко Трофеев + Натиск (2 ОД на атаке)");
     expect(talentMoveCostLabel(by("speedOfTheFaolchu", "reactionHalf"))).toBe("1 Реакция");
     expect(talentMoveCostLabel(by("speedOfTheFaolchu", "reactionFull"))).toBe("2 Реакции");
     expect(talentMoveCostLabel(by("danceOfCarnage", "carnage"))).toBe("бесплатно");

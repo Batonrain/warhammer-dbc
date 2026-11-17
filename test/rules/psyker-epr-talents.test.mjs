@@ -69,3 +69,24 @@ describe("Таланты в паке", () => {
     expect(caps(doc)).toEqual(["psyker.core.childOfTheWarp"]);
   });
 });
+
+import { minionHasPsykerTrait } from "../../module/rules/psyker.mjs";
+
+describe("Миньон с Чертой «Псайкер» считается псайкером (dbc-114)", () => {
+  const trait = name => ({ type: "trait", name, system: {} });
+  const minion = (...items) => ({ type: "minion", items });
+  it("Черта по любой половине двуязычного имени", () => {
+    expect(minionHasPsykerTrait(minion(trait("Psyker / Псайкер")))).toBe(true);
+    expect(minionHasPsykerTrait(minion(trait("Псайкер")))).toBe(true);
+  });
+  it("без Черты, с другой Чертой или Талантом того же имени — нет", () => {
+    expect(minionHasPsykerTrait(minion())).toBe(false);
+    expect(minionHasPsykerTrait(minion(trait("Fanatic / Фанатик")))).toBe(false);
+    expect(minionHasPsykerTrait(minion({ type: "talent", name: "Psyker", system: {} }))).toBe(false);
+  });
+  it("у персонажа и демона не включается (флаг ведёт чарген; Метка Тзинча)", () => {
+    expect(minionHasPsykerTrait({ type: "character", items: [trait("Psyker")] })).toBe(false);
+    expect(minionHasPsykerTrait({ type: "daemon", items: [trait("Psyker")] })).toBe(false);
+    expect(minionHasPsykerTrait(null)).toBe(false);
+  });
+});

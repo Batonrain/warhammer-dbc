@@ -41,7 +41,7 @@ describe("Скрытная Атака: геометрия facing на момен
     withAttackerToken(actor, { x: 0, y: 300 }); // южнее защищающегося
 
     const defender = actorFor();
-    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 0 })]); // смотрит на север
+    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 180 })]); // смотрит на север
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
     expect(card()).toContain("wh-unseen-detect-btn");
@@ -54,7 +54,7 @@ describe("Скрытная Атака: геометрия facing на момен
     withAttackerToken(actor, { x: 0, y: -300 }); // севернее защищающегося
 
     const defender = actorFor();
-    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 0 })]);
+    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 180 })]);
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
     expect(card()).not.toContain("wh-unseen-detect-btn");
@@ -67,7 +67,7 @@ describe("Скрытная Атака: геометрия facing на момен
     withAttackerToken(actor, { x: 0, y: 300 });
 
     const defender = actorFor();
-    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 0, sight: { angle: 360 } })]);
+    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 180, sight: { angle: 360 } })]);
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
     expect(card()).not.toContain("wh-unseen-detect-btn");
@@ -77,7 +77,7 @@ describe("Скрытная Атака: геометрия facing на момен
     const weapon = weaponFor();
     const actor = actorFor({ items: [weapon] }); // без uuid/токена
     const defender = actorFor();
-    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 0 })]);
+    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 180 })]);
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
     expect(card()).not.toContain("wh-unseen-detect-btn");
@@ -91,7 +91,7 @@ describe("Скрытная Атака: геометрия facing на момен
     globalThis.canvas.tokens.placeables = [{ actor, document: { x: 0, y: 300, width: 1, height: 1, rotation: 0 } }];
 
     const defender = actorFor({ items: [{ id: "janus-1", type: "mutation", name: "Janus / Янус", system: {} }] });
-    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 0 })]); // смотрит на север, атакующий южнее (сзади)
+    globalThis.game.user.targets = new Set([targetToken(defender, { x: 0, y: 0, rotation: 180 })]); // смотрит на север, атакующий южнее (сзади)
 
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
     expect(card()).not.toContain("wh-unseen-detect-btn");

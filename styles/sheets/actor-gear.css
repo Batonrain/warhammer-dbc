@@ -385,7 +385,8 @@
   color: var(--wh-text-mid, #6a5a48);
   width: 36px;
 }
-.warhammer-dbc .gear-modsub-main {
+.warhammer-dbc .gear-modsub-main { padding: 0; }
+.warhammer-dbc .gear-modsub-flex {
   display: flex;
   align-items: center;
   gap: 8px;

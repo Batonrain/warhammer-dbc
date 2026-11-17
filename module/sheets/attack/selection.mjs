@@ -23,7 +23,8 @@ import { attackIsMelee }           from "../../combat/weapon-profiles.mjs";
 import { tentacleBonusSuppressed } from "../../rules/tentacle-hand-form.mjs";
 import { legacySlaughterThresholdDelta } from "../../rules/legacy-weapon.mjs";
 import { divineProtectionActive } from "../../rules/death-save.mjs";
-import { berserkChargeBonus } from "../../rules/berserker-talents.mjs";
+import { berserkChargeBonus, hasBerserkerTalent } from "../../rules/berserker-talents.mjs";
+import { baseIsCharge, baseIsFullAttack, baseFitsList } from "../../rules/melee-base.mjs";
 import { stunUnrestricted } from "../../rules/takedown.mjs";
 import { BAYONET_CHARGE, hasBayonetCharge } from "../../rules/run-and-gun.mjs";
 import { grindFullSb, holdsInGrapple, hasMeleeTalent, reverseStrikeSecondProfileIdx, stockGripActive, STOCK_GRIP_SECONDARY_WS } from "../../rules/melee-talents.mjs";
@@ -177,7 +178,7 @@ export function buildSelection(v) {
       // Вырубание (Takedown, rules/takedown.mjs): «приём Оглушить с любым оружием» — снимает список категорий.
       const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !category || def.categories.includes(category)
         || (key === "stun" && stunUnrestricted(actor));
-      const baseOk     = !def.bases || def.bases.includes(baseKeyNow);
+      const baseOk     = !def.bases || baseFitsList(def.bases, baseKeyNow);
       const trainingOk = trained || key === "standard" || key === "freeattack";
       const balanceOk  = def.minBalance == null || ((sys.balance ?? 0) >= def.minBalance);
       // Штыковая Атака: Талант опознаётся и по имени — у персонажей со снимком Таланта без записи Конструктора
@@ -216,6 +217,8 @@ export function buildSelection(v) {
    * пересчитываются заново на каждое изменение формы (см. #atk-base-pills в
    * updateTotal), а не один раз.
    */
+  // Составная База видна только носителю Таланта: остальным пилюля с вечным «Нужен Талант» — шум.
+  const hasRecklessCharge = hasRuleFlag(actor, MELEE_BASES.recklessCharge.requiresCapability) || hasBerserkerTalent(actor, "recklessCharge");
   function computeBaseOptions(stanceKeyNow, gKeyNow) {
     const noCharge = MELEE_STANCES[stanceKeyNow]?.noCharge === true;
     const gDefNow = GRIPS[gKeyNow] ? gripEffects(gKeyNow, gKeyNow !== primGrip) : null;
@@ -232,17 +235,17 @@ export function buildSelection(v) {
       // оружие мешает; Защитная, стр. 15, wdbc-x1nz.2.66.6 — «не даёт
       // совершать Натиск») — подпись причины берёт лейбл РЕАЛЬНОЙ текущей
       // Стойки, не захардкожена на одну из них.
-      if (allowed && noCharge && key === "charge") {
+      if (allowed && noCharge && baseIsCharge(key)) {
         allowed = false;
         reason = `Недоступно в Стойке «${MELEE_STANCES[stanceKeyNow]?.label ?? stanceKeyNow}»`;
       }
       // Божественная Защита (стр. 233): до конца сессии — только полудвижения.
-      if (allowed && key === "charge" && divineProtectionActive(actor)) {
+      if (allowed && baseIsCharge(key) && divineProtectionActive(actor)) {
         allowed = false;
         reason = "Божественная Защита: до конца сессии — только полудвижения";
       }
       return { key, label: def.label, allowed, reason };
-    });
+    }).filter(o => o.key !== "recklessCharge" || hasRecklessCharge);
   }
   // Профиль (стр. 207-221) не завязан на Тренировку — доступен всегда, кроме
   // альт-профилей с requiresCapability (напр. «Unarmed Warrior»/Безоружный
@@ -368,7 +371,7 @@ export function buildSelection(v) {
     // учётом Могучего/Сдержанного/Длани Кхорна, которые известны только в
     // attack.mjs (sbEff) — здесь только сигнальный флаг.
     const reverseGripThrust    = isMelee && gKey === "Об" && maneuverKey === "thrust";
-    const reverseThrustFullAtk = reverseGripThrust && baseKey === "fullatk";
+    const reverseThrustFullAtk = reverseGripThrust && baseIsFullAttack(baseKey);
     const gDef = (reverseGripThrust && gDefRaw)
       ? { ...gDefRaw, ws: 0, sbHalf: reverseThrustFullAtk ? false : gDefRaw.sbHalf,
           reverseThrustBonus: reverseThrustFullAtk }
@@ -422,7 +425,7 @@ export function buildSelection(v) {
     // Длина Оружия, правило 2 (wdbc-x1nz.2.67, стр. 39): при Натиске на
     // противника, чьё оружие длиннее атакующего на 3 и более, у цели +5
     // к тестам Избегания от этой атаки.
-    const chargeLengthBonus = (isMelee && baseKey === "charge" && targetActor
+    const chargeLengthBonus = (isMelee && baseIsCharge(baseKey) && targetActor
       && chargeTargetDodgeBonus(effRange, actorMaxMeleeRange(targetActor))) ? 5 : 0;
     const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod + chargeLengthBonus + extraEvasionMod;
     const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod + extraEvasionMod;

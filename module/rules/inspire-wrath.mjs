@@ -24,6 +24,7 @@
 
 import { itemIs } from "./item-marker.mjs";
 import { itemHasName } from "./predicates.mjs";
+import { harbingerTargetMult } from "./dark-apostle.mjs";
 
 /** Ключ Возможности (constants/capabilities.mjs). */
 export const INSPIRE_WRATH_KEY = "social.core.inspireWrath";
@@ -51,7 +52,7 @@ export function hasDemagogue(actor) {
 /** Сколько персонажей охватывает Талант: F.b × 10 (× 100 с Demagogue). */
 export function inspireWrathAudience(actor) {
   const fb = Math.max(0, Number(actor?.system?.characteristics?.fel?.bonus) || 0);
-  return fb * (hasDemagogue(actor) ? AUDIENCE_PER_BONUS_DEMAGOGUE : AUDIENCE_PER_BONUS);
+  return fb * (hasDemagogue(actor) ? AUDIENCE_PER_BONUS_DEMAGOGUE : AUDIENCE_PER_BONUS) * harbingerTargetMult(actor);
 }
 
 /** Выданная этим Талантом временная Ненависть? (предмет или сырые данные) */

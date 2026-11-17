@@ -298,10 +298,9 @@ describe("Уклонение верхом: Драконий Рыцарь", () =>
     return captured.chat[0].content;
   }
 
-  it("попадание по всаднику: уклоняется он сам, не скакун — метка скакуна не прибавляется", async () => {
+  it("попадание по всаднику: метка скакуна тоже прибавляется (решение владельца 26.10.2026)", async () => {
     const card = await dodge(buffedBeast("evasion", 12), "rider");
-    expect(card).toContain("<label>Порог</label><b>10</b>");
-    expect(card).not.toContain("Драконий Рыцарь");
+    expect(card).toContain("<label>Порог</label><b>22</b>");   // 10 + 12
   });
 
   it("попадание по скакуну (комбинированный тест): метка тоже прибавляется к итоговому порогу", async () => {

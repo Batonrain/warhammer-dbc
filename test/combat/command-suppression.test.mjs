@@ -147,4 +147,34 @@ describe("ГМ-релей правки командования", () => {
     await applyRelayedCommandUpdate({ uuid: "Actor.s", update: { "flags.warhammer-dbc.somethingElse": 1 } });
     expect(soldier.getFlag("warhammer-dbc", "somethingElse")).toBeUndefined();
   });
+  // PR #568: Момент, Кровь Богу Крови, Варп-Нестабильность и Щит Презрения пишут в NPC через
+  // updateOrRelay — ГМ должен принимать эти поля, но только с допустимыми значениями.
+  it.each([
+    [{ "flags.warhammer-dbc.momentum": 3 }],
+    [{ "flags.warhammer-dbc.momentumSeen": "a:msg1" }],
+    [{ "flags.warhammer-dbc.-=momentum": null, "flags.warhammer-dbc.-=momentumSeen": null }],
+    [{ "flags.warhammer-dbc.bloodGodKills": 2 }],
+    [{ "flags.warhammer-dbc.-=bloodGodKills": null }],
+    [{ "flags.warhammer-dbc.warpInstabDealt": true }],
+    [{ "flags.warhammer-dbc.warpInstabHurt": true }],
+    [{ "flags.warhammer-dbc.-=warpInstabHurt": null, "flags.warhammer-dbc.-=warpInstabDealt": null }],
+    [{ "system.inRage": true }]
+  ])("боевые отметки ГМ принимает: %o", async (update) => {
+    soldier.updates.length = 0;
+    await applyRelayedCommandUpdate({ uuid: "Actor.s", update });
+    expect(soldier.updates).toEqual([update]);
+  });
+  it.each([
+    [{ "flags.warhammer-dbc.momentum": 999 }],
+    [{ "flags.warhammer-dbc.momentum": -1 }],
+    [{ "flags.warhammer-dbc.bloodGodKills": 50 }],
+    [{ "flags.warhammer-dbc.warpInstabDealt": "x" }],
+    [{ "flags.warhammer-dbc.momentumSeen": { a: 1 } }],
+    [{ "system.inRage": false }],
+    [{ "system.inRage": true, "system.wounds.value": 0 }]
+  ])("боевые отметки с чужим значением ГМ отклоняет: %o", async (update) => {
+    soldier.updates.length = 0;
+    await applyRelayedCommandUpdate({ uuid: "Actor.s", update });
+    expect(soldier.updates).toEqual([]);
+  });
 });

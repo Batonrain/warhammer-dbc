@@ -168,7 +168,6 @@ const NOT_MODELED_KNOWN = {
   efMh8mo7eR9FWBnl: `Volunteer Actor — ${TEMPLATE}`,
   RGF7Tt4NtAAoHHNF: `Deadly Effectiveness — ${TEMPLATE}`,
   WmyB1UycelmxWLia: `Gun Arm — ${TEMPLATE}`,
-  "7HZcZyigkPuJDzTN": `Battle Sage — ${TEMPLATE}`
 };
 
 describe("механизированный предмет не называет себя «Не смоделировано»", () => {

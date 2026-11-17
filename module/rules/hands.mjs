@@ -217,7 +217,8 @@ export function baseHandsFromTraits(actor) {
     .filter(isMultipleArmsTrait)
     .map(t => Number(t.system?.rating) || 0)
     .filter(n => n > 0);
-  return ratings.length ? Math.max(...ratings) : BASE_HANDS;
+  const base = ratings.length ? Math.max(...ratings) : BASE_HANDS;
+  return base + Math.max(0, Number(actor?.system?.extraHands) || 0);
 }
 
 /**
@@ -256,6 +257,26 @@ export function maxHands(actor) {
   // в них оружие, щиты и предметы нельзя (3-eddb, ревью). Раньше +ноги стояли здесь и
   // на время полёта открывали экипировку ещё двух-четырёх одноручных стволов.
   return Math.max(0, baseHandsFromTraits(actor) - armSideState(actor).noHand);
+}
+
+/**
+ * «За каждую пару рук можно совершать дополнительную атаку» (Трейт Multiple
+ * Arms / Многорукий; нечётная лишняя рука считается парой без одной руки,
+ * dbc-114/55-15, 13.11.2026): +1 к Лимиту Атак за Ход на каждую пару сверх
+ * первой — ceil(рук/2) − 1. Считается по ДОСТУПНЫМ рукам (maxHands: потерянные
+ * и бесполезные руки уже вычтены) и только при самой Черте — прибавка рук от
+ * других источников (extraHands без Черты) сама Атаку не добавляет.
+ * Пинок с Полёта сюда не входит (maxHands его ног не считает) — у него своя
+ * прибавка, rules/pugilist-talents.mjs flyingKickAttackBonus.
+ * ПРИБЛИЖЕНИЕ: книга делает доп. атаку частью ОДНОГО действия, лимит же
+ * считает клики «Бросок!» — вторая атака стоит своё ОД (как у Пинка с Полёта).
+ * Не реализовано: потолок «не более 2+P.b рук за Ход», независимые пары
+ * (выстрел одной парой + рукопашная другой), счёт по парам для Талантов
+ * группы «Два оружия».
+ */
+export function multipleArmsAttackBonus(actor) {
+  if (![...(actor?.items ?? [])].some(isMultipleArmsTrait)) return 0;
+  return Math.max(0, Math.ceil(maxHands(actor) / 2) - 1);
 }
 
 // ── Кисть и рука (wdbc-x1nz.2.97 п.2, «Раны и Урон», стр. 43) ─────────────

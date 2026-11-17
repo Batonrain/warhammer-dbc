@@ -30,12 +30,13 @@ function characterWith(over = {}, items = []) {
 }
 
 describe("Дары Одержимого (giftNamesOf) — реальные бигвальные имена пака", () => {
-  function possessedWith(items) {
+  function possessedWith(items, over = {}) {
     return characterWith({
       alignment: "heretic",
       possessed: true,
       possession: { manifested: true },
-      corruption: { value: 40 }
+      corruption: { value: 40 },
+      ...over
     }, items);
   }
 
@@ -44,10 +45,35 @@ describe("Дары Одержимого (giftNamesOf) — реальные би�
     expect(s.possessionActive.applied.some(a => a.startsWith("Панцирь:"))).toBe(true);
   });
 
-  it("«Giant / Дар: Гигант» — +1 Размер, +10 S", () => {
+  it("«Giant / Дар: Гигант» — +1 Размер БЕЗ +1 к SPD, +10 S", () => {
     const s = possessedWith([talent("Giant / Дар: Гигант")]);
-    expect(s.sizeMod).toBe(1);
+    const base = possessedWith([]);
+    // Книга: «это увеличение Размера не даёт обычный бонус +1 к SPD» —
+    // Размер растёт отдельным вкладом (sizeModNoSpd), а не sizeMod, двигающим SPD.
+    expect(s.sizeMod).toBe(0);
+    expect(s.sizeModNoSpd).toBe(1);
+    expect(s.sizeTotal).toBe(base.sizeTotal + 1);
     expect(s.traitCharValueBonus.s).toBe(10);
+  });
+
+  it("«Giant / Дар: Гигант» — +10 к максимуму Ран (и текущие не выше нового максимума)", () => {
+    const wounds = { max: 30, value: 30 };
+    const s = possessedWith([talent("Giant / Дар: Гигант")], { wounds });
+    const base = possessedWith([], { wounds: { max: 30, value: 30 } });
+    expect(base.wounds.effectiveMax).toBe(30);
+    expect(s.wounds.effectiveMax).toBe(40);
+    expect(s.wounds.maxMods.some(m => m.value === 10 && /Гигант/.test(m.label))).toBe(true);
+  });
+
+  it("Проявление действует без мировоззрения «еретик» — книга его не требует", () => {
+    const s = characterWith({
+      alignment: "",
+      possessed: true,
+      possession: { manifested: true },
+      corruption: { value: 40 }
+    }, [talent("Carapace / Дар: Панцирь")]);
+    expect(s.possessionActive).not.toBeNull();
+    expect(s.possessionActive.applied.some(a => a.startsWith("Панцирь:"))).toBe(true);
   });
 
   it("«Daemonic Speed / Дар: Демоническая Скорость» — Unnatural A", () => {

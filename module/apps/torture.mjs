@@ -30,6 +30,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
+import { moraleAutoPass } from "../rules/morale-auto.mjs";
 import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { EATER_OF_PAIN_CAPABILITY, eaterOfPainChoiceButtonsHtml } from "../rules/eater-of-pain.mjs";
@@ -112,12 +113,17 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
   const { rv: torturerRv, rerollNote: torturerRerollNote } = await rollD100WithReroll(torturerMods.reroll);
   const { rv: targetRv, rerollNote: targetRerollNote } = await rollD100WithReroll(targetMods.reroll);
   const mine   = { ...testOutcome(torturerRv, torturerThresholdVal), threshold: torturerThresholdVal };
-  const theirs = { ...testOutcome(targetRv, targetThreshold), threshold: targetThreshold };
+  // Тесты Запугивания и Пыток — тесты Морали (книга, «Командование»): Ярость
+  // жертвы (Frenzy) «автоматически проходит тесты Морали» — тем же приёмом, что
+  // у combat/intimidate.mjs: встречный тест жертвы засчитан успешным, но
+  // пытающий всё ещё может победить большей степенью.
+  const autoPass = moraleAutoPass(target);
+  const theirs = { ...testOutcome(targetRv, targetThreshold, { autoSuccess: !!autoPass }), threshold: targetThreshold };
   const { winner, margin } = resolveOpposed(mine, theirs);
   await clearForesight(torturer); // бросок пытающего — тест I: +10 Предусмотрительности потрачен
 
   const tMods = [...torturerMods.parts, torturerMod ? `мод. ${torturerMod >= 0 ? "+" : ""}${torturerMod}` : ""].filter(Boolean);
-  const vMods = [...targetMods.parts, targetMod ? `мод. ${targetMod >= 0 ? "+" : ""}${targetMod}` : "", victimPenalty ? `Мучитель ${victimPenalty}` : ""].filter(Boolean);
+  const vMods = [...targetMods.parts, targetMod ? `мод. ${targetMod >= 0 ? "+" : ""}${targetMod}` : "", victimPenalty ? `Мучитель ${victimPenalty}` : "", autoPass && targetRv > targetThreshold ? autoPass.label : ""].filter(Boolean);
   lines.push(
     `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRv}</b> vs ${torturerThresholdVal}${tMods.length ? ` (${esc(tMods.join(", "))})` : ""} ${mine.success ? "(успех)" : "(провал)"}`,
     torturerRerollNote,

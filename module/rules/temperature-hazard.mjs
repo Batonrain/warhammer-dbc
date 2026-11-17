@@ -19,6 +19,8 @@
 import { SECONDS_PER_ROUND } from "./condition-duration.mjs";
 
 export const BREEZE_CAPABILITY = "mutation.breeze";
+/** Burning Body / Пылающее Тело (wdbc-1rno.16): «иммунитет к экстремальным температурам». */
+export const BURNING_BODY_CAPABILITY = "mutation.burningBody";
 
 /** Частота теста (constants/environment.mjs::tempEffect().freq) → секунды кулдауна. */
 const FREQ_SECONDS = {

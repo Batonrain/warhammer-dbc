@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { WarhammerSquadSheet } from "../../module/sheets/squad-sheet.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
 function squadActor(over = {}) {
   const flags = {};
@@ -139,5 +140,31 @@ describe("_executeCommand: Риск и Координатор", () => {
     captured.nextRoll = 5;                        // Порог 90 → 9 Успехов, Риск 1 → потолок 3
     await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "coordinator", 90);
     expect(captured.chat[0].content).toContain("срезано Риском 1 до 3");
+  });
+});
+
+describe("Целеустремлённый Охотник (Мастер Казней, Sahara 1-54b9): Помеха в окне Команды Отряда", () => {
+  const HUNTER = packDocById("packs-src/traits/Элитные_архетипы/Мастер_Казней", "SMFzhi92ZMmAx2pB");
+  const withHunter = () => ({
+    ...pers("Охотник"),
+    items: [{ id: "h1", name: HUNTER.name, type: "trait", system: HUNTER.system, flags: HUNTER.flags, getFlag: (s, k) => HUNTER.flags?.[s]?.[k] }]
+  });
+
+  it("отдаёт Охотник — «Помеха» отмечена в окне заранее; отдаёт другой — Обычный кубик", async () => {
+    resolveAs({ "Actor.h": withHunter(), "Actor.o": pers("Обычный") });
+    const hunterSheet = sheetLike(squadActor({ posts: { commander: { uuid: "Actor.h" } } }));
+    const pending = hunterSheet._commandRoll("short");
+    expect(captured.dialog.content).toMatch(/value="disadvantage" checked/);
+    expect(captured.dialog.content).toContain('data-hunter="1"');
+    captured.dismiss();
+    await pending;
+
+    resetCaptured();
+    const plainSheet = sheetLike(squadActor({ posts: { commander: { uuid: "Actor.o" } } }));
+    const pending2 = plainSheet._commandRoll("short");
+    expect(captured.dialog.content).toMatch(/value="normal" checked/);
+    expect(captured.dialog.content).toContain('data-hunter="0"');
+    captured.dismiss();
+    await pending2;
   });
 });

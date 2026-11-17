@@ -81,17 +81,26 @@ import { CHAOS_PATRONS, chaosPatronMeta, godAttentionTip } from "../constants/ch
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
+import { gearQualityRollMod } from "../constants/quality.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { socialFactionPickerShown, socialFactionOptions, withSocialFaction } from "../rules/social-faction.mjs";
+import { sensePickerShown, senseSelectHtml, withSense } from "../rules/awareness-talents.mjs";
+import { WITCHFINDER_CAP, witchfinderTestKind } from "../rules/defiance-talents.mjs";
+import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { getFactionIndex } from "../rules/factions.mjs";
 import { EXCESS_LEGACY_RULE_ID } from "../rules/legacy-weapon.mjs";
 import { rollExcessLegacyRiskTest } from "../combat/legacy-weapon-excess.mjs";
 import { commitRerollUse } from "../combat/angel-hunters.mjs";
 import { resolveKindOutcome, applyAssistedMasteryCrit } from "../rules/kind-outcome.mjs";
+import { cardFailUndo } from "../rules/fail-undo.mjs";
 import { awarenessTalentDegrees } from "../rules/awareness-talents.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
-import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
+import { isMoraleOpposedSkill, resolveTest, isSocialSkill } from "../rules/resolve-test.mjs";
+import { faithfulResistBonus } from "../rules/dark-apostle.mjs";
+import { brokenAutoFail } from "../rules/warpsmith.mjs";
+import { actorIdentityUuids } from "../combat/command-state.mjs";
+import { hunterHindranceApplies } from "../rules/master-of-executions.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readTestKind, readDiceChoice, mergeReroll,
@@ -125,6 +134,8 @@ import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-prop
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
+import { restoreJudgementTrophy } from "../combat/trophy-kill.mjs";
+import { markPreyFromTarget } from "../combat/marked-prey.mjs";
 import { clearForesight } from "../apps/talent-actions.mjs";
 import { ignoresWeight, IGNORE_WEIGHT_FLAG } from "../rules/encumbrance.mjs";
 import { isNotableCharacter, NOTABLE_FLAG } from "../rules/resilience-talents.mjs";
@@ -177,6 +188,16 @@ function onInfamyMinus()   { return this._ipChange(-1); }
 function onInfamyPlus()    { return this._ipChange(+1); }
 function onInfamyRestore() { return this._ipRestore(); }
 function onInfamySpend(event, target) { return this._ipSpend(target.dataset.ability); }
+
+// ── Очки Трофеев (Мастер Казней): кнопки ячейки «Трофеи» в шапке ──
+// ⚖ Трофеи Приговора — возврат Очка по решению ГМа (combat/trophy-kill.mjs::restoreJudgementTrophy); не-ГМу — отказ.
+// 🎯 Отмеченная Добыча — отметить выцеленную цель за Очко (combat/marked-prey.mjs).
+async function onTrophyJudgement() {
+  const res = await restoreJudgementTrophy(this.actor);
+  if (res.reason === "notGM") ui.notifications.warn("⚠️ Трофеи Приговора возвращает ГМ — приговор оценивает он.");
+  else if (res.reason === "full") ui.notifications.warn("⚠️ Пул Очков Трофеев уже полон (максимум P.b).");
+}
+function onTrophyMarkPrey() { return markPreyFromTarget(this.actor); }
 
 // ── Возможности сейчас: кнопка «Потратить» у записей с ценой (wdbc-1dc8) ──
 // Цена не сериализуется в DOM — пересчитывается свежей ruleFlagCost на клик,
@@ -844,6 +865,8 @@ export class WarhammerCharacterSheet
       gearModsToggle: onGearModsToggle,
       // Ниже — то, что в V1 стояло после общей проверки isEditable.
       portrait: whenEditable(onPortrait),
+      trophyJudgement: whenEditable(onTrophyJudgement),
+      trophyMarkPrey: whenEditable(onTrophyMarkPrey),
       infamyMinus: whenEditable(onInfamyMinus),
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),
@@ -2269,11 +2292,24 @@ export class WarhammerCharacterSheet
    */
   _itemRollModsHtml(context) {
     const groups = [];
+    let resolved = null;
     for (const it of this.actor.items) {
       const mods = it.getFlag("warhammer-dbc", "rollMods");
       if (!Array.isArray(mods) || !mods.length) continue;
       const hits = mods.filter(m => matchesContext(m.when, context));
-      if (hits.length) groups.push({ item: it, mods: hits });
+      if (!hits.length) continue;
+      // Качество снаряжения (стр. 165): ±тесты «с этим снаряжением» — строка
+      // в тот же блок, уже отмеченная: снаряжение применимо к этому тесту.
+      // Но если у предмета есть и запись «Модификатор теста», строку качества уже
+      // дал конвейер правил (rules/resolve-test.mjs, ruleId quality.<id>) — второй не нужно.
+      const q = gearQualityRollMod(it);
+      if (q) {
+        resolved ??= resolveTest({ actor: this.actor, ...context });
+        const dupId = `quality.${it.id ?? it.name}`;
+        const viaRules = [...resolved.mods, ...resolved.autoMods].some(m => m.ruleId === dupId);
+        if (!viaRules) hits.push({ ...q, preChecked: true });
+      }
+      groups.push({ item: it, mods: hits });
     }
     if (!groups.length) return { html: "", mods: [] };
     const allMods = [];
@@ -2285,7 +2321,7 @@ export class WarhammerCharacterSheet
         const sign = m.value > 0 ? `+${m.value}` : (m.value < 0 ? `${m.value}` : "");
         return `<label class="attack-mod-check item-roll-mod">
           <input type="checkbox" class="item-mod" data-idx="${gi}" data-value="${m.value || 0}"
-                 ${m.halvePenalty ? 'data-halve="1"' : ""}/>
+                 ${m.halvePenalty ? 'data-halve="1"' : ""}${m.preChecked ? " checked" : ""}/>
           <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
       }).join("");
       return `<div class="atk-dlg-modifiers item-mods">
@@ -2422,12 +2458,20 @@ export class WarhammerCharacterSheet
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
     // блоком, а не галочкой среди модификаторов: их не с чем складывать.
     const rr = ruleRerollsHtml(this.actor, rollCtx);
+    // Целеустремлённый Охотник (Мастер Казней, Sahara 1-54b9): Помеха на Command, Charm, Deceive и Inquiry —
+    // в окне стоит заранее (rules/master-of-executions.mjs).
+    const hunterHindrance = hunterHindranceApplies(this.actor, rollCtx.skill);
     // Фракция собеседника без токена-цели (Sahara task-240a): Связи, Хорошая
     // Репутация, Враг и переброс Ненависти работают от rollCtx.socialFaction.
     // Выбор меняет ctx на лету — строки «Состояние» и переброс пересобираются.
     const socialPick = socialFactionPickerShown(this.actor, rollCtx)
       ? socialFactionOptions(this.actor, getFactionIndex()) : null;
     let socialFaction = "";
+    // Необязательный выбор одного из пяти чувств (Слух, Зрение…) на тестах Внимательности/Восприятия: нужен
+    // правилам, что различают чувства (Оглох — автопровал слуха, Резонанс — штраф Слуха, Усиленные Чувства).
+    let sense = "";
+    const senseRowHtml = sensePickerShown(rollCtx) ? `<div class="roll-dlg-row" title="Необязательно: какое чувство проверяет этот тест. Без выбора тест общий на все чувства; с выбором работают модификаторы именно этого чувства (Оглох, Резонанс и т.п.).">
+        <label>Чувство:</label>${senseSelectHtml()}</div>` : "";
     const socialFactionRowHtml = socialPick ? `<div class="roll-dlg-row" title="Собеседника нет на сцене токеном — укажите, из какой он группы: Связи, Репутация, Враг и Ненависть сработают по ней.">
         <label>Собеседник:</label>
         <select id="social-faction-select">
@@ -2435,6 +2479,18 @@ export class WarhammerCharacterSheet
           ${socialPick.own.length ? `<optgroup label="Группы ваших Талантов">${socialPick.own.map(o => `<option value="${esc(o.key)}">${esc(o.label)}</option>`).join("")}</optgroup>` : ""}
           <optgroup label="Все фракции">${socialPick.all.map(o => `<option value="${esc(o.key)}">${esc(o.label)}</option>`).join("")}</optgroup>
         </select>
+      </div>` : "";
+    // Ведьмоискатель (Sahara 3-defiance): переброс Awareness на засекание
+    // проявления психосилы и Forbidden Lore (Psykers) на распознание. Для чего
+    // игрок бросает навык, система не знает — носителю Таланта на этих двух
+    // тестах показана галочка; отмеченная, она включает ctx.psychicDetect и
+    // с ним переброс в блоке ниже (тот же приём, что у выбора фракции собеседника).
+    const witchKind = witchfinderTestKind(rollCtx) && hasTalentCapability(this.actor, WITCHFINDER_CAP)
+      ? witchfinderTestKind(rollCtx) : null;
+    const witchfinderRowHtml = witchKind ? `<div class="roll-dlg-row" title="Ведьмоискатель: при отметке в окне предлагается переброс «лучший из двух»">
+        <label><input type="checkbox" id="witchfinder-psychic"/> ${witchKind === "detect"
+          ? "Засекаю проявление психосилы (Ведьмоискатель — переброс)"
+          : "Распознаю психосилу (Ведьмоискатель — переброс)"}</label>
       </div>` : "";
     const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
     const rankBonus        = baseTotal - defaultCharTotal;
@@ -2573,6 +2629,8 @@ export class WarhammerCharacterSheet
               <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
               <div id="assist-list" class="assist-list"></div>
               ${socialFactionRowHtml}
+              ${senseRowHtml}
+              ${witchfinderRowHtml}
               ${hw.html}
               ${im.html}
               ${rl.html}
@@ -2581,7 +2639,8 @@ export class WarhammerCharacterSheet
               ${aa.html}
             </div>
             <div id="rule-rerolls-slot">${rr.html}</div>
-            ${diceModeHtml()}
+            ${hunterHindrance ? `<div class="roll-dlg-note">Целеустремлённый Охотник: на тесты Command, Charm, Deceive и Inquiry — Помеха (выбрана ниже).</div>` : ""}
+            ${diceModeHtml({ preset: hunterHindrance ? "disadvantage" : "normal" })}
             <div class="roll-dlg-row roll-dlg-subrow">
               <label><input type="checkbox" id="confirm-pick"/> Спросить, если Преимущество/Помеха/Переброс дадут выбор (стр. 26)</label>
             </div>
@@ -2657,6 +2716,7 @@ export class WarhammerCharacterSheet
               checkedRuleIds: checkedRuleIds(form),
               // Фракция собеседника без токена (Sahara task-240a) — _runTest досчитывает по ней авто-модификаторы.
               socialFaction: socialFaction || undefined,
+              sense: sense || undefined,
               // isOpposed/isSafe — сама галочка «Встречный», отдельно от opposed
               // (которое null, пока Порог/Бросок соперника не введены вручную и
               // авто-резолв ещё не отработал): полтеста без соперника — всё равно
@@ -2753,6 +2813,24 @@ export class WarhammerCharacterSheet
           updateAutoOutcomeNote();
         });
 
+        root.querySelector("#sense-select")?.addEventListener("change", ev => {
+          sense = ev.currentTarget.value;
+          delete rollCtx.sense;
+          if (sense) rollCtx.sense = sense;
+          autoModsCache.clear();
+          refreshAutoMods();
+          updateAutoOutcomeNote();
+        });
+
+        // Ведьмоискатель: галочка включает/снимает ctx.psychicDetect и пересобирает
+        // блок перебросов — радиокнопка переброса появляется только с ней.
+        root.querySelector("#witchfinder-psychic")?.addEventListener("change", ev => {
+          if (ev.currentTarget.checked) rollCtx.psychicDetect = true;
+          else delete rollCtx.psychicDetect;
+          const rerollSlot = root.querySelector("#rule-rerolls-slot");
+          if (rerollSlot) rerollSlot.innerHTML = ruleRerollsHtml(this.actor, rollCtx).html;
+        });
+
         // Авто-встречный тест (wdbc-j814): галочка видна, только когда есть
         // таргет сцены — таргет не меняется, пока диалог открыт, поэтому
         // подпись достаточно выставить один раз при рендере, без слушателя.
@@ -2835,7 +2913,7 @@ export class WarhammerCharacterSheet
           const bRollCtx = () => {
             const parsed = parseTestTarget(bTargetSelect?.value, defaultChar);
             const charKey = bCharSelect?.value || parsed.charKey;
-            return { kind: "skill", char: charKey, skill: parsed.skillKey ?? undefined, targetActor };
+            return withSense(withSocialFaction({ kind: "skill", char: charKey, skill: parsed.skillKey ?? undefined, targetActor }, socialFaction), sense);
           };
           const refreshBMods = () => {
             if (!bModsSlot) return;
@@ -2926,6 +3004,8 @@ export class WarhammerCharacterSheet
             recomputeB();
           });
           bCharSelect?.addEventListener("change", () => { refreshBMods(); recomputeB(); });
+          root.querySelector("#social-faction-select")?.addEventListener("change", () => { recomputeA(); refreshBMods(); recomputeB(); });
+          root.querySelector("#sense-select")?.addEventListener("change", () => { recomputeA(); refreshBMods(); recomputeB(); });
           bDifficulty?.addEventListener("change", recomputeB);
           bTargetInput?.addEventListener("input", recomputeB);
           bModifierInput?.addEventListener("input", recomputeB);
@@ -3040,7 +3120,11 @@ export class WarhammerCharacterSheet
     // Ярость соперника-NPC: социальный ответ — автопровал (Порог 0, бросок 1 = минимальный провал, без кубика).
     if (rageSocialAutoFail(opponentActor, { skill: skillKey, char: charKey }))
       return { opposed: { threshold: 0, roll: 1, rageAutoFail: true }, opponentActor: null };
-    const threshold = skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0);
+    if (brokenAutoFail(opponentActor, this.actor, charKey, a => actorIdentityUuids(a)))
+      return { opposed: { threshold: 0, roll: 1, brokenAutoFail: true }, opponentActor: null };
+    // Правоверный Тёмного Апостола: +30 на сопротивление убеждению (rules/dark-apostle.mjs).
+    const threshold = (skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0))
+      + faithfulResistBonus(opponentActor, { social: isSocialSkill(skillKey) });
     const roll = await new Roll("1d100").evaluate();
     // unnatural (стр. 26, wdbc-y9i8) — соперник известен по документу здесь,
     // поэтому тай-брейк Сверхъестественной Характеристики можно проверить
@@ -3205,7 +3289,7 @@ export class WarhammerCharacterSheet
     // сошёлся бы с брошенным.
     // Фракция собеседника, выбранная в окне (Sahara task-240a): тот же ctx.socialFaction, что видел диалог.
     const autoCtxBase = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
-    const autoCtx = result.socialFaction ? withSocialFaction(autoCtxBase, result.socialFaction) : autoCtxBase;
+    const autoCtx = withSense(result.socialFaction ? withSocialFaction(autoCtxBase, result.socialFaction) : autoCtxBase, result.sense);
     if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
     const autoResolved = resolveTest({ actor: this.actor, ...autoCtx });
     const autoMods = autoResolved.autoMods;
@@ -3262,7 +3346,8 @@ export class WarhammerCharacterSheet
     if (combined) {
       const bCtx = { kind: "skill", targetActor: sceneTarget, char: combined.charKey || defaultChar,
                      skill: combined.skillKey ?? undefined,
-                     ...(result.socialFaction ? { socialFaction: result.socialFaction } : {}) };
+                     ...(result.socialFaction ? { socialFaction: result.socialFaction } : {}),
+                     ...(result.sense ? { sense: result.sense } : {}) };
       if (isMoraleOpposedSkill(combined.skillKey)) bCtx.morale = true;
       const bAutoResolved = resolveTest({ actor: this.actor, ...bCtx });
       const bEff = combined.target + combined.modifier + combined.difficulty + autoModsTotal(bAutoResolved.autoMods);
@@ -3275,10 +3360,11 @@ export class WarhammerCharacterSheet
       // group/specialty (wdbc-1rno.22): групповой Навык приходит без skill
       // (onSkillRoll) — без них исход теста принимал бросок Навигации/Ремесла
       // за тест Характеристики (Инфернальная Воля: «любой тест Навыка»).
-      ctx: { actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
+      // sense: выбранное в окне Чувство — без него Оглохший + Слух не получал автопровал.
+      ctx: withSense({ actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
              group: rollContext?.group || undefined, specialty: rollContext?.specialty || undefined,
              morale: isMoraleOpposedSkill(skillKey),
-             ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }
+             ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }, result.sense)
     });
     if (isMoraleOpposedSkill(skillKey)) {
       await applyLordOfExoditesFailPenalty(this.actor, {
@@ -3372,7 +3458,11 @@ export class WarhammerCharacterSheet
         // Для меню Очков: Мастерство (автоуспех: Характеристика, поправки не
         // хуже +0, уже набранные Успехи) и За Гранью Человека (Характеристика).
         char: charKey, mod: baseEff - target, deg
-      } } }
+      },
+      // Откат последствий провала (Шок Инфернальной Воли, Ступор Гипно-Шрамов): если провал позже засчитают
+      // успехом — переброс за Очко, «+10», Бесчестие, Хирургия Легиона, Мастерство, — hooks.mjs снимает их
+      // (rules/fail-undo.mjs, task-e30b).
+      ...(outcome.failUndo ? { failUndo: cardFailUndo(effectActor, outcome.failUndo) } : {}) } }
     });
 
     // Гололит (rules/situational.mjs::hololithBriefingBonus): подготовленный

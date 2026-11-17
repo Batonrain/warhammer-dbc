@@ -102,7 +102,7 @@ export function ruleRollModsHtml(actor, context, resolved = null) {
       <input type="checkbox" class="rule-mod" data-idx="${i}" data-value="${m.value || 0}"
              data-rule-id="${esc(m.ruleId || "")}"
              ${m.setChar ? `data-set-char="${esc(m.setChar)}"` : ""}
-             ${m.halvePenalty ? 'data-halve="1"' : ""}/>
+             ${m.halvePenalty ? 'data-halve="1"' : ""}${m.preChecked ? " checked" : ""}/>
       <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
   }).join("");
   return {

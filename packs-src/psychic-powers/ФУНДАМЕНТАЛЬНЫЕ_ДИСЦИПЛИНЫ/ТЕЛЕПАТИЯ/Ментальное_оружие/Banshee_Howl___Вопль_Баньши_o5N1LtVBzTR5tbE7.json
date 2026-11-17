@@ -41,6 +41,7 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
+    "mindEffect": true,
     "effect": "Атака · Незримое · Психическое Дыхание · Стрельба. Треб.: Psychic Scream. Авто-попадание в голову. Профиль: PR×5м, 1d10+2×PR X, Pen 0, Shocking, Spray, Warp Weapon. Тесты T против Shocking −5×PR.",
     "isSustained": false,
     "effects": {

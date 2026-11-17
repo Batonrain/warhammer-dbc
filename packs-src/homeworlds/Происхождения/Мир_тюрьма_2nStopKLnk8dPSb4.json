@@ -268,7 +268,16 @@
               "weightMode": "kg",
               "weightValue": 1,
               "label": "",
-              "code": ""
+              "code": "",
+              "targets": [
+                {
+                  "kind": "faction",
+                  "ref": "pirates",
+                  "value": "",
+                  "name": "Pirates / Пираты",
+                  "img": "icons/svg/aura.svg"
+                }
+              ]
             },
             {
               "id": "qM5N100gu7fDTEpy",
@@ -296,7 +305,16 @@
               "weightMode": "kg",
               "weightValue": 1,
               "label": "",
-              "code": ""
+              "code": "",
+              "targets": [
+                {
+                  "kind": "faction",
+                  "ref": "criminals",
+                  "value": "",
+                  "name": "Criminals / Преступники",
+                  "img": "icons/svg/aura.svg"
+                }
+              ]
             }
           ]
         }

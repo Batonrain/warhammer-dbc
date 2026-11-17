@@ -234,8 +234,19 @@ export function pickRageTarget(candidates, { failedExit = false } = {}) {
   return pool.filter(c => c.relation === "ally").sort(byDistance)[0] ?? null;
 }
 
-/** Строка напоминания в чат в начале Хода персонажа в Ярости. */
-export function rageTurnReminderText({ target = null, failedExit = false } = {}) {
+/** Верхом на Звере / Riding the Beast: в Ярости тест W+0 даёт выбрать цель атак вместо ближайшего видимого врага. */
+export function hasRidingTheBeast(actor) {
+  return hasAbility(actor, "berserker.core.ridingTheBeast", "Riding the Beast", "talent");
+}
+
+/** Ключ карточки (card-once.mjs): тест Верхом на Звере — одна попытка на карточку-напоминание. */
+export const RIDING_BEAST_CARD_FLAG = "ridingBeastTried";
+
+/**
+ * Строка напоминания в чат в начале Хода персонажа в Ярости.
+ * canChoose — у носителя Верхом на Звере под карточкой кнопка теста W+0 на свободный выбор цели.
+ */
+export function rageTurnReminderText({ target = null, failedExit = false, canChoose = false } = {}) {
   const where = target
     ? ` — ${failedExit ? "ближайшая цель" : "ближайший"}: ${target.name}${Number.isFinite(target.distance) ? `, ${Math.round(target.distance * 10) / 10} м` : ""}`
     : "";
@@ -243,5 +254,6 @@ export function rageTurnReminderText({ target = null, failedExit = false } = {})
     return "Ярость: не вышел из Ярости — обязан атаковать других (приоритет: сдавшиеся, беспомощные и обезоруженные "
       + `враги; затем союзные NPC и игроки)${where}`;
   }
-  return `Ярость: обязан двигаться к ближайшему видимому противнику и атаковать в рукопашной${where}`;
+  const hint = canChoose ? " (Верхом на Звере: тест W+0 позволяет выбрать цель самому)" : "";
+  return `Ярость: обязан двигаться к ближайшему видимому противнику и атаковать в рукопашной${where}${hint}`;
 }

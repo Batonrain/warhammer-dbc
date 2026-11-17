@@ -204,25 +204,50 @@ export function sameValue(a, b) {
   return false;
 }
 
-/** Индекс документов пака: по uuid и по "type::имя" (для отката по имени). */
+/**
+ * Метка «под этим именем в паке лежат РАЗНЫЕ документы» — имя ничего не решает
+ * (task-8d6a; то же правило, что module/migrations/pack-source.mjs::AMBIGUOUS).
+ * Граната «Rad / Рад» (2d10) и ракета «Rad / Ракета: Рад» (4d10) обе отзываются
+ * на «rad»: раньше побеждал последний попавшийся, и копия с именем просто «Rad»
+ * без uuid источника сверялась с чужими числами.
+ */
+const AMBIGUOUS = Symbol("ambiguous");
+
+/** Что в документе важно для сверки: поля system, Механика, эффекты. */
+const packAnswer = doc => ({ system: doc?.system ?? {}, mech: mechanicsOf(doc), effects: effectsOf(doc) });
+
+/**
+ * Индекс документов пака: по uuid и по "type::имя" (для отката по имени).
+ * Ключ имени, под которым лежат документы с РАЗНЫМ содержимым, помечается
+ * неоднозначным; одинаковое содержимое (одна запись в двух паках) не мешает.
+ */
 export function buildPackIndex(docs) {
   const byUuid = new Map();
   const byTypeName = new Map();
   for (const doc of docs) {
     if (!doc?.uuid) continue;
     byUuid.set(doc.uuid, doc);
-    for (const key of nameKeys(doc.name)) byTypeName.set(`${doc.type}::${key}`, doc);
+    for (const k of nameKeys(doc.name)) {
+      const key = `${doc.type}::${k}`;
+      const prev = byTypeName.get(key);
+      if (prev === undefined) byTypeName.set(key, doc);
+      else if (prev !== AMBIGUOUS && !sameValue(packAnswer(prev), packAnswer(doc))) byTypeName.set(key, AMBIGUOUS);
+    }
   }
   return { byUuid, byTypeName };
 }
 
-/** Документ пака для предмета актёра: сперва compendiumSource, затем имя того же типа. */
+/**
+ * Документ пака для предмета актёра: сперва compendiumSource, затем имя того же
+ * типа (целиком, потом половинами). Неоднозначный ключ пропускается — решить
+ * может другая половина; не решила никто — null («Без соответствия в паке»).
+ */
 export function matchPackSource(item, index) {
   const src = item._stats?.compendiumSource;
   if (src && index.byUuid.has(src)) return index.byUuid.get(src);
   for (const key of nameKeys(item.name)) {
     const doc = index.byTypeName.get(`${item.type}::${key}`);
-    if (doc) return doc;
+    if (doc && doc !== AMBIGUOUS) return doc;
   }
   return null;
 }
@@ -385,6 +410,46 @@ function withDeletedStaleKeys(actorVal, packVal) {
   return out;
 }
 
+// Разовые записи с последствиями: applyMechEntry (apps/mechanics.mjs)
+// отыгрывает их по одному разу — бросок Порчи/Ран, выдача предмета, Код «При
+// выдаче», наложение Состояния, Лояльность миньонов. Здесь, а не импортом из
+// mechanics.mjs: тот тянет за собой весь Foundry-граф.
+const ONE_SHOT_MECH_KINDS = new Set(["corruption", "wounds", "script", "condition", "equipment", "integralAttack", "loyalty"]);
+
+/** Листья Механики (без узлов-подгрупп) — [{id, kind}]. */
+function mechLeaves(groups, out = []) {
+  for (const g of groups || []) {
+    for (const e of g?.entries || []) {
+      if (e?.kind === "group") mechLeaves([e.group], out);
+      else if (e?.id) out.push(e);
+    }
+  }
+  return out;
+}
+
+/**
+ * PR #568: перенос Механики на УЖЕ купленную копию будит updateItem →
+ * applyItemMechanics, и разовая запись, которой в копии не было (Порча
+ * архетипа, Раны, выдача брони/импланта/Гнили), отыгралась бы поверх того,
+ * что ГМ давно внёс по книге руками. Такие записи помечаются применёнными в
+ * том же update; прямые выдачи снаряжения ещё и вносятся в equipWaived —
+ * syncGrantedEquipment создаёт недостающее независимо от mechanicsApplied.
+ * Таланты/Черты/постоянные записи не трогаются: им выдача и пересборка нужны.
+ */
+function waiveNewOneShots(upd, item, entry, packVal) {
+  const known = new Set([...mechLeaves(entry.actorVal), ...mechLeaves(entry.baseVal)].map(e => e.id));
+  const fresh = mechLeaves(packVal).filter(e => ONE_SHOT_MECH_KINDS.has(e.kind) && !known.has(e.id));
+  if (!fresh.length || !item) return;
+  const flag = item.getFlag?.(FLAG, "mechanicsApplied");
+  // Старое `true` = «всё, что лежало на предмете» (appliedEntryIds в mechanics.mjs).
+  const applied = Array.isArray(flag) ? flag : flag === true ? mechLeaves(entry.actorVal).map(e => e.id) : [];
+  upd[`flags.${FLAG}.mechanicsApplied`] = [...new Set([...applied, ...fresh.map(e => e.id)])];
+  const equip = fresh.filter(e => e.kind === "equipment" || e.kind === "integralAttack").map(e => e.id);
+  if (equip.length) {
+    upd[`flags.${FLAG}.equipWaived`] = [...new Set([...(item.getFlag?.(FLAG, "equipWaived") || []), ...equip])];
+  }
+}
+
 /**
  * Применяет отмеченные записи (Set entryKey = "<itemId>::<path>"): пишет
  * новое значение поля и одновременно продвигает опору этого поля на то же
@@ -426,6 +491,7 @@ export async function applySyncReport(report, selectedKeys) {
       if (row.path === MECH_PATH) {
         upd[`flags.${FLAG}.mechanics`] = withDeletedStaleKeys(entry.actorVal, row.packVal);
         upd[`flags.${FLAG}.${MECH_BASELINE_PATH}`] = withDeletedStaleKeys(entry.baseVal, row.packVal);
+        waiveNewOneShots(upd, game.actors.get(entry.actorId)?.items?.get?.(entry.itemId), entry, row.packVal);
       } else {
         upd[`system.${row.path}`] = withDeletedStaleKeys(entry.actorVal, row.packVal);
         upd[`flags.${FLAG}.${BASELINE_PATH}.${row.path}`] = withDeletedStaleKeys(entry.baseVal, row.packVal);

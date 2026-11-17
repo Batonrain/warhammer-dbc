@@ -10,7 +10,13 @@
 //   • автоуспех Важного персонажа, стр. 53: Infamy не ниже порога рейтинга
 //     или свой рейтинг Страха «равный или выше, чем у источника»;
 //   • Стальное Сердце (Мутация, wdbc-tsz6): «считает все рейтинги Страха на 1
-//     меньше… игнорируя их, если рейтинг Страха опускается до 0».
+//     меньше… игнорируя их, если рейтинг Страха опускается до 0»;
+//   • Инфернальное Знакомство (Талант, 3-defiance): «считает всех демонов
+//     имеющими Рейтинг Страха на 1 ниже настоящего» — то же снижение на 1, но
+//     только когда источник Страха — демон (галочка «Демон» в окне Страха).
+//     Книга не говорит, что делать, когда рейтинг опустился до 0; принято как у
+//     Стального Сердца — тест не нужен (допущение, помечено в отчёте задачи).
+//     Если снижают оба, они складываются (в тексте нет запрета).
 //
 //  «Не может игнорировать этот Страх» (Затронутый Варпом, субмутация 1,
 //  wdbc-1rno.26) снимает все три — решение владельца 02.10.2026: книга
@@ -32,7 +38,8 @@ export const FEAR_IGNORE_LABELS = {
   scene: "память сцены",
   infamy: "автоуспех по Infamy",
   ownFear: "автоуспех по своему Страху",
-  steelHeart: "Стальное Сердце"
+  steelHeart: "Стальное Сердце",
+  infernal: "Инфернальное Знакомство"
 };
 
 /**
@@ -45,6 +52,8 @@ export const FEAR_IGNORE_LABELS = {
  * @param {number}  [p.ownFear]    собственный рейтинг Страха персонажа
  * @param {number}  [p.faced]      наибольший Страх, против которого уже был тест в этой сцене
  * @param {boolean} [p.steelHeart] есть Стальное Сердце
+ * @param {boolean} [p.infernal]   источник — демон, а у персонажа Инфернальное Знакомство
+ *   (вызывающий код сам проверяет обе половины: «Демон» из окна и Талант)
  * @param {boolean} [p.free]       бесплатный переброс Демона — тот же тест, не новая встреча
  * @param {boolean} [p.unignorable] этот Страх нельзя игнорировать
  * @returns {{rating:number, skip:boolean, autoPass:boolean, cancelled:string[]}}
@@ -54,20 +63,21 @@ export const FEAR_IGNORE_LABELS = {
  *   путей, которые сработали бы, но отменены «нельзя игнорировать».
  */
 export function fearIgnore({ rating, important = false, infamy = 0, ownFear = 0, faced = 0,
-                             steelHeart = false, free = false, unignorable = false } = {}) {
+                             steelHeart = false, infernal = false, free = false, unignorable = false } = {}) {
   const real = Number(rating) || 0;
-  const lowered = steelHeart ? real - 1 : real;
+  const lowered = real - (steelHeart ? 1 : 0) - (infernal ? 1 : 0);
   const r = FEAR_RATINGS[lowered] || FEAR_RATINGS[1];
   const own = Number(ownFear) || 0;
   const ways = {
     scene: !free && (Number(faced) || 0) >= real,
     infamy: !!important && (Number(infamy) || 0) >= r.infamy,
     ownFear: !!important && own > 0 && own >= real,
-    steelHeart: !!steelHeart
+    steelHeart: !!steelHeart,
+    infernal: !!infernal
   };
   if (!unignorable) {
     return { rating: lowered, skip: ways.scene, cancelled: [],
-             autoPass: (ways.steelHeart && lowered <= 0) || ways.infamy || ways.ownFear };
+             autoPass: ((ways.steelHeart || ways.infernal) && lowered <= 0) || ways.infamy || ways.ownFear };
   }
   return { rating: real, skip: false, autoPass: false,
            cancelled: Object.keys(ways).filter(k => ways[k]) };

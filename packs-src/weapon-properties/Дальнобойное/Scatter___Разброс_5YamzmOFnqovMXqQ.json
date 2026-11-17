@@ -1,0 +1,35 @@
+{
+  "name": "Scatter / Разброс",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Выстреливает снопом выстрелов, нанося чудовищный урон на близкой дистанции. Получает свойство Imprecise, +10 на выстрелы с Короткой дистанции и ближе и +1d10 Dmg для выстрелов в Упор и в рукопашной. Все тесты Избеганий от этого оружия на Короткой дистанции и в Упор (но не в рукопашной) получают штраф −20.",
+    "reminder": "🔸 Разброс: Неточное; +10 на короткой и ближе; +1d10 урона в упор и в рукопашной; Избегание на короткой/в упор −20",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "scatter",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "5YamzmOFnqovMXqQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353821,
+    "modifiedTime": 1786224353826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!5YamzmOFnqovMXqQ"
+}

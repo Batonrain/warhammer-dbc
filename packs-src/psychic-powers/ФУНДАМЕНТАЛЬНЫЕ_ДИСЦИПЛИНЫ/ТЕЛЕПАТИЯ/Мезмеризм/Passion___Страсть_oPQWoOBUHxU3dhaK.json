@@ -50,6 +50,7 @@
     },
     "resistChar": "wp",
     "resistMod": 0,
+    "mindEffect": true,
     "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Телепатия — Мезмеризм» стр. 319)"
   },
   "_id": "oPQWoOBUHxU3dhaK",

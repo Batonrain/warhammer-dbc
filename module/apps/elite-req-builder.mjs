@@ -55,10 +55,12 @@ export function blankEntry(kind = "race") {
                             rank: "knows", count: 1 };
     case "talent": return { ...base, name: "", specialization: "", uuid: "", count: 1 };
     case "or":       return { ...base, items: [] };
-    case "notEldar": return { ...base };
+    case "notEldar": case "notHeretic": return { ...base };
     case "patron":   return { ...base, key: "" };
-    case "other":  return { ...base, text: "" };
-    case "corruption": case "infamy": case "xp": case "psyRating": return { ...base, value: 0 };
+    case "other": case "notElite": case "notHas": case "power": return { ...base, text: "" };
+    case "sex":      return { ...base, key: "female" };
+    case "skillPool": return { ...base, text: "", rank: "trained", count: 3 };
+    case "corruption": case "infamy": case "xp": case "psyRating": case "wounds": return { ...base, value: 0 };
     case "characteristic": return { ...base, charKey: Object.keys(CHARACTERISTICS)[0], value: 0 };
     default:       return { ...base, key: "", name: "", uuid: "" };  // раса, субраса, Черта
   }
@@ -87,6 +89,7 @@ function fieldsHtml(e, dis) {
     case "race":    return dropField(e, dis, "Расу");
     case "subrace": return dropField(e, dis, "Субрасу");
     case "notEldar": return `<span class="elite-req-drop filled">Любая раса, кроме Аэльдари</span>`;
+    case "notHeretic": return `<span class="elite-req-drop filled">Мировоззрение не Хаосит</span>`;
     case "trait":   return dropField(e, dis, "Черту");
     case "talent": {
       // «Мастерство» без привязки — это не Талант, а пустое место: он владеет
@@ -142,6 +145,31 @@ function fieldsHtml(e, dis) {
     case "other":
       return `<input type="text" class="elite-req-field elite-req-text" data-field="text"
         value="${esc(e.text || "")}" placeholder="Своё требование — читает ГМ" ${dis}/>`;
+
+    case "notElite":
+      return `<input type="text" class="elite-req-field elite-req-text" data-field="text"
+        value="${esc(e.text || "")}" placeholder="Названия архетипов через запятую" ${dis}/>`;
+
+    case "notHas":
+      return `<input type="text" class="elite-req-field elite-req-text" data-field="text"
+        value="${esc(e.text || "")}" placeholder="Названия Черт/предметов через запятую" ${dis}/>`;
+
+    case "sex":
+      return `<select class="elite-req-field" data-field="key" ${dis}>
+        ${opt("female", "Женский", e.key === "female")}${opt("male", "Мужской", e.key === "male")}</select>`;
+
+    case "skillPool": {
+      const ranks = Object.entries(SKILL_RANKS).filter(([k]) => k !== "untrained")
+        .map(([k, d]) => opt(k, d.label, e.rank === k)).join("");
+      return `<input type="text" class="elite-req-field elite-req-text" data-field="text"
+        value="${esc(e.text || "")}" placeholder="Ключи групповых Умений через запятую: scholasticLore, forbiddenLore" ${dis}/>
+        <select class="elite-req-field" data-field="rank" ${dis}>${ranks}</select>
+        ${countField(e, dis, "Сколько разных специализаций нужно суммарно")}`;
+    }
+
+    case "power":
+      return `<input type="text" class="elite-req-field elite-req-text" data-field="text"
+        value="${esc(e.text || "")}" placeholder="Названия психосил через запятую" ${dis}/>`;
 
     case "or":
       return "";   // содержимое ИЛИ-группы рисуется отдельно, вложенными строками

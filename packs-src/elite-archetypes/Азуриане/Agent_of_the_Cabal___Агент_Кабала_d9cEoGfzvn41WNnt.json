@@ -6,7 +6,66 @@
     "key": "eldarAgentOfCabal",
     "cost": 3500,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "dbc13s01",
+          "kind": "characteristic",
+          "charKey": "int",
+          "value": 60
+        },
+        {
+          "id": "dbc13s02",
+          "kind": "characteristic",
+          "charKey": "wp",
+          "value": 60
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "characteristic",
+          "charKey": "fel",
+          "value": 60
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "skill",
+          "scope": "group",
+          "skillKey": "forbiddenLore",
+          "specKey": "Ересь Хоруса и Долгая Война",
+          "rank": "expert",
+          "count": 1,
+          "label": "Запретные знания"
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "talent",
+          "name": "Mastery / Мастерство",
+          "specialization": "Запретные знания (Демоны)",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.2OBfo5PO1q8hIKDJ",
+          "count": 1
+        },
+        {
+          "id": "dbc13s08",
+          "kind": "talent",
+          "name": "Mastery / Мастерство",
+          "specialization": "",
+          "specPrefix": "Запретные знания|Forbidden Lore",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.2OBfo5PO1q8hIKDJ",
+          "count": 2
+        },
+        {
+          "id": "dbc13s07",
+          "kind": "talent",
+          "name": "Mastery / Мастерство",
+          "specialization": "",
+          "specPrefix": "Ученые знания|Scholastic Lore",
+          "uuid": "Compendium.warhammer-dbc.talents.Item.2OBfo5PO1q8hIKDJ",
+          "count": 1
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "notHeretic"
+        }
+      ],
       "secondary": []
     },
     "race": "Любая",
@@ -28,7 +87,8 @@
     "talents": [],
     "description": "",
     "notes": "Единственный элитный архетип книги без гейта по расе (доступен любому виду). Становление требует найти информацию о Кабале (R5) и штаб организации, пройти обучение тайнам Кабала. Дополнительные Таланты (A Click of the Mind, The Hydra's Hand, The Hand Of The Insignia, The Hand of Metal, The Hand of the Law) — фаза 169 Доп.Талантов (wdbc-54f7). Возвышение: Мастер Кабала.",
-    "bookSource": "Книга Аэльдари"
+    "bookSource": "Книга Аэльдари",
+    "becoming": "Стать Агентом Кабала – невероятно сложная задача в любой промежуток времени. Это прямое членство, участие в жизни организации как таковой. Дабы стать Агентом Кабала, необходимо найти информацию о Кабале (R5). Это может быть древнейшие справки и документы Альфа–Легиона из Империума, редкие руины летающих кораблей Кабала или выживший член Кабала, что может даровать новому члену невероятные тайны и технологии, что унес Кабал. Возможно, вы будете последним и единственным участником Кабала, и возможно – вы станете тем, кто его восстановит. После получения информации и технологий, персонаж должен найти один из сотен штабов Кабала на одной из миллионов планет. Обладая информацией, он может сузить поиск до сектора или даже субсектора, после чего, ему придется искать штаб. После успешного поиска штаба, дальнейшая ситуация может развиваться по разному – персонаж может встретить ячейку Кабала, что примет его и посвятит в дела Кабала, или атакует его, или на планете будет что–то иное, что определит ГМ. Самое важное, персонажу необходимо пройти обучение тайнам Кабала, дабы получить возможность стать его Агентом."
   },
   "_id": "d9cEoGfzvn41WNnt",
   "effects": [],
@@ -1227,7 +1287,16 @@
               "label": "",
               "code": "",
               "kind": "talent",
-              "id": "ea14"
+              "id": "ea14",
+              "targets": [
+                {
+                  "kind": "faction",
+                  "ref": "chaos",
+                  "value": "",
+                  "name": "Chaos / Хаос",
+                  "img": "icons/svg/aura.svg"
+                }
+              ]
             },
             {
               "corruptionValue": "1",

@@ -21,7 +21,7 @@ import {
   protegeFavoriteUuid, protegeFreeCommandActive, protegePenalty, protegeActivationPatch,
   anyRadiantPresenceHolderExists, radiantPresenceBonus,
   anyIntoTheJawsOfHellHolderExists, intoTheJawsOfHellActive,
-  commandTargetLimit, commandCapacity,
+  commandTargetLimit, commandCapacity, followerCapacity,
   livingLegendCommandBonus,
   warChantSinging, WAR_CHANT_FLAG,
   warChantSingAlongActive, WAR_CHANT_SING_ALONG_FLAG, warChantIntimidateBonus, warChantSingAlongBonus,
@@ -339,6 +339,21 @@ describe("Air of Authority/Аура Власти — лимит целей Comma
     expect(commandTargetLimit(actor(0, [talentOf("Air of Authority")]))).toBe(0);
   });
 
+  it("commandTargetLimit — у командира с Дрессировкой это P.b, не F.b×2 (и Air of Authority его не меняет)", () => {
+    const tamer = (per, talents = []) => ({ items: talents, system: {
+      characteristics: { fel: { bonus: 5 }, per: { bonus: per } }, command: { training: true } } });
+    expect(commandTargetLimit(tamer(3))).toBe(3);
+    expect(commandTargetLimit(tamer(3, [talentOf("Air of Authority")]))).toBe(3);
+    expect(commandTargetLimit(tamer(-1))).toBe(0);
+  });
+
+  it("followerCapacity — тот же лимит, что у узла командования: Дрессировка P.b, иначе commandCapacity(fel)", () => {
+    const boss = (training) => ({ items: [], system: {
+      characteristics: { fel: { bonus: 4 }, per: { bonus: 2 } }, command: { training } } });
+    expect(followerCapacity(boss(true))).toBe(2);
+    expect(followerCapacity(boss(false))).toBe(8);
+  });
+
   it("commandTargetLimit — отрицательный F.b не уходит в минус", () => {
     expect(commandTargetLimit({ items: [], system: { characteristics: { fel: { bonus: -1 } } } })).toBe(0);
   });
@@ -359,7 +374,7 @@ describe("Air of Authority/Аура Власти — лимит целей Comma
   });
 });
 
-describe("Radiant Presence/Блистательное Присутствие — галочка диалога, не скан сцены", () => {
+describe("Radiant Presence/Блистательное Присутствие — +10 по готовой галочке диалога (видимость — rules/radiant-presence-sight.mjs)", () => {
   it("anyRadiantPresenceHolderExists — хоть один носитель в списке", () => {
     expect(anyRadiantPresenceHolderExists([{ items: [talentOf("Radiant Presence")] }, { items: [] }])).toBe(true);
     expect(anyRadiantPresenceHolderExists([{ items: [] }])).toBe(false);

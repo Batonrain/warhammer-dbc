@@ -11,10 +11,11 @@
 //   • Трофеи Приговора (Талант): исполнив приговор нарушителю законов, восстанавливает очко —
 //     по усмотрению ГМа, в перерывах между миссиями;
 //   • Трофеи Триумфа (Талант): убивая достойную трофея цель с Inf 30–59 — 2 очка, 60–79 — 3, 80+ — 4;
-//   • тратят: Туманный Прыжок (очко за прыжок), Окончательная Казнь (очко за усиленную атаку).
+//   • тратят: Туманный Прыжок (очко за прыжок), Окончательная Казнь (очко за усиленную атаку), Отмеченная Добыча (очко за отметку цели).
 //  Начисление — карточка «Трофей» после констатации смерти цели убийцей-носителем (combat/trophy-kill.mjs):
 //  «офицер/чемпион/чудовище» и «достойна ли цель» решает ГМ диалогом, сумму (1 либо 2/3/4 по Inf цели при
-//  Трофеях Триумфа) и зажим по P.b считает система. Трофеи Приговора (возврат очка за приговор) — вручную.
+//  Трофеях Триумфа) и зажим по P.b считает система. Трофеи Приговора (возврат очка за приговор) — кнопка ГМа (combat/trophy-kill.mjs::restoreJudgementTrophy);
+//  Отмеченная Добыча — combat/marked-prey.mjs (Sahara fear-2, 30.10.2026).
 //  Трата: Туманный Прыжок (combat/talent-move.mjs) и Окончательная Казнь (combat/final-execution.mjs).
 //
 //  Модуль чистый и намеренно НЕ импортирует hasRuleFlag/collect: его зовёт rules/character.mjs
@@ -48,6 +49,19 @@ export function hasTrophyPoints(actor) {
   const items = actor?.items ?? [];
   return HOLDERS.some(h => items.some(i => h.types.includes(i?.type) && h.match.test(String(i.name ?? ""))))
     || EXACT_HOLDERS.some(h => items.some(i => h.types.includes(i?.type) && h.names.some(n => itemHasName(i, n))));
+}
+
+/** Inf цели — характеристика «Влияние» (system.characteristics.inf); для «аналога» не-Хаоситов ГМ правит число в диалоге. */
+export const actorInf = actor => num(actor?.system?.characteristics?.inf?.total);
+
+/** Есть ли у актора Талант «Трофеи Приговора» (Талант Мастера Казней). */
+export function hasTrophiesOfJudgement(actor) {
+  return (actor?.items ?? []).some(i => i?.type === "talent" && (itemHasName(i, "Trophies of Judgement") || itemHasName(i, "Трофеи Приговора")));
+}
+
+/** Есть ли у актора Талант «Отмеченная Добыча» (не Hex-Marked Prey Шамана Зверолюдей — точное имя). */
+export function hasMarkedPrey(actor) {
+  return (actor?.items ?? []).some(i => i?.type === "talent" && (itemHasName(i, "Marked Prey") || itemHasName(i, "Отмеченная Добыча")));
 }
 
 /** Есть ли у актора Талант «Трофеи Триумфа» (Талант, не Черта-тёзка). */

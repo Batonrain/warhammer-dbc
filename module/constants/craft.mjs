@@ -246,9 +246,11 @@ export function computeCombined(selectedOpts, mods) {
   return { limit, external, primary, hasTrade, hasTechMed, rows };
 }
 
-export function bankFor(baseBank, quality, improve) {
+// halveMult — Прототипирование (rules/craft-memory.mjs): мультипликатор Банка от
+// Качества вдвое («×4 → ×2 для Good.Q, ×14 → ×7 для Best.Q»); Улучшение ÷2 — отдельно.
+export function bankFor(baseBank, quality, improve, { halveMult = false } = {}) {
   const q = CRAFT_QUALITY[quality] || CRAFT_QUALITY.common;
-  let bank = Math.round(Number(baseBank || 0) * q.bankMult);
+  let bank = Math.round(Number(baseBank || 0) * q.bankMult * (halveMult ? 0.5 : 1));
   if (improve) bank = Math.round(bank / 2);
   return Math.max(1, bank);
 }

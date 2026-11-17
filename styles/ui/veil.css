@@ -304,6 +304,27 @@
   color: #ff9a9a; background: rgba(255,107,107,0.08);
   border: 1px solid rgba(255,107,107,0.35); border-radius: 3px;
 }
+/* Ассистенты ритуала — список акторов (Запасные Планы / Инструктор). */
+.wv-rit-assist-drop {
+  padding: 6px 8px; margin-bottom: 6px; font-size: 0.8em; text-align: center; opacity: 0.8;
+  border: 1px dashed var(--wv-line); border-radius: 4px;
+}
+.wv-rit-assist-drop.over { border-color: var(--wv-holy); background: rgba(180,119,255,0.10); }
+.wv-rit-assist-list { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+.wv-rit-arow {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 0.82em;
+  padding: 3px 6px; border: 1px solid var(--wv-line); border-radius: 4px;
+}
+.wv-rit-arow.blocked { border-color: rgba(255,107,107,0.45); background: rgba(255,107,107,0.06); }
+.wv-rit-aname { flex: 1; min-width: 90px; font-weight: 600; }
+.wv-rit-arole { opacity: 0.75; font-style: italic; }
+.wv-rit-abadge { font-size: 0.85em; font-weight: 700; padding: 0 5px; border-radius: 3px; }
+.wv-rit-abadge.ok  { color: var(--wv-holy); }
+.wv-rit-abadge.bad { color: var(--wv-red); }
+.wv-rit-awhy { flex-basis: 100%; font-size: 0.9em; color: #ff9a9a; }
+.wv-rit-arow button { width: auto; padding: 0 6px; cursor: pointer; }
+.wv-rit-arow button:disabled { opacity: 0.4; cursor: not-allowed; }
+.wv-rit-instr { margin-left: 0; margin-bottom: 6px; }
 .wv-rit-mods { display: flex; flex-direction: column; gap: 3px; }
 .wv-rit-mod {
   display: grid; grid-template-columns: 18px 40px 1fr; align-items: center; gap: 6px;

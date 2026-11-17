@@ -28,6 +28,7 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
+    "mindEffect": true,
     "effect": "Аура. Психотест W+0 vs W−20. Треб.: Thought Sending. Подслушивает поверхностные мысли и эмоции всех в ауре, не прошедших встречный тест (кроме исключённых). Опытные лжецы (Deceive +20) скрывают поверхностные мысли — это не детектор лжи.",
     "isSustained": false,
     "effects": {

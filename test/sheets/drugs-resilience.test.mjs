@@ -98,7 +98,9 @@ describe("Пожиратель Змей: сроки", () => {
     captured.nextRoll = 7;
     await applyDrug(a, item);
     expect(item.system.activeEffect.roundsRemaining).toBe(4);
-    expect(captured.chat.at(-1).content).toContain("Пожиратель Змей");
+    // chat[0] — карточка применения (срок); яд категории "poison" добавляет
+    // следом ОТДЕЛЬНУЮ карточку спасброска цели (wdbc-x1nz.4) — она не в счёт.
+    expect(captured.chat[0].content).toContain("Пожиратель Змей");
   });
 
   it("срок наркотика (не яда) не меняется", async () => {

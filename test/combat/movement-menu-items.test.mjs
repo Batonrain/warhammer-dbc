@@ -9,6 +9,7 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import { movementMenuItems } from "../../module/combat/movement-actions.mjs";
+import { isNextMoveForced, clearNextMoveForced } from "../../module/combat/forced-next-move.mjs";
 
 function fakeActor({ items = [], flags = {} } = {}) {
   return { name: "Подставной", system: {}, items, getFlag: (scope, key) => flags[scope]?.[key] };
@@ -88,5 +89,36 @@ describe("movementMenuItems", () => {
     const on = movementMenuItems(fakeActor({ flags: { "warhammer-dbc": { deepContactCarry: true } } }))
       .find(i => i.key === "deepContactCarry");
     expect(on.label).toBe("Глубокий Контакт: закончить переноску");
+  });
+
+  // wdbc-98xsv: тумблер «следующий сдвиг — вынужденный» — только в бою и только
+  // актору с лимитом пути; метка читает состояние, действие переключает его.
+  describe("Следующий сдвиг — вынужденный", () => {
+    const withUuid = (type = "character") => ({ ...fakeActor(), type, uuid: "Actor.a1" });
+    afterEach(() => clearNextMoveForced());
+
+    it("вне боя пункта нет", () => {
+      expect(movementMenuItems(withUuid()).map(i => i.key)).not.toContain("forcedNextMove");
+    });
+
+    it("в бою у персонажа есть; у Техники и без типа — нет", () => {
+      globalThis.game.combat = { started: true };
+      expect(movementMenuItems(withUuid()).map(i => i.key)).toContain("forcedNextMove");
+      expect(movementMenuItems(withUuid("vehicle")).map(i => i.key)).not.toContain("forcedNextMove");
+      expect(movementMenuItems(fakeActor()).map(i => i.key)).not.toContain("forcedNextMove");
+    });
+
+    it("действие включает тумблер на актора, метка меняется, повтор выключает", () => {
+      globalThis.game.combat = { started: true };
+      globalThis.ui.notifications.info = () => {};
+      const actor = withUuid();
+      const item = () => movementMenuItems(actor).find(i => i.key === "forcedNextMove");
+      expect(item().label).toBe("Следующий сдвиг — вынужденный");
+      item().action();
+      expect(isNextMoveForced("Actor.a1")).toBe(true);
+      expect(item().label).toContain("ВКЛ");
+      item().action();
+      expect(isNextMoveForced("Actor.a1")).toBe(false);
+    });
   });
 });

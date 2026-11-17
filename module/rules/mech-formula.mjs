@@ -40,7 +40,9 @@ const RAW_KEYS = CHAR_KEYS.map(k => `${k}v`);
 // подставляется в mechEffectData по предмету, в mechRollData(actor) его нет.
 // «wound» — сколько психосил сейчас бесплатны по Ране в Реальности (rules/wound-in-reality.mjs):
 // радиус её ауры «ceil(wound/(wound+1))*cor*2» равен нулю, пока бесплатных сил нет.
-const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", "subtier", "rating", "wound", ...RAW_KEYS];
+// «rating2» — второй рейтинг Черты-источника (Y у «Демоническое Присутствие X/Y»:
+// X — штраф, Y — радиус); сейчас его подставляет только syncAuraFlag (радиус ауры).
+const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", "subtier", "rating", "rating2", "wound", ...RAW_KEYS];
 
 // Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
 // utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).
@@ -73,7 +75,9 @@ export function mechRollData(actor) {
     // файла), поэтому raw-значение получает отдельный ключ.
     corv: Number(actor?.system?.corruption?.value) || 0,
     subtier: Math.max(1, Number(actor?.system?.subraceTier) || 1),
-    wound: woundFreeCount(actor)
+    wound: woundFreeCount(actor),
+    // Момент Гладиатора (rules/momentum.mjs): очки из флага актора; у остальных — 0.
+    momentum: Math.max(0, Number(actor?.flags?.["warhammer-dbc"]?.momentum ?? actor?.getFlag?.("warhammer-dbc", "momentum")) || 0)
   };
   for (const k of CHAR_KEYS) {
     data[k] = bonus(k);

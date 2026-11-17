@@ -2,8 +2,8 @@
 //
 // module/rules/vision-target.mjs (wdbc-1rno, «Икона Богохульства») —
 // геометрическая проверка «наблюдатель видит цель по дальности+сектору»,
-// без стен. См. шапку модуля: конвенция rotation НЕ проверена на живом
-// Foundry-канвасе, только выведена из документированного поведения ядра.
+// без стен. См. шапку модуля: rotation 0 = юг, по часовой (Foundry 14);
+// четыре стороны света — в rotation-convention.test.mjs.
 
 // vision-target.mjs re-uses tokenDocDistance из regions/auras.mjs, а тот
 // транзитивно тянет apps/mechanics.mjs → regions/difficult-terrain.mjs,
@@ -59,33 +59,33 @@ describe("isTokenInSight: только дальность (angle=0 — круг�
 });
 
 describe("isTokenInSight: сектор обзора (angle сужает)", () => {
-  // rotation=0 => facing «вверх» (север, gy уменьшается).
-  it("цель прямо по направлению взгляда (rotation=0, цель выше) — видна в узком секторе", () => {
-    const observer = token("o", { range: 10, angle: 60, rotation: 0 });
+  // rotation=180 => facing «вверх» (север, gy уменьшается).
+  it("цель прямо по направлению взгляда (rotation=180, цель выше) — видна в узком секторе", () => {
+    const observer = token("o", { range: 10, angle: 60, rotation: 180 });
     const target = token("t", { gx: 0, gy: -4 }); // выше наблюдателя
     expect(isTokenInSight(observer, target, grid)).toBe(true);
   });
 
-  it("цель точно сзади (rotation=0, цель ниже) — вне узкого сектора", () => {
-    const observer = token("o", { range: 10, angle: 60, rotation: 0 });
+  it("цель точно сзади (rotation=180, цель ниже) — вне узкого сектора", () => {
+    const observer = token("o", { range: 10, angle: 60, rotation: 180 });
     const target = token("t", { gx: 0, gy: 4 }); // ниже — позади при взгляде вверх
     expect(isTokenInSight(observer, target, grid)).toBe(false);
   });
 
   it("цель сзади, но angle=360 (круговой обзор) — всё равно видна", () => {
-    const observer = token("o", { range: 10, angle: 360, rotation: 0 });
+    const observer = token("o", { range: 10, angle: 360, rotation: 180 });
     const target = token("t", { gx: 0, gy: 4 });
     expect(isTokenInSight(observer, target, grid)).toBe(true);
   });
 
-  it("поворот наблюдателя на 90° (facing вправо) — цель справа теперь видна", () => {
-    const observer = token("o", { range: 10, angle: 60, rotation: 90 });
+  it("поворот наблюдателя на rotation=270 (facing вправо) — цель справа теперь видна", () => {
+    const observer = token("o", { range: 10, angle: 60, rotation: 270 });
     const target = token("t", { gx: 4, gy: 0 }); // справа от наблюдателя
     expect(isTokenInSight(observer, target, grid)).toBe(true);
   });
 
   it("узкий сектор (30°), цель на границе половины угла — не видна за пределом", () => {
-    const observer = token("o", { range: 10, angle: 10, rotation: 0 });
+    const observer = token("o", { range: 10, angle: 10, rotation: 180 });
     // Цель почти сбоку (45° от направления взгляда) — точно вне 10°-сектора.
     const target = token("t", { gx: 4, gy: -4 });
     expect(isTokenInSight(observer, target, grid)).toBe(false);

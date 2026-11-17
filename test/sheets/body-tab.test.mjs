@@ -6,7 +6,6 @@ import {
   satisfyVital,
   setDeceased,
   setVital,
-  toggleBodyType,
   toggleImplantSide
 } from "../../module/sheets/tabs/body.mjs";
 
@@ -52,14 +51,6 @@ function actor({ vitals = {}, items = [] } = {}) {
 beforeEach(() => { resetCaptured(); game.time = { worldTime: 0 }; });
 
 describe("body tab helpers", () => {
-  it("toggleBodyType переключает фигуру в обе стороны", async () => {
-    const a = actor();
-
-    expect(await toggleBodyType(a, "male")).toBe("female");
-    expect(await toggleBodyType(a, "female")).toBe("male");
-    expect(a.flags.bodyType).toBe("male");
-  });
-
   it("setVital держит стадию в границах 0…3", async () => {
     const a = actor();
 
@@ -234,14 +225,16 @@ describe("body tab listeners", () => {
       currentTarget: { dataset, value, checked: true }
     });
 
-    await handlers[".bc-sex-toggle:click"](ev({ bodytype: "male" }));
+    // Переключателя пола здесь нет: пол живёт в system.bodyType (меню
+    // «Телосложение»), а флаг bodyType никто не читал (task-0a7d).
+    expect(handlers[".bc-sex-toggle:click"]).toBeUndefined();
     handlers[".bc-surgeon-btn:click"](ev({}));
     await handlers["[data-vital-adj]:click"](ev({ vitalAdj: "hunger", dir: "1" }));
     await handlers["[data-vital-reset]:click"](ev({ vitalReset: "hunger" }));
     await handlers[".bc-death-toggle:change"](ev({}));
     await handlers[".bc-side-btn:click"](ev({ itemId: "eye-1", side: "left" }));
 
-    expect(a.flags.bodyType).toBe("female");
+    expect(a.flags.bodyType).toBeUndefined();
     expect(surgeonCalls).toEqual([a]);
     expect(a.updates).toEqual([
       { "system.vitals.hunger": 2 },

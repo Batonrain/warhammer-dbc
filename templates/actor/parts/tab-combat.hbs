@@ -364,6 +364,10 @@
   <div class="combat-section-panel" data-collapse-key="combat-stance"> <div class="panel-title" data-action="panelCollapse">СТОЙКА{{#if stanceLocked}} <span class="rwc-recharge-badge" title="Стр. 31: Смену Стойки нельзя проводить после рукопашной атаки — снимется на следующем Ходу">🔒 заблокировано</span>{{/if}}</div> <div class="combat-collapse-body">
     <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{#if ../stanceLocked}}Стр. 31: нельзя менять Стойку после рукопашной атаки в этом Ходу{{else}}{{s.desc}}{{/if}}" {{#if ../stanceLocked}}disabled{{/if}}> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
     </div>
+    <div class="roll-dlg-row" style="margin-top:6px;" title="Оружие в другой руке парирует с −20 (снимают свойство Защитное и Талант Амбидекстр; двуручное и щиты не страдают). Рука оружия назначается на панели оружия.">
+      <label>Основная рука:</label>
+      <select name="system.mainHand"><option value="right" {{#if (eq system.mainHand "right")}}selected{{/if}}>Правая</option><option value="left" {{#if (eq system.mainHand "left")}}selected{{/if}}>Левая</option></select>
+    </div>
     {{!-- Ярость (wdbc-plsf) — тумблер состояния боя. Числа Ярости (+10 WS/S/W,
           −20 BS/I/F, стр. 15) считает rules/rage.mjs по этому полю, поведение
           (запрет Избеганий/речи/психосил, напоминание в начале Хода, тест выхода) —
@@ -384,8 +388,93 @@
     {{#if hasAvatarOfSlaughter}}
     <button type="button" class="technique-btn avatar-of-slaughter-btn" style="margin-top:6px;" title="Аватар Резни — наведите таргет (T) на видимого противника; тратит 1 Очко Бесчестия, раз за бой"><span class="tech-name">🩸 Аватар Резни</span></button>
     {{/if}}
+    {{#if hasButchersNails}}
+    <button type="button" class="technique-btn butchers-nails-btn" style="margin-top:6px;" title="Гвозди Мясника — оскорбление или угроза: тест W+10, иначе Ярость (можно намеренно провалить). Непоглощённый урон запускает ту же карточку сам"><span class="tech-name">🔩 Оскорбили / пригрозили</span></button>
+    {{/if}}
+    {{#if hasRedStreak}}
+    <button type="button" class="technique-btn red-streak-btn" style="margin-top:6px;" title="Красная Полоса — свободное действие: 1 непоглощаемый R урон себе, по желанию Кровотечение; нужно рукопашное оружие, наносящее R Dmg"><span class="tech-name">🩸 Красная Полоса</span></button>
+    {{/if}}
     {{#if hasDreadWail}}
     <button type="button" class="technique-btn dread-wail-btn" style="margin-top:6px;" title="Грозный Вопль — усиление звукового оружия ИЛИ звуковая волна AoE"><span class="tech-name">📢 Грозный Вопль</span></button>
+    {{/if}}
+    {{#if hasDirgeOfDespair}}
+    <button type="button" class="technique-btn dirge-of-despair-btn{{#if dirgeActive}} active{{/if}}" style="margin-top:6px;" title="Песнь Отчаянья — до начала следующего Хода звуковое оружие получает Оглушающее (3), но его урон падает до 0 (повторное нажатие выключает)"><span class="tech-name">🎼 Песнь Отчаянья{{#if dirgeActive}} ✓{{/if}}</span></button>
+    {{/if}}
+    {{#if hasWallOfDiscord}}
+    <button type="button" class="technique-btn wall-of-discord-btn" style="margin-top:6px;" title="Стена Диссонанса — полудействие и Очко Бесчестия; враги в радиусе Cor.b×2 м проходят S−30, провал — Ничком и отброс на Cor.b×3 м"><span class="tech-name">🔊 Стена Диссонанса</span></button>
+    {{/if}}
+    {{#if hasSingForMe}}
+    <button type="button" class="technique-btn sing-for-me-btn" style="margin-top:6px;" title="Спой Мне! — наведите таргет (T) на беспомощную или сдавшуюся жертву; 15 минут пытки, Interrogate+0 против W+0"><span class="tech-name">🎶 Спой Мне!</span></button>
+    {{/if}}
+    {{#if hasDistilledTorment}}
+    <button type="button" class="technique-btn distilled-torment-btn" style="margin-top:6px;" title="Дистиллированная Мука — после убийства звуковым оружием за Реакцию обратить плоть в пыль и сделать из неё дозу наркотика"><span class="tech-name">✨ Дистиллированная Мука</span></button>
+    {{/if}}
+    {{#if hasInfectiousMiasma}}
+    <button type="button" class="technique-btn infectious-miasma-btn{{#if miasmaStatus.active}} active{{/if}}" style="margin-top:6px;" {{#if miasmaStatus.used}}{{#unless miasmaStatus.active}}disabled{{/unless}}{{/if}} title="Заразные Миазмы — раз за бой, Очко Бесчестия: 1d5+1 Ходов в начале вашего Хода все, кто не посвящён Нурглу, в 7 м получают 1d10 C Toxic(0), игнорирующее негерметичную броню; по окончании выжившие враги — T+0 или заражение вашей болезнью"><span class="tech-name">☣ Заразные Миазмы{{#if miasmaStatus.active}} ({{miasmaStatus.left}}){{/if}}</span></button>
+    {{/if}}
+    {{#if hasRotsmith}}
+    <button type="button" class="technique-btn rotsmith-btn" style="margin-top:6px;" title="Кузнец Гнили — 5 минут: заразить нож или отрубленную голову Гнилью Нургла; через 7 часов игрового времени нож станет чумным ножом, голова — Моровой гранатой"><span class="tech-name">🔪 Кузнец Гнили</span></button>
+    {{/if}}
+    {{#if hasBlessedWithPus}}
+    <button type="button" class="technique-btn blessed-touch-btn" style="margin-top:6px;" title="Благословенный Гноем — наведите таргет (T) на того, кто коснулся вас голой кожей: 1d10 C Toxic(0); при непоглощённом уроне в конце боя — T+0 или заражение"><span class="tech-name">🦠 Коснулись кожи</span></button>
+    {{/if}}
+    {{#if hasGolemMaster}}
+    <button type="button" class="technique-btn golem-create-btn" style="margin-top:6px;" {{#unless golemStatus.free}}disabled{{/unless}} title="Повелитель Големов — тратит душу, комплект силовой брони и слот Миньона: 9 часов вселения и тест For.Lore(Warp)−10; Голем — средний Миньон-демон с Лояльностью 30. Разбитых Големов: {{golemStatus.fallen}}"><span class="tech-name">🗿 Создать Голема ({{golemStatus.free}}/{{golemStatus.max}} душ)</span></button>
+    {{/if}}
+    {{#if hasNexusOfSouls}}
+    <button type="button" class="technique-btn nexus-bind-btn" style="margin-top:6px;" {{#unless golemStatus.nexusLeft}}disabled{{/unless}} title="Узы Душ — привязать Голема к копии Таланта: он ходит в Инициативу колдуна и служит его Псайбером. Свободных связей: {{golemStatus.nexusLeft}}"><span class="tech-name">🔗 Узы Душ ({{golemStatus.nexusLeft}})</span></button>
+    {{/if}}
+    {{#if hasRebornInDust}}
+    <button type="button" class="technique-btn reborn-in-dust-btn" style="margin-top:6px;" title="Возрождён во Прахе — полное действие, Очко Бесчестия и психотест W−20 в Усиленном режиме: разбитый Голем встаёт с Ранами, равными Успехам, и лежит в Ступоре до начала вашего следующего Хода"><span class="tech-name">♻ Возрождён во Прахе</span></button>
+    {{/if}}
+    {{#if hasInfernalShells}}
+    <button type="button" class="technique-btn infernal-shells-btn" style="margin-top:6px;" title="Инфернальные Снаряды — час резьбы: 24 обычных болта (единица боеприпаса) становятся Инферно-болтами Тзинча"><span class="tech-name">🔩 Инфернальные Снаряды</span></button>
+    {{/if}}
+    {{#if hasHarbinger}}
+    <button type="button" class="technique-btn apostle-convert-btn" style="margin-top:6px;" title="Предвестник Ереси — наведите таргет (T) на дружественного NPC: Charm+0 против W+0, при победе он разделяет вашу веру"><span class="tech-name">📿 Обратить в веру</span></button>
+    <button type="button" class="technique-btn apostle-faithful-btn" style="margin-top:6px;" title="Предвестник Ереси — наведите таргет (T) на NPC, разделяющего вашу веру: Очко Бесчестия и Charm+10 делают его Правоверным (+30 на сопротивление убеждению). Правоверных на сцене: {{darkApostle.faithfulCount}}"><span class="tech-name">🕯 Правоверный ({{darkApostle.faithfulCount}})</span></button>
+    {{/if}}
+    {{#if hasDarkDevotion}}
+    <button type="button" class="technique-btn apostle-monument-btn" style="margin-top:6px;" title="Тёмное Поклонение — Очко Бесчестия: соорудить монумент Разрушительным Силам; бонусы к ритуалам назначает ГМ. Воздвигнуто: {{darkApostle.monuments}}"><span class="tech-name">🗿 Монумент ({{darkApostle.monuments}})</span></button>
+    {{/if}}
+    {{#if hasTruePrayer}}
+    <button type="button" class="technique-btn apostle-true-prayer-btn" style="margin-top:6px;" {{#unless darkApostle.inCombat}}disabled{{/unless}} title="Истинная Молитва — полудействие, For.Lore (Heresy)+0: успех возвращает одно потраченное Очко Бесчестия ({{darkApostle.infamy}}/{{darkApostle.infamyMax}}). Только в бою"><span class="tech-name">🙏 Истинная Молитва</span></button>
+    {{/if}}
+    {{#if hasLitanyOfChaos}}
+    <button type="button" class="technique-btn apostle-litany-btn" style="margin-top:6px;" {{#unless darkApostle.inCombat}}disabled{{/unless}} title="Литания Хаоса — Очко Бесчестия: подчинённым под вашим Командным Присутствием до конца боя один из бонусов Бога (Extreme (9/−1), +30 на Командование, автопроход Трудного Ландшафта, Frenzy и Hatred (Все!), Fanatic).{{#if darkApostle.litanyLabel}} Сейчас: {{darkApostle.litanyLabel}}.{{/if}}"><span class="tech-name">📜 Литания Хаоса{{#if darkApostle.litanyLabel}}: {{darkApostle.litanyLabel}}{{/if}}</span></button>
+    {{/if}}
+    {{#if hasLayOnHands}}
+    <button type="button" class="technique-btn apostle-lay-on-hands-btn" style="margin-top:6px;" title="Возложение Рук — наведите таргет (T) на добровольную цель: она получит Порчу до следующего Порога Мутации (не выше вашей Cor), а вы бросите мутацию три раза с вашим Inf и выберете. Раз в месяц на цель"><span class="tech-name">🖐 Возложение Рук</span></button>
+    {{/if}}
+    {{#if hasMartyr}}
+    <button type="button" class="technique-btn apostle-martyr-btn" style="margin-top:6px;" title="Мученик — полное действие, For.Lore (Heresy)+0: Правоверный в поле зрения погибает и становится демоном (4+ Успеха — демона называете вы, иначе ГМ). Правоверных на сцене: {{darkApostle.faithfulCount}}"><span class="tech-name">☠ Мученик</span></button>
+    {{/if}}
+    {{#if hasMortalInstrument}}
+    <button type="button" class="technique-btn apostle-mortal-btn" style="margin-top:6px;" {{#unless darkApostle.mortalReady}}disabled{{/unless}} title="Смертный Инструмент — раз в сессию, в смертельной опасности: Очко Бесчестия, Боги отвечают (щит от смертельного удара, мутация, демоны — выбирает ГМ).{{#if darkApostle.mortalShield}} Щит Богов поднят.{{/if}}"><span class="tech-name">⚡ Смертный Инструмент{{#if darkApostle.mortalShield}} (щит){{/if}}</span></button>
+    {{/if}}
+    {{#if hasHunterSight}}
+    <button type="button" class="technique-btn hunter-sight-btn" style="margin-top:6px;" title="Взор Охотника — души в зоне Unnatural Senses и их грубая сила по Inf (шёпот вам и ГМу). Достойна ли душа трофея, решает ГМ"><span class="tech-name">👁 Взор Охотника</span></button>
+    {{/if}}
+    {{#if hasIronCage}}
+    <button type="button" class="technique-btn warpsmith-cage-btn" style="margin-top:6px;" title="Железная Клеть — наведите таргет (T) на демона в Истинной Форме не дальше I.b м: полное действие, Tech-Use−10 против W+0. Заарканенный демон парализован, пока вы не сдвинетесь с места; через W.b часов (Календарь) он Сломлен и автоматически проваливает встречные тесты W против вас. Заарканено: {{warpsmith.caged}}, Сломлено: {{warpsmith.broken}}"><span class="tech-name">⛓ Железная Клеть ({{warpsmith.caged}}/{{warpsmith.broken}})</span></button>
+    {{/if}}
+    {{#if hasSigilOfDominion}}
+    <button type="button" class="technique-btn warpsmith-sigil-btn" style="margin-top:6px;" title="Печать Владычества — наведите таргет (T) на Сломленного вами демона: Очко Бесчестия (без бросков) — железная печать, дающая её держателю те же преимущества против этого демона"><span class="tech-name">🔱 Печать Владычества</span></button>
+    {{/if}}
+    {{#if hasCellOfShame}}
+    <button type="button" class="technique-btn warpsmith-cell-btn" style="margin-top:6px;" title="Ячейка Позора — наведите таргет (T) на Сломленного вами демона: 5 Ходов, For.Lore (Daemons)−20; демон навсегда теряет 10 W и 15 Inf, выбранное устройство не требует перезарядки"><span class="tech-name">🔋 Ячейка Позора</span></button>
+    {{/if}}
+    {{#if hasEmpyreanWhip}}
+    <button type="button" class="technique-btn warpsmith-whip-btn" style="margin-top:6px;" {{#unless warpsmith.inCombat}}disabled{{/unless}} title="Эмпирейная Плеть — полное действие, комбинированный тест For.Lore (Daemons)−20 и Command(I)−10: до конца боя Сломленные вами демонические машины в радиусе I м управляются напрямую, как Миньоны"><span class="tech-name">🪢 Эмпирейная Плеть</span></button>
+    {{/if}}
+    {{#if hasForgeOfOne}}
+    <button type="button" class="technique-btn warpsmith-forge-btn" style="margin-top:6px;" title="Кузница Одного — Очко Бесчестия: собрать известный паттерн техники или оболочку демонической машины (R3 и ниже) из обломков за сутки работы"><span class="tech-name">🔨 Кузница Одного</span></button>
+    {{/if}}
+    {{#if hasRunDown}}
+    <button type="button" class="technique-btn warpsmith-rundown-btn" style="margin-top:6px;" {{#unless warpsmith.inCombat}}disabled{{/unless}} title="Загнать — свободное действие раз в Ход, Очко Бесчестия: наведите таргет (T) на Сломленную машину — +30 ко всем Характеристикам и 1 Очко Бесчестия до начала вашего следующего Хода; затем она теряет 3d10 Структуры, Беспомощна 1d5 Раундов, а демон навсегда теряет 1d5 W"><span class="tech-name">🏎 Загнать</span></button>
+    {{/if}}
+    {{#if hasWalkingWasteland}}
+    <button type="button" class="technique-btn walking-wasteland-btn" style="margin-top:6px;" title="Ходячая Пустошь — 1 непоглощаемого R урона себе, чтобы намеренно заразить местность вокруг (квадрат 100×100 м, 7 дней). Сама зона появляется и без кнопки, когда вы получаете непоглощённый урон в бою"><span class="tech-name">🏜 Заразить местность</span></button>
     {{/if}}
     {{#if hasResplendentRaiment}}
     <button type="button" class="technique-btn resplendent-raiment-btn" style="margin-top:6px;" title="Блистательные Одеяния — раз за бой/сцену, тратит 1 Очко Бесчестия"><span class="tech-name">👑 Блистательные Одеяния</span></button>
@@ -542,6 +631,7 @@
           <span class="{{#unless mountControl.trained}}mount-warn{{/unless}}">{{mountControl.label}} {{mountControl.value}}</span>
         </div>
         <div class="mount-stat"><label>Стрельба с седла</label><span>{{mountRanged}}</span></div>
+        {{#if mountRangedLightNote}}<div class="mount-stat"><label>Пистолет/винтовка</label><span title="{{mountRangedLightNote}}">{{mountRangedLight}}</span></div>{{/if}}
         {{#if mountPassengerMod}}<div class="mount-stat"><label>Пассажир: физ. тесты</label><span title="Штраф на все атаки и тесты Навыков на Ловкость/Силу; считается сам. Рысь снимает.">{{mountPassengerMod}}</span></div>{{/if}}
         <div class="mount-stat"><label>Маневрирование</label><span>{{mountManoeuvre}}</span></div>
         <div class="mount-stat"><label>Руки заняты</label><span title="{{mountHands.reason}}">{{mountHands.hands}}</span></div>
@@ -613,7 +703,7 @@
             <span class="rwc-no-ammo">Нет боеприпасов</span> {{/if}}
           <div class="rwc-mag-block
             {{#if w.magLow}}rwc-mag-low{{/if}}
-            {{#if w.magEmpty}}rwc-mag-empty{{/if}}"> <span class="rwc-mag-cur">{{w.magazineCur}}</span> <span class="rwc-mag-sep">/</span> <span class="rwc-mag-max">{{w.magazineMax}}</span> </div> <button type="button" class="weapon-reload-btn rwc-reload-btn" data-item-id="{{w.id}}" title="Перезарядить: {{w.name}}">Перезар.</button> {{#each w.compatAmmo as |ammo|}}
+            {{#if w.magEmpty}}rwc-mag-empty{{/if}}"> {{#if w.magLabel}}<span class="rwc-mag-cur">{{w.magLabel}}</span>{{else}}<span class="rwc-mag-cur">{{w.magazineCur}}</span> <span class="rwc-mag-sep">/</span> <span class="rwc-mag-max">{{w.magazineMax}}</span>{{/if}} </div> <button type="button" class="weapon-reload-btn rwc-reload-btn" data-item-id="{{w.id}}" title="Перезарядить: {{w.name}}">Перезар.</button> {{#each w.compatAmmo as |ammo|}}
             {{#if ammo.loaded}}
             <span class="rwc-ammo-stock" title="В запасе: {{ammo.name}}"> {{ammo.quantity}}
             </span> {{/if}}

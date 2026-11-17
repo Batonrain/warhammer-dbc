@@ -59,8 +59,8 @@ function setupPair({ ag = 45, wp = 40, weaponItems = [], gazeOnAttacker = true, 
   attacker.uuid = "Actor.attacker-1";
   globalThis.fromUuid = async uuid => ({ "Actor.attacker-1": attacker }[uuid] ?? null);
   globalThis.canvas.tokens.placeables = [
-    withToken(defender, { x: 0, y: 0, rotation: 0, sight: sightOverride }),
-    withToken(attacker, { x: 0, y: -300 }) // атакующий в поле зрения защищающегося по умолчанию (0° сектор смотрит вверх)
+    withToken(defender, { x: 0, y: 0, rotation: 180, sight: sightOverride }),
+    withToken(attacker, { x: 0, y: -300 }) // атакующий в поле зрения защищающегося по умолчанию (rotation 180 смотрит вверх)
   ];
   return { defender, attacker };
 }
@@ -103,9 +103,9 @@ describe("_performDodge: Взор Неизбежности", () => {
     const attacker = actorFor({ items: [gazeItem()] });
     attacker.uuid = "Actor.attacker-1";
     globalThis.fromUuid = async uuid => ({ "Actor.attacker-1": attacker }[uuid] ?? null);
-    // Защищающийся смотрит на север (rotation 0, сектор 210 по умолчанию), атакующий строго сзади (юг).
+    // Защищающийся смотрит на север (rotation 180, сектор 210 по умолчанию), атакующий строго сзади (юг).
     globalThis.canvas.tokens.placeables = [
-      withToken(defender, { x: 0, y: 0, rotation: 0, sight: { angle: 210 } }),
+      withToken(defender, { x: 0, y: 0, rotation: 180, sight: { angle: 210 } }),
       withToken(attacker, { x: 0, y: 300 })
     ];
     captured.dice = [50]; // провалил бы комбинированный W-10=30, но эффект не должен сработать вовсе

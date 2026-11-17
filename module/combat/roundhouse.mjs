@@ -38,6 +38,7 @@ import { writeToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 import { hasPugilistTalent } from "../rules/pugilist-talents.mjs";
 import { isIntegralAttack } from "./equipped-melee.mjs";
+import { baseIsCharge } from "../rules/melee-base.mjs";
 
 /** Бонус инициатора: Athletics(S)+10 против Athletics(S)+0. */
 export const ROUNDHOUSE_INITIATOR_BONUS = 10;
@@ -65,7 +66,7 @@ export function isKickWeapon(weapon) {
  * удар ногой с Натиска, попадание, цель не крупнее.
  */
 export function roundhouseOffered({ actor, weapon, baseKey, hit, targetActor }) {
-  if (!hit || !targetActor || baseKey !== "charge") return false;
+  if (!hit || !targetActor || !baseIsCharge(baseKey)) return false;
   if (!isKickWeapon(weapon) || !hasPugilistTalent(actor, "roundhouseKick")) return false;
   return sizeOf(targetActor) <= sizeOf(actor);
 }

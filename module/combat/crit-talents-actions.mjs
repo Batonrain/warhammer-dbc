@@ -38,6 +38,8 @@ import { critCharDamageHtml, applyCharDamageButton } from "./char-damage-button.
 import { sweetSufferingHtml } from "./sweet-suffering.mjs";
 import { dropFromHand } from "./limb-loss.mjs";
 import { dimCritEffects, collectCritEffects, CRIT_TALENT_FLAGS as F } from "./crit-talents.mjs";
+import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
+import { hasUnstoppableWrath, wrathKeeps, WRATH_ROUND_FLAG, WRATH_DEATH_FLAG } from "../rules/khorne-berserker.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -69,6 +71,52 @@ export async function useNeverDie(actor, { message, block } = {}) {
     }), { sound: false, ignoreRollMode: true });
     return true;
   }, "Не Умирать с этой карточки уже использовано.");
+}
+
+// ── Неостановимый Гнев ──────────────────────────────────────────────────────
+
+/**
+ * Неостановимый Гнев (Черта Берсерка Кхорна): раз в Раунд тест T+0 — успех гасит эффекты карточки, кроме Кровотечения.
+ * Смерть игнорируется «только один раз за бой»: если право потрачено раньше, кнопки смерти остаются живыми.
+ * @returns {Promise<boolean>} true — тест брошен (попытка Раунда израсходована)
+ */
+export async function useUnstoppableWrath(actor, { message, block } = {}) {
+  if (!hasUnstoppableWrath(actor)) {
+    ui.notifications?.warn(`${actor?.name ?? "?"}: нет Черты «Неостановимый Гнев».`);
+    return false;
+  }
+  if (!isCapabilityAvailable(actor, WRATH_ROUND_FLAG, "round")) {
+    ui.notifications?.warn(`${actor.name}: Неостановимый Гнев уже испытан в этом Раунде.`);
+    return false;
+  }
+  return runCardOnce(message, F.unstoppableWrathTried, async () => {
+    await markCapabilityUsed(actor, WRATH_ROUND_FLAG, "round");
+    const test = await rollResilienceTest(actor, "t", {
+      title: "Неостановимый Гнев", charLabel: "T",
+      successText: "Успех — Критические Эффекты проигнорированы (кроме Кровотечения)",
+      failText: "Провал — Критические Эффекты остаются"
+    });
+    if (!test.success) return true;
+    const hasDeath = !!block?.querySelector?.(".wh-crit-death-btn, .wh-shock-death-btn");
+    let deathIgnored = false;
+    if (hasDeath && isCapabilityAvailable(actor, WRATH_DEATH_FLAG, "battle")) {
+      await markCapabilityUsed(actor, WRATH_DEATH_FLAG, "battle");
+      deathIgnored = true;
+    }
+    await markCardOnce(message, F.unstoppableWrathUsed);
+    if (deathIgnored) await markCardOnce(message, F.unstoppableWrathDeath);
+    const n = dimCritEffects(block, "Проигнорировано: Неостановимый Гнев", { keep: btn => wrathKeeps(btn, { deathIgnored }) });
+    await postTestCard(actor, testCardHtml({
+      icon: rollIcon("spark", "#ff5a5a"), title: `Неостановимый Гнев — ${esc(actor.name)}`,
+      lines: [`<div class="roll-threshold">Эффекты Критического Эффекта проигнорированы${n ? ` (кнопок погашено: ${n})` : ""}; Кровотечение остаётся. `
+        + (hasDeath
+          ? (deathIgnored ? "Смерть игнорирована — право на бой потрачено." : "Смерть НЕ игнорируется: право на этот бой уже потрачено.")
+          : "")
+        + ` Урон остаётся — Раны уже списаны.</div>`],
+      outcome: outcomeHtml(true, "Критический Эффект проигнорирован")
+    }), { sound: false, ignoreRollMode: true });
+    return true;
+  }, "Неостановимый Гнев с этой карточки уже испытан.", { persist: false });
 }
 
 // ── Боль — Лишь Иллюзия ─────────────────────────────────────────────────────

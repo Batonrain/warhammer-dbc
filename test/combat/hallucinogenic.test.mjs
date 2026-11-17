@@ -9,17 +9,20 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   HALLUCINOGENIC_TABLE, rollHallucinogenicEffect, isHallucinatingCannotAttack
 } from "../../module/combat/hallucinogenic.mjs";
+import { markFrenzyExited, frenzyEntryBlocked } from "../../module/combat/frenzy.mjs";
+import { withRageGate } from "../support/rage-gate.mjs";
 
 function actorFor(overrides = {}) {
   const flags = {};
   const actor = {
-    name: "Подставной",
+    name: "Подставной", items: [],
     system: { conditions: {}, inRage: false, ...overrides },
     getFlag: (_s, k) => flags[k],
+    setFlag: async (_s, k, v) => { flags[k] = v; },
     update: async data => {
       for (const [path, value] of Object.entries(data)) {
         const m = path.match(/^flags\.warhammer-dbc\.(-=)?(.+)$/);
@@ -35,6 +38,7 @@ function actorFor(overrides = {}) {
 }
 
 beforeEach(resetCaptured);
+afterEach(() => { globalThis.game.combat = undefined; });
 
 describe("HALLUCINOGENIC_TABLE", () => {
   it("ровно 10 граней, у каждой есть title и text", () => {
@@ -80,6 +84,17 @@ describe("rollHallucinogenicEffect", () => {
     const { entry } = await rollHallucinogenicEffect(actor);
     expect(entry.title).toBe("Порррррву!!!");
     expect(actor.system.inRage).toBe(true);
+  });
+
+  it("грань 8 вводит в Ярость и после выхода из неё в этом бою — наркотики исключение из запрета (wdbc-sh3qt)", async () => {
+    globalThis.game.combat = { id: "combat-1", round: 1 };
+    captured.nextRoll = 8;
+    const actor = withRageGate(actorFor());
+    await markFrenzyExited(actor);
+    expect(frenzyEntryBlocked(actor)).toBe(true);
+    await rollHallucinogenicEffect(actor);
+    expect(actor.system.inRage).toBe(true);
+    expect(captured.warnings).toEqual([]);
   });
 
   it("грань 9 (Я маленький) — только флаг граней, никакого Состояния напрямую", async () => {

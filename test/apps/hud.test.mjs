@@ -279,3 +279,41 @@ describe("hudData: наручное/наплечное оружие (Independent
     expect(data.zeroHand.map(z => z.id)).not.toContain("blade1");
   });
 });
+
+describe("initHUD: эффекты на акторе перерисовывают HUD (hud-activeeffect)", () => {
+  it("create/update/deleteActiveEffect своего актора вызывает перерисовку, чужого — нет", async () => {
+    const handlers = {};
+    const lookups = [];
+    const prevHooks = globalThis.Hooks;
+    const prevDoc = globalThis.document;
+    globalThis.Hooks = { on: (name, fn) => { (handlers[name] ??= []).push(fn); } };
+    globalThis.document = {
+      getElementById: id => { lookups.push(id); return null; },
+      createElement: () => ({}),
+      body: { classList: { add() {} }, appendChild() {} }
+    };
+    const prevUser = globalThis.game.user;
+    globalThis.game.user = { isGM: false, character: { id: "actor-1", type: "character" } };
+    try {
+      const { initHUD } = await import("../../module/apps/hud.mjs");
+      initHUD();
+      const after = () => lookups.length;
+      for (const name of ["createActiveEffect", "updateActiveEffect", "deleteActiveEffect"]) {
+        expect(handlers[name]?.length).toBe(1);
+        const before = after();
+        handlers[name][0]({ parent: { id: "actor-1", documentName: "Actor" } });
+        expect(after()).toBeGreaterThan(before);
+        const mid = after();
+        handlers[name][0]({ parent: { id: "other", documentName: "Actor" } });
+        expect(after()).toBe(mid);
+      }
+      const before = after();
+      handlers.createActiveEffect[0]({ parent: { documentName: "Item", parent: { id: "actor-1" } } });
+      expect(after()).toBeGreaterThan(before);
+    } finally {
+      globalThis.Hooks = prevHooks;
+      globalThis.document = prevDoc;
+      globalThis.game.user = prevUser;
+    }
+  });
+});

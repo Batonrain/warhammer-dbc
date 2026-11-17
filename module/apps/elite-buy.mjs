@@ -18,8 +18,21 @@ import { checkEliteRequirements, eliteWho, eliteCost, eliteCostNote }
   from "../rules/elite-requirements.mjs";
 import { isFatedElite, fatedEliteCost, eliteTakenForPrice, FATED_DISCOUNT } from "../rules/fated-path.mjs";
 import { hasEliteDiscount, consumeEliteDiscount, TRAINING_ELITE_DISCOUNT_FLAG } from "../rules/training.mjs";
+import { isAstartes } from "../rules/legacy-weapon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { grantEliteGear } from "./gear-grant.mjs";
+
+/**
+ * Базовая цена архетипа для этого персонажа, ещё без множителя за взятые.
+ * Книга иногда называет две цены — Облитератор «4500 xp для Космодесантника,
+ * 5500 xp для Человека»: тогда цена не-Космодесантника лежит в
+ * system.costNonAstartes, а в system.cost — цена Космодесантника.
+ */
+export function eliteBaseCost(actor, doc) {
+  const other = Number(doc?.system?.costNonAstartes) || 0;
+  if (other > 0 && !isAstartes(actor)) return other;
+  return doc?.system?.cost;
+}
 
 /**
  * Цена архетипа именно для этого персонажа, с множителем за уже взятые.
@@ -37,7 +50,7 @@ export function eliteCostFor(actor, doc) {
     return { cost: fatedEliteCost(doc?.system?.cost), taken, fated: true,
              note: `Предначертанный Путь: −${FATED_DISCOUNT}, всегда базовая цена` };
   }
-  const base = eliteCost(doc?.system?.cost, taken);
+  const base = eliteCost(eliteBaseCost(actor, doc), taken);
   const discountLog = actor?.getFlag?.("warhammer-dbc", TRAINING_ELITE_DISCOUNT_FLAG) ?? [];
   if (hasEliteDiscount(discountLog, doc?.name)) {
     return { cost: Math.ceil(base / 2), taken, fated: false, klaivex: true,

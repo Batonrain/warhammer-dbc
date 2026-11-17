@@ -14,6 +14,7 @@ import { minionsPanelContext, minionsOfActor } from "../../module/sheets/tabs/mi
 import { applyMinionSlot, minionSlotLabel } from "../../module/apps/minion-talent.mjs";
 import { minionSlotOf } from "../../module/rules/minion-build.mjs";
 import { clearRuleSources, registerRuleSource } from "../../module/rules/sources.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
 const talent = (group, tier, id) => ({
   id, type: "talent", name: "Minion of Chaos / Миньон Хаоса",
@@ -31,6 +32,44 @@ const master = (items = [], chars = { fel: 45, per: 32, int: 51, wp: 30 }) => ({
 const minion = (group, tier, name = "Слуга") => ({
   uuid: `Actor.${name}`, name, img: "icons/svg/mystery-man.svg",
   system: { masterUuid: "Actor.master", minionType: group, minionTier: tier, loyalty: { value: 30, max: 32 } }
+});
+
+const MECHANICUM = "packs-src/talents/Механикум";
+const packTalent = id => {
+  const d = packDocById(MECHANICUM, id);
+  return { id: d._id, type: d.type, name: d.name, system: d.system, flags: d.flags };
+};
+
+describe("подсказка при Бинарном Владычестве и Бинарной Пастве без слуг", () => {
+  it("Владычество без слотов и слуг — блока нет, подсказка есть", () => {
+    const ctx = minionsPanelContext(master([packTalent("fTx8PaNrxtN9dJYo")]), []);
+    expect(ctx.hasMinionTalent).toBe(false);
+    expect(ctx.minionBinaryHint).toBe(true);
+  });
+
+  it("Паства без слотов и слуг — то же", () => {
+    const ctx = minionsPanelContext(master([packTalent("nfTL20vbJP46bgJX")]), []);
+    expect(ctx.hasMinionTalent).toBe(false);
+    expect(ctx.minionBinaryHint).toBe(true);
+  });
+
+  it("с Талантом «Миньон Хаоса» блок есть, подсказки нет", () => {
+    const ctx = minionsPanelContext(master([packTalent("fTx8PaNrxtN9dJYo"), talent("human", "lesser", "t1")]), []);
+    expect(ctx.hasMinionTalent).toBe(true);
+    expect(ctx.minionBinaryHint).toBe(false);
+  });
+
+  it("с уже привязанным слугой блок есть, подсказки нет", () => {
+    const ctx = minionsPanelContext(master([packTalent("nfTL20vbJP46bgJX")]), [minion("machine", "lesser")]);
+    expect(ctx.hasMinionTalent).toBe(true);
+    expect(ctx.minionBinaryHint).toBe(false);
+  });
+
+  it("без Бинарных Талантов подсказки нет", () => {
+    const ctx = minionsPanelContext(master([{ type: "talent", name: "Дуэлист" }]), []);
+    expect(ctx.hasMinionTalent).toBe(false);
+    expect(ctx.minionBinaryHint).toBe(false);
+  });
 });
 
 describe("блок «МИНЬОНЫ»", () => {

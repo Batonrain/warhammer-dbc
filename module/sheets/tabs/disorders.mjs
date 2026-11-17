@@ -28,9 +28,12 @@ import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { severityTestMod, effectiveSeverity, stepSeverity } from "../../rules/disorder-severity.mjs";
 import { commitRerollUse } from "../../combat/angel-hunters.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { fearIgnore } from "../../rules/fear-ignore.mjs";
 import { hasTalentCapability } from "../../rules/ability-by-key.mjs";
 import { JADED_CAP } from "../../rules/courage-talents.mjs";
+import { INFERNAL_FAMILIARITY_CAP } from "../../rules/defiance-talents.mjs";
 import { anyRadiantPresenceHolderExists, anyIntoTheJawsOfHellHolderExists } from "../../rules/leadership-talents.mjs";
+import { radiantPresenceSeenBy, radiantPresenceHint } from "../../combat/radiant-presence.mjs";
 import { RAGE_FEAR_CAPABILITY, rageFearRating, isRageFearSource, relationByDisposition } from "../../rules/warp-touched.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
@@ -129,11 +132,14 @@ export function openFearDialog(actor) {
     ? `<div class="atk-dlg-row"><label title="Затронутый Варпом: Страх врага в Ярости нельзя игнорировать — не действуют память сцены, автоуспех по Infamy или своему Страху, Стальное Сердце"><input id="fear-prop-unignorable" type="checkbox"${pre.unignorable ? " checked" : ""}/> Нельзя игнорировать (враг в Ярости)</label></div>`
     : "";
   // Radiant Presence/Блистательное Присутствие и Into the Jaws of Hell/
-  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — решение владельца: галочки
-  // тем же приёмом, что «Нельзя игнорировать» выше — ГМ решает на глаз,
-  // показываются только если в мире вообще есть носитель (иначе незачем).
+  // В Самое Пекло (Sahara 3-ac78, 19.10.2026) — галочки тем же приёмом, что
+  // «Нельзя игнорировать» выше, показываются только если в мире вообще есть
+  // носитель (иначе незачем). Блистательное Присутствие (wdbc-051qb) —
+  // проставляется само, если союзный или нейтральный носитель в поле зрения токена; «слышит»
+  // и снятие — руками. «В Самое Пекло» — только руками: книга не даёт радиуса.
+  const radiantSeen = radiantPresenceSeenBy(actor, { sourceActor: targetActor });
   const radiantPresenceHtml = anyRadiantPresenceHolderExists(game.actors ?? [])
-    ? `<div class="atk-dlg-row"><label title="Видит или слышит союзника/нейтрального с Блистательным Присутствием — +10 на этот тест"><input id="fear-prop-radiant" type="checkbox"/> Блистательное Присутствие (+10)</label></div>`
+    ? `<div class="atk-dlg-row"><label title="${esc(radiantPresenceHint(radiantSeen))}"><input id="fear-prop-radiant" type="checkbox"${radiantSeen.seen ? " checked" : ""}/> Блистательное Присутствие (+10)</label></div>`
     : "";
   const jawsOfHellHtml = anyIntoTheJawsOfHellHolderExists(game.actors ?? [])
     ? `<div class="atk-dlg-row"><label title="Рядом сражается командующий с В Самое Пекло — тест проходит автоматически"><input id="fear-prop-jaws" type="checkbox"/> В Самое Пекло (авто-успех)</label></div>`
@@ -205,7 +211,18 @@ export function openFearDialog(actor) {
         getBaseEff: () => {
           const ratingKey = html.find("#fear-rating").val();
           const type = html.find("#fear-type").val();
-          const r = FEAR_RATINGS[ratingKey] || FEAR_RATINGS[1];
+          // Рейтинг — через fearIgnore, как у самого броска (combat/fear.mjs): Стальное
+          // Сердце снижает его на 1, а «Нельзя игнорировать» это снижение снимает
+          // (task-ab3f). Иначе игрок видел Порог по настоящему рейтингу, а в чате
+          // получал другой.
+          const ignore = fearIgnore({
+            rating: ratingKey,
+            steelHeart: hasRuleFlag(actor, "mutation.heartOfSteel"),
+            // Инфернальное Знакомство — только против демона (галочка «Демон»), как у самого броска.
+            infernal: !!root.querySelector("#fear-prop-demon")?.checked && hasTalentCapability(actor, INFERNAL_FAMILIARITY_CAP),
+            unignorable: !!root.querySelector("#fear-prop-unignorable")?.checked
+          });
+          const r = FEAR_RATINGS[ignore.rating] || FEAR_RATINGS[1];
           const ratingMod = type === "important" ? r.important : r.normal;
           const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(root);
           const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
@@ -218,7 +235,7 @@ export function openFearDialog(actor) {
             + autoTestMods(actor, { kind: "skill", char, morale: true, fearTest: true, targetActor, radiantPresence }).total;
         }
       });
-      root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, #fear-prop-radiant, .rule-mod").forEach(el =>
+      root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, #fear-prop-demon, #fear-prop-radiant, #fear-prop-unignorable, .rule-mod").forEach(el =>
         el.addEventListener("change", updateAutoOutcomeNote));
     }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
@@ -319,6 +336,43 @@ export async function rollDisorder(actor, opts = {}) {
 }
 
 /**
+ * Расстройство, названное источником (Мастер Казней, Целеустремлённый Охотник: «Психопатия» на Тяжести 0, не ниже 0):
+ * без броска по таблице. Уже лежащее на листе не дублируется, а получает тот же нижний предел и «неизлечимо».
+ * Выданное помечается источником, как у случайного (смена источника снимает и расстройство).
+ */
+async function grantNamedDisorder(actor, sourceItem, { name, severityMin, incurable, label }) {
+  const entry = DISORDER_LIBRARY.find(d => d.name === name);
+  if (!entry) return { ok: false, reason: `Расстройства «${name}» нет в таблице.` };
+  const floor = severityMin === null || severityMin === undefined ? null : Number(severityMin);
+  const who = label || sourceItem?.name || "";
+  const existing = actor.items.find(i => i.type === "mentalDisorder" && i.name === name);
+  if (existing) {
+    const cur = existing.system?.severityMin;
+    const patch = { "system.incurable": !!incurable };
+    if (floor !== null && (cur === null || cur === undefined || Number(cur) < floor)) patch["system.severityMin"] = floor;
+    await existing.update(patch);
+    return { ok: true, item: existing, existing: true };
+  }
+  const originGrant = sourceItem?.getFlag?.("warhammer-dbc", "originGrant");
+  const flags = { "warhammer-dbc": {
+    ...(sourceItem?.id ? { grantedByItem: sourceItem.id } : {}),
+    ...(originGrant ? { originGrant } : {})
+  } };
+  const item = await createDisorderItem(actor, entry, { system: { severity: 0, severityMin: floor, incurable: !!incurable }, flags });
+  if (!item) return { ok: false, reason: `Расстройство «${name}» уже есть.` };
+  if (sourceItem?.setFlag) await sourceItem.setFlag("warhammer-dbc", "startingDisorderId", item.id);
+  await postTestCard(actor, {
+    icon: rollIcon("dice", "#6fe6ff"), title: `Ментальное Расстройство — ${esc(actor.name)}`,
+    outcome: `<span class="roll-failure">${rollIcon("warn", "#ffb84d")}${esc(name)}</span>`,
+    sections: [
+      `<div class="roll-threshold"><b>${esc(who)}: расстройство на Тяжести 0${floor !== null ? `, не ниже ${floor}` : ""}${incurable ? ", неизлечимо" : ""}.</b></div>`,
+      entry.desc ? `<div class="roll-threshold">${entry.desc}</div>` : ""
+    ]
+  }, { sound: false });
+  return { ok: true, item };
+}
+
+/**
  * Стартовое расстройство от источника (Архетип «Беглый Псайкер»: «начинает
  * игру со случайным ментальным расстройством. Оно неизлечимо и его тяжесть не
  * может опуститься ниже −2»). Зовётся записью Конструктора kind:"script"
@@ -328,8 +382,9 @@ export async function rollDisorder(actor, opts = {}) {
  * смена Архетипа снимает и расстройство.
  * @returns {Promise<{ok:boolean, reason?:string, item?:Item}>}
  */
-export async function grantStartingDisorder(actor, sourceItem, { severityMin = null, incurable = true, label = "" } = {}) {
+export async function grantStartingDisorder(actor, sourceItem, { severityMin = null, incurable = true, label = "", name = "" } = {}) {
   if (!actor) return { ok: false, reason: "Нет актора." };
+  if (name) return grantNamedDisorder(actor, sourceItem, { name, severityMin, incurable, label });
   const prevId = sourceItem?.getFlag?.("warhammer-dbc", "startingDisorderId");
   if (prevId && actor.items.get(prevId)) {
     return { ok: false, reason: `Стартовое расстройство уже выдано: «${actor.items.get(prevId).name}».` };
