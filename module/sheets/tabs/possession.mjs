@@ -101,7 +101,7 @@ export async function toggleManifest(actor) {
     // один раз при входе в Проявление; при выходе их срезает ветка выхода ниже.
     if (giftNamesOf(actor).has("Гигант")) {
       const w = sys.wounds || {};
-      const cap = (Number(w.max) || 0) + 10;
+      const cap = (Number(w.effectiveMax ?? w.max) || 0) + 10;
       updates["system.wounds.value"] = Math.min(cap, (Number(w.value) || 0) + 10);
     }
     const body = `

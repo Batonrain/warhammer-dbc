@@ -70,6 +70,16 @@ describe("Одержимый: Дар «Гигант» и выход из Про�
     }
   });
 
+  it("вход при бонусе к максимуму (Крепкое Телосложение): +10 от производного максимума, не от хранимого", async () => {
+    const a = possessed({ wounds: { max: 10, value: 12 }, manifested: false });
+    a.items.push(talent("Sound Constitution / Крепкое Телосложение"), { ...talent("Sound Constitution / Крепкое Телосложение"), id: "sc2" });
+    WarhammerActor.prototype.prepareDerivedData.call(a);
+    expect(a.system.wounds.effectiveMax).toBe(12);
+    await toggleManifest(a);
+    expect(a.system.wounds.effectiveMax).toBe(22);
+    expect(a.system.wounds.value).toBe(22);
+  });
+
   it("без Дара «Гигант» выход Раны не трогает", async () => {
     const a = possessed({ wounds: { max: 10, value: 7 }, giant: false });
     await toggleManifest(a);

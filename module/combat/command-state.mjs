@@ -23,6 +23,7 @@ import { commandRulesFor, braveryActive, moraleCommandActive, commandEffectNode,
 import { commandReachFor } from "../rules/command.mjs";
 import { commandCapacity, followerCapacity, warChantSinging } from "../rules/leadership-talents.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { BLOOD_GOD_MAX, BLOOD_GOD_STEP } from "../rules/demon-god-traits.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { NO_COMMAND_CAPABILITY } from "../rules/naga-traits.mjs";
@@ -307,16 +308,38 @@ export async function updateOrRelay(doc, update) {
   game.socket.emit(SOCKET, { action: "commandUpdate", uuid: doc.uuid, update, userId: game.user.id });
 }
 
-/** Сокет: ГМ применяет правку командования (только поля Команд/флаги Морали). */
+/**
+ * Боевые отметки, которые игрок пишет в чужого NPC, применяя урон или атакуя: Момент
+ * (momentum.mjs), Кровь Богу Крови (demon-god-traits.mjs), Варп-Нестабильность
+ * (warp-instability.mjs), Ярость от проваленного Щита Презрения (warp-guard.mjs).
+ * Каждое поле — только со своим видом значения; снятие флага ("-=") — только null.
+ */
+const isIntIn = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+const RELAYED_COMBAT_MARKS = {
+  "flags.warhammer-dbc.momentum": v => isIntIn(v, 0, 20),
+  "flags.warhammer-dbc.momentumSeen": v => typeof v === "string" && v.length <= 64,
+  "flags.warhammer-dbc.bloodGodKills": v => isIntIn(v, 0, BLOOD_GOD_MAX / BLOOD_GOD_STEP),
+  "flags.warhammer-dbc.warpInstabHurt": v => v === true,
+  "flags.warhammer-dbc.warpInstabDealt": v => v === true,
+  "flags.warhammer-dbc.-=momentum": v => v === null,
+  "flags.warhammer-dbc.-=momentumSeen": v => v === null,
+  "flags.warhammer-dbc.-=bloodGodKills": v => v === null,
+  "flags.warhammer-dbc.-=warpInstabHurt": v => v === null,
+  "flags.warhammer-dbc.-=warpInstabDealt": v => v === null,
+  "system.inRage": v => v === true
+};
+
+/** Сокет: ГМ применяет правку командования (только поля Команд/флаги Морали) и боевые отметки. */
 export async function applyRelayedCommandUpdate(data) {
   const doc = resolve(data.uuid);
   if (!doc) return;
-  // Только поля Команд, метка Морали и СНЯТИЕ Подавления/Шока («Храбрость»):
-  // сокет открыт любому игроку, и шире ему давать нечего.
+  // Только поля Команд, метка Морали, СНЯТИЕ Подавления/Шока («Храбрость») и боевые
+  // отметки RELAYED_COMBAT_MARKS: сокет открыт любому игроку, и шире ему давать нечего.
   const allowed = Object.entries(data.update ?? {}).every(([k, v]) =>
     /^system\.(presence|shortCommand|detailCommand|command|cohesion\.value|briefing)\b/.test(k)
     || (/^system\.conditions\.(pinned|shocked)$/.test(k) && v === false)
-    || /^flags\.warhammer-dbc\.(-=)?(commandLost|commandSuppressed|focusFire|volleyFire|volleyAimUsed|combatFormation)\b/.test(k));
+    || /^flags\.warhammer-dbc\.(-=)?(commandLost|commandSuppressed|focusFire|volleyFire|volleyAimUsed|combatFormation)\b/.test(k)
+    || (Object.hasOwn(RELAYED_COMBAT_MARKS, k) && RELAYED_COMBAT_MARKS[k](v)));
   if (!allowed) return console.warn("Warhammer DBC | правка командования отклонена:", data.update);
   await doc.update(data.update);
 }

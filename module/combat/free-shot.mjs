@@ -18,6 +18,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
+import { getModEffects, mergeWeaponPropEntries } from "./weapon-mods.mjs";
 import { COVERING_FIRE_OFFER_FLAG } from "../rules/gunner-talents.mjs";
 import { HIP_SHOOTING_FLAG, DRAW_FIRE_ROUND_FLAG, hipShootingEligibleWeapon, hipShootingWeapon,
   drawFireOffered } from "../rules/gunner-talents.mjs";
@@ -121,10 +122,15 @@ export function bayonetShotButtonsHtml(actor) {
 /** Раз-в-Раунд возможность Независимого оружия (книга, свойство Independent). */
 export const INDEPENDENT_SHOT_ROUND_FLAG = "weaponProperty.independentShot";
 
-/** Независимое ли оружие: свойство Independent в его списке свойств. */
-export function isIndependentWeapon(item) {
-  return item?.type === "weapon" && (Array.isArray(item.system?.weaponProps) ? item.system.weaponProps : [])
-    .some(p => p?.key === "independent");
+/**
+ * Независимое ли оружие: свойство Independent в итоговом списке свойств — с учётом
+ * модификаций (Наплечное даёт independent через addProps), как resolveWeaponPropsList.
+ */
+export function isIndependentWeapon(item, actor = item?.parent) {
+  if (item?.type !== "weapon") return false;
+  const props = actor?.items ? mergeWeaponPropEntries(item, getModEffects(actor, item))
+    : (Array.isArray(item.system?.weaponProps) ? item.system.weaponProps : []);
+  return props.some(p => p?.key === "independent");
 }
 
 /**
@@ -136,7 +142,7 @@ export function isIndependentWeapon(item) {
 export function independentShotOfferHtml(actor, { attackingItem = null, freeShotKind = "" } = {}) {
   if (freeShotKind === FREE_SHOT_KINDS.independent) return "";
   if (!isRoundCapabilityAvailable(actor, INDEPENDENT_SHOT_ROUND_FLAG)) return "";
-  const guns = equippedWeaponsWhere(actor, i => isIndependentWeapon(i) && i.id !== attackingItem?.id);
+  const guns = equippedWeaponsWhere(actor, i => isIndependentWeapon(i, actor) && i.id !== attackingItem?.id);
   if (!guns.length) return "";
   return guns.map(g => `<button class="wh-free-shot-btn" type="button" data-kind="independent" data-actor-uuid="${actor.uuid}" data-item-id="${g.id}" title="Раз в Раунд, вдобавок к любой атаке: выстрел из Независимого оружия, без траты ОД">🦾 Выстрел наплечным: ${esc(g.name)}</button>`).join("");
 }
@@ -213,7 +219,7 @@ export async function activateFreeShot(actorUuid, kind, itemId = "") {
   }
   if (kind === FREE_SHOT_KINDS.independent) {
     const item = actor.items.get(itemId);
-    if (!item || !isIndependentWeapon(item)) return ui.notifications?.warn("Независимое оружие не найдено.");
+    if (!item || !isIndependentWeapon(item, actor)) return ui.notifications?.warn("Независимое оружие не найдено.");
     if (!isRoundCapabilityAvailable(actor, INDEPENDENT_SHOT_ROUND_FLAG)) return ui.notifications?.warn("Независимое оружие: в этом Раунде уже стреляло.");
     const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
     return showAttackDialog(actor, item, { freeShot: kind });
