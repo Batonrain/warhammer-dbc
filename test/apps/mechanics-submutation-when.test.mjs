@@ -228,6 +228,14 @@ describe("applyItemMechanics — гейт на разовой выдаче сн�
     await applyItemMechanics(item);
     expect(item.parent.items.filter(i => i.name === "Claws / Когти")).toHaveLength(1);
   });
+
+  it("запись, отменённая «Обновить мир» (equipWaived + mechanicsApplied), не выдаётся ни разово, ни пересинхронизацией (PR #568)", async () => {
+    const item = mutationOnActor({ mechanics: [andGroup(equipEntry("e1", when([])))] });
+    await item.setFlag(FLAG, "mechanicsApplied", ["e1"]);
+    await item.setFlag(FLAG, "equipWaived", ["e1"]);
+    await applyItemMechanics(item);
+    expect(item.parent.items).toHaveLength(0);
+  });
 });
 
 describe("mechanicsRelevantChange — предикат хука updateItem (warhammer-dbc.mjs)", () => {

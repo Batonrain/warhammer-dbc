@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import { allPackDocuments, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 import {
-  buildRotContext, plagueMarineRotData, hasPlagueMarineArchetype, hasNurglesRot
+  buildRotContext, plagueMarineRotData, hasPlagueMarineArchetype, hasNurglesRot, rotAppliedUpdate
 } from "../../module/migrations/plague-marine-rot.mjs";
 
 const DISEASE_ID = "hfck3ePSodX4RmUD";
@@ -57,5 +57,21 @@ describe("Гниль Нургла у Чумных Десантников", () =>
   it("одноимённая психосила Гнили Нургла болезнью не считается", () => {
     const power = { id: "P", type: "psychicPower", name: disease.name, system: {}, flags: {} };
     expect(plagueMarineRotData([arch(), power], CTX)).not.toBeNull();
+  });
+
+  // PR #568: без отметки «Обновить мир» дописал бы архетипу запись выдачи, и
+  // applyItemMechanics выдал бы вторую Гниль поверх выданной миграцией.
+  it("запись выдачи Гнили помечается применённой на архетипе", () => {
+    const a = { ...arch(), flags: { "warhammer-dbc": { mechanicsApplied: ["x1"] } } };
+    expect(rotAppliedUpdate([a], CTX)).toEqual({
+      _id: "A1", "flags.warhammer-dbc.mechanicsApplied": ["x1", "zLVckpia4vCBsVRE"]
+    });
+  });
+
+  it("флаг не задан — заводится; уже помечена или не Чумной — ничего", () => {
+    expect(rotAppliedUpdate([arch()], CTX)).toEqual({ _id: "A1", "flags.warhammer-dbc.mechanicsApplied": ["zLVckpia4vCBsVRE"] });
+    const done = { ...arch(), flags: { "warhammer-dbc": { mechanicsApplied: ["zLVckpia4vCBsVRE"] } } };
+    expect(rotAppliedUpdate([done], CTX)).toBeNull();
+    expect(rotAppliedUpdate([{ id: "B", type: "eliteArchetype", name: "Berzerker", flags: {} }], CTX)).toBeNull();
   });
 });

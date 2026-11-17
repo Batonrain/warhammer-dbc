@@ -80,11 +80,26 @@ export function plagueMarineRotData(items, ctx) {
   return data;
 }
 
+/**
+ * Правка архетипа: запись выдачи Гнили — в mechanicsApplied, иначе «Обновить
+ * мир», дописав её старой копии, разбудит applyItemMechanics и выдаст вторую
+ * Гниль (PR #568). null — уже помечена, флаг старый `true` (он и так значит
+ * «всё на предмете применено») или Чумного Десантника нет.
+ */
+export function rotAppliedUpdate(items, ctx) {
+  const arch = [...(items ?? [])].find(i => i?.type === "eliteArchetype" && itemHasName(i, ARCHETYPE_NAME));
+  if (!arch || !ctx?.entryId) return null;
+  const flag = arch.flags?.[FLAG]?.mechanicsApplied;
+  if (flag === true || (Array.isArray(flag) && flag.includes(ctx.entryId))) return null;
+  return { _id: arch.id, [`flags.${FLAG}.mechanicsApplied`]: [...(Array.isArray(flag) ? flag : []), ctx.entryId] };
+}
+
 async function migrateOneActor(actor, ctx) {
   const data = plagueMarineRotData(actor.items, ctx);
-  if (!data) return 0;
-  await actor.createEmbeddedDocuments("Item", [data]);
-  return 1;
+  const archUpd = rotAppliedUpdate(actor.items, ctx);
+  if (data) await actor.createEmbeddedDocuments("Item", [data]);
+  if (archUpd) await actor.updateEmbeddedDocuments("Item", [archUpd]);
+  return data ? 1 : 0;
 }
 
 export async function migratePlagueMarineRot({ tokensOnly = false } = {}) {

@@ -388,6 +388,68 @@ describe("Механика Конструктора участвует в све
 });
 
 // ════════════════════════════════════════════════════════════════════════════
+//  PR #568: в паке у уже купленного архетипа появились НОВЫЕ разовые записи
+//  (Порча, Раны, выдача снаряжения). Перенос механики на существующую копию
+//  будит updateItem → applyItemMechanics, и они отыгрались бы по второму
+//  разу поверх того, что ГМ уже внёс по книге руками.
+// ════════════════════════════════════════════════════════════════════════════
+
+describe("сверка не отыгрывает новые разовые записи на уже купленной копии", () => {
+  const oldMech = [{ id: "g1", operator: "AND", entries: [{ id: "cap1", kind: "capability" }] }];
+  const newMech = [{ id: "g1", operator: "AND", entries: [
+    { id: "cap1", kind: "capability" },
+    { id: "cap2", kind: "capability" },
+    { id: "cor1", kind: "corruption", corruptionValue: "1d10" },
+    { id: "g2", kind: "group", group: { operator: "AND", entries: [
+      { id: "eq1", kind: "equipment", equipMode: "direct", equipSourceUuid: "Compendium.x.Item.r" },
+      { id: "tal1", kind: "talent" }
+    ] } }
+  ] }];
+
+  const run = async (applied) => {
+    const pack = mechDoc("u5", "Чумной Десантник", "eliteArchetype", newMech);
+    const it0 = mechItem({ id: "e5", name: "Чумной Десантник", type: "eliteArchetype", src: "u5",
+                           mechanics: oldMech, mechBaseline: oldMech });
+    if (applied !== undefined) it0.flags["warhammer-dbc"].mechanicsApplied = applied;
+    it0.getFlag = (scope, key) => it0.flags[scope]?.[key];
+    const report = buildSyncReport([{ id: "a5", name: "Ветеран", items: [it0] }], buildPackIndex([pack]));
+    const row = report.rows.find(r => r.path === MECH_PATH);
+    const calls = [];
+    globalThis.game = { actors: { get: id => ({ id, items: { get: () => it0 },
+      updateEmbeddedDocuments: async (t, u) => calls.push(...u) }) } };
+    await applySyncReport(report, new Set([row.entries[0].entryKey]));
+    return calls[0];
+  };
+
+  it("id новых Порчи и выдачи — в mechanicsApplied того же update, постоянные не трогаются", async () => {
+    const upd = await run(["cap1"]);
+    expect(upd["flags.warhammer-dbc.mechanics"]).toEqual(newMech);
+    expect(upd["flags.warhammer-dbc.mechanicsApplied"]).toEqual(["cap1", "cor1", "eq1"]);
+  });
+
+  it("прямая выдача снаряжения не создаётся и живой пересинхронизацией", async () => {
+    const upd = await run(["cap1"]);
+    expect(upd["flags.warhammer-dbc.equipWaived"]).toEqual(["eq1"]);
+  });
+
+  it("старое булево true читается как «всё прежнее применено»", async () => {
+    const upd = await run(true);
+    expect(upd["flags.warhammer-dbc.mechanicsApplied"]).toEqual(["cap1", "cor1", "eq1"]);
+  });
+
+  it("новых разовых нет — mechanicsApplied не пишется", async () => {
+    const pack = mechDoc("u6", "Т", "talent", mech("Новое"));
+    const it0 = mechItem({ id: "m6", src: "u6", mechanics: mech("Старое"), mechBaseline: mech("Старое") });
+    const report = buildSyncReport([{ id: "a6", name: "В", items: [it0] }], buildPackIndex([pack]));
+    const calls = [];
+    globalThis.game = { actors: { get: id => ({ id, items: { get: () => it0 },
+      updateEmbeddedDocuments: async (t, u) => calls.push(...u) }) } };
+    await applySyncReport(report, new Set([report.rows[0].entries[0].entryKey]));
+    expect(Object.keys(calls[0])).not.toContain("flags.warhammer-dbc.mechanicsApplied");
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
 //  Эффекты предмета (wdbc-9aj9). Найдено живой проверкой: сверка не смотрела
 //  на встроенную коллекцию ActiveEffect вовсе, и любая поломка, осевшая в
 //  эффекте, «Обновить мир» не лечил и даже не показывал.

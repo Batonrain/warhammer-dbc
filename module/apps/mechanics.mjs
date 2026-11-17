@@ -2890,9 +2890,12 @@ export async function syncGrantedEquipment(sourceItem) {
   const live = grantedNow.filter(i => !stale.includes(i));
 
   const haveIds = new Set(live.map(i => i.getFlag(FLAG, "equipEntryId")));
+  // equipWaived — выдачи, которые «Обновить мир» дописал уже купленной копии
+  // (content-sync.mjs, waiveNewOneShots): по книге их давно внёс ГМ руками.
+  const waived = new Set(sourceItem.getFlag(FLAG, "equipWaived") || []);
   const toCreate = [];
   for (const e of entries) {
-    if (haveIds.has(e.id)) continue;
+    if (haveIds.has(e.id) || waived.has(e.id)) continue;
     if (e.kind === "integralAttack") {
       const data = await buildIntegralAttackData(e, sourceItem);
       if (data) toCreate.push(data);
