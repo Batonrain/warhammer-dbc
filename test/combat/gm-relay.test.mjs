@@ -99,6 +99,22 @@ describe("checkTargetWrite", () => {
     expect(checkTargetWrite({ kind: "createItem", item }, own).ok).toBe(false);
   });
 
+  it("Резонанс: только целый уровень выше текущего и не выше Размер+2 цели", () => {
+    const target = { system: { size: 4, conditions: { resonanceLevel: 1 } } };
+    const ctx = { ...own, target };
+    expect(checkTargetWrite({ kind: "resonance", level: 2 }, ctx).ok).toBe(true);
+    expect(checkTargetWrite({ kind: "resonance", level: 6 }, ctx).ok).toBe(true);
+    for (const level of [1, 0, 7, 1.5, "3"]) expect(checkTargetWrite({ kind: "resonance", level }, ctx).ok).toBe(false);
+    expect(checkTargetWrite({ kind: "resonance", level: 2, data: {} }, ctx).ok).toBe(false);
+  });
+
+  it("Перерезать путы: только снятие Беспомощности у связанной цели", () => {
+    expect(checkTargetWrite({ kind: "snareCut" }, { ...own, target: { system: { conditions: { helpless: true } } } }).ok).toBe(true);
+    expect(checkTargetWrite({ kind: "snareCut" }, { ...own, target: { system: { conditions: {} } } }).ok).toBe(false);
+    expect(checkTargetWrite({ kind: "snareCut", data: { "system.conditions.helpless": true } },
+      { ...own, target: { system: { conditions: { helpless: true } } } }).ok).toBe(false);
+  });
+
   it("неизвестный вид и пустая правка — отказ", () => {
     expect(checkTargetWrite({ kind: "delete" }, own).ok).toBe(false);
     expect(checkTargetWrite({ kind: "update", data: {} }, own).ok).toBe(false);

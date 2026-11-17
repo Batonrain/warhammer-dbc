@@ -223,3 +223,23 @@ describe("звуковая волна: ветка «Страх 2»", () => {
     expect(captured.chat.at(-1).content).not.toContain("отметьте вручную");
   });
 });
+
+describe("Выступление: эффект через grantTimedEffect (PR #568)", () => {
+  it("эффект AP несёт метку timedEffect боя носителя и срок «до начала следующего Хода»", async () => {
+    const { usePerformance } = await import("../../module/combat/fate-abilities.mjs");
+    const fs = await import("node:fs");
+    const dir = "packs-src/traits";
+    const find = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? find(`${d}/${e.name}`)
+      : e.name.startsWith("Performance_") ? [`${d}/${e.name}`] : []);
+    const trait = JSON.parse(fs.readFileSync(find(dir)[0], "utf8"));
+    const gladiator = actorWithEffects({ uuid: "Actor.glad" });
+    gladiator.items.push({ ...trait, id: "tr1" });
+    gladiator.system.characteristics.ag = { total: 40, bonus: 4 };
+    globalThis.game.combats = [startedCombat("real", [gladiator], 3)];
+    await usePerformance(gladiator);
+    const [e] = timedEffectsOf(gladiator, "performance");
+    expect(e?.flags?.[NS]?.[TIMED_EFFECT_FLAG]).toEqual({ key: "performance", combatId: "real", round: 3 });
+    expect(e.duration).toEqual({ value: 1, units: "rounds", expiry: "turnStart" });
+    expect(e.system.changes).toHaveLength(6);
+  });
+});

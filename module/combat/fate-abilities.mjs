@@ -6,6 +6,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { spendReaction } from "./action-economy.mjs";
+import { grantTimedEffect } from "./timed-effects.mjs";
 import {
   BLOOD_HEROES_CAP, PERFORMANCE_CAP, BLOOD_HEROES_USED_FLAG, BLOOD_HEROES_CHANGED_FLAG, PERFORMANCE_ROUND_FLAG,
   UNNATURAL_CHARS, battleKey, bloodHeroesAvailable, bloodHeroesThreshold, bloodHeroesChanges,
@@ -81,10 +82,10 @@ export async function usePerformance(actor) {
     "system.fate.value": fate - 1,
     ...(key ? { [`flags.${NS}.${PERFORMANCE_ROUND_FLAG}`]: key } : {})
   });
-  await actor.createEmbeddedDocuments("ActiveEffect", [{
-    name: `Выступление: +${changes[0].value} AP`, img: "systems/warhammer-dbc/assets/item-icons/trait.svg",
-    system: { changes }, duration: { value: 1, units: "rounds", expiry: "turnStart" }, flags: { [NS]: { performance: true } }
-  }]);
+  // Через grantTimedEffect: явный старт в Ходе гладиатора (иначе ядро гасит не в тот Ход) и метка timedEffect для подметания.
+  await grantTimedEffect(actor, {
+    key: "performance", name: `Выступление: +${changes[0].value} AP`, img: "systems/warhammer-dbc/assets/item-icons/trait.svg", changes
+  });
   await postTestCard(actor, {
     icon: rollIcon("shield", "#8fd0ff"), title: `Выступление — ${esc(actor.name)}`,
     outcome: `<span class="roll-success">+${changes[0].value} к поглощению (AP) во всех зонах до начала следующего Хода. Очко Судьбы потрачено (осталось ${fate - 1}).</span>`

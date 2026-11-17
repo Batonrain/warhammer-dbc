@@ -41,6 +41,8 @@
 //    • saviorSwap — Спаситель Туманов (Мастер Казней, Sahara 1-54b9): токен союзника встаёт на прежнее место
 //      инициатора (обмен местами). Нужен Талант Mist Savior у инициатора; ГМ сверяет, что инициатор уже стоит на месте
 //      союзника и что цель переноса не дальше предела (P.b или Полудвижение инициатора).
+//    • resonance / snareCut — Резонанс от Резонирующего оружия (только уровень, вверх, до Размер+2 цели) и
+//      «Перерезать путы» Связывающего (только снятие Беспомощности); поля Состояния собирает ГМ.
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -62,6 +64,8 @@ import {
   RUN_DOWN_STRUCTURE_MAX, RUN_DOWN_HELPLESS_MAX, RUN_DOWN_WP_MAX
 } from "../rules/warpsmith.mjs";
 import { mutationCatalog } from "../constants/mutations.mjs";
+import { resonanceCap } from "../rules/resonance.mjs";
+import { sizeOf } from "../rules/predicates.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
 import { hasCloudCognition, hasMotiveEucharist, hasApocryphaCoil, planCloudCognition, planMotiveEucharist,
@@ -287,6 +291,23 @@ export function checkTargetWrite(op, ctx = {}) {
     return { ok: true };
   }
 
+  // Резонанс (свойство оружия Resonant, combat/attack.mjs): клиент присылает только итоговый уровень; поля
+  // Состояния собирает ГМ. Уровень — целое в пределах Размер+2 цели и только вверх (снижает его конец Хода цели).
+  if (op.kind === "resonance") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "level")) return { ok: false, reason: "resonance: лишние поля" };
+    const cap = resonanceCap(sizeOf(ctx.target));
+    if (!Number.isInteger(op.level) || op.level < 1 || op.level > cap) return { ok: false, reason: `resonance: уровень вне 1…${cap}` };
+    if (op.level <= (Number(ctx.target?.system?.conditions?.resonanceLevel) || 0)) return { ok: false, reason: "resonance: уровень не выше текущего" };
+    return { ok: true };
+  }
+
+  // Перерезать путы Связывающего (combat/snare.mjs): только СНЯТИЕ Беспомощности, полезной нагрузки нет.
+  if (op.kind === "snareCut") {
+    if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "snareCut: лишние поля" };
+    if (!ctx.target?.system?.conditions?.helpless) return { ok: false, reason: "snareCut: цель не Беспомощна" };
+    return { ok: true };
+  }
+
   // Урон приёма по чужой цели: клиент присылает только поля урона, считает и применяет ГМ.
   if (op.kind === "applyDamage") {
     if (!RELAY_DAMAGE_SOURCES.includes(op.source)) return { ok: false, reason: "неизвестный источник урона" };
@@ -367,6 +388,11 @@ async function _performTargetWrite(target, op, initiator) {
   if (op.kind === "addFatigue") {
     const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
     return addFatigue(target, Number(op.amount));
+  }
+  if (op.kind === "resonance" || op.kind === "snareCut") {
+    const { conditionApplyFields, conditionRemoveFields } = await import("../sheets/tabs/conditions.mjs");
+    const fields = op.kind === "resonance" ? conditionApplyFields("resonance", op.level, target) : conditionRemoveFields("helpless");
+    return Object.keys(fields).length ? target.update(fields) : null;
   }
   if (op.kind === "apDebt") {
     const debt = Number(target.getFlag?.(NS, DEVOURER_OF_TIME_AP_DEBT_FLAG)) || 0;

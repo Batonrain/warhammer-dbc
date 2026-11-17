@@ -402,6 +402,51 @@ describe("Повелитель Големов: создание", () => {
     expect(captured.rolls).toEqual([]);
   });
 
+  it("игрок: план уходит Мастеру, снаряжение не трогается до создания Голема", async () => {
+    const armour = armourItem();
+    const bolter = bolterBlade();
+    const a = hero({ items: [itemOf(GOLEM_MASTER), armour, bolter] });
+    globalThis.game.actors = [a];
+    const emitted = [];
+    const prev = { user: globalThis.game.user, users: globalThis.game.users, socket: globalThis.game.socket };
+    globalThis.game.user = { isGM: false, id: "u2", targets: new Set() };
+    globalThis.game.users = { activeGM: { id: "gm" } };
+    globalThis.game.socket = { emit: (_c, p) => emitted.push(p) };
+    try {
+      captured.nextRoll = 50;
+      prompt({ armourId: armour.id, terminator: false, weaponIds: [bolter.id] });
+      const res = await startGolemCreation(a);
+      expect(res.relayed).toBe(true);
+      expect(a.deleted).toEqual([]);
+      expect(emitted[0].plan.spentItemIds).toEqual([armour.id, bolter.id]);
+      expect(lastCard()).toContain("Мастер");
+    } finally { Object.assign(globalThis.game, prev); }
+  });
+
+  it("сторона ГМа: снаряжение списывается только после успешного создания Голема", async () => {
+    const armour = armourItem();
+    const a = hero({ items: [itemOf(GOLEM_MASTER), armour] });
+    globalThis.game.actors = [a];
+    globalThis.fromUuid = async () => a;
+    globalThis.Actor.create = async () => null;
+    expect((await spawnGolem({ masterUuid: "Actor.hero", spentItemIds: [armour.id] })).ok).toBe(false);
+    expect(a.deleted).toEqual([]);
+    globalThis.Actor.create = async data => { const g = hero({ uuid: "Actor.g", name: data.name, type: "minion" }); made.push(g); return g; };
+    expect((await spawnGolem({ masterUuid: "Actor.hero", spentItemIds: [armour.id, a.items[0].id, "nope"] })).ok).toBe(true);
+    expect(a.deleted).toEqual([armour.id]);
+  });
+
+  it("сторона ГМа: чужой хозяин по запросу игрока — Голема нет, снаряжение цело", async () => {
+    const armour = armourItem();
+    const a = hero({ items: [itemOf(GOLEM_MASTER), armour] });
+    a.testUserPermission = () => false;
+    globalThis.fromUuid = async () => a;
+    const res = await spawnGolem({ masterUuid: "Actor.hero", spentItemIds: [armour.id] }, { requester: { isGM: false } });
+    expect(res.ok).toBe(false);
+    expect(made).toHaveLength(0);
+    expect(a.deleted).toEqual([]);
+  });
+
   it("spawnGolem без профиля в Бестиарии сообщает причину", async () => {
     globalThis.game.packs = { get: () => ({ getIndex: async () => [], getDocument: async () => null }) };
     globalThis.fromUuid = async () => hero();

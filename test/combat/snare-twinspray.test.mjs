@@ -55,6 +55,24 @@ describe("Связывающее: кнопки освобождения", () => 
   });
 });
 
+describe("Связывающее: «перерезать путы» у чужого актора — через ГМа", () => {
+  it("игрок режет путы NPC-союзнику ГМа: запрос уходит ГМу, локальной записи нет, карточка есть", async () => {
+    const prev = { socket: globalThis.game.socket, users: globalThis.game.users, user: globalThis.game.user };
+    const emitted = [];
+    globalThis.game.socket = { emit: (_c, p) => emitted.push(p) };
+    globalThis.game.users = { activeGM: { id: "gm" } };
+    globalThis.game.user = { id: "u1", isGM: false, character: { uuid: "Actor.me" } };
+    try {
+      const a = bound();
+      a.isOwner = false;
+      await resolveSnareButton(a, { kind: "cut" });
+      expect(a.updates).toEqual([]);
+      expect(emitted.map(e => [e.targetUuid, e.initiatorUuid, e.op])).toEqual([["Actor.bound", "Actor.me", { kind: "snareCut" }]]);
+      expect(card()).toContain("перерезаны");
+    } finally { Object.assign(globalThis.game, prev); }
+  });
+});
+
 describe("Связывающее: кто может перерезать путы (решение владельца 13.11.2026)", () => {
   const bound = { id: "b", x: 0, y: 0, width: 1, height: 1, disposition: 1 };
   const at = (id, x, over = {}) => ({ id, name: id, x, y: 0, width: 1, height: 1, disposition: 1, blade: true, ...over });

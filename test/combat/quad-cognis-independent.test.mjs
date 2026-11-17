@@ -95,6 +95,17 @@ describe("Независимое оружие: выстрел раз в Раун
     expect(independentShotOfferHtml(actorWith([shoulder]), { attackingItem: shoulder })).toBe("");
     expect(independentShotOfferHtml(actorWith([shoulder]), { freeShotKind: "independent" })).toBe("");
   });
+  it("Независимое от модификации «Наплечное» (addProps) тоже даёт кнопку; removeProps гасит", () => {
+    const pistol = gun("p1", []);
+    const mod = { id: "m", name: "Shoulder Mounted", type: "weaponMod",
+      system: { installedOn: "p1", effects: { addProps: [{ key: "independent" }], removeProps: [] } } };
+    const a = actorWith([gun("m1", []), pistol, mod]);
+    expect(isIndependentWeapon(pistol, a)).toBe(true);
+    expect(independentShotOfferHtml(a, { attackingItem: gun("m1", []) })).toContain('data-item-id="p1"');
+    const strip = { id: "x", name: "Strip", type: "weaponMod",
+      system: { installedOn: "p1", effects: { addProps: [], removeProps: ["independent"] } } };
+    expect(isIndependentWeapon(pistol, actorWith([pistol, mod, strip]))).toBe(false);
+  });
   it("без Независимого оружия — пусто", () => {
     expect(independentShotOfferHtml(actorWith([gun("m1", [])]), {})).toBe("");
   });
