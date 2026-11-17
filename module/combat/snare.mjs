@@ -15,6 +15,7 @@ import { rollConditionCharTest } from "./condition-ticks.mjs";
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { basesInContact } from "../rules/master-of-executions.mjs";
 import { heldWeapons } from "../rules/dual-wield-talents.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 
 /** Клинковое рукопашное оружие: рукопашное с Режущим типом урона. */
 export const isBladeWeapon = w => String(w?.system?.weaponClass ?? "") === "melee"
@@ -36,15 +37,15 @@ export function bondCutters(bound, others, size = 100) {
     .map(t => t.name || t.id);
 }
 
-/** Подходящие «резаки» на сцене для актора (токен связанного ищется среди его активных токенов). */
+/** Подходящие «резаки» на сцене для актора (токен связанного ищется среди его активных токенов); каждый — с актором. */
 function bondCuttersOnScene(actor) {
   const tokens = canvas?.tokens?.placeables ?? [];
   const mine = actor.getActiveTokens?.() ?? [];
   const size = canvas?.grid?.size || 100;
   const data = t => ({ id: t.id, x: t.document.x, y: t.document.y, width: t.document.width, height: t.document.height,
-    disposition: t.document.disposition, name: t.name, blade: t.actor ? heldWeapons(t.actor).some(isBladeWeapon) : false });
+    disposition: t.document.disposition, name: t.name, actor: t.actor, blade: t.actor ? heldWeapons(t.actor).some(isBladeWeapon) : false });
   const others = tokens.map(data);
-  return mine.flatMap(m => bondCutters(data(m), others, size));
+  return mine.flatMap(m => others.filter(o => bondCutters(data(m), [o], size).length));
 }
 
 /** Кнопки под карточкой наложения Связывающего. */
@@ -66,13 +67,17 @@ export async function resolveSnareButton(actor, { kind, char, rating }) {
   }
   if (kind === "cut") {
     // Книга: другой персонаж в базовом контакте, клинок в руках. Без готового холста проверять нечего.
+    let cutter = null;
     if (canvas?.ready) {
       const cutters = bondCuttersOnScene(actor);
       if (!cutters.length) {
         return ui.notifications?.warn?.(`${actor.name}: перерезать путы некому — нужен другой персонаж в базовом контакте с клинковым рукопашным оружием в руках.`);
       }
+      cutter = cutters.find(c => c.actor?.isOwner)?.actor ?? null;
     }
-    await actor.update(conditionRemoveFields("helpless"));
+    // Связанный обычно чужой (NPC ГМа или персонаж другого игрока) — снятие идёт через ГМа (gm-relay, вид «snareCut»);
+    // инициатор — свой резак на сцене, иначе персонаж игрока.
+    if (!(await writeToTarget(actor, { kind: "snareCut" }, cutter ?? game.user?.character ?? null))) return;
     return postTestCard(actor, {
       title: `Путы перерезаны — ${esc(actor.name)}`, actorUuid: actor.uuid,
       outcome: `<span class="roll-success">Путы перерезаны клинком — Беспомощность снята.</span>`

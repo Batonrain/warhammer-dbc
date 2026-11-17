@@ -2,7 +2,8 @@ import { CHARACTERISTICS }                         from "../constants/characteri
 import { reliableSoldierChoice } from "../apps/reliable-soldier.mjs";
 import { RELIABLE_SOLDIER_CAP, reliableSoldierBonus } from "../rules/reliable-soldier.mjs";
 import { STRUCTURAL_ANALYSIS_CAP, structuralAnalysisBonus } from "../rules/mechanicus-monk-traits.mjs";
-import { momentumOnAttackMiss } from "./momentum.mjs";
+import { momentumOnAttackMiss, momentumOf, addMomentum } from "./momentum.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 import { bloodGodBonusOf } from "./demon-god-traits.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { resonanceCap, resonanceAfterHits, multiplyDamageDice } from "../rules/resonance.mjs";
@@ -494,7 +495,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   }
   // Кровавое Подношение (Талант Берсерка Кхорна, combat/khorne-berserker.mjs): следующее попадание оружием, убившим
   // противника, получает свойство Освящённое (+½Cor.b Dmg добавлено ниже к плоскому бонусу).
-  const bloodOffering = isMelee ? bloodOfferingForAttack(actor, item) : { dmg: 0, sanctified: false };
+  // Метку снимает первое попадание; переигровка той же атаки берёт израсходованное Подношение из opts.talentPaid.
+  const bloodOffering = isMelee ? (opts.talentPaid?.bloodOffering ?? bloodOfferingForAttack(actor, item)) : { dmg: 0, sanctified: false };
   if (bloodOffering.sanctified && !_mergedEntries.some(x => x.key === "sanctified")) _mergedEntries.push({ key: "sanctified", rating: 0 });
   // Обратный Удар (MELEE_MANEUVERS.reverseStrike): вторая атака профилем посоха получает Concussive(0),
   // если у оружия нет его с более высоким рейтингом.
@@ -529,6 +531,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
   wp.reliabilityScore += modFx.reliabilityMod || 0;
+  // Переигровка той же атаки: сдвиг места, Горжет, +10/Успех за Очко (forcedRoll) и переброс за Судьбу (skipAmmo).
+  const replay = !!opts.skipAmmo || opts.forcedRoll != null;
   // Когнис (rules/cognis.mjs): допуск по Трейту Mechanicum Implants; атака через I
   // вместо WS/BS стоит 1 Когниции (характеристику игрок меняет в окне атаки).
   if (wp.cognis) {
@@ -538,8 +542,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       isGM: !!game.user?.isGM, charKey, cognition: actor.system?.cognition?.value
     });
     if (cg.warn) ui.notifications?.warn?.(`⚠️ ${cg.warn}`);
-    if (cg.blocked) return;
-    if (cg.spend) await actor.update({ "system.cognition.value": (Number(actor.system.cognition?.value) || 0) - cg.spend });
+    // Переигровка той же атаки (forcedRoll/skipAmmo) Когницию уже оплатила — ни отказа, ни второго списания.
+    if (cg.blocked && !replay) return;
+    if (cg.spend && !replay) await actor.update({ "system.cognition.value": (Number(actor.system.cognition?.value) || 0) - cg.spend });
   }
   // Окрась Всё в Красный (Талант Берсерка Кхорна): 8 на любом кубике урона — Экстремальный Урон (rollExtremeDamage).
   if (isMelee && paintItRedApplies(actor, item)) wp.paintItRed = true;
@@ -822,10 +827,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Квад (Quad, книга): «делается две атаки с одинаковыми модификаторами по той же цели,
   // и каждая наносит свои попадания». Вторая атака — свой d100 против того же порога;
   // основной разбор (Уклонение, место, крит) идёт по лучшему броску, попадания второго
-  // прибавляются ниже. Переигровка (forcedRoll) второй раз не бросает.
+  // прибавляются ниже. Переигровка (forcedRoll) второй раз не бросает: rv второй атаки — из storedOpts (quadOtherRv).
   let quadOther = null;
-  if (wp.extraHits === "quad" && !isMelee && opts.forcedRoll == null) {
-    const secondRoll = await new Roll("1d100").evaluate();
+  const quadReplayRv = opts.forcedRoll != null ? Number(opts.quadOtherRv) : NaN;
+  if (wp.extraHits === "quad" && !isMelee && (opts.forcedRoll == null || quadReplayRv > 0)) {
+    const secondRoll = await new Roll(quadReplayRv > 0 ? String(quadReplayRv) : "1d100").evaluate();
     const probe = r => attackHitOutcome({ rv: r.total, threshold, isMelee, wp, forceHit: opts.forceHit,
       forceFail: !isMelee && handOfKhorneBlocksRangedAttack(item), fixedSuccessDeg: opts.fixedSuccessDeg });
     const o1 = probe(roll), o2 = probe(secondRoll);
@@ -1186,8 +1192,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Запрещённый Приём (Cheap Shot, книга): Избегания от него тратят вдвое больше Успехов
   // на отмену каждого попадания; множится с Огневой Клетью.
   wp.evadeCost = (cageFiring ? CAGE_FIRING_EVADE_COST : 1) * (isMelee && wp.cheapShot ? 2 : 1);
-  // Момент Гладиатора: промах рукопашной/метательной атаки — −1 очко (rules/momentum.mjs).
-  if (!hit) await momentumOnAttackMiss(actor, { isMelee, weaponClass: sys.weaponClass });
+  // Момент Гладиатора: промах рукопашной/метательной атаки — −1 очко (rules/momentum.mjs). Один раз на атаку:
+  // переигровка (opts.talentPaid.momentumMiss) не снимает повторно, а промах, ставший попаданием, очко возвращает.
+  let momentumMissPaid = !!opts.talentPaid?.momentumMiss;
+  if (!hit && !momentumMissPaid) {
+    const before = momentumOf(actor);
+    await momentumOnAttackMiss(actor, { isMelee, weaponClass: sys.weaponClass });
+    momentumMissPaid = momentumOf(actor) < before;
+  } else if (hit && momentumMissPaid) {
+    await addMomentum(actor, +1);
+    momentumMissPaid = false;
+  }
   const hitCountSys = wideBurst
     ? { ...fanningSys, [wideBurstKey]: Math.max(0, (Number(fanningSys[wideBurstKey]) || 0) - WIDE_BURST_RATING_CUT - (cageFiring ? CAGE_FIRING_RATING_CUT : 0)) }
     : fanningSys;
@@ -1782,7 +1797,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Только существа: у Техники/Орды Состояний нет.
   const resonantTarget = (hit && wp.resonant && defenderActor?.system?.conditions
     && !["vehicle", "horde"].includes(defenderActor.type)) ? defenderActor : null;
-  const resonanceStart = resonantTarget ? (Number(resonantTarget.system.conditions.resonanceLevel) || 0) : 0;
+  // Уровень до атаки: переигровка берёт его из storedOpts — свой же Резонанс прошлого броска не множит кубы ещё раз.
+  const resonanceCurrent = resonantTarget ? (Number(resonantTarget.system.conditions.resonanceLevel) || 0) : 0;
+  const resonanceStart = resonantTarget ? (opts.talentPaid?.resonanceStart ?? resonanceCurrent) : 0;
   const resonanceMax   = resonantTarget ? resonanceCap(sizeOf(resonantTarget)) : 0;
   let resonanceFinal = resonanceStart;
 
@@ -1884,12 +1901,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     }
   }
 
-  // Резонанс остаётся на цели: уровень после всех попаданий этой атаки.
-  if (resonantTarget && resonanceFinal > resonanceStart) {
+  // Резонанс остаётся на цели: уровень после всех попаданий этой атаки. Цель обычно чужой NPC — запись через ГМа
+  // (combat/gm-relay.mjs, вид «resonance»); переигровка уровень не повторяет — пишется, только если он выше текущего.
+  if (resonantTarget && resonanceFinal > resonanceCurrent) {
     try {
-      const { conditionApplyFields } = await import("../sheets/tabs/conditions.mjs");
-      const fields = conditionApplyFields("resonance", resonanceFinal, resonantTarget);
-      if (Object.keys(fields).length) await resonantTarget.update(fields);
+      await writeToTarget(resonantTarget, { kind: "resonance", level: resonanceFinal }, actor);
     } catch (e) { console.warn("warhammer-dbc | Резонанс не наложен", e); }
   }
 
@@ -2502,7 +2518,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Что в этом выстреле уже оплачено (Очко Бесчестия, метка Тех-Оружейника, заряд Линз) — перебросы
   // того же выстрела (+10, Очко Судьбы, сдвиг места) повторно не платят, но и бесплатно бонус не получают.
   const storedOpts = { ...storedOptsBase, whack, bladeJugglerPenalty, talentPaid: {
-    sureShot: sureShotPaid, killingStrike: killingStrikePaid, oneWillGoDown: owgdOn, haymaker: haymakerOn, weaponTech: weaponTech.bonus > 0, lens: !!lens.use, cooking: cooking ?? undefined } };
+    sureShot: sureShotPaid, killingStrike: killingStrikePaid, oneWillGoDown: owgdOn, haymaker: haymakerOn, weaponTech: weaponTech.bonus > 0, lens: !!lens.use, cooking: cooking ?? undefined,
+    // Израсходованное Подношение и уровень Резонанса до атаки держатся и через переигровку-промах: следующая может снова попасть.
+    momentumMiss: momentumMissPaid || undefined, bloodOffering: ((hit || opts.talentPaid?.bloodOffering) && bloodOffering.sanctified) ? bloodOffering : undefined,
+    resonanceStart: resonantTarget ? resonanceStart : opts.talentPaid?.resonanceStart },
+    quadOtherRv: quadOther?.roll.total };
   messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
     "warhammer-dbc": { attack: {
       actorId: actor.id, itemId: item.id, charKey, rv,
