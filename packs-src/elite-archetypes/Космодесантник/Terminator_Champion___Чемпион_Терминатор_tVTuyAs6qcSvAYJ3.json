@@ -6,7 +6,8 @@
     "key": "43e4b463",
     "cost": 2500,
     "requirements": {
-      "primary": [
+      "primary": [],
+      "secondary": [
         {
           "id": "dbc13r01",
           "kind": "characteristic",
@@ -25,8 +26,7 @@
           "charKey": "inf",
           "value": 40
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Космодесантник",
     "god": "Неделимый",

@@ -8,6 +8,20 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s06",
+          "kind": "notElite",
+          "text": "Secutor, Malagra, Tech-Assassin"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13r01",
           "kind": "characteristic",
           "charKey": "int",
@@ -18,13 +32,6 @@
           "kind": "characteristic",
           "charKey": "inf",
           "value": 55
-        },
-        {
-          "id": "dbc13s01",
-          "kind": "trait",
-          "key": "",
-          "name": "Mechanicum Implants / Импланты Механикум",
-          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
         },
         {
           "id": "dbc13s02",
@@ -61,14 +68,8 @@
           "specialization": "",
           "uuid": "Compendium.warhammer-dbc.talents.Item.fTx8PaNrxtN9dJYo",
           "count": 1
-        },
-        {
-          "id": "dbc13s06",
-          "kind": "notElite",
-          "text": "Secutor, Malagra, Tech-Assassin"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Неделимый",

@@ -6,7 +6,8 @@
     "key": "6901dabe",
     "cost": 2500,
     "requirements": {
-      "primary": [
+      "primary": [],
+      "secondary": [
         {
           "id": "dbc13r01",
           "kind": "characteristic",
@@ -73,8 +74,7 @@
           "uuid": "Compendium.warhammer-dbc.talents.Item.VrTQB3fL8Vp8oaHu",
           "count": 1
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Космодесантник",
     "god": "Неделимый",

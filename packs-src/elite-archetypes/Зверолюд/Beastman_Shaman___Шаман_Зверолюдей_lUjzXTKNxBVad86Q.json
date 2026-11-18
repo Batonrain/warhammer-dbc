@@ -8,6 +8,15 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13r03",
+          "kind": "trait",
+          "key": "",
+          "name": "Psyker / Псайкер",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13r01",
           "kind": "characteristic",
           "charKey": "wp",
@@ -18,13 +27,6 @@
           "kind": "characteristic",
           "charKey": "int",
           "value": 35
-        },
-        {
-          "id": "dbc13r03",
-          "kind": "trait",
-          "key": "",
-          "name": "Psyker / Псайкер",
-          "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
         },
         {
           "id": "dbc13r04",
@@ -50,8 +52,7 @@
           "count": 1,
           "label": "Ученые знания"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Зверолюд",
     "god": "",

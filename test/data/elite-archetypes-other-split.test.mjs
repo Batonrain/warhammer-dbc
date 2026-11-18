@@ -58,10 +58,10 @@ describe("Чумной Монах: разнесённые требования �
     expect(entry("skill", e => e.skillKey === "survival").rank).toBe("trained");
     expect(entry("skill", e => e.skillKey === "forbiddenLore").specKey).toBe("Ересь");
   });
-  it("персонаж без Умений и Талантов не проходит, а с ними — проходит", () => {
+  it("без Умений и Талантов архетип доступен, недостающее подсвечено, а с ними — всё выполнено", () => {
     const empty = checkEliteRequirements(monk(), who({ patron: "nurgle", chars: { t: 50, wp: 35 } }));
-    expect(empty.available).toBe(false);
-    expect(empty.primaryUnmet.length).toBeGreaterThan(5);
+    expect(empty.available).toBe(true);
+    expect(empty.secondaryUnmet.length).toBeGreaterThan(5);
 
     const names = ["Tireless / Неутомимый", "True Grit / Настоящая Выдержка", "Unarmed Master / Безоружный Мастер", "Meditation / Медитация"];
     const full = checkEliteRequirements(monk(), who({
@@ -75,8 +75,22 @@ describe("Чумной Монах: разнесённые требования �
       }
     }));
     expect(full.primaryUnmet).toEqual([]);
+    expect(full.secondaryUnmet).toEqual([]);
     expect(full.available).toBe(true);
   });
+});
+
+// wdbc-ux658, решение владельца 18.11.2026: Характеристики, Умения, Таланты,
+// Психорейтинг и Порча у всех архетипов — вторичные (красная строка, ГМ
+// разрешает исключение), а не обязательные (архетип скрыт из списка).
+describe("мягкие виды требований — только во вторичном блоке", () => {
+  const SOFT = ["characteristic", "skill", "talent", "psyRating", "corruption"];
+  for (const d of DOCS) {
+    it(`${d.name}: в обязательном блоке нет ${SOFT.join("/")}`, () => {
+      const hard = (d.system.requirements?.primary ?? []).filter(e => SOFT.includes(e.kind)).map(e => e.kind);
+      expect(hard).toEqual([]);
+    });
+  }
 });
 
 describe("Архимагос и Секутор: трейт и Таланты структурно, отрицание — текстом", () => {

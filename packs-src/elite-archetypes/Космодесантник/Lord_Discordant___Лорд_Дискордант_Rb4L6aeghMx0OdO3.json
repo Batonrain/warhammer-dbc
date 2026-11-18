@@ -8,6 +8,15 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13s02",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13s01",
           "kind": "skill",
           "scope": "group",
@@ -16,16 +25,8 @@
           "rank": "trained",
           "count": 1,
           "label": "Запретные знания"
-        },
-        {
-          "id": "dbc13s02",
-          "kind": "trait",
-          "key": "",
-          "name": "Mechanicum Implants / Импланты Механикум",
-          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Космодесантник",
     "god": "Неделимый",

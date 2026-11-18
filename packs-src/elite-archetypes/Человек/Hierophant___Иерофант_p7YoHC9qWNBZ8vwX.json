@@ -6,7 +6,8 @@
     "key": "31ddcebb",
     "cost": 2500,
     "requirements": {
-      "primary": [
+      "primary": [],
+      "secondary": [
         {
           "id": "dbc13r01",
           "kind": "characteristic",
@@ -82,8 +83,7 @@
           "uuid": "Compendium.warhammer-dbc.talents.Item.w9lFpVoUDm8pxLb4",
           "count": 1
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Неделимый",

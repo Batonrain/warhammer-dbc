@@ -11,7 +11,9 @@
           "id": "dbc13r01",
           "kind": "patron",
           "key": "slaanesh"
-        },
+        }
+      ],
+      "secondary": [
         {
           "id": "dbc13r02",
           "kind": "characteristic",
@@ -111,8 +113,7 @@
           "uuid": "Compendium.warhammer-dbc.talents.Item.hgr4BacJ2x2F3Nwq",
           "count": 1
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Слаанеш",

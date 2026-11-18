@@ -11,7 +11,9 @@
           "id": "dbc13r01",
           "kind": "patron",
           "key": "nurgle"
-        },
+        }
+      ],
+      "secondary": [
         {
           "id": "dbc13r02",
           "kind": "characteristic",
@@ -101,8 +103,7 @@
           "uuid": "Compendium.warhammer-dbc.talents.Item.PjYdEZCl7AspsgFT",
           "count": 1
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Нургл",
