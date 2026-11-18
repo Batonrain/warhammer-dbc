@@ -8269,6 +8269,11 @@ export const CAPABILITIES = {
   // Шока бросают на I вместо W». Не Черта Machine: Техножрец с ней мыслит
   // как человек. Поэтому своё имя, которое ставится тем, кто действует по
   // программе, — Черте Сервочереп, будущему Сервитору, NPC вручную.
+  "shock.mindKiller": {
+    label: "Убийца Разума: −½I (окр.▼) от бросков на Шок",
+    source: "Талант: Mind Killer / Убийца Разума (Смелость, Основная книга)",
+    reader: "module/rules/mind-killer.mjs mindKillerShockReduction() — module/combat/fear.mjs _executeFearRoll и rollInfernalWillShockDetailed"
+  },
   "fear.machineMind": {
     label: "Машина без свободы воли: тесты Страха и выхода из Шока — на Int вместо W",
     source: "Черта: Servoskull / Сервочереп (Основная книга, «Страх и Машины», стр. 53)",

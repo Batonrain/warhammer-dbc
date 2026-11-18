@@ -26,6 +26,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
 import { infernalWillReduction, infernalWillShockTotal } from "../rules/infernal-will.mjs";
+import { mindKillerShockReduction } from "../rules/mind-killer.mjs";
 import { failUndoOf, failUndoLabels, FAIL_UNDO_SETTLED_FLAG } from "../rules/fail-undo.mjs";
 import { cardOnceUsed, markCardOnce } from "./card-once.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }            from "../constants/skills.mjs";
@@ -190,13 +191,15 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     const sRoll = await new Roll("1d100").evaluate(); allRolls.push(sRoll);
     // Infamy вычитают только Важные персонажи (стр. 53).
     const shockInfamy = important ? infamy : 0;
-    const total = sRoll.total + 10 * (dof - 1) - shockInfamy;
+    // Убийца Разума: −½I от броска Шока (rules/mind-killer.mjs).
+    const mindKiller = mindKillerShockReduction(actor);
+    const total = sRoll.total + 10 * (dof - 1) - shockInfamy - mindKiller;
     if (total <= 0) {
-      shockHtml = `<div class="roll-outcome"><span class="roll-success">${rollIcon("shield","#4dffa6")}Шок предотвращён (Infamy)</span></div>`;
+      shockHtml = `<div class="roll-outcome"><span class="roll-success">${rollIcon("shield","#4dffa6")}Шок предотвращён (${mindKiller ? "Infamy, Убийца Разума" : "Infamy"})</span></div>`;
     } else {
       const row = lookupTable(SHOCK_TABLE, total);
       shockHtml = `<div class="roll-damage-section">
-        <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${shockInfamy ? ` −${shockInfamy}` : ""} = ${total}):</div>
+        <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${shockInfamy ? ` −${shockInfamy}` : ""}${mindKiller ? ` −${mindKiller} Убийца Разума` : ""} = ${total}):</div>
         <div class="roll-threshold">${row?.text ?? "—"}</div>
         ${/* Сегодня ни одна строка Шоковой таблицы смерть напрямую не
              утверждает — это закреплено сторожем (test/combat/crit-effect-
@@ -398,9 +401,10 @@ export async function rollInfernalWillShock(actor, info = {}) {
 export async function rollInfernalWillShockDetailed(actor, { deg, ctx = {} } = {}) {
   const reduction = infernalWillReduction(actor, ctx);
   const sRoll = await new Roll("1d100").evaluate();
-  const total = infernalWillShockTotal(sRoll.total, deg, reduction.value);
+  const mindKiller = mindKillerShockReduction(actor);
+  const total = infernalWillShockTotal(sRoll.total, deg, reduction.value) - mindKiller;
   const fails = Math.max(1, Number(deg) || 1);
-  const formula = `${sRoll.total}${fails > 1 ? ` + ${10 * (fails - 1)}` : ""}${reduction.value ? ` − ${reduction.value}` : ""} = ${total}`;
+  const formula = `${sRoll.total}${fails > 1 ? ` + ${10 * (fails - 1)}` : ""}${reduction.value ? ` − ${reduction.value}` : ""}${mindKiller ? ` − ${mindKiller} (Убийца Разума)` : ""} = ${total}`;
   const head = `<div class="roll-damage-label">🜏 Инфернальная Воля — ${fails} ${_degWord(fails)} теста Навыка, бросок Шока (${formula}):</div>`;
   // Подпись снижения — всегда, и при нуле: «Навык не дружественный» объясняет,
   // почему Cor не помог.
