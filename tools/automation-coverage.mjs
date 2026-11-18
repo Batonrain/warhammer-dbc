@@ -79,7 +79,8 @@ export function nameHalves(name) {
  * и добавляются две формы, которых он не видит:
  *  • константа-строка аргументом: `itemHasName(i, BONE_SONG)`;
  *  • массив строк-имён в файле, который опознаёт по имени:
- *    `const X_TALENTS = ["A", "B"]` … `.some(n => itemHasName(i, n))`.
+ *    `const X_TALENTS = ["A", "B"]` … `.some(n => itemHasName(i, n))`;
+ *  • поле `names: [...]` в таблице определений того же файла.
  */
 export function detectionNames(moduleFiles = readModule()) {
   const names = nameDetectionStrings(moduleFiles);
@@ -95,6 +96,11 @@ export function detectionNames(moduleFiles = readModule()) {
     if (!detects) continue;
     for (const m of src.matchAll(/const\s+([A-Z][A-Z0-9_]*(?:NAMES?|TALENTS?|TRAITS?)[A-Z0-9_]*)\s*=\s*(?:new Set\()?\[([^\]]*)\]/g)) {
       for (const lit of m[2].matchAll(/"([^"\n]+)"/g)) names.add(lit[1]);
+    }
+    // Таблица определений с полем имён: `allTerrain: { names: ["All-Terrain", "Вездеход"] }`
+    // (rules/mount.mjs MOUNT_TRAIT_DEFS — Черты скакуна ищутся перебором таблицы).
+    for (const m of src.matchAll(/\bnames:\s*\[([^\]]*)\]/g)) {
+      for (const lit of m[1].matchAll(/"([^"\n]+)"/g)) names.add(lit[1]);
     }
   }
   return new Set([...names].map(normName).filter(Boolean));
