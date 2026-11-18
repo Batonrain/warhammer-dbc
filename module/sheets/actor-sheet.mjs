@@ -114,6 +114,7 @@ import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "../rules/personal-adaptation.mjs";
 import { skillTotal } from "../combat/movement-actions.mjs";
+import { opposedSide } from "../rules/opposed-skill.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -3122,20 +3123,24 @@ export class WarhammerCharacterSheet
       return { opposed: { threshold: 0, roll: 1, rageAutoFail: true }, opponentActor: null };
     if (brokenAutoFail(opponentActor, this.actor, charKey, a => actorIdentityUuids(a)))
       return { opposed: { threshold: 0, roll: 1, brokenAutoFail: true }, opponentActor: null };
+    // Соперник отвечает тем, что велит книга (Скрытность — Внимательностью,
+    // Очарование — Силой Воли…, rules/opposed-skill.mjs), а не тем же Навыком.
+    const side = opposedSide(skillKey, charKey);
     // Правоверный Тёмного Апостола: +30 на сопротивление убеждению (rules/dark-apostle.mjs).
-    const threshold = (skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0))
+    const threshold = (side.skillKey ? skillTotal(opponentActor, side.skillKey) : (opponentActor.system.characteristics?.[side.charKey]?.total ?? 0))
       + faithfulResistBonus(opponentActor, { social: isSocialSkill(skillKey) });
     const roll = await new Roll("1d100").evaluate();
     // unnatural (стр. 26, wdbc-y9i8) — соперник известен по документу здесь,
     // поэтому тай-брейк Сверхъестественной Характеристики можно проверить
-    // автоматически, а не оставлять на ручную галочку.
-    return { opposed: { threshold, roll: roll.total, unnatural: hasUnnaturalCharacteristic(opponentActor, charKey) }, opponentActor: null };
+    // автоматически, а не оставлять на ручную галочку. Характеристика — та,
+    // которой бросал СОПЕРНИК.
+    return { opposed: { threshold, roll: roll.total, unnatural: hasUnnaturalCharacteristic(opponentActor, side.charKey) }, opponentActor: null };
   }
 
   /** Запрос встречного броска сопернику-игроку — payload несёт УЖЕ готовую
    *  сторону инициатора, опенер "opposedResponse" (hooks.mjs) считает
    *  сравнение сам, сразу после своего броска, без обратной связи. */
-  async _sendOpposedRequest(opponentActor, { label, safe, testKind, skillKey, charKey, hideCharSelect, baseEff, rv, outcome }) {
+  async _sendOpposedRequest(opponentActor, { label, safe, testKind, skillKey, charKey, initiatorCharKey = charKey, hideCharSelect, baseEff, rv, outcome }) {
     await requestDelegatedTest({
       requesterActor: this.actor, executorActor: opponentActor, effectTargetActor: opponentActor,
       kind: "opposedResponse", label, buttonLabel: "Бросить встречный",
@@ -3146,8 +3151,8 @@ export class WarhammerCharacterSheet
         // Характеристику знаю сразу; ответчик прочтёт это поле, когда будет
         // считать сравнение своей стороной (_maybePostOpposedComparison).
         initiatorSide: { threshold: baseEff, roll: rv, success: outcome.success, deg: outcome.deg,
-                          unnatural: hasUnnaturalCharacteristic(this.actor, charKey),
-                          noUnnaturalTie: singleCombatNoUnnaturalTie(this.actor, charKey) },
+                          unnatural: hasUnnaturalCharacteristic(this.actor, initiatorCharKey),
+                          noUnnaturalTie: singleCombatNoUnnaturalTie(this.actor, initiatorCharKey) },
         safe: !!safe
       }
     });
@@ -3333,8 +3338,11 @@ export class WarhammerCharacterSheet
       finalOpposed = auto.opposed;
       opposedOpponent = auto.opponentActor;
     }
-    const pendingOpponentNote = opposedOpponent
-      ? `<div class="roll-dlg-note">⏳ Ждём встречный бросок игрока «${esc(opposedOpponent.name)}»…</div>` : "";
+    const opponentSide = opposedSide(skillKey, charKey);
+    const opponentVsNote = (opposedAuto && opponentSide.paired)
+      ? `<div class="roll-dlg-note">Соперник отвечает: ${esc(opponentSide.label)}</div>` : "";
+    const pendingOpponentNote = (opposedOpponent
+      ? `<div class="roll-dlg-note">⏳ Ждём встречный бросок игрока «${esc(opposedOpponent.name)}»…</div>` : "") + opponentVsNote;
 
     // Столбец Б Комбинированного (стр. 25, wdbc-y9i8): диалог отдаёт «сырые»
     // Цель/Модификатор/Сложность второго Навыка — ситуативные авто-штрафы
@@ -3476,8 +3484,9 @@ export class WarhammerCharacterSheet
 
     if (opposedOpponent) {
       await this._sendOpposedRequest(opposedOpponent, {
-        label, safe: finalOpposed?.safe, testKind: skillKey ? "skill" : "characteristic",
-        skillKey, charKey, hideCharSelect,
+        label, safe: finalOpposed?.safe, testKind: opponentSide.testKind,
+        skillKey: opponentSide.skillKey, charKey: opponentSide.charKey, initiatorCharKey: charKey,
+        hideCharSelect: opponentSide.paired ? true : hideCharSelect,
         baseEff, rv, outcome
       });
     }
