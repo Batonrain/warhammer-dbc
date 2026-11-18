@@ -6,7 +6,8 @@
     "key": "3f13b3fc",
     "cost": 4000,
     "requirements": {
-      "primary": [
+      "primary": [],
+      "secondary": [
         {
           "id": "dbc13r01",
           "kind": "psyRating",
@@ -52,8 +53,7 @@
           "count": 1,
           "label": "Ученые знания"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Любая",
     "god": "",

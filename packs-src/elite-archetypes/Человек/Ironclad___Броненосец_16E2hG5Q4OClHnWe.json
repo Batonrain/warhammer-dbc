@@ -8,6 +8,13 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13r03",
+          "kind": "notHas",
+          "text": "Skitarii War Plate, Mechanicum Implants"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13r01",
           "kind": "characteristic",
           "charKey": "inf",
@@ -17,14 +24,8 @@
           "id": "dbc13r02",
           "kind": "corruption",
           "value": 30
-        },
-        {
-          "id": "dbc13r03",
-          "kind": "notHas",
-          "text": "Skitarii War Plate, Mechanicum Implants"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Неделимый",

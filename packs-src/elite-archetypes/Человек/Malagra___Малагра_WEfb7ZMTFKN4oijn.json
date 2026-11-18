@@ -8,6 +8,20 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s04",
+          "kind": "notElite",
+          "text": "Tech-Assassin, Secutor, Archmagos"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13r01",
           "kind": "characteristic",
           "charKey": "int",
@@ -18,13 +32,6 @@
           "kind": "characteristic",
           "charKey": "per",
           "value": 55
-        },
-        {
-          "id": "dbc13s01",
-          "kind": "trait",
-          "key": "",
-          "name": "Mechanicum Implants / Импланты Механикум",
-          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
         },
         {
           "id": "dbc13s02",
@@ -42,14 +49,8 @@
           "specialization": "",
           "uuid": "Compendium.warhammer-dbc.talents.Item.ttzHNu39HbCICfk8",
           "count": 1
-        },
-        {
-          "id": "dbc13s04",
-          "kind": "notElite",
-          "text": "Tech-Assassin, Secutor, Archmagos"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Неделимый",

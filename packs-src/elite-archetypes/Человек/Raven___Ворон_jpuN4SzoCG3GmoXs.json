@@ -11,7 +11,9 @@
           "id": "dbc13r01",
           "kind": "patron",
           "key": "tzeentch"
-        },
+        }
+      ],
+      "secondary": [
         {
           "id": "dbc13r02",
           "kind": "characteristic",
@@ -76,8 +78,7 @@
           "uuid": "Compendium.warhammer-dbc.talents.Item.icosn3iRFLevn5hw",
           "count": 1
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Тзинч",

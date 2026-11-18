@@ -13,6 +13,15 @@
           "key": "tzeentch"
         },
         {
+          "id": "dbc13r04",
+          "kind": "trait",
+          "key": "",
+          "name": "Psyker / Псайкер",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13r02",
           "kind": "characteristic",
           "charKey": "wp",
@@ -23,13 +32,6 @@
           "kind": "characteristic",
           "charKey": "int",
           "value": 45
-        },
-        {
-          "id": "dbc13r04",
-          "kind": "trait",
-          "key": "",
-          "name": "Psyker / Псайкер",
-          "uuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD"
         },
         {
           "id": "dbc13r05",
@@ -102,8 +104,7 @@
           "count": 1,
           "label": "Пристальность"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Тзинч",

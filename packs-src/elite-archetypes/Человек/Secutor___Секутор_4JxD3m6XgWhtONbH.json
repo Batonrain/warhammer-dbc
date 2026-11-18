@@ -8,6 +8,20 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13s01",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s05",
+          "kind": "notElite",
+          "text": "Tech-Assassin, Archmagos, Malagra"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13r01",
           "kind": "characteristic",
           "charKey": "ws",
@@ -18,13 +32,6 @@
           "kind": "characteristic",
           "charKey": "bs",
           "value": 50
-        },
-        {
-          "id": "dbc13s01",
-          "kind": "trait",
-          "key": "",
-          "name": "Mechanicum Implants / Импланты Механикум",
-          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
         },
         {
           "id": "dbc13s02",
@@ -49,14 +56,8 @@
           "specialization": "Ranged",
           "uuid": "Compendium.warhammer-dbc.talents.Item.M42c1iRsyj6o7ovi",
           "count": 1
-        },
-        {
-          "id": "dbc13s05",
-          "kind": "notElite",
-          "text": "Tech-Assassin, Archmagos, Malagra"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Неделимый",

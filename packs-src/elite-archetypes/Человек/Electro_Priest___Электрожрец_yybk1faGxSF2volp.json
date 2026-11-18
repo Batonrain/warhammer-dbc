@@ -8,6 +8,20 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13s02",
+          "kind": "trait",
+          "key": "",
+          "name": "Mechanicum Implants / Импланты Механикум",
+          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
+        },
+        {
+          "id": "dbc13s03",
+          "kind": "power",
+          "text": "Voltagheist Shield, Luminen Shock, Electroepithany"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13r01",
           "kind": "characteristic",
           "charKey": "wp",
@@ -28,21 +42,8 @@
           "rank": "trained",
           "count": 1,
           "label": "Запретные знания"
-        },
-        {
-          "id": "dbc13s02",
-          "kind": "trait",
-          "key": "",
-          "name": "Mechanicum Implants / Импланты Механикум",
-          "uuid": "Compendium.warhammer-dbc.traits.Item.mIHNU8mi5oBaNDpR"
-        },
-        {
-          "id": "dbc13s03",
-          "kind": "power",
-          "text": "Voltagheist Shield, Luminen Shock, Electroepithany"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Неделимый",

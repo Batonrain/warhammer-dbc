@@ -8,18 +8,6 @@
     "requirements": {
       "primary": [
         {
-          "id": "dbc13r01",
-          "kind": "characteristic",
-          "charKey": "ws",
-          "value": 45
-        },
-        {
-          "id": "dbc13r02",
-          "kind": "characteristic",
-          "charKey": "ag",
-          "value": 45
-        },
-        {
           "id": "dbc13s01",
           "kind": "trait",
           "key": "",
@@ -32,7 +20,20 @@
           "text": "Secutor, Archmagos, Malagra"
         }
       ],
-      "secondary": []
+      "secondary": [
+        {
+          "id": "dbc13r01",
+          "kind": "characteristic",
+          "charKey": "ws",
+          "value": 45
+        },
+        {
+          "id": "dbc13r02",
+          "kind": "characteristic",
+          "charKey": "ag",
+          "value": 45
+        }
+      ]
     },
     "race": "Человек",
     "god": "Неделимый",

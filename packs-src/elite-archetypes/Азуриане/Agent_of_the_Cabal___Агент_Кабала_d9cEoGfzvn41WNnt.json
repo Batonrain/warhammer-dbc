@@ -8,6 +8,12 @@
     "requirements": {
       "primary": [
         {
+          "id": "dbc13s06",
+          "kind": "notHeretic"
+        }
+      ],
+      "secondary": [
+        {
           "id": "dbc13s01",
           "kind": "characteristic",
           "charKey": "int",
@@ -60,13 +66,8 @@
           "specPrefix": "Ученые знания|Scholastic Lore",
           "uuid": "Compendium.warhammer-dbc.talents.Item.2OBfo5PO1q8hIKDJ",
           "count": 1
-        },
-        {
-          "id": "dbc13s06",
-          "kind": "notHeretic"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Любая",
     "god": "",

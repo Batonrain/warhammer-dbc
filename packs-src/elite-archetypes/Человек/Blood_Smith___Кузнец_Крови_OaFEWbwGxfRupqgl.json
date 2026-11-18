@@ -11,7 +11,9 @@
           "id": "dbc13r01",
           "kind": "patron",
           "key": "khorne"
-        },
+        }
+      ],
+      "secondary": [
         {
           "id": "dbc13r02",
           "kind": "characteristic",
@@ -44,8 +46,7 @@
           "count": 1,
           "label": "Ремесло"
         }
-      ],
-      "secondary": []
+      ]
     },
     "race": "Человек",
     "god": "Кхорн",
