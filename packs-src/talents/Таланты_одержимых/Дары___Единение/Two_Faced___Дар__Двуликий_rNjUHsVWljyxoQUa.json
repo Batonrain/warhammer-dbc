@@ -5,7 +5,7 @@
   "folder": "Y3osK7XKipa7yxt9",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Частично реализовано (19.11.2026): в окне теста Awareness предлагается второй бросок (лучший из двух) — ставит игрок, пока демон проявлен. Вручную: полудействие неконтролирующей души на речь, Команду, Запугивание, Baleful Dirge, War Cry.",
     "benefit": "Доп. глаза/рот второй души: 2 броска Awareness; неконтролирующая душа получает полудействие только на общение/Команду/Запугивание/Baleful Dirge/War Cry через рот.",
     "tier": 1,
     "requirement": "Базовый",
@@ -35,7 +35,23 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "GzX4R3QkNQ1CpWOD",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "UL6YOWbhIL2f5uFU",
+              "kind": "reroll",
+              "rerollScope": "skill",
+              "skillKey": "awareness",
+              "rerollMode": "keepBest",
+              "label": "Дар: Двуликий — второй бросок Awareness (в Проявлении)"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

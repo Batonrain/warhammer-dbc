@@ -12,7 +12,7 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 import { ruleFlagLabels, hasRuleFlag } from "../../rules/flags.mjs";
-import { isStunnedOrDazed }       from "../../rules/predicates.mjs";
+import { isStunnedOrDazed, manifestedGift } from "../../rules/predicates.mjs";
 import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs";
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
 import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
@@ -118,6 +118,10 @@ export function situationalMods(v) {
   // что получают преимущества Прицеливания, автоматически промахиваются».
   const aimingOn = !!actor?.system?.aiming && actor.system.aiming !== "none";
   const tgtAntiAim = !!tgt && hasRuleFlag(tgt, "attack.antiAim");
+  // Дар Одержимого «Завеса Тьмы» (DoomBC 129-132): «Облако тьмы: все зрячие
+  // атаки по нему −20». Действует, пока демон проявлен. Отмечена сама — атаку,
+  // которая не полагается на зрение, игрок снимает галочкой.
+  const tgtVeilOfDarkness = !!tgt && manifestedGift(tgt, "Завеса Тьмы");
   const tgtSurprisedRound1 = !!tgt?.system?.conditions?.surprised
     && (typeof game !== "undefined" ? game.combat?.round : null) === 1;
   const tgtStunnedAuto = isStunnedOrDazed(tgt);
@@ -136,6 +140,8 @@ export function situationalMods(v) {
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
                      : "атаки с Прицеливанием по этой цели автоматически промахиваются" }] : []),
+    ...(tgtVeilOfDarkness ? [{ label: "Завеса Тьмы цели (Дар Одержимого)", value: -20, autoCheck: true,
+      note: "все зрячие атаки по Одержимому в Проявлении −20; атаке не по зрению снимите галочку" }] : []),
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
     // Ярость (Frenzy, стр. 62): «штраф −20 на все тесты BS» — стрельба. Окно
     // атаки собирает порог само (правила rollBonus сюда не доезжают, см.

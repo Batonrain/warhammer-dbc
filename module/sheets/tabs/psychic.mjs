@@ -8,7 +8,7 @@ import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { isPossessedByParasite } from "../../rules/parasite-trait.mjs";
-import { isMentalActionBlocked } from "../../rules/predicates.mjs";
+import { isMentalActionBlocked, itemHasName } from "../../rules/predicates.mjs";
 import { rageBlocksMental } from "../../rules/rage.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
@@ -184,6 +184,20 @@ export async function learnSigilliteRune(actor, item) {
  * @param {object} [extraOpts]  доливается в opts executePsychotest — напр.
  *   onResult({success, deg, ePR}) у Огня Души (module/combat/soulfire.mjs).
  */
+/**
+ * Виден ли Путь Силы этому псайкеру в окне манифестации. Путь с `flag`
+ * (Руны Сигиллитов) — только носителю возможности; Путь с `talent`
+ * (Инкантация, Медитация, Телесная Конверсия, Жертва) — только тому, у кого
+ * этот Талант есть: «Псайкер может использовать Путь Силы …» — без Таланта
+ * Путь закрыт. Остальные Пути видны всем, как и прежде.
+ */
+export function pathAvailable(actor, path) {
+  if (path?.flag && !hasRuleFlag(actor, path.flag)) return false;
+  if (path?.talent && ![...(actor?.items ?? [])].some(i =>
+    (i?.type === "talent" || i?.type === "trait") && itemHasName(i, path.talent))) return false;
+  return true;
+}
+
 export function showManifestDialog(actor, item, extraOpts = {}) {
   // Варп-Замок (rules/warp-lock.mjs): до начала следующего Хода персонаж не псайкер и манифестировать не может.
   if (warpLockBlocksManifest(actor)) {
@@ -280,7 +294,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // возможность реально выдана. Все прочие Пути поля не несут, поэтому у
   // псайкера без Черты список остаётся ровно прежним.
   const pathOptions = Object.entries(PSY_PATHS)
-    .filter(([, p]) => !p.flag || hasRuleFlag(actor, p.flag))
+    .filter(([, p]) => pathAvailable(actor, p))
     .map(([k, p]) =>
       `<option value="${k}"${p.req ? ` title="${esc(p.req)}"` : ""}>${p.label}${p.req ? " *" : ""}</option>`).join("");
 

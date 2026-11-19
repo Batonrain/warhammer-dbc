@@ -43,9 +43,40 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { clearPinnedOnMeleeEntry } from "./suppression.mjs";
 import { isForcedMove } from "../rules/movement-path.mjs";
+import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
+import { itemHasName } from "../rules/predicates.mjs";
 
 /** Флаг «раз в Раунд» (module/apps/game-session.mjs). */
 export const FREE_ATTACK_CAPABILITY = "freeAttack";
+/** Счётчик Свободных атак за Раунд у носителя Привратника (rules/cooldown.mjs, поле count). */
+export const FREE_ATTACK_COUNTER = "freeAttackGatekeeper";
+
+/**
+ * Сколько Свободных атак в Раунд доступно актору. Gatekeeper / Привратник
+ * (Рукопашные, стр. 62): «до WS.b свободных атак в Раунд вместо одной».
+ * Каждая по-прежнему стоит Реакцию — лимит Реакций проверяется отдельно.
+ */
+export function freeAttacksPerRound(actor) {
+  const gatekeeper = [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Gatekeeper"));
+  if (!gatekeeper) return 1;
+  const ch = actor?.system?.characteristics?.ws;
+  const wsb = Number(ch?.bonus ?? Math.floor((Number(ch?.total) || 0) / 10)) || 0;
+  return Math.max(1, wsb);
+}
+
+/** Осталась ли у актора Свободная атака в этом Раунде. */
+export function freeAttackAvailable(actor) {
+  const max = freeAttacksPerRound(actor);
+  return max > 1
+    ? isThrottleCountAvailable(actor, FREE_ATTACK_COUNTER, "round", max)
+    : isRoundCapabilityAvailable(actor, FREE_ATTACK_CAPABILITY);
+}
+
+async function markFreeAttackUsed(actor) {
+  const max = freeAttacksPerRound(actor);
+  if (max > 1) return incrementThrottleCount(actor, FREE_ATTACK_COUNTER, "round", max);
+  return markRoundCapabilityUsed(actor, FREE_ATTACK_CAPABILITY);
+}
 
 function actorOf(tokenDoc) {
   return tokenDoc?.actor ?? null;
@@ -204,8 +235,9 @@ function pruneStalePreMoveContacts(now = Date.now()) {
 export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc, reasonHtml = null) {
   const reactor = actorOf(reactorTokenDoc);
   if (!reactor || !hasActionEconomy(reactor)) return;
-  if (!isRoundCapabilityAvailable(reactor, FREE_ATTACK_CAPABILITY)) return;
+  if (!freeAttackAvailable(reactor)) return;
   if (!canSpendReaction(reactor)) return;
+  const perRound = freeAttacksPerRound(reactor);
 
   const reason = reasonHtml ?? `${esc(moverTokenDoc.name)} покидает рукопашную с ${esc(reactor.name)}`;
 
@@ -219,7 +251,7 @@ export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc, reasonHtml
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("sword", "#ff9d4d")}Свободная атака — ${reason}</div>
-        <div class="roll-threshold">Раз в Раунд, ценой Реакции: рукопашный приём +0 по нему.</div>
+        <div class="roll-threshold">${perRound > 1 ? `До ${perRound} раз в Раунд (Привратник)` : "Раз в Раунд"}, ценой Реакции: рукопашный приём +0 по нему.</div>
         <div class="roll-defense-btns">
           <button class="wh-free-attack-btn" type="button"
             data-reactor-uuid="${reactor.uuid}" data-mover-uuid="${moverTokenDoc.uuid}">
@@ -316,13 +348,13 @@ export async function resolveFreeAttackClick(reactorUuid, moverUuid) {
   const reactor = await fromUuid(reactorUuid).catch(() => null);
   if (!reactor) return ui.notifications.warn("⚠️ Актор реагирующего не найден.");
   if (!reactor.isOwner) return ui.notifications.warn("⚠️ Нет прав на этого актора.");
-  if (!isRoundCapabilityAvailable(reactor, FREE_ATTACK_CAPABILITY)) {
+  if (!freeAttackAvailable(reactor)) {
     return ui.notifications.warn(`⚠️ ${reactor.name}: Свободная атака уже потрачена в этом Раунде.`);
   }
   if (!await spendReaction(reactor)) {
     return ui.notifications.warn(`⚠️ ${reactor.name}: не хватает Реакции.`);
   }
-  await markRoundCapabilityUsed(reactor, FREE_ATTACK_CAPABILITY);
+  await markFreeAttackUsed(reactor);
 
   const moverTokenDoc = await fromUuid(moverUuid).catch(() => null);
   const moverToken = moverTokenDoc?.object;

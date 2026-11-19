@@ -929,3 +929,14 @@ export function giftNamesOf(actor) {
   }
   return out;
 }
+
+/**
+ * Дар действует прямо сейчас: актор может проявлять демона, демон проявлен
+ * (system.possession.manifested) и Дар есть среди его Талантов. Тот же гейт,
+ * что у числовых Даров в rules/character.mjs, — для мест, которые читают Дар
+ * не при пересчёте листа (окно атаки по Одержимому: «Завеса Тьмы»).
+ */
+export function manifestedGift(actor, giftName) {
+  if (!canManifestPossession(actor) || !actor?.system?.possession?.manifested) return false;
+  return giftNamesOf(actor).has(giftName);
+}
