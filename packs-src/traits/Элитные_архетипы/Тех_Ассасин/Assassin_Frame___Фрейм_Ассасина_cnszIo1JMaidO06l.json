@@ -5,7 +5,7 @@
   "folder": "4F6ZUgR7hVW6YdHR",
   "system": {
     "description": "",
-    "notes": "Комплект бионических имплантов Best.Q конкретного состава — грант категории предметов, тот же класс, что Paladin Frame/Paragon Coil.",
+    "notes": "Частично реализовано (19.11.2026): +10 к тестам S и A и +20 к Карабканью прибавляются сами; когти — Черта Deadly Natural Weapons, её выдаёт сам Архетип. Вручную: +20 к Athletics для прыжков, Talent Sprint при беге, Haywire на 4 слабее для бионики, скрытые полости.",
     "benefit": "Фрейм почти полностью заменяет тело, оставляя только головной и спинной мозг, биологические глаза и уши (они спрятаны за односторонне-прозрачными трансстальными панелями на лицевой пластине). Оборудован бионическими глазами и слухом Best.Q (в дополнение к биологическим), двумя парами бионических рук Best.Q (+10 на тесты S и A, скрытые полости для ножа/компактного пистолета) и парой бионических ног Best.Q (Талант Sprint при беге, +20 на Athletics для прыжков и карабканья). Руки и ноги имеют когти Трейта Deadly Natural Weapons. Источники энергии и грав-пластины экранированы — считает любой эффект Haywire на 4 меньше в отношении своей бионики и кибернетики.",
     "source": "Элитный архетип: Тех-Ассасин",
     "hasRating": false,
@@ -34,7 +34,44 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "gH4MI3CmK44Ljxjl",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "NySO9XvYXjvBRExt",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "s",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Фрейм Ассасина: бионические руки (S)",
+              "modAuto": true
+            },
+            {
+              "id": "JiKFZI7KQacVgqlJ",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "ag",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Фрейм Ассасина: бионические руки (A)",
+              "modAuto": true
+            },
+            {
+              "id": "d0JjB5ViqqOweLS3",
+              "kind": "testMod",
+              "modScope": "climbing",
+              "modValueMode": "flat",
+              "value": 20,
+              "label": "Фрейм Ассасина: бионические ноги (карабканье)",
+              "modAuto": true
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -5,7 +5,7 @@
   "folder": "foutd4GzPCUo8Jyv",
   "system": {
     "description": "",
-    "notes": "Категория цены группы Навыков (дружественные/нейтральные независимо от Покровительства) — тарификация опыта, не тест; тот же класс, что Noble Eugenics. Правило стола, механики нет (dbc-114, 14.11.2026, решение владельца): кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Частично реализовано (19.11.2026): Навыки Inquiry, Interrogate, Security и Stealth дружественные в цене продвижений. Вручную: Acrobatics и Dodge нейтральные (в системе нет «всегда нейтральный» независимо от Покровительства), исключения из Гнева Кхорна.",
     "benefit": "Считает Навыки Inquiry, Interrogate, Security и Stealth дружественными, а Acrobatics и Dodge — нейтральными, независимо от покровительства. Обман и пытки с целью выследить заклятых врагов, выведать их слабости и подготовиться к бою не вызывают Гнев Кхорна, равно как и попытки скрытно пробраться мимо их охраны. Медленное и мучительное убийство заклятого врага, если оно является наказанием, соразмерным его преступлению, не только не вызывает Гнев Кхорна, но может быть вознаграждено Бесчестием или мутацией.",
     "source": "Элитный архетип: Ревенант",
     "hasRating": false,
@@ -136,6 +136,48 @@
                 "negate": false,
                 "conditions": []
               }
+            }
+          ]
+        },
+        {
+          "id": "YKPt4ubiIfXenmtE",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "a2hQhFCquEF1mAyj",
+              "kind": "capability",
+              "capabilityMode": "aptOverride",
+              "capabilityAptScope": "skill",
+              "capabilityAptMatch": "Расспрос",
+              "capabilityAptAlign": "ally",
+              "label": "Тень Отмщения: Расспрос дружественный"
+            },
+            {
+              "id": "crkdedMKHLNz0IK2",
+              "kind": "capability",
+              "capabilityMode": "aptOverride",
+              "capabilityAptScope": "skill",
+              "capabilityAptMatch": "Допрос",
+              "capabilityAptAlign": "ally",
+              "label": "Тень Отмщения: Допрос дружественный"
+            },
+            {
+              "id": "brXQx7JDfdzmh3ef",
+              "kind": "capability",
+              "capabilityMode": "aptOverride",
+              "capabilityAptScope": "skill",
+              "capabilityAptMatch": "Безопасность",
+              "capabilityAptAlign": "ally",
+              "label": "Тень Отмщения: Безопасность дружественный"
+            },
+            {
+              "id": "crdYUSITbJgrkoIq",
+              "kind": "capability",
+              "capabilityMode": "aptOverride",
+              "capabilityAptScope": "skill",
+              "capabilityAptMatch": "Скрытность",
+              "capabilityAptAlign": "ally",
+              "label": "Тень Отмщения: Скрытность дружественный"
             }
           ]
         }
