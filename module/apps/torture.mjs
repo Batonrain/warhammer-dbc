@@ -53,7 +53,10 @@ function _sideModsAndReroll(resolved) {
   const total = list.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
   const parts = list.map(m => `${m.label} ${Number(m.value) >= 0 ? "+" : ""}${m.value}`);
   const reroll = resolved.rerolls.find(r => r.who !== "target");
-  return { total, parts, reroll: reroll ? { mode: reroll.mode, rolls: reroll.rolls, label: reroll.label } : null };
+  // Запись Конструктора «автоуспех» с областью «сопротивление допросу» (Вуаль
+  // Лжи): у жертвы нет своего окна с галочкой — условие и так выполнено.
+  const auto = list.find(m => m.autoSuccess) ?? null;
+  return { total, parts, auto, reroll: reroll ? { mode: reroll.mode, rolls: reroll.rolls, label: reroll.label } : null };
 }
 
 /** Иммунитет к пыткам: Не Чувствует Боли (мутация) и Метка Слаанеш (defence.tortureImmune). */
@@ -117,7 +120,8 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
   // жертвы (Frenzy) «автоматически проходит тесты Морали» — тем же приёмом, что
   // у combat/intimidate.mjs: встречный тест жертвы засчитан успешным, но
   // пытающий всё ещё может победить большей степенью.
-  const autoPass = moraleAutoPass(target);
+  const autoPass = moraleAutoPass(target)
+    ?? (targetMods.auto ? { by: "rule", label: `${targetMods.auto.label}`, short: targetMods.auto.label } : null);
   const theirs = { ...testOutcome(targetRv, targetThreshold, { autoSuccess: !!autoPass }), threshold: targetThreshold };
   const { winner, margin } = resolveOpposed(mine, theirs);
   await clearForesight(torturer); // бросок пытающего — тест I: +10 Предусмотрительности потрачен

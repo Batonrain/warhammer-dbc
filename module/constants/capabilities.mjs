@@ -6610,7 +6610,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kognite.veilOfLies": {
     label: "Гипноиндоктринация превращает разум в многослойный лабиринт из сконструированных личностей, в сердце которого скрыто ядро настоящих мыслей.",
-    source: "Veil of Lies / Вуаль Лжи", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Veil of Lies / Вуаль Лжи", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора testMod modValueMode autoSuccess — область psychicMind (галочка в окне теста Воли против психосилы, sheets/actor-sheet.mjs::autoSuccessChecked) и interrogation (apps/torture.mjs засчитывает сам). Прокси-личность (Deceive) — вручную"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Коготь_Варпа — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogotVarpa.veilRender": {
@@ -6785,7 +6785,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meyster.savantOfLifeAndDeath": {
     label: "Имеет доступ к безграничным медицинским знаниям своего покровителя. Автоматически преуспевает во всех тестах медицинской диагностики и автом…",
-    source: "Savant of Life and Death / Савант Жизни и Смерти", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Savant of Life and Death / Савант Жизни и Смерти", reader: "ЧАСТИЧНО (19.11.2026): запись Конструктора testMod modValueMode autoSuccess на skill:medicae — галочка в окне теста Медицины; игрок ставит её при диагностике"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Монарх — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.monarh.brainHarvesting": {
