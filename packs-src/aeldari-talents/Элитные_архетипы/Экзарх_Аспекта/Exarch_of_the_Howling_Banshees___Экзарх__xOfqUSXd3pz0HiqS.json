@@ -46,7 +46,8 @@
               "modScope": "attack",
               "modValueMode": "flat",
               "value": 20,
-              "label": "Экзарх Воющих Баньши: после прыжка"
+              "label": "Экзарх Воющих Баньши: после прыжка",
+              "askOnly": true
             }
           ]
         }

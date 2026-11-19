@@ -47,7 +47,8 @@
               "modValueMode": "flat",
               "value": 20,
               "label": "Виртуоз Защиты: в Защитной Стойке",
-              "skillKey": "parry"
+              "skillKey": "parry",
+              "askOnly": true
             }
           ]
         }

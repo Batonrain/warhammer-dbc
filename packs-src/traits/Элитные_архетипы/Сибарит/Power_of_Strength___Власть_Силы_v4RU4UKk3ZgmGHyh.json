@@ -150,7 +150,8 @@
               "skillKey": "command",
               "modValueMode": "flat",
               "value": 15,
-              "label": "Власть Силы: командуя своим отрядом"
+              "label": "Власть Силы: командуя своим отрядом",
+              "askOnly": true
             }
           ]
         }

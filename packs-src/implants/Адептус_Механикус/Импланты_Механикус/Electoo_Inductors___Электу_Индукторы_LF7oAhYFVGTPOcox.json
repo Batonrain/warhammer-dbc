@@ -285,7 +285,8 @@
                   "good"
                 ],
                 "negateQuality": false
-              }
+              },
+              "askOnly": true
             },
             {
               "id": "mcElectooBest001",
@@ -400,7 +401,8 @@
                   "best"
                 ],
                 "negateQuality": false
-              }
+              },
+              "askOnly": true
             }
           ]
         }

@@ -35,6 +35,9 @@ describe("пачки шага 3: галочки Талантов", () => {
       for (const fx of effects) {
         expect(fx.target).toBeTruthy();
         expect(fx.auto).not.toBe(true); // галочка, а не тихая прибавка
+        // и только галочка: в бросках без окна (Мораль, Запугивание, Пытки)
+        // условие спросить негде — не складывается (rules/roll-mods.mjs)
+        expect(fx.askOnly).toBe(true);
       }
     });
   }

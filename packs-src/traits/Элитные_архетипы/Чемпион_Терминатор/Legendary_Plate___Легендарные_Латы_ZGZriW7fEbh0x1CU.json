@@ -150,7 +150,8 @@
               "rerollChar": "inf",
               "modValueMode": "flat",
               "value": 20,
-              "label": "Легендарные Латы: с Космодесантниками и Ancient Warrior"
+              "label": "Легендарные Латы: с Космодесантниками и Ancient Warrior",
+              "askOnly": true
             }
           ]
         }

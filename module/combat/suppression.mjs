@@ -32,6 +32,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { duckAndCoverAdvantage } from "../rules/duck-and-cover.mjs";
@@ -105,7 +106,8 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", so
     return { success: true, rv: null, threshold: null, immune: true };
   }
   // Не От Мира Сего (From Beyond): «автоматически проходит тесты на … Подавление».
-  if (hasRuleFlag(actor, "suppression.immune")) {
+  // «Извне» (Медуза) — и по имени: старая копия без ключа (приёмка #581).
+  if (hasAbility(actor, "suppression.immune", "Извне", "trait")) {
     await postTestCard(actor, {
       icon: rollIcon("target","#8fd0ff"),
       title: `Тест Подавления${sourceLabel ? ` — ${esc(sourceLabel)}` : ""} → ${esc(actor.name)}`,

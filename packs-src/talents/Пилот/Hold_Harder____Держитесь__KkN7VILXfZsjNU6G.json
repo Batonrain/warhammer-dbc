@@ -51,7 +51,8 @@
               "modValueMode": "flat",
               "value": 20,
               "label": "Держитесь!: манёвр (раз в Раунд; Провал — Крит 1d5 в Шасси)",
-              "skillKey": "operate"
+              "skillKey": "operate",
+              "askOnly": true
             }
           ]
         }

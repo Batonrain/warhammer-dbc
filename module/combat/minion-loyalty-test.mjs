@@ -115,7 +115,12 @@ export async function rollLoyaltyTest(minion, {
     }
     // «Могут потратить по Реакции» — Реакция Миньона; вне боя списывать нечего.
     const spend = spendReactionFn ?? (async a => (await import("./action-economy.mjs")).spendReaction(a));
-    if (!(await spend(minion))) {
+    // В бою — актор участника (у несвязанного токена Реакция своя), а не
+    // мировой актор, которого берёт кнопка на листе Хозяина.
+    const fighter = minionInCombat(minion)
+      ? [...globalThis.game.combat.combatants].find(c => c?.actorId === minion.id)?.actor ?? minion
+      : minion;
+    if (!(await spend(fighter))) {
       ui.notifications?.warn(`${minion.name}: нет Реакции — тест по Обожанию Толпы недоступен.`);
       return null;
     }

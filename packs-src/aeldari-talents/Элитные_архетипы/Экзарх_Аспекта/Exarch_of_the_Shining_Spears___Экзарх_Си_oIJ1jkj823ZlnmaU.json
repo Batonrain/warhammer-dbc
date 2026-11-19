@@ -46,7 +46,8 @@
               "modScope": "attack",
               "modValueMode": "flat",
               "value": 10,
-              "label": "Экзарх Сияющих Копий: атака Копьём"
+              "label": "Экзарх Сияющих Копий: атака Копьём",
+              "askOnly": true
             }
           ]
         }

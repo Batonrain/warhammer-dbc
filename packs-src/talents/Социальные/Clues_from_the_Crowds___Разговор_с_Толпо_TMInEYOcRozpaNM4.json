@@ -51,7 +51,8 @@
               "skillKey": "inquiry",
               "modValueMode": "flat",
               "value": 10,
-              "label": "Разговор с Толпой: сутки поисков в толпе"
+              "label": "Разговор с Толпой: сутки поисков в толпе",
+              "askOnly": true
             }
           ]
         }

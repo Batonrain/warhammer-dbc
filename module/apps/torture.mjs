@@ -52,7 +52,7 @@ function _sideModsAndReroll(resolved) {
   const list = [...resolved.autoMods, ...resolved.mods.filter(m => !m.askOnly)];
   const total = list.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
   const parts = list.map(m => `${m.label} ${Number(m.value) >= 0 ? "+" : ""}${m.value}`);
-  const reroll = resolved.rerolls.find(r => r.who !== "target");
+  const reroll = resolved.rerolls.find(r => r.who !== "target" && r.mode !== "reverse");
   // Запись Конструктора «автоуспех» с областью «сопротивление допросу» (Вуаль
   // Лжи): у жертвы нет своего окна с галочкой — условие и так выполнено.
   const auto = list.find(m => m.autoSuccess) ?? null;

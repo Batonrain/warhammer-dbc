@@ -17,6 +17,7 @@
 
 import { psyRatingFromTalents, minionHasPsykerTrait } from "../psyker.mjs";
 import { hasRuleFlag, ruleFlagLabels } from "../flags.mjs";
+import { hasAbility } from "../ability-by-key.mjs";
 import { initiativeCharKey, fastestHandBonus, initiativeHint,
          INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
 import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } from "../legacy-weapon.mjs";
@@ -146,6 +147,9 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
     // Человек, wdbc-gzuf) — Природа Дара выставляется один раз в чаргене
     // (дропдаун), но здесь пересчитывается каждый цикл, так что ручная
     // смена значения на листе тут же откатывается обратно.
-    if (hasRuleFlag(actor, "psyker.alwaysBound")) system.psyker.class = "bound";
+    // Владыка Тьмы и Тёмные Искусства — и по имени: копия, взятая до записи
+    // в паке, ключа не несёт (приёмка #581).
+    if (hasAbility(actor, "psyker.alwaysBound", "Lord of Darkness", "trait")
+        || hasAbility(actor, "", "Dark Arts", "trait")) system.psyker.class = "bound";
   }
 }

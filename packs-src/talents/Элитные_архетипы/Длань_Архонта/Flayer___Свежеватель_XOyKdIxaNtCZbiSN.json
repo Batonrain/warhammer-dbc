@@ -48,7 +48,8 @@
               "modValueMode": "flat",
               "value": 20,
               "label": "Свежеватель: пытки",
-              "skillKey": "interrogate"
+              "skillKey": "interrogate",
+              "askOnly": true
             }
           ]
         }

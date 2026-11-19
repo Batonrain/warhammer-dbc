@@ -24,6 +24,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "./flags.mjs";
+import { hasTalentCapability } from "./ability-by-key.mjs";
 import { itemIs }     from "./item-marker.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
 
@@ -102,7 +103,9 @@ export function canDualWield(actor) {
  */
 export function dualWieldMods(actor, main, off) {
   const reductions = REDUCTIONS
-    .filter(r => r.when(main, off) && hasRuleFlag(actor, r.cap))
+    // По имени тоже: ключи Фузилады, Залпа, Юстаэринца легли в старые файлы
+    // пака, а копия, взятая до этого, ключа не несёт до «Обновить мир».
+    .filter(r => r.when(main, off) && hasTalentCapability(actor, r.cap))
     .map(r => ({ label: r.label, value: REDUCTION_STEP }));
 
   const total = reductions.reduce((n, r) => n + r.value, 0);

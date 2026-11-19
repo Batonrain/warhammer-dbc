@@ -51,7 +51,8 @@
               "modValueMode": "flat",
               "value": -10,
               "label": "Полиглот: понять незнакомый язык (Ремесло (Лингвист))",
-              "skillKey": "trade"
+              "skillKey": "trade",
+              "askOnly": true
             }
           ]
         }

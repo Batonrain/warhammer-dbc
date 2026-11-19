@@ -10,12 +10,13 @@
 // снята механика — ровно как старая копия у персонажа.
 //
 // Ключи не перечисляются руками: их собирает разбор module/ — все вызовы
-// hasTalentCapability и все таблицы { key, name }, по которым код опознаёт
+// hasTalentCapability (и таблицы { cap }, опрашиваемые им по r.cap), все таблицы { key, name }, по которым код опознаёт
 // Талант (MELEE_TALENTS, TAKEDOWN…). Для строки таблицы договор тот же:
 // Талант пака несёт ключ и носит имя из таблицы, иначе копия без ключа молчит.
 
 import "../support/foundry-stub.mjs";
-import { describe, it, expect } from "vitest";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { describe, it, expect, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { hasTalentCapability } from "../../module/rules/ability-by-key.mjs";
@@ -28,6 +29,11 @@ import {
   isForesightItem, isBladeJugglerItem, isWarCryItem
 } from "../../module/apps/talent-actions.mjs";
 import { isBlackMantleItem } from "../../module/apps/black-mantle.mjs";
+import { dualWieldMods, CAP_FUSILLADE, CAP_BROADSIDE, CAP_JUSTAERIN, CAP_TYRANTHIKOS } from "../../module/rules/dual-wield.mjs";
+import { RAGE_NO_BS_PENALTY } from "../../module/rules/rage.mjs";
+import { resolveTest } from "../../module/rules/resolve-test.mjs";
+import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
+import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const TALENTS = path.join(ROOT, "packs-src", "talents");
@@ -90,6 +96,13 @@ function talentCapabilityKeys() {
   for (const { rel, text } of MODULE_SOURCES) {
     const own = new Map([...text.matchAll(STRING_CONST)].map(m => [m[1], m[2]]));
     for (const m of text.matchAll(/(?<!function\s)hasTalentCapability\([^,()]+,\s*("[^"]*"|[A-Za-z_$][\w$]*)\s*\)/g)) {
+      const key = m[1].startsWith("\"") ? m[1].slice(1, -1) : own.get(m[1]) ?? exported.get(m[1]);
+      if (key) { if (!keys.has(key)) keys.set(key, rel); } else unresolved.push(`${rel}: ${m[1]}`);
+    }
+    // Таблицы `{ cap: КЛЮЧ, … }`, которые модуль опрашивает через
+    // hasTalentCapability(actor, r.cap) (dual-wield.mjs REDUCTIONS).
+    if (!/hasTalentCapability\([^,()]+,\s*[A-Za-z_$][\w$]*\.cap\s*\)/.test(text)) continue;
+    for (const m of text.matchAll(/\{\s*cap:\s*("[^"]*"|[A-Za-z_$][\w$]*)/g)) {
       const key = m[1].startsWith("\"") ? m[1].slice(1, -1) : own.get(m[1]) ?? exported.get(m[1]);
       if (key) { if (!keys.has(key)) keys.set(key, rel); } else unresolved.push(`${rel}: ${m[1]}`);
     }
@@ -227,5 +240,43 @@ describe("окно атаки: Отравитель и Болтерная Муш
   });
   it("Болтерная Муштра без ключа опознаётся по имени", () => {
     expect(hasTalentCapability(actorWith(staleCopy("weaponsmith.core.bolterDrill")), "weaponsmith.core.bolterDrill")).toBe(true);
+  });
+});
+
+describe("парная атака: скидки элитных Талантов у копии без ключа", () => {
+  const w = weaponClass => ({ type: "weapon", system: { weaponClass, equipped: true } });
+  const labels = (cap, a, b) => dualWieldMods(actorWith(staleCopy(cap)), w(a), w(b)).reductions.map(r => r.label);
+
+  it("Фузилада и Тирантикос — на паре стволов, Залп — на паре тяжёлого/винтовок, Юстаэринец — винтовка + клинок", () => {
+    expect(labels(CAP_FUSILLADE, "pistol", "basic")).toEqual(["Фузилада"]);
+    expect(labels(CAP_TYRANTHIKOS, "pistol", "basic")).toEqual(["Тирантикос"]);
+    expect(labels(CAP_BROADSIDE, "heavy", "basic")).toEqual(["Залп"]);
+    expect(labels(CAP_JUSTAERIN, "basic", "melee")).toEqual(["Юстаэринец"]);
+  });
+
+  it("таблица REDUCTIONS попала под сторож", () => {
+    expect([...KEYS.keys()]).toEqual(expect.arrayContaining([CAP_FUSILLADE, CAP_BROADSIDE, CAP_JUSTAERIN, CAP_TYRANTHIKOS]));
+  });
+});
+
+describe("Железный Гнев у копии без ключа: в Ярости нет −20 BS", () => {
+  const prevCanvas = globalThis.canvas;
+  afterEach(() => { globalThis.canvas = prevCanvas; });
+
+  it("тест BS — без штрафа Ярости, штраф I остаётся", () => {
+    const a = { system: { inRage: true, characteristics: {}, wounds: {}, conditions: {} }, items: [staleCopy(RAGE_NO_BS_PENALTY)] };
+    const rage = char => resolveTest({ actor: a, kind: "char", char }).autoMods.some(m => /Ярост/.test(m.label) && m.value === -20);
+    expect(rage("bs")).toBe(false);
+    expect(rage("int")).toBe(true);
+  });
+
+  it("окно стрельбы — без строки «Ярость: −20 BS»", () => {
+    resetCaptured();
+    globalThis.canvas = { grid: { size: 1 }, tokens: { placeables: [] } };
+    const weapon = weaponFor({ weaponClass: "basic" });
+    const a = actorFor({ items: [weapon, staleCopy(RAGE_NO_BS_PENALTY)], fatigue: { value: 0 }, aiming: "none", inRage: true });
+    a.type = "character"; a.uuid = "Actor.dread"; a.update = async () => {};
+    showAttackDialog(a, weapon);
+    expect(captured.dialog?.content ?? "").not.toContain("<span>Ярость: −20 BS");
   });
 });

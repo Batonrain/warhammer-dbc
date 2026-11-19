@@ -146,7 +146,8 @@
                 "negate": false,
                 "conditions": []
               },
-              "modAuto": false
+              "modAuto": false,
+              "askOnly": true
             }
           ]
         }

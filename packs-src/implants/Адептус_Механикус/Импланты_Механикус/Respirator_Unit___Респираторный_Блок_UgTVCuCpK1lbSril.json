@@ -169,7 +169,8 @@
                   "poor"
                 ],
                 "negateQuality": false
-              }
+              },
+              "askOnly": true
             },
             {
               "id": "mcRespComm000001",
@@ -284,7 +285,8 @@
                   "common"
                 ],
                 "negateQuality": false
-              }
+              },
+              "askOnly": true
             },
             {
               "id": "mcRespGood000001",
@@ -400,7 +402,8 @@
                   "best"
                 ],
                 "negateQuality": false
-              }
+              },
+              "askOnly": true
             }
           ]
         }
