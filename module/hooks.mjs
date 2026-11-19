@@ -50,7 +50,7 @@ import { fateBonusOutcome, FATE_BONUS, withoutBoughtSuccess }  from "./rules/fat
 import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
 import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
 import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
-import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
+import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit, unrulySaddleKey } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest, rollHordeFlameTest } from "./combat/horde-psych.mjs";
@@ -225,6 +225,7 @@ import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, R
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { onDefenceRerollClick, rerollDefenceCard, defenceTestOf } from "./combat/defence-reroll.mjs";
+import { DEFENCE_REROLLED_FLAG } from "./rules/defence-reroll.mjs";
 import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
 import { markFrenzyExited } from "./combat/frenzy.mjs";
 import { RAGE_EXIT_REROLL_CARD_FLAG, RIDING_BEAST_CARD_FLAG } from "./rules/rage-behavior.mjs";
@@ -1672,13 +1673,13 @@ export function registerHooks() {
 
     // Переброс проваленного Уклонения/Парирования Чертой или Талантом (combat/defence-reroll.mjs).
     html.querySelectorAll(".wh-defence-reroll-btn").forEach(btn => {
-      if (cardOnceUsed(message, "defenceRerolled")) btn.disabled = true;
+      if (cardOnceUsed(message, DEFENCE_REROLLED_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
         el.disabled = true;
         const done = await onDefenceRerollClick(message, el.dataset.ruleId);
-        if (!done) el.disabled = cardOnceUsed(message, "defenceRerolled");
+        if (!done) el.disabled = cardOnceUsed(message, DEFENCE_REROLLED_FLAG);
       });
     });
 
@@ -2507,14 +2508,21 @@ export function registerHooks() {
     });
 
     // Непослушный скакун: тест удержания в седле из карточки урона скакуна (19.11.2026)
+    // Одна попытка на всадника с этой карточки (строка = номер, damage.mjs::unrulySaddleKey).
     html.querySelectorAll(".wh-unruly-saddle-btn").forEach(btn => {
+      const key = unrulySaddleKey(Number(btn.dataset.row));
+      if (key && cardOnceUsed(message, key)) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const uuid = ev.currentTarget.dataset.riderUuid;
+        const el = ev.currentTarget;
+        const uuid = el.dataset.riderUuid;
         const rider = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
         if (!rider) return ui.notifications.warn("⚠️ Всадник не найден (возможно, удалён).");
         if (!rider.isOwner) return ui.notifications.warn(`⚠️ Тест бросает владелец «${rider.name}».`);
-        await showMountDamageTest(rider);
+        if (!key) return showMountDamageTest(rider);
+        el.disabled = true;
+        const done = await runCardOnce(message, key, () => showMountDamageTest(rider), "Этот всадник уже проходил тест удержания с этой карточки.");
+        if (!done) el.disabled = cardOnceUsed(message, key);
       });
     });
 
@@ -4594,12 +4602,29 @@ function _attachFateContextMenu(message, html) {
       if (!champion && (!canSpend || rerollBan)) return;
 
       // Тратим очко судьбы — временный запас (wdbc-e728) уходит первым.
-      const reroll1 = champion
-        ? await spendInspiringInfamy(champion, actor)
-        : await spendFromInfamyPool(actor, 1, "system.fate.value");
-      if (!reroll1) return;
-      if (!champion) await actor.update({ "system.fate.value": reroll1.poolValue });
+      const spend = async () => {
+        const r = champion
+          ? await spendInspiringInfamy(champion, actor)
+          : await spendFromInfamyPool(actor, 1, "system.fate.value");
+        if (r && !champion) await actor.update({ "system.fate.value": r.poolValue });
+        return r;
+      };
       const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)` : "";
+
+      // Уклонение/Парирование кнопкой карточки атаки — повторяем ту же защиту
+      // целиком (пересчёт снятых попаданий, без второй Реакции), а не голый d100.
+      // Очко списывается внутри, только если переброс разрешён (провал, не
+      // переброшено, тот же Раунд) — отказ Очко не тратит.
+      if (defenceTestOf(message)) {
+        let paid = null;
+        if (await rerollDefenceCard(message, `${ft.one}${payerNote}`, async () => (paid = await spend()))) {
+          if (paid) ui.notifications.info(`✨ ${actor.name} тратит ${ft.one} на переброс защиты${payerNote}! Осталось: ${paid.poolValue}`);
+          return;
+        }
+      }
+
+      const reroll1 = await spend();
+      if (!reroll1) return;
 
       // Если это была атака — повторяем атаку целиком (новый бросок d100,
       // место попадания, урон, кнопки защиты), а не «голый» переброс.
@@ -4634,13 +4659,6 @@ function _attachFateContextMenu(message, html) {
           }
           return;
         }
-      }
-
-      // Уклонение/Парирование кнопкой карточки атаки — повторяем ту же защиту
-      // целиком (пересчёт снятых попаданий, без второй Реакции), а не голый d100.
-      if (defenceTestOf(message) && await rerollDefenceCard(message, `${ft.one}${payerNote}`)) {
-        ui.notifications.info(`✨ ${actor.name} тратит ${ft.one} на переброс защиты${payerNote}! Осталось: ${reroll1.poolValue}`);
-        return;
       }
 
       // Перебрасываем все кости из сообщения

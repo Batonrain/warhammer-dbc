@@ -93,6 +93,10 @@ import { hasFleshmetal, fleshmetalMachineApCut, fleshmetalHaywireText } from "..
 import { negativeWoundsBonus } from "../rules/gunner-talents.mjs";
 
 /** Электродуга Best.Q «Электрическая регенерация» (wdbc-3hgd0). */
+/** Отметка «этот всадник уже проходил тест удержания с этой карточки урона» (строка = номер всадника; дальше — без отметки). */
+export const UNRULY_SADDLE_ROWS = 4;
+export const unrulySaddleKey = i => (Number.isInteger(i) && i >= 0 && i < UNRULY_SADDLE_ROWS ? `unrulySaddle${i}` : "");
+
 export const ELECTRIC_REGENERATION = "implant.electricArc.regeneration";
 
 /** «Иммунитет к Corrosive, но не у брони» — Замена Крови, «Кислота» (wdbc-1rno.15). */
@@ -1674,8 +1678,8 @@ export async function applyDamageToActor(actor, damageData) {
   // −20 Бег) или выпадает из седла». Раньше всадник жал кнопку на своей
   // панели сам и мог забыть — теперь кнопка теста приходит в карточку урона.
   const unrulySection = netDamage > 0
-    ? unrulyRiders(actor, game.actors?.contents ?? []).map(r =>
-        `<button type="button" class="wh-unruly-saddle-btn" data-rider-uuid="${esc(r.uuid)}">🐎 ${esc(r.name)}: удержаться в седле (Непослушный скакун)</button>`).join("")
+    ? unrulyRiders(actor, game.actors?.contents ?? []).map((r, i) =>
+        `<button type="button" class="wh-unruly-saddle-btn" data-rider-uuid="${esc(r.uuid)}" data-row="${i}">🐎 ${esc(r.name)}: удержаться в седле (Непослушный скакун)</button>`).join("")
     : "";
 
   // Enjoyment/Наслаждение (wdbc-sk8s): Непоглощённый Урон / Критический

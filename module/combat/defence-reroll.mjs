@@ -6,7 +6,7 @@
 //    onDefenceRerollClick(message, ruleId) — кнопка «Перебросить Уклонение:
 //      <Талант>»: проверить, что переброс всё ещё доступен, отметить его
 //      потраченным (ограничитель «раз в Раунд») и повторить тот же тест;
-//    rerollDefenceCard(message, label) — тот же повтор для «Переброса за Очко»
+//    rerollDefenceCard(message, label, pay) — тот же повтор для «Переброса за Очко»
 //      из меню карточки (hooks.mjs): раньше он перебрасывал голый d100 и не
 //      пересчитывал, сколько попаданий снято.
 //
@@ -16,7 +16,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { _performDodge, _performParry } from "./defense.mjs";
-import { DEFENCE_TEST_FLAG, DEFENCE_REROLLED_FLAG, defenceRerollsFor } from "../rules/defence-reroll.mjs";
+import { DEFENCE_TEST_FLAG, DEFENCE_REROLLED_FLAG, defenceRerollsFor, defenceRerollWindowOpen } from "../rules/defence-reroll.mjs";
 import { commitRerollUse } from "./angel-hunters.mjs";
 import { runCardOnce } from "./card-once.mjs";
 import { reverseD100 } from "../rules/reroll-pick.mjs";
@@ -46,6 +46,8 @@ function cardRollValue(message) {
   return Number.isFinite(v) ? v : null;
 }
 
+const WINDOW_CLOSED = "⚠️ Эта защита была в другом Раунде или бою — перебросить её уже нельзя.";
+
 /** Кнопка переброса Черты/Таланта на карточке проваленной защиты. */
 export async function onDefenceRerollClick(message, ruleId) {
   const test = defenceTestOf(message);
@@ -53,10 +55,7 @@ export async function onDefenceRerollClick(message, ruleId) {
   const actor = await actorOf(test);
   if (!actor) return ui.notifications?.warn("⚠️ Защищавшийся персонаж не найден.");
   if (!game.user?.isGM && !actor.isOwner) return ui.notifications?.warn(`⚠️ Нет прав на «${actor.name}».`);
-  // Переброс — решение сразу после броска; карточка из прошлого Раунда уже не перебрасывается.
-  if (test.round != null && game.combat && game.combat.round !== test.round) {
-    return ui.notifications?.warn("⚠️ Эта защита была в прошлом Раунде — перебросить её уже нельзя.");
-  }
+  if (!defenceRerollWindowOpen(test, game.combat)) return ui.notifications?.warn(WINDOW_CLOSED);
   const attackerUuid = test.opts?.attackerUuid;
   const attackerDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
   const offer = defenceRerollsFor(actor, test.kind, {
@@ -79,14 +78,23 @@ export async function onDefenceRerollClick(message, ruleId) {
 }
 
 /**
- * «Переброс за Очко» из меню карточки защиты. Очко уже потрачено вызывающим
- * (hooks.mjs); здесь — только сам повтор.
- * @returns {Promise<boolean>} false — карточка не защиты или актор не найден (вызывающий перебросит по-старому)
+ * «Переброс за Очко» из меню карточки защиты. Те же условия, что у кнопки
+ * Таланта: только проваленная, ещё не переброшенная защита своего Раунда, раз
+ * на карточку (общая отметка DEFENCE_REROLLED_FLAG). Успешную защиту не
+ * повторяют: второй бросок силового поля и снятие попаданий легли бы дважды.
+ * Очко списывает `pay` — только когда переброс точно состоится.
+ * @param {() => Promise<any>} pay списать Очко; ложь — не хватило, повтора нет
+ * @returns {Promise<boolean>} false — карточка не защиты или актор не найден (вызывающий перебросит по-старому);
+ *   true — разобрано здесь (переброшено или отказано с уведомлением)
  */
-export async function rerollDefenceCard(message, label) {
+export async function rerollDefenceCard(message, label, pay = async () => true) {
   const test = defenceTestOf(message);
   if (!test) return false;
   const actor = await actorOf(test);
   if (!actor) return false;
-  return performDefenceReroll(actor, test, label);
+  if (test.passed || test.rerolled) ui.notifications?.warn("⚠️ Перебросить можно только проваленную и ещё не переброшенную защиту.");
+  else if (!defenceRerollWindowOpen(test, game.combat)) ui.notifications?.warn(WINDOW_CLOSED);
+  else await runCardOnce(message, DEFENCE_REROLLED_FLAG,
+    async () => !!(await pay()) && performDefenceReroll(actor, test, label), "Эту защиту уже перебросили.");
+  return true;
 }

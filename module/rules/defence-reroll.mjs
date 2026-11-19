@@ -33,6 +33,17 @@ export const DEFENCE_TEST_FLAG = "defenceTest";
 /** Отметка «эту карточку уже перебросили» (combat/card-once.mjs). */
 export const DEFENCE_REROLLED_FLAG = "defenceRerolled";
 
+/**
+ * Открыто ли ещё окно переброса: переброс — решение сразу после броска.
+ * В бою — тот же бой и тот же Раунд; вне боя — пока бой не начался.
+ * Карточка без combatId (до 19.11.2026) — по номеру Раунда, как раньше.
+ */
+export function defenceRerollWindowOpen(test, combat) {
+  if (test?.combatId === undefined) return !(test?.round != null && combat && combat.round !== test.round);
+  if (!test.combatId) return !combat;
+  return combat?.id === test.combatId && combat.round === test.round;
+}
+
 export const DEFENCE_KINDS = {
   dodge: { skill: "dodge", char: "ag", label: "Уклонение" },
   parry: { skill: "parry", char: "ws", label: "Парирование" }

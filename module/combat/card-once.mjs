@@ -104,6 +104,9 @@ export const CARD_ONCE_FLAGS = ["mistSaviorSwapped", "infamyFailSuccessUsed", "a
   "ramPirouetteUsed",
   // Переброс проваленного Уклонения/Парирования — кнопкой Черты/Таланта или за Очко (combat/defence-reroll.mjs).
   "defenceRerolled",
+  // Непослушный скакун: тест удержания в седле с карточки урона скакуна — по разу на всадника
+  // (строка = номер, combat/damage.mjs::unrulySaddleKey).
+  ...Array.from({ length: 4 }, (_, i) => `unrulySaddle${i}`),
   // Снайпер Ужаса: тест Подавления каждого врага из карточки — по разу на врага (строка карточки = номер,
   // combat/terror-sniper.mjs::terrorSuppressKey; врагов больше TERROR_SUPPRESS_ROWS остаются без общей отметки).
   ...Array.from({ length: 20 }, (_, i) => `terrorSuppress${i}`),

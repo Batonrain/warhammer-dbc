@@ -448,7 +448,7 @@ export async function _performDodge(actor, {
 function defenceTestFlags(actor, kind, opts, carry, { passed, rerolled }) {
   return { "warhammer-dbc": { [DEFENCE_TEST_FLAG]: {
     kind, actorUuid: actor?.uuid ?? "", opts, carry, passed: !!passed, rerolled: !!rerolled,
-    round: globalThis.game?.combat?.round ?? null
+    round: globalThis.game?.combat?.round ?? null, combatId: globalThis.game?.combat?.id ?? null
   } } };
 }
 

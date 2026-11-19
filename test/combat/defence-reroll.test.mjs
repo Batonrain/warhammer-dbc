@@ -13,7 +13,7 @@ import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { effectAppliesTo } from "../../module/rules/resolve-test.mjs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
-import { defenceRerollsFor, defenceRerollSectionHtml } from "../../module/rules/defence-reroll.mjs";
+import { defenceRerollsFor, defenceRerollSectionHtml, defenceRerollWindowOpen } from "../../module/rules/defence-reroll.mjs";
 import { _performDodge, _performParry } from "../../module/combat/defense.mjs";
 import { onDefenceRerollClick, rerollDefenceCard } from "../../module/combat/defence-reroll.mjs";
 
@@ -62,7 +62,7 @@ let prevFromUuid;
 beforeEach(() => {
   resetCaptured();
   globalThis.game.user = { ...globalThis.game.user, id: "user-1", isGM: true, targets: new Set() };
-  globalThis.game.combat = { started: true, round: 1 };
+  globalThis.game.combat = { id: "c1", started: true, round: 1 };
   prevFromUuid = globalThis.fromUuid;
 });
 afterEach(() => {
@@ -130,7 +130,7 @@ describe("Уклонение: кнопка на карточке и сам пе�
     expect(card()).toContain("Уклонение провалено");
     expect(card()).toContain("Перебросить Уклонение: Соларит");
     const test = last().flags["warhammer-dbc"].defenceTest;
-    expect(test).toMatchObject({ kind: "dodge", actorUuid: "Actor.def", passed: false, rerolled: false, round: 1 });
+    expect(test).toMatchObject({ kind: "dodge", actorUuid: "Actor.def", passed: false, rerolled: false, round: 1, combatId: "c1" });
     expect(test.opts).toMatchObject({ hitsCount: 2, attackerUuid: "Actor.att" });
   });
 
@@ -189,7 +189,7 @@ describe("Уклонение: кнопка на карточке и сам пе�
     captured.dice = [95];
     await _performDodge(a, { extraMod: 0 });
     const msg = messageFrom(last());
-    globalThis.game.combat = { started: true, round: 2 };
+    globalThis.game.combat = { id: "c1", started: true, round: 2 };
     const before = captured.chat.length;
     await onDefenceRerollClick(msg, "test.Соларит");
     expect(captured.chat.length).toBe(before);
@@ -208,8 +208,108 @@ describe("Уклонение: кнопка на карточке и сам пе�
     expect(card()).toContain("Переброс: Очко Судьбы");
   });
 
+  it("карточка из другого боя с тем же номером Раунда не перебрасывается", async () => {
+    withRules(evasionReroll());
+    const a = defender();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.def" ? a : null);
+    captured.dice = [95];
+    await _performDodge(a, { extraMod: 0 });
+    const msg = messageFrom(last());
+    globalThis.game.combat = { id: "c2", started: true, round: 1 };
+    const before = captured.chat.length;
+    await onDefenceRerollClick(msg, "test.Соларит");
+    expect(captured.chat.length).toBe(before);
+  });
+
+  it("за Очко после переброса Талантом — отказ, Очко не списано", async () => {
+    withRules(evasionReroll());
+    const a = defender();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.def" ? a : null);
+    captured.dice = [95];
+    await _performDodge(a, { extraMod: 0 });
+    const msg = messageFrom(last());
+    captured.dice = [95];
+    await onDefenceRerollClick(msg, "test.Соларит");
+    const before = captured.chat.length;
+    let paid = 0;
+    expect(await rerollDefenceCard(msg, "Очко Судьбы", async () => ++paid)).toBe(true);
+    expect(paid).toBe(0);
+    expect(captured.chat.length).toBe(before);
+  });
+
+  it("Талантом после переброса за Очко — отказ", async () => {
+    withRules(evasionReroll());
+    const a = defender();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.def" ? a : null);
+    captured.dice = [95];
+    await _performDodge(a, { extraMod: 0 });
+    const msg = messageFrom(last());
+    captured.dice = [95];
+    expect(await rerollDefenceCard(msg, "Очко Судьбы", async () => true)).toBe(true);
+    expect(msg.flags["warhammer-dbc"].defenceRerolled).toBe(true);
+    const before = captured.chat.length;
+    expect(await onDefenceRerollClick(msg, "test.Соларит")).toBe(false);
+    expect(captured.chat.length).toBe(before);
+  });
+
+  it("за Очко: успешная защита не повторяется, Очко не списано", async () => {
+    const a = defender();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.def" ? a : null);
+    captured.dice = [10];
+    await _performDodge(a, { extraMod: 0 });
+    const msg = messageFrom(last());
+    const before = captured.chat.length;
+    let paid = 0;
+    expect(await rerollDefenceCard(msg, "Очко Судьбы", async () => ++paid)).toBe(true);
+    expect(paid).toBe(0);
+    expect(captured.chat.length).toBe(before);
+  });
+
+  it("за Очко: карточка прошлого Раунда — отказ, Очко не списано", async () => {
+    const a = defender();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.def" ? a : null);
+    captured.dice = [95];
+    await _performDodge(a, { extraMod: 0 });
+    const msg = messageFrom(last());
+    globalThis.game.combat = { id: "c1", started: true, round: 2 };
+    let paid = 0;
+    expect(await rerollDefenceCard(msg, "Очко Судьбы", async () => ++paid)).toBe(true);
+    expect(paid).toBe(0);
+  });
+
+  it("за Очко: не хватило Очка — защита не повторяется и карточка не помечена", async () => {
+    const a = defender();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.def" ? a : null);
+    captured.dice = [95];
+    await _performDodge(a, { extraMod: 0 });
+    const msg = messageFrom(last());
+    const before = captured.chat.length;
+    expect(await rerollDefenceCard(msg, "Очко Судьбы", async () => null)).toBe(true);
+    expect(captured.chat.length).toBe(before);
+    expect(msg.flags["warhammer-dbc"].defenceRerolled).toBeUndefined();
+  });
+
   it("не карточка защиты — «Переброс за Очко» идёт старым путём", async () => {
     expect(await rerollDefenceCard(messageFrom({ flags: {} }), "Очко Судьбы")).toBe(false);
+  });
+});
+
+describe("окно переброса: тот же бой и тот же Раунд", () => {
+  const combat = { id: "c1", round: 2 };
+  it("в бою — только тот же бой и тот же Раунд", () => {
+    expect(defenceRerollWindowOpen({ combatId: "c1", round: 2 }, combat)).toBe(true);
+    expect(defenceRerollWindowOpen({ combatId: "c1", round: 1 }, combat)).toBe(false);
+    expect(defenceRerollWindowOpen({ combatId: "c0", round: 2 }, combat)).toBe(false);
+    expect(defenceRerollWindowOpen({ combatId: "c1", round: 2 }, null)).toBe(false);
+  });
+  it("вне боя — пока бой не начался", () => {
+    expect(defenceRerollWindowOpen({ combatId: null, round: null }, null)).toBe(true);
+    expect(defenceRerollWindowOpen({ combatId: null, round: null }, combat)).toBe(false);
+  });
+  it("старая карточка без combatId — по номеру Раунда, как раньше", () => {
+    expect(defenceRerollWindowOpen({ round: 2 }, combat)).toBe(true);
+    expect(defenceRerollWindowOpen({ round: 1 }, combat)).toBe(false);
+    expect(defenceRerollWindowOpen({ round: 1 }, null)).toBe(true);
   });
 });
 
