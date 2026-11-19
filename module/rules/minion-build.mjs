@@ -176,6 +176,18 @@ export function minionInfamyWaiverFlag(group) {
   return `minion.ignoreInfamy.${group}`;
 }
 
+// Черты, получившие ключ записью пака 19.11.2026: копия, взятая раньше, ключа
+// не несёт до «Обновить мир» — опознаём её по имени (приёмка #581).
+const LEGACY_INFAMY_WAIVERS = { machine: "Cyberembrace", beast: "Beast Master" };
+
+/** Снимает ли Черта Хозяина требование по Бесчестию для Миньонов группы. */
+export function waivesMinionInfamy(master, group) {
+  if (!group) return false;
+  const legacy = LEGACY_INFAMY_WAIVERS[group];
+  return legacy ? hasAbility(master, minionInfamyWaiverFlag(group), legacy, "trait")
+                : hasRuleFlag(master, minionInfamyWaiverFlag(group));
+}
+
 // ── Бюджеты создания ──────────────────────────────────────────────────────
 
 /** Пределы Характеристик выбранной пары: общий потолок уровня и рамки группы. */

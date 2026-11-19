@@ -15,7 +15,7 @@ import {
   charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft, skillRankFor,
   minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, speechNote,
-  minionInfamyWaiverFlag
+  minionInfamyWaiverFlag, waivesMinionInfamy
 } from "../../module/rules/minion-build.mjs";
 
 /** Талант Миньона с выбранной парой «группа + сила». */
@@ -408,5 +408,14 @@ describe("требования Таланта: Черта снимает тре�
   it("имя возможности — по группе", () => {
     expect(minionInfamyWaiverFlag("beast")).toBe("minion.ignoreInfamy.beast");
     expect(minionInfamyWaiverFlag("machine")).toBe("minion.ignoreInfamy.machine");
+  });
+  // Киберобъятья и Мастер Зверей получили ключ записью пака 19.11.2026 —
+  // копия, взятая раньше, ключа не несёт и опознаётся по имени (приёмка #581).
+  it("старая копия Черты без ключа снимает требование по имени", () => {
+    const owner = (name) => ({ items: [{ type: "trait", name, system: {}, flags: {} }] });
+    expect(waivesMinionInfamy(owner("Cyberembrace / Киберобъятья"), "machine")).toBe(true);
+    expect(waivesMinionInfamy(owner("Beast Master / Мастер Зверей"), "beast")).toBe(true);
+    expect(waivesMinionInfamy(owner("Beast Master / Мастер Зверей"), "machine")).toBe(false);
+    expect(waivesMinionInfamy(owner("Beast Master / Мастер Зверей"), "")).toBe(false);
   });
 });

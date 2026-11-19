@@ -25,10 +25,9 @@ import {
   skillPointsLeft, talentPointsLeft, traitPointsLeft,
   minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, minionTraitRating,
   availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor,
-  talentRequirements, minionInfamyWaiverFlag
+  talentRequirements, waivesMinionInfamy
 } from "../rules/minion-build.mjs";
 import { hasBinaryFlock, buildCountGroup, FLOCK_MACHINE_FLAG } from "../rules/binary-dominion.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { minionsOfActor } from "../sheets/tabs/minions-panel.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -61,7 +60,7 @@ const countGroupOf = (master, state) => buildCountGroup(master, state.group, sta
 /** Строка требований Таланта по группе счёта: чего Хозяину не хватает. */
 function requirementsHtml(master, state) {
   const group = countGroupOf(master, state);
-  const ignoreInfamy = !!group && hasRuleFlag(master, minionInfamyWaiverFlag(group));
+  const ignoreInfamy = waivesMinionInfamy(master, group);
   const req = talentRequirements(master, group, state.tier, { ignoreInfamy });
   const miss = req.missing?.length
     ? `<span class="mc-badge over">не хватает: ${esc(req.missing.join("; "))}</span>`
