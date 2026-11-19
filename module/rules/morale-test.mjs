@@ -62,7 +62,8 @@ export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null,
   const bonus = applied.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
   const parts = applied.map(m => `${m.label} ${m.value > 0 ? "+" : ""}${m.value}`);
   const eff = baseThreshold + bonus;
-  const ruleReroll = resolved.rerolls.find(r => r.who !== "target");
+  // Обращение («reverse», Дьяболист) — выбор игрока в окне, само не берётся.
+  const ruleReroll = resolved.rerolls.find(r => r.who !== "target" && r.mode !== "reverse");
   const reroll = ruleReroll
     ? { mode: ruleReroll.mode, rolls: ruleReroll.rolls, label: ruleReroll.label }
     : (selfAdvantage ? { mode: "keepBest", rolls: 2, label: selfAdvantageLabel } : null);

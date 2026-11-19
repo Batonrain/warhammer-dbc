@@ -72,6 +72,20 @@ describe("resolveTorture", () => {
     expect(html).toContain("vs 20"); // пытающий: Допрос(Int)−20, без бонуса
   });
 
+  it("обращение броска (Дьяболист) само не берётся и не вытесняет «лучший из 2»", async () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "t.rev", label: "Обратить", when: {}, effects: [{ kind: "rollMode", target: "morale", mode: "reverse", rolls: 1 }] },
+      { id: "t.best", label: "Лучший", when: {}, effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2 }] }
+    ]);
+    const t = actor("t"), v = actor("v");
+    captured.dice = [90, 10, 90, 30];
+    await resolveTorture(t, v, {});
+    const html = captured.chat.at(-1).content;
+    expect(html).not.toContain("обращено");
+    expect(html).toContain("Лучший: отброшено 90");
+  });
+
   it("Мучитель: Успехи теста Medicae−10 снижают Порог жертвы на 3 за Успех", async () => {
     grantTorturer();
     const t = actor("t", { medicae: 50 }), v = actor("v", { wp: 60 });

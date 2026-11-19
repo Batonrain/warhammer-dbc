@@ -48,7 +48,8 @@
               "modValueMode": "flat",
               "value": 10,
               "label": "Сеть Контрактов: торговцы и наёмники Комморага",
-              "rerollChar": "inf"
+              "rerollChar": "inf",
+              "askOnly": true
             }
           ]
         }

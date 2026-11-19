@@ -169,7 +169,8 @@
                   "good"
                 ],
                 "negateQuality": false
-              }
+              },
+              "askOnly": true
             },
             {
               "id": "mcGraftBest00001",
@@ -284,7 +285,8 @@
                   "best"
                 ],
                 "negateQuality": false
-              }
+              },
+              "askOnly": true
             }
           ]
         }

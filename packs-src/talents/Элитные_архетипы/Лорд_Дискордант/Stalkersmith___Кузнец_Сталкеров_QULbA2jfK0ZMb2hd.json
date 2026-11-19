@@ -48,7 +48,8 @@
               "modValueMode": "flat",
               "value": 30,
               "label": "Кузнец Сталкеров: оболочка Адского Сталкера",
-              "skillKey": "trade"
+              "skillKey": "trade",
+              "askOnly": true
             },
             {
               "id": "EJb5d3MN1jtwSZDF",
@@ -57,7 +58,8 @@
               "modValueMode": "flat",
               "value": 30,
               "label": "Кузнец Сталкеров: оболочка Адского Сталкера",
-              "skillKey": "techUse"
+              "skillKey": "techUse",
+              "askOnly": true
             }
           ]
         }

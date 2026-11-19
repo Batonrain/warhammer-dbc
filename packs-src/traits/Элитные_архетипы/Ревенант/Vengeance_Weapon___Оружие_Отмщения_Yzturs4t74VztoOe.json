@@ -149,7 +149,8 @@
               "modScope": "attack",
               "modValueMode": "flat",
               "value": 10,
-              "label": "Оружие Отмщения: атака им"
+              "label": "Оружие Отмщения: атака им",
+              "askOnly": true
             }
           ]
         }

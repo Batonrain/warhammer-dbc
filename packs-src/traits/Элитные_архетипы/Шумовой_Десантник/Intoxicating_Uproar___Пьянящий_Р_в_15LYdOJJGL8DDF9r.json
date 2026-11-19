@@ -347,7 +347,8 @@
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "askOnly": true
             }
           ]
         }

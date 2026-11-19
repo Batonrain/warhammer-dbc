@@ -893,7 +893,7 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
     // Внутри executePsychotest несколько await до самого диалога (бросок,
     // запись sustainedDegree/sustainedEpr) — дать микрозадачам довести
     // выполнение до конструктора Dialog, прежде чем читать captured.dialog.
-    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    for (let i = 0; i < 20 && !captured.dialog; i++) await Promise.resolve();
 
     expect(captured.dialog?.title).toMatch(/Force Blade/i);
     const html = fakeHtml({}, { ".fb-shop-cb:checked": [{ dataset: { id: "shocking" } }] });

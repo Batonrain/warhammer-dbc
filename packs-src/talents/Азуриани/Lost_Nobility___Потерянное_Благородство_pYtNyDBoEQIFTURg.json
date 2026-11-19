@@ -50,7 +50,8 @@
               "modScope": "social",
               "modValueMode": "flat",
               "value": 10,
-              "label": "Потерянное Благородство: власть и аристократия"
+              "label": "Потерянное Благородство: власть и аристократия",
+              "askOnly": true
             },
             {
               "id": "oaIvUt102TraGSi0",
@@ -58,7 +59,8 @@
               "modScope": "social",
               "modValueMode": "flat",
               "value": 30,
-              "label": "Потерянное Благородство: собеседник с этим Талантом"
+              "label": "Потерянное Благородство: собеседник с этим Талантом",
+              "askOnly": true
             }
           ]
         }

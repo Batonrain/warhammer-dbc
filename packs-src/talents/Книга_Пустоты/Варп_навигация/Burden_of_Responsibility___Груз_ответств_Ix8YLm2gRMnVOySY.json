@@ -51,7 +51,8 @@
               "modValueMode": "flat",
               "value": 5,
               "label": "Груз ответственности: Навигация (Варп) в варпе",
-              "skillKey": "navigation"
+              "skillKey": "navigation",
+              "askOnly": true
             }
           ]
         }

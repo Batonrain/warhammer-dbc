@@ -29,7 +29,8 @@ import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
-import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
+import { rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
@@ -472,11 +473,15 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // и атака: вид теста «power», область эффекта «power» или «power:<имя>». Сама
   // сила лежит в контексте целиком — по ней область и находит нужную
   // (rules/resolve-test.mjs).
-  const ruleMods = ruleRollModsHtml(actor, {
+  const ruleCtx = {
     kind: "power", power: item, char: cast.key,
     skill: cast.key === "psyniscience" ? "psyniscience" : undefined,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
-  });
+  };
+  const ruleMods = ruleRollModsHtml(actor, ruleCtx);
+  // Перебросы области «power» (Дьяболист — обращение цифр) — радиокнопкой,
+  // как в окне Страха (sheets/tabs/disorders.mjs::namedReroll).
+  const ruleRerolls = ruleRerollsHtml(actor, ruleCtx);
 
   const discLabel = (PSY_DISCIPLINES?.[sys.discipline]?.label) || "";
   const typeLabel = (PSY_POWER_TYPES?.[sys.powerType]) || sys.powerType || "";
@@ -563,6 +568,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
           </div>
         </details>
         ${ruleMods.html}
+        ${ruleRerolls.html}
       </form>`;
 
   new Dialog({
@@ -578,6 +584,9 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
             ruleMod += parseInt(cb.dataset.value) || 0;
             if (cb.dataset.halve === "1") halveRulePenalty = true;
           });
+          const rerollEl = html.find(".rule-reroll-opt:checked")[0];
+          const rerollIdx = parseInt(rerollEl?.dataset?.idx ?? "-1");
+          const ruleReroll = rerollIdx >= 0 ? ruleRerolls.rerolls[rerollIdx] : null;
           // Руны Сигиллитов: цена считается и проверяется ДО броска — иначе
           // манифестация состоялась бы в долг. Проверка стоит только у
           // носителя Черты: у всех прочих `runeMagic` ложно и ветка не
@@ -616,7 +625,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
           }
           await executePsychotest(actor, item, {
             ...extraOpts,
-            ruleMod, halveRulePenalty, runeStrike, improvisedRune: needsImprovise, sigilliteSubs,
+            ruleMod, halveRulePenalty, ruleReroll, runeStrike, improvisedRune: needsImprovise, sigilliteSubs,
             mPR:      parseInt(html.find("#psy-pr").val())     || minPR,
             prMod:    parseInt(html.find("#psy-pr-mod").val()) || 0,
             mode:     html.find("#psy-mode").val()             || "normal",
@@ -1056,8 +1065,8 @@ export async function executePsychotest(actor, item, opts) {
   if (opts.reroll) {
     talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">⚜ Переброс психотеста (Ключевая Сила): ${esc(opts.rerollNote || "")}. Результат прежней карточки заменён этим; те же модификаторы, поддержание и Феномен пересчитаны. Разовые траты первой попытки (ОД, Рун, Очки Возрождения/Проводника) заново не платились.</div>`);
   }
-  const roll = await new Roll("1d100").evaluate();
-  const rv   = roll.total;
+  const { roll, rv, rerollNote: ruleRerollNote } = await rollD100WithReroll(opts.ruleReroll ?? null);
+  if (ruleRerollNote) talentLines.push(ruleRerollNote);
   let success = rv <= threshold;
   let deg  = Math.floor(Math.abs(rv - threshold) / 10) + 1;
   const allRolls = focusRoll ? [roll, focusRoll] : [roll];

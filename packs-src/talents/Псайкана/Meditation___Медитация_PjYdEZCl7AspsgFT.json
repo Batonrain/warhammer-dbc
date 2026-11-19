@@ -51,7 +51,8 @@
               "skillKey": "psyniscience",
               "modValueMode": "flat",
               "value": 30,
-              "label": "Медитация: 5 минут перед тестом"
+              "label": "Медитация: 5 минут перед тестом",
+              "askOnly": true
             }
           ]
         }

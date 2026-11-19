@@ -51,7 +51,8 @@
               "modValueMode": "flat",
               "value": 10,
               "label": "Преодолеть Предел: манёвр (раз в Раунд; урон Шасси за Провалы)",
-              "skillKey": "operate"
+              "skillKey": "operate",
+              "askOnly": true
             }
           ]
         }

@@ -376,6 +376,10 @@ function ruleFromEntry(item, entry, groupId = null) {
     // (учтено в Пороге)»), как ситуативные штрафы. Только число — «ополовинить
     // штраф» остаётся галочкой.
     if (entry.modAuto && effect.kind === "rollBonus") effect.auto = true;
+    // askOnly — галочка «по условию» (Ледяное Сердце «против Очарования»):
+    // условие видит только стол, поэтому в бросках без окна (Мораль,
+    // Запугивание, Пытки, rules/roll-mods.mjs::collectTestMods) не складывается.
+    else if (entry.askOnly && effect.kind === "rollBonus") effect.askOnly = true;
     // Качество «прочего снаряжения» (стр. 165): предмет даёт бонус к тесту —
     // значит, тест «с этим снаряжением»; rollModsFromRules добавит строку качества
     // один раз на предмет (constants/quality.mjs::gearQualityRollMod).

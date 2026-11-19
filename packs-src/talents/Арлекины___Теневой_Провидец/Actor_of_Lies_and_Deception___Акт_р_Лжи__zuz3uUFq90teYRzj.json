@@ -48,7 +48,8 @@
               "modValueMode": "flat",
               "value": 20,
               "label": "Актёр Лжи и Обмана: Телекинез/Телепатия/Прорицание",
-              "powerName": ""
+              "powerName": "",
+              "askOnly": true
             }
           ]
         }

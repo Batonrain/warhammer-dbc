@@ -46,7 +46,8 @@
               "modScope": "social",
               "modValueMode": "flat",
               "value": 30,
-              "label": "Глас Омниссии: с Механикум и Скитариями"
+              "label": "Глас Омниссии: с Механикум и Скитариями",
+              "askOnly": true
             }
           ]
         }

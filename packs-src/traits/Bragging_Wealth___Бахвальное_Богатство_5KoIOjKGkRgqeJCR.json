@@ -149,7 +149,8 @@
                 "negate": false,
                 "conditions": []
               },
-              "modAuto": false
+              "modAuto": false,
+              "askOnly": true
             },
             {
               "id": "NdO9Gahu9cAskrUb",
@@ -261,7 +262,8 @@
                 "negate": false,
                 "conditions": []
               },
-              "modAuto": false
+              "modAuto": false,
+              "askOnly": true
             },
             {
               "id": "X60VWUsPIiymYexe",
@@ -373,7 +375,8 @@
                 "negate": false,
                 "conditions": []
               },
-              "modAuto": false
+              "modAuto": false,
+              "askOnly": true
             }
           ]
         }
