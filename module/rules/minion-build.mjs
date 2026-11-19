@@ -19,7 +19,7 @@ import { MINION_GROUPS, MINION_TIERS, GROUP_CHAR_LIMITS, MINION_INFAMY_CAP,
 import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../constants/minion-traits.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { hasRuleFlag } from "./flags.mjs";
-import { hasTalentCapability } from "./ability-by-key.mjs";
+import { hasTalentCapability, hasAbility } from "./ability-by-key.mjs";
 import { hasInfernalMaster } from "./occultist-talents.mjs";
 import { hasAirOfAuthority } from "./leadership-talents.mjs";
 import { itemHasName } from "./predicates.mjs";
@@ -387,6 +387,12 @@ export function minionLoyalty(master, group, minion = null) {
   if (hasRuleFlag(master, "minion.core.belovedLeader")) value += 10;
   if (group === "daemon" && hasInfernalMaster(master)) value += 10;
   if (group === "human" && hasAirOfAuthority(master)) value += 10;
+  // Книга Аэльдари: Grand-Strategist / Гранд-Стратег (Черта Аутарха, имя в паке через дефис) — «Все
+  // миньоны персонажа получают +20 Лояльности»; The Aura of Power / Аура
+  // Могущества (Талант Барона Корсаров) — «Его миньоны-люди также получают
+  // +20 Лояльности». Опознание по имени: ключей Возможности у них нет.
+  if (hasAbility(master, "", "Grand-Strategist", "trait")) value += AELDARI_LOYALTY_BONUS;
+  if (group === "human" && hasAbility(master, "", "The Aura of Power", "talent")) value += AELDARI_LOYALTY_BONUS;
   // Ancient Warrior / Древний Воин (arsenal.core.ancientWarrior): «+10 к
   // Лояльности Миньонов-Космодесантников» — признак на самом Миньоне
   // (system.isAstartes), у человека того же group:"human" его не отличить.
@@ -398,6 +404,9 @@ export function minionLoyalty(master, group, minion = null) {
   value -= cannonFodderPenalty(master, minion);
   return Math.max(0, value);
 }
+
+/** «+20 Лояльности» миньонам — Гранд Стратег (все) и Аура Могущества (люди), Книга Аэльдари. */
+export const AELDARI_LOYALTY_BONUS = 20;
 
 /** «+10 к Лояльности Миньонов-Космодесантников» (Ancient Warrior, корбук стр. 62). */
 export const ANCIENT_WARRIOR_LOYALTY_BONUS = 10;
