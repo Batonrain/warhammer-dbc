@@ -34,6 +34,10 @@
 .warhammer-dbc .minion-card-name { font-size: 0.86em; line-height: 1.15; }
 .warhammer-dbc .minion-card-meta,
 .warhammer-dbc .minion-card-loyalty { font-size: 0.72em; color: var(--wh-text-mid); }
+.warhammer-dbc .minion-card-loyalty .minion-loyalty-roll {
+  margin-left: 4px; padding: 0 4px; line-height: 1.2;
+  font-size: 1em; cursor: pointer; width: auto; min-width: 0;
+}
 .warhammer-dbc .minion-slot-chip {
   display: inline-block; margin: 0 4px 3px 0; padding: 1px 6px;
   font-size: 0.74em; border: 1px solid var(--wh-border); border-radius: 10px;

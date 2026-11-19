@@ -20,6 +20,7 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { MINION_GROUPS, MINION_TIERS, MINION_TIER_ORDER } from "../constants/minions.mjs";
 import { minionLoyalty, speechNote } from "../rules/minion-build.mjs";
 import { loyaltyGroupOf } from "../rules/binary-dominion.mjs";
+import { openLoyaltyTest } from "../combat/minion-loyalty-test.mjs";
 
 /** Клик по аватару Хозяина открывает его лист. */
 async function onOpenMaster() {
@@ -44,6 +45,11 @@ async function onSyncLoyalty() {
   await this.actor.update({ "system.loyalty.max": base, "system.loyalty.value": base });
 }
 
+/** Кнопка «🎲» у Лояльности: тест Лояльности (стр. 113). */
+function onLoyaltyTest() {
+  return openLoyaltyTest(this.actor);
+}
+
 function onAvatar() {
   const FP = filePicker();
   return new FP({ type: "image", current: this.actor.img, callback: p => this._setAvatar(p) }).render(true);
@@ -57,7 +63,8 @@ export class WarhammerMinionSheet extends WarhammerCharacterSheet {
       tab: onTab,
       minionAvatar:      whenEditable(onAvatar),
       minionOpenMaster:  onOpenMaster,
-      minionSyncLoyalty: whenEditable(onSyncLoyalty)
+      minionSyncLoyalty: whenEditable(onSyncLoyalty),
+      minionLoyaltyTest: onLoyaltyTest
     }
   };
 

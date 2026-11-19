@@ -5812,7 +5812,7 @@ export const CAPABILITIES = {
   },
   "trait.monodevotant": {
     label: "Переброс неудачных тестов Лояльности; без субстанции 1d10+W.b дней — штраф −10 ко всем Характеристикам (−5 за каждый доп. день);",
-    source: "Monodevotant / Монозависимый", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Monodevotant / Монозависимый", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::hasMonodevotant → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (провал теста Лояльности перебрасывается сам). Ломка без субстанции — памятка kind:script в чат"
   },
   "trait.multipleArms": {
     label: "Рейтинг = общее число рук (бюджет рук) и +1 Атака за Ход на каждую пару рук сверх первой (нечётная лишняя рука — пара). Не автоматизировано: потолок 2+P.b рук за Ход, независимые пары (выстрел + рукопашная в один Ход), счёт по парам для Талантов «Два оружия».",
@@ -6419,7 +6419,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Воин_Ноты — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.voinNoty.adoringCrowds": {
     label: "Фанаты стягиваются к нему из-за славы мечника и его выступлений. Может использовать A вместо F и Trade(Dancer) вместо Command для своих Минь…",
-    source: "Adoring Crowds / Обожание Толпы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Adoring Crowds / Обожание Толпы", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::adoringCrowdsEligible → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (повод «Обожание Толпы»: Реакция Миньона-Человека, Успех — +1 Очко Бесчестия Хозяину). A вместо F, Trade(Dancer) вместо Command, бесплатные Sycophant и Trade(Musician) — памятка kind:script в чат"
   },
   "trait.elitnyeArhetipy.voinNoty.danceOfPain": {
     label: "Элегантными выверенными ударами изматывает противника, обрывая его жизнь только когда вдоволь наиграется. Раз в Ход,",
