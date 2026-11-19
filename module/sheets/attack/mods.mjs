@@ -37,6 +37,7 @@ import { flourishPenaltyAgainst } from "../../combat/flourish-dance.mjs";
 import { halvePenalty } from "../../rules/awareness-talents.mjs";
 import { hasDamageTalent } from "../../rules/damage-talents.mjs";
 import { isInRage, RAGE_TEST_PENALTY, RAGE_NO_BS_PENALTY } from "../../rules/rage.mjs";
+import { hasAbility } from "../../rules/ability-by-key.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
@@ -149,7 +150,9 @@ export function situationalMods(v) {
     // WS в Ярости не падает — там +10 к значению (rules/character.mjs).
     // Модуль Агрессии Скитария Best.Q «убирает штраф к BS в Ярости» —
     // возможность RAGE_NO_BS_PENALTY (rules/rage.mjs), строки нет вовсе.
-    ...(!isMelee && isInRage(actor) && !hasRuleFlag(actor, RAGE_NO_BS_PENALTY)
+    // Железный Гнев (Дредноут) — ещё и по имени: копия, взятая до записи в
+    // паке, ключа не несёт.
+    ...(!isMelee && isInRage(actor) && !hasAbility(actor, RAGE_NO_BS_PENALTY, "Iron Wrath")
       ? [{ label: "Ярость: −20 BS", value: RAGE_TEST_PENALTY, autoCheck: true }] : []),
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
       note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },

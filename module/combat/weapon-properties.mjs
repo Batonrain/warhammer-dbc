@@ -7,6 +7,7 @@
 
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { mechFormulaTotalSafe } from "../rules/mech-formula.mjs";
 
@@ -32,8 +33,13 @@ import { mechFormulaTotalSafe } from "../rules/mech-formula.mjs";
  * combat/damage.mjs::applyDamageToActor, где проверяются остальные ключи
  * этого пространства имён.
  */
+const LEGACY_IMMUNITY_TRAITS = { haywire: ["Warp Talon Suit", "Fleshmetal Body"] };
+
 export function hasWeaponPropertyImmunity(actor, propKey) {
   if (hasRuleFlag(actor, `weaponPropertyImmunity.${propKey}`)) return true;
+  // Черты Элитных Архетипов, чей ключ лёг в старые файлы пака: копия, взятая
+  // до этого, опознаётся по имени (приёмка #581).
+  if ((LEGACY_IMMUNITY_TRAITS[propKey] ?? []).some(name => hasAbility(actor, "", name, "trait"))) return true;
   if (actor?.system?.inRage && hasRuleFlag(actor, `weaponPropertyImmunityInRage.${propKey}`)) return true;
   return false;
 }

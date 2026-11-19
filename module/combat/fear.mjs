@@ -9,7 +9,7 @@ import { FEAR_RATINGS, SHOCK_TABLE, TRAUMA_TABLE, lookupTable } from "../constan
 import { _degWord, esc }                               from "../helpers/utils.mjs";
 import { rollIcon }                                from "../constants/roll-icons.mjs";
 import { ruleFlagLabels, hasRuleFlag }             from "../rules/flags.mjs";
-import { hasTalentCapability } from "../rules/ability-by-key.mjs";
+import { hasTalentCapability, hasAbility } from "../rules/ability-by-key.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
@@ -160,7 +160,8 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
                    || !!moraleAuto
                    || jadedAuto
                    || hasRuleFlag(actor, "sarcophagus.autoPassFear")
-                   || hasRuleFlag(actor, FEAR_IMMUNE_FLAG)
+                   // «Извне» (Медуза) — и по имени: старая копия без ключа (приёмка #581).
+                   || hasAbility(actor, FEAR_IMMUNE_FLAG, "Извне", "trait")
                    || !!properties.intoTheJawsOfHell;
   const autoParts = [];
   if (moraleAuto && moraleAuto.by !== "rage") autoParts.push(moraleAuto.label);

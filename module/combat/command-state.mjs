@@ -26,6 +26,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { BLOOD_GOD_MAX, BLOOD_GOD_STEP } from "../rules/demon-god-traits.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { isItemActive } from "../apps/effects.mjs";
+import { itemHasName } from "../rules/predicates.mjs";
 import { NO_COMMAND_CAPABILITY } from "../rules/naga-traits.mjs";
 import { COMMAND_SUPPRESSED_FLAG, commandSuppression, commandSuppressedNow, commandSuppressionExpired } from "../rules/command-suppression.mjs";
 
@@ -43,7 +44,9 @@ export function refusesCommand(actor) {
       e => e?.kind === "capability" && e.capabilityKey === NO_COMMAND_CAPABILITY));
     if (grants && isItemActive(item)) return true;
   }
-  return false;
+  // «Ни Владыка, Ни Слуга» (Моритат) — и по имени: копия, взятая до записи в
+  // паке, ключа не несёт (приёмка #581).
+  return [...(actor?.items ?? [])].some(i => i?.type === "trait" && itemHasName(i, "No Lord, Nor Servant"));
 }
 
 const NS = "warhammer-dbc";
