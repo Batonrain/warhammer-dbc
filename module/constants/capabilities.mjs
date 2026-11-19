@@ -6649,7 +6649,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.korolChervey.verminousConduit": {
     label: "Благословенные Нурглом черви в плоти служат проводником мистической силы. Получает +1 к эPR психосил Нургла и Биомантии.",
-    source: "Verminous Conduit / Паразитический Проводник", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Verminous Conduit / Паразитический Проводник", reader: "module/rules/psyker.mjs — disciplineEprBonus (DISCIPLINE_EPR_SOURCES): +1 эPR силам дисциплин nurgle и biomancy; применяют sheets/tabs/psychic.mjs::executePsychotest и окно манифестации (wirePsyManifestPreview)"
   },
   "trait.elitnyeArhetipy.korolChervey.wormMaster": {
     label: "В бою может мистически размножать рои паразитов, формируя аморфные боевые конструкты.",

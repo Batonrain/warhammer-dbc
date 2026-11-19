@@ -36,7 +36,7 @@ import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
 import { nailsForcePeril } from "../../rules/khorne-berserker.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
-import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS } from "../../rules/psyker.mjs";
+import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS, disciplineEprBonus } from "../../rules/psyker.mjs";
 import { techniqueFocusFor, TECHNIQUE_FOCUS_TEST_BONUS, TECHNIQUE_FOCUS_PHEN_MOD,
          psychicSpiteApplies, hasPsychicSpite, normalizeSpiteChoice, PSYCHIC_SPITE_BONUS,
          manifestPrCeiling, RESURGENCE_FLAG,
@@ -401,8 +401,11 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
     return { text: `Действие силы (${PSY_ACTIONS[plan.action] ?? PSY_ACTIONS.half}) в бою стоит ${plan.cost} ОД (есть ${Number(actor.system.actionPoints?.value) || 0}).`, cover };
   };
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue,
-                    runeBase, techFocus, apPreview, ...eprTalents };
+                    runeBase, techFocus, apPreview, ...eprTalents,
+                    // Паразитический Проводник и подобные: +эPR силам своей дисциплины.
+                    discEpr: disciplineEprBonus(actor, item).bonus };
   const talentRows = [
+    psyMeta.discEpr ? `<div class="pm-note">${esc(disciplineEprBonus(actor, item).labels.join(", "))} к эPR этой силы (дисциплина) — учтено.</div>` : "",
     techFocus ? `<div class="pm-note">Фокус Техники: +${TECHNIQUE_FOCUS_TEST_BONUS} к психотесту этой силы, ${TECHNIQUE_FOCUS_PHEN_MOD} к её Феноменам — учтено.</div>`
       : (hasTechniqueFocus(actor) ? `<div class="pm-note" style="opacity:.75;">Фокус Техники: выбранная сила записана в поле «Специализация» Таланта; для «${esc(item.name)}» не выбрана.</div>` : ""),
     spiteOk ? `
@@ -699,6 +702,7 @@ export function wirePsyManifestPreview(html, m) {
     // исчезает вместе с ценой. Элементов нет ни у кого, кроме Сигиллита.
     const strike = parseInt($("#psy-rune-strike")?.value) || 0;
     if (pd.runeCost) ePR += strike;
+    ePR += m.discEpr || 0;
     // Варповый Шёпот, Злоба, Проводник — тот же порядок и те же числа, что в
     // executePsychotest: Шёпот снимает эPR (не ниже 1), Злоба «в психотесте»
     // прибавляет только к эPR порога, Проводник — только к эPR эффектов.
@@ -863,12 +867,16 @@ export async function executePsychotest(actor, item, opts) {
     ? Math.min(Math.max(0, Math.trunc(Number(opts.runeStrike) || 0)), runeStrikeMax(actor, item))
     : 0;
   ePR += runeStrike;
+  // Прибавка по дисциплине силы (Паразитический Проводник: Нургл и Биомантия +1).
+  const discEpr = disciplineEprBonus(actor, item);
+  ePR += discEpr.bonus;
 
   // ── Таланты манифестации (rules/psyker-talents.mjs, Sahara 3-28) ───────────
   // Порядок тот же, что в wirePsyManifestPreview: Шёпот снимает эPR, Злоба
   // прибавляет к одному из аспектов, Проводник — к эPR эффектов, Фокус Техники —
   // к порогу и к Феноменам.
   const talentLines = [];
+  if (discEpr.bonus) talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">эPR по дисциплине силы: ${esc(discEpr.labels.join(", "))}.</div>`);
   const whisperAsked = hasWarpWhisper(actor) ? Math.max(0, Math.trunc(Number(opts.whisper) || 0)) : 0;
   const whisperX = Math.min(whisperAsked, Math.max(0, ePR - 1));
   if (whisperX > 0) {
