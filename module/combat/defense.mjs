@@ -60,6 +60,7 @@ import { hasDodgeTalent, speedAwarenessPenalty, talentBalance, deflectableProjec
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
 import { RAN_METERS_FLAG } from "../rules/movement-path.mjs";
+import { DEFENCE_TEST_FLAG, defenceRerollsFor, defenceRerollSectionHtml } from "../rules/defence-reroll.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -239,7 +240,11 @@ export async function _performDodge(actor, {
   // Огневая Клеть (Талант Стрелка): каждое снятое попадание стоит evadeCost Успехов Уклонения (по умолчанию 1)
   evadeCost = 1,
   // Ускользнуть (переброс после провала): это повтор того же Уклонения от Захвата — Реакция второй раз не тратится
-  slipReroll = false
+  slipReroll = false,
+  // Переброс проваленного Уклонения Чертой/Талантом или за Очко (rules/defence-reroll.mjs,
+  // combat/defence-reroll.mjs): { label } — повтор того же теста без Реакции и без окон;
+  // carry — ответы, данные в окнах до первого броска (Скоростная Внимательность).
+  reroll = null, carry = null
 } = {}) {
   // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
   // потерянной ноги (книга не требует «обеих», в отличие от полной
@@ -261,7 +266,8 @@ export async function _performDodge(actor, {
   const fullAtkLock = avoidanceVerdict(actor, "dodge");
   if (fullAtkLock.blocked) return _bladeShieldRefusal(actor, fullAtkLock.reason, "Уклонение");
   // Скоростная Внимательность: после Бега — спросить дистанцию (до траты Реакции).
-  const speedAw = await _speedAwarenessMod(actor);
+  // Переброс не спрашивает второй раз: дистанция та же, что у первого броска.
+  const speedAw = reroll ? (carry?.speedAw ?? { value: 0, part: "" }) : await _speedAwarenessMod(actor);
   if (speedAw === null) return;
   // Ускользнуть: Уклонение от атаки Захватом, раз в Раунд (+30 или переброс).
   let slip = "none";
@@ -271,25 +277,26 @@ export async function _performDodge(actor, {
       return ui.notifications.warn("⚠️ Ускользнуть в этом Раунде уже использовано (или нет Таланта).");
     }
     await markThrottleUsed(actor, SLIP_AWAY_FLAG, "round");
-  } else if (grappleAttack && hasDodgeTalent(actor, "slipAway") && isThrottleReady(actor, SLIP_AWAY_FLAG, "round")) {
+  } else if (!reroll && grappleAttack && hasDodgeTalent(actor, "slipAway") && isThrottleReady(actor, SLIP_AWAY_FLAG, "round")) {
     slip = await _slipAwayChoice(actor);
     if (slip === null) return;
   }
   // «Прикрытие» (Детальная Команда): нет своей Реакции — одолжить у соратника
   // в 3 м; у стаи Йигори (Сознание Стаи) — у члена стаи и без «Прикрытия».
   // Переброс Ускользнуть (slipReroll) — тот же тест, Реакция уже потрачена первым броском.
-  if (!slipReroll
+  if (!slipReroll && !reroll
       && !(await spendReaction(actor, { forDefense: true, attackId }))
       && !(await borrowCoverReaction(actor, { dodge: true }))) return _noReactionCard(actor, "Уклонение");
   if (slip !== "none") await markThrottleUsed(actor, SLIP_AWAY_FLAG, "round");
   // Переброс после провала ещё возможен (Талант есть, в этом Раунде не использован, +30 не брали).
-  const slipRerollAvailable = !slipReroll && slip === "none" && grappleAttack && hasDodgeTalent(actor, "slipAway")
+  const slipRerollAvailable = !slipReroll && !reroll && slip === "none" && grappleAttack && hasDodgeTalent(actor, "slipAway")
     && isThrottleReady(actor, SLIP_AWAY_FLAG, "round");
   const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value + (slip === "bonus" ? 30 : 0) + fullAtkLock.penalty);
   if (speedAw.part) modParts.push(speedAw.part);
   if (fullAtkLock.note) modParts.push(fullAtkLock.note);
   if (slip === "bonus") modParts.push("Ускользнуть +30");
   if (slipReroll) modParts.push("Ускользнуть: переброс провала");
+  if (reroll) modParts.push(`Переброс: ${esc(reroll.label || "")}`);
   // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
   // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
   // резолвится тем же путём, что Разница Размеров у Парирования ниже
@@ -416,8 +423,24 @@ export async function _performDodge(actor, {
       // Ускользнуть: провал Уклонения от Захвата можно перебросить кнопкой (раз в Раунд, без второй Реакции).
       (!passed && slipRerollAvailable)
         ? slipRerollSectionHtml(actor, { extraMod, forcedReroll, hitsCount, attackerUuid, isMelee, burst, attackerIsHorde, attackId, itemUuid, evadeCost })
-        : ""]
-  }, { rolls: [roll] });
+        : "",
+      // Перебросы Черт и Талантов (rules/defence-reroll.mjs): окна броска у защиты нет, поэтому — кнопкой после провала.
+      defenceRerollSectionHtml(defenceRerollsFor(actor, "dodge", {
+        attackerActor, isMelee, passed, rerolled: !!(reroll || slipReroll) }), "dodge")]
+  }, { rolls: [roll], flags: defenceTestFlags(actor, "dodge", {
+    extraMod, forcedReroll, hitsCount, attackerUuid, isMelee, burst, attackerIsHorde, attackId, itemUuid, grappleAttack, evadeCost
+  }, { speedAw }, { passed, rerolled: !!(reroll || slipReroll) }) });
+}
+
+/**
+ * Флаги карточки защиты: параметры вызова и ответы окон — чтобы переброс
+ * (кнопкой Черты/Таланта или за Очко из меню карточки) повторил ТОТ ЖЕ тест.
+ */
+function defenceTestFlags(actor, kind, opts, carry, { passed, rerolled }) {
+  return { "warhammer-dbc": { [DEFENCE_TEST_FLAG]: {
+    kind, actorUuid: actor?.uuid ?? "", opts, carry, passed: !!passed, rerolled: !!rerolled,
+    round: globalThis.game?.combat?.round ?? null
+  } } };
 }
 
 // Распыление/Spray (wdbc-p06s, свойство оружия «Дальнобойное», стр. 166-170):
@@ -733,7 +756,10 @@ export async function _performParry(actor, {
   chomper = false, forAlly = "",
   // Запрещённый Приём (Cheap Shot): каждое снятое попадание стоит evadeCost Успехов.
   evadeCost = 1,
-  attackBaseKey = "" // База атаки (opts.baseKey карточки): Пересилить действует только против Полной Атаки
+  attackBaseKey = "", // База атаки (opts.baseKey карточки): Пересилить действует только против Полной Атаки
+  // Переброс проваленного Парирования (см. _performDodge): без Реакции и без окон;
+  // carry — ответы окон первого броска (Крестовой Блок, Скоростная Внимательность).
+  reroll = null, carry = null
 } = {}) {
   // Полная Атака (core, «Полная Атака»): Физические Избегания закрыты до начала
   // следующего Хода. Реакция не тратится. Реприз (Берсерк) открывает Парирование
@@ -751,7 +777,8 @@ export async function _performParry(actor, {
   // Крестовой Блок платит Контратакой (стр. 62), поэтому спрашивается ДО
   // броска — и только когда цена реальна: Талант Контратаки есть и доступен в
   // этом Раунде. Нечем платить — выгода бесплатна, и спрашивать не о чем.
-  const useCrossblock = await askCrossblock(actor);
+  // Переброс второй раз не спрашивает (и не платит Контратакой повторно).
+  const useCrossblock = reroll ? !!carry?.useCrossblock : await askCrossblock(actor);
 
   // Длань Кхорна (wdbc-1rno): +2 эффективного Размера атакующего, когда бьёт
   // именно этой рукой — не своё поле на акторе, читается с оружия атаки.
@@ -823,7 +850,7 @@ export async function _performParry(actor, {
     chomperBite = hasDodgeTalent(actor, "chomper") ? [...(actor.items ?? [])].find(i => isBiteWeapon(i)) : null;
     if (!chomperBite) return _bladeShieldRefusal(actor, "Кусака: нужен Талант Chomper/Кусака и атака укусом.");
   }
-  const speedAw = await _speedAwarenessMod(actor);
+  const speedAw = reroll ? (carry?.speedAw ?? { value: 0, part: "" }) : await _speedAwarenessMod(actor);
   if (speedAw === null) return;
   const { wsTotal, meleeWeapon, balance, balanceMod, threshold: parryProfileThreshold, modParts, pwp, crossblock } =
     parryProfile(actor, extraMod + speedAw.value,
@@ -936,8 +963,10 @@ export async function _performParry(actor, {
     return;
   }
 
-  if (!(await spendReaction(actor, { forDefense: true, attackId }))
+  if (!reroll
+      && !(await spendReaction(actor, { forDefense: true, attackId }))
       && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Парирование");
+  if (reroll) modParts.push(`Переброс: ${esc(reroll.label || "")}`);
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём
@@ -1222,8 +1251,13 @@ export async function _performParry(actor, {
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
     outcome: outcomeHtml,
-    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, attackerPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, bladeBindingHtml, riposteHtml]
-  }, { rolls: allRolls });
+    sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, attackerPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, bladeBindingHtml, riposteHtml,
+      // Перебросы Черт и Талантов (rules/defence-reroll.mjs) — кнопкой после провала, окна у защиты нет.
+      defenceRerollSectionHtml(defenceRerollsFor(actor, "parry", { attackerActor, isMelee, passed, rerolled: !!reroll }), "parry")]
+  }, { rolls: allRolls, flags: defenceTestFlags(actor, "parry", {
+    extraMod, attackerUuid, hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid, attackId,
+    chomper, forAlly, evadeCost, attackBaseKey
+  }, { speedAw, useCrossblock }, { passed, rerolled: !!reroll }) });
 }
 
 /**

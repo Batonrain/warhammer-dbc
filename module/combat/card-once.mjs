@@ -102,6 +102,8 @@ export const CARD_ONCE_FLAGS = ["mistSaviorSwapped", "infamyFailSuccessUsed", "a
   "grenadierReduceUsed", "grenadierRerollUsed",
   // Пируэт против Тарана (combat/opposed-contest.mjs::resolveRamPirouette): один бросок на карточку Тарана.
   "ramPirouetteUsed",
+  // Переброс проваленного Уклонения/Парирования — кнопкой Черты/Таланта или за Очко (combat/defence-reroll.mjs).
+  "defenceRerolled",
   // Снайпер Ужаса: тест Подавления каждого врага из карточки — по разу на врага (строка карточки = номер,
   // combat/terror-sniper.mjs::terrorSuppressKey; врагов больше TERROR_SUPPRESS_ROWS остаются без общей отметки).
   ...Array.from({ length: 20 }, (_, i) => `terrorSuppress${i}`),

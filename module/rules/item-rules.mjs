@@ -131,8 +131,9 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // terrain — тест Трудного Ландшафта (Бег/Натиск через зону,
   // combat/movement-terrain.mjs, ctx.terrain): Barefoot / Босоногий Ратлинга —
   // «+20 и переброс», Cloven One / Копытный Зверолюда — «+20». Не «char:ag»:
-  // тот ловил бы любой тест Ловкости.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge", "psychicPower", "psychicMind", "psychicDirect", "psychicDetect", "interrogation", "requisition"].includes(scope)) return scope;
+  // тот ловил бы любой тест Ловкости. evasion — тест Избегания (Уклонение или
+  // Парирование), в т.ч. кнопкой защиты на карточке атаки (rules/defence-reroll.mjs).
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge", "psychicPower", "psychicMind", "psychicDirect", "psychicDetect", "interrogation", "requisition", "evasion"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;

@@ -42,11 +42,10 @@ describe("Черты корня: верховой бой", () => {
 });
 
 describe("Утончённый Бой", () => {
-  it("даёт галочку переброса в окне атаки", () => {
+  it("даёт переброс атаки (галочка в окне) и Избегания (кнопка на карточке защиты)", () => {
     const rules = rulesFromItemMechanics([asItem(load("Sophisticated_Combat"))]);
     const fx = rules.flatMap(r => r.effects ?? []).filter(e => e.kind === "rollMode");
-    expect(fx).toHaveLength(1);
-    expect(fx[0].target).toBe("attack");
-    expect(fx[0].mode).toBe("keepBest");
+    expect(fx.map(e => e.target).sort()).toEqual(["attack", "evasion"]);
+    expect(fx.every(e => e.mode === "keepBest")).toBe(true);
   });
 });

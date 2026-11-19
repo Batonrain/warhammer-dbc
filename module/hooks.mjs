@@ -224,6 +224,7 @@ import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { onDefenceRerollClick, rerollDefenceCard, defenceTestOf } from "./combat/defence-reroll.mjs";
 import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
 import { markFrenzyExited } from "./combat/frenzy.mjs";
 import { RAGE_EXIT_REROLL_CARD_FLAG, RIDING_BEAST_CARD_FLAG } from "./rules/rage-behavior.mjs";
@@ -1665,6 +1666,18 @@ export function registerHooks() {
           attackerIsHorde: ds.attackerIsHorde === "1", attackId: ds.attackId || "", itemUuid: ds.itemUuid || "",
           grappleAttack: true, evadeCost: parseInt(ds.evadeCost || "1"), slipReroll: true
         });
+      });
+    });
+
+    // Переброс проваленного Уклонения/Парирования Чертой или Талантом (combat/defence-reroll.mjs).
+    html.querySelectorAll(".wh-defence-reroll-btn").forEach(btn => {
+      if (cardOnceUsed(message, "defenceRerolled")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const done = await onDefenceRerollClick(message, el.dataset.ruleId);
+        if (!done) el.disabled = cardOnceUsed(message, "defenceRerolled");
       });
     });
 
@@ -4608,6 +4621,13 @@ function _attachFateContextMenu(message, html) {
           }
           return;
         }
+      }
+
+      // Уклонение/Парирование кнопкой карточки атаки — повторяем ту же защиту
+      // целиком (пересчёт снятых попаданий, без второй Реакции), а не голый d100.
+      if (defenceTestOf(message) && await rerollDefenceCard(message, `${ft.one}${payerNote}`)) {
+        ui.notifications.info(`✨ ${actor.name} тратит ${ft.one} на переброс защиты${payerNote}! Осталось: ${reroll1.poolValue}`);
+        return;
       }
 
       // Перебрасываем все кости из сообщения

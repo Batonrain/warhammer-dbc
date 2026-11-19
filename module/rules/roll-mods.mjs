@@ -132,21 +132,32 @@ export const rerollLimiters = new Map();
 /** Ограничитель переброса: (actor) → null — недоступен, иначе { uuid, name } источника переброса. */
 export function registerRerollLimiter(key, fn) { rerollLimiters.set(key, fn); }
 
-export function ruleRerollsHtml(actor, context, resolved = null) {
+/**
+ * Свои добровольные перебросы, которые можно потратить прямо сейчас: без
+ * навязанных (who:"target"/"opponent") и без исчерпанных ограничителем.
+ * Общая часть окна броска и кнопок переброса на карточке Избегания
+ * (rules/defence-reroll.mjs) — «доступен ли переброс» обязано значить одно и то же.
+ */
+export function selfRerollsOffered(actor, rerolls = []) {
   // Только ДОБРОВОЛЬНЫЕ свои перебросы. Навязанные цели (who:"target") бросает
   // она сама, у себя; навязанные МНЕ противником (who:"opponent" — Уравнитель)
   // применяются без спроса в sheets/attack/dialog.mjs и предлагать их
   // наказуемому галочкой нельзя — он её просто не поставит.
-  const rerolls = [];
-  for (const r of ((resolved ?? resolveTest({ actor, ...context })).rerolls || [])) {
+  const out = [];
+  for (const r of rerolls || []) {
     if (r.who !== "self") continue;
     const limiter = r.limit ? rerollLimiters.get(r.limit) : null;
-    if (!limiter) { rerolls.push(r); continue; }
+    if (!limiter) { out.push(r); continue; }
     const source = limiter(actor);
     if (!source) continue;
-    rerolls.push({ ...r, source,
+    out.push({ ...r, source,
       label: source.borrowed ? `${r.label} — переброс стаи: ${source.name}` : r.label });
   }
+  return out;
+}
+
+export function ruleRerollsHtml(actor, context, resolved = null) {
+  const rerolls = selfRerollsOffered(actor, (resolved ?? resolveTest({ actor, ...context })).rerolls);
   if (!rerolls.length) return { html: "", rerolls };
   const rows = rerolls.map((r, i) => `
     <label class="attack-mod-check rule-reroll">

@@ -194,6 +194,13 @@ export function effectAppliesTo(target, ctx) {
   // ставит ctx.contest. Аватар Резни: «−20 на все атаки и манёвры, направленные на Берсерка».
   if (scope === "contest") return ctx.contest === true;
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Тест Избегания — Уклонение или Парирование (стр. 12), откуда бы его ни
+  // бросили: с листа (ctx.skill) или кнопкой защиты на карточке атаки
+  // (rules/defence-reroll.mjs ставит и skill, и ctx.evasion). Книга пишет
+  // «перебрасывать проваленные тесты на избегание атаки» (Соларит) одним
+  // словом на оба Навыка — две записи skill:dodge + skill:parry задвоили бы
+  // один переброс в окне.
+  if (scope === "evasion") return ctx.evasion === true || ctx.skill === "dodge" || ctx.skill === "parry";
   // Реквизиция — тест «достать снаряжение» (apps/requisition.mjs): идёт по Inf
   // (или по F у Сети Контактов), поэтому свой ctx-флаг, а не «char:inf» — тот
   // подхватил бы любой тест Влияния. Бонус Чрезмерного Богатства «на получение

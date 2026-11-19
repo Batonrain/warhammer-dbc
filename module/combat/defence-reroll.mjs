@@ -1,0 +1,76 @@
+// module/combat/defence-reroll.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  Переброс проваленной защиты с её карточки — Foundry-сторона
+//  rules/defence-reroll.mjs (что предлагать — там).
+//
+//    onDefenceRerollClick(message, ruleId) — кнопка «Перебросить Уклонение:
+//      <Талант>»: проверить, что переброс всё ещё доступен, отметить его
+//      потраченным (ограничитель «раз в Раунд») и повторить тот же тест;
+//    rerollDefenceCard(message, label) — тот же повтор для «Переброса за Очко»
+//      из меню карточки (hooks.mjs): раньше он перебрасывал голый d100 и не
+//      пересчитывал, сколько попаданий снято.
+//
+//  Повтор — тот же _performDodge/_performParry с параметрами исходного вызова
+//  из флага карточки: Реакция второй раз не тратится, окна до броска не
+//  открываются (их ответы едут в carry).
+// ════════════════════════════════════════════════════════════════════════════
+
+import { _performDodge, _performParry } from "./defense.mjs";
+import { DEFENCE_TEST_FLAG, DEFENCE_REROLLED_FLAG, defenceRerollsFor } from "../rules/defence-reroll.mjs";
+import { commitRerollUse } from "./angel-hunters.mjs";
+import { runCardOnce } from "./card-once.mjs";
+
+const NS = "warhammer-dbc";
+
+/** Параметры защиты, записанные на карточке (null — карточка не защиты). */
+export function defenceTestOf(message) {
+  return message?.flags?.[NS]?.[DEFENCE_TEST_FLAG] ?? null;
+}
+
+async function actorOf(test) {
+  const doc = test?.actorUuid ? await fromUuid(test.actorUuid).catch(() => null) : null;
+  return doc?.actor ?? doc ?? null;
+}
+
+/** Повторить защиту с карточки как переброс. */
+async function performDefenceReroll(actor, test, label) {
+  const run = test.kind === "parry" ? _performParry : _performDodge;
+  await run(actor, { ...(test.opts ?? {}), reroll: { label }, carry: test.carry ?? null });
+  return true;
+}
+
+/** Кнопка переброса Черты/Таланта на карточке проваленной защиты. */
+export async function onDefenceRerollClick(message, ruleId) {
+  const test = defenceTestOf(message);
+  if (!test || test.passed || test.rerolled) return ui.notifications?.warn("⚠️ Эту защиту перебросить нельзя.");
+  const actor = await actorOf(test);
+  if (!actor) return ui.notifications?.warn("⚠️ Защищавшийся персонаж не найден.");
+  if (!game.user?.isGM && !actor.isOwner) return ui.notifications?.warn(`⚠️ Нет прав на «${actor.name}».`);
+  // Переброс — решение сразу после броска; карточка из прошлого Раунда уже не перебрасывается.
+  if (test.round != null && game.combat && game.combat.round !== test.round) {
+    return ui.notifications?.warn("⚠️ Эта защита была в прошлом Раунде — перебросить её уже нельзя.");
+  }
+  const attackerUuid = test.opts?.attackerUuid;
+  const attackerDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const offer = defenceRerollsFor(actor, test.kind, {
+    attackerActor: attackerDoc?.actor ?? attackerDoc, isMelee: test.opts?.isMelee ?? true
+  }).find(r => r.ruleId === ruleId);
+  if (!offer) return ui.notifications?.warn("⚠️ Этот переброс сейчас недоступен (уже потрачен в этом Раунде?).");
+  return runCardOnce(message, DEFENCE_REROLLED_FLAG, async () => {
+    if (offer.limit) await commitRerollUse(actor, { limit: offer.limit, sourceUuid: offer.source?.uuid ?? "" });
+    return performDefenceReroll(actor, test, offer.label);
+  }, "Эту защиту уже перебросили.");
+}
+
+/**
+ * «Переброс за Очко» из меню карточки защиты. Очко уже потрачено вызывающим
+ * (hooks.mjs); здесь — только сам повтор.
+ * @returns {Promise<boolean>} false — карточка не защиты или актор не найден (вызывающий перебросит по-старому)
+ */
+export async function rerollDefenceCard(message, label) {
+  const test = defenceTestOf(message);
+  if (!test) return false;
+  const actor = await actorOf(test);
+  if (!actor) return false;
+  return performDefenceReroll(actor, test, label);
+}
