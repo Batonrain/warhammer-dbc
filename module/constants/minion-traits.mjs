@@ -15,7 +15,10 @@
 //             "required" — обязателен (Daemonic у демона, Machine у машины);
 //    tiers  — что даёт уровень силы: null — недоступен, true — доступен без
 //             рейтинга, число — базовый Рейтинг, строка — формула книги;
-//    perPoint — на сколько поднимается Рейтинг за лишнее Очко Трейтов.
+//    perPoint — на сколько поднимается Рейтинг за лишнее Очко Трейтов;
+//    requires — ключ Трейта, без которого этот не открывается (Трейты
+//             скакунов — только со Steed);
+//    pack   — имя предмета в компендиуме, если ключ с ним не совпадает.
 //
 //  Пары через дробь (Daemonic Armament «1/0», Daemonic Presence «5/10») книга
 //  пишет как «рейтинг/рейтинг»: у Трейта два числа сразу, и здесь они хранятся
@@ -127,6 +130,25 @@ export const MINION_TRAITS = {
     note: "Сервочереп: Трейты Size (−2), Hoverer и Machine по силе. Считается имеющим одну руку — встроенное "
         + "оружие или инструмент, который нельзя выпустить, но с бонусом +15 на тесты с ним; мехатентрилы "
         + "поднимают предметы Размера −2 и меньше, но не бьют."
+  },
+  // ── Трейты скакунов (корбук стр. 112, 19.11.2026) ─────────────────────────
+  // Открываются только Миньону, у которого уже выбран комплексный Трейт Steed
+  // (`requires`), — ни в списке генератора, ни по цене без него их нет. Цены
+  // книги: Unruly −1, ½ за ходовые, 1 за Ablative Plating и тяжёлые Лезвия.
+  // `pack` — имя предмета в компендиуме, когда ключ таблицы с ним не совпадает
+  // (у книги два профиля Лезвий, предмет один — Blades (X)). Legion в таблицу
+  // не внесён: Черты «Legion / Легион» в компендиуме нет.
+  "Unruly":           { cost: -1,  groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
+  "All-Terrain":      { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
+  "Maneuverable":     { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
+  "Stand":            { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
+  "War-Trained":      { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
+  "Blades (1d10+2 R, Pen 0)": {
+    cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed", pack: "Blades"
+  },
+  "Ablative Plating": { cost: 1,   groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
+  "Blades (2d10+2 R, Pen 2, Tearing)": {
+    cost: 1, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed", pack: "Blades"
   },
   "Steed": {
     cost: 1, complex: true, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true),

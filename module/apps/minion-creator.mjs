@@ -17,12 +17,13 @@
 import { MINION_GROUPS, MINION_TIERS, MINION_TIER_ORDER, MINION_SWAP,
          tierBudget } from "../constants/minions.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { MINION_TRAITS } from "../constants/minion-traits.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { specOptions } from "../constants/skill-specializations.mjs";
 import {
   minionSlots, slotUsage, charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft,
-  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty,
+  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, minionTraitRating,
   availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor,
   talentRequirements, minionInfamyWaiverFlag
 } from "../rules/minion-build.mjs";
@@ -301,7 +302,7 @@ function dropStepHtml(state, kind, title, num) {
       { toTalents: state.convert.traitsToTalents, fromGear: state.convert.gearToTraits });
     // Таблица книги (стр. 112) сама говорит, что этой паре доступно и почём —
     // список выбирается отсюда, а не набирается перетаскиванием вслепую.
-    const options = availableTraits(state.group, state.tier).map(t => `
+    const options = availableTraits(state.group, state.tier, list.map(it => it.name)).map(t => `
       <option value="${esc(t.name)}">${esc(t.name)} — ${t.cost} оч.${t.rating ? `, Рейтинг ${esc(String(t.rating))}` : ""}${t.complex ? " (комплексный)" : ""}${t.mandatory ? " (обязателен)" : ""}</option>`).join("");
     const missing = mandatoryTraits(state.group)
       .filter(name => !list.some(it => String(it.name).includes(name)));
@@ -342,6 +343,8 @@ function creatorHtml(state, master) {
     : `Раны <b>${minionWounds({ toughness: state.chars.t, tier: state.tier })}</b>`;
 
   const countGroup = countGroupOf(master, state);
+  // Мутант (X): Порча не ниже X×20 — подпись, чтобы число не казалось ошибкой.
+  const mutantNote = state.traits.some(entry => traitEntry(entry.name)?.key === "Mutant") ? " (не ниже X×20 — Мутант)" : "";
   return `
     <form class="wh-minion-creator">
       <div class="mc-head">
@@ -352,7 +355,7 @@ function creatorHtml(state, master) {
           ${woundsOrMagnitude} ·
           Лояльность <b>${minionLoyalty(master, countGroup, { slotTalentId: state.talentId })}</b> (${esc(MINION_GROUPS[countGroup]?.masterChar?.toUpperCase() || "")}) ·
           Бесчестие <b>${minionInfamy(master, state.tier)}</b> ·
-          Порча <b>${minionCorruption(state.group)}</b>
+          Порча <b>${minionCorruption(state.group, state.traits)}</b>${mutantNote}
         </div>
         ${requirementsHtml(master, state)}
         <button type="button" class="mc-btn" id="mc-browser">📚 Обозреватель компендиумов</button>
@@ -377,8 +380,12 @@ async function findTraitInPack(name) {
   // Совпадения по вхождению мало: «Daemonic» находит «Daemonic Armament»
   // первым. Поэтому имя документа разбираем той же таблицей и сверяем ключи —
   // у «Daemonic Armament» ключ свой, и коротким именем он больше не ловится.
-  const entry = [...pack.index].find(i => traitEntry(i.name)?.key === name)
-             ?? [...pack.index].find(i => String(i.name).startsWith(`${name} /`));
+  // `pack` (Трейты скакунов): ключ таблицы — профиль книги («Blades (1d10+2 R,
+  // Pen 0)»), а предмет в паке один — «Blades (X) / Лезвия (X)».
+  const want = MINION_TRAITS[name]?.pack ?? name;
+  const entry = [...pack.index].find(i => traitEntry(i.name)?.key === want)
+             ?? [...pack.index].find(i => String(i.name).startsWith(`${want} /`))
+             ?? [...pack.index].find(i => String(i.name).startsWith(`${want} (`));
   return entry ? pack.getDocument(entry._id).catch(() => null) : null;
 }
 
@@ -445,7 +452,7 @@ async function createMinionActor(master, state) {
     slotTalentId: state.talentId || "",
     characteristics: chars,
     loyalty: { value: loyalty, max: loyalty },
-    corruption: { value: minionCorruption(state.group) },
+    corruption: { value: minionCorruption(state.group, state.traits) },
     ...minionSkillFields(state)
   };
 
@@ -479,7 +486,13 @@ async function createMinionActor(master, state) {
   const docs = [];
   for (const entry of [...state.talents, ...state.traits, ...state.gear]) {
     const doc = await fromUuid(entry.uuid).catch(() => null);
-    if (doc) docs.push(doc.toObject());
+    if (!doc) continue;
+    const data = doc.toObject();
+    // Рейтинг из таблицы книги (Укус (2), Мутант (1)…) — окно его показывало,
+    // а Трейт приходил с рейтингом пака (19.11.2026).
+    const rating = state.traits.includes(entry) ? minionTraitRating(entry) : null;
+    if (rating !== null && data.system?.hasRating) data.system.rating = rating;
+    docs.push(data);
   }
   if (docs.length) await actor.createEmbeddedDocuments("Item", docs);
 
@@ -618,7 +631,7 @@ function openCreator(master, state) {
       ev.preventDefault();
       const name = String(box.querySelector("#mc-trait-sel")?.value || "");
       if (!name) return;
-      const spec = traitAvailability(name, state.group, state.tier);
+      const spec = traitAvailability(name, state.group, state.tier, state.traits.map(t => t.name));
       const doc = await findTraitInPack(name);
       state.traits.push({
         uuid: doc?.uuid || "", name: doc?.name || name, img: doc?.img,

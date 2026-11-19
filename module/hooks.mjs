@@ -62,7 +62,7 @@ import { ROUND_DAMAGE_FLAG }            from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
-import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation, ironMountTest, clearDragonKnight } from "./combat/mount.mjs";
+import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation, ironMountTest, clearDragonKnight, showMountDamageTest } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity, isDiceRating, resolveLingerRounds } from "./combat/weapon-properties.mjs";
 import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
 import { conditionApplyFields, setFatigue } from "./sheets/tabs/conditions.mjs";
@@ -2502,6 +2502,18 @@ export function registerHooks() {
         const attackerUuid = ev.currentTarget.dataset.attackerUuid;
         const { injectFangVenom } = await import("./apps/naga-traits.mjs");
         await injectFangVenom(attackerUuid);
+      });
+    });
+
+    // Непослушный скакун: тест удержания в седле из карточки урона скакуна (19.11.2026)
+    html.querySelectorAll(".wh-unruly-saddle-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.riderUuid;
+        const rider = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
+        if (!rider) return ui.notifications.warn("⚠️ Всадник не найден (возможно, удалён).");
+        if (!rider.isOwner) return ui.notifications.warn(`⚠️ Тест бросает владелец «${rider.name}».`);
+        await showMountDamageTest(rider);
       });
     });
 
