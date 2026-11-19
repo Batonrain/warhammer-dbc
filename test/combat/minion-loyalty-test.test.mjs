@@ -48,6 +48,15 @@ describe("Тест Лояльности: бросок и карточка", () =
     expect(lastCard()).toMatch(/перехватывает контроль/);
   });
 
+  it("Связан душой (Ритуал Связывания Души): провальный бросок засчитан успехом, без переброса", async () => {
+    const bound = { ...minion({ items: [named("trait", "Monodevotant / Монозависимый")] }), flags: { "warhammer-dbc": { soulBound: true } } };
+    const rollFn = dice(95, 10);
+    const r = await rollLoyaltyTest(bound, { master: master(), reason: "mission", inCombat: true, rollFn });
+    expect(r).toMatchObject({ success: true, rerolled: false, gmControl: false });
+    expect(rollFn.calls).toEqual([95]);
+    expect(lastCard()).toMatch(/Связан душой/);
+  });
+
   it("Монозависимый: второй бросок только после провала, и он окончательный", async () => {
     const mono = minion({ items: [named("trait", "Monodevotant / Монозависимый")] });
     const ok = dice(20, 99);

@@ -123,6 +123,8 @@ export class WarhammerMinionSheet extends WarhammerCharacterSheet {
       // подпись показывает, от какой именно, чтобы кнопка «🔄» не выглядела
       // произволом.
       loyaltyFrom: MINION_GROUPS[group]?.masterChar?.toUpperCase() || "",
+      // Ритуал Связывания Души: тесты Лояльности проходятся автоматически.
+      soulBound: !!this.actor.getFlag?.("warhammer-dbc", "soulBound"),
       isHorde: !!MINION_TIERS[tier]?.isHorde,
       magnitude: { value: s.magnitude?.value ?? 0, max: s.magnitude?.max ?? 0 },
       speech: speechNote({

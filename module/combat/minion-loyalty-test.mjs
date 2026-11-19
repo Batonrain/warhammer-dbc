@@ -18,7 +18,7 @@
 
 import {
   LOYALTY_REASONS, LOYALTY_COMBAT_FAIL_TEXT, loyaltyReasonOptions, loyaltyThreshold,
-  resolveLoyaltyRolls, loyaltyConsequence, hasMonodevotant, adoringCrowdsEligible
+  resolveLoyaltyRolls, loyaltyConsequence, hasMonodevotant, adoringCrowdsEligible, isSoulBound
 } from "../rules/minion-loyalty.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -123,12 +123,14 @@ export async function rollLoyaltyTest(minion, {
 
   const threshold = loyaltyThreshold(minion, mod);
   const base = Number(minion.system?.loyalty?.value) || 0;
-  const reroll = hasMonodevotant(minion);
+  // Связан душой (Ритуал Связывания Души): тест пройден всегда, переброс не нужен.
+  const soulBound = isSoulBound(minion);
+  const reroll = !soulBound && hasMonodevotant(minion);
 
   const first = await rollFn();
   const rolls = [first];
   if (reroll && !resolveLoyaltyRolls([first.total], threshold).success) rolls.push(await rollFn());
-  const res = resolveLoyaltyRolls(rolls.map(r => r.total), threshold, { rerollFailed: reroll });
+  const res = resolveLoyaltyRolls(rolls.map(r => r.total), threshold, { rerollFailed: reroll, autoSuccess: soulBound });
   const cons = loyaltyConsequence(key, res.success, { inCombat });
 
   let infamyRestored = 0;
@@ -149,7 +151,7 @@ export async function rollLoyaltyTest(minion, {
 
   const rerollNote = res.rerolled
     ? `<div class="roll-reroll-note">Монозависимый: провал на ${res.first} переброшен</div>`
-    : "";
+    : (soulBound ? `<div class="roll-reroll-note">Связан душой (Ритуал Связывания Души): тест Лояльности пройден автоматически</div>` : "");
   await postTestCard(minion, {
     icon: rollIcon("target", "#e0b050"),
     title: `Тест Лояльности — ${esc(minion.name)}`,

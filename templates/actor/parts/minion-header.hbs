@@ -103,6 +103,11 @@
             <input type="checkbox" name="system.isAstartes" {{checked system.isAstartes}}/>
           </div>
 
+          <div class="header-cell">
+            <label title="Ритуал Связывания Души: Миньон автоматически проходит все тесты Лояльности">Связан душой</label>
+            <input type="checkbox" name="flags.warhammer-dbc.soulBound" {{checked minion.soulBound}}/>
+          </div>
+
           <div class="header-cell minion-loyalty-cell">
             <label title="Базовая Лояльность равна Характеристике Хозяина{{#if minion.loyaltyFrom}} ({{minion.loyaltyFrom}}){{/if}} и меняется вместе с ней">Лояльность</label>
             <div class="fate-values">

@@ -113,6 +113,19 @@ export function loyaltyThreshold(minion, mod = 0) {
 }
 
 /**
+ * Ритуал Связывания Души (Ритуалы, «Контроль»): «Цель … автоматически проходит
+ * все тесты Лояльности, даже если её отправят на самоубийственные миссии».
+ * Кто связан, система по ритуалу не узнаёт (ритуал не знает свою цель) — ГМ
+ * ставит галочку «Связан душой» в шапке листа Миньона (флаг soulBound).
+ */
+export const SOUL_BOUND_FLAG = "soulBound";
+
+/** Связан ли Миньон с Хозяином Ритуалом Связывания Души. */
+export function isSoulBound(minion) {
+  return !!minion?.flags?.["warhammer-dbc"]?.[SOUL_BOUND_FLAG];
+}
+
+/**
  * Разобрать броски теста. `values` — выпавшие d100 по порядку; второй
  * используется, только если первый провален и разрешён переброс провала.
  *
@@ -120,11 +133,12 @@ export function loyaltyThreshold(minion, mod = 0) {
  * @param {number}   threshold
  * @param {object}   [o]
  * @param {boolean}  [o.rerollFailed]  Монозависимый: перебросить провал
+ * @param {boolean}  [o.autoSuccess]   Связан душой: тест засчитан успешным
  * @returns {{rv:number, success:boolean, deg:number, rerolled:boolean, first:number, usedRolls:number}}
  */
-export function resolveLoyaltyRolls(values, threshold, { rerollFailed = false } = {}) {
+export function resolveLoyaltyRolls(values, threshold, { rerollFailed = false, autoSuccess = false } = {}) {
   const first = Number(values?.[0]) || 0;
-  const firstOutcome = testOutcome(first, threshold);
+  const firstOutcome = testOutcome(first, threshold, { autoSuccess });
   if (firstOutcome.success || !rerollFailed || values?.length < 2) {
     return { rv: first, ...firstOutcome, rerolled: false, first, usedRolls: 1 };
   }
