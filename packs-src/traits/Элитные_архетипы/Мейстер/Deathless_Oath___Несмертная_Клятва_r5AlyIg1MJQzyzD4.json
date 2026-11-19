@@ -5,7 +5,7 @@
   "folder": "gYOBYPe0AxNedsDM",
   "system": {
     "description": "",
-    "notes": "Тот же класс, что Dream Chaser/Ideal of Science — грант прогрессирующего ментального расстройства, не число. Правило стола, механики нет (dbc-114, 14.11.2026, решение владельца): кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (19.11.2026): при получении Черты на лист ложится неизлечимое расстройство «Сноб» на Тяжести 0, Тяжесть не ниже 0 (sheets/tabs/disorders.mjs::grantStartingDisorder); покупка каждой Стадии Пакта поднимает нижний предел на 1 (rules/pact-disorder.mjs, хук createItem). Уже лежащее расстройство не дублируется, а получает предел. Остальной текст Черты кнопка «▶ Запустить» пишет в чат — его ведёт ГМ.",
     "benefit": "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0); с каждой следующей Стадией Пакта минимальная тяжесть поднимается на 1. Мейстером движет милосердие, точнее извращённое презрение к смерти как концепту. Кроме обычных эффектов расстройства, он должен пройти тест W+10 (с обычными модификаторами Тяжести), чтобы попытаться убить кого-то, кто не атакует его самого (атаки, что по его мнению не убьют цель, теста не требуют).",
     "source": "Элитный архетип: Мейстер",
     "hasRating": false,
@@ -128,14 +128,15 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механики нет): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Неизлечимое расстройство «Сноб»",
+              "code": "// Несмертная Клятва (корбук, Мейстер): «Сноб» на Тяжести 0, не ниже 0; предел растёт на 1 за каждую Стадию Пакта (rules/pact-disorder.mjs).\n// Повторный запуск расстройство не дублирует — только подтягивает нижний предел (sheets/tabs/disorders.mjs).\nconst res = await grantStartingDisorder(actor, item, { name: \"Сноб\", severity: 0, severityMin: 0, incurable: true, pactScaled: true, label: \"Несмертная Клятва\" });\nif (!res.ok) ui.notifications?.info(res.reason);\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "scriptOnGrant": true
             }
           ]
         }

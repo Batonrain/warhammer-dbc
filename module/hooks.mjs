@@ -250,6 +250,7 @@ import { applyScatterOverride, SCATTER_FLAG } from "./combat/grenadier.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
 import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
 import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
+import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -5561,6 +5562,13 @@ function _attachFateContextMenu(message, html) {
   // Искусный (Adroit, Ренегат): выбор Характеристики при получении Черты —
   // только у того, кто Черту положил (module/apps/adroit.mjs).
   Hooks.on("createItem", (item, options, userId) => onAdroitTraitCreated(item, userId));
+  // Стадия Пакта куплена — нижний предел Тяжести расстройства Пакта растёт на 1
+  // за Стадию (Когитор, Мейстер, Ревенант; rules/pact-disorder.mjs). Только у
+  // того, кто Талант положил.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId !== game.user?.id || !item.actor || !pactStageOf(item)) return;
+    for (const { item: d, floor } of pactFloorUpdates(item.actor)) await d.update({ "system.severityMin": floor });
+  });
   Hooks.on("updateItem", async (item, changes, options, userId) => {
     if (userId === game.user?.id && changes?.system?.submutation && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
   });

@@ -5,7 +5,7 @@
   "folder": "FgdGoSekSCHU21Ha",
   "system": {
     "description": "",
-    "notes": "Грант неизлечимого ментального расстройства с фиксированной Тяжестью и правилом «работы над собой» — новое состояние персонажа, не тест/характеристика. Правило стола, механики нет (dbc-114, 14.11.2026, решение владельца): кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (19.11.2026): при получении Черты на лист ложится неизлечимое расстройство «Перфекционизм» на Тяжести −2, Тяжесть не ниже −2 (sheets/tabs/disorders.mjs::grantStartingDisorder). Уже лежащее расстройство не дублируется, а получает предел. Остальной текст Черты кнопка «▶ Запустить» пишет в чат — его ведёт ГМ.",
     "benefit": "Получает неизлечимое ментальное расстройство «Перфекционизм» на Тяжести −2, и его Тяжесть не может опуститься ниже −2. «Работа над самосовершенствованием» для него обычно состоит в поиске подходящей жертвы, выпив которую досуха, он сможет исправить своё несовершенство, украв её внешность, знания или умения. Когда жертва найдена, усилия поймать её или втереться в доверие для внезапного предательства считаются работой над собой в расчёте расстройства. Иногда следующую жертву являет ему во сне демон-покровитель.",
     "source": "Элитный архетип: Вампир",
     "hasRating": false,
@@ -128,14 +128,15 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механики нет): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Неизлечимое расстройство «Перфекционизм»",
+              "code": "// Высшая Алчность (корбук, Вампир): «Перфекционизм» на Тяжести −2, не ниже −2.\n// Повторный запуск расстройство не дублирует — только подтягивает нижний предел (sheets/tabs/disorders.mjs).\nconst res = await grantStartingDisorder(actor, item, { name: \"Перфекционизм\", severity: -2, severityMin: -2, incurable: true, pactScaled: false, label: \"Высшая Алчность\" });\nif (!res.ok) ui.notifications?.info(res.reason);\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "scriptOnGrant": true
             }
           ]
         }

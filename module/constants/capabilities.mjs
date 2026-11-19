@@ -6369,7 +6369,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vampir.supremeAvarice": {
     label: "Получает неизлечимое ментальное расстройство «Перфекционизм» на Тяжести −2, и его Тяжесть не может опуститься ниже −2.",
-    source: "Supreme Avarice / Высшая Алчность", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Supreme Avarice / Высшая Алчность", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.vampir.theThirst": {
     label: "Пробив укусом броню цели, имеющей душу, может выпить её кровь (или аналог, вплоть до машинного масла или реакторной жидкости мутанта-механои…",
@@ -6589,7 +6589,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Когитор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogitor.dreamChaser": {
     label: "Получает неизлечимое ментальное расстройство «Психопатия» на Тяжести −1 (не может опуститься ниже −1);",
-    source: "Dream Chaser / Гоняющийся за Мечтой", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Dream Chaser / Гоняющийся за Мечтой", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести; rules/pact-disorder.mjs + хук createItem (hooks.mjs) поднимают предел на 1 за Стадию Пакта. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.kogitor.heartOfStone": {
     label: "При заключении Пакта сердце Когитора трансмутирует из плоти в техномагический конструкт, в который заключается его душа,",
@@ -6773,7 +6773,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meyster.deathlessOath": {
     label: "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0);",
-    source: "Deathless Oath / Несмертная Клятва", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Deathless Oath / Несмертная Клятва", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести; rules/pact-disorder.mjs + хук createItem (hooks.mjs) поднимают предел на 1 за Стадию Пакта. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.meyster.lifeVirus": {
     label: "Потратив 5 минут работы, может синтезировать дозу персонализированного вируса, укрепляющего организм цели.",
@@ -6843,7 +6843,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.revenant.vengefulOne": {
     label: "Получает неизлечимое ментальное расстройство «Ненависть» на Тяжести 0 (не может опуститься ниже 0);",
-    source: "Vengeful One / Мстительный", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Vengeful One / Мстительный", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести; rules/pact-disorder.mjs + хук createItem (hooks.mjs) поднимают предел на 1 за Стадию Пакта. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.revenant.vengefulSpirit": {
     label: "Демон-покровитель при заключении Пакта отрывает от себя крохотную частичку своей сущности, формируя из неё мелкого демона,",
