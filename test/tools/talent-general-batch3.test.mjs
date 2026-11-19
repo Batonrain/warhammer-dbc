@@ -75,6 +75,9 @@ describe("пачка 3: записи Конструктора", () => {
   for (const d of docs) {
     const entries = (d.flags?.["warhammer-dbc"]?.mechanics ?? []).flatMap(g => g.entries ?? []);
     if (!entries.length) continue;
+    // Таланты элитных архетипов того же дня (PR #579) включаются кнопкой за Бесчестие
+    // (activateItemUntil): их перебросы молчат, пока Талант не включён, — проверяет свой тест.
+    if (entries.some(e => e.kind === "script" && /activateItemUntil/.test(e.code ?? ""))) continue;
     it(`${d.name}: запись работает`, () => {
       for (const e of entries) {
         if (e.kind === "capability") expect(CAPABILITIES[e.capabilityKey]?.reader).toBeTruthy();

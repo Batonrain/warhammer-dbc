@@ -18,7 +18,10 @@ function walk(d) {
 }
 const docs = walk(path.join(ROOT, "packs-src/traits/Элитные_архетипы"))
   .map(f => JSON.parse(fs.readFileSync(f, "utf8")))
-  .filter(d => /^(Частично реализовано|Реализовано) \(19\.11\.2026\)/.test(d.system?.notes ?? ""));
+  .filter(d => /^(Частично реализовано|Реализовано) \(19\.11\.2026\)/.test(d.system?.notes ?? ""))
+  // Обожание Толпы тем же днём подключено кодом теста Лояльности (PR #575,
+  // combat/minion-loyalty-test.mjs), а не записью Конструктора — у неё своя проверка.
+  .filter(d => !/minion-loyalty-test\.mjs/.test(d.system?.notes ?? ""));
 
 const asItem = d => ({ id: d._id, name: d.name, type: d.type, system: d.system, flags: d.flags });
 const RULE_KINDS = new Set(["testMod", "reroll", "capability"]);
