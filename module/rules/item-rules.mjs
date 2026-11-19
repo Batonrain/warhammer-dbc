@@ -346,7 +346,12 @@ function ruleFromEntry(item, entry, groupId = null) {
     const fixedEpr = entry.modCharBonus === "pr" && entry.modValueMode === "charBonus"
       && item.type === "psychicPower" ? item.system?.sustainedEpr : null;
     const multiplier = Number(entry.modCharBonusMultiplier) || 1;
-    const effect = entry.modValueMode === "halvePenalty"
+    // autoSuccess (19.11.2026): «автоматически проходит тест … в условии» —
+    // галочка диалога, как halvePenalty: условие (родной биом Зверя) знает
+    // только стол, молча тест не засчитывается.
+    const effect = entry.modValueMode === "autoSuccess"
+      ? { kind: "autoSuccess", target }
+      : entry.modValueMode === "halvePenalty"
       ? { kind: "penaltyMul", target, factor: 0.5 }
       : (fixedEpr != null)
       ? { kind: "rollBonus", target, value: fixedEpr * multiplier }

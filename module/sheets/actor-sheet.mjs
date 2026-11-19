@@ -82,7 +82,7 @@ import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRIC
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { gearQualityRollMod } from "../constants/quality.mjs";
-import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal, autoSuccessChecked } from "../rules/roll-mods.mjs";
 import { socialFactionPickerShown, socialFactionOptions, withSocialFaction } from "../rules/social-faction.mjs";
 import { sensePickerShown, senseSelectHtml, withSense } from "../rules/awareness-talents.mjs";
 import { WITCHFINDER_CAP, witchfinderTestKind } from "../rules/defiance-talents.mjs";
@@ -3362,9 +3362,12 @@ export class WarhammerCharacterSheet
       combinedForOutcome = { target: bEff, label: combined.label, charKey: combined.charKey, assistCount: combined.assistCount };
     }
 
+    // Галочка «автоуспех» (эффект autoSuccess — Зверь: Survival в родном
+    // биоме, 19.11.2026): условие подтвердил игрок, бросок засчитан успешным.
+    const autoSuccess = autoSuccessChecked(autoResolved.mods, checkedRuleIds);
     const outcome = await resolveKindOutcome(effectActor, {
       baseEff, rv, combined: combinedForOutcome, extended, opposed: finalOpposed,
-      opposedSelected: opposedKind, opposedSafeSelected,
+      opposedSelected: opposedKind, opposedSafeSelected, autoSuccess,
       // group/specialty (wdbc-1rno.22): групповой Навык приходит без skill
       // (onSkillRoll) — без них исход теста принимал бросок Навигации/Ремесла
       // за тест Характеристики (Инфернальная Воля: «любой тест Навыка»).

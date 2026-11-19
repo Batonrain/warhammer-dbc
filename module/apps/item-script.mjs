@@ -71,6 +71,8 @@ import { useShapeshift } from "../combat/shapeshift.mjs";
 import { linkPsyberToMaster } from "./psyber-link.mjs";
 import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
 import { shiftAmorphousSize } from "./amorphous-size.mjs";
+import { rollTraitTest } from "../combat/trait-test.mjs";
+import { chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL } from "./unnatural-choice.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -248,6 +250,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
     "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
+    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL",
     ...extraNames,
     code
   );
@@ -268,6 +271,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
     grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
+    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL,
     ...extraNames.map(k => extra[k])
   );
 }

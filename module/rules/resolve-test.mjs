@@ -498,6 +498,13 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
         }
         continue;
       }
+      // Автоуспех по условию (19.11.2026): галочка без числа; что она отмечена,
+      // бросок узнаёт по ruleId (checkedRuleIds в sheets/actor-sheet.mjs) и
+      // передаёт исходу теста autoSuccess (rules/kind-outcome.mjs).
+      if (effect.kind === "autoSuccess") {
+        mods.push({ ruleId: rule.id, label, value: 0, halvePenalty: false, autoSuccess: true });
+        continue;
+      }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.
       // Правило с иным factor не применяем молча, а жалуемся: тихо потерянный
       // множитель ищется днями.

@@ -2545,8 +2545,14 @@ Hooks.on("updateItem", async (item, changed, options, userId) => {
   await onItemQualityChanged(item, changed);
   // Рейтинг Черты сменили (Укус (1) → (3)) — пересчитать урон выданных ею
   // интегральных атак (wdbc-o368c); полное применение Механики тут не нужно.
+  // Долговечные записи со значением «rating» (+X Бонуса шаблона Unnatural,
+  // +X SPD Двусоставного) тоже пересобираются: сверка идемпотентна и без
+  // формулы от рейтинга ничего не пишет (19.11.2026).
   if (changed?.system?.rating !== undefined && item.parent instanceof Actor
-      && !mechanicsRelevantChange(changed)) return syncGrantedEquipment(item);
+      && !mechanicsRelevantChange(changed)) {
+    await syncMechanicsEffects(item);
+    return syncGrantedEquipment(item);
+  }
   if (!mechanicsRelevantChange(changed)) return;
   if (item.parent instanceof Actor) await applyItemMechanics(item);
   else await syncMechanicsEffects(item);

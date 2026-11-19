@@ -71,18 +71,12 @@ const ALLOWED = {
   "combat.initiativeChar.wp":  "книжного носителя нет, ключ про запас для эффекта ГМа",
   "combat.initiativeChar.fel": "книжного носителя нет, ключ про запас для эффекта ГМа",
 
-  // Сверхъестественная Характеристика (wdbc-gdf2, 18.09.2026): включается НЕ
-  // Конструктор-ключом/target-литералом, а именем предмета (module/rules/
-  // unnatural-characteristic.mjs::UNNATURAL_PREFIX — Трейт типа "trait", чьё
-  // английское имя начинается с «Unnatural »), поэтому строковый литерал
-  // ключа capability анализатор в паках не находит. Выдач НЕ «нечем включить»
-  // — их ~40+ в packs-src/traits (Unnatural S (4), Unnatural WP (+2) и т.д.,
-  // плюс шаблонные «Unnatural Strength (X)» под ручной рейтинг), включатель
-  // просто другого вида, чем ищет анализатор.
-  "trait.unnaturalCharacteristic": "включается по имени предмета (Unnatural …), не по target-ключу — анализатор такой вид выдачи не распознаёт, хотя предметов-выдачи ~40+",
+  // Сверхъестественная Характеристика (wdbc-gdf2) раньше стояла здесь: ключ
+  // анализатор не видел. С 19.11.2026 шаблоны несут запись Конструктора, и
+  // исключение снято.
 
   // Альтернативные чувства против Ослепления (wdbc-x1nz.2.89): тот же случай,
-  // что trait.unnaturalCharacteristic выше — главный включатель ИМЯ Черты
+  // что была у Сверхъестественной Характеристики — главный включатель ИМЯ Черты
   // (rules/library/conditions.mjs::ALT_SENSES_TRAITS; packs-src/traits/
   // Sonar_Sense, Unnatural_Senses, бестиарий). Ключ Конструктора — второй,
   // запасной путь для предметов «даёт Трейт Sonar Sense» (Sonar Visor,
@@ -189,7 +183,6 @@ const ALLOWED = {
   "trait.stand": "включается по имени Черты скакуна (Stand), rules/mount.mjs — флага нет",
   "trait.unruly": "включается по имени Черты скакуна (Unruly), combat/mount.mjs — флага нет",
   "trait.warTrained": "включается по имени Черты скакуна (War-Trained), rules/mount.mjs handsNeeded — флага нет",
-  "trait.treytyRas.unnaturalX": "включается по имени предмета (Unnatural …), rules/unnatural-characteristic.mjs — как trait.unnaturalCharacteristic выше",
   "occultist.core.instructor": "включается по имени Таланта (Instructor) через модульный массив имён в occultist-talents.mjs::hasInstructor — анализатор такую форму не распознаёт"
 };
 

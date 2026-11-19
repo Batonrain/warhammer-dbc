@@ -253,7 +253,9 @@ export function skillRankFor(tier, upgraded = false) {
 export function talentPointsLeft(entries = [], tier, { toSkills = 0, fromTraits = 0 } = {}) {
   const spec = tierBudget(tier)?.talents;
   if (!spec) return { left: 0, maxTier: null, overTier: [] };
-  const spent = entries.reduce((sum, e) => sum + (num(e?.cost) || 1), 0);
+  // Пустая цена — 1 очко; 0 (Size) и −1 (недостатки) — как записаны.
+  const costOf = e => (e?.cost === undefined || e?.cost === null || e?.cost === "") ? 1 : num(e.cost);
+  const spent = entries.reduce((sum, e) => sum + costOf(e), 0);
   const overTier = spec.maxTier
     ? entries.filter(e => num(e?.tier) > spec.maxTier).map(e => e?.name || "?")
     : [];
@@ -264,7 +266,9 @@ export function talentPointsLeft(entries = [], tier, { toSkills = 0, fromTraits 
 export function traitPointsLeft(entries = [], tier, { toTalents = 0, fromGear = 0 } = {}) {
   const spec = tierBudget(tier)?.traits;
   if (!spec) return 0;
-  const spent = entries.reduce((sum, e) => sum + (num(e?.cost) || 1), 0);
+  // Пустая цена — 1 очко; 0 (Size) и −1 (недостатки) — как записаны.
+  const costOf = e => (e?.cost === undefined || e?.cost === null || e?.cost === "") ? 1 : num(e.cost);
+  const spent = entries.reduce((sum, e) => sum + costOf(e), 0);
   return spec.points + num(fromGear) - num(toTalents) - spent;
 }
 
@@ -290,9 +294,16 @@ export function traitEntry(name) {
  * взять, сколько стоит, каков базовый Рейтинг и на сколько его поднимает
  * лишнее очко. `reason` — почему нельзя, если нельзя.
  */
-export function traitAvailability(name, group, tier) {
+export function traitAvailability(name, group, tier, chosen = null) {
   const entry = traitEntry(name);
   if (!entry) return { known: false, allowed: true, cost: 1 };
+  // Трейт скакуна без Steed (`requires`). chosen — имена уже выбранных
+  // Трейтов; null — не проверять (вызов без списка, как раньше).
+  if (entry.requires && Array.isArray(chosen)
+      && !chosen.some(n => traitEntry(n)?.key === entry.requires)) {
+    return { known: true, allowed: false, cost: entry.cost, key: entry.key,
+             reason: `${entry.key} открывается только с Трейтом ${entry.requires}` };
+  }
 
   const buildsAs = MINION_TIERS[tier]?.buildsAs || tier;
   const rating = entry.tiers?.[buildsAs] ?? null;
@@ -317,10 +328,14 @@ export function traitAvailability(name, group, tier) {
   };
 }
 
-/** Всё, что этой паре доступно, — список для шага Трейтов в генераторе. */
-export function availableTraits(group, tier) {
+/**
+ * Всё, что этой паре доступно, — список для шага Трейтов в генераторе.
+ * chosen — имена уже выбранных Трейтов: Трейты скакунов появляются только
+ * после Steed. Без списка они не предлагаются вовсе.
+ */
+export function availableTraits(group, tier, chosen = []) {
   return Object.keys(MINION_TRAITS)
-    .map(name => ({ name, ...traitAvailability(name, group, tier) }))
+    .map(name => ({ name, ...traitAvailability(name, group, tier, chosen ?? []) }))
     .filter(t => t.allowed);
 }
 
@@ -357,9 +372,28 @@ export function minionInfamy(master, tier) {
   return Math.min(MINION_INFAMY_CAP, Math.floor(masterInf / 2));
 }
 
-/** Порча: у демона она задана книгой, у прочих её назначает ГМ. */
-export function minionCorruption(group) {
-  return group === "daemon" ? DAEMON_CORRUPTION : 0;
+/** «Mutant / Мутант (X)»: стартовая Порча миньона не ниже X×20 (корбук стр. 112). */
+export const MUTANT_CORRUPTION_PER_RATING = 20;
+
+/** Рейтинг Черты из списка шага Трейтов: число или null (книга не дала числа). */
+export function minionTraitRating(entry) {
+  const r = Number(entry?.rating);
+  return Number.isFinite(r) && r > 0 ? r : null;
+}
+
+/**
+ * Порча: у демона она задана книгой, у прочих её назначает ГМ. Мутант (X)
+ * поднимает нижнюю границу до X×20 — `traits` — список шага Трейтов
+ * генератора ({name, rating}); без рейтинга у Мутанта берётся 1.
+ */
+export function minionCorruption(group, traits = []) {
+  const base = group === "daemon" ? DAEMON_CORRUPTION : 0;
+  let floor = 0;
+  for (const t of traits ?? []) {
+    if (traitEntry(t?.name)?.key !== "Mutant") continue;
+    floor = Math.max(floor, (minionTraitRating(t) ?? 1) * MUTANT_CORRUPTION_PER_RATING);
+  }
+  return Math.max(base, floor);
 }
 
 /**

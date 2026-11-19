@@ -39,7 +39,7 @@ import { isHaemonculus }                         from "../constants/haemonculus.
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
 import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movement-actions.mjs";
 import { hipShootingWeapon } from "../rules/gunner-talents.mjs";
-import { flightSpeedOf }                         from "../rules/flight-speed.mjs";
+import { flightSpeedOf, burrowSpeedOf }          from "../rules/flight-speed.mjs";
 import { mechRollData }                          from "../rules/mech-formula.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
@@ -268,6 +268,9 @@ export function characterContext(actor) {
     context.movementFlight = { spd: flightSpeedOf(actor.items, mechRollData(actor)),
                                lift, blocked: !!lift && !lift.canFly };
   }
+  // Рытьё (Burrower (X), rules/flight-speed.mjs): SPD×X без Размера — строка
+  // видна только с Чертой, как Полёт.
+  context.movementBurrowSpd = burrowSpeedOf(actor.items, system.characteristics?.ag?.bonus, mechRollData(actor));
   // Полушаг (wdbc-9wvm) — та же видимость «только с Талантом», что у Полёта.
   context.movementCanHalfStep = actorHasHalfStep(actor);
   // Стрельба от Бедра (Талант Стрелка): тот же пункт, что в меню Движения Token HUD — только с Талантом и

@@ -723,6 +723,29 @@ export function passengerCount(mount, actors = []) {
 }
 
 /**
+ * Steed / Скакун (корбук стр. 112, Трейты Миньонов): «персонаж может ездить на
+ * Миньоне верхом», только если у Миньона есть этот комплексный Трейт. Персонаж,
+ * Демон и байк скакунами бывают по своим правилам — им Трейт не нужен.
+ */
+export function minionLacksSteed(mount) {
+  if (mount?.type !== "minion") return false;
+  return ![...(mount.items ?? [])].some(item => TRAIT_ITEM_TYPES.has(item?.type)
+    && (itemHasName(item, "Steed") || itemHasName(item, "Скакун")));
+}
+
+/**
+ * Непослушный скакун (Unruly, стр. 112): кто из седоков должен проходить тест
+ * удержания, когда скакун получил непоглощённый урон. Пассажир тоже сидит в
+ * седле и вылетает так же — книга не делит. Пусто, если Черты нет.
+ * @param {object} mount
+ * @param {object[]} actors — все акторы мира (обратная связь, как ridersOf)
+ */
+export function unrulyRiders(mount, actors = []) {
+  if (!("unruly" in mountTraits(mount))) return [];
+  return ridersOf(mount, actors);
+}
+
+/**
  * Может ли этот скакун нести этого седока по Размеру: седок должен быть хотя
  * бы на 1 Размер меньше (стр. 477).
  */

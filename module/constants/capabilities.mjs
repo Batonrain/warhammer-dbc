@@ -5515,7 +5515,7 @@ export const CAPABILITIES = {
   },
   "trait.bestial": {
     label: "Авто Survival; не использует сложные действия.",
-    source: "Bestial / Зверь", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Bestial / Зверь", reader: "packs-src Bestial: testMod modValueMode:\"autoSuccess\" (rules/item-rules.mjs → resolve-test.mjs → sheets/actor-sheet.mjs::autoSuccessChecked) и kind:\"script\" на панели → combat/trait-test.mjs::rollTraitTest"
   },
   "trait.bite": {
     label: "Естественное оружие: Укус 1d5+X R, Reinforced, Tearing — только в Борьбе (при втором источнике укуса — и обычной атакой).",
@@ -5555,7 +5555,7 @@ export const CAPABILITIES = {
   },
   "trait.burrower": {
     label: "Роет тоннели со скоростью SPD×X.",
-    source: "Burrower / Бурильщик (X)", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Burrower / Бурильщик (X)", reader: "module/rules/flight-speed.mjs::burrowSpeedOf → sheets/character-context.mjs (movementBurrowSpd, строка «Рытьё» на вкладке БОЙ)"
   },
   "trait.chaosPsyker": {
     label: "В расчёте психической силы считается Несвязанным (Черта Архетипа Ведьма). Трейт Psyker, PR3 и +3d5 Cor — строки самого Архетипа, не этой Черты (в книге Черта их не даёт). Реализовано без возможности: Возможность данными не выдаётся: «Несвязанный» ставит сам Архетип — system.psykerClass → system.psyker.class при выборе (module/apps/archetypes.mjs::applyArchetype, module/apps/character-wizard.mjs::_finishArchetypeStep). Психосилы читают system.psyker.class (module/sheets/tabs/psychic.mjs). Ручная смена Природы Дара на листе не запрещена — Ведьма может стать, например, демоническим псайкером позже по сюжету.",
@@ -5640,7 +5640,7 @@ export const CAPABILITIES = {
   },
   "trait.dedication": {
     label: "Покровительство Бога и его божественный Трейт демонов.",
-    source: "Dedication / Посвящение", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Dedication / Посвящение", reader: "packs-src Dedication: группа ИЛИ из четырёх kind:\"trait\" (божественные Трейты демонов) — выбор Бога окном при выдаче (apps/mechanics.mjs)"
   },
   "trait.digitigrade": {
     label: "+X к SPD; +5×X на группирование.",
@@ -5820,7 +5820,7 @@ export const CAPABILITIES = {
   },
   "trait.mutant": {
     label: "Имеет X мутаций.",
-    source: "Mutant / Мутант", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Mutant / Мутант", reader: "module/rules/minion-build.mjs::minionCorruption (Порча Миньона не ниже X×20) — apps/minion-creator.mjs"
   },
   "trait.naturalWeapons": {
     label: "Естественное оружие: профили Кулаки/Когти/Косы/Щупальца/Рога/Укус/Копыта с X рейтинга — выбор галочками при получении.",
@@ -6014,7 +6014,7 @@ export const CAPABILITIES = {
   },
   "trait.steed": {
     label: "На Миньоне можно ездить верхом; открывает Трейты скакунов.",
-    source: "Steed / Скакун", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Steed / Скакун", reader: "module/constants/minion-traits.mjs (requires:\"Steed\") + rules/minion-build.mjs::traitAvailability — Трейты скакунов в генераторе; rules/mount.mjs::minionLacksSteed — предупреждение при посадке"
   },
   "trait.stepchildrenOfTheGods": {
     label: "Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника; один кубик на мутации и субмутации.",
@@ -6112,7 +6112,7 @@ export const CAPABILITIES = {
   },
   "trait.unruly": {
     label: "Непоглощённый урон скакуну — тест Акробатики или выпадение из седла.",
-    source: "Unruly / Непослушный", reader: "module/combat/mount.mjs (тест Акробатики при непоглощённом уроне скакуну), module/rules/mount.mjs — по имени Черты"
+    source: "Unruly / Непослушный", reader: "module/combat/damage.mjs (кнопка теста удержания в карточке урона скакуна, rules/mount.mjs::unrulyRiders) → hooks.mjs .wh-unruly-saddle-btn → combat/mount.mjs::showMountDamageTest"
   },
   "trait.unstableGenome": {
     label: "Урон в Характеристики усиливается на +1 (плюс ещё +1 за каждую доп. адаптацию).",

@@ -85,6 +85,16 @@ export function ruleAutoModsHtml(actor, context, resolved = null) {
   };
 }
 
+/**
+ * Отмечена ли в диалоге галочка «автоуспех» (эффект autoSuccess, 19.11.2026).
+ * `mods` — список resolveTest(...).mods того же теста, `checkedRuleIds` — id
+ * отмеченных галочек правил (.rule-mod:checked → data-rule-id).
+ */
+export function autoSuccessChecked(mods = [], checkedRuleIds = []) {
+  const checked = new Set(checkedRuleIds);
+  return mods.some(m => m?.autoSuccess && checked.has(m.ruleId));
+}
+
 export function ruleRollModsHtml(actor, context, resolved = null) {
   // resolved — уже посчитанный resolveTest: избавляет вызывающего от
   // повторного обхода правил актора (attack-dialog зовёт трижды за диалог).
@@ -103,7 +113,7 @@ export function ruleRollModsHtml(actor, context, resolved = null) {
              data-rule-id="${esc(m.ruleId || "")}"
              ${m.setChar ? `data-set-char="${esc(m.setChar)}"` : ""}
              ${m.halvePenalty ? 'data-halve="1"' : ""}${m.preChecked ? " checked" : ""}/>
-      <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
+      <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}${m.autoSuccess ? " <b>(автоуспех)</b>" : ""}</span></label>`;
   }).join("");
   return {
     mods,
