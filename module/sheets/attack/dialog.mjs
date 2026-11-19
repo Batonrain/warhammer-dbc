@@ -25,6 +25,7 @@ import { spendActionPoints, apCostForActionType, spendReaction, canSpendReaction
 import { movementApCost } from "../../combat/psychic-sprint.mjs";
 import { fullFireOptionByValue, fullFireSecondThreshold, fullFireSecondBlockReason, secondRofBonus } from "../../rules/full-fire.mjs";
 import { weaponTrainingPenalty } from "../../rules/weapon-training.mjs";
+import { isMechadendriteWeapon } from "../../rules/mechadendrites.mjs";
 import { BATPACK_ROF } from "../../rules/batpack-dump.mjs";
 import { POWER_MODE_FLAG } from "../../rules/power-setting.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
@@ -875,7 +876,8 @@ export function openAttackDialog(ctx) {
             const secondProfile = ffSecondProfile;
             if (secondItem) {
               const trainOf = s => weaponTrainingPenalty({ actor, weaponType: s?.weaponType, weaponClass: s?.weaponClass,
-                isGrenade: s?.weaponType === "grenade" }).total;
+                isGrenade: s?.weaponType === "grenade", weaponName: item.name,
+                mechadendrite: isMechadendriteWeapon(item) }).total;
               // Тот же предмет, другой ствол: от оружия отличается только Тренировка по типу ствола.
               const weaponDelta = secondProfile
                 ? trainOf({ ...item.system, weaponType: secondProfile.weaponType || item.system.weaponType }) - trainOf(item.system)

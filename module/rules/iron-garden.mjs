@@ -23,17 +23,15 @@
 
 import { itemHasName } from "./predicates.mjs";
 import { ITEM_QUALITY_LIST, normQuality } from "../constants/quality.mjs";
+import { isMechadendriteWeapon } from "./mechadendrites.mjs";
 
 export const hasIronGarden = actor =>
   [...(actor?.items ?? [])].some(i => i?.type === "talent"
     && (itemHasName(i, "Iron Garden") || itemHasName(i, "Железный Сад")));
 
-/** Мехадендрит: ярлык профиля «Мехадендрит» (так подписан весь раздел оружия-дендритов) либо имя. */
-export function isMechadendriteWeapon(item) {
-  if (item?.type !== "weapon") return false;
-  if (String(item.system?.profileLabel ?? "").trim() === "Мехадендрит") return true;
-  return /mechadendrite|мехадендрит/i.test(String(item.name ?? ""));
-}
+// Опознание оружия-мехадендрита живёт в rules/mechadendrites.mjs (там же учёт
+// портов и обучения); здесь реэкспорт для прежних импортов.
+export { isMechadendriteWeapon };
 
 const norm = name => String(name ?? "").trim().toLowerCase();
 const countOf = item => Math.max(1, Math.trunc(Number(item.system?.quantity) || 1));

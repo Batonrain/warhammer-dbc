@@ -2377,7 +2377,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.cyberMantleCalibration": {
     label: "Персонаж увеличивает максимум своих мехадендритов на 1. Можно брать до I.b раз.",
-    source: "Cyber-Mantle Calibration / Калибровка Кибер-Мантии", reader: ""
+    source: "Cyber-Mantle Calibration / Калибровка Кибер-Мантии",
+    reader: "module/rules/mechadendrites.mjs::mechadendritePorts — каждая копия Таланта +1 к максимуму портов Кибер-Мантии (T.b + копии); перебор предела I.b подсвечивается на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView) и в Хирургеоне (apps/surgeon.mjs), покупку не запрещает"
   },
   "mechanicum.core.cyberneticExcellence": {
     label: "Персонаж может установить дополнительную бионическую руку, получая Трейт Multiple Arms (+1). Можно брать до ½I.b+1 (окр.▼) раз.",
@@ -2420,7 +2421,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.mechadendriteUse": {
     label: "Персонаж получил обучение, посвящение и гипнонаставление по использованию конкретного типа мехадендритов.",
-    source: "Mechadendrite Use / Использование Мехадендритов", reader: ""
+    source: "Mechadendrite Use / Использование Мехадендритов",
+    reader: "module/rules/mechadendrites.mjs::mechadendriteTraining — специализация Weapon/Utility; атака мехадендритом без (Weapon) −20 (weapon-training.mjs::weaponTrainingPenalty mechadendrite:true — attack-dialog.mjs, attack-threshold.mjs); необученный тип дендрита подсвечен на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView)"
   },
   "mechanicum.core.steelRatio": {
     label: "Персонаж увеличивает максимальное количество изучения Таланта Sound Constitution на I.b.",
