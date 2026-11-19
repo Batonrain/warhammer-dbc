@@ -11,7 +11,8 @@ import { resetCaptured, captured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   enemyContactTokenDocs, processTokenMove, offerFreeAttack,
-  resolveFreeAttackClick, initFreeAttackHooks, FREE_ATTACK_CAPABILITY
+  resolveFreeAttackClick, initFreeAttackHooks, FREE_ATTACK_CAPABILITY,
+  freeAttacksPerRound, freeAttackAvailable
 } from "../../module/combat/free-attack.mjs";
 
 const HOSTILE = -1, FRIENDLY = 1;
@@ -428,5 +429,41 @@ describe("initFreeAttackHooks: подписка на Foundry-хуки", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("Привратник (Gatekeeper): до WS.b Свободных атак в Раунд", () => {
+  const gatekeeper = { id: "g", name: "Gatekeeper / Привратник", type: "talent", system: {} };
+  const withTalent = (extra = {}) => {
+    const a = fakeActor({ type: "character", characteristics: { ws: { total: 45, bonus: 4 } },
+      reactions: { value: 5, max: 5, defenseValue: 0, defenseMax: 0 }, ...extra });
+    a.items = [gatekeeper];
+    return a;
+  };
+
+  it("без Таланта — одна, с Талантом — WS.b", () => {
+    expect(freeAttacksPerRound(fakeActor({ type: "character" }))).toBe(1);
+    expect(freeAttacksPerRound(withTalent())).toBe(4);
+  });
+
+  it("клик тратит одну из WS.b; на исчерпании — отказ", async () => {
+    globalThis.game.combat = { started: true, round: 2 };
+    const reactor = withTalent();
+    globalThis.fromUuid = async uuid => (uuid === reactor.uuid ? reactor : null);
+    for (let n = 0; n < 4; n++) await resolveFreeAttackClick(reactor.uuid, "Scene.s.Token.x");
+    expect(reactor.system.reactions.value).toBe(1);
+    expect(freeAttackAvailable(reactor)).toBe(false);
+    await resolveFreeAttackClick(reactor.uuid, "Scene.s.Token.x");
+    expect(reactor.system.reactions.value).toBe(1);
+    expect(captured.warnings.some(w => w.includes("уже потрачена"))).toBe(true);
+    globalThis.game.combat = { started: true, round: 3 };
+    expect(freeAttackAvailable(reactor)).toBe(true);
+  });
+
+  it("предложение в чате называет лимит", async () => {
+    globalThis.game.combat = { started: true, round: 1 };
+    const reactor = withTalent();
+    await offerFreeAttack(token({ id: "e", actor: reactor }).document, token({ id: "m" }).document);
+    expect(captured.chat.at(-1).content).toContain("До 4 раз в Раунд (Привратник)");
   });
 });

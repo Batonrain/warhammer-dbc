@@ -2063,7 +2063,7 @@ export const CAPABILITIES = {
   },
   "minion.core.betrayer": {
     label: "Раз в сессию персонаж может убить собственного Миньона, чтобы получить +20 (+10 если Миньон легко заменим) к следующему тесту Inf или восста…",
-    source: "Betrayer / Предатель", reader: ""
+    source: "Betrayer / Предатель", reader: "ЧАСТИЧНО: запись Конструктора kind:testMod (Inf +20, галочка). Раз в сессию и восстановление ОБ — вручную"
   },
   "minion.core.cannonFodder": {
     label: "Можно взять несколько раз для каждого Миньона. Миньон теряет 20 Лояльности, но если умирает,",
@@ -3385,7 +3385,7 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.gatekeeper": {
     label: "Персонаж может совершить до WS.b свободных атак в Раунд вместо одной.",
-    source: "Gatekeeper / Привратник", reader: ""
+    source: "Gatekeeper / Привратник", reader: "module/combat/free-attack.mjs::freeAttacksPerRound — до WS.b Свободных атак в Раунд (счётчик rules/cooldown.mjs)"
   },
   "meleeCore.core.grind": {
     label: "Проводя приём Пила против противника, которого держит в Борьбе, персонаж использует полный S.b для урона вместо половины как обычно.",
@@ -3688,7 +3688,7 @@ export const CAPABILITIES = {
   },
   "elite.drednouty.ironWrath": {
     label: "Сохраняет способность стрелять как обычно и игнорирует штраф к BS от Ярости. В Ярости не обязан двигаться к ближайшей цели быстрее Шага,",
-    source: "Iron Wrath / Железный Гнев", reader: ""
+    source: "Iron Wrath / Железный Гнев", reader: "ЧАСТИЧНО: запись Конструктора на Таланте — возможность rage.noBsPenalty (module/rules/rage.mjs RAGE_NO_BS_PENALTY). Движение в Ярости — вручную"
   },
   "elite.drednouty.payback": {
     label: "Когда ненавистный противник наносит Дредноуту или пилоту непоглощённый урон, пилот может потратить Реакцию и немедленно атаковать этого прот…",
@@ -3908,7 +3908,7 @@ export const CAPABILITIES = {
   // ── Таланты_Астартес\Повелители_Ночи — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyAstartes.poveliteliNochi.propheticVision": {
     label: "Персонаж может раз в Раунд перебросить любой свой тест, но его тесты против Рока Ночного Призрака становятся W+0 вместо W+10.",
-    source: "Prophetic Vision / Пророческое Видение", reader: ""
+    source: "Prophetic Vision / Пророческое Видение", reader: "ЧАСТИЧНО: запись Конструктора kind:reroll (любой тест, лучший из двух). «Раз в Раунд» и W+0 против Рока — вручную"
   },
   "elite.talantyAstartes.poveliteliNochi.theLongNightmare": {
     label: "Когда ГМ посылает персонажу пророческий сон с его смертью, он может пройти тест W+20 и при Успехе растянуть сон на 2 часа за каждый Успех,",
@@ -3929,7 +3929,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryDvizhenie.wings": {
     label: "Flyer (A.b×2). Несовместим с «Руки на Спине».",
-    source: "Wings / Дар: Крылья", reader: ""
+    source: "Wings / Дар: Крылья", reader: "module/rules/character/movement.mjs (SPD в полёте A.b×2) и module/combat/movement-actions.mjs actorCanFly/actorHasFlyer — пока демон проявлен (rules/predicates.mjs::manifestedGift)"
   },
   // ── Таланты_одержимых\Дары___Единение — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryEdinenie.brotherhood": {
@@ -3950,7 +3950,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryEdinenie.twoFaced": {
     label: "Доп. глаза/рот второй души: 2 броска Awareness; неконтролирующая душа получает полудействие только на общение/Команду/Запугивание/Baleful Di…",
-    source: "Two-Faced / Дар: Двуликий", reader: ""
+    source: "Two-Faced / Дар: Двуликий", reader: "ЧАСТИЧНО: запись Конструктора kind:reroll (Awareness, лучший из двух) — галочка в Проявлении"
   },
   "elite.talantyOderzhimyh.daryEdinenie.warpSight": {
     label: "Warp Sight и Unnatural Senses (W.b демона).",
@@ -3963,7 +3963,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryZaschita.carapace": {
     label: "Natural Armour (Cor.b), не складывается с носимой бронёй.",
-    source: "Carapace / Дар: Панцирь", reader: ""
+    source: "Carapace / Дар: Панцирь", reader: "module/rules/character.mjs — блок Проявления (giftNamesOf «Панцирь»): Natural Armour Cor.b"
   },
   "elite.talantyOderzhimyh.daryZaschita.giant": {
     label: "+1 Размер, +10 S, +10 к макс. и текущим Ранам (без бонуса +1 SPD от Размера).",
@@ -4047,7 +4047,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedPath": {
     label: "−1 к максимуму Очков Бесчестия, но демон получает 3 своих ОБ (может тратить даже когда телом правит хост).",
-    source: "Shared Path / Общий Путь", reader: ""
+    source: "Shared Path / Общий Путь", reader: "ЧАСТИЧНО: запись Конструктора kind:poolMax (infamy −1). Собственные 3 ОБ демона — вручную"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSlaughter": {
     label: "В Проявлении считается двумя персонажами для численного превосходства; раз в Ход переброс промаха меньшим WS/BS.",

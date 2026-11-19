@@ -89,13 +89,18 @@ export const PSY_ACTIONS = {
 // ── Пути Силы ───────────────────────────────────────────────────────────────
 // testMod — мод. к психотесту; ePR — прибавка к эПР; phenMod — мод. к броску
 // Феноменов. note — текст для тех Путей, что не автоматизируются полностью.
+// talent — Путь открывает Талант с этим именем (Blasphemous Incantation,
+// Meditation, Corpus Conversion, Sacrifice: «Псайкер может использовать Путь
+// Силы …»). Без Таланта Пути нет в выпадающем списке окна манифестации
+// (sheets/tabs/psychic.mjs::pathAvailable) — тот же приём, что `flag` у Рун
+// Сигиллитов ниже.
 export const PSY_PATHS = {
   "":            { label: "— Без Пути —",          req: "",                                          testMod: 0,  ePR: 0, phenMod: 0,  note: "" },
   psychofocus:   { label: "Психофокус",            req: "психофокус в руке/контакте с кожей",         testMod: 0,  ePR: 0, phenMod: 0,  focusTest: true, note: "Свободное действие, тест W+0 (1/ход, в свой Ход): Успех +10, Крит. успех +15, Крит. провал −10 к этому психотесту. Качество привязанного на листе предмета-фокуса: Good.Q — +5 к бонусу на силах резонирующей Дисциплины; Best.Q — то же и крит. провал не штрафует." },
-  incantation:   { label: "Инкантация",            req: "Талант Blasphemous Incantation",             testMod: 0,  ePR: 1, phenMod: 20, note: "Полудействие→полное действие при манифестации." },
-  meditation:    { label: "Медитация",             req: "Талант Meditation",                          testMod: 0,  ePR: 3, phenMod: 0,  note: "Требует концентрации; развеивается при Оглушении." },
-  corpus:        { label: "Телесная Конверсия",     req: "Талант Corpus Conversion",                   testMod: 0,  ePR: 0, phenMod: 0,  dynamicTestMod: "t", woundCost: 1, note: "Ценой 1 Раны: +T.b к психотесту (или +1d10 урона — вручную)." },
-  sacrifice:     { label: "Жертва",                req: "Талант Sacrifice",                           testMod: 0,  ePR: 0, phenMod: 0,  note: "Ритуал 1d5 мин: +1 эПР за каждый нечётный Успех Forbidden Lore (Warp) (вручную)." },
+  incantation:   { label: "Инкантация",            req: "Талант Blasphemous Incantation",             testMod: 0,  ePR: 1, phenMod: 20, talent: "Blasphemous Incantation", note: "Полудействие→полное действие при манифестации." },
+  meditation:    { label: "Медитация",             req: "Талант Meditation",                          testMod: 0,  ePR: 3, phenMod: 0,  talent: "Meditation", note: "Требует концентрации; развеивается при Оглушении." },
+  corpus:        { label: "Телесная Конверсия",     req: "Талант Corpus Conversion",                   testMod: 0,  ePR: 0, phenMod: 0,  dynamicTestMod: "t", woundCost: 1, talent: "Corpus Conversion", note: "Ценой 1 Раны: +T.b к психотесту (или +1d10 урона — вручную)." },
+  sacrifice:     { label: "Жертва",                req: "Талант Sacrifice",                           testMod: 0,  ePR: 0, phenMod: 0,  talent: "Sacrifice", note: "Ритуал 1d5 мин: +1 эПР за каждый нечётный Успех Forbidden Lore (Warp) (вручную)." },
   unholy:        { label: "Нечестивые Символы",     req: "Scholastic Lore (Occult) +0",                testMod: 0,  ePR: 0, phenMod: -20, note: "Символы на объекте/персонаже; штраф к броску Феноменов." },
   familiar:      { label: "Псайбер-Фамильяр",       req: "связанный псайбер-фамильяр",                 testMod: 0,  ePR: 0, phenMod: 0,  note: "Дальность считается от фамильяра." },
   personal:      { label: "Личный Фокус",           req: "Scholastic Lore (Occult) +10",               testMod: 0,  ePR: 0, phenMod: 0,  note: "Личный фокус из материала псайкера; применим только к нему." },

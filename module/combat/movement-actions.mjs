@@ -60,7 +60,7 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { raceMatches } from "../rules/race.mjs";
-import { isGrappled } from "../rules/predicates.mjs";
+import { isGrappled, manifestedGift } from "../rules/predicates.mjs";
 import { grappleMoveAllowed } from "./grapple.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { enemyContactTokenDocs, offerFreeAttack } from "./free-attack.mjs";
@@ -278,7 +278,8 @@ const FLIGHT_TRAIT_ITEM_TYPES = new Set(["trait", "vehicleTrait"]);
 export function actorCanFly(actor) {
   return (actor?.items ?? []).some(item =>
     FLIGHT_TRAIT_ITEM_TYPES.has(item?.type)
-    && FLIGHT_TRAIT_NAMES.some(name => itemHasName(item, name)));
+    && FLIGHT_TRAIT_NAMES.some(name => itemHasName(item, name)))
+    || manifestedGift(actor, "Крылья");
 }
 
 // Hoverer БЕЗ Flyer поднимается только на Приземную (стр. 30: «Персонажи с
@@ -288,7 +289,9 @@ export function actorCanFly(actor) {
 export function actorHasFlyer(actor) {
   return (actor?.items ?? []).some(item =>
     FLIGHT_TRAIT_ITEM_TYPES.has(item?.type)
-    && FLYER_TRAIT_NAMES.some(name => itemHasName(item, name)));
+    && FLYER_TRAIT_NAMES.some(name => itemHasName(item, name)))
+    // Дар Одержимого «Крылья» — Flyer (A.b×2), пока демон проявлен.
+    || manifestedGift(actor, "Крылья");
 }
 
 // Half-Step/Полушаг (Талант, стр. 12, wdbc-9wvm): доступен только с этим
