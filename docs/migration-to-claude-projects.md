@@ -184,7 +184,8 @@ npm run packs:build   # сборка компендиумов из packs-src/
   Перед коммитом смотреть `git diff --cached` — чужое уже застейдженное не
   видно в `git status`.
 - **PR не вливать самому.** Довести до открытого PR с зелёным CI; после
-  мерджа — `git pull --ff-only`. Включить Auto-fix на PR сразу, без вопроса
+  мерджа — `npm run git:merge-main` (не голый `git pull`/`git merge`,
+  см. `dbc-workflow`, шаг 13). Включить Auto-fix на PR сразу, без вопроса
   (постоянное правило Сергея).
 - **CI** (`.github/workflows/check.yml`, на PR и push в `main`, Node 22):
   `npm ci` → `npm run lint` → `npm test` → `packs:build` + `packs:unpack` +

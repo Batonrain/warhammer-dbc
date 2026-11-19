@@ -38,6 +38,17 @@ describe("unnaturalRating", () => {
     expect(unnaturalRating(actor, "t")).toBe(4);
   });
 
+  // Ревью #581 п.3: старая копия с заполненным charBonusStat после выбора в
+  // окне получает ещё и запись Конструктора — +½X не должен считаться дважды.
+  it("есть запись Конструктора — старое поле charBonusStat не прибавляется", () => {
+    const item = legacyTrait("Unnatural Characteristic / Сверхъестественная Характеристика (X)", "s", 4);
+    item.system.rating = 4;
+    item.flags = { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "characteristic", field: "bonus", charKey: "s", op: "add", value: "rating" }
+    ] }] } };
+    expect(unnaturalRating({ items: [item] }, "s")).toBe(4);
+  });
+
   it("Daemonic (X) НЕ считается Unnatural — своё правило по тексту пака, без бонуса степени", () => {
     const actor = { items: [trait("Daemonic / Демонический (X)", "t", 1)] };
     expect(unnaturalRating(actor, "t")).toBe(0);

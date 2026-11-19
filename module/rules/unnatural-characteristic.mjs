@@ -77,7 +77,10 @@ export function unnaturalRating(actor, charKey) {
   for (const item of actor?.items ?? []) {
     if (item.type !== "trait") continue;
     if (!UNNATURAL_PREFIX.test(englishName(item.name))) continue;
-    for (const cb of [...charBonusEntries(item.system?.effects), ...mechanicsBonusEntries(item)]) {
+    // Есть запись Конструктора — старое поле не читаем: выбор в окне
+    // (apps/unnatural-choice.mjs) не чистит charBonusStat, и +½X удвоился бы.
+    const mech = mechanicsBonusEntries(item);
+    for (const cb of mech.length ? mech : charBonusEntries(item.system?.effects)) {
       if (cb?.stat === charKey) total += Number(cb.value) || 0;
     }
   }

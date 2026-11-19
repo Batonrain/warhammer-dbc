@@ -84,6 +84,24 @@ describe("Тест Лояльности: бросок и карточка", () =
     expect(lastCard()).toMatch(/Очки Бесчестия <b>2<\/b>\/3/);
   });
 
+  // Ревью #581 п.4: кнопка на листе Хозяина берёт мирового актора; в бою
+  // Реакцию надо списывать с актора участника (у несвязанного токена — свой).
+  it("Обожание Толпы в бою: Реакция списывается с актора участника боя", async () => {
+    const h = master([named("trait", "Adoring Crowds / Обожание Толпы")]);
+    const tokenActor = { uuid: "Scene.s.Token.t.Actor.m" };
+    const prev = globalThis.game.combat;
+    globalThis.game.combat = { started: true, combatants: [{ actorId: "m", actor: tokenActor }] };
+    const spent = [];
+    try {
+      await rollLoyaltyTest(minion(), {
+        master: h, reason: "adoringCrowds", rollFn: dice(10),
+        spendReactionFn: async a => { spent.push(a.uuid); return true; },
+        restoreInfamyFn: async () => ({ changed: true, before: 1, after: 2, max: 3 })
+      });
+    } finally { globalThis.game.combat = prev; }
+    expect(spent).toEqual(["Scene.s.Token.t.Actor.m"]);
+  });
+
   it("Обожание Толпы без Реакции — теста нет", async () => {
     const h = master([named("trait", "Adoring Crowds / Обожание Толпы")]);
     const rollFn = dice(10);
