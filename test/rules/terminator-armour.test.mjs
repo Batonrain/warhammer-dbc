@@ -15,6 +15,7 @@ import {
 } from "../../module/rules/terminator-armour.mjs";
 import { armorAgilityCap } from "../../module/combat/armor-mods.mjs";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 
@@ -111,8 +112,8 @@ describe("данные пака", () => {
   });
 
   it("Черта несёт ключ Возможности, у ключа есть читатель", () => {
-    const f = path.join(ROOT, "packs-src/traits/Элитные_архетипы/Чемпион_Терминатор/Graceful_Giant___Изящный_Гигант_TfMgURq3BmpKtdx0.json");
-    expect(hasGracefulGiant(actorWith(JSON.parse(fs.readFileSync(f, "utf8"))))).toBe(true);
+    const d = packDocByFileHint("packs-src/traits/Элитные_архетипы/Чемпион_Терминатор/Graceful_Giant___Изящный_Гигант_TfMgURq3BmpKtdx0.json");
+    expect(hasGracefulGiant(actorWith(d))).toBe(true);
     expect(CAPABILITIES[GRACEFUL_GIANT_KEY]?.reader).toMatch(/terminator-armour\.mjs/);
   });
 });

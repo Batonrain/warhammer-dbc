@@ -4,14 +4,12 @@
 // книжное число плюс старшая купленная Стадия Пакта (rules/pact-disorder.mjs);
 // четыре Черты выдают своё расстройство при получении.
 
-import fs from "node:fs";
-import path from "node:path";
 import { describe, it, expect } from "vitest";
 import { pactStageOf, pactStage, pactDisorderFloor, pactFloorUpdates, PACT_FLOOR_FLAG }
   from "../../module/rules/pact-disorder.mjs";
 import { DISORDER_LIBRARY } from "../../module/constants/fear-tables.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
-const ROOT = path.resolve(import.meta.dirname, "../..");
 const stage = (name) => ({ type: "talent", name });
 const disorder = (name, severityMin, base) => ({
   type: "mentalDisorder", name, system: { severity: 0, severityMin },
@@ -56,7 +54,7 @@ describe("подъём предела после покупки Стадии", (
 });
 
 describe("данные пака", () => {
-  const P = path.join(ROOT, "packs-src/traits/Элитные_архетипы");
+  const P = "packs-src/traits/Элитные_архетипы";
   const CASES = [
     ["Когитор/Dream_Chaser___Гоняющийся_за_Мечтой_xOX8NAa4NQz5ua2o.json", "Психопатия", -1, true],
     ["Мейстер/Deathless_Oath___Несмертная_Клятва_r5AlyIg1MJQzyzD4.json", "Сноб", 0, true],
@@ -65,7 +63,7 @@ describe("данные пака", () => {
   ];
   for (const [file, dis, min, scaled] of CASES) {
     it(`${file.split("/")[0]}: выдаёт «${dis}» при получении`, () => {
-      const d = JSON.parse(fs.readFileSync(path.join(P, file), "utf8"));
+      const d = packDocByFileHint(`${P}/${file}`);
       const e = d.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).find(x => x.kind === "script");
       expect(e.scriptOnGrant).toBe(true);
       expect(e.code).toContain(`name: "${dis}"`);

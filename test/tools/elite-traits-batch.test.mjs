@@ -32,7 +32,8 @@ describe("Черты элитных архетипов: пачка 19.11.2026", 
   for (const d of docs) {
     const entries = (d.flags?.["warhammer-dbc"]?.mechanics ?? []).flatMap(g => g.entries ?? []);
     it(`${d.name}: есть запись сверх памятки`, () => {
-      expect(entries.some(e => e.kind !== "script")).toBe(true);
+      // Скрипт «При выдаче» (scriptOnGrant) — тоже механика: расстройства Пактов кладут предмет на лист.
+      expect(entries.some(e => e.kind !== "script" || e.scriptOnGrant === true)).toBe(true);
     });
     const ruled = entries.filter(e => RULE_KINDS.has(e.kind));
     if (!ruled.length) continue;
