@@ -537,6 +537,7 @@
 .warhammer-dbc .bc-leg-aug    { color: var(--bc-aug); }
 .warhammer-dbc .bc-leg-bionic { color: var(--bc-bionic); }
 .warhammer-dbc .bc-leg-mech   { color: #ffcf8a; text-shadow: 0 0 6px rgba(255,154,60,0.5); }
+.warhammer-dbc .bc-leg-mech--warn { color: #ff6b5a; text-shadow: 0 0 6px rgba(255,80,60,0.55); cursor: help; }
 
 /* ═══════════════ ПРАВАЯ КОЛОНКА ═══════════════ */
 .warhammer-dbc .bc-side { display: flex; flex-direction: column; gap: 8px; }

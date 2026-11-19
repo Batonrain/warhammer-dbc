@@ -7,6 +7,7 @@
 //  что и вкладка ТЕЛО.
 // ════════════════════════════════════════════════════════════════════════
 
+import { mechadendritePorts, mechadendriteInstallWarning } from "../rules/mechadendrites.mjs";
 import { buildBodyState, buildBodyLayers, buildImplantsSvg,
          classifyImplant, implantCatColor } from "../constants/body-map.mjs";
 import { syncItemEffectsDisabled } from "./effects.mjs";
@@ -162,8 +163,13 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
       // т.е. пока не установлено НИ одной этой системы (installed.length===0).
       // Если одна сторона уже занята — второй добирают только select-ом.
       const bothEligible = !!sys.sideable && installed.length === 0;
+      // Мехадендриты: в счётчике слота — занятые порты Кибер-Мантии из максимума.
+      const ports = sys.id === "mech" ? mechadendritePorts(actor) : null;
+      const count = ports && ports.source !== "none"
+        ? `порты ${ports.used}/${ports.max}` : installed.length;
       return { id: sys.id, label: sys.label, icon: sys.icon, sideable: !!sys.sideable,
-               installed, count: installed.length, bothEligible,
+               installed, count, bothEligible,
+               portsWarn: ports ? ports.warnings.join("; ") : "",
                available: { owned, groups, has: owned.length > 0 || groups.length > 0 } };
     });
 
@@ -197,9 +203,16 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
           .map(i => i.getFlag(NS, "bodySide")).filter(Boolean));
         return used.has("left") ? (used.has("right") ? null : "right") : "left";
       };
+      // Порты Кибер-Мантии (rules/mechadendrites.mjs): не запрет, а подсказка —
+      // ГМ ставит что угодно, перебор подсвечивают Хирургеон и лист.
+      const warnPorts = it => {
+        const msg = mechadendriteInstallWarning(this.actor, it);
+        if (msg) ui.notifications?.warn(`⚠ ${msg}`);
+      };
       if (src === "own") {
         const item = this.actor.items.get(ref);
         if (item) {
+          warnPorts(item);
           const side = item.getFlag(NS, "bodySide") ? null : freeSide();
           await item.setFlag(NS, NS_INST, true);
           if (side) await item.setFlag(NS, "bodySide", side);
@@ -211,6 +224,7 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       } else if (src === "lib") {
         const doc = await fromUuid(ref); if (!doc) return;
+        warnPorts(doc);
         const obj = doc.toObject(); delete obj._id;
         foundry.utils.setProperty(obj, `flags.${NS}.${NS_INST}`, true);
         const side = freeSide();

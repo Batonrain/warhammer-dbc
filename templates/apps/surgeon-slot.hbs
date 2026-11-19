@@ -1,4 +1,4 @@
-<div class="wh-surg-slot" data-system="{{id}}"> <div class="wh-surg-slot-head"> <span class="wh-surg-slot-icon">{{{icon}}}</span> <span class="wh-surg-slot-name">{{label}}</span> <span class="wh-surg-slot-count">{{count}}</span> </div>
+<div class="wh-surg-slot" data-system="{{id}}"> <div class="wh-surg-slot-head"> <span class="wh-surg-slot-icon">{{{icon}}}</span> <span class="wh-surg-slot-name">{{label}}</span> <span class="wh-surg-slot-count{{#if portsWarn}} wh-surg-slot-count--warn{{/if}}"{{#if portsWarn}} title="{{portsWarn}}"{{/if}}>{{count}}</span> </div>
 
   {{#if installed.length}}
   <div class="wh-surg-inst-list"> {{#each installed as |imp|}}

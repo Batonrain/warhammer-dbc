@@ -16,7 +16,7 @@
           <div class="bp {{#if L.aug}}is-aug{{/if}} {{#if L.organ}}bp-organ{{/if}} {{#if L.beat}}bp-beat{{/if}}" data-part="{{L.key}}" style="--bp-col:{{L.color}}; -webkit-mask-image:url('{{L.mask}}'); mask-image:url('{{L.mask}}');"></div> {{/each}}
           {{{body.implantsFront}}}
           <div class="body-photo-scan"></div> </div> <div class="bc-figure-grid"></div> </div> <div class="bc-figure-legend"> <span class="bc-leg bc-leg-flesh">● плоть</span> {{#each body.legend as |lg|}}<span class="bc-leg" style="color:{{lg.color}};">● {{lg.label}}</span>{{/each}}
-        {{#if body.mechCount}}<span class="bc-leg bc-leg-mech">● механодендриты: {{body.mechCount}}</span>{{/if}}
+        {{#if body.mechPorts}}<span class="bc-leg bc-leg-mech{{#if body.mechPorts.warn}} bc-leg-mech--warn{{/if}}" title="{{body.mechPorts.title}}">● мехадендриты: порты {{body.mechPorts.used}}/{{body.mechPorts.max}}{{#if body.mechPorts.warn}} ⚠{{/if}}</span>{{else if body.mechCount}}<span class="bc-leg bc-leg-mech">● механодендриты: {{body.mechCount}}</span>{{/if}}
       </div> </div>
     </div>{{!-- /bc-figure-col --}}
 

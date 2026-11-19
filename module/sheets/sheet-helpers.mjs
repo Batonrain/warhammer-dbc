@@ -67,6 +67,7 @@ import { aptBindingContext, entryAptitudeOverride } from "../rules/aptitude-bind
 import { skillAdvanceCat, advanceCatSource } from "../rules/advance-category.mjs";
 import { missingMarkForPower } from "./tabs/psychic.mjs";
 import { hasRuneMagic, runeLearnInfo } from "../rules/sigillite-runes.mjs";
+import { mechadendritePorts, mechPortsView } from "../rules/mechadendrites.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -990,6 +991,9 @@ function buildGetDataUncached(actor) {
       deceased,
       legend,
       mechCount:    bodyState.mechadendrites,
+      // Порты Кибер-Мантии под мехадендриты: занято/максимум и что не так
+      // (rules/mechadendrites.mjs). Показывается, когда есть дендрит или порты.
+      mechPorts:    mechPortsView(mechadendritePorts(actor)),
       conditionCount: context.activeConditions.length,
       diseaseCount:   context.diseases.length,
       disorderCount:  context.mentalDisorders.length,
