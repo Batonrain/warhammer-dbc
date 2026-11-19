@@ -518,7 +518,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
 }
 
 /** Режимы переброса, которые понимает бросок. Умолчание — «лучший из двух». */
-const REROLL_MODES = new Set(["keepBest", "keepWorst"]);
+// "reverse" — «обратить бросок» (поменять местами десятки и единицы d100,
+// Ветеран Долгой Войны): один бросок, второго кубика нет.
+const REROLL_MODES = new Set(["keepBest", "keepWorst", "reverse"]);
 
 /**
  * Перебросы, доступные на ЭТОМ броске. Книга даёт их россыпью — «раз в Раунд
@@ -548,8 +550,8 @@ export function rerollsFromRules(rules, ctx = {}) {
       }
       // Один бросок — не переброс. Молча превратить это в «лучший из одного»
       // значило бы показать игроку кнопку, которая ничего не делает.
-      const rolls = effect.rolls == null ? 2 : Number(effect.rolls);
-      if (!Number.isFinite(rolls) || rolls < 2) {
+      const rolls = mode === "reverse" ? 1 : effect.rolls == null ? 2 : Number(effect.rolls);
+      if (mode !== "reverse" && (!Number.isFinite(rolls) || rolls < 2)) {
         console.error(`Warhammer DBC | правило «${rule?.id ?? "без id"}»: перебросу нужно не меньше двух бросков, задано ${effect.rolls}`);
         continue;
       }

@@ -5,7 +5,7 @@
   "folder": "hhrwa4G7Vg9pXSsH",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано (19.11.2026): кнопка «Крадущийся в Тенях» на панели «Возможности сейчас» списывает 1 Очко Бесчестия и включает Талант до конца боя или сцены; пока включено, в окнах Скрытности, Внимательности и Обмана есть обращение броска (десятки ↔ единицы) — строка «обратить цифры» в окне броска; система сама берёт меньшее из двух прочтений. Вручную: +2d10 урона при дубле на атаке из скрытности.",
     "benefit": "В свой Ход может потратить Очко Бесчестия, чтобы до конца боя/сцены обращать (меняя местами десятки и единицы) броски на скрытность, маскировку или обнаружение скрытного/замаскированного. Если выбрасывает дубль на атаку из скрытности — атака наносит +2d10 Dmg.",
     "tier": 3,
     "requirement": "P 60",
@@ -35,7 +35,61 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "ECwYTeFDaina9PAP",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "STwn0MZuQfokaBQW",
+              "kind": "script",
+              "label": "Крадущийся в Тенях: потратить Очко Бесчестия",
+              "code": "return await activateItemUntil(item, { label: \"Крадущийся в Тенях: потратить Очко Бесчестия\", text: \"Броски на скрытность, маскировку и обнаружение можно обращать.\" });",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1,
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 1
+            },
+            {
+              "id": "VdRkX61fVRKrVVeS",
+              "kind": "reroll",
+              "rerollScope": "skill",
+              "rerollMode": "reverse",
+              "rerollWho": "self",
+              "label": "Крадущийся в Тенях",
+              "skillKey": "stealth",
+              "when": {
+                "requireActivated": true
+              }
+            },
+            {
+              "id": "bLQBNY2kDSvoLwiq",
+              "kind": "reroll",
+              "rerollScope": "skill",
+              "rerollMode": "reverse",
+              "rerollWho": "self",
+              "label": "Крадущийся в Тенях: обнаружить скрытого",
+              "skillKey": "awareness",
+              "when": {
+                "requireActivated": true
+              }
+            },
+            {
+              "id": "xTUinhthb5hxerZW",
+              "kind": "reroll",
+              "rerollScope": "skill",
+              "rerollMode": "reverse",
+              "rerollWho": "self",
+              "label": "Крадущийся в Тенях: маскировка",
+              "skillKey": "deceive",
+              "when": {
+                "requireActivated": true
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

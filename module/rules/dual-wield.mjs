@@ -38,6 +38,10 @@ export const CAP_TWO_WEAPON   = "dualWield.core.twoWeaponWielder";
 export const CAP_AMBIDEXTROUS = "dualWield.core.ambidextrous";
 /** Тирантикос (элитный Талант Чемпиона-Терминатора, core.json стр. 123-124). */
 export const CAP_TYRANTHIKOS  = "elite.elitnyeArhetipy.chempionTerminator.tyranthikos";
+/** Фузилада (Секутор), Залп (Облитератор), Юстаэринец (Чемпион-Терминатор) — корбук, «Элитные архетипы». */
+export const CAP_FUSILLADE    = "elite.elitnyeArhetipy.sekutor.fusillade";
+export const CAP_BROADSIDE    = "elite.elitnyeArhetipy.obliterator.broadside";
+export const CAP_JUSTAERIN    = "elite.elitnyeArhetipy.chempionTerminator.justaerin";
 
 /** Скидки −10 к парному штрафу: возможность → когда действует. */
 const REDUCTIONS = [
@@ -59,10 +63,24 @@ const REDUCTIONS = [
   // «Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в
   // том числе двух тяжёлых» — не только тяжёлое: любая пара стволов.
   { cap: CAP_TYRANTHIKOS, label: "Тирантикос",
-    when: (a, b) => gun(a) && gun(b) }
+    when: (a, b) => gun(a) && gun(b) },
+  // Фузилада (Секутор, корбук «Элитные архетипы»): «уменьшает штраф за
+  // стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых» —
+  // слово в слово Тирантикос.
+  { cap: CAP_FUSILLADE, label: "Фузилада",
+    when: (a, b) => gun(a) && gun(b) },
+  // Залп (Облитератор): «штраф на стрельбу тяжёлым оружием и винтовками с
+  // двух рук (в любой комбинации) на 10». Винтовка — класс «Ручное» (basic).
+  { cap: CAP_BROADSIDE, label: "Залп",
+    when: (a, b) => heavyOrRifle(a) && heavyOrRifle(b) },
+  // Юстаэринец (Чемпион-Терминатор): «уменьшает штраф за атаки с двух рук
+  // на −10, если вооружён винтовкой и рукопашным оружием».
+  { cap: CAP_JUSTAERIN, label: "Юстаэринец",
+    when: (a, b) => (cls(a) === "basic" && cls(b) === "melee") || (cls(b) === "basic" && cls(a) === "melee") }
 ];
 
 const cls   = w => String(w?.system?.weaponClass ?? "");
+const heavyOrRifle = w => ["heavy", "basic"].includes(cls(w));
 // «Стрелковое» для Тирантикоса — всё, кроме рукопашного и метательного:
 // метательное книга держит отдельным классом со своей скидкой (Веер Ножей)
 // и в описании разводит «метательное оружие» и «снаряды стрелкового».

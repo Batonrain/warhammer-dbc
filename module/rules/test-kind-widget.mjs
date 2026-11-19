@@ -18,7 +18,7 @@
 import { diceModeFor } from "./test-kind.mjs";
 import { DIFFICULTY_STEPS, DEFAULT_DIFFICULTY } from "./difficulty.mjs";
 import { extendedTestKey } from "./extended-test.mjs";
-import { pickReroll } from "./reroll-pick.mjs";
+import { pickReroll, applyReverse } from "./reroll-pick.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 /**
@@ -46,16 +46,24 @@ import { esc } from "../helpers/utils.mjs";
  * @returns {Promise<{roll:Roll, rv:number, rolls:Roll[], rerollNote:string}>}
  */
 export async function rollD100WithReroll(reroll, { confirmPick = false } = {}) {
-  const rollCount = reroll ? Math.max(1, Number(reroll.rolls) || 2) : 1;
+  // «Обратить бросок» (mode "reverse" или флаг reverse поверх Преимущества/
+  // Помехи) — кубик один, второго не бросаем: обращается уже выбранный.
+  const reverseOnly = reroll?.mode === "reverse";
+  const rollCount = reroll && !reverseOnly ? Math.max(1, Number(reroll.rolls) || 2) : 1;
   const rolls = [];
   for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
   const values = rolls.map(r => r.total);
-  const auto = pickReroll(values, reroll?.mode);
-  const picked = (confirmPick && rolls.length > 1 && new Set(values).size > 1)
+  const auto = pickReroll(values, reverseOnly ? "keepBest" : reroll?.mode);
+  let picked = (confirmPick && rolls.length > 1 && new Set(values).size > 1)
     ? await confirmRollPick(values, auto)
     : auto;
+  if (reverseOnly || reroll?.reverse) picked = applyReverse(picked);
+  const reverseNote = picked?.reversed
+    ? `обращено ${String(picked.original).padStart(2, "0")} → ${String(picked.value).padStart(2, "0")}`
+    : (reverseOnly || reroll?.reverse) ? "обращать невыгодно" : "";
+  const droppedNote = picked.dropped.filter(v => !(picked.reversed && v === picked.original)).join(", ");
   const rerollNote = reroll
-    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+    ? `<div class="roll-reroll-note">${esc(reroll.label)}: ${[droppedNote ? `отброшено ${droppedNote}` : "", reverseNote].filter(Boolean).join("; ")}</div>`
     : "";
   return { roll: rolls[picked.index], rv: picked.value, rolls, rerollNote };
 }
@@ -345,6 +353,11 @@ export function mergeReroll(namedReroll, diceChoice) {
   }
   if (!diceMode) return namedReroll;
   const diceLabel = diceChoice === "advantage" ? "Преимущество" : "Помеха";
+  // Обращение не спорит с Кубиком: сначала Преимущество/Помеха выбирает бросок,
+  // потом выбранный обращается (rollD100WithReroll, флаг reverse).
+  if (namedReroll.mode === "reverse") {
+    return { ...diceMode, reverse: true, label: `${namedReroll.label ?? "Обращение"} + ${diceLabel}` };
+  }
   if (namedReroll.mode === diceMode.mode) {
     return { ...namedReroll, rolls: Math.max(namedReroll.rolls, diceMode.rolls), label: `${namedReroll.label} + ${diceLabel}` };
   }

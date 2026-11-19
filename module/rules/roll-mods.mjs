@@ -164,7 +164,7 @@ export function ruleRerollsHtml(actor, context, resolved = null) {
       <input type="radio" name="rule-reroll" class="rule-reroll-opt" data-idx="${i}"
              data-mode="${r.mode}" data-rolls="${r.rolls}"
              ${r.limit ? `data-limit="${esc(r.limit)}" data-source-uuid="${esc(r.source?.uuid || "")}"` : ""}/>
-      <span>${r.label} <b>(${r.mode === "keepWorst" ? "худший" : "лучший"} из ${r.rolls})</b></span>
+      <span>${r.label} <b>(${r.mode === "reverse" ? "обратить цифры" : `${r.mode === "keepWorst" ? "худший" : "лучший"} из ${r.rolls}`})</b></span>
     </label>`).join("");
   return {
     rerolls,

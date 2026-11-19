@@ -71,8 +71,8 @@ export function defenceRerollSectionHtml(rerolls, kind) {
   const what = DEFENCE_KINDS[kind]?.label ?? "тест";
   const buttons = rerolls.map(r => `
     <button class="wh-defence-reroll-btn" type="button" data-rule-id="${esc(r.ruleId)}"
-      title="Переброс проваленного теста: новый бросок остаётся. Реакция второй раз не тратится.">
-      Перебросить ${esc(what)}: ${esc(r.label)}
+      title="${r.mode === "reverse" ? "Обратить бросок: десятки и единицы меняются местами. Реакция второй раз не тратится." : "Переброс проваленного теста: новый бросок остаётся. Реакция второй раз не тратится."}">
+      ${r.mode === "reverse" ? "Обратить" : "Перебросить"} ${esc(what)}: ${esc(r.label)}
     </button>`).join("");
   return `<div class="roll-defense-note wh-defence-rerolls">${buttons}</div>`;
 }
