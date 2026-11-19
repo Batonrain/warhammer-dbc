@@ -46,7 +46,6 @@ const ALLOWED = {
   // Иммунитеты к свойствам оружия: в паке нет предмета, который бы их давал,
   // они заведены про запас — ГМ ставит эффектом (см. их же `source`).
   "weaponPropertyImmunity.piercing": "иммунитет про запас, ставится эффектом ГМа",
-  "weaponPropertyImmunity.haywire":  "иммунитет про запас, ставится эффектом ГМа",
 
   // Иммунитет по подвиду урона (wdbc-q0q8): инфраструктура заведена раньше
   // контента. laser выдаётся Живым Зеркалом, flame — Био-Плавильней на Best.Q
@@ -157,7 +156,6 @@ const ALLOWED = {
   "trait.elitnyeArhetipy.sukkub.brutalChargeWsB": "включается по имени Черты (Brutal Charge (WS.b) / Жестокий Натиск), combat/attack.mjs brutalChargeDamageBonus — ключа Конструктора нет",
   "trait.elitnyeArhetipy.arhimagos.doctrinaImperative": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.arhimagos.masterpieceFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
-  "trait.elitnyeArhetipy.arhimagos.voiceOfOmnissiah": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.gerold.delegate": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.gerold.livingBanner": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.gerold.noblesseOblige": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
@@ -174,7 +172,6 @@ const ALLOWED = {
   "trait.elitnyeArhetipy.pitati.runicBullet": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",
   "trait.elitnyeArhetipy.pitati.runicShot": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",
   "trait.elitnyeArhetipy.sekutor.paladinFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
-  "trait.elitnyeArhetipy.tehAssasin.assassinFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
   "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.elektrozhrets.powerFromFlesh": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
   "trait.multipleArms":"включается по имени Черты (Multiple Arms / Многорукий), rules/hands.mjs isMultipleArmsTrait — флага нет",
