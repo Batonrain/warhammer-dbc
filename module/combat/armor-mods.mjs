@@ -14,6 +14,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { armourTrainingAgilityBonus } from "../rules/armour-training.mjs";
+import { gracefulGiantAgilityBonus } from "../rules/terminator-armour.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -172,7 +173,9 @@ export function armorAgilityCap(actor) {
       : baseCap
         + qualityCap
         + getArmorModEffects(actor, item).maxAgilityMod
-        + armourTrainingAgilityBonus(actor, item.system.armorType);
+        + armourTrainingAgilityBonus(actor, item.system.armorType)
+        // Изящный Гигант: +10 Max.A Терминаторской брони (rules/terminator-armour.mjs).
+        + gracefulGiantAgilityBonus(actor, item);
     cap = cap === null ? value : Math.min(cap, value);
   }
   return cap;

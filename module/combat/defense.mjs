@@ -28,6 +28,7 @@ import { parryWeaponFor, strikeLocation, locationAcc, rollStrikeOn, ARMED_VS_UNA
 import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { avoidanceVerdict } from "./full-attack-lock.mjs";
+import { terminatorDodgeVerdict } from "../rules/terminator-armour.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
 import { overpenetrationButtonHtml } from "./overpenetration.mjs";
@@ -265,6 +266,10 @@ export async function _performDodge(actor, {
   // Атаки кулаками/ножами — штраф ложится в порог ниже.
   const fullAtkLock = avoidanceVerdict(actor, "dodge");
   if (fullAtkLock.blocked) return _bladeShieldRefusal(actor, fullAtkLock.reason, "Уклонение");
+  // Терминаторская броня (стр. 235): «Не позволяет … Уклоняться» — Реакция не
+  // тратится; Изящный Гигант разрешает со штрафом −10 (rules/terminator-armour.mjs).
+  const termDodge = terminatorDodgeVerdict(actor);
+  if (termDodge.blocked) return _bladeShieldRefusal(actor, termDodge.reason, "Уклонение");
   // Скоростная Внимательность: после Бега — спросить дистанцию (до траты Реакции).
   // Переброс не спрашивает второй раз: дистанция та же, что у первого броска.
   const speedAw = reroll ? (carry?.speedAw ?? { value: 0, part: "" }) : await _speedAwarenessMod(actor);
@@ -291,8 +296,9 @@ export async function _performDodge(actor, {
   // Переброс после провала ещё возможен (Талант есть, в этом Раунде не использован, +30 не брали).
   const slipRerollAvailable = !slipReroll && !reroll && slip === "none" && grappleAttack && hasDodgeTalent(actor, "slipAway")
     && isThrottleReady(actor, SLIP_AWAY_FLAG, "round");
-  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value + (slip === "bonus" ? 30 : 0) + fullAtkLock.penalty);
+  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod + speedAw.value + (slip === "bonus" ? 30 : 0) + fullAtkLock.penalty + termDodge.penalty);
   if (speedAw.part) modParts.push(speedAw.part);
+  if (termDodge.note) modParts.push(termDodge.note);
   if (fullAtkLock.note) modParts.push(fullAtkLock.note);
   if (slip === "bonus") modParts.push("Ускользнуть +30");
   if (slipReroll) modParts.push("Ускользнуть: переброс провала");

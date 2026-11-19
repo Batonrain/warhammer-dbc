@@ -6965,7 +6965,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Чемпион_Терминатор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chempionTerminator.gracefulGiant": {
     label: "Двигается в Терминаторской броне почти так же непринуждённо, как в обычной. Уменьшает штраф к A на 10, увеличивает Max.A на 10,",
-    source: "Graceful Giant / Изящный Гигант", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Graceful Giant / Изящный Гигант", reader: "module/rules/terminator-armour.mjs — hasGracefulGiant: gracefulGiantPenaltyReduction (rules/character.mjs, штраф A −10), gracefulGiantAgilityBonus (combat/armor-mods.mjs::armorAgilityCap, Max.A +10), terminatorDodgeVerdict (combat/defense.mjs::_performDodge — Уклонение в Терминаторской броне разрешено со штрафом −10)"
   },
   "trait.elitnyeArhetipy.chempionTerminator.legendaryPlate": {
     label: "Терминаторская броня — символ могущества среди Космодесантников Хаоса. В общении с другими Космодесантниками и персонажами с Талантом Ancien…",
