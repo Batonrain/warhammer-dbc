@@ -1817,8 +1817,9 @@ export const CAPABILITIES = {
     reader: "module/rules/craft-memory.mjs (журнал, prototypingFor) + module/rules/craft-advantage.mjs prototypingEffects()/effectiveDiceMode — module/apps/craft-workshop.mjs _resolve (Банк, −20), _rollShift (переброс), _rememberCrafted (запись), constants/craft.mjs bankFor(halveMult)"
   },
   "craft.core.safetyPrecautions": {
-    label: "Персонаж не теряет Успехи из банка от Критических Провалов на тесты Крафта, а ассистируя другим — те теряют только 1 Успех от своих Критичес…",
-    source: "Safety Precautions / Техника Безопасности", reader: ""
+    label: "Персонаж не теряет Успехи из банка от Критических Провалов на тесты Крафта, а ассистируя другим — те теряют только 1 Успех. Механизировано (19.11.2026): Мастерская снимает за Критический Провал смены 5–15 Успехов (поле проекта «Потеря за Крит. Провал», решение ГМа, по умолчанию 10); Талант у крафтера — потеря 0, у именованного ассистента — 1. Только Крафт, не Исследование",
+    source: "Safety Precautions / Техника Безопасности",
+    reader: "module/rules/craft-advantage.mjs craftCritLoss() — module/apps/craft-workshop.mjs::_rollShift"
   },
   "craft.core.slowShift": {
     label: "+30 и Преимущество за +4ч смены механизировано (wdbc-u0by) — галочка в Мастерской Крафта, видна владельцу Таланта. Сами +4ч на слово стола, время нигде не тикает",
