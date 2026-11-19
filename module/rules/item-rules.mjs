@@ -291,8 +291,9 @@ function ruleFromEntry(item, entry, groupId = null) {
       id, label: entry.label || item.name, when: {},
       effects: [{
         kind: "rollMode", target,
-        mode: entry.rerollMode === "keepWorst" ? "keepWorst" : "keepBest",
-        rolls: 2,
+        mode: entry.rerollMode === "keepWorst" ? "keepWorst"
+            : entry.rerollMode === "reverse" ? "reverse" : "keepBest",
+        rolls: entry.rerollMode === "reverse" ? 1 : 2,
         // who:"target" — переброс НАВЯЗАН цели: «заставить цель перебросить
         // Избегание» (Локус Кровопролития), «заставить цель соблазнения
         // перебросить встречный тест» (Локус Очарования). Без пометки демон

@@ -15,7 +15,8 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import { dualWieldMods, dualWieldActionType, canDualWield, offHandCandidates,
          PAIR_PENALTY, OFF_HAND_PENALTY,
-         requiredSpecs, missingSpecs, targetSpreadExceeded, TARGET_SPREAD_LIMIT_M }
+         requiredSpecs, missingSpecs, targetSpreadExceeded, TARGET_SPREAD_LIMIT_M,
+         CAP_FUSILLADE, CAP_BROADSIDE, CAP_JUSTAERIN }
   from "../../module/rules/dual-wield.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -118,6 +119,16 @@ describe("скидки срабатывают только на своём ор�
     expect(has(["dualWield.core.brawler"], fists("a"), sword("b"))).toEqual([]);
     expect(has(["dualWield.core.fanOfKnives"], thrown("a"), thrown("b"))).toEqual(["Веер Ножей"]);
     expect(has(["dualWield.core.fanOfKnives"], thrown("a"), pistol("b"))).toEqual([]);
+  });
+
+  it("элитные архетипы: Фузилада — любая пара стволов, Залп — тяжёлое/винтовки, Юстаэринец — винтовка + рукопашное", () => {
+    const rifle = id => w("basic", "", id), heavy = id => w("heavy", "", id);
+    expect(has([CAP_FUSILLADE], pistol("a"), heavy("b"))).toEqual(["Фузилада"]);
+    expect(has([CAP_FUSILLADE], pistol("a"), sword("b"))).toEqual([]);
+    expect(has([CAP_BROADSIDE], heavy("a"), rifle("b"))).toEqual(["Залп"]);
+    expect(has([CAP_BROADSIDE], heavy("a"), pistol("b"))).toEqual([]);
+    expect(has([CAP_JUSTAERIN], sword("a"), rifle("b"))).toEqual(["Юстаэринец"]);
+    expect(has([CAP_JUSTAERIN], pistol("a"), sword("b"))).toEqual([]);
   });
 
   it("Талант, которого у персонажа нет, скидки не даёт", () => {

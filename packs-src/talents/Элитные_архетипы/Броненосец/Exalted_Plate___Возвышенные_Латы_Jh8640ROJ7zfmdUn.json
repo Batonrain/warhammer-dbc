@@ -5,7 +5,7 @@
   "folder": "VtxB4oTCqDmAYaJ4",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
+    "notes": "Реализовано (19.11.2026): кнопка «Возвышенные Латы» на панели «Возможности сейчас» списывает 1 Очко Бесчестия и включает Талант до конца боя или сцены; пока включено, ко всем участкам тела прибавляется ½Cor.b (окр.▲) AP — Броня на листе считается сама.",
     "benefit": "Порча в душе Броненосца проникает в его латы и укрепляет их. Может потратить Очко Бесчестия, чтобы до конца боя или сцены получить +½Cor.b (окр.▲) к AP на всех участках тела.",
     "tier": 3,
     "requirement": "Inf 50, Cor 50",
@@ -35,7 +35,36 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "VEjsHuqZZljLJnCI",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "dVZAe0JfVxXJS809",
+              "kind": "script",
+              "label": "Возвышенные Латы: потратить Очко Бесчестия",
+              "code": "return await activateItemUntil(item, { label: \"Возвышенные Латы: потратить Очко Бесчестия\", text: \"+½Cor.b AP на всех участках тела.\" });",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1,
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 1
+            },
+            {
+              "id": "5AvQ0TTht39mufJQ",
+              "kind": "armour",
+              "armourLocation": "all",
+              "op": "add",
+              "armourValue": "ceil(cor/2)",
+              "label": "Возвышенные Латы",
+              "when": {
+                "requireActivated": true
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

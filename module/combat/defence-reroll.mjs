@@ -19,6 +19,7 @@ import { _performDodge, _performParry } from "./defense.mjs";
 import { DEFENCE_TEST_FLAG, DEFENCE_REROLLED_FLAG, defenceRerollsFor } from "../rules/defence-reroll.mjs";
 import { commitRerollUse } from "./angel-hunters.mjs";
 import { runCardOnce } from "./card-once.mjs";
+import { reverseD100 } from "../rules/reroll-pick.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -33,10 +34,16 @@ async function actorOf(test) {
 }
 
 /** Повторить защиту с карточки как переброс. */
-async function performDefenceReroll(actor, test, label) {
+async function performDefenceReroll(actor, test, label, forcedRv = null) {
   const run = test.kind === "parry" ? _performParry : _performDodge;
-  await run(actor, { ...(test.opts ?? {}), reroll: { label }, carry: test.carry ?? null });
+  await run(actor, { ...(test.opts ?? {}), reroll: { label, ...(forcedRv ? { forcedRv } : {}) }, carry: test.carry ?? null });
   return true;
+}
+
+/** Результат d100 исходной защиты — первый бросок карточки. */
+function cardRollValue(message) {
+  const v = Number(message?.rolls?.[0]?.total);
+  return Number.isFinite(v) ? v : null;
 }
 
 /** Кнопка переброса Черты/Таланта на карточке проваленной защиты. */
@@ -56,9 +63,18 @@ export async function onDefenceRerollClick(message, ruleId) {
     attackerActor: attackerDoc?.actor ?? attackerDoc, isMelee: test.opts?.isMelee ?? true
   }).find(r => r.ruleId === ruleId);
   if (!offer) return ui.notifications?.warn("⚠️ Этот переброс сейчас недоступен (уже потрачен в этом Раунде?).");
+  // «Обратить бросок» (десятки ↔ единицы): тот же кубик, а не новый. Обращать
+  // имеет смысл, только если обращённое число меньше.
+  let forcedRv = null;
+  if (offer.mode === "reverse") {
+    const rv = cardRollValue(message);
+    const alt = rv == null ? null : reverseD100(rv);
+    if (alt == null || alt >= rv) return ui.notifications?.warn("⚠️ Обращение этого броска ничего не даёт.");
+    forcedRv = alt;
+  }
   return runCardOnce(message, DEFENCE_REROLLED_FLAG, async () => {
     if (offer.limit) await commitRerollUse(actor, { limit: offer.limit, sourceUuid: offer.source?.uuid ?? "" });
-    return performDefenceReroll(actor, test, offer.label);
+    return performDefenceReroll(actor, test, offer.mode === "reverse" ? `${offer.label} (обращение)` : offer.label, forcedRv);
   }, "Эту защиту уже перебросили.");
 }
 

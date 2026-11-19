@@ -5027,6 +5027,9 @@ function _attachFateContextMenu(message, html) {
     await clearBlessingOfSteel(combat);
     // Грозный Вопль (Sahara dread-wail-2): эффект «рейтинг Страха 2 до конца боя» на целях.
     await clearDreadWailFear(combat);
+    // Таланты, включённые за Очко Бесчестия «до конца боя или сцены» (apps/item-activation.mjs).
+    const { clearActivationsOnCombatEnd } = await import("./apps/item-activation.mjs");
+    await clearActivationsOnCombatEnd(combat);
     // Кровавое Пламя (wdbc-1rno): в отличие от Reformation Song выше, книга
     // прямо ломает оружие по концу боя/сцены — clearBloodFlameBuffs это и
     // делает (не только снимает временные свойства).

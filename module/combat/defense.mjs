@@ -335,7 +335,10 @@ export async function _performDodge(actor, {
   // там оба кубика бросают сразу, здесь второй — только после успеха.
   const rerollSuccess = forcedReroll === "rerollSuccess";
   const rolled = [];
-  for (let i = 0; i < ((forcedReroll && !rerollSuccess) || selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  // «Обратить бросок» с карточки защиты (Ветеран Долгой Войны): не новый
+  // кубик, а тот же бросок с переставленными цифрами — combat/defence-reroll.mjs.
+  if (reroll?.forcedRv) rolled.push(await new Roll(String(reroll.forcedRv)).evaluate());
+  else for (let i = 0; i < ((forcedReroll && !rerollSuccess) || selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   let picked = pickReroll(rolled.map(r => r.total), (!rerollSuccess && forcedReroll) || "keepBest");
   let wrestlerRerolled = false;
   if (rerollSuccess && testOutcome(picked.value, threshold).success) {
@@ -984,7 +987,8 @@ export async function _performParry(actor, {
   // «может перебрасывать» у Ненависти: бросок ×2, лучший.
   const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche || duckAdvantage || bulwarkShield;
   const rolled = [];
-  for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  if (reroll?.forcedRv) rolled.push(await new Roll(String(reroll.forcedRv)).evaluate());
+  else for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
   const roll     = rolled[picked.index];
   const rv       = picked.value;

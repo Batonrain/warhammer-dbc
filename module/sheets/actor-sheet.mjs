@@ -812,6 +812,16 @@ async function onTalentManualToggle(event, target) {
   await item.setFlag("warhammer-dbc", "manualOff", !off);
 }
 
+// Досрочно выключить Талант, включённый «до конца боя или сцены»
+// (apps/item-activation.mjs). Потраченное Очко не возвращается — как в книге.
+async function onTalentDeactivate(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  const item = this.actor.items.get(target.dataset.itemId);
+  if (!item) return;
+  const { deactivateItem } = await import("../apps/item-activation.mjs");
+  await deactivateItem(item);
+}
+
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
 // только разбор текстовых списков колбэком createTraits — его зовёт и Мастер
 // создания персонажа)
@@ -911,6 +921,7 @@ export class WarhammerCharacterSheet
       mutgiftRoll: whenEditable(onMutgiftRoll),
       mutgiftToggleActive: whenEditable(onMutgiftToggleActive),
       talentManualToggle: whenEditable(onTalentManualToggle),
+      talentDeactivate: whenEditable(onTalentDeactivate),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),

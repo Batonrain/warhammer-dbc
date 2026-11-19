@@ -126,7 +126,10 @@
 //      уйдёт предмет — сам перестанет учитываться, без отдельного отката.
 //    reroll: { rerollScope:"all"|"char"|"skill"|"attack"|"initiative"|"social",
 //              rerollChar / skillKey (уточнение области), rerollMode:"keepBest"|
-//              "keepWorst", label }
+//              "keepWorst"|"reverse", label }
+//      "reverse" — «обратить бросок» (поменять местами десятки и единицы d100,
+//      Ветеран Долгой Войны): один бросок, берётся меньший из двух прочтений
+//      (rules/reroll-pick.mjs::reverseD100).
 //      → ЖИВОЙ ЗАПРОС, как terrainIgnore: при получении предмета не пишет
 //      ничего. В момент броска rulesFromItemMechanics (module/rules/
 //      item-rules.mjs) превращает запись в правило формата docs/rules-format.md
@@ -1357,7 +1360,8 @@ export function describeMechEntry(entry) {
       return `Доп. Провалы при провале: ${scope} — ${n >= 0 ? "+" : ""}${n}`;
     }
     case "reroll": {
-      const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух" : "лучший из двух";
+      const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух"
+        : entry.rerollMode === "reverse" ? "обратить (десятки ↔ единицы)" : "лучший из двух";
       const scope = REROLL_SCOPE_LABEL(entry);
       return scope ? `Переброс: ${scope} — ${modeLabel}` : "Переброс: (область не выбрана)";
     }
@@ -1661,6 +1665,7 @@ function describeMechWhen(when, item = null) {
     parts.push(`Тир Ран ${when?.negateWoundTier ? "≠" : "="} ${names.join(" или ")}`);
   }
   if (when?.requireRage) parts.push(`Ярость ${when?.negateRage ? "≠" : "="} да`);
+  if (when?.requireActivated) parts.push("включено до конца боя/сцены");
   const gods = whenPatronGod(when);
   if (gods.length) {
     const names = gods.map(k => WARP_GODS_MAP[k]?.label || k);
@@ -4050,7 +4055,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "reroll") {
     const scopeOpts = REROLL_SCOPES
       .map(([v, l]) => `<option value="${v}" ${ent.rerollScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
-    const modeOpts = [["keepBest", "лучший из двух"], ["keepWorst", "худший из двух"]]
+    const modeOpts = [["keepBest", "лучший из двух"], ["keepWorst", "худший из двух"],
+      ["reverse", "обратить (десятки ↔ единицы)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.rerollMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     // Уточнение показывается только там, где оно есть: у «любого теста»,
     // атаки, Инициативы и социальных навыков области хватает самой по себе.
@@ -4563,6 +4569,16 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     </label>
   </div>`;
 
+  // «Когда включено» — гейт активации «до конца боя или сцены» (rules/
+  // item-activation.mjs): запись действует, пока сам предмет включён кнопкой.
+  const activatedHtml = `<div class="grant-entry-when grant-entry-when-activated">
+    <span class="grant-when-label">Когда включено</span>
+    <label class="grant-when-activated-row">
+      <input type="checkbox" class="grant-when-activated" ${d} ${w.requireActivated ? "checked" : ""} ${dis}/>
+      <span>предмет включён до конца боя/сцены</span>
+    </label>
+  </div>`;
+
   // «Когда Покровитель» (wdbc-xxb7) — шестой независимый гейт: список ключей
   // WARP_GODS (khorne/nurgle/slaanesh/tzeentch/undivided), между вариантами
   // ИЛИ — та же форма, что у Тира Ран. Источник — actor.system.patronGod.
@@ -4675,7 +4691,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${qualHtml}${chosenHtml}${anyOfHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${activatedHtml}${patronHtml}${sealedArmourHtml}${condHtml}${qualHtml}${chosenHtml}${anyOfHtml}`;
 }
 
 /**
@@ -4757,8 +4773,12 @@ function buildGroupHtml(grp, canEdit, depth = 1, nested = false, item = null) {
  *   никогда.
  */
 export function mechanicsRelevantChange(changed) {
-  return changed?.flags?.["warhammer-dbc"]?.mechanics !== undefined
-      || changed?.system?.submutation !== undefined;
+  const f = changed?.flags?.["warhammer-dbc"];
+  return f?.mechanics !== undefined
+      || changed?.system?.submutation !== undefined
+      // Включение/выключение «до конца боя или сцены» (rules/item-activation.mjs)
+      // меняет гейт when.requireActivated — долговечные записи пересобираются.
+      || f?.activated !== undefined || (!!f && Object.hasOwn(f, "-=activated"));
 }
 
 // Поля-формулы записей по kind — те самые, что isEntryComplete гоняет через

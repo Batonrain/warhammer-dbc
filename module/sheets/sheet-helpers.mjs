@@ -79,6 +79,7 @@ import { hasNavigationWarp, warpRoutesTabContext }   from "./tabs/warp-routes.mj
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
+import { isItemActivated }                         from "../rules/item-activation.mjs";
 import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities, hasRuleFlag } from "../rules/flags.mjs";
 import { sleepGraceDays, sleepNeededHours } from "../rules/squat-traits.mjs";
 import { ALCHEM_MONSTER, ENDURING, alchemDoseLimit } from "../rules/replicant.mjs";
@@ -1088,7 +1089,10 @@ function buildGetDataUncached(actor) {
       // переносит), поэтому Солипсизм узнаётся ещё и по имени.
       manualToggle:   !!i.flags?.["warhammer-dbc"]?.manualToggle || /solipsism|солипсизм/i.test(String(i.name ?? "")),
       manualOff:      !!i.flags?.["warhammer-dbc"]?.manualOff,
-      manualItemId:   i.id
+      manualItemId:   i.id,
+      // Включён «до конца боя или сцены» (rules/item-activation.mjs) — метка в
+      // строке, нажатие выключает раньше срока.
+      activated:      isItemActivated(i)
     };
   });
   // Группировка талантов по типам корбука (стр. 62-105) для читаемого списка.

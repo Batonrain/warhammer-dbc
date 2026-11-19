@@ -3021,6 +3021,15 @@ export class WarhammerItemSheet
       e.when.requireRage = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── «Когда включено» (entry.when.requireActivated, rules/item-activation.mjs) ─
+    on(".grant-when-activated", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.requireActivated = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     on(".grant-when-rage-negate", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
