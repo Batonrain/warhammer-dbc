@@ -74,6 +74,9 @@ import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
 import { shiftAmorphousSize } from "./amorphous-size.mjs";
 import { rollTraitTest } from "../combat/trait-test.mjs";
 import { chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL } from "./unnatural-choice.mjs";
+import { inspiredRest } from "./infernal-inspiration.mjs";
+import { gainResource, spendResource } from "./resource-pools.mjs";
+import { resourcePoolDef } from "../rules/resource-pools.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -164,6 +167,13 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    применение к конкретному тесту Страха остаётся отметкой вручную.
  *  - `activateItemUntil`/`deactivateItem` (apps/item-activation.mjs) — включить
  *    предмет «до конца боя или сцены» (записи с условием when.requireActivated)
+ *  - `gainResource`/`spendResource` (apps/resource-pools.mjs), `resourcePoolDef`
+ *    (rules/resource-pools.mjs: максимум, пополнение, лимиты пула) — пулы ресурсов
+ *    элитных архетипов (Жажда, Очки Вдохновения, Очки Мести): начислить /
+ *    списать с карточкой и лимитом за Раунд. Обычная цена кнопки — не это, а
+ *    capabilityCostPool "res:<ключ>"; эти — для второго пула в той же кнопке.
+ *  - `inspiredRest` (apps/infernal-inspiration.mjs) — «аналог полноценного
+ *    сна» Когитора: снять Усталость и 2d10 урона в I и W одним броском.
  *  - `purityOfBattleWave` (combat/purity-of-battle.mjs) — Чистота Битвы
  *    (Дар Кхорна, wdbc-1rno): реально снимает боевые наркотики и психосилы
  *    (свои и чужие, нацеленные на жертву) со всех токенов сцены в радиусе.
@@ -254,6 +264,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
     "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
     "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem",
+    "inspiredRest", "gainResource", "spendResource", "resourcePoolDef",
     ...extraNames,
     code
   );
@@ -275,6 +286,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
     grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
     rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem,
+    inspiredRest, gainResource, spendResource, resourcePoolDef,
     ...extraNames.map(k => extra[k])
   );
 }

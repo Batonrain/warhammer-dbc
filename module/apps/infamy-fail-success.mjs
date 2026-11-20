@@ -18,6 +18,8 @@ import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mj
 import { esc } from "../helpers/utils.mjs";
 import { runCardOnce } from "../combat/card-once.mjs";
 import { revertCardFailure, failUndoLineHtml } from "../combat/fear.mjs";
+import { resourceFailSuccessOptions, resourceAmountLabel } from "../rules/resource-pools.mjs";
+import { spendResource, resourceCostGate } from "./resource-pools.mjs";
 
 /**
  * Кнопки для карточки проваленного теста — пустая строка, если ни одна
@@ -27,8 +29,17 @@ import { revertCardFailure, failUndoLineHtml } from "../combat/fear.mjs";
 export function infamyFailSuccessButtonsHtml(actor, { skill, char, success, testLabel = "" } = {}) {
   if (!actor || success) return "";
   const options = infamyFailSuccessOptions(flag => hasRuleFlag(actor, flag), { skill, char, success });
-  if (!options.length) return "";
-  return `<div class="roll-threshold">${options.map(o =>
+  // Пулы ресурсов архетипов (Очки Вдохновения Когитора: «при Провале любого
+  // теста I или W заменить его 1 Успехом», rules/resource-pools.mjs).
+  const pools = resourceFailSuccessOptions(actor, char);
+  if (!options.length && !pools.length) return "";
+  const poolBtns = pools.map(d => {
+    const gate = resourceCostGate(actor, d.key, 1);
+    return `<button type="button" class="wh-resource-fail-success-btn" data-actor-uuid="${esc(actor.uuid)}"
+      data-pool="${esc(d.key)}" data-test-label="${esc(testLabel)}" ${gate.disabled ? "disabled" : ""}
+      title="${esc(gate.title || `Потратить ${resourceAmountLabel(d.key, 1, d)}: тест засчитывается успешным на 1 Успех`)}">✦ ${esc(d.label)}: 1 → Успех (1)</button>`;
+  });
+  return `<div class="roll-threshold">${poolBtns.join(" ")}${options.map(o =>
     `<button type="button" class="wh-infamy-fail-success-btn" data-actor-uuid="${esc(actor.uuid)}"
       data-capability="${esc(o.capability)}" data-test-label="${esc(testLabel)}"
       title="Потратить 1 Очко Бесчестия: тест засчитывается успешным на 1 Успех">⚜ ${esc(o.label)}: Очко Бесчестия → Успех (1)</button>`
@@ -65,6 +76,27 @@ export async function spendInfamyForFailSuccess(actor, capability, { testLabel =
       icon: "⚜ ", title: `${esc(src.label)}${testLabel ? ` — ${esc(testLabel)}` : ""}`,
       lines: [`<div class="roll-threshold" style="font-size:0.85em;">Потрачено Очко Бесчестия${
         spend.tempSpent ? " (из временного запаса)" : ""}. Осталось: <b>${actorInfamyValue(actor) + tempInfamyAmount(actor)}</b>.</div>`,
+        failUndoLineHtml(reverted)],
+      outcome: outcomeHtml(true, "Провал заменён: Успех — 1 Успех")
+    }), { sound: false, ignoreRollMode: true });
+    return true;
+  }, "Этот провал уже заменён успехом.");
+}
+
+/**
+ * Провал → Успех на 1 Успех за 1 очко пула ресурса архетипа (кнопка
+ * .wh-resource-fail-success-btn). Тот же замок карточки, что у траты
+ * Бесчестия: один провал заменяется успехом один раз.
+ */
+export async function spendResourceForFailSuccess(actor, key, { testLabel = "", message } = {}) {
+  if (!actor || !key) return false;
+  return runCardOnce(message, "infamyFailSuccessUsed", async () => {
+    const res = await spendResource(actor, key, 1, { silent: true });
+    if (!res) return false;
+    const reverted = await revertCardFailure(message);
+    await postTestCard(actor, testCardHtml({
+      icon: "✦ ", title: `${esc(res.label)}${testLabel ? ` — ${esc(testLabel)}` : ""}`,
+      lines: [`<div class="roll-threshold" style="font-size:0.85em;">Потрачено: ${esc(resourceAmountLabel(key, 1))}. Осталось: <b>${res.after}</b> / ${res.max}.</div>`,
         failUndoLineHtml(reverted)],
       outcome: outcomeHtml(true, "Провал заменён: Успех — 1 Успех")
     }), { sound: false, ignoreRollMode: true });

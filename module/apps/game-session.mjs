@@ -45,6 +45,7 @@ import { endInspiredWrathOnSceneEnd } from "../combat/inspire-wrath.mjs";
 import { DIVINE_PROTECTION_FLAG } from "../rules/death-save.mjs";
 import { wakeDivineProtected } from "../sheets/tabs/death.mjs";
 import { worldAndTokenActors } from "../migrations/unlinked-tokens.mjs";
+import { refillResourcePools } from "./resource-pools.mjs";
 
 const BANNER_TEXT = {
   scene:   "Поворот судьбы",
@@ -224,6 +225,8 @@ export async function triggerNewScene() {
   await wakeDivineProtected(worldAndTokenActors());
   // Таланты, включённые «до конца боя или сцены» (apps/item-activation.mjs).
   await (await import("./item-activation.mjs")).clearActivationsOnSceneEnd();
+  // Пулы ресурсов архетипов, что восполняются «с новой сценой» (Очки Мести).
+  await refillResourcePools("scene");
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },
     content: bannerCard("🎬 Новая сцена", BANNER_TEXT.scene)
@@ -251,6 +254,8 @@ export async function triggerSessionEnd() {
   await (await import("../combat/fear.mjs")).clearFearSceneState();
   await endDivineProtection();
   await refillFatePools();
+  // Конец сессии — и конец сцены: пулы «с новой сценой» и «в конце сессии».
+  await refillResourcePools("session");
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },
     content: bannerCard("⏻ Конец сессии", BANNER_TEXT.session)

@@ -50,12 +50,14 @@ describe("capabilityCostLabel", () => {
     expect(capabilityCostLabel({ pool: "" })).toBe("");
   });
 
-  it("четыре пула зарегистрированы в CAPABILITY_COST_POOLS", () => {
+  it("четыре пула плюс пулы ресурсов архетипов зарегистрированы в CAPABILITY_COST_POOLS", () => {
     // Первые три — три ТЕРМИНА одного поля актора (system.fate.value), см.
     // шапку capability-cost.mjs. Четвёртый, "action", устроен иначе: это
     // настоящее другое хранилище (Очки Действия), заведён в wdbc-m7we под
     // самую частую форму способности — «Полудействие: сделать X».
-    expect(Object.keys(CAPABILITY_COST_POOLS).sort()).toEqual(["action", "fate", "infamy", "pain"]);
+    // Пятый вид — «res:<ключ>» (rules/resource-pools.mjs): у каждого своё хранилище.
+    expect(Object.keys(CAPABILITY_COST_POOLS).sort()).toEqual(
+      ["action", "fate", "infamy", "pain", "res:inspiration", "res:thirst", "res:vengeance"]);
     // Три «терминных» пула по-прежнему делят одно хранилище и своего не имеют.
     for (const k of ["fate", "infamy", "pain"])
       expect(CAPABILITY_COST_POOLS[k].storage).toBeUndefined();
