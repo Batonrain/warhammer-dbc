@@ -824,7 +824,7 @@ export async function executePsychotest(actor, item, opts) {
   // манифестации нет (spendCapabilityCost уже сказал об этом игроку).
   const prCeiling = manifestPrCeiling(actor, item, { combatId: isEncounterActive() ? game.combat.id : null });
   let resurgenceLine = "";
-  if (prCeiling.canResurge && (opts.mPR || 0) > prCeiling.max) {
+  if (!opts.warpGifted && prCeiling.canResurge && (opts.mPR || 0) > prCeiling.max) {
     const paid = opts.reroll || await spendCapabilityCost(actor, { pool: "infamy", amount: 1 }, "Психическое Возрождение");
     if (!paid) return;
     // Метка «до начала следующего Хода» гасится началом Хода В БОЮ; вне боя её
@@ -1121,6 +1121,8 @@ export async function executePsychotest(actor, item, opts) {
   } else if (MODE.phenomena === "double") {
     phenomena = (success && isDouble) || rv === 99;
   }
+  // Одарённый Варпом (rules/warp-gifted.mjs): «не вызывает Феноменов или Прорывов».
+  if (opts.warpGifted) phenomena = false;
 
   // Исчисления: снять 1 эPR ради −2×I.b к броску Феномена. Спрашиваем только
   // когда Феномен действительно выпал, есть что снимать (эPR ≥ 2) и мод не нулевой.

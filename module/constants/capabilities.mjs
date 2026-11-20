@@ -5473,7 +5473,7 @@ export const CAPABILITIES = {
   },
   "trait.adaptiveXenos": {
     label: "В людском облике (шлем/капюшон + не-эльдарская броня/плащ >70%) и на Низком Готике — нет штрафов на общение с людьми.",
-    source: "Adaptive Xenos / Адаптивный Ксенос", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Adaptive Xenos / Адаптивный Ксенос", reader: "module/rules/warp-gifted.mjs (warpGiftedRating, warpGiftedPowers, warpGiftedCastOpts), module/combat/warp-gifted.mjs::useWarpGifted (кнопка Черты), module/sheets/tabs/psychic.mjs::executePsychotest (opts.warpGifted: без Феноменов и без потолка тPR)"
   },
   "trait.adroit": {
     label: "Выбирает одну Характеристику (кроме Inf и Cor): все успешные тесты на неё (в т.ч. навыки через неё) получают +1 Успех. Реализовано: выбор — диалогом при получении Черты (флаг adroitChar на ней), +1 Успех — тесты Навыков/Характеристик с листа, Страх, верховые, атака WS/BS, Уклонение (A), Парирование (WS). Не покрыто: прочие частные броски со своим подсчётом степени (Захват, приёмы, тесты техники и т.п.) — там бонус считает игрок.",
