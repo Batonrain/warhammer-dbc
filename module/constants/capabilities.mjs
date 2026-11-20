@@ -2123,7 +2123,7 @@ export const CAPABILITIES = {
   },
   "pilot.core.putThatOut": {
     label: "За полное действие персонаж может потушить Пожар в машине, получив 1 Усталости и 1d10 E(Fl) Dmg, игнорирующего броню.",
-    source: "Put That Out! / Гаси Это!", reader: ""
+    source: "Put That Out! / Гаси Это!", reader: "module/combat/put-that-out.mjs — кнопка Таланта: полное действие, 1 Усталость, 1d10 E(Fl) без брони"
   },
   "pilot.core.rollWithIt": {
     label: "Персонаж может Уклоняться от эффектов аварий, действующих на экипаж, как от обычных атак. Успешно уклонившись от взрыва боекомплекта,",
