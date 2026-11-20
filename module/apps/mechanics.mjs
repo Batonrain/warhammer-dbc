@@ -1348,6 +1348,8 @@ export function describeMechEntry(entry) {
         ? "½ штрафа (вкл. необученность)"
         : entry.modValueMode === "autoSuccess"
         ? "автоуспех (галочка)"
+        : entry.modValueMode === "successMul"
+        ? `Успехи ×${Number(entry.value) || 2} (галочка)`
         : entry.modValueMode === "formula"
         ? `формула: ${entry.value}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
@@ -3982,7 +3984,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const modeOpts = [["flat", "число"], ["formula", "формула (½Cor и т.п.)"], ["charBonus", "бонус характеристики"],
       ["masterCharBonus", "бонус характеристики ХОЗЯИНА (system.masterUuid)"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"],
-      ["autoSuccess", "автоуспех теста (галочка в окне броска)"]]
+      ["autoSuccess", "автоуспех теста (галочка в окне броска)"],
+      ["successMul", "умножить Успехи (галочка в окне броска; число — множитель)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const charSel = (cls, val, extra = []) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
       [...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k]), ...extra].map(([k, l]) =>

@@ -24,6 +24,7 @@ export const EFFECT_KINDS = {
   scriptTrigger: ["target", "side", "itemId", "entryId"], // автозапуск kind:"script" по исходу (wdbc-1rno)
   scriptAbility: ["itemId", "entryId"], // кнопка kind:"script" на панели ВОЗМОЖНОСТИ СЕЙЧАС (wdbc-suwp); на бросок не влияет
   autoSuccess: ["target"],            // галочка диалога «тест пройден автоматически» (Зверь — Survival в родном биоме, 19.11.2026)
+  successMul:  ["target", "value"],   // галочка диалога «Успехи ×N» на успешном тесте (Кортекс Малагры ×3/×2, 20.11.2026)
   autoFail:    ["target"],            // тест провален без броска (Ослеплён — BS, wdbc-x1nz.2.89); `degrees` необязателен — минимум Провалов (Рог Чумоноса — 3)
   successDegMax: ["target", "value"], // потолок Успехов при Успехе (BONE-Head Огрина — тесты I)
   script:      ["code"]               // аварийный выход, см. docs/rules-format.md

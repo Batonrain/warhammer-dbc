@@ -6706,7 +6706,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.malagra.malagraCortex": {
     label: "Кортикальные импланты экранированы гексаграмматическими кодами и защищают разум от вторжения чужой воли.",
-    source: "Malagra Cortex / Кортекс Малагры", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-8fc7 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Malagra Cortex / Кортекс Малагры", reader: "packs-src Malagra Cortex: testMod modValueMode:\"successMul\" (области all ×3 — галочка «против Ноотеургии/Аниматеургии», psychicMind ×2) → rules/item-rules.mjs → resolve-test.mjs → roll-mods.mjs::successMulChecked → rules/kind-outcome.mjs (Успехи ×N до сравнения встречного)"
   },
   "trait.elitnyeArhetipy.malagra.paragonCoil": {
     label: "Комплекс электромагнитных имплантов окутывает его мантией магнитного поля и нимбом сияния. Оснащён Люминен Конденсаторами, Маглев Спиралями,",

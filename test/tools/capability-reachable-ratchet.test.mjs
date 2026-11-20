@@ -161,7 +161,6 @@ const ALLOWED = {
   "trait.elitnyeArhetipy.lordDiskordant.corruptedNoosphere": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
   "trait.elitnyeArhetipy.malagra.astralConverter": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.malagra.digitalGhost": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.malagraCortex": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
   "trait.elitnyeArhetipy.malagra.paragonCoil": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.pitati.runicBullet": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",
   "trait.elitnyeArhetipy.pitati.runicShot": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",

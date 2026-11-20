@@ -37,9 +37,10 @@ describe("кнопки-памятки у Черт — правил стола", 
 describe("Черты, ждущие подсистему", () => {
   const waiting = Object.entries(CAPABILITIES).filter(([k, v]) => k.startsWith("trait.") && /^ЖДЁТ ПОДСИСТЕМУ/.test(v.reader));
   // 22 на 14.11.2026; 19.11.2026 Глас Омниссии и Фрейм Ассасина получили
-  // записи Конструктора и читателя «ЧАСТИЧНО».
-  it("20 Черт, у каждой в читателе номер задачи Sahara", () => {
-    expect(waiting).toHaveLength(20);
+  // записи Конструктора и читателя «ЧАСТИЧНО»; 20.11.2026 — Кортекс Малагры
+  // (множитель Успехов, successMul).
+  it("19 Черт, у каждой в читателе номер задачи Sahara", () => {
+    expect(waiting).toHaveLength(19);
     for (const [k, v] of waiting) expect(v.reader, k).toMatch(/task-[0-9a-f]{4}/);
   });
 });

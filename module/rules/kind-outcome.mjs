@@ -153,7 +153,7 @@ export async function applyAssistedMasteryCrit(actor, outcome, skillCtx, deg) {
 }
 
 export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, extended, opposed,
-    opposedSelected = false, opposedSafeSelected = false, autoSuccess = false }) {
+    opposedSelected = false, opposedSafeSelected = false, autoSuccess = false, successMul = 1 }) {
   // opposedSelected/opposedSafeSelected — сама галочка «Встречный», отдельно
   // от opposed (данные соперника): полтеста без Порога/Броска соперника
   // (сравнивается вручную позже) — всё равно Встречный тест по RAW, шапка
@@ -288,7 +288,15 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const uncappedDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  // Множитель Успехов (successMul, 20.11.2026 — Кортекс Малагры «утраивает
+  // Успехи на встречных тестах…»): только на Успехе, по всем Успехам теста
+  // (с надбавками выше) и ДО сравнения встречного теста ниже — иначе
+  // умножение ничего не решало бы. Ассистентов лист прибавляет позже.
+  const mul = success ? Math.max(1, Math.floor(Number(successMul) || 1)) : 1;
+  const preMulDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : 0;
+  const uncappedDeg = success ? preMulDeg * mul : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const successMulLine = mul > 1
+    ? `<div class="roll-threshold">✖ Успехи ×${mul}: ${preMulDeg} → <b>${uncappedDeg}</b></div>` : "";
   // Потолок Успехов (successDegMax, BONE-Head Огрина — тесты I): только на
   // Успехе, после надбавки Сверхъестественной Характеристики. Ассистентов
   // лист прибавляет позже и режет тем же degCap (sheets/actor-sheet.mjs).
@@ -389,6 +397,6 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, scriptTriggers: resolved.scriptTriggers ?? [],
            critLine, kindLabel, combinedLine, combinedAssistCount,
            failUndo: Object.keys(failUndo).length ? failUndo : null,
-           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
+           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + successMulLine + degCapLine,
            degCap, degCapLine };
 }
