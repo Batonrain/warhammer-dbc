@@ -2094,7 +2094,7 @@ export const CAPABILITIES = {
   // ── Пилот
   "pilot.core.aceOperator": {
     label: "Персонаж может потратить Очко Бесчестия, чтобы уменьшить число Провалов на вождение техники на A.b, потенциально превращая Провал в Успех,",
-    source: "Ace Operator / Ас Оператор", reader: ""
+    source: "Ace Operator / Ас Оператор", reader: "module/combat/ace-operator.mjs::aceOperatorButtonHtml/useAceOperator ← combat/vehicle.mjs (Вираж, Трудный Ландшафт)"
   },
   "pilot.core.dive": {
     label: "Находясь на Высокой высоте, пилот может вместо Виража спуститься на Приземную высоту и избежать всех атак по нему,",
@@ -2144,7 +2144,7 @@ export const CAPABILITIES = {
   },
   "pilot.core.tankCommander": {
     label: "Когда персонаж занимает станцию командира машины, весь экипаж может действовать в Инициативу командира,",
-    source: "Tank Commander / Танковый Командир", reader: ""
+    source: "Tank Commander / Танковый Командир", reader: "module/combat/ace-operator.mjs::useTankCommander — Инициатива экипажа"
   },
   // ── Два оружия
   "dualWield.core.allGunsBlazing": {

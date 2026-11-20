@@ -3845,6 +3845,17 @@ export function registerHooks() {
       });
     });
 
+    // Ас Оператор (combat/ace-operator.mjs): −A.b Провалов вождения за Очко Бесчестия, раз на карточку.
+    html.querySelectorAll(".wh-ace-operator-btn").forEach(btn => {
+      if (cardOnceUsed(message, "aceOperatorUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { useAceOperator } = await import("./combat/ace-operator.mjs");
+        if (await useAceOperator(message, el.dataset)) el.disabled = true;
+      });
+    });
+
     // Непоглощаемый урон в Ходовую техники (Трудный Ландшафт) → Структура
     html.querySelectorAll(".wh-vehicle-track-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {

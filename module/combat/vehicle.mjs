@@ -3,6 +3,7 @@
 // урона по Структуре (броня по стороне). Интеграция с чат-карточками — в том
 // же стиле, что Уклонение/Парирование и Применение урона для персонажей.
 
+import { aceOperatorButtonHtml } from "./ace-operator.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { pedalActive, pedalOf } from "../rules/pedal-to-metal.mjs";
 import { defenceRerollsFor, defenceRerollSectionHtml, defenceTestFlagsFor, jinkApplies } from "../rules/defence-reroll.mjs";
@@ -36,7 +37,7 @@ const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 const SWERVE_CREW_ROLES = ["driver", "pilot", "commander"];
 
 /** Водитель машины (актор со станции), или null — экипаж не назначен. */
-async function swerveDriver(vehicle) {
+export async function swerveDriver(vehicle) {
   const stations = Array.isArray(vehicle?.system?.stations) ? vehicle.system.stations : [];
   for (const role of SWERVE_CREW_ROLES) {
     const st = stations.find(s => String(s?.role ?? "").trim().toLowerCase() === role && s?.uuid);
@@ -158,7 +159,8 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   await postTestCard(actor, {
     icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Operate", base: operate, parts: modParts, threshold, rv }),
-    outcome, sections: [reactionNote, ramNote, leftoverNote, rerollSection]
+    outcome, sections: [reactionNote, ramNote, leftoverNote, rerollSection,
+      (!passed && !rammer) ? aceOperatorButtonHtml(driver, actor, { kind: "swerve", failures: deg, hits: hitsCount }) : ""]
   }, { rolls: [roll, ...ramRolls], flags: rerollFlags });
 }
 
@@ -293,6 +295,8 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
       ${stopped ? `<div class="roll-allout-note">Машина останавливается, зайдя наполовину в область Трудного Ландшафта.</div>` : ""}`;
   }
 
+  // Ас Оператор водителя (combat/ace-operator.mjs): Провалов меньше на A.b за Очко Бесчестия.
+  const aceBtn = passed ? "" : aceOperatorButtonHtml(await swerveDriver(actor), actor, { kind: "terrain", failures: dop, walker: isWalker });
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
     threshold: rollStatLine({
@@ -300,7 +304,7 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
       parts: [`${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""})`],
       threshold, rv
     }),
-    sections: [body]
+    sections: [body, aceBtn]
   }, { rolls: [roll] });
 }
 
