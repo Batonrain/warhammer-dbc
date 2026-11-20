@@ -1353,11 +1353,19 @@ export async function executePsychotest(actor, item, opts) {
           data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}">
           ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcDamage})
         </button>` : "";
+      // Шаблон Взрывной психосилы — та же кнопка, что у оружия (hooks.mjs .wh-place-template-btn):
+      // накрытые становятся целями, а псайкер с Эгидой Воли сразу снимает до ½PR из них.
+      const blastBtn = wp.blastRating > 0 ? `
+        <button class="wh-place-template-btn" type="button" data-shape="circle" data-meters="${wp.blastRating}"
+          data-weapon-name="${esc(item.name)}" data-attacker-uuid="${actor.uuid}" data-item-uuid="${esc(item.uuid)}">
+          🎯 Разместить шаблон Blast(${wp.blastRating} м) и отметить цели
+        </button>` : "";
       damageSection = `
           <div class="roll-damage-section">
             ${hitsNote ? `<div class="roll-threshold" style="font-size:0.82em;">${hitsNote}${profile ? ` Профиль «${atk.label}».` : ""} Вторичные цели (в 2м) — попадания в Торс.</div>` : (profile ? `<div class="roll-threshold" style="font-size:0.82em;">Профиль «${atk.label}».</div>` : "")}
             ${hitLines.join("")}
             ${arcBtn}
+            ${blastBtn}
           </div>`;
     } catch(e) {
       ui.notifications.warn(`Не удалось бросить урон психосилы: ${atk.damage}`);

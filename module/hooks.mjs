@@ -227,6 +227,7 @@ import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { FIRE_DANCE_CARD_KEY, FIRE_DANCE_PANIC_FLAG, hasFireMaze } from "./rules/fire-dance.mjs";
 import { pickFireMazeRounds } from "./combat/fire-maze.mjs";
+import { offerAegisExclusion } from "./combat/aegis-of-will.mjs";
 import { onDefenceRerollClick, rerollDefenceCard, defenceTestOf } from "./combat/defence-reroll.mjs";
 import { resolveTipOfSpearClick } from "./combat/tip-of-spear.mjs";
 import { DEFENCE_REROLLED_FLAG } from "./rules/defence-reroll.mjs";
@@ -2732,6 +2733,8 @@ export function registerHooks() {
         // Пироман (Spray + Flame): укрытия под шаблоном загораются — раньше, чем
         // «никого нет» заканчивает обработку: пустое поле с бочками тоже горит.
         if (ds.pyromaniac === "1") await igniteCoversUnderTemplate(result.region, { attackerName: ds.attacker || "" });
+        // Эгида Воли (rules/aegis-of-will.mjs): псайкер снимает до ½PR накрытых с площадной психосилы.
+        if (result.tokens.length) result.tokens = await offerAegisExclusion(ds.attackerUuid, ds.itemUuid, result.tokens);
         if (!result.tokens.length) {
           ui.notifications.info("В зоне шаблона никого нет.");
           return;

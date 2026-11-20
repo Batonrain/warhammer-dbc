@@ -3194,7 +3194,7 @@ export const CAPABILITIES = {
   // ── Псайкана
   "psyker.core.aegisOfWill": {
     label: "При психосилах, действующих на площадь (аура, психический взрыв, дыхание), псайкер может исключить до ½PR (окр.▲) целей из воздействия.",
-    source: "Aegis of Will / Эгида Воли", reader: ""
+    source: "Aegis of Will / Эгида Воли", reader: "module/rules/aegis-of-will.mjs (aegisApplies, aegisLimit), module/combat/aegis-of-will.mjs::offerAegisExclusion (окно исключения после шаблона), module/hooks.mjs (.wh-place-template-btn), module/sheets/tabs/psychic.mjs (кнопка шаблона Blast у психосилы)"
   },
   "psyker.core.alpha": {
     label: "Персонаж может продвигать свой бPR до 15 независимо от W.b и Cor.b. Существует в основном для персонажей не-Хаоситов.",
