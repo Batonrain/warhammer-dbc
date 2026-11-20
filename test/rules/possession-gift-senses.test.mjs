@@ -39,3 +39,17 @@ describe("Дар: Регенерация", () => {
     expect(regenerationSource(a)).toEqual({ rating: 5, test: "t" });
   });
 });
+
+import { maxHands, multipleArmsAttackBonus } from "../../module/rules/hands.mjs";
+describe("Дар: Братство", () => {
+  it("в Проявлении — ещё пара рук и +1 Атака", () => {
+    const a = possessed("Brotherhood / Дар: Братство", true);
+    expect(maxHands(a)).toBe(4);
+    expect(multipleArmsAttackBonus(a)).toBe(1);
+  });
+  it("без Проявления — обычные две руки", () => {
+    const a = possessed("Brotherhood / Дар: Братство", false);
+    expect(maxHands(a)).toBe(2);
+    expect(multipleArmsAttackBonus(a)).toBe(0);
+  });
+});

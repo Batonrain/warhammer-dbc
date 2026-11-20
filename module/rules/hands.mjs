@@ -21,6 +21,7 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { manifestedGift, itemHasName } from "./predicates.mjs";
 import { isPathOneHandedWeapon } from "./library/paths.mjs";
 import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
 import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
@@ -221,7 +222,15 @@ export function baseHandsFromTraits(actor) {
     .map(t => Number(t.system?.rating) || 0)
     .filter(n => n > 0);
   const base = ratings.length ? Math.max(...ratings) : BASE_HANDS;
-  return base + Math.max(0, Number(actor?.system?.extraHands) || 0);
+  return base + Math.max(0, Number(actor?.system?.extraHands) || 0) + brotherhoodArms(actor);
+}
+
+/** Дар Одержимого «Братство»: доп. пара рук (Multiple Arms +2), пока демон проявлен (Разобрать eyupr). */
+export const BROTHERHOOD_ARMS = 2;
+export function brotherhoodArms(actor) {
+  if (!actor?.system?.possession?.manifested) return 0;
+  const has = [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Brotherhood"));
+  return has && manifestedGift(actor, "Братство") ? BROTHERHOOD_ARMS : 0;
 }
 
 /**
@@ -278,7 +287,7 @@ export function maxHands(actor) {
  * группы «Два оружия».
  */
 export function multipleArmsAttackBonus(actor) {
-  if (![...(actor?.items ?? [])].some(isMultipleArmsTrait)) return 0;
+  if (![...(actor?.items ?? [])].some(isMultipleArmsTrait) && !brotherhoodArms(actor)) return 0;
   return Math.max(0, Math.ceil(maxHands(actor) / 2) - 1);
 }
 

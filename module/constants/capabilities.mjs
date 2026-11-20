@@ -3938,7 +3938,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Единение — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryEdinenie.brotherhood": {
     label: "Доп. пара рук (Multiple Arms +2) на WS/BS/S/A демона; демон призывает Daemonic Armament (Демонетка — клинки/клешни,",
-    source: "Brotherhood / Дар: Братство", reader: ""
+    source: "Brotherhood / Дар: Братство", reader: "ЧАСТИЧНО: module/rules/hands.mjs::brotherhoodArms — +2 руки и Multiple Arms в Проявлении. Daemonic Armament — вручную"
   },
   "elite.talantyOderzhimyh.daryEdinenie.locusOfTheSymbiote": {
     label: "Излучает Локус демона (можно менять); действует на всех дружественных Одержимых в Проявлении. Только для Высших Одержимых.",
