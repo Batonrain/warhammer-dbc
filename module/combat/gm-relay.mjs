@@ -61,6 +61,7 @@ import {
 import { isThrottleReady } from "../rules/cooldown.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { hasLivingBanner } from "../rules/living-banner.mjs";
+import { hasCook, hasAntivenom, hasDeepDetox, hasPlacebo } from "../rules/medic-chemistry.mjs";
 import {
   hasIronCage, hasCellOfShame, hasEmpyreanWhip, hasRunDown, brokenOf, flagSmithIs, isBrokenBySmith, runDownMarkOf, clampRoll,
   RUN_DOWN_STRUCTURE_MAX, RUN_DOWN_HELPLESS_MAX, RUN_DOWN_WP_MAX
@@ -187,6 +188,21 @@ export function checkTargetWrite(op, ctx = {}) {
     if (!hasAbility(ctx.initiator, "ability.singForMe", "Sing For Me!", "talent")) return { ok: false, reason: "у инициатора нет Sing For Me" };
     const self = ctx.target && ctx.initiator && ctx.target.uuid === ctx.initiator.uuid;
     if (!self && !hasRuleFlag(ctx.target, "dreadWail.immune")) return { ok: false, reason: "получатель не поклонник Слаанеш" };
+    return { ok: true };
+  }
+  // Таланты Медика поверх химии (combat/medic-chemistry.mjs): имя препарата и число Раундов/минут;
+  // зависимость, пост-эффект и яд ГМ находит на листе цели сам.
+  if (op.kind === "medicChem") {
+    const fields = { cook: ["drug"], antivenom: ["poison"], deepDetox: ["drug", "stun"], placebo: ["rounds"] }[op.action];
+    if (!fields) return { ok: false, reason: `medicChem: действие вне списка: ${op.action}` };
+    if (Object.keys(op).some(k => k !== "kind" && k !== "action" && !fields.includes(k))) return { ok: false, reason: "medicChem: лишние поля" };
+    const has = { cook: hasCook, antivenom: hasAntivenom, deepDetox: hasDeepDetox, placebo: hasPlacebo }[op.action];
+    if (!has(ctx.initiator)) return { ok: false, reason: `у инициатора нет Таланта (${op.action})` };
+    for (const f of ["drug", "poison"]) {
+      if (fields.includes(f) && (typeof op[f] !== "string" || !op[f].trim() || op[f].length > 200)) return { ok: false, reason: `medicChem: нет ${f}` };
+    }
+    if (fields.includes("rounds") && (!Number.isInteger(op.rounds) || op.rounds < 1 || op.rounds > 30)) return { ok: false, reason: "medicChem: Раунды вне 1…30" };
+    if (fields.includes("stun") && (!Number.isInteger(op.stun) || op.stun < 0 || op.stun > 6)) return { ok: false, reason: "medicChem: Оглушение вне 0…6" };
     return { ok: true };
   }
   if (op.kind === "livingBannerBoon") {
@@ -436,6 +452,10 @@ async function _performTargetWrite(target, op, initiator) {
       "system.energy.value": (Number(en.value) || 0) + plan.toMain,
       ...(plan.toApoc ? { "system.apocryphaEnergy.value": (Number(ap.value) || 0) + plan.toApoc } : {})
     });
+  }
+  if (op.kind === "medicChem") {
+    const { performMedicChemWrite } = await import("./medic-chemistry.mjs");
+    return performMedicChemWrite(target, op, initiator);
   }
   if (op.kind === "livingBannerBoon") {
     const { changeActorInfamy } = await import("../apps/infamy-points.mjs");

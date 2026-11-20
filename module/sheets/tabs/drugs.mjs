@@ -9,6 +9,7 @@ import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields,
          fatigueChangeFields, announceFatigueChange } from "./conditions.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { antivenomImmune } from "../../rules/medic-chemistry.mjs";
 import { stunTaintFor, STUN_TAINT_ACTOR_FLAG } from "../../rules/stun-taint.mjs";
 import { expiryAtFor } from "../../rules/drug-expiry.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
@@ -223,6 +224,17 @@ export async function applyDrug(owner, item, recipient = null) {
     await postTestCard(owner, {
       icon: rollIcon("shield", "#4dffa6"), title: `${esc(item.name)} → ${esc(actor.name)}`,
       threshold: `<div class="roll-threshold">${esc(src)} — иммунитет к ядам.</div>`,
+      rv: "—", outcome: `<span class="roll-success">Яд не действует (доза потрачена, осталось: ${qty}).</span>`
+    }, { sound: false });
+    return;
+  }
+
+  // Противоядие (Талант Медика, rules/medic-chemistry.mjs): 24 часа иммунитета к этому яду.
+  if (sys.drugCategory === "poison" && antivenomImmune(actor, item.name, game.time?.worldTime ?? 0)) {
+    await item.update({ "system.quantity": qty });
+    await postTestCard(owner, {
+      icon: rollIcon("shield", "#4dffa6"), title: `${esc(item.name)} → ${esc(actor.name)}`,
+      threshold: `<div class="roll-threshold">Противоядие — иммунитет к этому яду на 24 часа.</div>`,
       rv: "—", outcome: `<span class="roll-success">Яд не действует (доза потрачена, осталось: ${qty}).</span>`
     }, { sound: false });
     return;

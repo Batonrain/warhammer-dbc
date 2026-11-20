@@ -2772,7 +2772,7 @@ export const CAPABILITIES = {
   // ── Медик
   "medic.core.antivenom": {
     label: "За полудействие, потратив 3 дозы Детокса, 1 Очко Бесчестия и пройдя тест Scholastic Lore (Chymistry)(I)+0,",
-    source: "Antivenom / Противоядие", reader: ""
+    source: "Antivenom / Противоядие", reader: "module/combat/medic-chemistry.mjs::makeAntivenom/giveAntivenom ← sheets/tabs/drugs.mjs::applyDrug (иммунитет к яду, rules/medic-chemistry.mjs::antivenomImmune)"
   },
   "medic.core.butAScratch": {
     label: "Персонаж автоматически проходит тесты на Первую Помощь легко раненным персонажам.",
@@ -2786,7 +2786,7 @@ export const CAPABILITIES = {
   },
   "medic.core.cook": {
     label: "Имея набор разнообразных химикатов, персонаж может потратить Очко Бесчестия и за 5 минут приготовить I.b смесей,",
-    source: "Cook / Повар", reader: ""
+    source: "Cook / Повар", reader: "module/combat/medic-chemistry.mjs::cookMixes/giveCookMix — смесь утоляет зависимость (startWithdrawal)"
   },
   "medic.core.councilium": {
     label: "Персонаж удваивает максимум ассистентов для любого теста лечения (до 4 для Первой Помощи),",
@@ -2795,7 +2795,7 @@ export const CAPABILITIES = {
   },
   "medic.core.deepDetox": {
     label: "Потратив 2 дозы Детокса и 1 дозу Стимма, персонаж тестом Trade(Chymist)+0 готовит дозу глубокой детоксикации против определённого наркотика.",
-    source: "Deep Detox / Глубокая Детоксикация", reader: ""
+    source: "Deep Detox / Глубокая Детоксикация", reader: "module/combat/medic-chemistry.mjs::makeDeepDetox/giveDeepDetox — снятие пост-эффекта и Оглушение"
   },
   "medic.core.fastStitches": {
     label: "Персонаж может провести тест на Первую Помощь как одно полное действие, но считает свой I.b вдвое ниже (окр.▲) для эффективности.",
@@ -2822,7 +2822,7 @@ export const CAPABILITIES = {
   },
   "medic.core.placebo": {
     label: "За полудействие персонаж может ввести что-то другому и пройти комбинированный тест Deceive(I)+0 и Medicae(I)−10,",
-    source: "Placebo / Плацебо", reader: ""
+    source: "Placebo / Плацебо", reader: "module/combat/medic-chemistry.mjs::usePlacebo ← rules/situational.mjs::fatiguePenalty (placeboActive)"
   },
   "medic.core.poisoner": {
     label: "Нанося Избирательное попадание оружием со свойством Toxic или заряженным ядом, цель должна перебрасывать успешные тесты против этого яда,",
@@ -2860,7 +2860,7 @@ export const CAPABILITIES = {
   },
   "medic.core.triage": {
     label: "Персонаж может оказывать медицинский уход до 10×I.b пациентам в смену (8 часов).",
-    source: "Triage / Триаж", reader: ""
+    source: "Triage / Триаж", reader: "module/rules/medic-chemistry.mjs::triageCap ← sheets/tabs/healing.mjs::assignCare"
   },
   // ── Лидерство
   "leadership.core.adjutant": {
