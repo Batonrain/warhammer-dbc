@@ -18,6 +18,7 @@ import { isSerpentine } from "./naga-traits.mjs";
 import { readEnvForScene } from "../constants/scene-nexus.mjs";
 import { baseAspects } from "./melee-base.mjs";
 import { modulesOverLimit } from "./skitarii-modules.mjs";
+import { underBalefulDirge } from "./baleful-dirge.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -647,6 +648,9 @@ export const PREDICATES = {
   // Модулей Скитарии больше лимита ½ T.b (окр.▲) — «штраф –30 на все действия».
   // Таланты Skitarii Alpha (+1), Shifting Mantle (+2 про запас), Cyberdeacon
   // (кибернетика Механикум считается Модулем) — rules/skitarii-modules.mjs.
+  // Под Мрачным Плачем поющего (rules/baleful-dirge.mjs).
+  underBalefulDirge: (actor, ctx, value) => underBalefulDirge(actor) === (value !== false),
+
   skitariiModulesOverLimit: (actor, ctx, value) => modulesOverLimit(actor, {
     alpha: hasNamed(actor, "Skitarii Alpha"),
     mantle: hasNamed(actor, "Shifting Mantle"),

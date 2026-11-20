@@ -2605,7 +2605,7 @@ export const CAPABILITIES = {
   // ── Социальные
   "social.core.balefulDirge": {
     label: "Действие: Свободное (Физическое, Ментальное). До начала следующего Хода персонажа все существа в 30м, слышащие его,",
-    source: "Baleful Dirge / Мрачный Плач", reader: ""
+    source: "Baleful Dirge / Мрачный Плач", reader: "module/combat/baleful-dirge.mjs::useBalefulDirge/resistBalefulDirge (кнопки) + module/rules/baleful-dirge.mjs::underBalefulDirge → predicates.mjs + rules/library/baleful-dirge.mjs (−10 кроме T)"
   },
   "social.core.cluesFromTheCrowds": {
     label: "Персонаж может потратить сутки на расспрос в толпах мира-улья. Целенаправленные поиски дают +10 к тестам Inquiry.",
@@ -2706,7 +2706,7 @@ export const CAPABILITIES = {
   },
   "weaponsmith.core.galvanicResonance": {
     label: "Попадая в цель из Гальванического оружия после любого прицеливания, персонаж узнаёт расчётные Т.b,",
-    source: "Galvanic Resonance / Гальванический Резонанс", reader: ""
+    source: "Galvanic Resonance / Гальванический Резонанс", reader: "module/rules/gunsmith-talents.mjs::galvanicResonanceOn/galvanicResonanceText → заметка карточки атаки (combat/attack.mjs)"
   },
   "weaponsmith.core.igniter": {
     label: "При Избирательном выстреле из Фосфорного оружия оно получает доп. эффекты по цели: Голова — Blinding игнорирует визоры/авточувства;",

@@ -1757,6 +1757,17 @@ export function registerHooks() {
       });
     });
 
+    // Мрачный Плач (Социальные): W+0 слушателя (combat/baleful-dirge.mjs).
+    html.querySelectorAll(".wh-dirge-test-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const listener = requireControlledActor("⚠️ Выберите токен слушателя на сцене!");
+        if (!listener) return;
+        const { resistBalefulDirge } = await import("./combat/baleful-dirge.mjs");
+        await resistBalefulDirge(listener, ev.currentTarget.dataset.singerUuid);
+      });
+    });
+
     // Бастион (Талант Дредноутов): Parry Шагохода против Тарана (combat/dreadnought-talents.mjs).
     html.querySelectorAll(".wh-ram-bastion-btn").forEach(btn => {
       if (cardOnceUsed(message, "ramBastionUsed")) btn.disabled = true;

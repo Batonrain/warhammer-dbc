@@ -562,7 +562,8 @@ describe("общее требование к предикатам", () => {
     // Обучение мехадендритам (Mechadendrite Use), утилитарные дендриты — wdbc-qbyvc.
     mechadendriteTraining: "utility",
     // Перегрузка Модулями Скитарии (rules/skitarii-modules.mjs).
-    skitariiModulesOverLimit: true
+    skitariiModulesOverLimit: true,
+    underBalefulDirge: true
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

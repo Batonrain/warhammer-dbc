@@ -141,7 +141,8 @@ import { tenacityButtonHtml } from "./tenacity.mjs";
 import { executionOfferHtml } from "./execution.mjs";
 import { shockerGrantsShocking, wallopConcussiveRating, sparksAvailable, welderMarksHit, irradiateMode,
   lensTuningShot, LENS_CHARGES_FLAG, litanyReliability, litanyCoversWeapon, LITANY_CLEANED_FLAG,
-  weaponTechShot, WEAPON_TECH_SPENT_FLAG, igniterZone, IGNITER_NOTES } from "../rules/gunsmith-talents.mjs";
+  weaponTechShot, WEAPON_TECH_SPENT_FLAG, igniterZone, IGNITER_NOTES, galvanicResonanceOn, galvanicResonanceText } from "../rules/gunsmith-talents.mjs";
+import { LOCATION_TO_ARMOR } from "./damage.mjs";
 import { WIDE_BURST_RATING_CUT, CAGE_FIRING_RATING_CUT } from "../rules/wide-burst.mjs";
 import { saturationFireCoverShots, sureShotApplies, sureShotDodgePenalty, cageFiringApplies, CAGE_FIRING_EVADE_COST, controlledBurstApplies, controlledBurstRof, eyeOfVengeanceBonus, eyeOfVengeanceAvailable, EYE_OF_VENGEANCE_FLAG, crackShotBonus, cripplingStrikeBonus, doubleTapActive, doubleTapLocation, doubleTapHits, onThisMarkActive, appliedPhysicsShift } from "../rules/gunner-talents.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
@@ -1706,6 +1707,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     (hit && tankHunter.penBonus) ? `🎯 Охотник на Танки: +${tankHunter.penBonus} к Pen (2×I.b, уже учтено) — слабые места этой модели техники опознаны.` : "",
     (!isMelee && wp.spray && ashMantleActive(actor)) ? ashMantleNote(actor) : "",
     (isMelee && hit && fistfulActive(actor)) ? fistfulNote(actor, defenderActor) : "",
+    galvanicResonanceOn(actor, { item, isMelee, hit, aimed: !!aiming && aiming !== "none" })
+      ? galvanicResonanceText(defenderActor?.system?.absorption, Array.from({ length: Math.max(1, hitsCount || 0) }, (_, i) => locForHit(i)), LOCATION_TO_ARMOR) : "",
     (!isMelee && wp.spray && hasFlamerTalent(actor, "friendlyFire")) ? "🔥 Дружественный Огонь: тест отмены Распыления у всех, кто не враг стрелка по токенам, получает +30 (кнопка теста считает сама)." : "",
     torrentOn ? `🌊 Поток: расход боеприпасов удвоен (${ammoSpent}); вместо конуса — шаблон Blast(${torrentBlastRadius(Number(sys.range) || 0)} м) в пределах ${torrentMaxDistance(Number(sys.range) || 0)} м и прямой видимости, попадание по правилам Spray (тест на отмену у каждой цели).` : "",
     (hit && pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame })) ? "🔥 Пироман: цели перебрасывают успешный тест против загорания, а в укрытии — ещё −20 (кнопка «Горение» считает сама). Укрытия под шаблоном (кнопка «Разместить шаблон») загорятся на 1d5+1 Раундов, стоящий в них в конце Хода — тоже." : "",
