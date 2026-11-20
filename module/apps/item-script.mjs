@@ -89,6 +89,7 @@ import { useTankCommander } from "../combat/ace-operator.mjs";
 import { useBoonOfOmnissiah } from "../combat/skitarii-modules.mjs";
 import { useBalefulDirge } from "../combat/baleful-dirge.mjs";
 import { useAria, useOverture } from "../combat/battle-music.mjs";
+import { useMortido } from "../combat/elite-buttons.mjs";
 import { chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL } from "./unnatural-choice.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
@@ -271,7 +272,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
     "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
-    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem", "giveMonodevotantSubstance", "useLivingBanner", "useWormMaster", "fusePossessionWeapon", "usePedalToMetal", "usePutThatOut", "studyPsychicLocus", "useAria", "useOverture", "useBalefulDirge", "useBoonOfOmnissiah", "useTankCommander", "useFanOut", "chooseDreamingPower", "cookMixes", "giveCookMix", "makeAntivenom", "giveAntivenom", "makeDeepDetox", "giveDeepDetox", "usePlacebo", "prepareScapegoat", "useDivineMask", "useBrainwashing", "useTzaangorDisc", "useWarpGifted",
+    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem", "giveMonodevotantSubstance", "useLivingBanner", "useWormMaster", "fusePossessionWeapon", "usePedalToMetal", "usePutThatOut", "studyPsychicLocus", "useMortido", "useAria", "useOverture", "useBalefulDirge", "useBoonOfOmnissiah", "useTankCommander", "useFanOut", "chooseDreamingPower", "cookMixes", "giveCookMix", "makeAntivenom", "giveAntivenom", "makeDeepDetox", "giveDeepDetox", "usePlacebo", "prepareScapegoat", "useDivineMask", "useBrainwashing", "useTzaangorDisc", "useWarpGifted",
     ...extraNames,
     code
   );
@@ -292,7 +293,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
     grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
-    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, studyPsychicLocus, useAria, useOverture, useBalefulDirge, useBoonOfOmnissiah, useTankCommander, useFanOut, chooseDreamingPower, cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo, prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc, useWarpGifted,
+    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, studyPsychicLocus, useMortido, useAria, useOverture, useBalefulDirge, useBoonOfOmnissiah, useTankCommander, useFanOut, chooseDreamingPower, cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo, prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc, useWarpGifted,
     ...extraNames.map(k => extra[k])
   );
 }

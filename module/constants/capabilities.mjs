@@ -4419,7 +4419,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gladiator.dimacherus": {
     label: "Сражается в агрессивном стиле, используя оружие в каждой руке. Если вооружён хотя бы двумя рукопашными оружиями,",
-    source: "Dimacherus / Димахер", reader: ""
+    source: "Dimacherus / Димахер", reader: "module/rules/gladiator-talents.mjs::dimacherusBonus → combat/attack.mjs flatBonus"
   },
   "elite.elitnyeArhetipy.gladiator.malearius": {
     label: "Сражается метеоритным молотом, танцуя на его реактивных струях как артист. Вооружённый метеоритным молотом и не нося броню прочнее AP4 ни на…",
@@ -4986,7 +4986,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.moritat.mortido": {
     label: "Танцует на грани верной гибели. В начале своего Хода, если в его поле зрения есть противники, может потратить все свои Реакции,",
-    source: "Mortido / Мортидо", reader: ""
+    source: "Mortido / Мортидо", reader: "module/combat/elite-buttons.mjs::useMortido (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.moritat.outgun": {
     label: "Винтовки движутся в руках с лёгкостью и грацией пистолетов. Может считать любую винтовку, которую держит в одной руке,",
@@ -5383,7 +5383,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chumnoyMonah.longHandOfCorrosion": {
     label: "Порченная плоть монаха служит лучшим проводником силы паразитов, позволяя им защищать его даже от атак издали,",
-    source: "Long Hand of Corrosion / Длинная Рука Коррозии", reader: ""
+    source: "Long Hand of Corrosion / Длинная Рука Коррозии", reader: "module/combat/putrescence.mjs::putrescenceOffer (hasLongHandOfCorrosion — и стрелковое)"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.putridClarity": {
     label: "Медитируя над природой жизни и смерти, монах глубже проникает в тайны ядов и полнее раскрывает смертоносный потенциал своих паразитов.",
