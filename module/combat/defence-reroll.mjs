@@ -16,6 +16,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { _performDodge, _performParry } from "./defense.mjs";
+import { performWalkerDodge, performWalkerParry } from "./walker.mjs";
+import { _performSwerve } from "./vehicle.mjs";
+import { rerollMountedDodge } from "./mount.mjs";
 import { DEFENCE_TEST_FLAG, DEFENCE_REROLLED_FLAG, defenceRerollsFor, defenceRerollWindowOpen } from "../rules/defence-reroll.mjs";
 import { commitRerollUse } from "./angel-hunters.mjs";
 import { runCardOnce } from "./card-once.mjs";
@@ -34,10 +37,24 @@ async function actorOf(test) {
 }
 
 /** Повторить защиту с карточки как переброс. */
-async function performDefenceReroll(actor, test, label, forcedRv = null) {
-  const run = test.kind === "parry" ? _performParry : _performDodge;
-  await run(actor, { ...(test.opts ?? {}), reroll: { label, ...(forcedRv ? { forcedRv } : {}) }, carry: test.carry ?? null });
+const PERFORMERS = {
+  dodge: _performDodge, parry: _performParry,
+  walkerDodge: performWalkerDodge, walkerParry: performWalkerParry,
+  swerve: _performSwerve, mountDodge: rerollMountedDodge
+};
+
+async function performDefenceReroll(actor, test, label, forcedRv = null, { point = false } = {}) {
+  const run = PERFORMERS[test.kind] ?? _performDodge;
+  // point — переброс за Очко из меню карточки (Манёвр Уклонения у шагохода и Виража, rules/jink.mjs).
+  await run(actor, { ...(test.opts ?? {}), reroll: { label, ...(forcedRv ? { forcedRv } : {}), ...(point ? { point: true } : {}) }, carry: test.carry ?? null });
   return true;
+}
+
+/** Чьи перебросы предлагать: пилот/водитель машины, иначе сам защищавшийся. */
+async function rerollActorOf(test, actor) {
+  if (!test?.rerollActorUuid) return actor;
+  const doc = await fromUuid(test.rerollActorUuid).catch(() => null);
+  return doc?.actor ?? doc ?? actor;
 }
 
 /** Результат d100 исходной защиты — первый бросок карточки. */
@@ -56,9 +73,10 @@ export async function onDefenceRerollClick(message, ruleId) {
   if (!actor) return ui.notifications?.warn("⚠️ Защищавшийся персонаж не найден.");
   if (!game.user?.isGM && !actor.isOwner) return ui.notifications?.warn(`⚠️ Нет прав на «${actor.name}».`);
   if (!defenceRerollWindowOpen(test, game.combat)) return ui.notifications?.warn(WINDOW_CLOSED);
+  const roller = await rerollActorOf(test, actor);
   const attackerUuid = test.opts?.attackerUuid;
   const attackerDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
-  const offer = defenceRerollsFor(actor, test.kind, {
+  const offer = defenceRerollsFor(roller, test.kind, {
     attackerActor: attackerDoc?.actor ?? attackerDoc, isMelee: test.opts?.isMelee ?? true
   }).find(r => r.ruleId === ruleId);
   if (!offer) return ui.notifications?.warn("⚠️ Этот переброс сейчас недоступен (уже потрачен в этом Раунде?).");
@@ -72,7 +90,7 @@ export async function onDefenceRerollClick(message, ruleId) {
     forcedRv = alt;
   }
   return runCardOnce(message, DEFENCE_REROLLED_FLAG, async () => {
-    if (offer.limit) await commitRerollUse(actor, { limit: offer.limit, sourceUuid: offer.source?.uuid ?? "" });
+    if (offer.limit) await commitRerollUse(roller, { limit: offer.limit, sourceUuid: offer.source?.uuid ?? "" });
     return performDefenceReroll(actor, test, offer.mode === "reverse" ? `${offer.label} (обращение)` : offer.label, forcedRv);
   }, "Эту защиту уже перебросили.");
 }
@@ -87,7 +105,7 @@ export async function onDefenceRerollClick(message, ruleId) {
  * @returns {Promise<boolean>} false — карточка не защиты или актор не найден (вызывающий перебросит по-старому);
  *   true — разобрано здесь (переброшено или отказано с уведомлением)
  */
-export async function rerollDefenceCard(message, label, pay = async () => true) {
+export async function rerollDefenceCard(message, label, pay = async () => true, { point = false } = {}) {
   const test = defenceTestOf(message);
   if (!test) return false;
   const actor = await actorOf(test);
@@ -95,6 +113,6 @@ export async function rerollDefenceCard(message, label, pay = async () => true) 
   if (test.passed || test.rerolled) ui.notifications?.warn("⚠️ Перебросить можно только проваленную и ещё не переброшенную защиту.");
   else if (!defenceRerollWindowOpen(test, game.combat)) ui.notifications?.warn(WINDOW_CLOSED);
   else await runCardOnce(message, DEFENCE_REROLLED_FLAG,
-    async () => !!(await pay()) && performDefenceReroll(actor, test, label), "Эту защиту уже перебросили.");
+    async () => !!(await pay()) && performDefenceReroll(actor, test, label, null, { point }), "Эту защиту уже перебросили.");
   return true;
 }

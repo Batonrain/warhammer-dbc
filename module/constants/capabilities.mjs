@@ -1796,7 +1796,8 @@ export const CAPABILITIES = {
   },
   "craft.core.hecatoncheires": {
     label: "Персонаж уменьшает время смены для Крафта/ремонта/обслуживания со стандартных 8 часов на 30 минут за каждый утилитарный мехадендрит или допо…",
-    source: "Hecatoncheires / Гекатонхейр", reader: ""
+    source: "Hecatoncheires / Гекатонхейр",
+    reader: "module/rules/mechadendrites.mjs::craftShiftHours — длина смены 8 ч −0,5 за утилитарный дендрит/лишнюю руку (≥2 ч) строкой на карточке смены Мастерской Крафта (apps/craft-workshop.mjs)"
   },
   "craft.core.journeyman": {
     label: "Преимущество крафтеру от ассистента-Подмастерья — ИСПРАВЛЕНО (wdbc-1rno): раньше был честный флаг без проверки, теперь Мастерская Крафта несёт assistantId (реальная ссылка на актора) — hasJourneyman(assistantActor) читает его настоящий инвентарь Талантов.",
@@ -2108,7 +2109,8 @@ export const CAPABILITIES = {
   },
   "pilot.core.jink": {
     label: "Тратя Очко Бесчестия на переброс Виража или Уклонения шагохода, персонаж делает второй бросок без штрафов за Размер машины и отрицательную М…",
-    source: "Jink / Манёвр Уклонения", reader: ""
+    source: "Jink / Манёвр Уклонения",
+    reader: "module/rules/defence-reroll.mjs::jinkApplies — переброс за Очко из меню карточки Виража (combat/vehicle.mjs::_performSwerve) и Уклонения шагохода (combat/walker.mjs::performWalkerDodge) без штрафа за Размер; Очко платит пилот/водитель (hooks.mjs, rerollActorUuid карточки)"
   },
   "pilot.core.pedalToMetal": {
     label: "Водитель может увеличить SPD машины на свой P.b, но в этот Ход машина не может поворачивать и до начала следующего Хода водителя не может со…",
@@ -2423,7 +2425,7 @@ export const CAPABILITIES = {
   "mechanicum.core.mechadendriteUse": {
     label: "Персонаж получил обучение, посвящение и гипнонаставление по использованию конкретного типа мехадендритов.",
     source: "Mechadendrite Use / Использование Мехадендритов",
-    reader: "module/rules/mechadendrites.mjs::mechadendriteTraining — специализация Weapon/Utility; атака мехадендритом без (Weapon) −20 (weapon-training.mjs::weaponTrainingPenalty mechadendrite:true — attack-dialog.mjs, attack-threshold.mjs); необученный тип дендрита подсвечен на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView)"
+    reader: "module/rules/mechadendrites.mjs::mechadendriteTraining — специализация Weapon/Utility; атака мехадендритом без (Weapon) −20 (weapon-training.mjs::weaponTrainingPenalty mechadendrite:true — attack-dialog.mjs, attack-threshold.mjs); необученный тип дендрита подсвечен на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView); с (Weapon) окно атаки дендритом даёт режимы «сосредоточение» (Multiple Arms по числу дендритов, combat/attack-limit.mjs) и «за Реакцию» (rules/mechadendrites.mjs::dendriteAttackBlock, sheets/attack/dialog.mjs)"
   },
   "mechanicum.core.steelRatio": {
     label: "Персонаж увеличивает максимальное количество изучения Таланта Sound Constitution на I.b.",
@@ -2432,7 +2434,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.testudo": {
     label: "За смену работы (без теста) персонаж может модифицировать щит для установки на мехадендрите (Manipulator, Technical, Plasma Cutter,",
-    source: "Testudo / Тестудо", reader: ""
+    source: "Testudo / Тестудо",
+    reader: "module/rules/testudo.mjs — кнопка «На мехадендрит» у щита на вкладке БОЙ (sheets/tabs/gear.mjs::toggleDendriteShield, предел ½WS.b▲); такой щит руку не занимает (rules/hands.mjs::weaponHandsRequired), не парирует (combat/equipped-melee.mjs) и не атакует (sheets/attack/dialog.mjs), AP даёт как обычно. Смена сектора при Смене Стойки — не моделируется (щиты без секторов)"
   },
   // ── Пугилист
   "pugilist.core.chokehold": {
@@ -4401,7 +4404,8 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gerold.tipOfTheSpear": {
     label: "На острие атаки вдохновляет боевых братьев личным примером. Попав по противнику хотя бы одной атакой ближнего боя,",
-    source: "Tip Of The Spear / Острие Копья", reader: ""
+    source: "Tip Of The Spear / Острие Копья",
+    reader: "module/rules/tip-of-spear.mjs (источник правил «tipOfSpear» в rules/sources.mjs, ограничитель раз в Раунд) + module/combat/tip-of-spear.mjs — кнопка Charm+0 на карточке рукопашного попадания (attack.mjs → attack-card.mjs, hooks.mjs .wh-tip-of-spear-btn), флаг соратникам в той же рукопашной; переброс атаки — радиокнопкой в окне атаки, Парирования — кнопкой на карточке проваленной защиты"
   },
   "elite.elitnyeArhetipy.gerold.villainousHonour": {
     label: "Может выжать из побед наибольшее влияние на соратников. Убив вражеского чемпиона, знаменосца или лорда (убив,",

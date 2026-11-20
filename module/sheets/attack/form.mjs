@@ -100,6 +100,8 @@ export function readAttackForm(form, ammoConds) {
     fullFire:     on("#atk-full-fire"),
     fullFireWith: el("#atk-full-fire-with")?.value || "",
     fullFireRof:  el("#atk-full-fire-rof")?.value || "single",
+    // Мехадендриты в бою (rules/mechadendrites.mjs): "" | "focus" | "reaction".
+    dendriteMode: el("#atk-dendrite-mode")?.value || "",
     dmgBonus:   parseInt(el("#atk-dmg-bonus")?.value) || 0,
     coverMod:   parseInt(el("#atk-cover")?.value) || 0,
     // Штраф стрельбы с седла (wdbc-8nz6) — раньше нигде не применялся к

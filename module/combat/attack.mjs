@@ -80,6 +80,8 @@ import { suppressionTestMod }                         from "./suppression.mjs";
 import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair, firstHandHitNow, tyranthikosDiceNow }
                                                       from "../rules/dual-wield-talents.mjs";
 import { attackedThisTurn }                           from "../rules/turn-flags.mjs";
+import { tipOfSpearOffered } from "../rules/tip-of-spear.mjs";
+import { tipOfSpearButtonHtml } from "./tip-of-spear.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { attackEntropyRating } from "./touch-of-entropy.mjs";
 import { touchOfPainActive } from "./touch-of-pain.mjs";
@@ -2325,6 +2327,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       })
         ? tenacityButtonHtml({ attackerUuid: actor.uuid || "", weaponUuid: item.uuid || "", baseKey: opts.baseKey || "", technique: opts.techniqueOpts?.technique || "", hit: !!hit })
         : "",
+      // Острие Копья (Талант Герольда, rules/tip-of-spear.mjs): рукопашное попадание — Charm+0 раздать перебросы соратникам.
+      tipOfSpearHtml: tipOfSpearOffered(actor, { isMelee, hit }) ? tipOfSpearButtonHtml(actor.uuid || "") : "",
       // Казнь (Черта Мастера Казней, combat/execution.mjs): двуручное оружие в двуручном хвате — кнопка «ещё атака, если цель жива».
       executionHtml: executionOfferHtml(actor, {
         isMelee, weapon: item, gripKey: opts.gripKey, defender: defenderActor,

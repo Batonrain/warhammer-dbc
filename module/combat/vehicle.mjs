@@ -4,6 +4,7 @@
 // же стиле, что Уклонение/Парирование и Применение урона для персонажей.
 
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
+import { defenceRerollsFor, defenceRerollSectionHtml, defenceTestFlagsFor, jinkApplies } from "../rules/defence-reroll.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -46,7 +47,7 @@ async function swerveDriver(vehicle) {
   return null;
 }
 
-export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", ramContest = false } = {}) {
+export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", ramContest = false, reroll = null } = {}) {
   if (actor.type !== "vehicle") {
     return ui.notifications.warn("⚠️ Вираж может совершать только Техника — выберите токен машины.");
   }
@@ -60,8 +61,8 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   // Вираж по Operate машины, как было, с честной пометкой в карточке.
   const driver = await swerveDriver(actor);
   // Ярость водителя: «не может совершать Избегания» — Вираж тоже Избегание (Реакция не тратится).
-  if (driver && await rageAvoidanceRefusal(driver, "evade", "Вираж")) return;
-  if (driver && !(await spendReaction(driver, { forDefense: true, attackId }))) {
+  if (!reroll && driver && await rageAvoidanceRefusal(driver, "evade", "Вираж")) return;
+  if (!reroll && driver && !(await spendReaction(driver, { forDefense: true, attackId }))) {
     return postTestCard(actor, {
       icon: rollIcon("warp", "#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
       outcome: outcomeHtml(false, `У водителя «${esc(driver.name)}» не осталось Реакций — Вираж невозможен.`)
@@ -71,10 +72,14 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
     ? `<div class="roll-defense-note">Реакцию тратит водитель — ${esc(driver.name)}.</div>`
     : `<div class="roll-defense-note">Экипаж не назначен — Реакция не списана (посадите водителя на вкладке «Экипаж»).</div>`;
   const operate   = Number(actor.system.operate) || 0;
-  const swerveMod = Number(der.swerveMod) || 0;
+  // Манёвр Уклонения (Jink): переброс за Очко — без штрафа за Размер.
+  const jink = jinkApplies(driver, reroll);
+  const sizePenalty = -(Number(actor.system.size) || 0) * 10;
+  const swerveMod = (Number(der.swerveMod) || 0) - (jink ? sizePenalty : 0);
   const threshold = operate + swerveMod + extraMod;
 
-  const roll   = await new Roll("1d100").evaluate();
+  // Переброс (Разобрать f6bti, combat/defence-reroll.mjs): «обращение» подставляет то же число с переставленными цифрами.
+  const roll   = await new Roll(reroll?.forcedRv ? String(reroll.forcedRv) : "1d100").evaluate();
   const rv     = roll.total;
   const swervePassed = rv <= threshold;
   const deg    = swervePassed
@@ -115,9 +120,10 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   const modParts = [];
-  modParts.push(`Размер ${sgn(-(Number(actor.system.size) || 0) * 10)}`);
+  modParts.push(jink ? "Размер не учитывается (Манёвр Уклонения)" : `Размер ${sgn(sizePenalty)}`);
   if (der.chassisType === "tracked") modParts.push("гусеничная −10");
   if (extraMod !== 0)                modParts.push(`мод ${sgn(extraMod)}`);
+  if (reroll)                        modParts.push(`Переброс: ${reroll.label || ""}`);
 
   let outcome;
   if (swervePassed && !passed) {
@@ -136,11 +142,19 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
     ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
     : "";
 
+  // Перебросы Черт/Талантов водителя на провале Виража (Разобрать f6bti). Встречный против Тарана не
+  // перебрасывается кнопкой: второй бросок Тарана повторился бы вместе с ним.
+  const roller = driver ?? actor;
+  const attackerDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const rerollSection = rammer ? "" : defenceRerollSectionHtml(defenceRerollsFor(roller, "swerve", {
+    attackerActor: attackerDoc?.actor ?? attackerDoc, isMelee: false, passed, rerolled: !!reroll }), "swerve");
+  const rerollFlags = rammer ? undefined : defenceTestFlagsFor(actor, "swerve",
+    { extraMod, hitsCount, attackerUuid, attackId }, null, { passed, rerolled: !!reroll, rerollActor: roller });
   await postTestCard(actor, {
     icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Operate", base: operate, parts: modParts, threshold, rv }),
-    outcome, sections: [reactionNote, ramNote, leftoverNote]
-  }, { rolls: [roll, ...ramRolls] });
+    outcome, sections: [reactionNote, ramNote, leftoverNote, rerollSection]
+  }, { rolls: [roll, ...ramRolls], flags: rerollFlags });
 }
 
 // ─── Тест Трудного Ландшафта ──────────────────────────────────────────────────

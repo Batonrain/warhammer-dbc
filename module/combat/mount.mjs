@@ -30,6 +30,7 @@ import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { spendReaction, spendActionPoints, canSpendActionPoints }  from "./action-economy.mjs";
 import { DRAGON_KNIGHT_FLAG, dragonKnightValue, dragonKnightEvasionBonus } from "../rules/dragon-knight.mjs";
 import { _noReactionCard } from "./defense.mjs";
+import { defenceRerollsFor, defenceRerollSectionHtml, defenceTestFlagsFor } from "../rules/defence-reroll.mjs";
 import { avoidanceVerdict } from "./full-attack-lock.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
@@ -72,8 +73,8 @@ export function speedKeyOf(rider) {
  * диапазон на всех, а не resolveTest под каждый из шести разных случаев.
  * `critLine` — готовая строка карточки, пустая, если не сработало.
  */
-async function rollAgainst(threshold) {
-  const roll = await new Roll("1d100").evaluate();
+async function rollAgainst(threshold, forcedRv = null) {
+  const roll = await new Roll(forcedRv ? String(forcedRv) : "1d100").evaluate();
   const rv = roll.total;
   const passed = rv <= threshold;
   const deg = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
@@ -121,12 +122,14 @@ async function rollWithKind(actor, baseEff, tk, ctx) {
  * бросок, переброс, крит, исход, свои блоки). Звук кубика — только когда
  * бросок действительно был, как и раньше.
  */
-async function postCard(actor, card, rolls = [], outcome = null) {
+async function postCard(actor, card, rolls = [], outcome = null, extraFlags = null) {
   // Откат последствий провала (Шок Инфернальной Воли и т.п.) — во флаг карточки, чтобы переброс за Очко и
   // «Провал → успех» могли его снять (rules/fail-undo.mjs, task-e30b).
   const failUndo = cardFailUndo(actor, outcome?.failUndo);
+  // extraFlags — флаги переброса защиты (rules/defence-reroll.mjs::defenceTestFlagsFor).
+  const flags = { "warhammer-dbc": { ...(extraFlags?.["warhammer-dbc"] ?? {}), ...(failUndo ? { failUndo } : {}) } };
   await postTestCard(actor, card, { rolls, sound: rolls.length > 0,
-    ...(failUndo ? { flags: { "warhammer-dbc": { failUndo } } } : {}) });
+    ...(Object.keys(flags["warhammer-dbc"]).length ? { flags } : {}) });
 }
 
 // ── Кто и на чём едет ─────────────────────────────────────────────────────
@@ -794,7 +797,18 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
 
 // wdbc-8zi (п.6): объект опций для extraMod/hitsCount/attackerUuid — тот же
 // приём и порядок полей, что у _performDodge/_performParry/_performSwerve.
-async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", evadeCost = 1 } = {}) {
+/**
+ * Переброс Уклонения верхом с карточки (Разобрать f6bti, combat/defence-reroll.mjs):
+ * та же цель попадания (carry.target), без второй Реакции.
+ */
+export async function rerollMountedDodge(rider, { reroll = null, carry = null, ...opts } = {}) {
+  const ctx = await mountContext(rider);
+  if (!ctx) return null;
+  return resolveMountedDodge(rider, ctx, carry?.target ?? "mount", { ...opts, reroll });
+}
+
+async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", evadeCost = 1, reroll = null } = {}) {
+  const callOpts = { extraMod, hitsCount, attackerUuid, attackId, evadeCost };
   // Запрет Физических Избеганий после Полной Атаки действует и верхом (rules/full-attack-lock.mjs);
   // В Ногу с Моментом даёт −10 к Уклонению и здесь. Реакция при отказе не тратится.
   const fullAtkLock = avoidanceVerdict(rider, "dodge");
@@ -807,7 +821,7 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
   extraMod += fullAtkLock.penalty;
   // Уклонение — Реакция (стр. 12) и верхом тоже: та же трата, что в
   // _performDodge, иначе конный всадник уклонялся бы бесплатно без лимита.
-  if (!(await spendReaction(rider, { forDefense: true, attackId }))) return _noReactionCard(rider, "Уклонение");
+  if (!reroll && !(await spendReaction(rider, { forDefense: true, attackId }))) return _noReactionCard(rider, "Уклонение");
   const { mount, control } = ctx;
   const chars = rider.system.characteristics ?? {};
   const rank = rider.system.skills?.dodge?.rank ?? "untrained";
@@ -832,7 +846,7 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
   const baseThreshold = ctrlThreshold === null ? dodgeThreshold : combinedThreshold(dodgeThreshold, ctrlThreshold);
   const threshold = baseThreshold + dragonBonus;
 
-  const { roll, rv, passed, deg, critLine } = await rollAgainst(threshold);
+  const { roll, rv, passed, deg, critLine } = await rollAgainst(threshold, reroll?.forcedRv);
   const rolls = [roll];
   const lower = ctrlThreshold !== null && ctrlThreshold < dodgeThreshold ? control.label : "Уклонение";
 
@@ -859,6 +873,7 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
     ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
     : "";
 
+  const attackerDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
   await postCard(rider, {
     icon: rollIcon("run"), title: `Уклонение верхом — ${esc(rider.name)}`,
     threshold: `<div class="roll-threshold">Цель попадания: <b>${riderHit ? "всадник" : esc(mount.name)}</b></div>`,
@@ -871,8 +886,10 @@ async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount
       })
     ],
     critLine, outcome,
-    sections: [leftoverNote]
-  }, rolls);
+    sections: [leftoverNote, reroll ? `<div class="roll-defense-note">Переброс: ${esc(reroll.label || "")}</div>` : "",
+      defenceRerollSectionHtml(defenceRerollsFor(rider, "mountDodge", {
+        attackerActor: attackerDoc?.actor ?? attackerDoc, isMelee: true, passed, rerolled: !!reroll }), "mountDodge")]
+  }, rolls, null, defenceTestFlagsFor(rider, "mountDodge", callOpts, { target }, { passed, rerolled: !!reroll }));
 }
 
 // ── Куда пришлось попадание ───────────────────────────────────────────────

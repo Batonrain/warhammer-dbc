@@ -33,6 +33,8 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
+import { mechatendrilCraftBonus, craftShiftHours, CRAFT_SHIFT_HOURS } from "../rules/mechadendrites.mjs";
+import { maxHands } from "../rules/hands.mjs";
 import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
          monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, masterEngineseerAutoEligible,
          masterEngineseerAutoSuccesses, masterEngineseerNoParts, hasMasterEngineseer, destroyedWeaponsOf,
@@ -642,7 +644,14 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // Мастер-Технопровидец (Талант, 3-cc96 п.11): +10 к Tech-Use на Крафт — когда
     // Tech-Use ведущий Навык теста (см. masterEngineseerBonus).
     const engineseerBonus = masterEngineseerBonus(crafter, proj.mode, R.combined.primary?.value);
-    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus + engineseerBonus;
+    // Мехатендрил (wdbc-qbyvc): +5 к Крафту за каждый установленный, нужен Mechadendrite Use (Utility).
+    const tendrilBonus = mechatendrilCraftBonus(crafter, proj.mode);
+    // Гекатонхейр (Разобрать tfgq9): смена короче 8 ч на 30 мин за утилитарный дендрит/лишнюю руку, не меньше 2 ч.
+    const shiftHours = proj.mode === "research" ? CRAFT_SHIFT_HOURS
+      : craftShiftHours(crafter, { extraArms: Math.max(0, maxHands(crafter) - 2) }) + (slowBonus ? 4 : 0);
+    const shiftHoursNote = shiftHours !== CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)
+      ? `Гекатонхейр: смена длится ${String(shiftHours).replace(".", ",")} ч вместо ${CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)}` : "";
+    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus + engineseerBonus + tendrilBonus;
 
     // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
     // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
@@ -802,6 +811,8 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${labBonus ? `<div class="wh-craft-roll-line ok">Лаборатория Гемункула: +${labBonus} к тесту</div>` : ""}
           ${innovationBonus ? `<div class="wh-craft-roll-line ok">Инновация: +${innovationBonus} к тесту</div>` : ""}
           ${R.mods?.hookUpMod ? `<div class="wh-craft-roll-line">Крючок: ${R.mods.hookUpMod} к тесту — готовый наркотик отметьте «Крючок» на его листе (лимит доз ÷2 ▼, принимающие перебрасывают успешный тест Зависимости).</div>` : ""}
+          ${tendrilBonus ? `<div class="wh-craft-roll-line ok">Мехатендрилы: +${tendrilBonus} к тесту</div>` : ""}
+          ${shiftHoursNote ? `<div class="wh-craft-roll-line ok">${shiftHoursNote}</div>` : ""}
           ${engineseerBonus ?`<div class="wh-craft-roll-line ok">Мастер-Технопровидец: +${engineseerBonus} к тесту (Tech-Use)</div>` : ""}
           ${workaholicNote ? `<div class="wh-craft-roll-line ok">Трудоголик: штраф за монотонность не применяется</div>` : ""}
           ${noPartsNote ? `<div class="wh-craft-roll-line ok">${noPartsNote}</div>` : ""}

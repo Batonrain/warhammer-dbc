@@ -558,7 +558,9 @@ describe("общее требование к предикатам", () => {
     // База рукопашной атаки, держащаяся на акторе (system.meleeBase).
     meleeBaseIs: ["charge"],
     // Чувство, выбранное в окне теста Внимательности (ctx.sense).
-    testSense: ["hearing"]
+    testSense: ["hearing"],
+    // Обучение мехадендритам (Mechadendrite Use), утилитарные дендриты — wdbc-qbyvc.
+    mechadendriteTraining: "utility"
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

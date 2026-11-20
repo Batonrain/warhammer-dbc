@@ -186,7 +186,7 @@
         <tbody>
           {{#if gearImplants.length}}
             {{#each gearImplants as |im|}}
-            <tr class="item-row" data-item-id="{{im.id}}"><td class="item-name-cell">{{im.name}}</td><td>{{im.category}}</td><td>{{im.quality}}</td><td class="implant-effect-cell">{{im.effect}}</td></tr>
+            <tr class="item-row" data-item-id="{{im.id}}"><td class="item-name-cell">{{im.name}}{{#if im.notInstalled}} <span class="effect-state-badge implant-not-installed" title="Без операции Хирургеона имплант не действует, не виден на фигуре и не занимает порты">не установлен</span>{{#if @root.canMarkImplants}} <button type="button" class="implant-mark-installed" data-item-id="{{im.id}}" title="ГМ: считать установленным без операции (персонаж собран до Хирургеона)">✓ Установлен</button>{{/if}}{{/if}}</td><td>{{im.category}}</td><td>{{im.quality}}</td><td class="implant-effect-cell">{{im.effect}}</td></tr>
             {{/each}}
           {{else}}
             <tr class="items-empty"><td colspan="4"><em>Нет имплантов — перетащите из библиотеки</em></td></tr>

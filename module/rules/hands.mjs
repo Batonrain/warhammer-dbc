@@ -161,7 +161,10 @@ function effectiveRangedGripHands(item, actor, auto) {
 export function weaponHandsRequired(item, actor = item?.parent) {
   if (!item || item.type !== "weapon") return 0;
   const sys = item.system || {};
-  if (isHandShield(item)) return 1;
+  // Тестудо (rules/testudo.mjs): щит на мехадендрите руку не занимает. Флаг читается
+  // строкой — импорт testudo.mjs сюда не нужен.
+  if (isHandShield(item)) return (item.flags?.["warhammer-dbc"]?.dendriteMounted
+    ?? item.getFlag?.("warhammer-dbc", "dendriteMounted")) ? 0 : 1;
   // Рука Смерти: сросшееся оружие работает одной рукой, даже если профиль
   // требовал двух (стр. 46) — гейт до ветвления мелейное/дальнобойное, оба
   // случая читают sys.grips/RANGED_CLASS_HANDS ниже, которых это правило не

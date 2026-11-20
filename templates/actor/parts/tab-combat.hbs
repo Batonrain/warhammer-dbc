@@ -687,6 +687,7 @@
             <button type="button" class="shield-hand-btn {{#if (eq w.shieldHand 'left')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="left" title="Щит в левой руке">Л</button>
             <button type="button" class="shield-hand-btn {{#if (eq w.shieldHand 'right')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="right" title="Щит в правой руке">П</button>
             <button type="button" class="shield-raise-btn {{#if w.shieldRaised}}is-on{{/if}}" data-item-id="{{w.id}}" title="Поднять щит: прикрывает зоны «в скобках» (пригнуться/закрыться), но это осознанное действие">{{#if w.shieldRaised}}Щит поднят{{else}}Поднять щит{{/if}}</button>
+            {{#if w.canDendriteShield}}<button type="button" class="shield-dendrite-btn {{#if w.shieldDendrite}}is-on{{/if}}" data-item-id="{{w.id}}" title="Тестудо: щит, переделанный за смену работы под мехадендрит, прикрывает как на руке и руку не занимает, но им нельзя атаковать и Парировать. Активных — не больше ½WS.b.">{{#if w.shieldDendrite}}На мехадендрите{{else}}На мехадендрит{{/if}}</button>{{/if}}
           </td> </tr> {{/if}} {{/each}}
         {{else}}
           <tr class="items-empty"> <td colspan="8"><em>Нет рукопашного оружия (отметьте «Экипировано» в Снаряжении)</em></td> </tr> {{/if}}

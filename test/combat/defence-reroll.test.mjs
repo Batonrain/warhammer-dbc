@@ -339,3 +339,38 @@ describe("Парирование: кнопка на карточке и пере
     expect(a.system.reactions.value).toBe(reactions);
   });
 });
+
+// Разобрать f6bti: защита шагохода (пилот), Вираж техники (водитель), Уклонение верхом.
+import { defenceTestFlagsFor } from "../../module/rules/defence-reroll.mjs";
+
+describe("перебросы защиты шагохода, Виража и верхом (f6bti)", () => {
+  it("те же перебросы области «evasion» предлагаются для новых видов защиты", () => {
+    withRules(evasionReroll());
+    const a = defender();
+    for (const kind of ["walkerDodge", "walkerParry", "mountDodge", "swerve"]) {
+      expect(defenceRerollsFor(a, kind, { passed: false }).map(r => r.label)).toEqual(["Соларит"]);
+      expect(defenceRerollsFor(a, kind, { passed: true })).toEqual([]);
+    }
+    expect(defenceRerollSectionHtml(defenceRerollsFor(a, "swerve"), "swerve")).toContain("Перебросить Вираж");
+  });
+
+  it("флаги карточки машины помнят, чьи перебросы предлагать", () => {
+    const vehicle = { uuid: "Actor.walker" }, pilot = { uuid: "Actor.pilot" };
+    const t = defenceTestFlagsFor(vehicle, "walkerDodge", { extraMod: 0 }, null,
+      { passed: false, rerollActor: pilot })["warhammer-dbc"].defenceTest;
+    expect(t.actorUuid).toBe("Actor.walker");
+    expect(t.rerollActorUuid).toBe("Actor.pilot");
+    expect(t.kind).toBe("walkerDodge");
+  });
+});
+
+import { jinkApplies } from "../../module/rules/defence-reroll.mjs";
+
+describe("Манёвр Уклонения (Jink)", () => {
+  const pilot = { items: [{ type: "talent", name: "Jink / Манёвр Уклонения" }] };
+  it("только переброс за Очко и только с Талантом", () => {
+    expect(jinkApplies(pilot, { point: true })).toBe(true);
+    expect(jinkApplies(pilot, { label: "Соларит" })).toBe(false);
+    expect(jinkApplies({ items: [] }, { point: true })).toBe(false);
+  });
+});

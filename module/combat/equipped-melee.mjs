@@ -8,6 +8,8 @@
 // а меч на поясе игнорировался. Интегральные берутся только фолбэком, когда
 // другого надетого рукопашного нет.
 
+import { isDendriteShield } from "../rules/testudo.mjs";
+
 const FLAG = "warhammer-dbc";
 
 /** Интегральная атака (безоружный удар, выданный расой/Чертой)? */
@@ -19,6 +21,8 @@ export function isIntegralAttack(item) {
 export function equippedMeleeWeapon(actor) {
   const melee = (actor?.items ?? []).filter(i =>
     i.type === "weapon" && i.system.equipped &&
-    (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown"));
+    (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown") &&
+    // Тестудо: щит на мехадендрите прикрывает, но им нельзя атаковать и Парировать.
+    !isDendriteShield(i));
   return melee.find(i => !isIntegralAttack(i)) ?? melee[0] ?? null;
 }

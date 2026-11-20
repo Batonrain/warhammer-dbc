@@ -225,6 +225,7 @@ import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, R
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
 import { onDefenceRerollClick, rerollDefenceCard, defenceTestOf } from "./combat/defence-reroll.mjs";
+import { resolveTipOfSpearClick } from "./combat/tip-of-spear.mjs";
 import { DEFENCE_REROLLED_FLAG } from "./rules/defence-reroll.mjs";
 import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
 import { markFrenzyExited } from "./combat/frenzy.mjs";
@@ -757,12 +758,13 @@ export function registerHooks() {
     html.querySelectorAll(".wh-loyalty-seize-btn").forEach(btn => {
       btn.addEventListener("click", async ev => {
         ev.preventDefault();
+        const el = ev.currentTarget;
         if (!game.user.isGM) { ui.notifications?.warn("Забрать Миньона под контроль может только ГМ."); return; }
-        const actor = await fromUuid(ev.currentTarget.dataset.actorUuid).catch(() => null);
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
         if (!actor) { ui.notifications?.warn("Миньон не найден."); return; }
         const { seizeMinion } = await import("./combat/minion-gm-control.mjs");
         if (await seizeMinion(actor)) {
-          ev.currentTarget.disabled = true;
+          el.disabled = true;
           ui.notifications?.info(`${actor.name}: под контролем ГМа до конца боя.`);
         }
       });
@@ -1051,6 +1053,19 @@ export function registerHooks() {
     // Упорство (Талант «Рукопашных», combat/tenacity.mjs): повтор единственной одиночной рукопашной атаки Хода,
     // не нанёсшей урона — тем же оружием, с той же Базой и Приёмом, по той же цели (цели не сбрасываются).
     // Свободное действие: tenacityRepeat снимает ОД и Лимит Атак в окне, и не порождает нового повтора.
+    // Острие Копья (Талант Герольда, combat/tip-of-spear.mjs): Charm+0 раз на карточку — перебросы соратникам.
+    html.querySelectorAll(".wh-tip-of-spear-btn").forEach(btn => {
+      if (cardOnceUsed(message, "tipOfSpearUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        await runCardOnce(message, "tipOfSpearUsed", () => resolveTipOfSpearClick(el.dataset.attackerUuid || ""),
+          "Острие Копья по этой атаке уже применено.");
+        el.disabled = cardOnceUsed(message, "tipOfSpearUsed");
+      });
+    });
+
     html.querySelectorAll(".wh-tenacity-btn").forEach(btn => {
       if (cardOnceUsed(message, TENACITY_CARD_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async ev => {
@@ -4459,6 +4474,12 @@ function _attachFateContextMenu(message, html) {
     if (!actor) {
       actor = canvas.tokens?.controlled?.[0]?.actor;
     }
+    // Защита машины (шагоход, Вираж — combat/defence-reroll.mjs): бросал пилот/водитель, его Очко и платит.
+    const machineRoller = defenceTestOf(message)?.rerollActorUuid;
+    if (machineRoller) {
+      const rollerDoc = fromUuidSync?.(machineRoller);
+      actor = rollerDoc?.actor ?? rollerDoc ?? actor;
+    }
 
     // Очки судьбы (название зависит от персонажа: Судьба/Бесчестье/Боль)
     const fate     = actor?.system?.fate;
@@ -4634,7 +4655,7 @@ function _attachFateContextMenu(message, html) {
       // переброшено, тот же Раунд) — отказ Очко не тратит.
       if (defenceTestOf(message)) {
         let paid = null;
-        if (await rerollDefenceCard(message, `${ft.one}${payerNote}`, async () => (paid = await spend()))) {
+        if (await rerollDefenceCard(message, `${ft.one}${payerNote}`, async () => (paid = await spend()), { point: true })) {
           if (paid) ui.notifications.info(`✨ ${actor.name} тратит ${ft.one} на переброс защиты${payerNote}! Осталось: ${paid.poolValue}`);
           return;
         }

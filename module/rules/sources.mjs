@@ -53,6 +53,7 @@ import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { healMistrustRules } from "./warp-touched.mjs";
 import { woundAuraRules } from "./wound-in-reality.mjs";
 import { noiseMarineRules } from "./noise-marine.mjs";
+import { tipOfSpearRules } from "./tip-of-spear.mjs";
 import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
 import { darkApostleRules } from "./dark-apostle.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
@@ -259,6 +260,10 @@ registerRuleSource("legacyExcess", a => legacyExcessRules(a));
 // стрелком на атаки по нему до начала его следующего Хода. См. заголовок
 // rules/legacy-weapon.mjs::legacyGuardianRules.
 registerRuleSource("legacyGuardian", () => legacyGuardianRules());
+
+// Острие Копья (Талант Герольда, Разобрать stnbt): переброс атаки/Парирования, выданный
+// Герольдом соратникам по рукопашной до начала его следующего Хода. См. rules/tip-of-spear.mjs.
+registerRuleSource("tipOfSpear", a => tipOfSpearRules(a));
 
 // Наследие Крови, Оружие Наследия (wdbc-1rno.35, стр. 427): +10 на встречный
 // тест против психической угрозы (психосилы/выжигание души — 2 из 4
