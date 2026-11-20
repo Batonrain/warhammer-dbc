@@ -38,6 +38,7 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { possessionWeaponGiftRules } from "./possession-weapon-gifts.mjs";
 import { rageRules } from "./rage.mjs";
 import { socialTalentRules } from "./social-talents.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
@@ -188,6 +189,10 @@ registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 // переброс встречного социального теста против цели, которую персонаж
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Дары Одержимого для оружия (Разобрать m9zer): атака слитым оружием в Проявлении
+// получает Reinforced и свойства Даров-усилителей — rules/possession-weapon-gifts.mjs.
+registerRuleSource("possessionWeaponGifts", (a, ctx) => possessionWeaponGiftRules(a, ctx));
 
 // Ярость / Frenzy (Берсерк, Sahara 3-861e): −20 на тесты BS, I и F, пока
 // system.inRage. Читает СОСТОЯНИЕ, а не Талант — Ярость приходит и от

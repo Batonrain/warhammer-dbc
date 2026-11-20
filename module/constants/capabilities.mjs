@@ -3984,7 +3984,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Оружие — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryOruzhie.fusion": {
     label: "Рукопашное оружие сливается с рукой: Reinforced, нельзя менять хват, двуручное — одной рукой, получает Дары-усилители.",
-    source: "Fusion / Дар: Слияние", reader: ""
+    source: "Fusion / Дар: Слияние", reader: "module/rules/possession-weapon-gifts.mjs — кнопка выбора оружия (combat/possession-fusion.mjs), Reinforced в Проявлении"
   },
   "elite.talantyOderzhimyh.daryOruzhie.gunArm": {
     label: "Пистолет/винтовка втягивается в предплечье: одной рукой без штрафов, не тратит боеприпасы; Reinforced, Wrist, Дары-усилители.",
@@ -4010,19 +4010,19 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Усилители — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryUsiliteli.bladesOfTheSoul": {
     label: "Оружие получает Warp Weapon, но урон уменьшается до поглощения вдвое (окр.▲).",
-    source: "Blades of the Soul / Дар: Лезвия Душ", reader: ""
+    source: "Blades of the Soul / Дар: Лезвия Душ", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Warp Weapon слитому оружию в Проявлении; половина урона вручную"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.daemonicVenom": {
     label: "Оружие получает Felling (½Cor.b, окр.▲) и Toxic (½Cor.b, окр.▲).",
-    source: "Daemonic Venom / Дар: Демонический Яд", reader: ""
+    source: "Daemonic Venom / Дар: Демонический Яд", reader: "module/rules/possession-weapon-gifts.mjs — Felling и Toxic (½Cor.b) слитому оружию в Проявлении"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.lightningField": {
     label: "Оружие: +2 Dmg и Pen, наносит E, получает Power Field.",
-    source: "Lightning Field / Дар: Молниевое Поле", reader: ""
+    source: "Lightning Field / Дар: Молниевое Поле", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Power Field слитому оружию в Проявлении; +2 Dmg/Pen и тип E вручную"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.warpflame": {
     label: "Оружие наносит E(Fl) и получает Flame.",
-    source: "Warpflame / Дар: Варп-Пламя", reader: ""
+    source: "Warpflame / Дар: Варп-Пламя", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Flame слитому оружию в Проявлении; тип E(Fl) вручную"
   },
   // ── Таланты_одержимых\Таланты_архетипа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.talantyArhetipa.greaterPossessed": {
