@@ -43,6 +43,8 @@ import { evaluateAssistants, tallyAssistants, reserveVictims, maxReserveAssistan
 import { DARK_SEER_FLAG, darkSeerAdvantage } from "../rules/dark-seer.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { hasWarprod, warprodPick, splitCostDice, ritualCostText, scapegoatFor, divineMaskGod,
+         brainwashedAssistants, brainwashedList, SCAPEGOAT_FLAG, BRAINWASHED_FLAG } from "../rules/ritual-talents.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
 
@@ -78,7 +80,10 @@ export function psykerMaxBonus(actor) {
 export function autoSummonMods(actor, god) {
   if (!god || !WARP_GODS_MAP[god]) return null;
   const mark = hasRuleFlag(actor, `mark.${god}`);
-  const patronGod = actor?.system?.patronGod || "";
+  // Божественная Маска (rules/ritual-talents.mjs): на Cor.b часов покровительство выбранного Бога
+  // «для ритуалов и демонического владычества» — подменяет собственное на это время.
+  const mask = divineMaskGod(actor, globalThis.game?.time?.worldTime ?? 0);
+  const patronGod = mask?.god || actor?.system?.patronGod || "";
   // Не список «кто чей враг» вторым экземпляром, а вопрос матрице: если книга
   // однажды разведёт богов иначе, менять придётся её одну.
   const enemyGod = WARP_GODS
@@ -313,6 +318,61 @@ async function defaultVeilShiftFn(delta, note) {
   game.socket?.emit("system.warhammer-dbc", { action: "veilShift", userId: game.user?.id, delta, note });
 }
 
+/**
+ * Бросок цены ошибки 1d100. Варпоотвод (R.warprod) — два броска, меньший (rules/ritual-talents.mjs).
+ * @returns {Promise<{roll:Roll, note:string}>}
+ */
+async function warprodD100(R, allRolls) {
+  const a = await new Roll("1d100").evaluate(); allRolls.push(a);
+  if (!R.warprod) return { roll: a, note: "" };
+  const b = await new Roll("1d100").evaluate(); allRolls.push(b);
+  const keep = warprodPick(a.total, b.total) === a.total ? a : b;
+  return { roll: keep, note: `<div class="rf-text">Варпоотвод: брошено ${a.total} и ${b.total}, взят ${keep.total}.</div>` };
+}
+
+/**
+ * Цена ритуала на карточке: проза «Цена» (Успех) или «Цена ошибки» (Провал) с кубиками,
+ * брошенными в строке. Варпоотвод бросает каждый кубик дважды и берёт меньший; Козёл Отпущения
+ * переносит цену на подготовленную жертву; Маска чужого Бога даёт +1d5 Порчи (сразу на лист).
+ */
+async function ritualCostSection(R, actor, item, success, allRolls) {
+  const out = [];
+  const text = ritualCostText(item, success);
+  if (text) {
+    const pieces = [];
+    for (const p of splitCostDice(text)) {
+      if (p.text !== undefined) { pieces.push(esc(p.text)); continue; }
+      let r;
+      try { r = await new Roll(p.formula).evaluate(); } catch { pieces.push(esc(p.raw)); continue; }
+      allRolls.push(r);
+      if (R.warprod) {
+        const r2 = await new Roll(p.formula).evaluate(); allRolls.push(r2);
+        const keep = warprodPick(r.total, r2.total);
+        pieces.push(`${esc(p.raw)} [<b>${keep}</b> <span style="opacity:0.7;">(Варпоотвод: ${r.total} / ${r2.total})</span>]`);
+      } else pieces.push(`${esc(p.raw)} [<b>${r.total}</b>]`);
+    }
+    const goat = scapegoatFor(actor, R.name || item?.name);
+    const who = goat ? ` — ложится на <b>${esc(goat.name)}</b> (Козёл Отпущения)` : "";
+    out.push(`<div class="roll-threshold" style="font-size:0.85em;"><b>${success ? "Цена" : "Цена ошибки"}</b>${who}: ${pieces.join("")}</div>`);
+    if (goat) await actor.unsetFlag?.("warhammer-dbc", SCAPEGOAT_FLAG);
+  }
+  const mask = divineMaskGod(actor, globalThis.game?.time?.worldTime ?? 0);
+  const own = actor?.system?.patronGod || "";
+  if (mask && own && godRelationCat(own, mask.god) === "enemy") {
+    const c = await new Roll("1d5").evaluate(); allRolls.push(c);
+    const cur = Number(actor.system?.corruption?.value) || 0;
+    await actor.update({ "system.corruption.value": Math.min(100, cur + c.total) });
+    out.push(`<div class="roll-threshold" style="font-size:0.85em;"><b>Божественная Маска</b> (${esc(WARP_GODS_MAP[mask.god]?.label || mask.god)} — враг вашего Бога): +${c.total} Порчи.</div>`);
+  }
+  const willing = brainwashedAssistants(actor, R.assistantList);
+  if (willing.length) {
+    const used = new Set(willing.map(w => w.uuid));
+    await actor.setFlag?.("warhammer-dbc", BRAINWASHED_FLAG, brainwashedList(actor).filter(e => !used.has(e.uuid)));
+    out.push(`<div class="roll-threshold" style="font-size:0.85em;"><b>Промывка Мозгов:</b> ${willing.map(w => esc(w.name)).join(", ")} участвует добровольно, даже ценой жизни.</div>`);
+  }
+  return out.join("");
+}
+
 /** Резолюция провала: Отвращение Варпа / Феномен / Прорыв / «Что Посеешь…» / ничего. */
 async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
   const kind = RITUAL_TYPES_MAP[R.type]?.failure || "phenomenon";
@@ -322,12 +382,12 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
   const extraTxt = extra ? ` +${extra}` : "";
 
   if (kind === "aversion") {
-    const aRoll = await new Roll("1d100").evaluate(); allRolls.push(aRoll);
+    const { roll: aRoll, note: wpNote } = await warprodD100(R, allRolls);
     const total = aRoll.total + extra;
     const a = lookupAversion(total);
     if (a.veil) await veilShiftFn(a.veil, `Отвращение Варпа: ${a.name}`);
     return `<div class="wh-ritual-fail wv-tier-torn">
-      <div class="rf-title">${veilIcon("spiral")} Отвращение Варпа: ${aRoll.total}${extraTxt} = <b>${total}</b> → ${esc(a.name)}</div>
+      <div class="rf-title">${veilIcon("spiral")} Отвращение Варпа: ${aRoll.total}${extraTxt} = <b>${total}</b> → ${esc(a.name)}</div>${wpNote}
       <div class="rf-text">${esc(a.text)}</div>
       ${a.veil ? `<div class="rf-veil">Завеса истончается на +${a.veil}.</div>` : ""}</div>`;
   }
@@ -337,7 +397,7 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
       <div class="rf-text">Вырвавшиеся энергии проклинают самого Ритуалиста. При наличии ассистентов проклятье падает на главного Ритуалиста, но он может пройти Scholastic Lore (Occult) −20, чтобы перенаправить его на ассистента.</div></div>`;
   }
   // phenomenon / breach
-  const fRoll = await new Roll("1d100").evaluate(); allRolls.push(fRoll);
+  const { roll: fRoll, note: wpNote } = await warprodD100(R, allRolls);
   const total = fRoll.total + extra;
   const asBreach = kind === "breach" || total >= 75;
   const obj = asBreach ? getPeril(total) : getPhenomenon(total);
@@ -345,7 +405,7 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
   const tx = obj.text || obj.effect || obj.desc || "";
   const failLabel = asBreach ? `${veilIcon("storm")} Варп-Прорыв` : `${veilIcon("star")} Психический Феномен`;
   return `<div class="wh-ritual-fail wv-tier-thin">
-    <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${esc(nm)}</div>
+    <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${esc(nm)}</div>${wpNote}
     ${tx ? `<div class="rf-text">${esc(tx)}</div>` : ""}</div>`;
 }
 
@@ -454,8 +514,10 @@ export async function castRitual(R, actor, {
       }
     }
   }
+  R.warprod = hasWarprod(actor);
   const failHtml = success ? ""
     : fallbackHtml + (ignoreFailure ? "" : await ritualFailure(R, Math.abs(deg), d.prMax, allRolls, veilShiftFn));
+  const costHtml = ignoreFailure ? "" : await ritualCostSection(R, actor, item, success, allRolls);
   const condHtml = success ? conditionPillsHtml(item) : "";
   // Токен демона — только движковый тип "summon" (действительно материализует
   // НОВОГО демона; Владычество/Связывание/Врата действуют на уже имеющегося
@@ -491,7 +553,7 @@ export async function castRitual(R, actor, {
       ? outcomeHtml(true, `Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}`)
       : outcomeHtml(false, `Ритуал провален — ${Math.abs(deg)} Провал(ов)`),
     sections: [
-      demonHtml, herdHtml, failHtml, condHtml,
+      demonHtml, herdHtml, failHtml, costHtml, condHtml,
       `<details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>`
     ]
   }), { rolls: allRolls });

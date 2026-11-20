@@ -1840,11 +1840,11 @@ export const CAPABILITIES = {
   // ── Оккультист
   "occultist.core.brainwashing": {
     label: "Потратив смену работы и пройдя Interrogate+0 vs W+0 против жертвы, персонаж может заставить её добровольно поучаствовать в одном ритуале (ка…",
-    source: "Brainwashing / Промывка Мозгов", reader: ""
+    source: "Brainwashing / Промывка Мозгов", reader: "module/combat/ritual-talents.mjs::useBrainwashing — встречный Interrogate vs W, доброволец отмечается на карточке ритуала (apps/ritual-cast.mjs)"
   },
   "occultist.core.divineMask": {
     label: "Потратив 15 минут и Очко Бесчестия, персонаж на Cor.b часов считается имеющим покровительство одного из Богов для ритуалов и демонического в…",
-    source: "Divine Mask / Божественная Маска", reader: ""
+    source: "Divine Mask / Божественная Маска", reader: "module/rules/ritual-talents.mjs::divineMaskGod ← apps/ritual-cast.mjs::autoSummonMods (покровительство на Cor.b часов), +1d5 Порчи — ritualCostSection"
   },
   "occultist.core.dominator": {
     label: "Преимущество на тест Владычества (R.type===\"dominion\", roll×2+keepBest, module/rules/dominator.mjs) — авто, кнопка «Провести ритуал» без доп. диалога.",
@@ -1883,12 +1883,12 @@ export const CAPABILITIES = {
     reader: "ЧАСТИЧНО: module/rules/requisition.mjs::rarityShifts — Редкость Записи −1 при добыче реквизицией (module/apps/requisition.mjs); I−20/I+0 — справочный расчёт module/rules/occultist-talents.mjs::ritePuzzlerLearnMod"
   },
   "occultist.core.scapegoat": {
-    label: "Потратив смену работы на ритуальную подготовку другого разумного существа для определённого ритуала, при Успехе цена или цена ошибки, применявшиеся бы к ритуалисту, применяются к этой жертве. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (перепроверка Sahara 3-2a39, 19.10.2026): «цена»/«цена ошибки» — текстовые поля предмета-ритуала (system.cost/failureCost, module/data/item/ritual.mjs), книга даёт разную прозу на каждый ритуал, числа для переноса в системе нет и не планируется.",
-    source: "Scapegoat / Козёл Отпущения", reader: ""
+    label: "Потратив смену работы на ритуальную подготовку другого разумного существа для определённого ритуала, при Успехе цена или цена ошибки, применявшиеся бы к ритуалисту, применяются к этой жертве.",
+    source: "Scapegoat / Козёл Отпущения", reader: "module/rules/ritual-talents.mjs::scapegoatFor ← apps/ritual-cast.mjs::ritualCostSection (цена ритуала ложится на жертву)"
   },
   "occultist.core.warprod": {
-    label: "Персонаж делает все броски на цену ритуала 2 раза, выбирая один. Ассистируя, главный ритуалист не может переносить на него цену ритуала/провала без его согласия. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (перепроверка Sahara 3-2a39, 19.10.2026): та же причина, что Scapegoat — цена ритуала текстовая, дайсов в коде на неё нет.",
-    source: "Warprod / Варпоотвод", reader: ""
+    label: "Персонаж делает все броски на цену ритуала 2 раза, выбирая один. Ассистируя, главный ритуалист не может переносить на него цену ритуала/провала без его согласия.",
+    source: "Warprod / Варпоотвод", reader: "module/apps/ritual-cast.mjs::warprodD100 и ritualCostSection — кубики цены и цены ошибки бросаются дважды, берётся меньший"
   },
   // ── Внимательность
   "awareness.core.analyticalEye": {
@@ -6295,7 +6295,7 @@ export const CAPABILITIES = {
   },
   "talent.beastmanSubrace.tzaangorEnlightened": {
     label: "Часовой ритуал без тестов — Диск Тзинча под управлением, как ритуал Трансформации Диска; 3d10 урона в W.",
-    source: "Tzaangor Enlightened / Тзаангор Просвещённый", reader: ""
+    source: "Tzaangor Enlightened / Тзаангор Просвещённый", reader: "module/combat/ritual-talents.mjs::useTzaangorDisc — Диск Тзинча и 3d10 урона в W"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимаг — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimag.magusSupreme": {
