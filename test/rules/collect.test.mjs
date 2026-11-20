@@ -164,6 +164,8 @@ describe("источники по умолчанию", () => {
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath",
                 // noiseMarine (Шумовой Десантник, Sahara 1-54b9) — Пьянящий Рёв (+2 за участника боя) и Боль Это Наслаждение (+10 за уровень).
+                // monodevotant (Монозависимый, 20.11.2026) — ломка без субстанции, правило от времени мира.
+                "monodevotant",
                 "noiseMarine", "nullZones",
                 "occultistTalents", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
                 // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».

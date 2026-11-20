@@ -252,6 +252,7 @@ import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
 import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
 import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
 import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
+import { minionPatronUpdate } from "./rules/minion-patron.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -5580,6 +5581,13 @@ function _attachFateContextMenu(message, html) {
   // Искусный (Adroit, Ренегат): выбор Характеристики при получении Черты —
   // только у того, кто Черту положил (module/apps/adroit.mjs).
   Hooks.on("createItem", (item, options, userId) => onAdroitTraitCreated(item, userId));
+  // Посвящение: божественный Трейт демонов ставит Миньону Покровителя, если тот
+  // ещё не выбран (rules/minion-patron.mjs). Только у того, кто Трейт положил.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId !== game.user?.id) return;
+    const patch = minionPatronUpdate(item.actor, item);
+    if (patch) await item.actor.update(patch);
+  });
   // Стадия Пакта куплена — нижний предел Тяжести расстройства Пакта растёт на 1
   // за Стадию (Когитор, Мейстер, Ревенант; rules/pact-disorder.mjs). Только у
   // того, кто Талант положил.

@@ -44,6 +44,9 @@ export class MinionData extends foundry.abstract.TypeDataModel {
       // людей одной меткой, а книга различает их: Древний Воин (Ancient Warrior)
       // даёт «+10 к Лояльности Миньонов-Космодесантников» (minionLoyalty).
       isAstartes: new BooleanField({ initial: false, label: "Астартес" }),
+      // Покровитель Миньона (Посвящение, rules/minion-patron.mjs) — то же поле,
+      // что у Персонажа: пусто = Бог не выбран.
+      patronGod: new StringField({ initial: "", label: "Покровитель" }),
       // Орда Миньонов Ран не имеет вовсе — у неё Магнитуда от Бесчестия
       // Хозяина (стр. 113). Поле держим здесь, а не в общей схеме существа:
       // Магнитуда бывает только у Орды.
