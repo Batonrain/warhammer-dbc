@@ -34,6 +34,7 @@ import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
 import { withdrawalRulesOf } from "./drug-withdrawal.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
+import { TARGET_SOCIAL_TALENT_RULES } from "./library/target-social-talents.mjs";
 import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
@@ -183,6 +184,8 @@ registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
 // цель ТЕКУЩЕГО теста (targetHasTrait, теперь живой и на обычных тестах
 // Навыка, не только атаках), не источник-владелец Мутации.
 registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
+// Мимик и Непримечательный (Разобрать b73dj) — штраф чужому тесту против носителя, тем же приёмом.
+registerRuleSource("targetSocialTalents", () => TARGET_SOCIAL_TALENT_RULES);
 
 // Hatred/Ненависть (wdbc-1rno, 12.09.2026) — первый реальный потребитель
 // инфраструктуры целей Таланта (talent-targets.mjs): +10 рукопашная атака и

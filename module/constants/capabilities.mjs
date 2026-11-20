@@ -2656,7 +2656,7 @@ export const CAPABILITIES = {
   },
   "social.core.mimic": {
     label: "Изучив тембр голоса цели как минимум час, персонаж может сойти за неё через встречный Deceive+0 vs Scrutiny−10 (или Scrutiny+0,",
-    source: "Mimic / Мимик", reader: ""
+    source: "Mimic / Мимик", reader: "module/rules/library/target-social-talents.mjs (галочка Scrutiny −10 у слушателя, цель — носитель; источник targetSocialTalents в rules/sources.mjs)"
   },
   "social.core.peer": {
     label: "Персонаж получает +10 ко всем социальным взаимодействиям с выбранной группой.",
@@ -2674,7 +2674,7 @@ export const CAPABILITIES = {
   },
   "social.core.unremarkable": {
     label: "Попытки идентифицировать персонажа среди других людей, описать его приметы или вспомнить черты лица выполняются со штрафом −20.",
-    source: "Unremarkable / Непримечательный", reader: ""
+    source: "Unremarkable / Непримечательный", reader: "module/rules/library/target-social-talents.mjs (галочка −20 на Awareness/Scrutiny/Inquiry против носителя; источник targetSocialTalents в rules/sources.mjs)"
   },
   "social.core.ventriloquist": {
     label: "Персонаж может говорить, не открывая рта, и даже проецировать свой голос, чтобы казалось, что он исходит из точки в пределах 2 м.",
