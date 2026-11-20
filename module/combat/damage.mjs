@@ -47,6 +47,7 @@ import { painIsPleasureOnDamage } from "./noise-marine.mjs";
 import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
 import { putrescenceOffer } from "./putrescence.mjs";
+import { paybackOfferHtml } from "./payback.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
@@ -1436,6 +1437,13 @@ export async function applyDamageToActor(actor, damageData) {
     putrescenceNote = p.note;
   }
 
+  // Расплата (Талант Дредноутов, combat/payback.mjs): непоглощённый урон от Ненавистного — пилоту кнопка ответной атаки.
+  let paybackHtml = "";
+  if (netDamage > 0 && !stunManeuver && attackerUuid) {
+    const src = await fromUuid(attackerUuid).catch(() => null);
+    paybackHtml = paybackOfferHtml(actor, src?.actor ?? src, netDamage);
+  }
+
   // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «непоглощённый урон
   // игнорируется, вместо этого цель Оглушается на 1 Ход за каждый нечётный
   // урон» — читается как ⌈netDamage/2⌉ Раундов Оглушения. Урон дальше НЕ
@@ -1725,6 +1733,7 @@ export async function applyDamageToActor(actor, damageData) {
     if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);
+  if (paybackHtml) propEffectNotes.push(paybackHtml);
   // Касание Энтропии сработала ВЫШЕ, до расчёта поглощения (см. там) — здесь
   // только подпись, чтобы игрок видел, почему броня вдруг не удержала.
   if (entropyLost > 0) {

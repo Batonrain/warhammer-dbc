@@ -1089,6 +1089,16 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Загонщик:", res.reason);
         return;
       }
+      if (data.action === "summonWormSwarm") {
+        // Повелитель Червей (combat/worm-master.mjs): Рой из Бестиария ставит ГМ. Просящий
+        // обязан владеть Повелителем; предел Роёв и Раны ГМ сверяет сам.
+        const { spawnWormSwarm } = await import("./module/combat/worm-master.mjs");
+        const master = await fromUuid(String(data.masterUuid ?? "")).catch(() => null);
+        if (!master || !(requester?.isGM || master.testUserPermission?.(requester, "OWNER"))) return;
+        const res = await spawnWormSwarm(master.uuid, data.bonusWounds);
+        if (!res.ok) console.warn("Warhammer DBC | Повелитель Червей:", res.reason);
+        return;
+      }
       if (data.action === "spawnSundering") {
         // Sundering/Разделение (wdbc-1rno, Тзинч) — тот же приём: клон САМОГО
         // умирающего персонажа требует прав ГМа на Actor.create, спавн+метки+

@@ -43,6 +43,7 @@
 //      союзника и что цель переноса не дальше предела (P.b или Полудвижение инициатора).
 //    • resonance / snareCut — Резонанс от Резонирующего оружия (только уровень, вверх, до Размер+2 цели) и
 //      «Перерезать путы» Связывающего (только снятие Беспомощности); поля Состояния собирает ГМ.
+//    • livingBannerBoon — Живой Стяг (Герольд): +1 Очко Бесчестия соратнику; нужна Черта Living Banner у инициатора.
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -59,6 +60,7 @@ import {
 } from "../rules/dark-apostle.mjs";
 import { isThrottleReady } from "../rules/cooldown.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
+import { hasLivingBanner } from "../rules/living-banner.mjs";
 import {
   hasIronCage, hasCellOfShame, hasEmpyreanWhip, hasRunDown, brokenOf, flagSmithIs, isBrokenBySmith, runDownMarkOf, clampRoll,
   RUN_DOWN_STRUCTURE_MAX, RUN_DOWN_HELPLESS_MAX, RUN_DOWN_WP_MAX
@@ -185,6 +187,12 @@ export function checkTargetWrite(op, ctx = {}) {
     if (!hasAbility(ctx.initiator, "ability.singForMe", "Sing For Me!", "talent")) return { ok: false, reason: "у инициатора нет Sing For Me" };
     const self = ctx.target && ctx.initiator && ctx.target.uuid === ctx.initiator.uuid;
     if (!self && !hasRuleFlag(ctx.target, "dreadWail.immune")) return { ok: false, reason: "получатель не поклонник Слаанеш" };
+    return { ok: true };
+  }
+  if (op.kind === "livingBannerBoon") {
+    // Живой Стяг (Герольд, combat/living-banner.mjs): +1 Очко Бесчестия соратнику; число не присылается.
+    if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "livingBannerBoon: лишние поля" };
+    if (!hasLivingBanner(ctx.initiator)) return { ok: false, reason: "у инициатора нет Живого Стяга" };
     return { ok: true };
   }
   if (op.kind === "wallPush") {
@@ -428,6 +436,10 @@ async function _performTargetWrite(target, op, initiator) {
       "system.energy.value": (Number(en.value) || 0) + plan.toMain,
       ...(plan.toApoc ? { "system.apocryphaEnergy.value": (Number(ap.value) || 0) + plan.toApoc } : {})
     });
+  }
+  if (op.kind === "livingBannerBoon") {
+    const { changeActorInfamy } = await import("../apps/infamy-points.mjs");
+    return changeActorInfamy(target, 1);
   }
   if (op.kind === "singForMeDamage" || op.kind === "singForMeBoon" || op.kind === "wallPush") {
     const { performNoiseMarineWrite } = await import("./noise-marine.mjs");

@@ -70,6 +70,7 @@ import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt, applySuppressionProne } from "./combat/suppression.mjs";
 import { clearFeintAtTurnEnd } from "./combat/feint-press.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
+import { resolvePaybackClick } from "./combat/payback.mjs";
 import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick } from "./combat/overwatch.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { resolveTankHunterClick, clearTankHunterMemory } from "./combat/tank-hunter.mjs";
@@ -3571,6 +3572,17 @@ export function registerHooks() {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
         await resolveFreeAttackClick(ds.reactorUuid, ds.moverUuid);
+      });
+    });
+
+    // Расплата (Талант Дредноутов, combat/payback.mjs) — ответная атака по Ненавистному за Реакцию.
+    html.querySelectorAll(".wh-payback-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const ok = await resolvePaybackClick(el.dataset.pilotUuid, el.dataset.attackerUuid);
+        if (!ok) el.disabled = false;
       });
     });
 

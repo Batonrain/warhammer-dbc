@@ -3696,7 +3696,7 @@ export const CAPABILITIES = {
   },
   "elite.drednouty.payback": {
     label: "Когда ненавистный противник наносит Дредноуту или пилоту непоглощённый урон, пилот может потратить Реакцию и немедленно атаковать этого прот…",
-    source: "Payback / Расплата", reader: ""
+    source: "Payback / Расплата", reader: "module/combat/payback.mjs — кнопка ответной атаки на карточке урона (Ненавистный, непоглощённый урон, Здравомыслие выше 20)"
   },
   "elite.drednouty.superiority": {
     label: "Победив потенциально опасного противника (способного серьёзно навредить) с помощью нечестного преимущества, Смоделирована только трата/бросок (та же кнопка панели, что у Cruelty) — условие книга не проверяет автоматически, самоотчёт игрока.",
@@ -6471,7 +6471,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.gerold.livingBanner": {
     label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 или Charm(F)+10 и восстановить одно ранее потраче…",
-    source: "Living Banner / Живой Стяг", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Living Banner / Живой Стяг", reader: "module/combat/living-banner.mjs::useLivingBanner — кнопка Черты: Очко Бесчестия, Command/Charm (F)+10, +1 Очко видящим соратникам (ГМ-реле livingBannerBoon). Слух и геральдика — вручную"
   },
   "trait.elitnyeArhetipy.gerold.noblesseOblige": {
     label: "Высокое доверие налагает большую ответственность — его провалы навлекают позор на всю банду.",
@@ -6658,7 +6658,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.korolChervey.wormMaster": {
     label: "В бою может мистически размножать рои паразитов, формируя аморфные боевые конструкты.",
-    source: "Worm Master / Повелитель Червей", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-4bfd (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Worm Master / Повелитель Червей", reader: "module/combat/worm-master.mjs::useWormMaster — кнопка Черты: предел Cor.b, полное действие, W−10, Рой из Бестиария с +10 Ран за Успех сверх первого. Поддержание каждый Ход — вручную"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Кузнец_Крови — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kuznetsKrovi.ringOfBlood": {
