@@ -114,6 +114,7 @@ import { terrorSniperEligible }                       from "../rules/terror-snip
 import { misfireCandidates, hasTargetSelection }      from "../rules/target-selection.mjs";
 import { laserDotOffered }                            from "../rules/laser-sight.mjs";
 import { hasFlamerTalent, pyromaniacActive, torrentActive, torrentBlastRadius, torrentMaxDistance } from "../rules/flamer-talents.mjs";
+import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
 import { bayonetShotButtonsHtml, independentShotOfferHtml } from "./free-shot.mjs";
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
@@ -2517,7 +2518,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           damageType: effDmgType, hitLocation: hits[0]?.loc || "",
           poisoner: !!aimTarget?.value && hasTalentCapability(actor, POISONER_CAP),
           pyromaniac: pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame }),
-          pyromaniacAttackerUuid: actor.uuid ?? "", igniter })
+          pyromaniacAttackerUuid: actor.uuid ?? "", igniter,
+          fireDance: fireDanceActive(actor, { spray: wp.spray, flame: wp.flame }) })
           // Хирургическая Точность (Медик): кнопка только у Избирательной атаки.
           + surgicalPrecisionButtonHtml(actor, { selective: !!aimTarget?.value, hit, attackerUuid: actor.uuid }),
         // Пинок с Разворота (Талант Пугилиста, combat/roundhouse.mjs): кнопка

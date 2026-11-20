@@ -18,6 +18,7 @@
 //  число для тика) — отменено по прямому запросу пользователя, wdbc-zepq.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { fireDancePanicMod, FIRE_DANCE_PANIC_FLAG } from "../rules/fire-dance.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { hasWarpforgedPlate } from "../rules/warpsmith.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -558,7 +559,13 @@ export async function rollBurningPanicTest(actor) {
     });
     return { success: true, rv: null, eff: wp };
   }
-  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  // Танец Пламени (rules/fire-dance.mjs): первый тест после такого загорания — с −40, метка снимается.
+  const fireDanceMod = fireDancePanicMod(actor);
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp + fireDanceMod);
+  if (fireDanceMod) {
+    parts.unshift(`Танец Пламени ${fireDanceMod}`);
+    await actor.unsetFlag("warhammer-dbc", FIRE_DANCE_PANIC_FLAG);
+  }
   if (!success) await actor.update({ "system.actionPoints.value": 0 });
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 

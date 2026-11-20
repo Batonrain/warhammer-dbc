@@ -1620,11 +1620,11 @@ export const CAPABILITIES = {
   // ── Огнемётчик
   "flamer.core.fireDance": {
     label: "Накрывая цели шаблоном огнемёта, после тестов А на избегание от огня, но до настоящих Избеганий,",
-    source: "Fire Dance / Танец Пламени", reader: ""
+    source: "Fire Dance / Танец Пламени", reader: "module/rules/fire-dance.mjs (fireDanceActive, fireDancePanicMod), module/combat/weapon-properties.mjs (вторая кнопка Горения −20, data-wp-fire-dance), module/hooks.mjs::_applyWeaponPropEffect (раз на карточку, метка fireDancePanic), module/combat/condition-ticks.mjs::rollBurningPanicTest (−40 к первому тесту Паники)"
   },
   "flamer.core.fireMaze": {
     label: "Стреляя из огнемёта, персонаж бросает на свойство Linger 2 раза и выбирает один результат по своему усмотрению.",
-    source: "Fire Maze / Лабиринт Пламени", reader: ""
+    source: "Fire Maze / Лабиринт Пламени", reader: "module/rules/fire-dance.mjs (hasFireMaze), module/hooks.mjs (кнопка «Разместить шаблон»: Linger кубиком бросается дважды), module/combat/fire-maze.mjs (выбор результата)"
   },
   "flamer.core.friendlyFire": {
     label: "Стреляя из оружия со свойством Spray, персонаж может дать всем целям в пределах дистанции по своему выбору +30 на тест А для избегания от по…",

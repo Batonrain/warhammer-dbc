@@ -225,6 +225,8 @@ import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { FIRE_DANCE_CARD_KEY, FIRE_DANCE_PANIC_FLAG, hasFireMaze } from "./rules/fire-dance.mjs";
+import { pickFireMazeRounds } from "./combat/fire-maze.mjs";
 import { onDefenceRerollClick, rerollDefenceCard, defenceTestOf } from "./combat/defence-reroll.mjs";
 import { resolveTipOfSpearClick } from "./combat/tip-of-spear.mjs";
 import { DEFENCE_REROLLED_FLAG } from "./rules/defence-reroll.mjs";
@@ -2634,14 +2636,20 @@ export function registerHooks() {
         // один раз, здесь, и виден в чате — игроку не нужно помнить, сколько выпало.
         const lingerSpec = String(ds.linger || "").trim();
         const lingerOn = isDiceRating(lingerSpec) || (parseInt(lingerSpec) || 0) > 0;
+        // Лабиринт Пламени (rules/fire-dance.mjs): стрелок с Талантом бросает дважды и выбирает.
+        const lingerShooter = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
+        const fireMaze = hasFireMaze(lingerShooter?.actor ?? lingerShooter);
         const rollLingerDice = async formula => {
           const lingerRoll = new Roll(formula);
           await lingerRoll.evaluate();
+          const second = fireMaze ? await new Roll(formula).evaluate() : null;
           await lingerRoll.toMessage({
             speaker: ChatMessage.getSpeaker?.() ?? {},
             flavor: `☁️ Остаётся (${formula}) — сколько раундов держится зона «${ds.weaponName || "оружия"}»`
+              + (second ? `<br>🔥 Лабиринт Пламени: второй бросок — <b>${second.total}</b>, стрелок выбирает` : "")
           });
-          return lingerRoll.total;
+          if (!second || second.total === lingerRoll.total) return lingerRoll.total;
+          return pickFireMazeRounds(lingerRoll.total, second.total);
         };
         const rounds = (lingerOn && game.combat) ? await resolveLingerRounds(lingerSpec, rollLingerDice) : 0;
         if (lingerOn) {
@@ -3999,6 +4007,16 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       });
     }
   }
+  // Танец Пламени (rules/fire-dance.mjs): «одну цель» — кнопка срабатывает раз
+  // на карточку; выбор сделан нажатием, независимо от исхода теста.
+  const fireDance = ds.wpFireDance === "1";
+  if (fireDance) {
+    const fdMsg = game.messages?.get?.(messageId) ?? null;
+    if (fdMsg && cardOnceUsed(fdMsg, FIRE_DANCE_CARD_KEY)) {
+      return ui.notifications.warn("⚠️ Танец Пламени: цель с этой карточки уже выбрана.");
+    }
+    if (fdMsg) await markCardOnce(fdMsg, FIRE_DANCE_CARD_KEY);
+  }
   const condition = ds.wpCondition || "";
   const testChar  = ds.wpTestChar  || "";
   const testMod   = parseInt(ds.wpTestMod || "0");
@@ -4214,6 +4232,8 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       if (resist.resisted) { resistedNotes.push(resist.note); resistedConds.push(cond); continue; }
       Object.assign(update, fields);
       if (cond === "burning") ignitedNow = true;
+      // Танец Пламени: первый тест Паники от Горения у этой цели — с −40.
+      if (cond === "burning" && fireDance) update[`flags.warhammer-dbc.${FIRE_DANCE_PANIC_FLAG}`] = true;
       // Подпись — у накладываемого Состояния (Оглушение), а не у свойства оружия (Шоковое).
       const condLabel = CONDITIONS_DEF[cond]?.label || label;
       applied.push(levelField
