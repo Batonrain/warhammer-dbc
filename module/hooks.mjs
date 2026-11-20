@@ -2879,6 +2879,8 @@ export function registerHooks() {
         ev.preventDefault();
         const el = ev.currentTarget;
         const ds = { ...el.dataset };
+        // Танец Боли (rules/dance-of-pain.mjs): кнопка внутри его блока — «раз в Ход» у атакующего.
+        const danceAttackerUuid = el.closest(".wh-dance-of-pain")?.dataset.actorUuid || "";
         const doc = ds.actorUuid ? await fromUuid(ds.actorUuid).catch(() => null) : null;
         const actor = ds.actorUuid ? (doc?.actor ?? doc) : requireControlledActor("⚠️ Выберите токен цели на сцене!");
         if (!actor) return;
@@ -2888,6 +2890,11 @@ export function registerHooks() {
           keys: String(ds.keys || "").split(",").filter(Boolean), formula: ds.formula || "",
           amount: ds.amount === "" ? null : Number(ds.amount), permanent: ds.permanent === "1", source: ds.source || ""
         });
+        if (danceAttackerUuid) {
+          const atk = await fromUuid(danceAttackerUuid).catch(() => null);
+          const atkActor = atk?.actor ?? atk;
+          if (atkActor?.isOwner) await atkActor.setFlag("warhammer-dbc", "danceOfPainThisTurn", true);
+        }
       });
     });
 
@@ -5029,6 +5036,9 @@ function _attachFateContextMenu(message, html) {
     // Миньоны, перехваченные ГМом при провале Лояльности, — права обратно.
     const { releaseSeizedMinions } = await import("./combat/minion-gm-control.mjs");
     await releaseSeizedMinions(combat);
+    // Гниль Внутри: оружие, испорченное «до конца сцены», возвращается (combat/putrescence.mjs).
+    const { restorePutrescentWeapons } = await import("./combat/putrescence.mjs");
+    await restorePutrescentWeapons([...(combat.combatants ?? [])].map(c => c.actor).filter(Boolean));
   });
 
   // Бой кончился — снять транс «Дух героя» у всех, кто в него впадал, и

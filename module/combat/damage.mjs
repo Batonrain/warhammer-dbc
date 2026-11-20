@@ -46,6 +46,7 @@ import { hellishResilienceOffer } from "./hellish-resilience.mjs";
 import { painIsPleasureOnDamage } from "./noise-marine.mjs";
 import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
+import { putrescenceOffer } from "./putrescence.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
@@ -1427,6 +1428,14 @@ export async function applyDamageToActor(actor, damageData) {
     hellishNote = h.note;
   }
 
+  // Гниль Внутри (Черта Чумного Монаха, combat/putrescence.mjs): Очко Бесчестия — урон рукопашного −Cor.b, оружие портится.
+  let putrescenceNote = "";
+  if (netDamage > 0 && !stunManeuver) {
+    const p = await putrescenceOffer(actor, netDamage, { melee, weaponUuid });
+    netDamage = p.net;
+    putrescenceNote = p.note;
+  }
+
   // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «непоглощённый урон
   // игнорируется, вместо этого цель Оглушается на 1 Ход за каждый нечётный
   // урон» — читается как ⌈netDamage/2⌉ Раундов Оглушения. Урон дальше НЕ
@@ -1712,7 +1721,7 @@ export async function applyDamageToActor(actor, damageData) {
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
   if (headGuard.note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(headGuard.note)}</div>`);
-  for (const note of [...hardeningNotes, hellishNote, mortalShieldNote, eye.note, ...statusNotes]) {
+  for (const note of [...hardeningNotes, hellishNote, putrescenceNote, mortalShieldNote, eye.note, ...statusNotes]) {
     if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);

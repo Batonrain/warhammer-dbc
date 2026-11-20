@@ -2,6 +2,7 @@
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { isDendriteShield, hasTestudo } from "../rules/testudo.mjs";
+import { hasJuryRigging, juryRiggedOriginal } from "../rules/jury-rigging.mjs";
 import { severityTestMod, severityNote } from "../rules/disorder-severity.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
@@ -702,6 +703,9 @@ function buildGetDataUncached(actor) {
       // починено»): тот же гейт кнопки «Атака», книга не делает исключения
       // по классу оружия, в отличие от jammed (только дальнобойное).
       destroyed:    !!s.destroyed,
+      // На Честном Слове (rules/jury-rigging.mjs): кнопки быстрой починки и полного ремонта.
+      canJuryRig:   !!s.destroyed && hasJuryRigging(actor),
+      juryRigged:   juryRiggedOriginal(i) != null,
       // Закрепление (стр. 35, wdbc-x1nz.2.56) — только тяжёлое; canBrace не
       // проверяет isBraced (кнопка «Закрепить» доступна и повторно —
       // перезакрепление на новом развороте/позиции разрешено книгой без

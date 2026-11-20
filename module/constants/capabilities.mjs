@@ -1806,7 +1806,8 @@ export const CAPABILITIES = {
   },
   "craft.core.juryRigging": {
     label: "Персонаж может починить поломку, обычно требующую до ½ смены, за одно полное действие, но уменьшает Качество предмета/машины на 1.",
-    source: "Jury Rigging / На Честном Слове", reader: ""
+    source: "Jury Rigging / На Честном Слове",
+    reader: "module/rules/jury-rigging.mjs + module/combat/weapon-repair.mjs::juryRigWeapon/fullRepairJuryRigged — кнопки на вкладке БОЙ (sheets/tabs/combat.mjs); поломка на Крит. Провале — combat/attack.mjs"
   },
   "craft.core.locum": {
     label: "Занимаясь Крафтом/ремонтом в мастерской, где проработал хотя бы месяц, персонаж за одну смену делает двойную работу (два теста,",

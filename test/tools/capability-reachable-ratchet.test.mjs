@@ -162,8 +162,6 @@ const ALLOWED = {
   "trait.elitnyeArhetipy.malagra.astralConverter": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.malagra.digitalGhost": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
   "trait.elitnyeArhetipy.malagra.paragonCoil": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
-  "trait.elitnyeArhetipy.pitati.runicBullet": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",
-  "trait.elitnyeArhetipy.pitati.runicShot": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",
   "trait.elitnyeArhetipy.sekutor.paladinFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
   "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.elektrozhrets.powerFromFlesh": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",

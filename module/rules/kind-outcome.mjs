@@ -14,7 +14,7 @@
 import { testOutcome, criticalOutcome } from "./roll-outcome.mjs";
 import { resolveTest } from "./resolve-test.mjs";
 import { combinedThreshold, resolveOpposed } from "./test-kind.mjs";
-import { extendedTestKey, applyGain } from "./extended-test.mjs";
+import { extendedTestKey, applyGain, EXTENDED_CRIT_LOSS } from "./extended-test.mjs";
 import { unnaturalRating, unnaturalDegreeBonus, hasUnnaturalCharacteristic } from "./unnatural-characteristic.mjs";
 import { critLineHtml } from "./test-kind-widget.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
@@ -342,7 +342,10 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     const key = extendedTestKey(extended.label);
     const flagPath = `extendedTests.${key}`;
     const prev = actor.getFlag("warhammer-dbc", flagPath) || { accumulated: 0 };
-    const gain = success ? baseDeg : 0;
+    // Критический Провал отнимает 5–15 Успехов «по решению ГМа» (стр. 25; Разобрать h4nbw): по умолчанию
+    // EXTENDED_CRIT_LOSS снимается сам, ГМ правит ±-полем панели «Расширенные тесты».
+    const critLoss = !success && crit?.failure ? EXTENDED_CRIT_LOSS : 0;
+    const gain = success ? baseDeg : -critLoss;
     const { accumulated, done } = applyGain(prev.accumulated, gain, extended.goal);
     // testKey (wdbc-nysl: панель «Расширенные тесты» на листе) — чем именно
     // бросали, чтобы «Переоткрыть» знал, какой Навык/Характеристику
@@ -351,7 +354,8 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     // характеристика тогда читается из ctx.char.
     const testKey = ctx?.skill ? `skill:${ctx.skill}` : (ctx?.char ? `char:${ctx.char}` : prev.testKey ?? null);
     await actor.setFlag("warhammer-dbc", flagPath, { accumulated, target: extended.goal, label: extended.label, testKey });
-    extendedLine = `<div class="roll-threshold">📈 Расширенный «${esc(extended.label)}»: +${gain} → Банк <b>${accumulated}</b>/${extended.goal}${done ? " — <b>ГОТОВО</b>" : ""}</div>`;
+    extendedLine = `<div class="roll-threshold">📈 Расширенный «${esc(extended.label)}»: ${gain >= 0 ? "+" : "−"}${Math.abs(gain)} → Банк <b>${accumulated}</b>/${extended.goal}${done ? " — <b>ГОТОВО</b>" : ""}${
+      critLoss ? ` · Критический Провал: −${critLoss} из Банка (ГМ может поправить до 5–15 полем «±» на панели)` : ""}</div>`;
   }
 
   let opposedLine = "";

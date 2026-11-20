@@ -904,6 +904,7 @@ export function attackCard({
   // Упорство (combat/tenacity.mjs): готовая разметка кнопки повтора.
   tenacityHtml = "",
   tipOfSpearHtml = "",
+  danceOfPainHtml = "",
   // Казнь (combat/execution.mjs): готовая разметка кнопки доп. атаки.
   executionHtml = "",
   // Снайпер Ужаса (combat/terror-sniper.mjs): {targetTokenUuid} или null.
@@ -1172,6 +1173,7 @@ export function attackCard({
       isMelee && furiousAssaultHtml ? furiousAssaultHtml : "",
       isMelee && tenacityHtml ? tenacityHtml : "",
       isMelee && tipOfSpearHtml ? tipOfSpearHtml : "",
+      danceOfPainHtml || "",
       isMelee && executionHtml ? executionHtml : "",
       !isMelee && terrorSniperOffer ? `
     <button class="wh-terror-sniper-btn" type="button" data-attacker-uuid="${attackerUuid}" data-target-token-uuid="${esc(terrorSniperOffer.targetTokenUuid)}"
