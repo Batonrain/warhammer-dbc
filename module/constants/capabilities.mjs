@@ -4331,7 +4331,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Воин_Ноты — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.voinNoty.aria": {
     label: "Рассекая воздух элегантными дугами, клинки издают божественную музыку. Вооружённый клинковым оружием с Балансом не ниже 0,",
-    source: "Aria / Ария", reader: ""
+    source: "Aria / Ария", reader: "module/combat/battle-music.mjs::useAria (кнопка Таланта) → метка hearingMusic (rules/battle-music.mjs)"
   },
   "elite.elitnyeArhetipy.voinNoty.crescendo": {
     label: "Врываясь в рукопашную, сеет смерть стремительными сериями атак. Может совершать Быструю Атаку или Молниеносную Атаку с каждой руки в Ход,",
@@ -4347,11 +4347,11 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voinNoty.overture": {
     label: "Порченая душа всегда настроена на мелодии, льющиеся сквозь Шесть Кругов Искушения. Может потратить Очко Бесчестия,",
-    source: "Overture / Увертюра", reader: ""
+    source: "Overture / Увертюра", reader: "module/combat/battle-music.mjs::useOverture (кнопка, 1 Очко Бесчестия) → метка hearingMusic"
   },
   "elite.elitnyeArhetipy.voinNoty.symphony": {
     label: "Под божественную гармонию музыки клинки поражают врагов со сверхъестественной точностью.",
-    source: "Symphony / Симфония", reader: ""
+    source: "Symphony / Симфония", reader: "module/rules/battle-music.mjs::musicDeg/symphonyProps → combat/attack.mjs (Felling и Precise при музыке 6+)"
   },
   "elite.elitnyeArhetipy.voinNoty.waltz": {
     label: "Лёгкими танцующими движениями обходит телохранителей и свиту, добираясь напрямую к цели.",

@@ -114,6 +114,8 @@ import { terrorSniperEligible }                       from "../rules/terror-snip
 import { misfireCandidates, hasTargetSelection }      from "../rules/target-selection.mjs";
 import { laserDotOffered }                            from "../rules/laser-sight.mjs";
 import { hasFlamerTalent, pyromaniacActive, torrentActive, torrentBlastRadius, torrentMaxDistance } from "../rules/flamer-talents.mjs";
+import { musicDeg, symphonyProps } from "../rules/battle-music.mjs";
+import { hasItemNamed } from "../rules/req-atom.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -421,6 +423,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Поджигатель (там же): Избирательный выстрел Фосфорным оружием — эффект по месту; кнопки
   // свойств несут зону (data-wp-igniter), а Blinding/Flame считаются в hooks.mjs::_applyWeaponPropEffect.
   const igniter = igniterZone(actor, { item, isMelee, aimValue: aimTarget?.value }) || "";
+  // Симфония (Воин Ноты, rules/battle-music.mjs): музыка на 6+ Успехов — Felling (Успехи−5) и Precise.
+  const symphony = hasItemNamed(actor, "Symphony", ["talent"])
+    ? symphonyProps(musicDeg(actor, { combat: game.combat?.started ? game.combat : null, now: game.time?.worldTime ?? 0 }),
+      { isMelee, thrown: sys.weaponClass === "thrown" }) : [];
+  for (const p of symphony) {
+    const i = _mergedEntries.findIndex(x => x.key === p.key);
+    if (i < 0) _mergedEntries.push(p);
+    else if ((Number(p.rating) || 0) > (Number(_mergedEntries[i].rating) || 0)) _mergedEntries[i] = { ..._mergedEntries[i], rating: p.rating };
+  }
   const wallopOn = wallopRating != null && !_mergedEntries.some(x => x.key === "concussive");
   if (wallopOn) _mergedEntries.push({ key: "concussive", rating: wallopRating });
   // Выпуск Батареи (rules/batpack-dump.mjs): лаз-оружию с Power Setting на эту атаку — Storm(2), +1d10 Dmg (ниже),
