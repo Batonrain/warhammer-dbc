@@ -32,6 +32,37 @@ const num = v => Number(v) || 0;
 const bonusOf = total => Math.floor(num(total) / 10);
 
 /**
+ * Adoring Crowds / Обожание Толпы (Черта Воина Ноты): «Может использовать A
+ * вместо F и Trade(Dancer) вместо Command для своих Миньонов-Людей». Выбор
+ * игрока — берётся лучшее из двух (как «Inf вместо F» у Тирана).
+ */
+export function hasAdoringCrowds(master) {
+  return hasAbility(master, "", "Adoring Crowds", "trait");
+}
+
+/**
+ * Характеристика Хозяина, от которой считаются Миньоны группы (стр. 111–113):
+ * { key, total }. Обожание Толпы у людей — A, если она выше F.
+ */
+export function masterGroupChar(master, group) {
+  const key = MINION_GROUPS[group]?.masterChar;
+  if (!key) return { key: "", total: 0 };
+  const chars = master?.system?.characteristics ?? {};
+  const base = { key, total: num(chars[key]?.total) };
+  if (group === "human" && hasAdoringCrowds(master)) {
+    const ag = num(chars.ag?.total);
+    if (ag > base.total) return { key: "ag", total: ag };
+  }
+  return base;
+}
+
+/** Навык в требовании Таланта группы: у Обожания Толпы для людей — Trade(Dancer) или Command. */
+export function groupReqSkill(master, group) {
+  const skill = MINION_GROUPS[group]?.reqSkill ?? "";
+  return group === "human" && hasAdoringCrowds(master) ? `${skill} или Trade (Dancer)` : skill;
+}
+
+/**
  * Бесчестие. В системе это Характеристика `inf`, а не отдельное поле: и
  * требования Таланта, и доля Миньона, и Магнитуда Орды считаются от неё.
  */
@@ -111,8 +142,7 @@ export function slotUsage(items = [], minions = [], master = null) {
 export function minionCapacity(master, groups = []) {
   const used = [...new Set(groups.filter(g => MINION_GROUPS[g]))];
   if (!used.length) return 0;
-  const chars = master?.system?.characteristics ?? {};
-  const cap = Math.min(...used.map(g => bonusOf(chars[MINION_GROUPS[g].masterChar]?.total)));
+  const cap = Math.min(...used.map(g => bonusOf(masterGroupChar(master, g).total)));
   return hasTalentCapability(master, "minion.core.lordOfChaos") ? Math.floor(cap * 1.5) : cap;
 }
 
@@ -146,12 +176,12 @@ export function talentRequirements(master, group, tier, { ignoreInfamy = false }
   if (!groupDef || !tierDef) return { ok: false, missing: ["Не выбраны группа и сила Миньона."] };
 
   const sys = master?.system ?? {};
-  const charTotal = num(sys.characteristics?.[groupDef.masterChar]?.total);
+  const { key: charKey, total: charTotal } = masterGroupChar(master, group);
   const infamy    = infamyOf(master);
   const missing = [];
 
   if (charTotal < tierDef.req.char) {
-    missing.push(`${groupDef.masterChar.toUpperCase()} ${charTotal} — нужно ${tierDef.req.char}`);
+    missing.push(`${charKey.toUpperCase()} ${charTotal} — нужно ${tierDef.req.char}`);
   }
   // ignoreInfamy — Черта Архетипа «игнорирует требования по Inf для
   // Миньонов-<группы>» (Змеиный Язык — люди, Ведун Тьмы — демоны): решает
@@ -162,7 +192,7 @@ export function talentRequirements(master, group, tier, { ignoreInfamy = false }
   // Навык проверяем подсказкой: степень владения хранится по-разному у разных
   // Навыков (обычный, групповой, специализация), и загонять сюда её разбор
   // значило бы дублировать skills.mjs. Требование показываем всегда.
-  const skillNote = `${groupDef.reqSkill} +${tierDef.req.skill}`;
+  const skillNote = `${groupReqSkill(master, group)} +${tierDef.req.skill}`;
 
   return { ok: !missing.length, missing, skillNote };
 }
@@ -424,9 +454,9 @@ export function minionCorruption(group, traits = []) {
 export function minionLoyalty(master, group, minion = null) {
   // Голем Рубрики (Повелитель Големов): «фиксированная Лояльность 30, которая не изменяется никакими Талантами».
   if (minion?.golem) return GOLEM_LOYALTY;
-  const charKey = MINION_GROUPS[group]?.masterChar;
-  if (!charKey) return 0;
-  let value = num(master?.system?.characteristics?.[charKey]?.total);
+  if (!MINION_GROUPS[group]?.masterChar) return 0;
+  // Обожание Толпы: у Миньонов-Людей — A вместо F, если выше (masterGroupChar).
+  let value = masterGroupChar(master, group).total;
   if (hasRuleFlag(master, "minion.core.tyrant")) {
     value = Math.max(value, num(master?.system?.characteristics?.inf?.total));
   }

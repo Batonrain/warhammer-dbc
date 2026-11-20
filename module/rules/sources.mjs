@@ -12,6 +12,7 @@
 // их импортируют отсюда три с лишним десятка файлов.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
+import { monodevotantRules } from "./monodevotant.mjs";
 import { OGRYN_RULES, OGRYN_TRAIT_RULES } from "./library/ogryn.mjs";
 import { REPLICANT_RULES } from "./library/replicant.mjs";
 import { serumHookRules } from "./replicant.mjs";
@@ -302,6 +303,12 @@ registerRuleSource("addiction", a => addictionPenaltyRules(a));
 // константы календаря), поэтому круга через sources.mjs не замыкает.
 registerRuleSource("drugWithdrawal", a =>
   withdrawalRulesOf(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
+
+// Монозависимый (Черта Миньона): ломка без субстанции — −10 ко всем тестам,
+// когда вышел срок 1d10+W.b дней, и ещё −5 за каждый следующий день
+// (rules/monodevotant.mjs). Та же схема «правило от времени мира».
+registerRuleSource("monodevotant", a =>
+  monodevotantRules(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
 
 // Затронутый Варпом, субмутация 10 «Недоверие к Лечению» (wdbc-1rno.26):
 // −10 на все тесты, кроме T, час после чужого лечения — та же схема «правило
