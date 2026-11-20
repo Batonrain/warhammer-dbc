@@ -43,6 +43,7 @@ import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey, aspirationPickState } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
 import { gearRequiresWearing } from "../apps/effects.mjs";
+import { skitariiModuleSummary } from "../rules/skitarii-modules.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
 import { extendedTestRows } from "../rules/extended-test.mjs";
 import { testTargetList } from "../rules/test-kind.mjs";
@@ -961,6 +962,9 @@ function buildGetDataUncached(actor) {
   // Органы Астартес (category "astartes") показаны отдельным блоком ГЕНОСЕМЯ
   // на вкладке ТЕЛО (context.geneSeedOrgans ниже) — здесь исключены, чтобы не
   // дублироваться в общей таблице Имплантов.
+  // Модули Скитарии: лимит ½ T.b (окр.▲) и переключатель Смещающейся Мантии.
+  const skMods = skitariiModuleSummary(actor);
+  context.skitariiModules = skMods;
   context.gearImplants = allItems.filter(i => i.type === "implant" && i.system.category !== "astartes").map(i => ({
     id: i.id, name: i.name,
     category:  IMPL_CAT[i.system.category] ?? i.system.category ?? "",
@@ -970,7 +974,10 @@ function buildGetDataUncached(actor) {
     // Лежит на листе без операции Хирургеона (wdbc-pqrh1): такой имплант не
     // даёт эффектов, не стоит на фигуре и не занимает порты — подсветка и
     // кнопка ГМа «Установлен» (персонажи, собранные до Хирургеона).
-    notInstalled: !i.getFlag?.("warhammer-dbc", "installed")
+    notInstalled: !i.getFlag?.("warhammer-dbc", "installed"),
+    // Модуль Скитарии: отключён ли (флаг disabled) и можно ли щёлкать Мантией.
+    moduleOff: !!skMods?.ids.has(i.id) && !!i.getFlag?.("warhammer-dbc", "disabled"),
+    moduleToggle: !!skMods?.mantle && skMods.ids.has(i.id)
   }));
   context.canMarkImplants = !!globalThis.game?.user?.isGM;
 

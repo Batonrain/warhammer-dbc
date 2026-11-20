@@ -560,7 +560,9 @@ describe("общее требование к предикатам", () => {
     // Чувство, выбранное в окне теста Внимательности (ctx.sense).
     testSense: ["hearing"],
     // Обучение мехадендритам (Mechadendrite Use), утилитарные дендриты — wdbc-qbyvc.
-    mechadendriteTraining: "utility"
+    mechadendriteTraining: "utility",
+    // Перегрузка Модулями Скитарии (rules/skitarii-modules.mjs).
+    skitariiModulesOverLimit: true
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

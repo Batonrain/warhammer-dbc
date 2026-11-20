@@ -3856,6 +3856,17 @@ export function registerHooks() {
       });
     });
 
+    // Избавление Аркхана: +1 Усталость, бионика держится в поле Haywire 7+.
+    html.querySelectorAll(".wh-arkhan-btn").forEach(btn => {
+      if (cardOnceUsed(message, "arkhanUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { useDeliveranceOfArkhan } = await import("./combat/skitarii-modules.mjs");
+        if (await useDeliveranceOfArkhan(message, el.dataset)) el.disabled = true;
+      });
+    });
+
     // Непоглощаемый урон в Ходовую техники (Трудный Ландшафт) → Структура
     html.querySelectorAll(".wh-vehicle-track-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {

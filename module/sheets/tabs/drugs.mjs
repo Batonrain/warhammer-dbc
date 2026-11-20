@@ -881,6 +881,15 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
     if (item) await item.setFlag("warhammer-dbc", "installed", true);
   });
 
+  // Смещающаяся Мантия: включить/выключить Модуль Скитарии (раз в Ход).
+  html.find(".skitarii-module-toggle").click(async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    const { toggleSkitariiModule } = await import("../../combat/skitarii-modules.mjs");
+    await toggleSkitariiModule(actor, item);
+  });
+
   html.find(".effect-deactivate-btn").click(async ev => {
     ev.preventDefault();
     const item = actor.items.get(ev.currentTarget.dataset.itemId);

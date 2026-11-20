@@ -23,6 +23,7 @@ import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
 import { NULL_ZONE_RULES } from "./library/null-zones.mjs";
+import { SKITARII_RULES } from "./library/skitarii.mjs";
 import { YIGORI_RULES } from "./library/yigori.mjs";
 import { CONDITION_RULES } from "./library/conditions.mjs";
 import { rulesFromItemMechanics, opposedTargetRerollRules } from "./item-rules.mjs";
@@ -81,6 +82,9 @@ registerRuleSource("core", () => CORE_AND_TRAIT_RULES);
 // Пустота Парии (library/null-zones.mjs): штрафы псайкерам/демонам в ауре и
 // социальные штрафы самого Парии — отбор по условию when, как у «core».
 registerRuleSource("nullZones", () => NULL_ZONE_RULES);
+
+// Перегрузка Модулями Скитарии (library/skitarii.mjs) — отбор по условию when.
+registerRuleSource("skitarii", () => SKITARII_RULES);
 
 // Черты Йигори с условием по цели броска (Angel Hunters) — отбор по Черте в
 // when, как у «nullZones»: см. library/yigori.mjs.

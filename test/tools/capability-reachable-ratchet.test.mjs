@@ -175,6 +175,7 @@ const ALLOWED = {
   "trait.stand": "включается по имени Черты скакуна (Stand), rules/mount.mjs — флага нет",
   "trait.unruly": "включается по имени Черты скакуна (Unruly), combat/mount.mjs — флага нет",
   "trait.warTrained": "включается по имени Черты скакуна (War-Trained), rules/mount.mjs handsNeeded — флага нет",
+  "awareness.core.lightSleeper": "включается по имени Таланта (Light Sleeper) в when.lacksTrait правила conditions.asleep, rules/library/conditions.mjs — флага нет",
   "occultist.core.instructor": "включается по имени Таланта (Instructor) через модульный массив имён в occultist-talents.mjs::hasInstructor — анализатор такую форму не распознаёт"
 };
 

@@ -1549,7 +1549,7 @@ export const CAPABILITIES = {
   // ── Скитарии
   "skitarii.core.boonOfOmnissiah": {
     label: "Подключившись к электросети и имея нужные сырые материалы, Скитарий за смену работы без инструментов и тестов может создать или перезарядить…",
-    source: "Boon of Omnissiah / Дар Омниссии", reader: ""
+    source: "Boon of Omnissiah / Дар Омниссии", reader: "module/combat/skitarii-modules.mjs::useBoonOfOmnissiah (кнопка Таланта) + module/rules/skitarii-modules.mjs::boonWeaponOk"
   },
   "skitarii.core.cyberdeacon": {
     label: "Скитарий может генерировать и накапливать мотивирующую силу как персонаж с Имплантами Механикум, но на 1 в Ход меньше.",
@@ -1557,15 +1557,15 @@ export const CAPABILITIES = {
   },
   "skitarii.core.deliveranceOfArkhan": {
     label: "Попав в поле Haywire интенсивностью 7+, Скитарий может получить 1 Усталости или потратить 1 заряд Актуаторных Банков,",
-    source: "Deliverance of Arkhan / Избавление Аркхана", reader: ""
+    source: "Deliverance of Arkhan / Избавление Аркхана", reader: "module/combat/skitarii-modules.mjs::arkhanHaywireNote (карточка ЭМИ 7+, combat/damage.mjs::_applyHaywire) + useDeliveranceOfArkhan (кнопка .wh-arkhan-btn, module/hooks.mjs)"
   },
   "skitarii.core.shiftingMantle": {
     label: "Раз в Ход за ментальное свободное действие Скитарий может отключить один Модуль и/или включить другой.",
-    source: "Shifting Mantle / Смещающаяся Мантия", reader: ""
+    source: "Shifting Mantle / Смещающаяся Мантия", reader: "module/combat/skitarii-modules.mjs::toggleSkitariiModule (кнопка .skitarii-module-toggle на вкладке Эффекты, флаг импланта disabled) + module/rules/skitarii-modules.mjs::moduleLimits (mantle +2 установленных), mantleSwapAllowed"
   },
   "skitarii.core.skitariiAlpha": {
     label: "Скитарий увеличивает максимум своих установленных и активных Модулей на 1.",
-    source: "Skitarii Alpha / Скитарий Альфа", reader: ""
+    source: "Skitarii Alpha / Скитарий Альфа", reader: "module/rules/skitarii-modules.mjs::moduleLimits (alpha) + module/rules/predicates.mjs::skitariiModulesOverLimit + module/rules/library/skitarii.mjs (−30 сверх лимита)"
   },
   // ── Мудрец
   "sage.core.foresight": {
@@ -1912,7 +1912,7 @@ export const CAPABILITIES = {
     reader: "module/rules/awareness-talents.mjs (heightenedSensesOf, awarenessTalentRules)"
   },
   "awareness.core.lightSleeper": {
-    label: "Не смоделировано (сверка главы 3): в системе нет Состояния «Спит» и штрафов P/Awareness за сон — Таланту нечего отменять. Текст лежит как есть; появится сон как Состояние — Чуткий Сон снимет его штраф для тестов P и Awareness.",
+    label: "Спящий персонаж с Талантом в тестах P и Awareness считается бодрствующим.",
     source: "Light Sleeper / Чуткий Сон", reader: "module/rules/library/conditions.mjs — conditions.asleep (−30 к тестам от P у спящего, lacksTrait Light Sleeper)"
   },
   "awareness.core.lipReading": {
