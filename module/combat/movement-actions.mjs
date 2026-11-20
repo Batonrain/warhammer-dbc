@@ -71,6 +71,7 @@ import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.m
 import { uselessCount } from "../rules/useless-limbs.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
 import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from "../rules/dodge-talents.mjs";
+import { equippedTerminatorArmour } from "../rules/terminator-armour.mjs";
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
 import { leapUpDenied, standUpExtraApCost } from "../rules/takedown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
@@ -964,7 +965,7 @@ export async function declareStandUp(actor) {
       </div>`,
       buttons: {
         plain: { label: `Обычным способом (${1 + extra} ОД)`, callback: () => resolve(_standUpPlain(actor)) },
-        jump:  { label: "Прыжком (тест Acrobatics)", callback: () => resolve(_standUpJump(actor)) },
+        ...(equippedTerminatorArmour(actor) ? {} : { jump: { label: "Прыжком (тест Acrobatics)", callback: () => resolve(_standUpJump(actor)) } }),
         cancel: { label: "Отмена", callback: () => resolve(null) }
       },
       default: "plain"
@@ -1383,6 +1384,11 @@ const JUMP_FORMULAS = {
 
 export function showJumpDialog(actor) {
   if (!actor) return;
+  // Терминаторская броня (стр. 235): «Не позволяет Прыгать» — Изящный Гигант этого не снимает.
+  if (equippedTerminatorArmour(actor)) {
+    ui.notifications.warn(`⚠️ ${actor.name}: Терминаторская броня не позволяет Прыгать.`);
+    return;
+  }
   const acro = skillTotal(actor, "acrobatics");
   const sb   = Number(actor.system.characteristics?.s?.bonus) || 0;
 
