@@ -49,6 +49,7 @@ import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS, withoutBoughtSuccess }  from "./rules/fate-bonus.mjs";
 import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
 import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
+import { twinFateApplies }                 from "./rules/twin-fate.mjs";
 import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit, unrulySaddleKey } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
@@ -4794,6 +4795,9 @@ function _attachFateContextMenu(message, html) {
           const atkOpts = wrathRerollOpts(withoutBoughtSuccess(atk.opts), wrathApplies);
           const wrathReroll = wrathApplies && !atk.opts?.reroll;
           delete atkOpts[BEYOND_HUMAN_FLAG];
+          delete atkOpts.twinFate;
+          // Двойная Судьба (Ворон): исходный бросок едет в атаку — хуже переброс, остаётся он (rules/twin-fate.mjs).
+          if (!wrathReroll && twinFateApplies(atkActor, { charKey: atk.charKey, champion: !!champion })) atkOpts.twinFate = { rv: atk.rv };
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}) });
           // Исходная карточка переброшена — бесплатный переброс Огневой Точки

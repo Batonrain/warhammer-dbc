@@ -4388,7 +4388,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voron.twinFate": {
     label: "Постигает ещё более продвинутые техники контроля судьбы своих клинков. Когда тратит Очко Бесчестия для переброса теста WS и результат перебр…",
-    source: "Twin Fate / Двойная Судьба", reader: ""
+    source: "Twin Fate / Двойная Судьба", reader: "module/rules/twin-fate.mjs (twinFateApplies/twinFateWorse) ← module/hooks.mjs (переброс атаки за Очко: opts.twinFate) ← module/combat/attack.mjs (исходный бросок остаётся, Очко возвращается)"
   },
   // ── Элитные_архетипы\Герольд — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.gerold.ancient": {

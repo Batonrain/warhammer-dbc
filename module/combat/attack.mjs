@@ -115,6 +115,7 @@ import { misfireCandidates, hasTargetSelection }      from "../rules/target-sele
 import { laserDotOffered }                            from "../rules/laser-sight.mjs";
 import { hasFlamerTalent, pyromaniacActive, torrentActive, torrentBlastRadius, torrentMaxDistance } from "../rules/flamer-talents.mjs";
 import { musicDeg, symphonyProps } from "../rules/battle-music.mjs";
+import { twinFateWorse } from "../rules/twin-fate.mjs";
 import { hasItemNamed } from "../rules/req-atom.mjs";
 import { dimacherusBonus } from "../rules/gladiator-talents.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
@@ -864,6 +865,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const [main, other, otherOutcome] = secondIsBetter ? [secondRoll, roll, o1] : [roll, secondRoll, o2];
     roll = main;
     quadOther = { roll: other, hit: otherOutcome.success, deg: otherOutcome.deg };
+  }
+  // Двойная Судьба (Ворон, rules/twin-fate.mjs): переброс WS за Очко хуже
+  // исходного — остаётся исходный бросок, Очко возвращается.
+  let twinFateNote = "";
+  const twinRv = Number(opts.twinFate?.rv);
+  if (twinRv > 0 && opts.forcedRoll == null && !quadOther) {
+    const probe = v => attackHitOutcome({ rv: v, threshold, isMelee, wp, forceHit: opts.forceHit, fixedSuccessDeg: opts.fixedSuccessDeg });
+    if (twinFateWorse(probe(twinRv), probe(roll.total))) {
+      const worse = roll.total;
+      roll = await new Roll(String(twinRv)).evaluate();
+      const { changeActorInfamy } = await import("../apps/infamy-points.mjs");
+      const back = await changeActorInfamy(actor, 1);
+      twinFateNote = `🎲 Двойная Судьба: переброс (${worse}) хуже исходного — остаётся ${twinRv}${back.changed ? ", Очко Бесчестия возвращено" : ""}.`;
+    } else twinFateNote = `🎲 Двойная Судьба: переброс не хуже исходного (${twinRv}) — Очко потрачено.`;
   }
   const rv       = roll.total;
   const rollMode = game.settings.get("core", "rollMode");
@@ -1721,6 +1736,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     (hit && tankHunter.penBonus) ? `🎯 Охотник на Танки: +${tankHunter.penBonus} к Pen (2×I.b, уже учтено) — слабые места этой модели техники опознаны.` : "",
     (!isMelee && wp.spray && ashMantleActive(actor)) ? ashMantleNote(actor) : "",
     (isMelee && hit && fistfulActive(actor)) ? fistfulNote(actor, defenderActor) : "",
+    twinFateNote,
     (hit && dimacherus) ? `⚔️ Димахер: +${dimacherus} к урону каждого попадания (очки Момента, уже в формуле).` : "",
     galvanicResonanceOn(actor, { item, isMelee, hit, aimed: !!aiming && aiming !== "none" })
       ? galvanicResonanceText(defenderActor?.system?.absorption, Array.from({ length: Math.max(1, hitsCount || 0) }, (_, i) => locForHit(i)), LOCATION_TO_ARMOR) : "",
