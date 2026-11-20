@@ -3258,7 +3258,7 @@ export const CAPABILITIES = {
   },
   "psyker.core.psychicLocus": {
     label: "Изучая потоки Варпа 8 часов, персонаж проходит Psyniscience+0 и при Успехе запоминает местность (запишите Успехи). Не дальше P.",
-    source: "Psychic Locus / Психический Локус", reader: ""
+    source: "Psychic Locus / Психический Локус", reader: "module/rules/psychic-locus.mjs — кнопка изучения места и галочка в окне манифестации (Феномен −Успехи×5)"
   },
   "psyker.core.psychicPrecision": {
     label: "При манифестации стрелковых психосил псайкер может уменьшить эPR силы на 2, чтобы выбрать часть тела попадания,",

@@ -72,6 +72,8 @@ import { hasWoundInReality, woundAuraPhenMod, woundFreeToggleGate, WOUND_FREE_FL
 import { setWoundFree } from "../../combat/wound-in-reality.mjs";
 import { sustainOffPatch } from "../../combat/psychic-sustain.mjs";
 import { warpLockBlocksManifest } from "../../rules/warp-lock.mjs";
+import { hasPsychicLocus, locusUsable } from "../../rules/psychic-locus.mjs";
+import { locusHere, spendPsychicLocus } from "../../combat/psychic-locus.mjs";
 import { warpLockButtonsHtml, applyWarpLock, resetWarpLockHour, clearWarpLockMark } from "../../combat/warp-lock.mjs";
 
 /**
@@ -465,7 +467,15 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
           <label title="Проводник Варпа: в Усиленном режиме за Очко Бесчестия +${WARP_CONDUIT_FORMULA} к эPR эффектов (не психотеста); +${WARP_CONDUIT_PHEN_MOD} к броску Феномена">
             <input type="checkbox" id="psy-conduit"/> Проводник Варпа: −1 ОБ, +${WARP_CONDUIT_FORMULA} эPR эффектов, +${WARP_CONDUIT_PHEN_MOD} Феномен (только Усиленный)</label>
         </div>`
-      : ""
+      : "",
+    // Психический Локус (rules/psychic-locus.mjs): галочка, если место рядом и в нём есть Успехи.
+    (() => {
+      if (!hasPsychicLocus(actor)) return "";
+      const u = locusUsable(actor, locusHere(actor));
+      return u.ok
+        ? `<div class="pm-row"><label title="Психический Локус: бросок Феномена −Успехи×5, Успехи места −1"><input type="checkbox" id="psy-locus"/> Психический Локус: −${u.reduction} к Феномену (место теряет 1 Успех)</label></div>`
+        : (u.reason ? `<div class="pm-note" style="opacity:.75;">${esc(u.reason)}</div>` : "");
+    })()
   ].join("");
   Object.assign(psyMeta, { spiteBonus: PSYCHIC_SPITE_BONUS, conduitFormula: WARP_CONDUIT_FORMULA });
 
@@ -642,6 +652,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
             precision: html.find("#psy-precision").val() || "",
             precisionLoc: html.find("#psy-precision-loc").val() || "",
             conduit: html.find("#psy-conduit").is(":checked"),
+            locus: html.find("#psy-locus").is(":checked"),
             fastWeaving: html.find("#psy-fastweave").is(":checked"),
             woundFree: html.find("#psy-woundfree").is(":checked")
           });
@@ -1399,6 +1410,15 @@ export async function executePsychotest(actor, item, opts) {
   let phenSection = "";
   let perilTriggered = false;
   if (phenomena) {
+    // Психический Локус: Успехи места ×5 вниз, место теряет 1 Успех (только первая попытка — переброс не платит второй раз).
+    if (opts.locus && !opts.reroll) {
+      const u = locusUsable(actor, locusHere(actor));
+      const cut = u.ok ? await spendPsychicLocus(actor, u.reduction) : 0;
+      if (cut) {
+        phenMod -= cut;
+        talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">Психический Локус: −${cut} к броску Феномена, у места осталось ${Math.max(0, cut / 5 - 1)} Успехов.</div>`);
+      }
+    }
     let phenRoll = await new Roll(`1d100 + ${phenMod}`).evaluate();
     allRolls.push(phenRoll);
     // Любимец Варпа: «бросает два кубика на Феномены (но не Прорывы) и может
