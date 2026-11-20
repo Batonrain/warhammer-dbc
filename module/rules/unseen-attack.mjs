@@ -44,7 +44,7 @@
 // ли атака», а «нужно ли вообще её засекать», это capability-заглушки
 // отдельного прохода.
 
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, hasWarpSightNow } from "./predicates.mjs";
 
 const NS = "warhammer-dbc";
 const DETECTED_FLAG = "unseenDetectedUntilNextTurn";
@@ -66,9 +66,8 @@ export function isUnseenAttack(wp) {
  * отрицали его).
  */
 export function hasWarpSight(actor) {
-  return (actor?.items ?? []).some(item =>
-    (item?.type === "trait" || item?.type === "talent") &&
-    (itemHasName(item, "Warp Sight") || itemHasName(item, "Варп-Зрение")));
+  // Дар Одержимого «Варп-Зрение» — только в Проявлении (predicates.mjs::hasWarpSightNow, 6plo6).
+  return hasWarpSightNow(actor);
 }
 
 /**

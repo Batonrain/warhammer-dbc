@@ -3958,7 +3958,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryEdinenie.warpSight": {
     label: "Warp Sight и Unnatural Senses (W.b демона).",
-    source: "Warp Sight / Дар: Варп-Зрение", reader: ""
+    source: "Warp Sight / Дар: Варп-Зрение", reader: "module/rules/predicates.mjs::hasWarpSightNow (Незримые атаки, Притупление) и rules/blindness.mjs — только в Проявлении"
   },
   // ── Таланты_одержимых\Дары___Защита — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryZaschita.auraOfChaos": {
@@ -3975,7 +3975,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryZaschita.regeneration": {
     label: "Regeneration (½Cor.b, окр.▲); активация на Cor+0 вместо Т+0. Не лечит урон от Sanctified.",
-    source: "Regeneration / Дар: Регенерация", reader: ""
+    source: "Regeneration / Дар: Регенерация", reader: "module/rules/rubric-sorcerer.mjs::regenerationSource — ½Cor.b, тест Cor+0, только в Проявлении"
   },
   "elite.talantyOderzhimyh.daryZaschita.veilOfDarkness": {
     label: "Облако тьмы: все зрячие атаки по нему −20.",

@@ -968,3 +968,18 @@ export function manifestedGift(actor, giftName) {
   if (!canManifestPossession(actor) || !actor?.system?.possession?.manifested) return false;
   return giftNamesOf(actor).has(giftName);
 }
+
+/** Предмет — Дар Одержимого (имя «… / Дар: X»): действует только в Проявлении. */
+export function isPossessionGiftItem(item) {
+  return item?.type === "talent" && String(item?.name ?? "").includes(GIFT_NAME_PREFIX);
+}
+
+/**
+ * Варп-Зрение сейчас (Разобрать 6plo6): Черта или Талант Warp Sight; Дар «Варп-Зрение» —
+ * только пока демон проявлен (раньше код видел одни Черты, а Дар считал всегда).
+ */
+export function hasWarpSightNow(actor) {
+  const named = [...(actor?.items ?? [])].some(i => (i?.type === "trait" || i?.type === "talent")
+    && !isPossessionGiftItem(i) && (itemHasName(i, "Warp Sight") || itemHasName(i, "Варп-Зрение")));
+  return named || manifestedGift(actor, "Варп-Зрение");
+}
