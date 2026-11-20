@@ -19,6 +19,8 @@ const NS = "warhammer-dbc";
 export const CARD_ONCE_FLAGS = [
   // Танец Пламени: цель с этой карточки уже выбрана (rules/fire-dance.mjs).
   "fireDanceUsed",
+  // Бастион против Тарана, Ас Оператор, Избавление Аркхана (остаток Талантов, 20.11.2026).
+  "ramBastionUsed", "aceOperatorUsed", "arkhanUsed",
   "tipOfSpearUsed", "mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
   // Трата Очка «Успех» из меню карточки теста (apps/infamy-success.mjs): +Успех дописан в эту карточку.
   "infamySuccessAdded",

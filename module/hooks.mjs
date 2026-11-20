@@ -1743,8 +1743,9 @@ export function registerHooks() {
     html.querySelectorAll(".wh-ash-mantle-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.attackerUuid;
         const { targetAshMantleRing } = await import("./combat/dreadnought-talents.mjs");
-        await targetAshMantleRing(ev.currentTarget.dataset.attackerUuid);
+        await targetAshMantleRing(uuid);
       });
     });
 
@@ -1762,10 +1763,11 @@ export function registerHooks() {
     html.querySelectorAll(".wh-dirge-test-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
+        const singerUuid = ev.currentTarget.dataset.singerUuid;
         const listener = requireControlledActor("⚠️ Выберите токен слушателя на сцене!");
         if (!listener) return;
         const { resistBalefulDirge } = await import("./combat/baleful-dirge.mjs");
-        await resistBalefulDirge(listener, ev.currentTarget.dataset.singerUuid);
+        await resistBalefulDirge(listener, singerUuid);
       });
     });
 
@@ -4786,6 +4788,8 @@ function _attachFateContextMenu(message, html) {
           // За Гранью Человека: данные о первом результате едут в опциях атаки
           // (они ложатся во флаги новой карточки). Старую метку убираем —
           // переброс переброшенной карточки считается от неё самой.
+          // Двойная Судьба (Ворон, rules/twin-fate.mjs): исходный бросок едет в атаку — хуже переброс, остаётся он.
+          const twinOk = twinFateApplies(atkActor, { charKey: atk.charKey, champion: !!champion });
           const bhAtk = beyondHumanRerollData(atkActor, {
             charKey: atk.charKey, firstRv: atk.rv, threshold: atk.threshold,
             spend: champion ? null : reroll1 });
@@ -4795,11 +4799,9 @@ function _attachFateContextMenu(message, html) {
           const atkOpts = wrathRerollOpts(withoutBoughtSuccess(atk.opts), wrathApplies);
           const wrathReroll = wrathApplies && !atk.opts?.reroll;
           delete atkOpts[BEYOND_HUMAN_FLAG];
-          delete atkOpts.twinFate;
-          // Двойная Судьба (Ворон): исходный бросок едет в атаку — хуже переброс, остаётся он (rules/twin-fate.mjs).
-          if (!wrathReroll && twinFateApplies(atkActor, { charKey: atk.charKey, champion: !!champion })) atkOpts.twinFate = { rv: atk.rv };
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
-            atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}) });
+            atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}),
+              twinFate: (twinOk && !wrathReroll) ? { rv: atk.rv } : undefined });
           // Исходная карточка переброшена — бесплатный переброс Огневой Точки
           // с неё больше не предлагается (переброс переброса).
           await markCardOnce(message, "attackRerolled");
