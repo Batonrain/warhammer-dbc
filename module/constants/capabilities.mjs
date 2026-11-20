@@ -3997,7 +3997,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryTransformatsiya.manyEyed": {
     label: "Круговое зрение; выглядывает из укрытия рукой/ногой вместо головы.",
-    source: "Many-Eyed / Дар: Многоглазый", reader: ""
+    source: "Many-Eyed / Дар: Многоглазый", reader: "module/rules/possession-talents.mjs::manyEyedSightAngle (360° в Проявлении) → module/combat/facing.mjs::isOutsideDefenderView"
   },
   "elite.talantyOderzhimyh.daryTransformatsiya.massiveMaw": {
     label: "Bite + Deadly Natural Weapon (Укус) от Проявления; при попадании укусом — Захват; может не наносить урон.",
@@ -4055,7 +4055,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSlaughter": {
     label: "В Проявлении считается двумя персонажами для численного превосходства; раз в Ход переброс промаха меньшим WS/BS.",
-    source: "Shared Slaughter / Общая Бойня", reader: ""
+    source: "Shared Slaughter / Общая Бойня", reader: "module/rules/possession-talents.mjs::outnumberWeight (за двоих в Проявлении) → module/combat/tactical-map.mjs::meleeContactCount"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSorcery": {
     label: "Неконтролирующая душа раз в Раунд манифестирует психосилу (своб./полу-/полное действие; штраф-простой после полу-/полного).",
