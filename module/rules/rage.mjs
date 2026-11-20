@@ -48,7 +48,7 @@
 //  (AGENTS.md, «Источники правил»); поэтому hasAbility/hasRuleFlag здесь нельзя.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasColdFury, hasWoundedBeast } from "./predicates.mjs";
+import { hasColdFury, hasWoundedBeast, hasIronWrath } from "./predicates.mjs";
 
 /** Прибавка к ЗНАЧЕНИЮ характеристики в Ярости (книга: «+10 к WS, S и W»). */
 export const RAGE_CHAR_BONUS = Object.freeze({ ws: 10, s: 10, wp: 10 });
@@ -130,8 +130,9 @@ export function woundedBeastBonus(actor, key) {
 export function rageRules(actor) {
   if (!isInRage(actor)) return [];
   const coldFury = hasColdFury(actor);
+  const ironWrath = hasIronWrath(actor);
   const rules = Object.entries(RAGE_PENALTY_CHARS)
-    .filter(([char]) => !(coldFury && char === "fel"))
+    .filter(([char]) => !(coldFury && char === "fel") && !(ironWrath && char === "bs"))
     .map(([char, abbr]) => ({
       id: `rage.penalty.${char}`,
       label: `Ярость: −20 на тесты ${abbr}`,

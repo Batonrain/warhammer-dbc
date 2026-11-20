@@ -42,6 +42,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { gracefulGiantPenaltyReduction } from "./terminator-armour.mjs";
 import { MUTATIONS_AS_ASTARTES, sleepGraceDays } from "./squat-traits.mjs";
 import { ORDER_REJECTS_BIONICS, rejectedImplants, bionicsRejection } from "./aversion-to-order.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
@@ -498,7 +499,9 @@ export function prepareCharacterDerived(actor, system) {
         armorCharBonus.wp += item.system.wpBonus       || 0;
       }
       const penalty = Math.max(0, (item.system.agilityPenalty || 0)
-        - armourTrainingPenaltyReduction(actor, item.system.armorType));
+        - armourTrainingPenaltyReduction(actor, item.system.armorType)
+        // Изящный Гигант (Чемпион-Терминатор): −10 к штрафу Терминаторской брони.
+        - gracefulGiantPenaltyReduction(actor, item));
       armorCharBonus.ag -= penalty;
     }
     system.armorCharBonus = armorCharBonus;

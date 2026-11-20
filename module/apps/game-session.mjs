@@ -222,6 +222,8 @@ export async function triggerNewScene() {
   await (await import("../combat/fear.mjs")).clearFearSceneState();
   // Божественная Защита: без сознания «до конца сцены или боя».
   await wakeDivineProtected(worldAndTokenActors());
+  // Таланты, включённые «до конца боя или сцены» (apps/item-activation.mjs).
+  await (await import("./item-activation.mjs")).clearActivationsOnSceneEnd();
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },
     content: bannerCard("🎬 Новая сцена", BANNER_TEXT.scene)
@@ -243,6 +245,7 @@ export async function triggerSessionEnd() {
   // Убийца, Оружие Наследия (wdbc-t3c3t.4): Felling «до конца боя или сцены».
   await revertLegacyKillerOnSceneEnd();
   await endBattleFormsOnSceneEnd();
+  await (await import("./item-activation.mjs")).clearActivationsOnSceneEnd();
   await endInspiredWrathOnSceneEnd();
   // Страх (стр. 53): пройденные рейтинги и штраф Шока «до конца сцены».
   await (await import("../combat/fear.mjs")).clearFearSceneState();

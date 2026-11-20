@@ -34,6 +34,30 @@ export function psyRatingFromTalents(items) {
   return matches.reduce((sum, i) => sum + Math.max(1, i.system?.rating || 0), 0);
 }
 
+/**
+ * Прибавки к эPR психосил ОПРЕДЕЛЁННЫХ дисциплин (system.discipline силы).
+ * Verminous Conduit / Паразитический Проводник (Король Червей): «Получает +1 к
+ * эPR психосил Нургла и Биомантии». Действует в любом режиме манифестации,
+ * складывается с остальными прибавками. Опознание — по имени Черты.
+ */
+export const DISCIPLINE_EPR_SOURCES = Object.freeze([
+  { names: ["Verminous Conduit", "Паразитический Проводник"], types: ["trait"],
+    label: "Паразитический Проводник", disciplines: ["nurgle", "biomancy"], bonus: 1 }
+]);
+
+/** Прибавка к эPR этой силы от Черт/Талантов по дисциплине: {bonus, labels}. */
+export function disciplineEprBonus(actor, power) {
+  const disc = String(power?.system?.discipline ?? "");
+  let bonus = 0; const labels = [];
+  if (!disc) return { bonus, labels };
+  for (const src of DISCIPLINE_EPR_SOURCES) {
+    if (!src.disciplines.includes(disc)) continue;
+    const has = (actor?.items ?? []).some(i => src.types.includes(i?.type) && src.names.some(n => itemHasName(i, n)));
+    if (has) { bonus += src.bonus; labels.push(`${src.label} +${src.bonus}`); }
+  }
+  return { bonus, labels };
+}
+
 /** Child of the Warp / Дитя Варпа: «+1 PR при Усиленной манифестации». */
 export const CHILD_OF_THE_WARP_PUSH_BONUS = 1;
 

@@ -427,6 +427,33 @@ function mechLeaves(groups, out = []) {
   return out;
 }
 
+const nameHalves = n => String(n ?? "").toLowerCase().split("/").map(p => p.trim()).filter(Boolean);
+
+/**
+ * Ревью #581 п.2: ветки НОВЫХ ИЛИ-групп (ни одной ветки не было на копии),
+ * чей Талант/Черта уже лежит у актора (ГМ вписал руками) — их id. Иначе
+ * applyItemMechanics всплыл бы окном выбора и мог выдать вторую копию.
+ * Совпадение по любой половине двуязычного имени. Ни одной ветки на листе —
+ * ничего: выбор нужен, окно уместно (как у прочих новых выдач Талантов/Черт).
+ */
+function ownedOrBranches(groups, known, actorItems) {
+  const have = new Set([...(actorItems ?? [])]
+    .filter(i => i?.type === "talent" || i?.type === "trait").flatMap(i => nameHalves(i.name)));
+  const out = [];
+  const walk = gs => {
+    for (const g of gs || []) {
+      const leaves = (g?.entries || []).filter(e => e?.kind !== "group");
+      if (g?.operator === "OR" && !mechLeaves([g]).some(e => known.has(e.id))) {
+        const hit = leaves.find(e => (e.kind === "talent" || e.kind === "trait") && nameHalves(e.sourceName).some(h => have.has(h)));
+        if (hit) out.push(hit.id);
+      }
+      walk((g?.entries || []).filter(e => e?.kind === "group").map(e => e.group));
+    }
+  };
+  walk(groups);
+  return out;
+}
+
 /**
  * PR #568: перенос Механики на УЖЕ купленную копию будит updateItem →
  * applyItemMechanics, и разовая запись, которой в копии не было (Порча
@@ -439,11 +466,12 @@ function mechLeaves(groups, out = []) {
 function waiveNewOneShots(upd, item, entry, packVal) {
   const known = new Set([...mechLeaves(entry.actorVal), ...mechLeaves(entry.baseVal)].map(e => e.id));
   const fresh = mechLeaves(packVal).filter(e => ONE_SHOT_MECH_KINDS.has(e.kind) && !known.has(e.id));
-  if (!fresh.length || !item) return;
+  const picked = item ? ownedOrBranches(packVal, known, item.parent?.items) : [];
+  if ((!fresh.length && !picked.length) || !item) return;
   const flag = item.getFlag?.(FLAG, "mechanicsApplied");
   // Старое `true` = «всё, что лежало на предмете» (appliedEntryIds в mechanics.mjs).
   const applied = Array.isArray(flag) ? flag : flag === true ? mechLeaves(entry.actorVal).map(e => e.id) : [];
-  upd[`flags.${FLAG}.mechanicsApplied`] = [...new Set([...applied, ...fresh.map(e => e.id)])];
+  upd[`flags.${FLAG}.mechanicsApplied`] = [...new Set([...applied, ...fresh.map(e => e.id), ...picked])];
   const equip = fresh.filter(e => e.kind === "equipment" || e.kind === "integralAttack").map(e => e.id);
   if (equip.length) {
     upd[`flags.${FLAG}.equipWaived`] = [...new Set([...(item.getFlag?.(FLAG, "equipWaived") || []), ...equip])];

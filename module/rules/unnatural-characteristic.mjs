@@ -17,6 +17,7 @@
 // экземпляры трейта, включая шаблонные «Unnatural Strength (X)»).
 
 import { beyondHumanRating } from "./beyond-human.mjs";
+import { mechFormulaTotalSafe } from "./mech-formula.mjs";
 
 const UNNATURAL_PREFIX = /^unnatural\s/i;
 
@@ -38,6 +39,30 @@ function charBonusEntries(effects) {
 }
 
 /**
+ * Записи Конструктора «Характеристика → бонус» с И-веток (ИЛИ-выбор
+ * отыгрывается один раз при выдаче и долговечного эффекта не держит).
+ * Шаблоны «Unnatural Characteristic (X)» и «Unnatural (выбор) (X)» (19.11.2026)
+ * несут +X Бонуса именно такой записью: Характеристику спрашивает скрипт при
+ * выдаче, X — рейтинг самой Черты (значение-формула «rating»).
+ */
+function mechanicsBonusEntries(item) {
+  const groups = item?.flags?.["warhammer-dbc"]?.mechanics ?? [];
+  const out = [];
+  const walk = (entries, operator) => {
+    if (operator === "OR") return;
+    for (const e of entries ?? []) {
+      if (e?.kind === "group") { walk(e.group?.entries, e.group?.operator); continue; }
+      if (e?.kind !== "characteristic" || e.field !== "bonus" || !e.charKey) continue;
+      if (e.op && e.op !== "add") continue;
+      const value = mechFormulaTotalSafe(e.value, { rating: Number(item?.system?.rating) || 0 });
+      if (value) out.push({ stat: e.charKey, value });
+    }
+  };
+  for (const g of Array.isArray(groups) ? groups : []) walk(g.entries, g.operator);
+  return out;
+}
+
+/**
  * Суммарный рейтинг X Unnatural-трейтов актора для одной Характеристики.
  * Складывает несколько источников — та же логика стекания, что уже применена
  * к +X Бонуса в character.mjs, не «последний/наибольший побеждает».
@@ -52,7 +77,10 @@ export function unnaturalRating(actor, charKey) {
   for (const item of actor?.items ?? []) {
     if (item.type !== "trait") continue;
     if (!UNNATURAL_PREFIX.test(englishName(item.name))) continue;
-    for (const cb of charBonusEntries(item.system?.effects)) {
+    // Есть запись Конструктора — старое поле не читаем: выбор в окне
+    // (apps/unnatural-choice.mjs) не чистит charBonusStat, и +½X удвоился бы.
+    const mech = mechanicsBonusEntries(item);
+    for (const cb of mech.length ? mech : charBonusEntries(item.system?.effects)) {
       if (cb?.stat === charKey) total += Number(cb.value) || 0;
     }
   }

@@ -46,3 +46,29 @@ export function flightSpeedOf(items, rollData = {}) {
   }
   return best;
 }
+
+// ── Рытьё: Burrower / Бурильщик (X) (корбук, «Трейты», 19.11.2026) ──────────
+//  «Прокапывает тоннели сквозь землю/камень со скоростью SPD×X, игнорируя
+//  модификаторы Размера». Отдельного режима движения под землёй в системе
+//  нет — лист показывает скорость рытья рядом с Полётом, считает её сам:
+//  SPD без Размера (Ag.b, не ниже 0.5) × X.
+/** Наибольший X Черт Burrower актора; null — Черты нет (или без рейтинга). */
+export function burrowRatingOf(items, rollData = {}) {
+  let best = null;
+  for (const item of items ?? []) {
+    if (!FLIGHT_ITEM_TYPES.has(item?.type)) continue;
+    // Имена литералами — так их видит замер (tools/capability-reachability.mjs).
+    if (!itemHasName(item, "Burrower") && !itemHasName(item, "Бурильщик")) continue;
+    const x = liveTraitRating(item, rollData);
+    if (x > 0 && (best === null || x > best)) best = x;
+  }
+  return best;
+}
+
+/** SPD рытья: (Ag.b без Размера, минимум 0.5) × X; null — Черты нет. */
+export function burrowSpeedOf(items, agBonus, rollData = {}) {
+  const x = burrowRatingOf(items, rollData);
+  if (x === null) return null;
+  const spd = (Number(agBonus) || 0) <= 0 ? 0.5 : Number(agBonus);
+  return spd * x;
+}

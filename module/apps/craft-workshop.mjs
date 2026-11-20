@@ -36,7 +36,8 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
          monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, masterEngineseerAutoEligible,
          masterEngineseerAutoSuccesses, masterEngineseerNoParts, hasMasterEngineseer, destroyedWeaponsOf,
-         craftShiftTitle, hasPrototyping, prototypingEffects } from "../rules/craft-advantage.mjs";
+         craftShiftTitle, hasPrototyping, prototypingEffects, craftCritLoss, craftCritLossBase,
+         CRAFT_CRIT_LOSS_MIN, CRAFT_CRIT_LOSS_MAX } from "../rules/craft-advantage.mjs";
 import { CRAFTED_ITEMS_FLAG, craftedItemsOf, recordCreation, recordAssist, normalizeItemName } from "../rules/craft-memory.mjs";
 import { repairDestroyedWeapon } from "../combat/weapon-repair.mjs";
 import { spendFromInfamyPool, actorInfamyPath } from "./infamy-points.mjs";
@@ -111,6 +112,9 @@ export function newCraftProject(preferredCrafterId) {
     categoryKey: CRAFT_CATEGORIES[3].key,
     rarity: 1, quality: "common", toolKey: "common",
     gmMod: 0, assistants: 0, baseBank: null, improve: false, monotony: false, machineSize: 0,
+    // Потеря Успехов за Критический Провал смены — «от 5 до 15 по решению ГМа»
+    // (корбук, Расширенные Тесты); 10 — середина, ГМ правит на проекте.
+    critLoss: 10,
     // «Крючок» (Талант Медика, 3-dc87): −30 к тесту Химии → наркотик с вдвое меньшим лимитом доз.
     hookUp: false,
     // Кубик смены (Преимущество/Помеха, стр. 26) — Сложность у Крафта уже
@@ -421,6 +425,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       qualityOptions: Object.entries(CRAFT_QUALITY).map(([k, q]) => ({ k, label: q.label, mult: q.bankMult, selected: k === proj.quality })),
       tools: CRAFT_TOOLS.map(t => ({ ...t, selected: t.key === proj.toolKey })),
 
+      critLoss: craftCritLossBase(proj.critLoss), critLossMin: CRAFT_CRIT_LOSS_MIN, critLossMax: CRAFT_CRIT_LOSS_MAX,
       gmMod: proj.gmMod, assistants: proj.assistants, improve: proj.improve, monotony: proj.monotony,
       hookUp: !!proj.hookUp, hookUpAvail: hookUpAvailable(R.crafter, proj),
       diceMode: proj.diceMode || "normal",
@@ -500,6 +505,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=basebank]", "change", e => upd(e.currentTarget, p => p.baseBank = num(e.target.value, 1)));
     on("[name=machinesize]", "change", e => upd(e.currentTarget, p => p.machineSize = Math.max(0, num(e.target.value))));
     on("[name=gmmod]", "change", e => upd(e.currentTarget, p => p.gmMod = num(e.target.value)));
+    on("[name=critloss]", "change", e => upd(e.currentTarget, p => p.critLoss = craftCritLossBase(e.target.value)));
     on("[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
     on("[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
     on("[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
@@ -683,9 +689,22 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const gain = Math.max(0, dos) + assist;
     const wasDone = R.bank != null && proj.project.accumulated >= R.bank;
+    // Критический Провал отнимает Успехи из банка (5–15 по решению ГМа — поле
+    // проекта critLoss); Техника Безопасности крафтера/ассистента — исключение.
+    // У готового проекта отнимать нечего: работа уже сдана.
+    const critLoss = wasDone
+      ? { loss: 0, source: "none" }
+      : craftCritLoss({ critFailure: !!crit.failure, mode: proj.mode, configured: proj.critLoss, crafter, assistantActor });
+    const accBefore = proj.project.accumulated;
     proj.project.shifts += 1;
     proj.project.fatigue += 1;
-    proj.project.accumulated += gain;
+    proj.project.accumulated = Math.max(0, accBefore + gain - critLoss.loss);
+    const lost = accBefore + gain - proj.project.accumulated;
+    const net = proj.project.accumulated - accBefore;
+    const critLossNote = !crit.failure || wasDone ? ""
+      : critLoss.source === "crafter" ? `Критический Провал: Техника Безопасности — Успехи из банка не теряются (без неё −${critLoss.base}).`
+      : critLoss.source === "assistant" ? `Критический Провал: Техника Безопасности ассистента (${esc(assistantActor?.name ?? "")}) — теряется только <b>${lost}</b> Успех вместо ${critLoss.base}.`
+      : `Критический Провал: из банка потеряно <b>${lost}</b> Успехов${lost < critLoss.loss ? ` (из ${critLoss.loss} — в банке больше не было)` : ""}.`;
     const done = R.bank != null && proj.project.accumulated >= R.bank;
 
     // Через addFatigue (wdbc-x1nz.2.95): смена работы у порога T.b+W.b роняет
@@ -775,6 +794,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
             : `<div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">Комбинированный тест: <b>${rv}</b> vs Предел ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}</div>`}
           ${diceNote}
           ${critLine}
+          ${critLossNote ? `<div class="wh-craft-roll-line fail">${critLossNote}</div>` : ""}
           ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха${darkMuseBonus ? ` (вкл. Тёмную Музу +${darkMuseBonus})` : ""}</div>` : ""}
           ${polyBonus ? `<div class="wh-craft-roll-line ok">Полимат: +${polyBonus} к тесту</div>` : ""}
           ${chain > 1 ? `<div class="wh-craft-roll-line ok">Дополнительная смена Полимата (за Критический Успех предыдущей), ${chain}-я в цепочке</div>` : ""}
@@ -791,7 +811,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${repairNote ? `<div class="wh-craft-roll-line ok">${repairNote}</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
           ${torrentNote ? `<div class="wh-craft-roll-line ok">${torrentNote}</div>` : ""}
-          <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank ?? "?"}${R.repairNeedsBank ? " · <b style='color:#f0c88a'>Впишите Базовый Банк ремонта (в книге формулы нет)</b>" : ""}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
+          <div class="wh-craft-msg-sum ${net > 0 ? "ok" : "fail"}">Итог смены: <b>${net < 0 ? `−${-net}` : `+${net}`}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank ?? "?"}${R.repairNeedsBank ? " · <b style='color:#f0c88a'>Впишите Базовый Банк ремонта (в книге формулы нет)</b>" : ""}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,
       rolls: [roll, polyFatigueRoll].filter(Boolean), sound: CONFIG.sounds.dice

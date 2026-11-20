@@ -50,7 +50,7 @@ import { fateBonusOutcome, FATE_BONUS, withoutBoughtSuccess }  from "./rules/fat
 import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
 import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
 import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
-import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
+import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit, unrulySaddleKey } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest, rollHordeFlameTest } from "./combat/horde-psych.mjs";
@@ -62,7 +62,7 @@ import { ROUND_DAMAGE_FLAG }            from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
-import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation, ironMountTest, clearDragonKnight } from "./combat/mount.mjs";
+import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation, ironMountTest, clearDragonKnight, showMountDamageTest } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity, isDiceRating, resolveLingerRounds } from "./combat/weapon-properties.mjs";
 import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
 import { conditionApplyFields, setFatigue } from "./sheets/tabs/conditions.mjs";
@@ -224,6 +224,8 @@ import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { onDefenceRerollClick, rerollDefenceCard, defenceTestOf } from "./combat/defence-reroll.mjs";
+import { DEFENCE_REROLLED_FLAG } from "./rules/defence-reroll.mjs";
 import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
 import { markFrenzyExited } from "./combat/frenzy.mjs";
 import { RAGE_EXIT_REROLL_CARD_FLAG, RIDING_BEAST_CARD_FLAG } from "./rules/rage-behavior.mjs";
@@ -249,6 +251,7 @@ import { applyScatterOverride, SCATTER_FLAG } from "./combat/grenadier.mjs";
 import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
 import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
 import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
+import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -1668,6 +1671,18 @@ export function registerHooks() {
       });
     });
 
+    // Переброс проваленного Уклонения/Парирования Чертой или Талантом (combat/defence-reroll.mjs).
+    html.querySelectorAll(".wh-defence-reroll-btn").forEach(btn => {
+      if (cardOnceUsed(message, DEFENCE_REROLLED_FLAG)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const done = await onDefenceRerollClick(message, el.dataset.ruleId);
+        if (!done) el.disabled = cardOnceUsed(message, DEFENCE_REROLLED_FLAG);
+      });
+    });
+
     // Пируэт против Тарана (Талант Избегания): цель — выбранный токен, таранящий — из карточки.
     html.querySelectorAll(".wh-ram-pirouette-btn").forEach(btn => {
       if (cardOnceUsed(message, "ramPirouetteUsed")) btn.disabled = true;
@@ -2489,6 +2504,25 @@ export function registerHooks() {
         const attackerUuid = ev.currentTarget.dataset.attackerUuid;
         const { injectFangVenom } = await import("./apps/naga-traits.mjs");
         await injectFangVenom(attackerUuid);
+      });
+    });
+
+    // Непослушный скакун: тест удержания в седле из карточки урона скакуна (19.11.2026)
+    // Одна попытка на всадника с этой карточки (строка = номер, damage.mjs::unrulySaddleKey).
+    html.querySelectorAll(".wh-unruly-saddle-btn").forEach(btn => {
+      const key = unrulySaddleKey(Number(btn.dataset.row));
+      if (key && cardOnceUsed(message, key)) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const uuid = el.dataset.riderUuid;
+        const rider = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
+        if (!rider) return ui.notifications.warn("⚠️ Всадник не найден (возможно, удалён).");
+        if (!rider.isOwner) return ui.notifications.warn(`⚠️ Тест бросает владелец «${rider.name}».`);
+        if (!key) return showMountDamageTest(rider);
+        el.disabled = true;
+        const done = await runCardOnce(message, key, () => showMountDamageTest(rider), "Этот всадник уже проходил тест удержания с этой карточки.");
+        if (!done) el.disabled = cardOnceUsed(message, key);
       });
     });
 
@@ -4568,12 +4602,29 @@ function _attachFateContextMenu(message, html) {
       if (!champion && (!canSpend || rerollBan)) return;
 
       // Тратим очко судьбы — временный запас (wdbc-e728) уходит первым.
-      const reroll1 = champion
-        ? await spendInspiringInfamy(champion, actor)
-        : await spendFromInfamyPool(actor, 1, "system.fate.value");
-      if (!reroll1) return;
-      if (!champion) await actor.update({ "system.fate.value": reroll1.poolValue });
+      const spend = async () => {
+        const r = champion
+          ? await spendInspiringInfamy(champion, actor)
+          : await spendFromInfamyPool(actor, 1, "system.fate.value");
+        if (r && !champion) await actor.update({ "system.fate.value": r.poolValue });
+        return r;
+      };
       const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)` : "";
+
+      // Уклонение/Парирование кнопкой карточки атаки — повторяем ту же защиту
+      // целиком (пересчёт снятых попаданий, без второй Реакции), а не голый d100.
+      // Очко списывается внутри, только если переброс разрешён (провал, не
+      // переброшено, тот же Раунд) — отказ Очко не тратит.
+      if (defenceTestOf(message)) {
+        let paid = null;
+        if (await rerollDefenceCard(message, `${ft.one}${payerNote}`, async () => (paid = await spend()))) {
+          if (paid) ui.notifications.info(`✨ ${actor.name} тратит ${ft.one} на переброс защиты${payerNote}! Осталось: ${paid.poolValue}`);
+          return;
+        }
+      }
+
+      const reroll1 = await spend();
+      if (!reroll1) return;
 
       // Если это была атака — повторяем атаку целиком (новый бросок d100,
       // место попадания, урон, кнопки защиты), а не «голый» переброс.
@@ -4995,6 +5046,9 @@ function _attachFateContextMenu(message, html) {
     await clearBlessingOfSteel(combat);
     // Грозный Вопль (Sahara dread-wail-2): эффект «рейтинг Страха 2 до конца боя» на целях.
     await clearDreadWailFear(combat);
+    // Таланты, включённые за Очко Бесчестия «до конца боя или сцены» (apps/item-activation.mjs).
+    const { clearActivationsOnCombatEnd } = await import("./apps/item-activation.mjs");
+    await clearActivationsOnCombatEnd(combat);
     // Кровавое Пламя (wdbc-1rno): в отличие от Reformation Song выше, книга
     // прямо ломает оружие по концу боя/сцены — clearBloodFlameBuffs это и
     // делает (не только снимает временные свойства).
@@ -5526,6 +5580,13 @@ function _attachFateContextMenu(message, html) {
   // Искусный (Adroit, Ренегат): выбор Характеристики при получении Черты —
   // только у того, кто Черту положил (module/apps/adroit.mjs).
   Hooks.on("createItem", (item, options, userId) => onAdroitTraitCreated(item, userId));
+  // Стадия Пакта куплена — нижний предел Тяжести расстройства Пакта растёт на 1
+  // за Стадию (Когитор, Мейстер, Ревенант; rules/pact-disorder.mjs). Только у
+  // того, кто Талант положил.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId !== game.user?.id || !item.actor || !pactStageOf(item)) return;
+    for (const { item: d, floor } of pactFloorUpdates(item.actor)) await d.update({ "system.severityMin": floor });
+  });
   Hooks.on("updateItem", async (item, changes, options, userId) => {
     if (userId === game.user?.id && changes?.system?.submutation && isLossOfLimbMutation(item)) await syncLossOfLimbMutation(item);
   });

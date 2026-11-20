@@ -12,7 +12,7 @@
 //  игрока, пустить ли силу (оговорка «если сам не пожелает»).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasRuleFlag } from "./flags.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 
 export const MIND_IMMUNE_CAPABILITY = "psychic.mindImmune";
 
@@ -32,5 +32,7 @@ export function isMindPower(discipline, subtype) {
 
 /** Гасит ли иммунитет эту силу у этой цели (до вопроса «пустить?»). */
 export function mindImmunityBlocksPower(targetActor, discipline, subtype) {
-  return isMindPower(discipline, subtype) && hasRuleFlag(targetActor, MIND_IMMUNE_CAPABILITY);
+  // «Извне» (Медуза) — и по имени: старая копия без ключа (приёмка #581). Имя
+  // русское: английское «From Beyond» носят и демоны бестиария с другим текстом.
+  return isMindPower(discipline, subtype) && hasAbility(targetActor, MIND_IMMUNE_CAPABILITY, "Извне", "trait");
 }

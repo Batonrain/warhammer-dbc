@@ -16,8 +16,13 @@ const withReminder = docs.filter(d => /Правило стола, механик
   && JSON.stringify(d.flags?.["warhammer-dbc"]?.mechanics ?? []).includes("Памятка"));
 
 describe("кнопки-памятки у Черт — правил стола", () => {
-  it("их 35 (сверка с решением владельца 14.11.2026)", () => {
-    expect(withReminder).toHaveLength(35);
+  // 35 на 14.11.2026; 19.11.2026 пять из них получили записи Конструктора
+  // (Тень Отмщения, Избранник Тьмы, Репутация Тирана, Ни Владыка Ни Слуга,
+  // Киберобъятья — test/tools/elite-traits-batch.test.mjs) и заметку «Частично».
+  // Ещё четыре (Высшая Алчность, Гоняющийся за Мечтой, Несмертная Клятва,
+  // Мстительный) 19.11.2026 выдают своё расстройство при получении — test/rules/pact-disorder.test.mjs.
+  it("их 26 (сверка с решением владельца 14.11.2026, минус подключённые 19.11.2026)", () => {
+    expect(withReminder).toHaveLength(26);
   });
   it("код каждой кнопки — исполнимое тело async-функции и пишет benefit Черты в чат", () => {
     for (const d of withReminder) {
@@ -31,8 +36,10 @@ describe("кнопки-памятки у Черт — правил стола", 
 
 describe("Черты, ждущие подсистему", () => {
   const waiting = Object.entries(CAPABILITIES).filter(([k, v]) => k.startsWith("trait.") && /^ЖДЁТ ПОДСИСТЕМУ/.test(v.reader));
-  it("22 Черты, у каждой в читателе номер задачи Sahara", () => {
-    expect(waiting).toHaveLength(22);
+  // 22 на 14.11.2026; 19.11.2026 Глас Омниссии и Фрейм Ассасина получили
+  // записи Конструктора и читателя «ЧАСТИЧНО».
+  it("20 Черт, у каждой в читателе номер задачи Sahara", () => {
+    expect(waiting).toHaveLength(20);
     for (const [k, v] of waiting) expect(v.reader, k).toMatch(/task-[0-9a-f]{4}/);
   });
 });

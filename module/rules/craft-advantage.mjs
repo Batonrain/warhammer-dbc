@@ -248,3 +248,48 @@ export function slowShiftBonus(crafter, slowShiftChosen) {
 export function haemonculusLabBonus(crafter) {
   return isHaemonculus(crafter) ? 60 : 0;
 }
+
+// ════════════════════════════════════════════════════════════════════════
+//  Потеря Успехов за Критический Провал (корбук, «Расширенные Тесты»):
+//  «Провалы в этих тестах не отнимаются от банка Успехов, но Критические
+//  Провалы отнимают от 5 до 15 по решению ГМа». Число — решение ГМа, поэтому
+//  оно не выдумывается, а стоит полем на проекте (critLoss, по умолчанию 10 —
+//  середина диапазона); Мастерская снимает его сама, игроку считать нечего.
+//
+//  Safety Precautions / Техника Безопасности — «не теряет Успехи из банка от
+//  Критических Провалов на тесты Крафта, а когда он ассистирует другим в
+//  тестах Крафта, те теряют только 1 Успех». Только Крафт (не Исследование):
+//  книга говорит о тестах Крафта и дефектах производства. Ассистент — тот же
+//  именованный assistantId, что у Подмастерья/Тёмной Музы.
+// ════════════════════════════════════════════════════════════════════════
+
+export const CRAFT_CRIT_LOSS_MIN = 5;
+export const CRAFT_CRIT_LOSS_MAX = 15;
+export const CRAFT_CRIT_LOSS_DEFAULT = 10;
+
+export const hasSafetyPrecautions = actor => hasTalent(actor, "Safety Precautions");
+
+/** Число ГМа с проекта, зажатое в книжные 5–15; пусто/мусор → 10. */
+export function craftCritLossBase(configured) {
+  const n = Math.round(Number(configured));
+  if (configured === "" || configured == null || !Number.isFinite(n)) return CRAFT_CRIT_LOSS_DEFAULT;
+  return Math.min(CRAFT_CRIT_LOSS_MAX, Math.max(CRAFT_CRIT_LOSS_MIN, n));
+}
+
+/**
+ * Сколько Успехов снять с банка за смену.
+ * @param {object} o
+ * @param {boolean} o.critFailure  смена — Критический Провал
+ * @param {string}  o.mode         "craft" | "research" | …
+ * @param {*}       o.configured   proj.critLoss (решение ГМа)
+ * @param {?Actor}  o.crafter
+ * @param {?Actor}  o.assistantActor именованный ассистент проекта
+ * @returns {{loss:number, base:number, source:"none"|"base"|"crafter"|"assistant"}}
+ */
+export function craftCritLoss({ critFailure, mode, configured, crafter, assistantActor } = {}) {
+  const base = craftCritLossBase(configured);
+  if (!critFailure) return { loss: 0, base, source: "none" };
+  if (mode === "craft" && hasSafetyPrecautions(crafter)) return { loss: 0, base, source: "crafter" };
+  if (mode === "craft" && hasSafetyPrecautions(assistantActor)) return { loss: Math.min(1, base), base, source: "assistant" };
+  return { loss: base, base, source: "base" };
+}

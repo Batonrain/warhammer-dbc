@@ -194,6 +194,13 @@ export function effectAppliesTo(target, ctx) {
   // ставит ctx.contest. Аватар Резни: «−20 на все атаки и манёвры, направленные на Берсерка».
   if (scope === "contest") return ctx.contest === true;
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Тест Избегания — Уклонение или Парирование (стр. 12), откуда бы его ни
+  // бросили: с листа (ctx.skill) или кнопкой защиты на карточке атаки
+  // (rules/defence-reroll.mjs ставит и skill, и ctx.evasion). Книга пишет
+  // «перебрасывать проваленные тесты на избегание атаки» (Соларит) одним
+  // словом на оба Навыка — две записи skill:dodge + skill:parry задвоили бы
+  // один переброс в окне.
+  if (scope === "evasion") return ctx.evasion === true || ctx.skill === "dodge" || ctx.skill === "parry";
   // Реквизиция — тест «достать снаряжение» (apps/requisition.mjs): идёт по Inf
   // (или по F у Сети Контактов), поэтому свой ctx-флаг, а не «char:inf» — тот
   // подхватил бы любой тест Влияния. Бонус Чрезмерного Богатства «на получение
@@ -491,6 +498,13 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
         }
         continue;
       }
+      // Автоуспех по условию (19.11.2026): галочка без числа; что она отмечена,
+      // бросок узнаёт по ruleId (checkedRuleIds в sheets/actor-sheet.mjs) и
+      // передаёт исходу теста autoSuccess (rules/kind-outcome.mjs).
+      if (effect.kind === "autoSuccess") {
+        mods.push({ ruleId: rule.id, label, value: 0, halvePenalty: false, autoSuccess: true });
+        continue;
+      }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.
       // Правило с иным factor не применяем молча, а жалуемся: тихо потерянный
       // множитель ищется днями.
@@ -511,7 +525,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
 }
 
 /** Режимы переброса, которые понимает бросок. Умолчание — «лучший из двух». */
-const REROLL_MODES = new Set(["keepBest", "keepWorst"]);
+// "reverse" — «обратить бросок» (поменять местами десятки и единицы d100,
+// Ветеран Долгой Войны): один бросок, второго кубика нет.
+const REROLL_MODES = new Set(["keepBest", "keepWorst", "reverse"]);
 
 /**
  * Перебросы, доступные на ЭТОМ броске. Книга даёт их россыпью — «раз в Раунд
@@ -541,8 +557,8 @@ export function rerollsFromRules(rules, ctx = {}) {
       }
       // Один бросок — не переброс. Молча превратить это в «лучший из одного»
       // значило бы показать игроку кнопку, которая ничего не делает.
-      const rolls = effect.rolls == null ? 2 : Number(effect.rolls);
-      if (!Number.isFinite(rolls) || rolls < 2) {
+      const rolls = mode === "reverse" ? 1 : effect.rolls == null ? 2 : Number(effect.rolls);
+      if (mode !== "reverse" && (!Number.isFinite(rolls) || rolls < 2)) {
         console.error(`Warhammer DBC | правило «${rule?.id ?? "без id"}»: перебросу нужно не меньше двух бросков, задано ${effect.rolls}`);
         continue;
       }

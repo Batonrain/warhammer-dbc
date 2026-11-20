@@ -5,7 +5,7 @@ import { STRUCTURAL_ANALYSIS_CAP, structuralAnalysisBonus } from "../rules/mecha
 import { momentumOnAttackMiss, momentumOf, addMomentum } from "./momentum.mjs";
 import { writeToTarget } from "./gm-relay.mjs";
 import { bloodGodBonusOf } from "./demon-god-traits.mjs";
-import { pickReroll } from "../rules/reroll-pick.mjs";
+import { pickReroll, applyReverse } from "../rules/reroll-pick.mjs";
 import { resonanceCap, resonanceAfterHits, multiplyDamageDice } from "../rules/resonance.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 import { cognisDecision, hasMechanicumImplants } from "../rules/cognis.mjs";
@@ -816,10 +816,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (opts.forcedRoll != null) {
     roll = await new Roll(String(Math.max(1, Math.min(100, opts.forcedRoll)))).evaluate();
   } else if (opts.reroll) {
+    // «Обратить бросок» (Ветеран Долгой Войны): mode "reverse" — кубик один;
+    // флаг reverse поверх Преимущества/Помехи — обращается уже выбранный.
+    const reverseOnly = opts.reroll.mode === "reverse";
     const rolls = [];
-    for (let i = 0; i < Math.max(2, opts.reroll.rolls || 2); i++) rolls.push(await new Roll("1d100").evaluate());
-    const picked = pickReroll(rolls.map(r => r.total), opts.reroll.mode);
-    roll = rolls[picked.index];
+    const n = reverseOnly ? 1 : Math.max(2, opts.reroll.rolls || 2);
+    for (let i = 0; i < n; i++) rolls.push(await new Roll("1d100").evaluate());
+    let picked = pickReroll(rolls.map(r => r.total), reverseOnly ? "keepBest" : opts.reroll.mode);
+    if (reverseOnly || opts.reroll.reverse) picked = applyReverse(picked);
+    roll = picked.reversed ? await new Roll(String(picked.value)).evaluate() : rolls[picked.index];
     rerollDropped = picked.dropped;
   } else {
     roll = await new Roll("1d100").evaluate();

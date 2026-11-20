@@ -101,6 +101,7 @@
           {{#if movementCanFly}}
           <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="fly" title="Высота полёта и потеря управления (стр. 30).{{#if movementFlight.spd}} В воздухе SPD {{movementFlight.spd}} (Черта Flyer/Hoverer) вместо обычной.{{/if}}{{#if movementFlight.lift}} Ношение для полёта (Ограниченная Подъёмная Сила): груз {{movementFlight.lift.load}} из {{movementFlight.lift.carry}} кг.{{/if}}">Полёт</button>{{#if movementFlight.spd}} <span class="mv-box"{{#if movementFlight.blocked}} style="color:#e0a030;" title="Груз тяжелее Ношения для полёта — взлететь нельзя"{{/if}}>SPD {{movementFlight.spd}}</span>{{/if}} </div>
           {{/if}}
+          {{#if movementBurrowSpd}}<div class="movement-item" title="Burrower (X): тоннели сквозь землю и камень со скоростью SPD×X, без модификаторов Размера.">Рытьё <span class="mv-box">SPD {{movementBurrowSpd}}</span></div>{{/if}}
           {{#if movementCanHalfStep}}
           <button type="button" class="wh-move-btn" data-move-action="halfstep" title="Полушаг (стр. 12, Талант Half-Step): раз в Ход Свободным действием, до ½SPD — дистанция списывается с Отскока этого Раунда.">Полушаг (Талант)</button>
           {{/if}}

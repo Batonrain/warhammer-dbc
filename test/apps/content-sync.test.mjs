@@ -449,6 +449,42 @@ describe("сверка не отыгрывает новые разовые за�
   });
 });
 
+// Ревью #581 п.2: «Посвящение» получило новую ИЛИ-группу из 4 Черт. У демона,
+// которому ГМ уже вписал одну из них руками, «Обновить мир» всплывал окном
+// выбора Бога и мог положить вторую копию. Ветка, Черта которой уже на листе,
+// считается выбранной; нет ни одной — окно остаётся (выбор действительно нужен).
+describe("новая ИЛИ-группа: уже лежащая на листе ветка считается выбранной", () => {
+  const orMech = [{ id: "or1", operator: "OR", entries: [
+    { id: "kh", kind: "trait", sourceName: "Blood for the Blood God / Кровь Богу Крови" },
+    { id: "ng", kind: "trait", sourceName: "Mockery of Life / Насмешка Над Жизнью" }
+  ] }];
+  const run = async (actorItems) => {
+    const pack = mechDoc("u7", "Посвящение", "trait", orMech);
+    const it0 = mechItem({ id: "d7", name: "Посвящение", type: "trait", src: "u7", mechanics: [], mechBaseline: [] });
+    it0.getFlag = (scope, key) => it0.flags[scope]?.[key];
+    it0.parent = { items: [it0, ...actorItems] };
+    const report = buildSyncReport([{ id: "a7", name: "Демон", items: [it0] }], buildPackIndex([pack]));
+    const row = report.rows.find(r => r.path === MECH_PATH);
+    const calls = [];
+    globalThis.game = { actors: { get: id => ({ id, items: { get: () => it0 },
+      updateEmbeddedDocuments: async (t, u) => calls.push(...u) }) } };
+    await applySyncReport(report, new Set([row.entries[0].entryKey]));
+    return calls[0];
+  };
+
+  it("Черта ветки уже на листе (любой половиной имени) — её id в mechanicsApplied", async () => {
+    const upd = await run([{ id: "x", type: "trait", name: "Mockery of Life / Насмешка Над Жизнью" }]);
+    expect(upd["flags.warhammer-dbc.mechanicsApplied"]).toEqual(["ng"]);
+    const ru = await run([{ id: "x", type: "trait", name: "Кровь Богу Крови" }]);
+    expect(ru["flags.warhammer-dbc.mechanicsApplied"]).toEqual(["kh"]);
+  });
+
+  it("ни одной ветки на листе — отметки нет, выбор остаётся за ГМом", async () => {
+    const upd = await run([{ id: "x", type: "weapon", name: "Mockery of Life" }]);
+    expect(Object.keys(upd)).not.toContain("flags.warhammer-dbc.mechanicsApplied");
+  });
+});
+
 // ════════════════════════════════════════════════════════════════════════════
 //  Эффекты предмета (wdbc-9aj9). Найдено живой проверкой: сверка не смотрела
 //  на встроенную коллекцию ActiveEffect вовсе, и любая поломка, осевшая в

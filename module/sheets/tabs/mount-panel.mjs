@@ -20,7 +20,7 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          handsNeeded, bonusHalfAction, sizeFits, pairInitiative, passengerCount,
          maneuverMods, skidInfo, mountRangedPenalty, isBroken,
          possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES,
-         hasTalent, passengerTestMod} from "../../rules/mount.mjs";
+         hasTalent, passengerTestMod, minionLacksSteed} from "../../rules/mount.mjs";
 import { spendActionPoints } from "../../combat/action-economy.mjs";
 import { unstablePlatformPenalty } from "../../rules/damage-talents.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -177,6 +177,10 @@ export async function setMount(actor, target) {
   }
   if (!freeMounting(actor, target) && !await spendActionPoints(actor, 1, { physical: true })) {
     return ui.notifications?.warn("⚠️ Не хватает ОД (Оседлать — полудействие, стр. 477).");
+  }
+  if (minionLacksSteed(target)) {
+    ui.notifications?.warn(
+      `У Миньона «${target.name}» нет Трейта Steed / Скакун — по книге на нём не ездят (стр. 112). Связь всё равно заведена.`);
   }
   if (!sizeFits(actor, target)) {
     ui.notifications?.warn(

@@ -170,6 +170,7 @@ import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-f
 import { migrateDiseaseActive } from "./module/migrations/disease-active.mjs";
 import { migrateDiseaseActiveAll } from "./module/migrations/disease-active-all.mjs";
 import { migratePlagueMarineRot } from "./module/migrations/plague-marine-rot.mjs";
+import { migratePactDisorderGrant } from "./module/migrations/pact-disorder-grant.mjs";
 import { migrateStrangeTechniqueEffect } from "./module/migrations/strange-technique-effect.mjs";
 import { migrateDrugAddictionFlag } from "./module/migrations/drug-addiction-flag.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
@@ -517,6 +518,7 @@ Hooks.once("init", () => {
     "diseaseActiveTokensVersion",
     "diseaseActiveAllTokensVersion",
     "plagueMarineRotTokensVersion",
+    "pactDisorderGrantTokensVersion",
     "strangeTechniqueEffectTokensVersion",
     "drugAddictionFlagTokensVersion"
   ]) {
@@ -715,6 +717,11 @@ Hooks.once("init", () => {
 
   // Версия выдачи Гнили Нургла уже созданным Чумным Десантникам (одноразовая, wdbc-jb0zt)
   game.settings.register("warhammer-dbc", "plagueMarineRotVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия выдачи расстройств Пактов уже взявшим Черту Пакта (одноразовая, ревью #581)
+  game.settings.register("warhammer-dbc", "pactDisorderGrantVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1255,7 +1262,7 @@ Hooks.once("ready", async () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migratePactDisorderGrant, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1615,12 +1622,21 @@ Hooks.once("ready", async () => {
 
 // ── Одноразово: Гниль Нургла — выдать уже созданным Чумным Десантникам (wdbc-jb0zt) ──
 // Ручной перезапуск: game.warhammerDBC.migratePlagueMarineRot()
+// ── затем: неизлечимые расстройства Пактов — выдать уже взявшим Черту Пакта
+// (ревью #581: scriptOnGrant добавлен старой записи, её id уже применён) ──
+// Ручной перезапуск: game.warhammerDBC.migratePactDisorderGrant()
+// Один обработчик, строго по очереди (см. «Зависимость наркотиков» выше).
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
   // Идемпотентна: болезнь уже на акторе — ничего не создаётся (migrations/plague-marine-rot.mjs).
   await runMigrationGate({
     key: "plagueMarineRotVersion", tokensKey: "plagueMarineRotTokensVersion", label: "Гниль Нургла у Чумных Десантников",
     full: () => migratePlagueMarineRot(), tokensOnly: () => migratePlagueMarineRot({ tokensOnly: true })
+  });
+  // Идемпотентна: расстройство уже на листе — ничего (migrations/pact-disorder-grant.mjs).
+  await runMigrationGate({
+    key: "pactDisorderGrantVersion", tokensKey: "pactDisorderGrantTokensVersion", label: "Расстройства Пактов",
+    full: () => migratePactDisorderGrant(), tokensOnly: () => migratePactDisorderGrant({ tokensOnly: true })
   });
 });
 
@@ -2545,8 +2561,14 @@ Hooks.on("updateItem", async (item, changed, options, userId) => {
   await onItemQualityChanged(item, changed);
   // Рейтинг Черты сменили (Укус (1) → (3)) — пересчитать урон выданных ею
   // интегральных атак (wdbc-o368c); полное применение Механики тут не нужно.
+  // Долговечные записи со значением «rating» (+X Бонуса шаблона Unnatural,
+  // +X SPD Двусоставного) тоже пересобираются: сверка идемпотентна и без
+  // формулы от рейтинга ничего не пишет (19.11.2026).
   if (changed?.system?.rating !== undefined && item.parent instanceof Actor
-      && !mechanicsRelevantChange(changed)) return syncGrantedEquipment(item);
+      && !mechanicsRelevantChange(changed)) {
+    await syncMechanicsEffects(item);
+    return syncGrantedEquipment(item);
+  }
   if (!mechanicsRelevantChange(changed)) return;
   if (item.parent instanceof Actor) await applyItemMechanics(item);
   else await syncMechanicsEffects(item);

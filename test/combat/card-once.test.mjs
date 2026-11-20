@@ -199,3 +199,19 @@ describe("стыковка: Гренадер и Снайпер Ужаса — р
     expect(HOOKS).toMatch(/cardOnceUsed\(message, rowKey\)/);
   });
 });
+
+describe("стыковка: переброс защиты и седло Непослушного скакуна (ревью #581)", () => {
+  it("hooks.mjs берёт ключ переброса защиты из rules/defence-reroll.mjs, а не литералом", () => {
+    expect(HOOKS).not.toMatch(/"defenceRerolled"/);
+    expect(HOOKS).toMatch(/cardOnceUsed\(message, DEFENCE_REROLLED_FLAG\)/);
+  });
+
+  it("«удержаться в седле» — раз на строку карточки: runCardOnce и гашение по той же отметке", () => {
+    const at = HOOKS.indexOf('".wh-unruly-saddle-btn"');
+    const block = HOOKS.slice(at, at + 1200);
+    expect(block).toMatch(/const key = unrulySaddleKey\(Number\(btn\.dataset\.row\)\)/);
+    expect(block).toMatch(/cardOnceUsed\(message, key\)\) btn\.disabled = true/);
+    expect(block).toMatch(/runCardOnce\(message, key, \(\) => showMountDamageTest\(rider\)/);
+    for (let i = 0; i < 4; i++) expect(CARD_ONCE_FLAGS).toContain(`unrulySaddle${i}`);
+  });
+});

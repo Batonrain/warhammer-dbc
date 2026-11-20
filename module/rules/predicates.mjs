@@ -337,6 +337,15 @@ export function hasColdFury(actor) {
   return hasNamed(actor, "Cold Fury") || holdsCapabilityKey(actor, "berserker.core.coldFury");
 }
 
+/**
+ * Талант «Iron Wrath / Железный Гнев» (Дредноут) по имени. Ключ rage.noBsPenalty
+ * снимает штраф BS вытеснением (item-rules.mjs::CAPABILITY_OVERRIDES), но
+ * копия, взятая до записи в паке, ключа не несёт — её ловит имя (rageRules).
+ */
+export function hasIronWrath(actor) {
+  return hasNamed(actor, "Iron Wrath");
+}
+
 /** Талант «Wounded Beast / Раненный Зверь» (Берсерк, ключ berserker.core.woundedBeast) — как hasColdFury. */
 export function hasWoundedBeast(actor) {
   return hasNamed(actor, "Wounded Beast") || holdsCapabilityKey(actor, "berserker.core.woundedBeast");
@@ -928,4 +937,15 @@ export function giftNamesOf(actor) {
     }
   }
   return out;
+}
+
+/**
+ * Дар действует прямо сейчас: актор может проявлять демона, демон проявлен
+ * (system.possession.manifested) и Дар есть среди его Талантов. Тот же гейт,
+ * что у числовых Даров в rules/character.mjs, — для мест, которые читают Дар
+ * не при пересчёте листа (окно атаки по Одержимому: «Завеса Тьмы»).
+ */
+export function manifestedGift(actor, giftName) {
+  if (!canManifestPossession(actor) || !actor?.system?.possession?.manifested) return false;
+  return giftNamesOf(actor).has(giftName);
 }

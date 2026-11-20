@@ -199,7 +199,9 @@ export const PREDICATES = {
 | `critRangeMod` | `target`, `side`, `value` | шире диапазон Критического Успеха/Провала (стр. 25) на `value` натуральных чисел; `side`: `success`, `failure` или `both` |
 | `grantWeaponProp` | `target`, `propKey`, `rating`, `rating2` | доп. Особое Свойство Оружия на эту атаку, см. ниже |
 | `failDegMod` | `target`, `value` | доп. степени провала (`value`, может быть отрицательным), суммируются, только если тест УЖЕ провален |
+| `scriptAbility` | `itemId`, `entryId` | кнопка записи `kind:"script"` с ценой, частотой или отметкой «на панели» на панели ВОЗМОЖНОСТИ СЕЙЧАС (`rules/flags.mjs`); на бросок не влияет — раньше бросок ругался на неизвестный вид в консоли |
 | `scriptTrigger` | `target`, `side`, `itemId`, `entryId` | автозапуск записи `kind:"script"` по исходу теста; `side`: `critSuccess` или `critFailure` |
+| `autoSuccess` | `target` | галочка в окне броска «тест пройден автоматически» — условие подтверждает игрок (Зверь: Выживание в родном биоме). Отмеченную галочку бросок узнаёт по `ruleId` (`rules/roll-mods.mjs::autoSuccessChecked`) и передаёт исходу теста `autoSuccess` (`rules/kind-outcome.mjs`); в Конструкторе — «Модификатор теста» в режиме «автоуспех» |
 | `autoFail` | `target` (+ `degrees`) | тест в этой области провален без учёта броска (Ослеплён — `basedon:bs`); `degrees` — минимум Провалов (Рог Чумоноса — 3, по умолчанию 1; если бросок провален глубже, остаётся он); применяет общий исход теста `rules/kind-outcome.mjs` |
 | `successDegMax` | `target`, `value` | потолок степени УСПЕХА (провал не трогает); несколько — берётся наименьший; режет итог после Сверхъестественной Характеристики и Ассистентов (BONE-Head Огрина: `basedon:int`, 1) — `rules/kind-outcome.mjs`, `sheets/actor-sheet.mjs` |
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
@@ -245,6 +247,7 @@ export const PREDICATES = {
 | `interrogation` | сопротивление допросу (`ctx.interrogation`): встречный тест Воли жертвы в диалоге пытки (`apps/torture.mjs`), Ортопрокси |
 | `disease` | тест заражения болезнью (`ctx.diseaseTest`): кнопка «Заражение» на болезни (`combat/disease-infection.mjs`), Порог T±N из `system.vectorTests`; Преимущество Крепкого как Камень и Живучести Сплайса — `rules/squat-traits.mjs::diseaseResistReroll` |
 | `requisition` | тест «достать снаряжение» (`ctx.requisition`): окно реквизиции (`apps/requisition.mjs`) идёт по Inf (или F у Сети Контактов); свой флаг, а не `char:inf` — иначе подхватился бы любой тест Влияния. «+N к Реквизиции» записью Конструктора `testMod` с областью «Реквизиция» |
+| `evasion` | тест Избегания — Уклонение или Парирование (стр. 12): с листа (`ctx.skill` = `dodge`/`parry`) или кнопкой защиты на карточке атаки (`ctx.evasion`). Переброс с этой областью (и любой другой, подошедший к тесту Уклонения/Парирования) предлагается кнопкой на карточке ПРОВАЛЕННОЙ защиты — `rules/defence-reroll.mjs` |
 | `vacuum` | тест вакуума (`ctx.vacuumTest`): начало Хода без пустотной брони на сцене с флагом «вакуум» (`combat/vacuum.mjs`), T+0 или Trade (Voidfarer)(T)+10; Преимущество Сквата — `vacuumResistReroll` |
 | `fear` | только тест Страха (`ctx.fearTest`, `combat/fear.mjs`) — не Запугивание, Пытки и Подавление, которые тоже тесты Морали (`morale`): Пьянящий Рёв Шумового Десантника (`rules/noise-marine.mjs`) |
 | `suppression` | только тест на Подавление (`ctx.suppressionTest`, `rules/morale-test.mjs`): Стальные Нервы, Пьянящий Рёв |

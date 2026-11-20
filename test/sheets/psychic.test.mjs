@@ -208,8 +208,17 @@ describe("psychic manifestation", () => {
   // Конверсия» — PSY_PATHS, module/constants/psyker.mjs) уже даёт реальные
   // эффекты при выборе (ePR/phenMod/testMod и т.п. в самом расчёте) — не
   // хватало только видимости условия доступа (req) в самом списке.
+  // Пути за Талантом (19.11.2026, sheets/tabs/psychic.mjs::pathAvailable)
+  // видны только носителю Таланта — здесь он есть, отсутствие проверяет
+  // test/tools/talent-general-batch3.test.mjs.
   it("выпадающий список Путей Силы несёт требование доступа в title, помечает звёздочкой", () => {
-    const a = actor({ system: { psyker: { rating: 2, currentRating: 0, sustain: 2, class: "bound" } } });
+    const a = actor({
+      system: { psyker: { rating: 2, currentRating: 0, sustain: 2, class: "bound" } },
+      items: [
+        { id: "ti", name: "Blasphemous Incantation / Богохульная Инкантация", type: "talent", system: {} },
+        { id: "tm", name: "Meditation / Медитация", type: "talent", system: {} }
+      ]
+    });
 
     showManifestDialog(a, item({ system: { discipline: "divination", powerType: "utility" } }));
 
@@ -884,7 +893,7 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
     // Внутри executePsychotest несколько await до самого диалога (бросок,
     // запись sustainedDegree/sustainedEpr) — дать микрозадачам довести
     // выполнение до конструктора Dialog, прежде чем читать captured.dialog.
-    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    for (let i = 0; i < 20 && !captured.dialog; i++) await Promise.resolve();
 
     expect(captured.dialog?.title).toMatch(/Force Blade/i);
     const html = fakeHtml({}, { ".fb-shop-cb:checked": [{ dataset: { id: "shocking" } }] });

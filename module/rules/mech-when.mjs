@@ -114,6 +114,12 @@
 // StringField initial "common"), а НЕ как «не пройдено»: пустое поле у старых
 // данных значит «обычное», а не «никакое».
 
+// ── Активация (when.requireActivated) ───────────────────────────────────────
+// Одиннадцатый гейт: запись действует, только пока САМ ПРЕДМЕТ включён «до
+// конца боя или сцены» (флаг activated, rules/item-activation.mjs) — «может
+// потратить Очко Бесчестия, чтобы до конца боя/сцены…». Без отрицания: «пока
+// НЕ включено» книга не пишет. Нет предмета (предпросмотр) — пройдено.
+
 // ── Выбранный бонусный эффект Best.Q (when.chosenEffect/when.negateChosenEffect) ─
 // Десятый независимый гейт (wdbc-jo51): гейт смотрит на МУЛЬТИМНОЖЕСТВО уже
 // взятых эффектов ПРЕДМЕТА — item.system.chosenEffects (можно взять один и тот
@@ -145,6 +151,7 @@ import { PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
 import { itemsNamed } from "./req-atom.mjs";
 import { currentSkillName } from "../constants/skills.mjs";
 import { entryQualityOk } from "./item-gates.mjs";
+import { isItemActivated } from "./item-activation.mjs";
 
 /** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
 export function whenPatronGod(when) {
@@ -263,6 +270,9 @@ function predicateOk(key, actor, value) {
  * @param {?object} item   предмет, несущий эту запись — для гейта по субмутации.
  */
 export function entryWhenOk(actor, entry, item = null) {
+  // Активация «до конца боя/сцены» (rules/item-activation.mjs): гейт смотрит
+  // на САМ ПРЕДМЕТ. Нет предмета (предпросмотр) — пройдено, как у субмутации.
+  const requireActivated = !!entry?.when?.requireActivated;
   const conditions = whenConditions(entry?.when);
   const subs = whenSubmutations(entry?.when);
   const talentSpec = whenTalentSpec(entry?.when);
@@ -276,7 +286,9 @@ export function entryWhenOk(actor, entry, item = null) {
   const chosenEffects = whenChosenEffect(entry?.when);
   if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
       && !patronGods.length && !requireSealedArmour && !condKeys.length && !quals.length
-      && !preds.length && !chosenEffects.length) return true;
+      && !preds.length && !chosenEffects.length && !requireActivated) return true;
+
+  const activatedOk = !requireActivated || !item || isItemActivated(item);
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -360,7 +372,7 @@ export function entryWhenOk(actor, entry, item = null) {
   // существующая запись поведения не меняет.
   if (!entry?.when?.anyOf) {
     return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk
-        && qualOk && predOk && chosenOk;
+        && qualOk && predOk && chosenOk && activatedOk;
   }
 
   // when.anyOf — «достаточно одного гейта» (wdbc-n48f). Без него способность
@@ -380,7 +392,8 @@ export function entryWhenOk(actor, entry, item = null) {
     [condKeys.length, condOk],
     [quals.length, qualOk],
     [preds.length, predOk],
-    [chosenEffects.length, chosenOk]
+    [chosenEffects.length, chosenOk],
+    [requireActivated, activatedOk]
   ].filter(([on]) => on);
 
   return configured.some(([, ok]) => ok);

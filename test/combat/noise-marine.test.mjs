@@ -272,6 +272,24 @@ describe("Спой Мне!: встречный тест и награда", () =
     expect(captured.chat.at(-1).content).toContain("Спой Мне!");
   });
 
+  it("Вуаль Лжи: автоуспех сопротивления допросу — жертва выстояла", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } = await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [{ id: "t.veil", label: "Вуаль Лжи", when: {},
+      effects: [{ kind: "autoSuccess", target: "interrogation" }] }]);
+    try {
+      const singer = singerActor();
+      const victim = hero({ uuid: "Actor.victim", wounds: 20 });
+      captured.dice = [95, 90, 3, 3];   // палач 95 (провал), жертва 90 — но автоуспех
+      await resolveSingForMe(singer, victim, {});
+      expect(captured.chat.at(-1).content).toMatch(/<b>90<\/b> vs \d+ \(успех\) — Вуаль Лжи/);
+    } finally {
+      clearRuleSources();
+      for (const [k, f] of saved) registerRuleSource(k, f);
+    }
+  });
+
   it("провал: жертва всё равно получает урон, награды нет", async () => {
     const singer = singerActor();
     const victim = hero({ uuid: "Actor.victim", wounds: 20 });

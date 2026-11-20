@@ -5,7 +5,7 @@
   "folder": "mbaAZsAG0NwHzzZC",
   "system": {
     "description": "",
-    "notes": "Дубликат предыдущей записи в другом архетипе — та же причина: нет числа для переноса. Механика ждёт задачу Sahara 20-dbc-114 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (19.11.2026): как общая Черта From Beyond — Страх, Подавление и Паника проходятся сами; психосилы на разум (Мезмеризм, Иллюзионизм) гасятся, если цель не пожелает иного.",
     "benefit": "Чуждое сознание: сопротивление воздействиям на разум.",
     "source": "Элитный архетип: Гемункул",
     "hasRating": false,
@@ -137,6 +137,36 @@
                 "negate": false,
                 "conditions": []
               }
+            }
+          ]
+        },
+        {
+          "id": "nfevAmXfLxO68ozt",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "CiuWkNeV5HkAkJuo",
+              "kind": "capability",
+              "capabilityKey": "fear.immune",
+              "label": "Иммунитет к Страху: тесты Страха проходятся автоматически"
+            },
+            {
+              "id": "s2AGY7NEKu3drIta",
+              "kind": "capability",
+              "capabilityKey": "suppression.immune",
+              "label": "Иммунитет к Подавлению: тест проходится автоматически"
+            },
+            {
+              "id": "1kgIoc0TauOnWewx",
+              "kind": "capability",
+              "capabilityKey": "panic.immune",
+              "label": "Иммунитет к Панике: тест проходится автоматически"
+            },
+            {
+              "id": "kPcmBQUF945Csyzv",
+              "kind": "capability",
+              "capabilityKey": "psychic.mindImmune",
+              "label": "Иммунитет к психосилам на разум (Мезмеризм, Иллюзионизм), если сам не пожелает"
             }
           ]
         }

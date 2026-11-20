@@ -690,6 +690,7 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
     rerollNote, critLine: outcome.critLine,
     sections: [body, outcome.extendedLine, outcome.opposedLine]
   }, [roll], outcome);
+  return true;
 }
 
 /** Блок выпадения: высота, формула урона и кнопка применения к всаднику. */
@@ -738,7 +739,7 @@ export async function showMountDamageTest(rider) {
   if (!ctx) return;
   const unruly = "unruly" in ctx.traits;
   const mod = acrobaticsStayMod(ctx.speedKey);
-  await saddleTest(rider, {
+  return saddleTest(rider, {
     kind: "acrobatics", mod,
     reason: unruly
       ? "Непослушный скакун — непоглощённый урон"

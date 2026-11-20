@@ -53,6 +53,7 @@
   min-width: 20px; text-align: center; font-family: monospace; font-weight: bold;
   color: #04140d; background: var(--bc-teal-dim); border-radius: 3px; padding: 0 5px; font-size: 0.8em;
 }
+.wh-surgeon .wh-surg-slot-count--warn { background: #ff6b5a; cursor: help; }
 
 .wh-surgeon .wh-surg-inst-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 5px; }
 .wh-surgeon .wh-surg-inst {

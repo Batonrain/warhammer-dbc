@@ -12,7 +12,7 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 import { ruleFlagLabels, hasRuleFlag } from "../../rules/flags.mjs";
-import { isStunnedOrDazed }       from "../../rules/predicates.mjs";
+import { isStunnedOrDazed, manifestedGift } from "../../rules/predicates.mjs";
 import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs";
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
 import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
@@ -37,6 +37,7 @@ import { flourishPenaltyAgainst } from "../../combat/flourish-dance.mjs";
 import { halvePenalty } from "../../rules/awareness-talents.mjs";
 import { hasDamageTalent } from "../../rules/damage-talents.mjs";
 import { isInRage, RAGE_TEST_PENALTY, RAGE_NO_BS_PENALTY } from "../../rules/rage.mjs";
+import { hasAbility } from "../../rules/ability-by-key.mjs";
 // Действующие моды (wdbc-1rno.38/.40): без «бесполезных без X» и без
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
@@ -118,6 +119,10 @@ export function situationalMods(v) {
   // что получают преимущества Прицеливания, автоматически промахиваются».
   const aimingOn = !!actor?.system?.aiming && actor.system.aiming !== "none";
   const tgtAntiAim = !!tgt && hasRuleFlag(tgt, "attack.antiAim");
+  // Дар Одержимого «Завеса Тьмы» (DoomBC 129-132): «Облако тьмы: все зрячие
+  // атаки по нему −20». Действует, пока демон проявлен. Отмечена сама — атаку,
+  // которая не полагается на зрение, игрок снимает галочкой.
+  const tgtVeilOfDarkness = !!tgt && manifestedGift(tgt, "Завеса Тьмы");
   const tgtSurprisedRound1 = !!tgt?.system?.conditions?.surprised
     && (typeof game !== "undefined" ? game.combat?.round : null) === 1;
   const tgtStunnedAuto = isStunnedOrDazed(tgt);
@@ -136,6 +141,8 @@ export function situationalMods(v) {
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
                      : "атаки с Прицеливанием по этой цели автоматически промахиваются" }] : []),
+    ...(tgtVeilOfDarkness ? [{ label: "Завеса Тьмы цели (Дар Одержимого)", value: -20, autoCheck: true,
+      note: "все зрячие атаки по Одержимому в Проявлении −20; атаке не по зрению снимите галочку" }] : []),
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
     // Ярость (Frenzy, стр. 62): «штраф −20 на все тесты BS» — стрельба. Окно
     // атаки собирает порог само (правила rollBonus сюда не доезжают, см.
@@ -143,7 +150,9 @@ export function situationalMods(v) {
     // WS в Ярости не падает — там +10 к значению (rules/character.mjs).
     // Модуль Агрессии Скитария Best.Q «убирает штраф к BS в Ярости» —
     // возможность RAGE_NO_BS_PENALTY (rules/rage.mjs), строки нет вовсе.
-    ...(!isMelee && isInRage(actor) && !hasRuleFlag(actor, RAGE_NO_BS_PENALTY)
+    // Железный Гнев (Дредноут) — ещё и по имени: копия, взятая до записи в
+    // паке, ключа не несёт.
+    ...(!isMelee && isInRage(actor) && !hasAbility(actor, RAGE_NO_BS_PENALTY, "Iron Wrath")
       ? [{ label: "Ярость: −20 BS", value: RAGE_TEST_PENALTY, autoCheck: true }] : []),
     { label: "Цель в Борьбе (не ваш Захват)", value: 20, autoCheck: vsGrappled,
       note: vsGrappled ? "стр. 12: +20 на атаки по сцепившимся" : undefined },

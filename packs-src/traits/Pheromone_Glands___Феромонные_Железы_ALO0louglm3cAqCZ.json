@@ -149,7 +149,8 @@
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "askOnly": true
             },
             {
               "id": "PheromoneSeduce1",
@@ -260,7 +261,8 @@
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "askOnly": true
             }
           ]
         }

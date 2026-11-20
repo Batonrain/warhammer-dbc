@@ -128,7 +128,8 @@
                 "predicates": {
                   "wearsFootwear": false
                 }
-              }
+              },
+              "askOnly": true
             },
             {
               "id": "RJ5rSYW1cn8gYC9w",

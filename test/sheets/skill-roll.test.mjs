@@ -603,7 +603,8 @@ describe("авто-встречный тест (wdbc-j814)", () => {
   }
 
   it("NPC без активного владельца: галочка сразу даёт готовый результат — одно сообщение, opposedLine заполнена", async () => {
-    npcOpponent("Драго", { skills: { intimidate: { total: 40 } } });
+    // Книга: против Запугивания — тест Морали, то есть Сила Воли (rules/opposed-skill.mjs).
+    npcOpponent("Драго", { characteristics: { wp: { total: 40 } } });
     const s = sheet({});
     const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
     // Очередь кубов: первый d100 — мой бросок (rollD100WithReroll), второй —
@@ -621,7 +622,7 @@ describe("авто-встречный тест (wdbc-j814)", () => {
   });
 
   it("мутация: неверный resolveOpposed/skillTotal должен уронить проверку margin/победителя", async () => {
-    npcOpponent("Драго", { skills: { intimidate: { total: 999 } } }); // заведомо гарантированный проигрыш инициатора
+    npcOpponent("Драго", { characteristics: { wp: { total: 999 } } }); // заведомо гарантированный проигрыш инициатора
     const s = sheet({});
     const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
     captured.dice = [20, 21]; // мой 20<=45 успех, но соперник при пороге 999 громит степенью
@@ -651,6 +652,34 @@ describe("авто-встречный тест (wdbc-j814)", () => {
     const requestCard = captured.chat[1];
     expect(requestCard.flags?.["warhammer-dbc"]?.delegatedTest?.kind).toBe("opposedResponse");
     const payload = requestCard.flags["warhammer-dbc"].delegatedTest;
+    expect(payload.initiatorSide).toMatchObject({ threshold: 45, roll: 20 });
+  });
+
+  it("Скрытность: соперник-NPC отвечает Внимательностью, а не Скрытностью (книга, стр. 61)", async () => {
+    npcOpponent("Часовой", { skills: { stealth: { total: 999 }, awareness: { total: 10 } } });
+    const s = sheet({});
+    const promise = s._rollSkill("Скрытность", 45, "ag", { skill: "stealth" });
+    captured.dice = [20, 60]; // мой 20<=45 успех; его 60 против Внимательности 10 — провал
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#kind-opposed": true
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+    const content = captured.chat[0].content;
+    expect(content).toContain("Вы побеждаете");
+    expect(content).toContain("Соперник отвечает: Внимательность");
+  });
+
+  it("Очарование: соперник-игрок получает запрос на тест Силы Воли, а сторона инициатора — со своей Характеристикой", async () => {
+    playerOpponent("Ксерксот");
+    const s = sheet({});
+    const promise = s._rollSkill("Очарование", 45, "fel", { skill: "charm" });
+    captured.nextRoll = 20;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#kind-opposed": true
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+    const payload = captured.chat[1].flags["warhammer-dbc"].delegatedTest;
+    expect(payload).toMatchObject({ testKind: "characteristic", skillKey: null, charKey: "wp", hideCharSelect: true });
     expect(payload.initiatorSide).toMatchObject({ threshold: 45, roll: 20 });
   });
 

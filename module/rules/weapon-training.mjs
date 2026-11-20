@@ -29,6 +29,7 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { MELEE_TRAINING_EXEMPT, WEAPON_TYPE_TO_TRAINING, sameCategory } from "../constants/weapon-categories.mjs";
+import { mechadendriteAttackPenalty } from "./mechadendrites.mjs";
 
 const MELEE_TRAINING_NAME  = /^Melee Training\b/i;
 const WEAPON_TRAINING_NAME = /^Weapon Training\b/i;
@@ -75,8 +76,12 @@ export function meleeTrainingStatus(actor, category) {
  * т.п.) идут через Melee Training по форме оружия, а не через эту функцию,
  * иначе обычный меч требовал бы разом двух разных Талантов.
  */
-export function weaponTrainingPenalty({ actor, weaponType, weaponClass, isGrenade = false, weaponName = "" } = {}) {
+export function weaponTrainingPenalty({ actor, weaponType, weaponClass, isGrenade = false, weaponName = "",
+                                        mechadendrite = false } = {}) {
   if (isGrenade) return { total: 0, parts: [] };
+  // Мехадендрит (в паке weaponType "exotic"): книга требует Mechadendrite Use
+  // (Weapon), а не Exotic Weapon Training — rules/mechadendrites.mjs.
+  if (mechadendrite) return mechadendriteAttackPenalty(actor);
   // «Настоящая» экзотика — отдельная ветка: нет общей категории, специализация
   // привязана к КОНКРЕТНОМУ предмету по подстроке в названии (см. шапку файла).
   // Блочные обходы (Legion/Eldar/Drukhari/allRanged) сюда намеренно не входят:

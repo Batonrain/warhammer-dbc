@@ -29,6 +29,7 @@
 import { CraftWorkshop, newCraftProject } from "../../apps/craft-workshop.mjs";
 import { RESEARCH_JOURNAL_FLAG } from "../../rules/research-findings.mjs";
 import { on } from "../../helpers/utils.mjs";
+import { craftCritLossBase } from "../../rules/craft-advantage.mjs";
 
 /** Модель вкладки — та же форма данных, что у CraftWorkshop.projects, но своя
  *  на каждый лист. Ленивая: создаётся при первом обращении и переживает
@@ -115,6 +116,7 @@ export function activateCraftListeners(root, sheet) {
   on(craftRoot, "[name=basebank]", "change", e => upd(e.currentTarget, p => p.baseBank = num(e.target.value, 1)));
   on(craftRoot, "[name=machinesize]", "change", e => upd(e.currentTarget, p => p.machineSize = Math.max(0, num(e.target.value))));
   on(craftRoot, "[name=gmmod]", "change", e => upd(e.currentTarget, p => p.gmMod = num(e.target.value)));
+  on(craftRoot, "[name=critloss]", "change", e => upd(e.currentTarget, p => p.critLoss = craftCritLossBase(e.target.value)));
   on(craftRoot, "[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
   on(craftRoot, "[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
   on(craftRoot, "[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));

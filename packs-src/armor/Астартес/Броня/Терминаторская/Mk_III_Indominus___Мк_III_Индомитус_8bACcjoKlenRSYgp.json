@@ -8,6 +8,7 @@
     "armorType": "power",
     "stacks": false,
     "maxAgility": 45,
+    "agilityPenalty": 20,
     "equipped": false,
     "largeBase": true,
     "head": 14,

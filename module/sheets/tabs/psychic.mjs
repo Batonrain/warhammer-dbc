@@ -8,7 +8,7 @@ import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { isPossessedByParasite } from "../../rules/parasite-trait.mjs";
-import { isMentalActionBlocked } from "../../rules/predicates.mjs";
+import { isMentalActionBlocked, itemHasName } from "../../rules/predicates.mjs";
 import { rageBlocksMental } from "../../rules/rage.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
@@ -29,14 +29,15 @@ import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
-import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
+import { rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
 import { nailsForcePeril } from "../../rules/khorne-berserker.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
-import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS } from "../../rules/psyker.mjs";
+import { manifestEprFlags, safeModeEpr, CHILD_OF_THE_WARP_PUSH_BONUS, disciplineEprBonus } from "../../rules/psyker.mjs";
 import { techniqueFocusFor, TECHNIQUE_FOCUS_TEST_BONUS, TECHNIQUE_FOCUS_PHEN_MOD,
          psychicSpiteApplies, hasPsychicSpite, normalizeSpiteChoice, PSYCHIC_SPITE_BONUS,
          manifestPrCeiling, RESURGENCE_FLAG,
@@ -184,6 +185,20 @@ export async function learnSigilliteRune(actor, item) {
  * @param {object} [extraOpts]  доливается в opts executePsychotest — напр.
  *   onResult({success, deg, ePR}) у Огня Души (module/combat/soulfire.mjs).
  */
+/**
+ * Виден ли Путь Силы этому псайкеру в окне манифестации. Путь с `flag`
+ * (Руны Сигиллитов) — только носителю возможности; Путь с `talent`
+ * (Инкантация, Медитация, Телесная Конверсия, Жертва) — только тому, у кого
+ * этот Талант есть: «Псайкер может использовать Путь Силы …» — без Таланта
+ * Путь закрыт. Остальные Пути видны всем, как и прежде.
+ */
+export function pathAvailable(actor, path) {
+  if (path?.flag && !hasRuleFlag(actor, path.flag)) return false;
+  if (path?.talent && ![...(actor?.items ?? [])].some(i =>
+    (i?.type === "talent" || i?.type === "trait") && itemHasName(i, path.talent))) return false;
+  return true;
+}
+
 export function showManifestDialog(actor, item, extraOpts = {}) {
   // Варп-Замок (rules/warp-lock.mjs): до начала следующего Хода персонаж не псайкер и манифестировать не может.
   if (warpLockBlocksManifest(actor)) {
@@ -280,7 +295,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // возможность реально выдана. Все прочие Пути поля не несут, поэтому у
   // псайкера без Черты список остаётся ровно прежним.
   const pathOptions = Object.entries(PSY_PATHS)
-    .filter(([, p]) => !p.flag || hasRuleFlag(actor, p.flag))
+    .filter(([, p]) => pathAvailable(actor, p))
     .map(([k, p]) =>
       `<option value="${k}"${p.req ? ` title="${esc(p.req)}"` : ""}>${p.label}${p.req ? " *" : ""}</option>`).join("");
 
@@ -387,8 +402,11 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
     return { text: `Действие силы (${PSY_ACTIONS[plan.action] ?? PSY_ACTIONS.half}) в бою стоит ${plan.cost} ОД (есть ${Number(actor.system.actionPoints?.value) || 0}).`, cover };
   };
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue,
-                    runeBase, techFocus, apPreview, ...eprTalents };
+                    runeBase, techFocus, apPreview, ...eprTalents,
+                    // Паразитический Проводник и подобные: +эPR силам своей дисциплины.
+                    discEpr: disciplineEprBonus(actor, item).bonus };
   const talentRows = [
+    psyMeta.discEpr ? `<div class="pm-note">${esc(disciplineEprBonus(actor, item).labels.join(", "))} к эPR этой силы (дисциплина) — учтено.</div>` : "",
     techFocus ? `<div class="pm-note">Фокус Техники: +${TECHNIQUE_FOCUS_TEST_BONUS} к психотесту этой силы, ${TECHNIQUE_FOCUS_PHEN_MOD} к её Феноменам — учтено.</div>`
       : (hasTechniqueFocus(actor) ? `<div class="pm-note" style="opacity:.75;">Фокус Техники: выбранная сила записана в поле «Специализация» Таланта; для «${esc(item.name)}» не выбрана.</div>` : ""),
     spiteOk ? `
@@ -455,11 +473,15 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
   // и атака: вид теста «power», область эффекта «power» или «power:<имя>». Сама
   // сила лежит в контексте целиком — по ней область и находит нужную
   // (rules/resolve-test.mjs).
-  const ruleMods = ruleRollModsHtml(actor, {
+  const ruleCtx = {
     kind: "power", power: item, char: cast.key,
     skill: cast.key === "psyniscience" ? "psyniscience" : undefined,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
-  });
+  };
+  const ruleMods = ruleRollModsHtml(actor, ruleCtx);
+  // Перебросы области «power» (Дьяболист — обращение цифр) — радиокнопкой,
+  // как в окне Страха (sheets/tabs/disorders.mjs::namedReroll).
+  const ruleRerolls = ruleRerollsHtml(actor, ruleCtx);
 
   const discLabel = (PSY_DISCIPLINES?.[sys.discipline]?.label) || "";
   const typeLabel = (PSY_POWER_TYPES?.[sys.powerType]) || sys.powerType || "";
@@ -546,6 +568,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
           </div>
         </details>
         ${ruleMods.html}
+        ${ruleRerolls.html}
       </form>`;
 
   new Dialog({
@@ -561,6 +584,9 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
             ruleMod += parseInt(cb.dataset.value) || 0;
             if (cb.dataset.halve === "1") halveRulePenalty = true;
           });
+          const rerollEl = html.find(".rule-reroll-opt:checked")[0];
+          const rerollIdx = parseInt(rerollEl?.dataset?.idx ?? "-1");
+          const ruleReroll = rerollIdx >= 0 ? ruleRerolls.rerolls[rerollIdx] : null;
           // Руны Сигиллитов: цена считается и проверяется ДО броска — иначе
           // манифестация состоялась бы в долг. Проверка стоит только у
           // носителя Черты: у всех прочих `runeMagic` ложно и ветка не
@@ -599,7 +625,7 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
           }
           await executePsychotest(actor, item, {
             ...extraOpts,
-            ruleMod, halveRulePenalty, runeStrike, improvisedRune: needsImprovise, sigilliteSubs,
+            ruleMod, halveRulePenalty, ruleReroll, runeStrike, improvisedRune: needsImprovise, sigilliteSubs,
             mPR:      parseInt(html.find("#psy-pr").val())     || minPR,
             prMod:    parseInt(html.find("#psy-pr-mod").val()) || 0,
             mode:     html.find("#psy-mode").val()             || "normal",
@@ -685,6 +711,7 @@ export function wirePsyManifestPreview(html, m) {
     // исчезает вместе с ценой. Элементов нет ни у кого, кроме Сигиллита.
     const strike = parseInt($("#psy-rune-strike")?.value) || 0;
     if (pd.runeCost) ePR += strike;
+    ePR += m.discEpr || 0;
     // Варповый Шёпот, Злоба, Проводник — тот же порядок и те же числа, что в
     // executePsychotest: Шёпот снимает эPR (не ниже 1), Злоба «в психотесте»
     // прибавляет только к эPR порога, Проводник — только к эPR эффектов.
@@ -849,12 +876,16 @@ export async function executePsychotest(actor, item, opts) {
     ? Math.min(Math.max(0, Math.trunc(Number(opts.runeStrike) || 0)), runeStrikeMax(actor, item))
     : 0;
   ePR += runeStrike;
+  // Прибавка по дисциплине силы (Паразитический Проводник: Нургл и Биомантия +1).
+  const discEpr = disciplineEprBonus(actor, item);
+  ePR += discEpr.bonus;
 
   // ── Таланты манифестации (rules/psyker-talents.mjs, Sahara 3-28) ───────────
   // Порядок тот же, что в wirePsyManifestPreview: Шёпот снимает эPR, Злоба
   // прибавляет к одному из аспектов, Проводник — к эPR эффектов, Фокус Техники —
   // к порогу и к Феноменам.
   const talentLines = [];
+  if (discEpr.bonus) talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">эPR по дисциплине силы: ${esc(discEpr.labels.join(", "))}.</div>`);
   const whisperAsked = hasWarpWhisper(actor) ? Math.max(0, Math.trunc(Number(opts.whisper) || 0)) : 0;
   const whisperX = Math.min(whisperAsked, Math.max(0, ePR - 1));
   if (whisperX > 0) {
@@ -1034,8 +1065,8 @@ export async function executePsychotest(actor, item, opts) {
   if (opts.reroll) {
     talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;">⚜ Переброс психотеста (Ключевая Сила): ${esc(opts.rerollNote || "")}. Результат прежней карточки заменён этим; те же модификаторы, поддержание и Феномен пересчитаны. Разовые траты первой попытки (ОД, Рун, Очки Возрождения/Проводника) заново не платились.</div>`);
   }
-  const roll = await new Roll("1d100").evaluate();
-  const rv   = roll.total;
+  const { roll, rv, rerollNote: ruleRerollNote } = await rollD100WithReroll(opts.ruleReroll ?? null);
+  if (ruleRerollNote) talentLines.push(ruleRerollNote);
   let success = rv <= threshold;
   let deg  = Math.floor(Math.abs(rv - threshold) / 10) + 1;
   const allRolls = focusRoll ? [roll, focusRoll] : [roll];

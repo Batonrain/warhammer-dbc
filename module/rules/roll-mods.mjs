@@ -85,6 +85,16 @@ export function ruleAutoModsHtml(actor, context, resolved = null) {
   };
 }
 
+/**
+ * Отмечена ли в диалоге галочка «автоуспех» (эффект autoSuccess, 19.11.2026).
+ * `mods` — список resolveTest(...).mods того же теста, `checkedRuleIds` — id
+ * отмеченных галочек правил (.rule-mod:checked → data-rule-id).
+ */
+export function autoSuccessChecked(mods = [], checkedRuleIds = []) {
+  const checked = new Set(checkedRuleIds);
+  return mods.some(m => m?.autoSuccess && checked.has(m.ruleId));
+}
+
 export function ruleRollModsHtml(actor, context, resolved = null) {
   // resolved — уже посчитанный resolveTest: избавляет вызывающего от
   // повторного обхода правил актора (attack-dialog зовёт трижды за диалог).
@@ -103,7 +113,7 @@ export function ruleRollModsHtml(actor, context, resolved = null) {
              data-rule-id="${esc(m.ruleId || "")}"
              ${m.setChar ? `data-set-char="${esc(m.setChar)}"` : ""}
              ${m.halvePenalty ? 'data-halve="1"' : ""}${m.preChecked ? " checked" : ""}/>
-      <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
+      <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}${m.autoSuccess ? " <b>(автоуспех)</b>" : ""}</span></label>`;
   }).join("");
   return {
     mods,
@@ -132,28 +142,39 @@ export const rerollLimiters = new Map();
 /** Ограничитель переброса: (actor) → null — недоступен, иначе { uuid, name } источника переброса. */
 export function registerRerollLimiter(key, fn) { rerollLimiters.set(key, fn); }
 
-export function ruleRerollsHtml(actor, context, resolved = null) {
+/**
+ * Свои добровольные перебросы, которые можно потратить прямо сейчас: без
+ * навязанных (who:"target"/"opponent") и без исчерпанных ограничителем.
+ * Общая часть окна броска и кнопок переброса на карточке Избегания
+ * (rules/defence-reroll.mjs) — «доступен ли переброс» обязано значить одно и то же.
+ */
+export function selfRerollsOffered(actor, rerolls = []) {
   // Только ДОБРОВОЛЬНЫЕ свои перебросы. Навязанные цели (who:"target") бросает
   // она сама, у себя; навязанные МНЕ противником (who:"opponent" — Уравнитель)
   // применяются без спроса в sheets/attack/dialog.mjs и предлагать их
   // наказуемому галочкой нельзя — он её просто не поставит.
-  const rerolls = [];
-  for (const r of ((resolved ?? resolveTest({ actor, ...context })).rerolls || [])) {
+  const out = [];
+  for (const r of rerolls || []) {
     if (r.who !== "self") continue;
     const limiter = r.limit ? rerollLimiters.get(r.limit) : null;
-    if (!limiter) { rerolls.push(r); continue; }
+    if (!limiter) { out.push(r); continue; }
     const source = limiter(actor);
     if (!source) continue;
-    rerolls.push({ ...r, source,
+    out.push({ ...r, source,
       label: source.borrowed ? `${r.label} — переброс стаи: ${source.name}` : r.label });
   }
+  return out;
+}
+
+export function ruleRerollsHtml(actor, context, resolved = null) {
+  const rerolls = selfRerollsOffered(actor, (resolved ?? resolveTest({ actor, ...context })).rerolls);
   if (!rerolls.length) return { html: "", rerolls };
   const rows = rerolls.map((r, i) => `
     <label class="attack-mod-check rule-reroll">
       <input type="radio" name="rule-reroll" class="rule-reroll-opt" data-idx="${i}"
              data-mode="${r.mode}" data-rolls="${r.rolls}"
              ${r.limit ? `data-limit="${esc(r.limit)}" data-source-uuid="${esc(r.source?.uuid || "")}"` : ""}/>
-      <span>${r.label} <b>(${r.mode === "keepWorst" ? "худший" : "лучший"} из ${r.rolls})</b></span>
+      <span>${r.label} <b>(${r.mode === "reverse" ? "обратить цифры" : `${r.mode === "keepWorst" ? "худший" : "лучший"} из ${r.rolls}`})</b></span>
     </label>`).join("");
   return {
     rerolls,

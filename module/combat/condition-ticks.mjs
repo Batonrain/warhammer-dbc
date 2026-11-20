@@ -27,7 +27,7 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { hasTalentCapability } from "../rules/ability-by-key.mjs";
+import { hasTalentCapability, hasAbility } from "../rules/ability-by-key.mjs";
 import { SELF_STANCH_CAPABILITY } from "../rules/naga-traits.mjs";
 import { FIREMAN_CAP } from "../rules/courage-talents.mjs";
 import { resolveArmorProps } from "./armor-properties.mjs";
@@ -541,7 +541,8 @@ export async function rollBurningPanicTest(actor) {
     return { success: true, rv: null, eff: wp };
   }
   // Не От Мира Сего (From Beyond): «автоматически проходит тесты на … Панику».
-  if (hasRuleFlag(actor, "panic.immune")) {
+  // «Извне» (Медуза) — и по имени: старая копия без ключа (приёмка #581).
+  if (hasAbility(actor, "panic.immune", "Извне", "trait")) {
     await postTestCard(actor, {
       icon: rollIcon("fire","#8fd0ff"), title: `Паника от Горения — ${esc(actor.name)}`,
       outcome: `<span class="roll-success">Не От Мира Сего: иммунитет к Панике — теста нет</span>`

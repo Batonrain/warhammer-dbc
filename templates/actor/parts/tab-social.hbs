@@ -315,6 +315,8 @@
         <div class="minion-card-meta">{{m.groupLabel}} · {{m.tierLabel}}</div>
         <div class="minion-card-loyalty">
           {{#if m.magnitude}}Магнитуда {{m.magnitude}}{{else}}Лояльность {{m.loyaltyValue}}/{{m.loyaltyMax}}{{/if}}
+          <button type="button" class="minion-loyalty-roll" data-uuid="{{m.uuid}}"
+                  title="Тест Лояльности: {{m.name}}">🎲</button>
         </div>
       </div>
       {{/each}}

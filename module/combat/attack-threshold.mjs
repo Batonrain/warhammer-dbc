@@ -13,6 +13,7 @@ import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { qualityEffects }                         from "../constants/quality.mjs";
 import { ironGardenQuality }                      from "../rules/iron-garden.mjs";
+import { isMechadendriteWeapon }                  from "../rules/mechadendrites.mjs";
 import { weaponTrainingPenalty }                  from "../rules/weapon-training.mjs";
 
 /**
@@ -57,5 +58,7 @@ export function weaponThresholdPart(actor, item, charKey) {
        + (melee ? (qualityEffects(item, ironGardenQuality(actor, item)).auto.testMod || 0) : 0)
        + weaponTrainingPenalty({ actor, weaponType: sys.weaponType,
                                  weaponClass: sys.weaponClass,
-                                 isGrenade: sys.weaponType === "grenade" }).total;
+                                 isGrenade: sys.weaponType === "grenade",
+                                 weaponName: item?.name ?? "",
+                                 mechadendrite: isMechadendriteWeapon(item) }).total;
 }

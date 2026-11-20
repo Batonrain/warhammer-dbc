@@ -126,7 +126,10 @@
 //      уйдёт предмет — сам перестанет учитываться, без отдельного отката.
 //    reroll: { rerollScope:"all"|"char"|"skill"|"attack"|"initiative"|"social",
 //              rerollChar / skillKey (уточнение области), rerollMode:"keepBest"|
-//              "keepWorst", label }
+//              "keepWorst"|"reverse", label }
+//      "reverse" — «обратить бросок» (поменять местами десятки и единицы d100,
+//      Ветеран Долгой Войны): один бросок, берётся меньший из двух прочтений
+//      (rules/reroll-pick.mjs::reverseD100).
 //      → ЖИВОЙ ЗАПРОС, как terrainIgnore: при получении предмета не пишет
 //      ничего. В момент броска rulesFromItemMechanics (module/rules/
 //      item-rules.mjs) превращает запись в правило формата docs/rules-format.md
@@ -729,6 +732,9 @@ const REROLL_SCOPES = [
   ["social",     "социальные навыки"],
   ["shield",     "тесты на щиты"],
   ["opposed",    "встречные тесты"],
+  // Избегание — Уклонение или Парирование (стр. 12). Переброс предлагается и
+  // кнопкой на карточке проваленной защиты (rules/defence-reroll.mjs).
+  ["evasion",    "тест Избегания (Уклонение, Парирование)"],
   // Тесты Морали (Страх/выход из Шока/Паника от Горения/Подавление/встречные
   // Запугивание и Пытки) — wdbc-zepq, Lord of the Exodites.
   ["morale",     "тесты Морали"],
@@ -1340,6 +1346,8 @@ export function describeMechEntry(entry) {
         ? `+${mult}Бонус ${bonusOf} ХОЗЯИНА${entry.modCharBonus === "cor" ? " (окр.▲)" : ""}`
         : entry.modValueMode === "halvePenalty"
         ? "½ штрафа (вкл. необученность)"
+        : entry.modValueMode === "autoSuccess"
+        ? "автоуспех (галочка)"
         : entry.modValueMode === "formula"
         ? `формула: ${entry.value}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
@@ -1352,7 +1360,8 @@ export function describeMechEntry(entry) {
       return `Доп. Провалы при провале: ${scope} — ${n >= 0 ? "+" : ""}${n}`;
     }
     case "reroll": {
-      const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух" : "лучший из двух";
+      const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух"
+        : entry.rerollMode === "reverse" ? "обратить (десятки ↔ единицы)" : "лучший из двух";
       const scope = REROLL_SCOPE_LABEL(entry);
       return scope ? `Переброс: ${scope} — ${modeLabel}` : "Переброс: (область не выбрана)";
     }
@@ -1577,7 +1586,7 @@ function isEntryComplete(e) {
       if (e.modScope === "char")  return !!e.rerollChar;
       if (e.modScope === "skill") return !!e.skillKey;
       // power не требует имени — «power» само по себе валидная область (см. item-rules.mjs::scopeTarget).
-      if (e.modValueMode === "halvePenalty") return !!e.modScope;
+      if (e.modValueMode === "halvePenalty" || e.modValueMode === "autoSuccess") return !!e.modScope;
       if (e.modValueMode === "charBonus" || e.modValueMode === "masterCharBonus") return !!e.modCharBonus;
       if (e.modValueMode === "formula") return !!e.modScope && formulaOk(e.value);
       return !!e.modScope && numOk(e.value);
@@ -1656,6 +1665,7 @@ function describeMechWhen(when, item = null) {
     parts.push(`Тир Ран ${when?.negateWoundTier ? "≠" : "="} ${names.join(" или ")}`);
   }
   if (when?.requireRage) parts.push(`Ярость ${when?.negateRage ? "≠" : "="} да`);
+  if (when?.requireActivated) parts.push("включено до конца боя/сцены");
   const gods = whenPatronGod(when);
   if (gods.length) {
     const names = gods.map(k => WARP_GODS_MAP[k]?.label || k);
@@ -3971,7 +3981,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const scopeOpts = REROLL_SCOPES
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const modeOpts = [["flat", "число"], ["formula", "формула (½Cor и т.п.)"], ["charBonus", "бонус характеристики"],
-      ["masterCharBonus", "бонус характеристики ХОЗЯИНА (system.masterUuid)"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
+      ["masterCharBonus", "бонус характеристики ХОЗЯИНА (system.masterUuid)"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"],
+      ["autoSuccess", "автоуспех теста (галочка в окне броска)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const charSel = (cls, val, extra = []) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
       [...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k]), ...extra].map(([k, l]) =>
@@ -3994,7 +4005,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"], ["cor", "Порча (Cor.b)"]])
         + `<input type="number" class="mech-mod-char-mult" min="0.1" step="0.1" title="множитель бонуса (1 — как есть; 0.5 — «½Cor.b», книга всегда округляет вверх)"
                   value="${esc(ent.modCharBonusMultiplier || 1)}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>×`
-      : ent.modValueMode === "halvePenalty" ? ""
+      : (ent.modValueMode === "halvePenalty" || ent.modValueMode === "autoSuccess") ? ""
       : ent.modValueMode === "formula"
       ? `<input type="text" class="mech-mod-formula" value="${esc(ent.value ?? "")}"
                 placeholder="напр. ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}"
@@ -4044,7 +4055,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "reroll") {
     const scopeOpts = REROLL_SCOPES
       .map(([v, l]) => `<option value="${v}" ${ent.rerollScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
-    const modeOpts = [["keepBest", "лучший из двух"], ["keepWorst", "худший из двух"]]
+    const modeOpts = [["keepBest", "лучший из двух"], ["keepWorst", "худший из двух"],
+      ["reverse", "обратить (десятки ↔ единицы)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.rerollMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     // Уточнение показывается только там, где оно есть: у «любого теста»,
     // атаки, Инициативы и социальных навыков области хватает самой по себе.
@@ -4557,6 +4569,16 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     </label>
   </div>`;
 
+  // «Когда включено» — гейт активации «до конца боя или сцены» (rules/
+  // item-activation.mjs): запись действует, пока сам предмет включён кнопкой.
+  const activatedHtml = `<div class="grant-entry-when grant-entry-when-activated">
+    <span class="grant-when-label">Когда включено</span>
+    <label class="grant-when-activated-row">
+      <input type="checkbox" class="grant-when-activated" ${d} ${w.requireActivated ? "checked" : ""} ${dis}/>
+      <span>предмет включён до конца боя/сцены</span>
+    </label>
+  </div>`;
+
   // «Когда Покровитель» (wdbc-xxb7) — шестой независимый гейт: список ключей
   // WARP_GODS (khorne/nurgle/slaanesh/tzeentch/undivided), между вариантами
   // ИЛИ — та же форма, что у Тира Ран. Источник — actor.system.patronGod.
@@ -4669,7 +4691,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${qualHtml}${chosenHtml}${anyOfHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${activatedHtml}${patronHtml}${sealedArmourHtml}${condHtml}${qualHtml}${chosenHtml}${anyOfHtml}`;
 }
 
 /**
@@ -4751,8 +4773,12 @@ function buildGroupHtml(grp, canEdit, depth = 1, nested = false, item = null) {
  *   никогда.
  */
 export function mechanicsRelevantChange(changed) {
-  return changed?.flags?.["warhammer-dbc"]?.mechanics !== undefined
-      || changed?.system?.submutation !== undefined;
+  const f = changed?.flags?.["warhammer-dbc"];
+  return f?.mechanics !== undefined
+      || changed?.system?.submutation !== undefined
+      // Включение/выключение «до конца боя или сцены» (rules/item-activation.mjs)
+      // меняет гейт when.requireActivated — долговечные записи пересобираются.
+      || f?.activated !== undefined || (!!f && Object.hasOwn(f, "-=activated"));
 }
 
 // Поля-формулы записей по kind — те самые, что isEntryComplete гоняет через

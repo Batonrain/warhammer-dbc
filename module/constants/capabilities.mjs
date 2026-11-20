@@ -1817,8 +1817,9 @@ export const CAPABILITIES = {
     reader: "module/rules/craft-memory.mjs (журнал, prototypingFor) + module/rules/craft-advantage.mjs prototypingEffects()/effectiveDiceMode — module/apps/craft-workshop.mjs _resolve (Банк, −20), _rollShift (переброс), _rememberCrafted (запись), constants/craft.mjs bankFor(halveMult)"
   },
   "craft.core.safetyPrecautions": {
-    label: "Персонаж не теряет Успехи из банка от Критических Провалов на тесты Крафта, а ассистируя другим — те теряют только 1 Успех от своих Критичес…",
-    source: "Safety Precautions / Техника Безопасности", reader: ""
+    label: "Персонаж не теряет Успехи из банка от Критических Провалов на тесты Крафта, а ассистируя другим — те теряют только 1 Успех. Механизировано (19.11.2026): Мастерская снимает за Критический Провал смены 5–15 Успехов (поле проекта «Потеря за Крит. Провал», решение ГМа, по умолчанию 10); Талант у крафтера — потеря 0, у именованного ассистента — 1. Только Крафт, не Исследование",
+    source: "Safety Precautions / Техника Безопасности",
+    reader: "module/rules/craft-advantage.mjs craftCritLoss() — module/apps/craft-workshop.mjs::_rollShift"
   },
   "craft.core.slowShift": {
     label: "+30 и Преимущество за +4ч смены механизировано (wdbc-u0by) — галочка в Мастерской Крафта, видна владельцу Таланта. Сами +4ч на слово стола, время нигде не тикает",
@@ -2062,7 +2063,7 @@ export const CAPABILITIES = {
   },
   "minion.core.betrayer": {
     label: "Раз в сессию персонаж может убить собственного Миньона, чтобы получить +20 (+10 если Миньон легко заменим) к следующему тесту Inf или восста…",
-    source: "Betrayer / Предатель", reader: ""
+    source: "Betrayer / Предатель", reader: "ЧАСТИЧНО: запись Конструктора kind:testMod (Inf +20, галочка). Раз в сессию и восстановление ОБ — вручную"
   },
   "minion.core.cannonFodder": {
     label: "Можно взять несколько раз для каждого Миньона. Миньон теряет 20 Лояльности, но если умирает,",
@@ -2377,7 +2378,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.cyberMantleCalibration": {
     label: "Персонаж увеличивает максимум своих мехадендритов на 1. Можно брать до I.b раз.",
-    source: "Cyber-Mantle Calibration / Калибровка Кибер-Мантии", reader: ""
+    source: "Cyber-Mantle Calibration / Калибровка Кибер-Мантии",
+    reader: "module/rules/mechadendrites.mjs::mechadendritePorts — каждая копия Таланта +1 к максимуму портов Кибер-Мантии (T.b + копии); перебор предела I.b подсвечивается на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView) и в Хирургеоне (apps/surgeon.mjs), покупку не запрещает"
   },
   "mechanicum.core.cyberneticExcellence": {
     label: "Персонаж может установить дополнительную бионическую руку, получая Трейт Multiple Arms (+1). Можно брать до ½I.b+1 (окр.▼) раз.",
@@ -2420,7 +2422,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.mechadendriteUse": {
     label: "Персонаж получил обучение, посвящение и гипнонаставление по использованию конкретного типа мехадендритов.",
-    source: "Mechadendrite Use / Использование Мехадендритов", reader: ""
+    source: "Mechadendrite Use / Использование Мехадендритов",
+    reader: "module/rules/mechadendrites.mjs::mechadendriteTraining — специализация Weapon/Utility; атака мехадендритом без (Weapon) −20 (weapon-training.mjs::weaponTrainingPenalty mechadendrite:true — attack-dialog.mjs, attack-threshold.mjs); необученный тип дендрита подсвечен на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView)"
   },
   "mechanicum.core.steelRatio": {
     label: "Персонаж увеличивает максимальное количество изучения Таланта Sound Constitution на I.b.",
@@ -3382,7 +3385,7 @@ export const CAPABILITIES = {
   },
   "meleeCore.core.gatekeeper": {
     label: "Персонаж может совершить до WS.b свободных атак в Раунд вместо одной.",
-    source: "Gatekeeper / Привратник", reader: ""
+    source: "Gatekeeper / Привратник", reader: "module/combat/free-attack.mjs::freeAttacksPerRound — до WS.b Свободных атак в Раунд (счётчик rules/cooldown.mjs)"
   },
   "meleeCore.core.grind": {
     label: "Проводя приём Пила против противника, которого держит в Борьбе, персонаж использует полный S.b для урона вместо половины как обычно.",
@@ -3685,7 +3688,7 @@ export const CAPABILITIES = {
   },
   "elite.drednouty.ironWrath": {
     label: "Сохраняет способность стрелять как обычно и игнорирует штраф к BS от Ярости. В Ярости не обязан двигаться к ближайшей цели быстрее Шага,",
-    source: "Iron Wrath / Железный Гнев", reader: ""
+    source: "Iron Wrath / Железный Гнев", reader: "ЧАСТИЧНО: запись Конструктора на Таланте — возможность rage.noBsPenalty (module/rules/rage.mjs RAGE_NO_BS_PENALTY). Движение в Ярости — вручную"
   },
   "elite.drednouty.payback": {
     label: "Когда ненавистный противник наносит Дредноуту или пилоту непоглощённый урон, пилот может потратить Реакцию и немедленно атаковать этого прот…",
@@ -3905,7 +3908,7 @@ export const CAPABILITIES = {
   // ── Таланты_Астартес\Повелители_Ночи — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyAstartes.poveliteliNochi.propheticVision": {
     label: "Персонаж может раз в Раунд перебросить любой свой тест, но его тесты против Рока Ночного Призрака становятся W+0 вместо W+10.",
-    source: "Prophetic Vision / Пророческое Видение", reader: ""
+    source: "Prophetic Vision / Пророческое Видение", reader: "ЧАСТИЧНО: запись Конструктора kind:reroll (любой тест, лучший из двух). «Раз в Раунд» и W+0 против Рока — вручную"
   },
   "elite.talantyAstartes.poveliteliNochi.theLongNightmare": {
     label: "Когда ГМ посылает персонажу пророческий сон с его смертью, он может пройти тест W+20 и при Успехе растянуть сон на 2 часа за каждый Успех,",
@@ -3926,7 +3929,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryDvizhenie.wings": {
     label: "Flyer (A.b×2). Несовместим с «Руки на Спине».",
-    source: "Wings / Дар: Крылья", reader: ""
+    source: "Wings / Дар: Крылья", reader: "module/rules/character/movement.mjs (SPD в полёте A.b×2) и module/combat/movement-actions.mjs actorCanFly/actorHasFlyer — пока демон проявлен (rules/predicates.mjs::manifestedGift)"
   },
   // ── Таланты_одержимых\Дары___Единение — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryEdinenie.brotherhood": {
@@ -3947,7 +3950,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryEdinenie.twoFaced": {
     label: "Доп. глаза/рот второй души: 2 броска Awareness; неконтролирующая душа получает полудействие только на общение/Команду/Запугивание/Baleful Di…",
-    source: "Two-Faced / Дар: Двуликий", reader: ""
+    source: "Two-Faced / Дар: Двуликий", reader: "ЧАСТИЧНО: запись Конструктора kind:reroll (Awareness, лучший из двух) — галочка в Проявлении"
   },
   "elite.talantyOderzhimyh.daryEdinenie.warpSight": {
     label: "Warp Sight и Unnatural Senses (W.b демона).",
@@ -3960,7 +3963,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryZaschita.carapace": {
     label: "Natural Armour (Cor.b), не складывается с носимой бронёй.",
-    source: "Carapace / Дар: Панцирь", reader: ""
+    source: "Carapace / Дар: Панцирь", reader: "module/rules/character.mjs — блок Проявления (giftNamesOf «Панцирь»): Natural Armour Cor.b"
   },
   "elite.talantyOderzhimyh.daryZaschita.giant": {
     label: "+1 Размер, +10 S, +10 к макс. и текущим Ранам (без бонуса +1 SPD от Размера).",
@@ -4044,7 +4047,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedPath": {
     label: "−1 к максимуму Очков Бесчестия, но демон получает 3 своих ОБ (может тратить даже когда телом правит хост).",
-    source: "Shared Path / Общий Путь", reader: ""
+    source: "Shared Path / Общий Путь", reader: "ЧАСТИЧНО: запись Конструктора kind:poolMax (infamy −1). Собственные 3 ОБ демона — вручную"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSlaughter": {
     label: "В Проявлении считается двумя персонажами для численного превосходства; раз в Ход переброс промаха меньшим WS/BS.",
@@ -5011,8 +5014,8 @@ export const CAPABILITIES = {
   },
   // ── Элитные_архетипы\Облитератор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.obliterator.broadside": {
-    label: "Способен выпустить в противника абсурдное количество огневой мощи. Уменьшает штраф на стрельбу тяжёлым оружием и винтовками с двух рук (в лю…",
-    source: "Broadside / Залп", reader: ""
+    label: "Уменьшает штраф на стрельбу тяжёлым оружием и винтовками с двух рук (в любой комбинации) на 10 (считается сам). Вручную: преимущество Прицеливания обеим атакам по одной цели.",
+    source: "Broadside / Залп", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 к парному штрафу на паре тяжёлого/винтовок)"
   },
   "elite.elitnyeArhetipy.obliterator.bulletEater": {
     label: "Может поглощать специализированные боеприпасы и хранить их внутри тела. Может заряжать их в подходящее оружие и менять боеприпасы в оружии,",
@@ -5086,8 +5089,8 @@ export const CAPABILITIES = {
     source: "Destructor / Деструктор", reader: ""
   },
   "elite.elitnyeArhetipy.sekutor.fusillade": {
-    label: "Укрепляет конечности усиленными подвесками и гасителями отдачи, устанавливая тяжёлое оружие в баллистические механодендриты и используя его…",
-    source: "Fusillade / Фузилада", reader: ""
+    label: "Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых (считается сам). Вручную: тяжёлое оружие в баллистическом механодендрите без штрафов.",
+    source: "Fusillade / Фузилада", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 к парному штрафу на паре стрелкового, как Тирантикос)"
   },
   "elite.elitnyeArhetipy.sekutor.gunzerker": {
     label: "Холодная ненависть Секутора более контролируема, чем у биологических существ. В начале Хода может пройти тест W+0,",
@@ -5295,8 +5298,8 @@ export const CAPABILITIES = {
     source: "Devourer / Поглотитель", reader: ""
   },
   "elite.elitnyeArhetipy.chempionTerminator.justaerin": {
-    label: "Считается как два персонажа в расчёте численного перевеса в рукопашной. Может считать винтовки пистолетами,",
-    source: "Justaerin / Юстаэринец", reader: ""
+    label: "Уменьшает штраф за атаки с двух рук на 10, если вооружён винтовкой и рукопашным оружием (считается сам). Вручную: считается двумя персонажами в численном перевесе; винтовки как пистолеты и тяжёлое как винтовки для стрельбы в рукопашной.",
+    source: "Justaerin / Юстаэринец", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 к парному штрафу на паре винтовка + рукопашное)"
   },
   "elite.elitnyeArhetipy.chempionTerminator.lernean": {
     label: "Не получает штрафов к Stealth от брони. Не страдает от уменьшенного угла обзора от брони и может перебрасывать тесты Awareness на обнаружени…",
@@ -5515,7 +5518,7 @@ export const CAPABILITIES = {
   },
   "trait.bestial": {
     label: "Авто Survival; не использует сложные действия.",
-    source: "Bestial / Зверь", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Bestial / Зверь", reader: "packs-src Bestial: testMod modValueMode:\"autoSuccess\" (rules/item-rules.mjs → resolve-test.mjs → sheets/actor-sheet.mjs::autoSuccessChecked) и kind:\"script\" на панели → combat/trait-test.mjs::rollTraitTest"
   },
   "trait.bite": {
     label: "Естественное оружие: Укус 1d5+X R, Reinforced, Tearing — только в Борьбе (при втором источнике укуса — и обычной атакой).",
@@ -5555,7 +5558,7 @@ export const CAPABILITIES = {
   },
   "trait.burrower": {
     label: "Роет тоннели со скоростью SPD×X.",
-    source: "Burrower / Бурильщик (X)", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Burrower / Бурильщик (X)", reader: "module/rules/flight-speed.mjs::burrowSpeedOf → sheets/character-context.mjs (movementBurrowSpd, строка «Рытьё» на вкладке БОЙ)"
   },
   "trait.chaosPsyker": {
     label: "В расчёте психической силы считается Несвязанным (Черта Архетипа Ведьма). Трейт Psyker, PR3 и +3d5 Cor — строки самого Архетипа, не этой Черты (в книге Черта их не даёт). Реализовано без возможности: Возможность данными не выдаётся: «Несвязанный» ставит сам Архетип — system.psykerClass → system.psyker.class при выборе (module/apps/archetypes.mjs::applyArchetype, module/apps/character-wizard.mjs::_finishArchetypeStep). Психосилы читают system.psyker.class (module/sheets/tabs/psychic.mjs). Ручная смена Природы Дара на листе не запрещена — Ведьма может стать, например, демоническим псайкером позже по сюжету.",
@@ -5640,7 +5643,7 @@ export const CAPABILITIES = {
   },
   "trait.dedication": {
     label: "Покровительство Бога и его божественный Трейт демонов.",
-    source: "Dedication / Посвящение", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Dedication / Посвящение", reader: "packs-src Dedication: группа ИЛИ из четырёх kind:\"trait\" (божественные Трейты демонов) — выбор Бога окном при выдаче (apps/mechanics.mjs)"
   },
   "trait.digitigrade": {
     label: "+X к SPD; +5×X на группирование.",
@@ -5812,7 +5815,7 @@ export const CAPABILITIES = {
   },
   "trait.monodevotant": {
     label: "Переброс неудачных тестов Лояльности; без субстанции 1d10+W.b дней — штраф −10 ко всем Характеристикам (−5 за каждый доп. день);",
-    source: "Monodevotant / Монозависимый", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Monodevotant / Монозависимый", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::hasMonodevotant → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (провал теста Лояльности перебрасывается сам). Ломка без субстанции — памятка kind:script в чат"
   },
   "trait.multipleArms": {
     label: "Рейтинг = общее число рук (бюджет рук) и +1 Атака за Ход на каждую пару рук сверх первой (нечётная лишняя рука — пара). Не автоматизировано: потолок 2+P.b рук за Ход, независимые пары (выстрел + рукопашная в один Ход), счёт по парам для Талантов «Два оружия».",
@@ -5820,7 +5823,7 @@ export const CAPABILITIES = {
   },
   "trait.mutant": {
     label: "Имеет X мутаций.",
-    source: "Mutant / Мутант", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Mutant / Мутант", reader: "module/rules/minion-build.mjs::minionCorruption (Порча Миньона не ниже X×20) — apps/minion-creator.mjs"
   },
   "trait.naturalWeapons": {
     label: "Естественное оружие: профили Кулаки/Когти/Косы/Щупальца/Рога/Укус/Копыта с X рейтинга — выбор галочками при получении.",
@@ -6014,7 +6017,7 @@ export const CAPABILITIES = {
   },
   "trait.steed": {
     label: "На Миньоне можно ездить верхом; открывает Трейты скакунов.",
-    source: "Steed / Скакун", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Steed / Скакун", reader: "module/constants/minion-traits.mjs (requires:\"Steed\") + rules/minion-build.mjs::traitAvailability — Трейты скакунов в генераторе; rules/mount.mjs::minionLacksSteed — предупреждение при посадке"
   },
   "trait.stepchildrenOfTheGods": {
     label: "Максимум Бесчестия −1 (не ниже 1); мутации как у Космодесантника; один кубик на мутации и субмутации.",
@@ -6112,7 +6115,7 @@ export const CAPABILITIES = {
   },
   "trait.unruly": {
     label: "Непоглощённый урон скакуну — тест Акробатики или выпадение из седла.",
-    source: "Unruly / Непослушный", reader: "module/combat/mount.mjs (тест Акробатики при непоглощённом уроне скакуну), module/rules/mount.mjs — по имени Черты"
+    source: "Unruly / Непослушный", reader: "module/combat/damage.mjs (кнопка теста удержания в карточке урона скакуна, rules/mount.mjs::unrulyRiders) → hooks.mjs .wh-unruly-saddle-btn → combat/mount.mjs::showMountDamageTest"
   },
   "trait.unstableGenome": {
     label: "Урон в Характеристики усиливается на +1 (плюс ещё +1 за каждую доп. адаптацию).",
@@ -6313,7 +6316,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.arhimagos.voiceOfOmnissiah": {
     label: "Командные протоколы опираются на глубочайшие базы кода. Распространяет эффект Таланта Binary Dominion на всех персонажей с Имплантами Механи…",
-    source: "Voice of Omnissiah / Глас Омниссии", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Voice of Omnissiah / Глас Омниссии", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — галочка testMod +30 к социальным Навыкам; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Архонт — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhont.lordOfTheSpiresOfCommoragh": {
@@ -6353,7 +6356,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Броненосец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.bronenosets.divinePlate": {
     label: "Носит несъёмную тяжёлую броню AP 8/10/8/8, которая ведёт себя как Трейт Natural Armour. Не нуждается в еде,",
-    source: "Divine Plate / Божественные Латы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Divine Plate / Божественные Латы", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — kind:armour 8/10/8/8 по локациям; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Вампир — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.vampir.pactProtection": {
@@ -6366,7 +6369,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vampir.supremeAvarice": {
     label: "Получает неизлечимое ментальное расстройство «Перфекционизм» на Тяжести −2, и его Тяжесть не может опуститься ниже −2.",
-    source: "Supreme Avarice / Высшая Алчность", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Supreme Avarice / Высшая Алчность", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.vampir.theThirst": {
     label: "Пробив укусом броню цели, имеющей душу, может выпить её кровь (или аналог, вплоть до машинного масла или реакторной жидкости мутанта-механои…",
@@ -6410,7 +6413,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vitkis.bloodFather": {
     label: "Личным примером и мудрым советом ведёт своих последователей в бой. Считает все Таланты группы Лидерство дружественными,",
-    source: "Blood Father / Отец Крови", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Blood Father / Отец Крови", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — aptOverride: группа Лидерство и F дружественные; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.vitkis.warSeer": {
     label: "Раз в Ход за свободное действие может сконцентрировать своё боевое всеведение на одном персонаже в том же бою и пройти тест Common Lore(War)…",
@@ -6419,7 +6422,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Воин_Ноты — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.voinNoty.adoringCrowds": {
     label: "Фанаты стягиваются к нему из-за славы мечника и его выступлений. Может использовать A вместо F и Trade(Dancer) вместо Command для своих Минь…",
-    source: "Adoring Crowds / Обожание Толпы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Adoring Crowds / Обожание Толпы", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::adoringCrowdsEligible → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (повод «Обожание Толпы»: Реакция Миньона-Человека, Успех — +1 Очко Бесчестия Хозяину). A вместо F, Trade(Dancer) вместо Command, бесплатные Sycophant и Trade(Musician) — памятка kind:script в чат"
   },
   "trait.elitnyeArhetipy.voinNoty.danceOfPain": {
     label: "Элегантными выверенными ударами изматывает противника, обрывая его жизнь только когда вдоволь наиграется. Раз в Ход,",
@@ -6586,7 +6589,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Когитор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogitor.dreamChaser": {
     label: "Получает неизлечимое ментальное расстройство «Психопатия» на Тяжести −1 (не может опуститься ниже −1);",
-    source: "Dream Chaser / Гоняющийся за Мечтой", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Dream Chaser / Гоняющийся за Мечтой", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести; rules/pact-disorder.mjs + хук createItem (hooks.mjs) поднимают предел на 1 за Стадию Пакта. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.kogitor.heartOfStone": {
     label: "При заключении Пакта сердце Когитора трансмутирует из плоти в техномагический конструкт, в который заключается его душа,",
@@ -6607,7 +6610,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kognite.veilOfLies": {
     label: "Гипноиндоктринация превращает разум в многослойный лабиринт из сконструированных личностей, в сердце которого скрыто ядро настоящих мыслей.",
-    source: "Veil of Lies / Вуаль Лжи", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Veil of Lies / Вуаль Лжи", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора testMod modValueMode autoSuccess — область psychicMind (галочка в окне теста Воли против психосилы, sheets/actor-sheet.mjs::autoSuccessChecked) и interrogation (apps/torture.mjs засчитывает сам). Прокси-личность (Deceive) — вручную"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Коготь_Варпа — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogotVarpa.veilRender": {
@@ -6620,7 +6623,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kogotVarpa.warpTalonSuit": {
     label: "Броня и прыжковый ранец сливаются с телом. Не способен снимать броню и прыжковый ранец,",
-    source: "Warp Talon Suit / Доспех Когтя Варпа", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Warp Talon Suit / Доспех Когтя Варпа", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — weaponPropertyImmunity.haywire; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Колдун_Рубрики — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.koldunRubriki.golemMaster": {
@@ -6646,7 +6649,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.korolChervey.verminousConduit": {
     label: "Благословенные Нурглом черви в плоти служат проводником мистической силы. Получает +1 к эPR психосил Нургла и Биомантии.",
-    source: "Verminous Conduit / Паразитический Проводник", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Verminous Conduit / Паразитический Проводник", reader: "module/rules/psyker.mjs — disciplineEprBonus (DISCIPLINE_EPR_SOURCES): +1 эPR силам дисциплин nurgle и biomancy; применяют sheets/tabs/psychic.mjs::executePsychotest и окно манифестации (wirePsyManifestPreview)"
   },
   "trait.elitnyeArhetipy.korolChervey.wormMaster": {
     label: "В бою может мистически размножать рои паразитов, формируя аморфные боевые конструкты.",
@@ -6664,7 +6667,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Лакрималлус — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.lakrimallus.cyberembrace": {
     label: "За минуту работы может встроить в беспомощного или не сопротивляющегося человека рудиментарные кибернетические импланты (авто-фабрикаторы ег…",
-    source: "Cyberembrace / Киберобъятья", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Cyberembrace / Киберобъятья", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — minion.ignoreInfamy.machine; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.lakrimallus.toilseer": {
     label: "Может использовать Миньонов-сервиторов и тех-траллов как ассистентов в тестах Крафта даже без нужных Навыков (Орды считаются как 1 ассистент…",
@@ -6741,11 +6744,11 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meduza.fromBeyond": {
     label: "Чуждое сознание: сопротивление воздействиям на разум.",
-    source: "From Beyond / Извне", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "From Beyond / Извне", reader: "РЕАЛИЗОВАНО (19.11.2026): записи Конструктора на Черте — fear.immune, suppression.immune, panic.immune, psychic.mindImmune (как общая From Beyond)"
   },
   "trait.elitnyeArhetipy.meduza.fromBeyond2": {
     label: "Чуждое сознание: сопротивление воздействиям на разум.",
-    source: "From Beyond / Извне", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "From Beyond / Извне", reader: "РЕАЛИЗОВАНО (19.11.2026): записи Конструктора на Черте — fear.immune, suppression.immune, panic.immune, psychic.mindImmune (как общая From Beyond)"
   },
   "trait.elitnyeArhetipy.meduza.hovererWB": {
     label: "Медуза парит, пока она без хоста.",
@@ -6770,7 +6773,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meyster.deathlessOath": {
     label: "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0);",
-    source: "Deathless Oath / Несмертная Клятва", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Deathless Oath / Несмертная Клятва", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести; rules/pact-disorder.mjs + хук createItem (hooks.mjs) поднимают предел на 1 за Стадию Пакта. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.meyster.lifeVirus": {
     label: "Потратив 5 минут работы, может синтезировать дозу персонализированного вируса, укрепляющего организм цели.",
@@ -6782,7 +6785,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meyster.savantOfLifeAndDeath": {
     label: "Имеет доступ к безграничным медицинским знаниям своего покровителя. Автоматически преуспевает во всех тестах медицинской диагностики и автом…",
-    source: "Savant of Life and Death / Савант Жизни и Смерти", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Savant of Life and Death / Савант Жизни и Смерти", reader: "ЧАСТИЧНО (19.11.2026): запись Конструктора testMod modValueMode autoSuccess на skill:medicae — галочка в окне теста Медицины; игрок ставит её при диагностике"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Монарх — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.monarh.brainHarvesting": {
@@ -6796,21 +6799,21 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Моритат — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.moritat.chainShot": {
     label: "Перегружая силовой ранец, может выжать из пистолетов невероятную скорострельность. Силовой ранец включает интегрированный прыжковый ранец па…",
-    source: "Chain Shot / Цепной Выстрел", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Chain Shot / Цепной Выстрел", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — выдача Черты Flyer (10); остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.moritat.noLordNorServant": {
     label: "Путь Моритата — путь одиночества. Не может признавать авторитет командиров и не получает преимущества Командования.",
-    source: "No Lord, Nor Servant / Ни Владыка, Ни Слуга", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "No Lord, Nor Servant / Ни Владыка, Ни Слуга", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — command.cannotReceive; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Ночной_Демон — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.nochnoyDemon.chosenOneOfDarkness": {
     label: "Все подчинённые-мандрагоры, когда персонаж уходит во тьму или фазовое состояние, могут уйти вместе с ним и перенестись в указанную им точку.",
-    source: "Chosen One of Darkness / Избранник Тьмы", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Chosen One of Darkness / Избранник Тьмы", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — переброс Командования (выбор игрока в окне броска); остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Облитератор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.obliterator.fleshmetalBody": {
     label: "Не способен носить броню или использовать обычное оружие и инструменты — формирует их из собственного тела.",
-    source: "Fleshmetal Body / Тело Из Плотеметалла", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Fleshmetal Body / Тело Из Плотеметалла", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — +10 Ран, weaponPropertyImmunity.haywire; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.obliterator.livingArsenal": {
     label: "За полное действие может ассимилировать касанием любое оружие или механизм размера, которым может пользоваться космодесантник или персонаж п…",
@@ -6832,15 +6835,15 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.revenant.shadowOfVengeance": {
     label: "Считает Навыки Inquiry, Interrogate, Security и Stealth дружественными, а Acrobatics и Dodge — нейтральными, независимо от покровительства.",
-    source: "Shadow of Vengeance / Тень Отмщения", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Shadow of Vengeance / Тень Отмщения", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — aptOverride: Inquiry, Interrogate, Security, Stealth дружественные; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.revenant.vengeanceWeapon": {
     label: "Выбирает одно оружие Редкостью 1 или ниже (Космодесантники считают по Редкости аналогов для людей). Может сделать это оружие Best.",
-    source: "Vengeance Weapon / Оружие Отмщения", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Vengeance Weapon / Оружие Отмщения", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — галочка testMod +10 к атаке; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.revenant.vengefulOne": {
     label: "Получает неизлечимое ментальное расстройство «Ненависть» на Тяжести 0 (не может опуститься ниже 0);",
-    source: "Vengeful One / Мстительный", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Vengeful One / Мстительный", reader: "ЧАСТИЧНО (19.11.2026): kind:script scriptOnGrant на Черте — sheets/tabs/disorders.mjs::grantStartingDisorder кладёт неизлечимое расстройство с нижним пределом Тяжести; rules/pact-disorder.mjs + хук createItem (hooks.mjs) поднимают предел на 1 за Стадию Пакта. Остальной текст Черты — памятка в чат, ведёт ГМ"
   },
   "trait.elitnyeArhetipy.revenant.vengefulSpirit": {
     label: "Демон-покровитель при заключении Пакта отрывает от себя крохотную частичку своей сущности, формируя из неё мелкого демона,",
@@ -6862,11 +6865,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Сибарит — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.sibarit.powerOfStrength": {
     label: "Может использовать Intimidate вместо Command; командуя своим отрядом, получает +15 на тесты командования.",
-    source: "Power of Strength / Власть Силы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Power of Strength / Власть Силы", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — галочка testMod +15 к Командованию; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.sibarit.tyrantSReputation": {
     label: "Теряет Inf, если подчинённый подрывает его репутацию отказом подчиняться, бездействием или громким провалом: от 1 Inf за неподчинение до 10…",
-    source: "Tyrant's Reputation / Репутация Тирана", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Tyrant's Reputation / Репутация Тирана", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — testMod ceil(infv/2) к Запугиванию, сам; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Скорбные_Пасти — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.skorbnyePasti.markOfRevenge": {
@@ -6923,7 +6926,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.tenetkach.lordOfDarkness": {
     label: "В радиусе Daemonic метров любые источники света затухают независимо от природы. Псайкеры-пироманты могут применять силы,",
-    source: "Lord of Darkness / Владыка Тьмы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Lord of Darkness / Владыка Тьмы", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — psyker.alwaysBound; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.tenetkach.theExaltedMandrake": {
     label: "Получает Multiple Arms (+2). Руки из чистой тьмы игнорируют E(Ls) урон и существуют в любой зоне.",
@@ -6948,7 +6951,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Тех_Ассасин — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.tehAssasin.assassinFrame": {
     label: "Фрейм почти полностью заменяет тело, оставляя только головной и спинной мозг, биологические глаза и уши.",
-    source: "Assassin Frame / Фрейм Ассасина", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-66c1 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Assassin Frame / Фрейм Ассасина", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — testMod +10 S, +10 A, +20 Карабканье, сами; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.tehAssasin.paradoxVeil": {
     label: "Наполовину технологическое, наполовину демоническое устройство стирает его с восприятия любых технологических сенсоров и Ноосферы: микрофоны…",
@@ -6957,21 +6960,21 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Укротитель — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.ukrotitel.beastMaster": {
     label: "Игнорирует Inf для подчинения Миньонов-Зверей и увеличивает максимум миньонов на P.b×2. Его звери в его присутствии игнорируют страх,",
-    source: "Beast Master / Мастер Зверей", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Beast Master / Мастер Зверей", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — minion.ignoreInfamy.beast; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Чемпион_Терминатор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chempionTerminator.gracefulGiant": {
     label: "Двигается в Терминаторской броне почти так же непринуждённо, как в обычной. Уменьшает штраф к A на 10, увеличивает Max.A на 10,",
-    source: "Graceful Giant / Изящный Гигант", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Graceful Giant / Изящный Гигант", reader: "module/rules/terminator-armour.mjs — hasGracefulGiant: gracefulGiantPenaltyReduction (rules/character.mjs, штраф A −10), gracefulGiantAgilityBonus (combat/armor-mods.mjs::armorAgilityCap, Max.A +10), terminatorDodgeVerdict (combat/defense.mjs::_performDodge — Уклонение в Терминаторской броне разрешено со штрафом −10)"
   },
   "trait.elitnyeArhetipy.chempionTerminator.legendaryPlate": {
     label: "Терминаторская броня — символ могущества среди Космодесантников Хаоса. В общении с другими Космодесантниками и персонажами с Талантом Ancien…",
-    source: "Legendary Plate / Легендарные Латы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Legendary Plate / Легендарные Латы", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — галочка testMod +20 к тестам Inf; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Чернокнижник — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chernoknizhnik.darkArts": {
     label: "Работает аналогично Трейту Psyker (PR2), но исключительно в части использования психосил.",
-    source: "Dark Arts / Тёмные Искусства", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Dark Arts / Тёмные Искусства", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — psyker.alwaysBound; остальное пишет в чат кнопка-памятка, считает ГМ"
   },
   "trait.elitnyeArhetipy.chernoknizhnik.transcription": {
     label: "Нуждается в глубоком понимании механизмов, а не инстинктивном. Не имеет врождённого фокуса ни на одну психодисциплину, кроме божественных.",
@@ -8269,6 +8272,11 @@ export const CAPABILITIES = {
   // Шока бросают на I вместо W». Не Черта Machine: Техножрец с ней мыслит
   // как человек. Поэтому своё имя, которое ставится тем, кто действует по
   // программе, — Черте Сервочереп, будущему Сервитору, NPC вручную.
+  "shock.mindKiller": {
+    label: "Убийца Разума: −½I (окр.▼) от бросков на Шок",
+    source: "Талант: Mind Killer / Убийца Разума (Смелость, Основная книга)",
+    reader: "module/rules/mind-killer.mjs mindKillerShockReduction() — module/combat/fear.mjs _executeFearRoll и rollInfernalWillShockDetailed"
+  },
   "fear.machineMind": {
     label: "Машина без свободы воли: тесты Страха и выхода из Шока — на Int вместо W",
     source: "Черта: Servoskull / Сервочереп (Основная книга, «Страх и Машины», стр. 53)",

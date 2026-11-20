@@ -54,6 +54,7 @@ import { buildCountenanceFearFlag } from "../rules/countenance-of-gods.mjs";
 // а не внутри скрипта пака: внутри скрипта её не видит ни один тест.
 import { devouredSkillRank, nextDevourerStreak, pruneDevourerStreaks } from "../rules/devourer-of-knowledge.mjs";
 import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
+import { activateItemUntil, deactivateItem } from "./item-activation.mjs";
 import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
 import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
@@ -71,6 +72,8 @@ import { useShapeshift } from "../combat/shapeshift.mjs";
 import { linkPsyberToMaster } from "./psyber-link.mjs";
 import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
 import { shiftAmorphousSize } from "./amorphous-size.mjs";
+import { rollTraitTest } from "../combat/trait-test.mjs";
+import { chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL } from "./unnatural-choice.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -159,6 +162,8 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    карточки. Книга не даёт этой способности радиуса — рейтинг не
  *    интегрирован в fearRating (тот же уровень, что уже у Dread Wail),
  *    применение к конкретному тесту Страха остаётся отметкой вручную.
+ *  - `activateItemUntil`/`deactivateItem` (apps/item-activation.mjs) — включить
+ *    предмет «до конца боя или сцены» (записи с условием when.requireActivated)
  *  - `purityOfBattleWave` (combat/purity-of-battle.mjs) — Чистота Битвы
  *    (Дар Кхорна, wdbc-1rno): реально снимает боевые наркотики и психосилы
  *    (свои и чужие, нацеленные на жертву) со всех токенов сцены в радиусе.
@@ -248,6 +253,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
     "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
+    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem",
     ...extraNames,
     code
   );
@@ -268,6 +274,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
     grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
+    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem,
     ...extraNames.map(k => extra[k])
   );
 }

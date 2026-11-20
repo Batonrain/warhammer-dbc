@@ -77,6 +77,12 @@
   (sheets/tabs/psychic.mjs). Делегированные/эффект-триггерные пути броска
   (hooks.mjs::genericTest/opposedResponse, horde-sheet.mjs) этой блокировкой
   НЕ накрыты — осознанно оставлено как хвост.
+- Встречный тест Навыка (галочка «авто-встречный», wdbc-j814): чем отвечает
+  соперник — `module/rules/opposed-skill.mjs::opposedSide` по книге (стр.
+  57-61): Скрытность ↔ Внимательность, Обман → Пристальность (маскировка с I →
+  Внимательность), Пристальность → Обман, Очарование/Допрос/Запугивание → Сила
+  Воли. Прочие Навыки — тот же Навык. Читают `_resolveOpposedAuto` и
+  `_sendOpposedRequest` (sheets/actor-sheet.mjs).
 - `module/constants/advancement.mjs` — таблицы цены Характеристик/Навыков/
   Талантов по Склонностям.
 - `module/rules/advance-category.mjs` — категория цены (Дружественная/

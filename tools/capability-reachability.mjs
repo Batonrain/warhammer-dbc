@@ -93,7 +93,7 @@ function readPacks() {
 }
 
 /** Все .mjs модуля разом — чтобы не ходить по диску повторно. */
-function readModule() {
+export function readModule() {
   const files = new Map();
   walk(path.join(ROOT, "module"), (p) => {
     if (p.endsWith(".mjs")) files.set(path.relative(ROOT, p).replace(/\\/g, "/"), fs.readFileSync(p, "utf8"));
@@ -250,7 +250,7 @@ export function analyze(capabilities) {
  * прочих таблиц совпадают с именами Талантов, и «Обезоружить» из подписи
  * MELEE_CONTESTS выдавалась бы за опознание Таланта.
  */
-function nameDetectionStrings(moduleFiles) {
+export function nameDetectionStrings(moduleFiles) {
   const names = new Set();
   for (const [file, src] of moduleFiles) {
     if (!file.startsWith("module/")) continue;

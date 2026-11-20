@@ -96,7 +96,10 @@ describe("доступность Трейта паре «группа + сила
 describe("связь таблицы с компендиумом", () => {
   it("у каждого Трейта таблицы есть предмет в паке", () => {
     const names = packTraitNames();
-    const missing = Object.keys(MINION_TRAITS).filter(key => !names.some(n => n.includes(key)));
+    // `pack` — имя предмета, когда ключ таблицы — профиль книги (Лезвия скакуна).
+    const missing = Object.entries(MINION_TRAITS)
+      .filter(([key, def]) => !names.some(n => n.includes(def.pack ?? key)))
+      .map(([key]) => key);
     expect(missing).toEqual([]);
   });
 });

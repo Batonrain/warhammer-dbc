@@ -23,7 +23,7 @@ import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
 import { speedMultiplierTraitsOf, speedMultipliersFor } from "../speed-multipliers.mjs";
 import { mechRollData } from "../mech-formula.mjs";
 import { VAST_SIZE_FLAG, vastSizeBonus } from "../strange-invulnerability.mjs";
-import { wearsActivePowerArmour } from "../predicates.mjs";
+import { wearsActivePowerArmour, manifestedGift } from "../predicates.mjs";
 import { quadrupedMultiplier } from "../quadruped.mjs";
 import { amorphousSpd, AMORPHOUS_SPD_CAP, AMORPHOUS_SIZE_CAP, amorphousSizeShiftOf } from "../amorphous.mjs";
 
@@ -88,8 +88,14 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // (rules/flight-speed.mjs). Надбавки ходьбы (Черты «+SPD пешком» вроде
   // Digitigrade, kind:"movement") к полёту не прибавляются — книга заменяет
   // скорость целиком; штрафы Перевеса/Piercing ниже действуют как обычно.
-  const flightSpd = IN_FLIGHT.has(system.movement?.altitude)
+  // Дар Одержимого «Крылья» (DoomBC 129-132): «Flyer (A.b×2)» — пока демон
+  // проявлен, тот же Flyer, только без предмета-Черты (combat/movement-actions.mjs
+  // открывает ему полёт тем же гейтом). Из двух скоростей полёта берётся бóльшая.
+  const wingsSpd = manifestedGift(actor, "Крылья") ? agBonus * 2 : null;
+  const traitFlightSpd = IN_FLIGHT.has(system.movement?.altitude)
     ? flightSpeedOf(actor?.items ?? [], mechRollData(actor)) : null;
+  const flightSpd = !IN_FLIGHT.has(system.movement?.altitude) ? null
+    : (wingsSpd !== null && (traitFlightSpd === null || wingsSpd > traitFlightSpd)) ? wingsSpd : traitFlightSpd;
   if (flightSpd !== null) {
     spd = flightSpd;
     halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;

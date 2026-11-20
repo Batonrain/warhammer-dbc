@@ -23,6 +23,7 @@ import { MINION_GROUPS, MINION_TIERS } from "../../constants/minions.mjs";
 import { minionSlots, slotUsage, minionCapacity, groupTally } from "../../rules/minion-build.mjs";
 import { effectiveMinionGroup, hasBinaryDominion, hasBinaryFlock } from "../../rules/binary-dominion.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { openLoyaltyTest } from "../../combat/minion-loyalty-test.mjs";
 
 /**
  * Возможности, которые дают слугу БЕЗ слота Таланта: четыре Инфернальных
@@ -58,6 +59,15 @@ export function activateMinionPanelListeners(html, actor, root = null) {
     ev.preventDefault();
     const doc = await fromUuid(ev.currentTarget.dataset.uuid).catch(() => null);
     doc?.sheet?.render(true);
+  }));
+
+  // «🎲» на карточке слуги — тест Лояльности. Карточка целиком открывает
+  // лист, поэтому клик по кнопке до неё не доходит.
+  el?.querySelectorAll?.(".minion-loyalty-roll").forEach(node => node.addEventListener("click", async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const minion = await fromUuid(ev.currentTarget.dataset.uuid).catch(() => null);
+    if (minion) await openLoyaltyTest(minion);
   }));
 
   const zone = el?.querySelector?.(".minion-drop-zone");

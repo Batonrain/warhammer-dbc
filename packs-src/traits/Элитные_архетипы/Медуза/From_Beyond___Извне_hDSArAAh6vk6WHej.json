@@ -5,7 +5,7 @@
   "folder": "mbaAZsAG0NwHzzZC",
   "system": {
     "description": "",
-    "notes": "«Сопротивление воздействиям на разум» без конкретного числа/теста в этой записи — не из чего строить механику (тот же случай, что общий From Beyond). Механика ждёт задачу Sahara 20-dbc-114 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (19.11.2026): как общая Черта From Beyond — Страх, Подавление и Паника проходятся сами; психосилы на разум (Мезмеризм, Иллюзионизм) гасятся, если цель не пожелает иного.",
     "benefit": "Чуждое сознание: сопротивление воздействиям на разум.",
     "source": "Элитный архетип: Медуза",
     "hasRating": false,
@@ -136,6 +136,36 @@
                 "negate": false,
                 "conditions": []
               }
+            }
+          ]
+        },
+        {
+          "id": "8YLYU62fQKpv6pbB",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "9leuOkrOerspeyMc",
+              "kind": "capability",
+              "capabilityKey": "fear.immune",
+              "label": "Иммунитет к Страху: тесты Страха проходятся автоматически"
+            },
+            {
+              "id": "Xu7HoYiFcMSipB8h",
+              "kind": "capability",
+              "capabilityKey": "suppression.immune",
+              "label": "Иммунитет к Подавлению: тест проходится автоматически"
+            },
+            {
+              "id": "VA39MtOmUWt9ITdl",
+              "kind": "capability",
+              "capabilityKey": "panic.immune",
+              "label": "Иммунитет к Панике: тест проходится автоматически"
+            },
+            {
+              "id": "LeMtYKzLxvBCr5X0",
+              "kind": "capability",
+              "capabilityKey": "psychic.mindImmune",
+              "label": "Иммунитет к психосилам на разум (Мезмеризм, Иллюзионизм), если сам не пожелает"
             }
           ]
         }

@@ -131,8 +131,9 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // terrain — тест Трудного Ландшафта (Бег/Натиск через зону,
   // combat/movement-terrain.mjs, ctx.terrain): Barefoot / Босоногий Ратлинга —
   // «+20 и переброс», Cloven One / Копытный Зверолюда — «+20». Не «char:ag»:
-  // тот ловил бы любой тест Ловкости.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge", "psychicPower", "psychicMind", "psychicDirect", "psychicDetect", "interrogation", "requisition"].includes(scope)) return scope;
+  // тот ловил бы любой тест Ловкости. evasion — тест Избегания (Уклонение или
+  // Парирование), в т.ч. кнопкой защиты на карточке атаки (rules/defence-reroll.mjs).
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "suppression", "climbing", "terrain", "vsExorcism", "noosphere", "coilCharge", "psychicPower", "psychicMind", "psychicDirect", "psychicDetect", "interrogation", "requisition", "evasion"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;
@@ -290,8 +291,9 @@ function ruleFromEntry(item, entry, groupId = null) {
       id, label: entry.label || item.name, when: {},
       effects: [{
         kind: "rollMode", target,
-        mode: entry.rerollMode === "keepWorst" ? "keepWorst" : "keepBest",
-        rolls: 2,
+        mode: entry.rerollMode === "keepWorst" ? "keepWorst"
+            : entry.rerollMode === "reverse" ? "reverse" : "keepBest",
+        rolls: entry.rerollMode === "reverse" ? 1 : 2,
         // who:"target" — переброс НАВЯЗАН цели: «заставить цель перебросить
         // Избегание» (Локус Кровопролития), «заставить цель соблазнения
         // перебросить встречный тест» (Локус Очарования). Без пометки демон
@@ -345,7 +347,12 @@ function ruleFromEntry(item, entry, groupId = null) {
     const fixedEpr = entry.modCharBonus === "pr" && entry.modValueMode === "charBonus"
       && item.type === "psychicPower" ? item.system?.sustainedEpr : null;
     const multiplier = Number(entry.modCharBonusMultiplier) || 1;
-    const effect = entry.modValueMode === "halvePenalty"
+    // autoSuccess (19.11.2026): «автоматически проходит тест … в условии» —
+    // галочка диалога, как halvePenalty: условие (родной биом Зверя) знает
+    // только стол, молча тест не засчитывается.
+    const effect = entry.modValueMode === "autoSuccess"
+      ? { kind: "autoSuccess", target }
+      : entry.modValueMode === "halvePenalty"
       ? { kind: "penaltyMul", target, factor: 0.5 }
       : (fixedEpr != null)
       ? { kind: "rollBonus", target, value: fixedEpr * multiplier }
@@ -369,6 +376,10 @@ function ruleFromEntry(item, entry, groupId = null) {
     // (учтено в Пороге)»), как ситуативные штрафы. Только число — «ополовинить
     // штраф» остаётся галочкой.
     if (entry.modAuto && effect.kind === "rollBonus") effect.auto = true;
+    // askOnly — галочка «по условию» (Ледяное Сердце «против Очарования»):
+    // условие видит только стол, поэтому в бросках без окна (Мораль,
+    // Запугивание, Пытки, rules/roll-mods.mjs::collectTestMods) не складывается.
+    else if (entry.askOnly && effect.kind === "rollBonus") effect.askOnly = true;
     // Качество «прочего снаряжения» (стр. 165): предмет даёт бонус к тесту —
     // значит, тест «с этим снаряжением»; rollModsFromRules добавит строку качества
     // один раз на предмет (constants/quality.mjs::gearQualityRollMod).

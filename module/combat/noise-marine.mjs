@@ -224,8 +224,10 @@ function sideMods(resolved) {
   const list = [...resolved.autoMods, ...resolved.mods.filter(m => !m.askOnly)];
   const total = list.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
   const parts = list.map(m => `${m.label} ${Number(m.value) >= 0 ? "+" : ""}${m.value}`);
-  const reroll = resolved.rerolls.find(r => r.who !== "target");
-  return { total, parts, reroll: reroll ? { mode: reroll.mode, rolls: reroll.rolls, label: reroll.label } : null };
+  const reroll = resolved.rerolls.find(r => r.who !== "target" && r.mode !== "reverse");
+  // Автоуспех сопротивления допросу (Вуаль Лжи) — как в apps/torture.mjs.
+  const auto = list.find(m => m.autoSuccess) ?? null;
+  return { total, parts, auto, reroll: reroll ? { mode: reroll.mode, rolls: reroll.rolls, label: reroll.label } : null };
 }
 
 /**
@@ -242,7 +244,7 @@ export async function resolveSingForMe(torturer, victim, { onlookers = [], tortu
   const { rv: tRv, rerollNote: tNote } = await rollD100WithReroll(tMods.reroll);
   const { rv: vRv, rerollNote: vNote } = await rollD100WithReroll(vMods.reroll);
   const mine = { ...testOutcome(tRv, tThr), threshold: tThr };
-  const theirs = { ...testOutcome(vRv, vThr), threshold: vThr };
+  const theirs = { ...testOutcome(vRv, vThr, { autoSuccess: !!vMods.auto }), threshold: vThr };
   const { winner } = resolveOpposed(mine, theirs);
   const success = winner === "mine";
 
@@ -252,7 +254,7 @@ export async function resolveSingForMe(torturer, victim, { onlookers = [], tortu
   const lines = [
     `<div>${rollIcon("target", "#e85ad6")}${esc(torturer.name)}: <b>${tRv}</b> vs ${tThr} ${mine.success ? "(успех)" : "(провал)"}</div>`,
     tNote,
-    `<div>${rollIcon("target", "#8a8a8a")}${esc(victim.name)}: <b>${vRv}</b> vs ${vThr} ${theirs.success ? "(успех)" : "(провал)"}</div>`,
+    `<div>${rollIcon("target", "#8a8a8a")}${esc(victim.name)}: <b>${vRv}</b> vs ${vThr} ${theirs.success ? "(успех)" : "(провал)"}${vMods.auto && vRv > vThr ? ` — ${esc(vMods.auto.label)}` : ""}</div>`,
     vNote,
     `<div>${rollIcon("skull", "#ff6b6b")}${esc(victim.name)} получает <b>${dmgRoll.total}</b> (${SING_FOR_ME_DAMAGE}) непоглощаемого R урона${hurt ? "" : " — записать некому (нет ГМа), спишите вручную"}.</div>`
   ];

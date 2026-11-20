@@ -63,6 +63,7 @@ import { hasHiddenJoints } from "../combat/armor-properties.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG, GIANTS_ARMS_FLAG, wearsPowerArmour } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
+import { isMechadendriteWeapon } from "../rules/mechadendrites.mjs";
 import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
@@ -411,7 +412,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.
   const weaponTraining = weaponTrainingPenalty({
     actor, weaponType: sys.weaponType, weaponClass: sys.weaponClass,
-    isGrenade: sys.weaponType === "grenade", weaponName: item.name
+    isGrenade: sys.weaponType === "grenade", weaponName: item.name,
+    mechadendrite: isMechadendriteWeapon(item)
   });
 
   // ── Тактическая карта (wdbc-8k0i): дистанция/контакт/Укрытие по токенам ───

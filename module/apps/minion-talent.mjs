@@ -22,8 +22,7 @@
 
 import { MINION_GROUPS, MINION_TIERS, MINION_TIER_ORDER,
          MINION_TALENT_FLAG } from "../constants/minions.mjs";
-import { talentRequirements, isMinionTalent, minionSlotOf, minionInfamyWaiverFlag } from "../rules/minion-build.mjs";
-import { hasRuleFlag } from "../rules/flags.mjs";
+import { talentRequirements, isMinionTalent, minionSlotOf, waivesMinionInfamy } from "../rules/minion-build.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 /** Подпись пары для списка Талантов: «Демон, Высший». */
@@ -88,7 +87,7 @@ export function promptMinionSlot(actor, doc) {
           const group = String(html.find("#minion-group").val() || "");
           const tier  = String(html.find("#minion-tier").val()  || "");
           const def   = MINION_TIERS[tier];
-          const ignoreInfamy = !!group && hasRuleFlag(actor, minionInfamyWaiverFlag(group));
+          const ignoreInfamy = waivesMinionInfamy(actor, group);
           const req   = talentRequirements(actor, group, tier, { ignoreInfamy });
           const miss  = req.missing?.length
             ? `<div class="minion-slot-miss">Не хватает: ${esc(req.missing.join("; "))}</div>`
