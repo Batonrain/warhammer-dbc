@@ -1913,7 +1913,7 @@ export const CAPABILITIES = {
   },
   "awareness.core.lightSleeper": {
     label: "Не смоделировано (сверка главы 3): в системе нет Состояния «Спит» и штрафов P/Awareness за сон — Таланту нечего отменять. Текст лежит как есть; появится сон как Состояние — Чуткий Сон снимет его штраф для тестов P и Awareness.",
-    source: "Light Sleeper / Чуткий Сон", reader: ""
+    source: "Light Sleeper / Чуткий Сон", reader: "module/rules/library/conditions.mjs — conditions.asleep (−30 к тестам от P у спящего, lacksTrait Light Sleeper)"
   },
   "awareness.core.lipReading": {
     label: "Не смоделировано (сверка главы 3): чтение по губам — повествование, тесты обычно не нужны, а когда ГМ их просит, это обычный тест Awareness без особых последствий. Автоматизировать нечего.",
@@ -3225,7 +3225,7 @@ export const CAPABILITIES = {
   },
   "psyker.core.dreamingOfMind": {
     label: "Талант позволяет поддерживать одну выбранную психосилу даже во сне или без сознания (или Оглушённым, если Оглушение прерывает поддержку).",
-    source: "Dreaming of Mind / Сон Разума", reader: ""
+    source: "Dreaming of Mind / Сон Разума", reader: "module/combat/psychic-sustain.mjs::dropSustainOnSleep/dreamingKeepId (хук updateActor в module/hooks.mjs), chooseDreamingPower"
   },
   "psyker.core.fastWeaving": {
     label: "В начале боя сразу после бросков инициативы персонаж получает 2 полудействия, которые может потратить только на психосилы без типа «Атака».",

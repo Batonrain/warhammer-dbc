@@ -5705,6 +5705,12 @@ function _attachFateContextMenu(message, html) {
     if (!grappleReleaseTriggered(changes)) return;
     await maybeAutoReleaseGrapple(actor);
   });
+  // Уснул или потерял сознание — поддержание психосил прерывается (кроме силы Сна Разума).
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    const { sleepDropTriggered, dropSustainOnSleep } = await import("./combat/psychic-sustain.mjs");
+    if (sleepDropTriggered(changes)) await dropSustainOnSleep(actor);
+  });
   // Кувырок (Талант Избегания, глава 3): сбит с ног — предложить Acrobatics+0.
   // Тот же userId-гвард: карточку пишет только клиент, поставивший Состояние.
   Hooks.on("updateActor", async (actor, changes, options, userId) => {
