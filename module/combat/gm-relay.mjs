@@ -98,7 +98,9 @@ export const TARGET_WRITE_ACTION = "targetActorWrite";
 export const RELAY_TARGET_FLAGS = Object.freeze([
   "grapplePartnerUuid", "grappleRole", "grappleHands", "grappleHeldHands", "grappleTail",
   "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold", "vastGrappleSize",
-  "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner"
+  "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner",
+  // Разбежаться! (combat/fan-out.mjs): id боя, в котором у члена отряда есть Reposition.
+  "fanOutReposition"
 ]);
 /** Состояния, которые можно наложить/снять на цель из этих приёмов. */
 export const RELAY_TARGET_CONDITIONS = Object.freeze(["grappling", "prone"]);

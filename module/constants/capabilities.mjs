@@ -2877,7 +2877,7 @@ export const CAPABILITIES = {
   },
   "leadership.core.battleSigns": {
     label: "Отряд персонажа может общаться его языком жестов, если «говорящий» в поле зрения «слушающего». Передаются только простые концепты;",
-    source: "Battle Signs / Боевые Жесты", reader: ""
+    source: "Battle Signs / Боевые Жесты", reader: "module/rules/command.mjs::battleSignsReach ← commandBlockReason (Оглохший получает Команды жестами)"
   },
   "leadership.core.bravado": {
     label: "Персонаж считает свой уровень Риска на 1 выше реального, если он не равен 1.",
@@ -2901,7 +2901,7 @@ export const CAPABILITIES = {
   },
   "leadership.core.fanOut": {
     label: "В начале боя сразу после бросков Инициативы персонаж может пройти Command (P)+0 (с бонусами Слаженности),",
-    source: "Fan Out! / Разбежаться!", reader: ""
+    source: "Fan Out! / Разбежаться!", reader: "module/combat/fan-out.mjs::useFanOut ← rules/speed-talents.mjs::hasSpeedTalent (метка fanOutReposition = id боя)"
   },
   "leadership.core.fieldExecution": {
     label: "Когда подчинённый в Шоке/Подавлен/запуган/отступает, персонаж может пройти Intimidate(W)+0 vs W+0 против него и при успехе атаковать его как…",
