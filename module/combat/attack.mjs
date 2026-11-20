@@ -114,6 +114,7 @@ import { terrorSniperEligible }                       from "../rules/terror-snip
 import { misfireCandidates, hasTargetSelection }      from "../rules/target-selection.mjs";
 import { laserDotOffered }                            from "../rules/laser-sight.mjs";
 import { hasFlamerTalent, pyromaniacActive, torrentActive, torrentBlastRadius, torrentMaxDistance } from "../rules/flamer-talents.mjs";
+import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
 import { bayonetShotButtonsHtml, independentShotOfferHtml } from "./free-shot.mjs";
@@ -1703,6 +1704,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     lens.use ? `🔍 Настройка Линз: заряд потрачен — Felling (${lens.felling}) и Precise на эту атаку; осталось зарядов: ${lens.charges}.` : "",
     litanyRel ? "🧼 Литания Чистки: оружие чищено за последние сутки — Надёжность +1." : "",
     (hit && tankHunter.penBonus) ? `🎯 Охотник на Танки: +${tankHunter.penBonus} к Pen (2×I.b, уже учтено) — слабые места этой модели техники опознаны.` : "",
+    (!isMelee && wp.spray && ashMantleActive(actor)) ? ashMantleNote(actor) : "",
+    (isMelee && hit && fistfulActive(actor)) ? fistfulNote(actor, defenderActor) : "",
     (!isMelee && wp.spray && hasFlamerTalent(actor, "friendlyFire")) ? "🔥 Дружественный Огонь: тест отмены Распыления у всех, кто не враг стрелка по токенам, получает +30 (кнопка теста считает сама)." : "",
     torrentOn ? `🌊 Поток: расход боеприпасов удвоен (${ammoSpent}); вместо конуса — шаблон Blast(${torrentBlastRadius(Number(sys.range) || 0)} м) в пределах ${torrentMaxDistance(Number(sys.range) || 0)} м и прямой видимости, попадание по правилам Spray (тест на отмену у каждой цели).` : "",
     (hit && pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame })) ? "🔥 Пироман: цели перебрасывают успешный тест против загорания, а в укрытии — ещё −20 (кнопка «Горение» считает сама). Укрытия под шаблоном (кнопка «Разместить шаблон») загорятся на 1d5+1 Раундов, стоящий в них в конце Хода — тоже." : "",
@@ -2229,7 +2232,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // выше, но проверка не одноразовая галочка, а персистентный флаг ЦЕЛИ
   // (module/combat/feint-press.mjs), снимается в конце Хода АТАКУЮЩЕГО,
   // а не этим выстрелом.
-  const feintBlocked = !hiddenAttack && feintBlocksEvasion(defenderActor, actor);
+  const feintBlocked = (!hiddenAttack && feintBlocksEvasion(defenderActor, actor))
+    // Пригоршня Грома (Таланты Дредноутов): выстрел встроенным по той же цели после попадания кулаком.
+    || (!hiddenAttack && !isMelee && fistfulBlocks(actor, defenderActor, game.combat?.started ? game.combat : null));
+  if (!isMelee && actor?.getFlag?.("warhammer-dbc", FISTFUL_FLAG)) await actor.unsetFlag("warhammer-dbc", FISTFUL_FLAG);
 
   // Затрещина (Талант Пугилиста, стр. 62, combat/whack.mjs): безоружный удар
   // рукой с одноручным оружием — первый раз по не видевшему приём −30 на

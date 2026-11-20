@@ -1738,6 +1738,42 @@ export function registerHooks() {
       });
     });
 
+    // Мантия Пепла (Талант Дредноутов): Spray по кольцу 2 м — отметить цели.
+    html.querySelectorAll(".wh-ash-mantle-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const { targetAshMantleRing } = await import("./combat/dreadnought-talents.mjs");
+        await targetAshMantleRing(ev.currentTarget.dataset.attackerUuid);
+      });
+    });
+
+    // Пригоршня Грома (Талант Дредноутов): метка на выстрел встроенным без Избеганий.
+    html.querySelectorAll(".wh-fistful-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { markFistful } = await import("./combat/dreadnought-talents.mjs");
+        if (await markFistful(el.dataset.attackerUuid, el.dataset.targetUuid)) el.disabled = true;
+      });
+    });
+
+    // Бастион (Талант Дредноутов): Parry Шагохода против Тарана (combat/dreadnought-talents.mjs).
+    html.querySelectorAll(".wh-ram-bastion-btn").forEach(btn => {
+      if (cardOnceUsed(message, "ramBastionUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const walker = requireControlledActor("⚠️ Выберите токен Дредноута, которого таранят!");
+        if (!walker) return;
+        const rammer = el.dataset.attackerUuid ? await fromUuid(el.dataset.attackerUuid).catch(() => null) : null;
+        if (!rammer) return ui.notifications.warn("⚠️ Таранящая машина не найдена.");
+        const { resolveBastion } = await import("./combat/dreadnought-talents.mjs");
+        const done = await runCardOnce(message, "ramBastionUsed", async () => !!(await resolveBastion(walker, rammer)),
+          "Бастион против этого Тарана уже проходили.");
+        if (done) el.disabled = true;
+      });
+    });
+
     // Ускользнуть в Борьбе и Состязаниях: переброс проваленного теста инициатора (combat/techniques.mjs).
     html.querySelectorAll(".wh-slip-contest-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {

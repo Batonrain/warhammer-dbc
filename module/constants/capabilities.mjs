@@ -3664,11 +3664,11 @@ export const CAPABILITIES = {
   // ── Дредноуты — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.drednouty.ashMantle": {
     label: "Может использовать орудия со свойством Spray, даже будучи связанным в рукопашной, и вместо обычного шаблона нанести попадание этим орудием п…",
-    source: "Ash Mantle / Мантия Пепла", reader: ""
+    source: "Ash Mantle / Мантия Пепла", reader: "module/combat/dreadnought-talents.mjs::ashMantleActive/ashMantleNote (заметка с кнопкой на карточке атаки Spray, combat/attack.mjs) + targetAshMantleRing (кнопка .wh-ash-mantle-btn, module/hooks.mjs)"
   },
   "elite.drednouty.bastion": {
     label: "Подвергшись Тарану, может пройти тест Parry+0 со штрафом −10 за каждый Размер таранящей машины выше своего: при Успехе не получает урона и н…",
-    source: "Bastion / Бастион", reader: ""
+    source: "Bastion / Бастион", reader: "module/combat/dreadnought-talents.mjs::resolveBastion (кнопка .wh-ram-bastion-btn на карточке Тарана, combat/vehicle.mjs::_resolveRam; module/hooks.mjs)"
   },
   "elite.drednouty.coreMemories": {
     label: "Увеличивает максимум Здравомыслия на 5. Можно брать до I.b раз. Смоделировано (module/rules/dreadnought.mjs::sanityMax) — считается автоматически в prepareDerivedData.",
@@ -3688,7 +3688,7 @@ export const CAPABILITIES = {
   },
   "elite.drednouty.fistfulOfThunder": {
     label: "Попав по цели рукопашным орудием, может немедленно атаковать встроенным в него орудием ту же цель или другую в базовом контакте с ним и изна…",
-    source: "Fistful of Thunder / Пригоршня Грома", reader: ""
+    source: "Fistful of Thunder / Пригоршня Грома", reader: "module/combat/dreadnought-talents.mjs::fistfulNote/markFistful (кнопка .wh-fistful-btn после попадания в рукопашной) + fistfulBlocks (combat/attack.mjs: выстрел по той же цели без Избеганий)"
   },
   "elite.drednouty.ironWrath": {
     label: "Сохраняет способность стрелять как обычно и игнорирует штраф к BS от Ярости. В Ярости не обязан двигаться к ближайшей цели быстрее Шага,",

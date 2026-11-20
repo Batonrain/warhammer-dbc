@@ -378,6 +378,7 @@ export async function _resolveRam(actor, fast, targetBigger) {
         <button class="wh-dodge-btn" type="button" data-extra-mod="30">Уклонение (+30)</button>
         <button class="wh-swerve-btn" type="button" data-extra-mod="0" data-ram="1" data-attacker-uuid="${actor.uuid ?? ""}">Вираж (встречный)</button>
         <button class="wh-ram-pirouette-btn" type="button" data-attacker-uuid="${actor.uuid ?? ""}" title="Пируэт (Талант Избегания): цель Тарана проходит Acrobatics+0 и пропускает машину, не тратя Реакцию. Нужен выбранный токен цели с Талантом.">Пируэт (Acrobatics+0)</button>
+        <button class="wh-ram-bastion-btn" type="button" data-attacker-uuid="${actor.uuid ?? ""}" title="Бастион (Талант Дредноутов): Шагоход проходит Parry+0 −10 за каждый Размер тарана выше своего; Успех — без урона и отброса, 3+ Успеха — ответная рукопашная атака. Нужен выбранный токен Дредноута.">Бастион (Parry)</button>
       </div>
       <div class="roll-defense-note">Уклонение от Тарана +30; Вираж — встречной проверкой против Operate+0 таранящего.</div>
     </div>`;
