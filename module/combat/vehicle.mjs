@@ -4,6 +4,7 @@
 // же стиле, что Уклонение/Парирование и Применение урона для персонажей.
 
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
+import { pedalActive, pedalOf } from "../rules/pedal-to-metal.mjs";
 import { defenceRerollsFor, defenceRerollSectionHtml, defenceTestFlagsFor, jinkApplies } from "../rules/defence-reroll.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -59,6 +60,10 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   // решение владельца 23.09.2026: Реакция водителя у всей техники). Раньше не
   // тратилась вовсе. Экипаж не назначен (стол ведёт машину без станций) —
   // Вираж по Operate машины, как было, с честной пометкой в карточке.
+  // Педаль в Пол (rules/pedal-to-metal.mjs): до начала следующего Хода водителя — без Виражей.
+  if (pedalActive(pedalOf(actor), game.combat)) {
+    return ui.notifications.warn("⚠️ Педаль в Пол: до начала следующего Хода водителя машина не может совершать Вираж.");
+  }
   const driver = await swerveDriver(actor);
   // Ярость водителя: «не может совершать Избегания» — Вираж тоже Избегание (Реакция не тратится).
   if (!reroll && driver && await rageAvoidanceRefusal(driver, "evade", "Вираж")) return;

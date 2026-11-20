@@ -2115,7 +2115,7 @@ export const CAPABILITIES = {
   },
   "pilot.core.pedalToMetal": {
     label: "Водитель может увеличить SPD машины на свой P.b, но в этот Ход машина не может поворачивать и до начала следующего Хода водителя не может со…",
-    source: "Pedal to Metal / Педаль в Пол", reader: ""
+    source: "Pedal to Metal / Педаль в Пол", reader: "module/rules/pedal-to-metal.mjs — кнопка Таланта, +P.b к SPD машины, Вираж закрыт до следующего Хода водителя"
   },
   "pilot.core.pushTheLimit": {
     label: "Раз в Раунд персонаж может добавить +10 к тесту Operate на маневры. При Провале техника получает 1 непоглощаемого урона в Шасси за каждый Пр…",
