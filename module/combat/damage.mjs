@@ -47,6 +47,7 @@ import { painIsPleasureOnDamage } from "./noise-marine.mjs";
 import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
 import { putrescenceOffer } from "./putrescence.mjs";
+import { sharedPainOffer } from "./shared-pain.mjs";
 import { paybackOfferHtml } from "./payback.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
@@ -1435,6 +1436,12 @@ export async function applyDamageToActor(actor, damageData) {
     const p = await putrescenceOffer(actor, netDamage, { melee, weaponUuid });
     netDamage = p.net;
     putrescenceNote = p.note;
+  }
+  // Общая Боль (Талант Одержимых, combat/shared-pain.mjs): в Проявлении Очко Бесчестия — урон до 1, остальное духу демона.
+  if (netDamage > 1 && !stunManeuver) {
+    const sp = await sharedPainOffer(actor, netDamage);
+    netDamage = sp.net;
+    if (sp.note) putrescenceNote = putrescenceNote ? `${putrescenceNote} ${sp.note}` : sp.note;
   }
 
   // Расплата (Талант Дредноутов, combat/payback.mjs): непоглощённый урон от Ненавистного — пилоту кнопка ответной атаки.

@@ -4047,7 +4047,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedPain": {
     label: "В Проявлении: потратить ОБ, уменьшить непоглощённый урон до 1; проигнорированный урон переносится на дух демона.",
-    source: "Shared Pain / Общая Боль", reader: ""
+    source: "Shared Pain / Общая Боль", reader: "module/combat/shared-pain.mjs (sharedPainOffer: окно перед применением Ран), module/combat/damage.mjs (после Гнили Внутри)"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedPath": {
     label: "−1 к максимуму Очков Бесчестия, но демон получает 3 своих ОБ (может тратить даже когда телом правит хост).",
