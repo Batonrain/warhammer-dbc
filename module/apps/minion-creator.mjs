@@ -24,13 +24,14 @@ import {
   minionSlots, slotUsage, charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft,
   minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, minionTraitRating,
-  availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor,
+  availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor, adoringCrowdsFreebies, minionMutationCount,
   talentRequirements, waivesMinionInfamy
 } from "../rules/minion-build.mjs";
 import { hasBinaryFlock, buildCountGroup, FLOCK_MACHINE_FLAG } from "../rules/binary-dominion.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { minionsOfActor } from "../sheets/tabs/minions-panel.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { mutationByRoll, mutationItemData } from "../constants/mutations.mjs";
 
 /** Порядок Характеристик как на листе; Бесчестие и Порча раскидке не подлежат. */
 const CHAR_KEYS = Object.keys(CHARACTERISTICS).filter(k => !["inf", "cor"].includes(k));
@@ -444,6 +445,13 @@ async function createMinionActor(master, state) {
   const chars = Object.fromEntries(CHAR_KEYS.map(k => [k, { base: Number(state.chars[k]) || 0 }]));
   chars.inf = { base: minionInfamy(master, state.tier) };
 
+  // Обожание Толпы (wdbc-ra2oc): Sycophant и Trade (Musician) слугам-Людям —
+  // бесплатно, вне очков шагов.
+  const freebies = adoringCrowdsFreebies(master, state.group);
+  const skillState = freebies && !state.skills.some(s => s.scope === "group" && s.key === "trade"
+      && /musician|музыкант/i.test(String(s.spec)))
+    ? { ...state, skills: [...state.skills, { ...freebies.skill, upgraded: false }] } : state;
+
   const system = {
     minionType: state.group,
     minionTier: state.tier,
@@ -452,7 +460,7 @@ async function createMinionActor(master, state) {
     characteristics: chars,
     loyalty: { value: loyalty, max: loyalty },
     corruption: { value: minionCorruption(state.group, state.traits) },
-    ...minionSkillFields(state)
+    ...minionSkillFields(skillState)
   };
 
   if (tierDef?.isHorde) {
@@ -493,7 +501,30 @@ async function createMinionActor(master, state) {
     if (rating !== null && data.system?.hasRating) data.system.rating = rating;
     docs.push(data);
   }
+  if (freebies && !docs.some(d => /Sycophant/i.test(String(d.name)))) {
+    const syc = await fromUuid(freebies.traitUuid).catch(() => null);
+    if (syc) docs.push(syc.toObject());
+  }
+  // Мутант (X) — «имеет X мутаций» (wdbc-q5zrm): X бросков d100 по таблице
+  // мутаций (стр. 441), выпавшие кладутся слуге, броски — карточкой в чат.
+  const mutationCount = minionMutationCount(state.traits);
+  const mutationRolls = [];
+  for (let i = 0; i < mutationCount; i++) {
+    const roll = await new Roll("1d100").evaluate();
+    const name = mutationByRoll(roll.total);
+    const data = await mutationItemData(name).catch(() => null);
+    mutationRolls.push({ roll, name, ok: !!data });
+    if (data) docs.push(data);
+  }
   if (docs.length) await actor.createEmbeddedDocuments("Item", docs);
+  if (mutationRolls.length) {
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result"><div class="roll-header">${esc(actor.name)} — Мутант (${mutationCount})</div>${
+        mutationRolls.map(m => `<div class="roll-threshold">d100 = ${m.roll.total}: <b>${esc(m.name)}</b>${m.ok ? "" : " (предмет не найден — выдайте вручную)"}</div>`).join("")}</div>`,
+      rolls: mutationRolls.map(m => m.roll), sound: CONFIG.sounds?.dice
+    });
+  }
 
   await actor.sheet?.render(true);
   return actor;

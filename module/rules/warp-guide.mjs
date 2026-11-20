@@ -99,3 +99,35 @@ export function guideDecadeUpkeep(kind, possessedHumanCoNav = false) {
 export function guideNeedsLoyaltyCheck(kind) {
   return kind === "daemon" || kind === "possessed";
 }
+
+/**
+ * Встречный тест лояльности демона-Проводника (wdbc-dq0r4): три варианта книги.
+ *   «inf»     — наибольшая Inf персонажей против Inf демона;
+ *   «wp»      — W против W, если демон сломлен и принуждён служить;
+ *   «loyalty» — тест Лояльности демона, если он Миньон (без встречной стороны).
+ * Режим по умолчанию: Миньон (есть Хозяин) — «loyalty», иначе «inf»; сломлен ли
+ * демон, система не знает — это выбирает ГМ в окне.
+ * @param {object} guide  актор Проводника
+ * @returns {"inf"|"wp"|"loyalty"}
+ */
+export function guideLoyaltyDefaultMode(guide) {
+  return guide?.system?.masterUuid && guide?.system?.loyalty ? "loyalty" : "inf";
+}
+
+/**
+ * Исход встречного теста лояльности. `party` — {value, rv} стороны персонажей,
+ * `guide` — {value, rv} демона. Степени — как у testOutcome, ничья — у кого
+ * выше Порог (общее правило встречных тестов); при равных Порогах — у демона нет
+ * победы (саботажа нет).
+ * @returns {{loyal:boolean, partyDeg:number, guideDeg:number}}
+ */
+export function resolveGuideLoyalty(mode, party, guide) {
+  const signed = ({ value, rv }) => rv <= value ? 1 + Math.floor((value - rv) / 10) : -(1 + Math.floor((rv - value) / 10));
+  if (mode === "loyalty") {
+    const g = signed(guide);
+    return { loyal: g > 0, partyDeg: 0, guideDeg: g };
+  }
+  const p = signed(party), g = signed(guide);
+  const loyal = p !== g ? p > g : (Number(party.value) || 0) >= (Number(guide.value) || 0);
+  return { loyal, partyDeg: p, guideDeg: g };
+}

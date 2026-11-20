@@ -752,6 +752,22 @@ export function registerHooks() {
     // Знания Веков (wdbc-1rno.23, apps/knowledge-of-ages.mjs): 1d10 после
     // траты Очка на «Усиление»/«Успех»/«Переброс» добытого Навыка. Актор — по
     // uuid карточки (чьё Очко потрачено). Раз на карточку.
+    // Перехват Миньона ГМом при провале Лояльности в бою (combat/minion-gm-control.mjs):
+    // кнопка на карточке, если бросал игрок, — права меняет только ГМ.
+    html.querySelectorAll(".wh-loyalty-seize-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        if (!game.user.isGM) { ui.notifications?.warn("Забрать Миньона под контроль может только ГМ."); return; }
+        const actor = await fromUuid(ev.currentTarget.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Миньон не найден."); return; }
+        const { seizeMinion } = await import("./combat/minion-gm-control.mjs");
+        if (await seizeMinion(actor)) {
+          ev.currentTarget.disabled = true;
+          ui.notifications?.info(`${actor.name}: под контролем ГМа до конца боя.`);
+        }
+      });
+    });
+
     html.querySelectorAll(".wh-knowledge-of-ages-btn").forEach(btn => {
       if (cardOnceUsed(message, "knowledgeOfAgesRolled")) btn.disabled = true;
       btn.addEventListener("click", async ev => {
@@ -4989,6 +5005,9 @@ function _attachFateContextMenu(message, html) {
     await clearAllBurningCovers(combat);
     await clearAllGravitonZones();
     await clearAllVortexZones();
+    // Миньоны, перехваченные ГМом при провале Лояльности, — права обратно.
+    const { releaseSeizedMinions } = await import("./combat/minion-gm-control.mjs");
+    await releaseSeizedMinions(combat);
   });
 
   // Бой кончился — снять транс «Дух героя» у всех, кто в него впадал, и

@@ -5823,7 +5823,7 @@ export const CAPABILITIES = {
   },
   "trait.mutant": {
     label: "Имеет X мутаций.",
-    source: "Mutant / Мутант", reader: "module/rules/minion-build.mjs::minionCorruption (Порча Миньона не ниже X×20) — apps/minion-creator.mjs"
+    source: "Mutant / Мутант", reader: "module/rules/minion-build.mjs::minionCorruption (Порча Миньона не ниже X×20) и minionMutationCount (X бросков по таблице мутаций) — apps/minion-creator.mjs::createMinionActor"
   },
   "trait.naturalWeapons": {
     label: "Естественное оружие: профили Кулаки/Когти/Косы/Щупальца/Рога/Укус/Копыта с X рейтинга — выбор галочками при получении.",
@@ -6422,7 +6422,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Воин_Ноты — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.voinNoty.adoringCrowds": {
     label: "Фанаты стягиваются к нему из-за славы мечника и его выступлений. Может использовать A вместо F и Trade(Dancer) вместо Command для своих Минь…",
-    source: "Adoring Crowds / Обожание Толпы", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::adoringCrowdsEligible → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (повод «Обожание Толпы»: Реакция Миньона-Человека, Успех — +1 Очко Бесчестия Хозяину). A вместо F, Trade(Dancer) вместо Command, бесплатные Sycophant и Trade(Musician) — памятка kind:script в чат; A вместо F для Миньонов-Людей — rules/minion-build.mjs::masterGroupChar (Лояльность, максимум, требование Таланта)"
+    source: "Adoring Crowds / Обожание Толпы", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::adoringCrowdsEligible → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (повод «Обожание Толпы»: Реакция Миньона-Человека, Успех — +1 Очко Бесчестия Хозяину). A вместо F, Trade(Dancer) вместо Command, бесплатные Sycophant и Trade(Musician) — apps/minion-creator.mjs::createMinionActor (rules/minion-build.mjs::adoringCrowdsFreebies); A вместо F для Миньонов-Людей — rules/minion-build.mjs::masterGroupChar (Лояльность, максимум, требование Таланта)"
   },
   "trait.elitnyeArhetipy.voinNoty.danceOfPain": {
     label: "Элегантными выверенными ударами изматывает противника, обрывая его жизнь только когда вдоволь наиграется. Раз в Ход,",

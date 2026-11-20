@@ -56,6 +56,20 @@ export function masterGroupChar(master, group) {
   return base;
 }
 
+/** Подхалим (Sycophant) в компендиуме Черт — бесплатный Трейт слуг Обожания Толпы. */
+export const SYCOPHANT_TRAIT_UUID = "Compendium.warhammer-dbc.traits.Item.z0ktCYeNDSOBiyeL";
+
+/**
+ * Обожание Толпы: «все они [Миньоны-Люди] получают Трейт Sycophant и Навык
+ * Trade (Musician) бесплатно» (wdbc-ra2oc). Генератор Миньона кладёт их сам,
+ * вне очков; уже выбранное игроком не задваивается.
+ * @returns {{traitUuid:string, skill:{scope:"group", key:"trade", spec:string}}|null}
+ */
+export function adoringCrowdsFreebies(master, group) {
+  if (group !== "human" || !hasAdoringCrowds(master)) return null;
+  return { traitUuid: SYCOPHANT_TRAIT_UUID, skill: { scope: "group", key: "trade", spec: "Музыкант" } };
+}
+
 /** Навык в требовании Таланта группы: у Обожания Толпы для людей — Trade(Dancer) или Command. */
 export function groupReqSkill(master, group) {
   const skill = MINION_GROUPS[group]?.reqSkill ?? "";
@@ -436,6 +450,19 @@ export function minionCorruption(group, traits = []) {
     floor = Math.max(floor, (minionTraitRating(t) ?? 1) * MUTANT_CORRUPTION_PER_RATING);
   }
   return Math.max(base, floor);
+}
+
+/**
+ * «Mutant (X) — имеет X мутаций» (wdbc-q5zrm): сколько мутаций бросить
+ * генератору по таблице 1–100. Без рейтинга — 1; Мутанта нет — 0.
+ */
+export function minionMutationCount(traits = []) {
+  let n = 0;
+  for (const t of traits ?? []) {
+    if (traitEntry(t?.name)?.key !== "Mutant") continue;
+    n = Math.max(n, minionTraitRating(t) ?? 1);
+  }
+  return n;
 }
 
 /**

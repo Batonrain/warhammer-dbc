@@ -48,6 +48,17 @@ describe("Тест Лояльности: бросок и карточка", () =
     expect(lastCard()).toMatch(/перехватывает контроль/);
   });
 
+  it("провал в бою: бросил ГМ — Миньон перехвачен сразу, бросил игрок — кнопка для ГМа", async () => {
+    const seized = [];
+    await rollLoyaltyTest(minion(), { master: master(), reason: "mission", inCombat: true, rollFn: dice(80),
+      seizeFn: async a => { seized.push(a.uuid); return true; } });
+    expect(seized).toEqual(["Actor.m"]);
+    expect(lastCard()).toContain("под контролем ГМа");
+    await rollLoyaltyTest(minion(), { master: master(), reason: "mission", inCombat: true, rollFn: dice(80),
+      seizeFn: async () => false });
+    expect(lastCard()).toContain("wh-loyalty-seize-btn");
+  });
+
   it("Связан душой (Ритуал Связывания Души): провальный бросок засчитан успехом, без переброса", async () => {
     const bound = { ...minion({ items: [named("trait", "Monodevotant / Монозависимый")] }), flags: { "warhammer-dbc": { soulBound: true } } };
     const rollFn = dice(95, 10);

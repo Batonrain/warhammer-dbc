@@ -5,7 +5,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
-import { masterGroupChar, minionLoyalty, minionCapacity, talentRequirements }
+import { masterGroupChar, minionLoyalty, minionCapacity, talentRequirements, adoringCrowdsFreebies, SYCOPHANT_TRAIT_UUID }
   from "../../module/rules/minion-build.mjs";
 
 const master = ({ fel = 30, ag = 50, crowds = true } = {}) => ({
@@ -33,5 +33,11 @@ describe("Обожание Толпы", () => {
     expect(r.ok).toBe(true);
     expect(r.skillNote).toMatch(/Command или Trade \(Dancer\)/);
     expect(talentRequirements(master({ fel: 10, ag: 60, crowds: false }), "human", "lesser").ok).toBe(false);
+  });
+  it("слуги-Люди получают Sycophant и Trade (Musician) бесплатно, остальные — нет (wdbc-ra2oc)", () => {
+    expect(adoringCrowdsFreebies(master(), "human")).toEqual({
+      traitUuid: SYCOPHANT_TRAIT_UUID, skill: { scope: "group", key: "trade", spec: "Музыкант" } });
+    expect(adoringCrowdsFreebies(master(), "beast")).toBeNull();
+    expect(adoringCrowdsFreebies(master({ crowds: false }), "human")).toBeNull();
   });
 });
