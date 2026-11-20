@@ -2819,6 +2819,15 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.value = ev.currentTarget.value; saveMech(arr); }
     });
+    // Пул ресурса архетипа (kind:"resourcePool"): поле записи — в data-field.
+    on(".mech-respool-field", "change", ev => {
+      const el = ev.currentTarget;
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, el.dataset.groupId, el.dataset.entryId);
+      if (!e || !el.dataset.field?.startsWith("resPool")) return;
+      e[el.dataset.field] = el.type === "checkbox" ? el.checked : el.value;
+      saveMech(arr);
+    });
     // Аура (kind:"aura") — drop-зона обрабатывается _onDropAuraGrant/_onDrop.
     on(".mech-aura-radius", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
