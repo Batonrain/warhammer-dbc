@@ -4970,15 +4970,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Моритат — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.moritat.beltFeed": {
     label: "Модифицирует ранец для хранения болтов или пуль и создаёт продвинутую ленту, подающую патроны.",
-    source: "Belt Feed / Ленточное Питание", reader: ""
+    source: "Belt Feed / Ленточное Питание", reader: "module/combat/moritat-talents.mjs::useBeltFeed (метка beltFed, пул beltFeed), rules/moritat-talents.mjs::beltFeedTransfer"
   },
   "elite.elitnyeArhetipy.moritat.flyBy": {
     label: "Способен танцевать в воздухе вокруг врагов, появляясь в их поле зрения на долю секунды для меткого выстрела и скрываясь от ответного огня.",
-    source: "Fly-By / Пролётом", reader: ""
+    source: "Fly-By / Пролётом", reader: "module/combat/moritat-talents.mjs::useFlyBy → combat/free-shot.mjs (вид flyBy), rules/moritat-talents.mjs::flyByBlockReason"
   },
   "elite.elitnyeArhetipy.moritat.lightningFingers": {
     label: "Может применять Таланты Quick Draw и Quick Store к пистолетам с питанием от кабеля или ленты и не получает штрафов на вытягивание и складыва…",
-    source: "Lightning Fingers / Молниеносные Пальцы", reader: ""
+    source: "Lightning Fingers / Молниеносные Пальцы", reader: "module/constants/rig.mjs::inAwkwardRigLocation → rules/moritat-talents.mjs::lightningFingersIgnoresRig"
   },
   "elite.elitnyeArhetipy.moritat.loneWarrior": {
     label: "Полагается только на себя. Когда в пределах 15м нет ни одного дружественного персонажа, не получает преимуществ дружественных психосил и не находится в секторе обстрела дружественного Караула,",
@@ -4990,7 +4990,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.moritat.outgun": {
     label: "Винтовки движутся в руках с лёгкостью и грацией пистолетов. Может считать любую винтовку, которую держит в одной руке,",
-    source: "Outgun / Огневая Мощь", reader: ""
+    source: "Outgun / Огневая Мощь", reader: "Возможность weapon.oneHandedRifle (rules/hands.mjs); rules/moritat-talents.mjs::outgunRifle (Молниеносные Пальцы)"
   },
   // ── Элитные_архетипы\Ночной_Демон — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.nochnoyDemon.darknessIsOurHome": {
