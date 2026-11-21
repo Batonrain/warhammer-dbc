@@ -65,6 +65,7 @@ import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from 
 import { woundSustainSplit } from "./wound-in-reality.mjs";
 import { applyAlacritySkills } from "./wild-psyker-talents.mjs";
 import { mirrorSoulCost } from "./archmagus-talents.mjs";
+import { brotherhoodSustainCost } from "./kenetai-talents.mjs";
 import { quadrupedMultiplier } from "./quadruped.mjs";
 
 /**
@@ -1220,6 +1221,8 @@ export function prepareCharacterDerived(actor, system) {
     if (sustainedCost > 0) sustainedCost = woundSustainSplit(actor).paid;
     // Зеркальная Душа (Архимаг): силы на копии души тPR не снижают.
     if (sustainedCost > 0) sustainedCost = Math.max(0, sustainedCost - mirrorSoulCost(actor));
+    // Клинки Братства (Кенетаи): сила, разделённая с клинками союзников, держится как ещё одна сила.
+    sustainedCost += brotherhoodSustainCost(actor);
     system.experience.spentTalents = autoTalentCost;
     system.experience.spentPsy = autoPsyCost;
     system.experience.spentTech = autoTechCost;

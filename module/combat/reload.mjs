@@ -7,6 +7,7 @@ import { profileHasOwnFire, sysWithProfileFire, profileFireUpdate } from "./weap
 import { chamberInAvailable, chamberInBlockReason, CHAMBER_IN_FLAG } from "../rules/gunner-talents.mjs";
 import { ammoFitsWeapon } from "../rules/ammo-override.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
+import { ordinatorLoader, ordinatorLoaderCost } from "../rules/secutor-talents.mjs";
 
 /**
  * Стоимость Перезарядки в ОД по книжному полю system.reload (стр. 35,
@@ -227,9 +228,13 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
   const baseCost = reloadApCost(sys.reload);
   const rapidCost = baseCost > 0 && hasSpeedTalent(actor, "rapidReload") ? rapidReloadApCost(baseCost) : baseCost;
   const armedCost = fullyArmedReloadApCost(actor, weapon, baseCost);
-  const apCost = Math.min(rapidCost, armedCost);
+  // Ординатор: технический + манипулирующий мехадендриты работают Заряжающим (Rld −1);
+  // как и прочие ускорения, не складывается — берётся лучшее.
+  const loaderCost = baseCost > 0 && ordinatorLoader(actor) ? ordinatorLoaderCost(baseCost) : baseCost;
+  const apCost = Math.min(rapidCost, armedCost, loaderCost);
   const rapid = rapidCost < baseCost && rapidCost === apCost;
   const armed = armedCost < baseCost && armedCost === apCost && !rapid;
+  const loader = loaderCost < baseCost && loaderCost === apCost && !rapid && !armed;
   if (apCost > 0 && !await spendActionPoints(actor, apCost, { physical: true })) {
     return ui.notifications.warn(`⚠️ ${barrel}: не хватает ОД на перезарядку (нужно ${apCost}).`);
   }
@@ -250,7 +255,8 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
           Боеприпасы: <b>${esc(preferredAmmo.name)}</b>
         </div>`,
         ...(rapid ? [`<div class="roll-damage-meta">Быстрая Перезарядка: ${baseCost} → ${apCost} ОД. Пустой магазин выброшен под ноги.</div>`] : []),
-        ...(armed ? [`<div class="roll-damage-meta">Во Всеоружии (Custom Grip): ${baseCost} → ${apCost} ОД.</div>`] : [])],
+        ...(armed ? [`<div class="roll-damage-meta">Во Всеоружии (Custom Grip): ${baseCost} → ${apCost} ОД.</div>`] : []),
+        ...(loader ? [`<div class="roll-damage-meta">Ординатор: мехадендриты-Заряжающий, Rld −1: ${baseCost} → ${apCost} ОД.</div>`] : [])],
     outcome: outcomeHtml(true, `
             Вставлен магазин · Заряд <b>${newMag}/${maxMag}</b> · В запасе: <b>${newQty}</b> маг.
           `),

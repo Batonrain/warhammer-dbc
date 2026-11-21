@@ -1,6 +1,7 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
 import { momentumOnEvade } from "./momentum.mjs";
 import { duelistEvasionMod, duelistEvasionNotes } from "../rules/duelist-evasion.mjs";
+import { secutorPinRefusal } from "./gladiator.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
 import { offHandParryPenalty } from "../rules/off-hand.mjs";
@@ -648,7 +649,7 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
 
   return { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp,
            crossblock: crossblock ? { weapon: crossWeapon, bonus: crossBonus,
-                                      sizeSteps: CROSSBLOCK_SIZE_STEPS } : null };
+                                      sizeSteps: CROSSBLOCK_SIZE_STEPS, solo: !!crossblock.solo } : null };
 }
 
 /**
@@ -690,7 +691,9 @@ function _bladeShieldRefusal(actor, why, what = "Парирование") {
  * @returns {Promise<boolean>} парировать ли обоими
  */
 export async function askCrossblock(actor) {
-  if (!crossblockPair(actor)) return true;
+  const pair = crossblockPair(actor);
+  // Димахер с одним клинком: «обоими» не парирует — Контратаку терять не за что.
+  if (!pair || pair.solo) return true;
   const canCounter = hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
                   && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY);
   if (!canCounter) return true;
@@ -873,7 +876,10 @@ export async function _performParry(actor, {
     parryProfile(actor, extraMod + speedAw.value,
       chomperBite ? biteAsBalanceZero(chomperBite) : (parryWith?.improvisedFrom ? parryWith : null), { useCrossblock });
   if (speedAw.part) modParts.push(speedAw.part);
-  // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием парировать нельзя до начала Хода цепляющего.
+  // Секуторий (Гладиатор): прижатым щитом оружием и самим занятым щитом не парируют.
+  const pinWhy = meleeWeapon ? secutorPinRefusal(actor, meleeWeapon) : "";
+  if (pinWhy) return _bladeShieldRefusal(actor, esc(pinWhy));
+    // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием парировать нельзя до начала Хода цепляющего.
   if (meleeWeapon && weaponIsBound(actor, meleeWeapon.id)) {
     return _bladeShieldRefusal(actor, `«${esc(meleeWeapon.name)}» сцеплено клинком противника (Сцепление Клинков) — парировать им нельзя до начала Хода цепляющего или пока не разойдутся.`);
   }
@@ -1175,7 +1181,8 @@ export async function _performParry(actor, {
   // идёт строка с причиной — иначе игрок решит, что Талант «пропал».
   // Цена — за само парирование обоими, а не за величину бонуса: пара без
   // Защитного даёт 0 к порогу, но предел Размера поднимает так же.
-  const crossblockUsed = !!crossblock;
+  // Одним клинком (Димахер) — не «обоими»: Контратака и Ответный Удар остаются.
+  const crossblockUsed = !!crossblock && !crossblock.solo;
   const counterAttackHtml = (parried && meleeWeapon && !crossblockUsed
       && hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
       && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY))
@@ -1243,7 +1250,10 @@ export async function _performParry(actor, {
   // (module/rules/parry-size.mjs, crossblockActive выше), не напоминание
   // столу. Строка печатается только при парировании ОБОИМИ: и выгода (сумма
   // бонусов, предел Размера), и цена (Контратака) — одно и то же решение.
-  const crossblockNote = crossblock
+  const crossblockNote = crossblock?.solo
+    ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок (Димахер, одним клинком): `
+      + `предел «Парирование невозможно» по Размеру поднят на ${CROSSBLOCK_SIZE_STEPS} ступень; Контратака и Ответный Удар доступны.</div>`
+    : crossblock
     ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок: парируете обоими`
       + `${crossblock.bonus ? ` (+${crossblock.bonus} от «${esc(crossblock.weapon.name)}»)` : " (бонусов второго оружия нет)"}`
       + `, Контратака и Ответный Удар в этом Парировании недоступны.`

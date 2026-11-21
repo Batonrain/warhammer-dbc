@@ -9,8 +9,11 @@ import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import {
   hasRunicShot, hasPiercingShot, hasSeekerBullet, hasTimedExplosion, hasLivingBullet,
-  runicWeaveAllowed, isPsychicBlast, SEEKER_EFFECTS, PIERCING_SHOT_FLAG
+  runicWeaveAllowed, isPsychicBlast, SEEKER_EFFECTS, PIERCING_SHOT_FLAG, SEEKER_FLAG,
+  TIMED_EXPLOSION_FLAG, timedExplosionPoint
 } from "../rules/runic-shot.mjs";
+import { resolveCharFormula } from "../helpers/utils.mjs";
+import { pxPerMeter } from "./templates.mjs";
 import { rollTestCard } from "./duelist-tests.mjs";
 
 const NS = "warhammer-dbc";
@@ -40,17 +43,129 @@ export async function weaveRunicPower(actor) {
   await markThrottleUsed(actor, WEAVE_FLAG, "round");
   const mom = itemHasName(power, "Mind Over Matter");
   const seek = (mom && pick.seek !== "") ? SEEKER_EFFECTS[Number(pick.seek)] : "";
+  const seekIdx = seek ? Number(pick.seek) : null;
   await postTestCard(actor, {
     icon: "ᚱ", title: `Рунный Выстрел: вплетение «${esc(power.name)}» — ${esc(actor.name)}`,
     lines: [
       "Манифестация — на ступень короче (полное → полудействие → свободное). Феномены и Прорывы, кроме обычного эффекта, наносят оружию Клин.",
       "Сила применяется к цели попадания (психострельба — свои попадания, ауры — от цели), даже за пределом обычной дальности. Поддержание — не дольше начала следующего Хода.",
       (power.system?.powerType === "touch" || /касани/i.test(String(power.system?.range ?? ""))) && hasLivingBullet(actor) ? "Живая Пуля: Контакт Плоти Биомантии — через пулю." : "",
-      seek ? `Пуля Искатель: вместо эффекта на цели — ${esc(seek)}.` : "",
+      seek ? `Пуля Искатель: вместо эффекта на цели — ${esc(seek)}. Манифестация Mind Over Matter (W+0) ниже; при Успехе эффект ляжет на следующий одиночный выстрел рунной пулей сам.` : "",
       hasTimedExplosion(actor) && isPsychicBlast(power) ? "Выдержанный Взрыв: при промахе или успешном Избегании взрыв разряжается в 1 м позади цели (по линии от Питати)." : ""
     ].filter(Boolean).map(l => `<div class="roll-threshold">${l}</div>`)
   }, { sound: false });
-  if (seek) return;
+  const { showManifestDialog } = await import("../sheets/tabs/psychic.mjs");
+  showManifestDialog(actor, power, seekIdx != null ? { seekerBullet: seekIdx } : {});
+}
+
+/** Успешная манифестация Mind Over Matter с выбранной Пулей Искателем — эффект ждёт рунного выстрела. */
+export async function armSeekerBullet(actor, idx) {
+  if (idx == null || !actor?.setFlag) return "";
+  await actor.setFlag(NS, SEEKER_FLAG, Number(idx));
+  return `ᚱ Пуля Искатель готова: ${esc(SEEKER_EFFECTS[idx] ?? "")} — на следующий одиночный выстрел рунной пулей (окно атаки учтёт само).`;
+}
+
+// ── Кнопки карточки рунного выстрела ────────────────────────────────────────
+
+const SEEKER_BTN = "wh-pitati-seeker-btn";
+const TIMED_BTN = "wh-pitati-timed-btn";
+
+/**
+ * Карточка выстрела рунной пулей (флаг attack.opts.talentPaid.runic):
+ *  • Пуля Искатель «развернуть пулю» — если ей дан эффект разворота;
+ *  • Выдержанный Взрыв — у Питати с Талантом (промах или Избегание цели).
+ */
+export function injectPitatiButtons(html, message) {
+  const atk = message?.flags?.[NS]?.attack;
+  const paid = atk?.opts?.talentPaid;
+  if (!html?.querySelector || !paid?.runic || html.querySelector(`.${SEEKER_BTN}, .${TIMED_BTN}`)) return;
+  const actor = globalThis.game?.actors?.get?.(atk.actorId);
+  if (!actor?.isOwner) return;
+  const host = html.querySelector(".message-content") ?? html;
+  const add = (cls, text, title, fn) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = cls; b.textContent = text; b.title = title;
+    b.addEventListener("click", ev => { ev.preventDefault(); fn(); });
+    host.append(b);
+  };
+  if (paid.seeker === 3) add(SEEKER_BTN, "ᚱ Пуля Искатель: развернуть пулю (цель Избежала)",
+    "Ещё одно Попадание тем же выстрелом — со спины цели.",
+    () => seekerReturnHit(actor, { weaponId: atk.itemId, targetUuid: atk.targetUuid, runic: paid.runic }));
+  if (hasTimedExplosion(actor)) add(TIMED_BTN, "ᚱ Выдержанный Взрыв: промах или Избегание",
+    "Вплести психический взрыв: он разрядится в 1 м позади цели (по линии от Питати).",
+    () => useTimedExplosion(actor, { targetUuid: atk.targetUuid }));
+}
+
+/** Пуля Искатель: «после успешного Избегания развернуть пулю и нанести ещё одно Попадание со спины цели». */
+export async function seekerReturnHit(actor, { weaponId = "", targetUuid = "", runic = null } = {}) {
+  const weapon = actor?.items?.get?.(weaponId);
+  if (!weapon) return ui.notifications.warn("⚠️ Оружие выстрела не найдено.");
+  const target = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+  const sys = weapon.system ?? {};
+  const base = resolveCharFormula(sys.damage || "0", actor.system?.characteristics, actor.system?.corruptionBonus ?? 0);
+  const bonus = Number(runic?.dmg) || 0;
+  const roll = await new Roll(bonus ? `${base} + ${bonus}` : base).evaluate();
+  const pen = (Number(sys.penetration) || 0) + (Number(runic?.pen) || 0);
+  await postTestCard(actor, {
+    icon: "ᚱ", title: `Пуля Искатель: разворот — ${esc(actor.name)}`,
+    lines: [
+      `<div class="roll-threshold">Пуля огибает цель и бьёт ${target ? esc(target.name) : "цель"} со спины: урон ${esc(base)}${bonus ? ` + ${bonus} (рунная пуля)` : ""}, Pen ${pen}.</div>`,
+      `<div class="roll-damage-section"><button class="wh-apply-dmg-btn" type="button"
+        data-damage="${roll.total}" data-penetration="${pen}" data-damage-type="${esc(sys.damageType || "impact")}" data-damage-subtype=""
+        data-hit-location="Торс" data-weapon-name="${esc(weapon.name)} (Пуля Искатель)" data-attacker="${esc(actor.name)}"
+        data-felling="0" data-primitive="0" data-ignore-shield="0" data-warp-soak="0" data-melee="0">
+        Применить ${roll.total} урона${target ? ` — ${esc(target.name)}` : ""}</button></div>`
+    ]
+  }, { rolls: [roll], sound: false });
+}
+
+/** Точка разряда Выдержанного Взрыва для кнопки шаблона силы (одноразовая; null — нет). */
+export async function takeTimedExplosionPoint(attackerUuid) {
+  if (!attackerUuid) return null;
+  const doc = await fromUuid(attackerUuid).catch(() => null);
+  const actor = doc?.actor ?? doc;
+  const at = actor?.getFlag?.(NS, TIMED_EXPLOSION_FLAG);
+  if (!at || at.sceneId !== globalThis.canvas?.scene?.id) return null;
+  await actor.unsetFlag(NS, TIMED_EXPLOSION_FLAG);
+  return { x: Number(at.x) || 0, y: Number(at.y) || 0 };
+}
+
+/**
+ * Выдержанный Взрыв: вплести психический взрыв в промахнувшуюся (или
+ * обойдённую Избеганием) рунную пулю. Точка разряда — в 1 м позади цели по
+ * линии от Питати; её подхватит кнопка шаблона на карточке силы и сама
+ * отметит накрытых.
+ */
+export async function useTimedExplosion(actor, { targetUuid = "" } = {}) {
+  if (!actor || !hasTimedExplosion(actor)) return ui.notifications.warn("⚠️ У актора нет Таланта Выдержанный Взрыв.");
+  if (!isThrottleReady(actor, WEAVE_FLAG, "round")) return ui.notifications.warn("⚠️ Вплетение — раз в Ход, уже было.");
+  const doc = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+  const target = doc?.actor ?? doc;
+  const me = actor.getActiveTokens?.(true)?.[0] ?? null;
+  const tt = target?.getActiveTokens?.(true)?.[0] ?? null;
+  if (!me || !tt) return ui.notifications.warn("⚠️ Нет токенов стрелка и цели на сцене.");
+  const powers = [...actor.items].filter(p => runicWeaveAllowed(actor, p) && isPsychicBlast(p));
+  if (!powers.length) return ui.notifications.warn("⚠️ Нет психических взрывов, которые можно вплести.");
+  let power = powers[0];
+  if (powers.length > 1) {
+    const id = await foundry.applications.api.DialogV2.wait({
+      window: { title: "Выдержанный Взрыв" }, classes: ["warhammer-dbc", "wh-holo"],
+      content: `<select name="power" style="width:100%">${powers.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select>`,
+      rejectClose: false,
+      buttons: [{ action: "ok", label: "Вплести", default: true, callback: (ev, b) => b.form.elements.power.value }]
+    });
+    power = actor.items.get(id);
+    if (!power) return;
+  }
+  const size = globalThis.canvas?.grid?.size || 100;
+  const radius = (Math.min(tt.document.width, tt.document.height) / 2) * size;
+  const at = timedExplosionPoint(me.center, tt.center, radius, pxPerMeter());
+  await markThrottleUsed(actor, WEAVE_FLAG, "round");
+  await actor.setFlag(NS, TIMED_EXPLOSION_FLAG, { x: at.x, y: at.y, sceneId: globalThis.canvas?.scene?.id ?? "" });
+  await postTestCard(actor, {
+    icon: "ᚱ", title: `Выдержанный Взрыв: «${esc(power.name)}» — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Пуля разряжает вплетённый взрыв в 1 м позади ${esc(target.name)} (по линии от Питати). Кнопка шаблона на карточке силы поставит зону туда сама и отметит накрытых.</div>`]
+  }, { sound: false });
   const { showManifestDialog } = await import("../sheets/tabs/psychic.mjs");
   showManifestDialog(actor, power);
 }

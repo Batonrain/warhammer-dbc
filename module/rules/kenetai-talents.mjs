@@ -145,3 +145,60 @@ export function sharedConsciousnessRules(actor) {
     effects: [{ kind: "rollBonus", target: ["weapon:melee", "basedon:ws"], value: total, auto: true, label: `Общее Сознание +${total}` }]
   }];
 }
+
+// ── Клинки Братства: сила на клинках связанных союзников ───────────────────
+// «Манифестируя Психический Клинок на своё оружие, может распространить эффект
+// на рукопашное оружие всех связанных союзников в радиусе Общего Сознания, но
+// они получают его с вдвое уменьшенным эPR (окр.▲). Поддержание на союзниках
+// уменьшает тPR как ещё одна отдельная психосила.»
+// Кому досталось — список uuid флагом BROTHERHOOD_FLAG на самой психосиле
+// (ставит combat/psyker-elite-hooks.mjs при успешной манифестации, снимает
+// combat/psychic-sustain.mjs::sustainOffPatch).
+
+/** Флаг психосилы: uuid союзников, на клинки которых легла сила. */
+export const BROTHERHOOD_FLAG = "bladesOfBrotherhood";
+
+const brotherhoodList = power => {
+  const v = flagOf(power, BROTHERHOOD_FLAG);
+  return Array.isArray(v) ? v.filter(Boolean) : [];
+};
+
+/** Лишняя цена поддержания: каждая поддерживаемая сила на союзниках — ещё одна такая же сила. */
+export function brotherhoodSustainCost(actor) {
+  let cost = 0;
+  for (const it of actor?.items ?? []) {
+    if (it?.type !== "psychicPower" || !it.system?.isSustained || !brotherhoodList(it).length) continue;
+    cost += Number(it.system?.sustainCost ?? 1) || 0;
+  }
+  return cost;
+}
+
+/** Усиление клинка вдвое слабее (эPR ½, окр.▲): числа от эPR делятся пополам с округлением вверх. */
+export function halveBladeBuff(wb) {
+  const half = v => { const x = Number(v) || 0; return x >= 0 ? Math.ceil(x / 2) : -Math.ceil(-x / 2); };
+  return {
+    damageMod: half(wb?.damageMod), penMod: half(wb?.penMod), rangeMod: half(wb?.rangeMod),
+    balanceMod: half(wb?.balanceMod), addProps: [...(wb?.addProps ?? [])]
+  };
+}
+
+/**
+ * Усиления рукопашного оружия союзника от Клинков Братства его Кенетаи:
+ * поддерживаемые силы чужих акторов сцены, в чьём флаге стоит этот союзник.
+ * @returns {{name:string, buff:object}[]}
+ */
+export function brotherhoodBuffsFor(actor, weapon, casters = _resolve.actors()) {
+  if (!actor || weapon?.system?.weaponClass !== "melee" || !weapon.system?.equipped) return [];
+  const out = [];
+  for (const k of casters ?? []) {
+    if (!k || k === actor || k.uuid === actor.uuid) continue;
+    for (const p of k.items ?? []) {
+      if (p?.type !== "psychicPower" || !p.system?.isSustained) continue;
+      if (!brotherhoodList(p).includes(actor.uuid)) continue;
+      const wb = p.system?.effects?.weaponBuff;
+      if (!wb?.enabled) continue;
+      out.push({ name: `${p.name} (Клинки Братства, ${k.name})`, buff: halveBladeBuff(wb) });
+    }
+  }
+  return out;
+}

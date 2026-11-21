@@ -12,7 +12,7 @@
 // остаётся зелёным как доказательство, что вынос не сдвинул числа.
 
 import { testOutcome, criticalOutcome } from "./roll-outcome.mjs";
-import { resolveTest } from "./resolve-test.mjs";
+import { resolveTest, critSuccessOnlyFromRules } from "./resolve-test.mjs";
 import { combinedThreshold, resolveOpposed } from "./test-kind.mjs";
 import { extendedTestKey, applyGain, EXTENDED_CRIT_LOSS } from "./extended-test.mjs";
 import { unnaturalRating, unnaturalDegreeBonus, hasUnnaturalCharacteristic } from "./unnatural-characteristic.mjs";
@@ -234,7 +234,12 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // Сильнее autoSuccess: тот — про цель/обстоятельство, а этот — про то, что
   // бросающий физически не может выполнить тест. Степень провала — обычная,
   // если бросок и так выше Порога, иначе 1.
-  const autoFail = (resolved.autoFail ?? []).length > 0;
+  // «Засчитывается только Критическим Успехом» (эффект critSuccessOnly —
+  // Скрытые Узоры Ворона против Пси-Чутья): обычный Успех — Провал с 1 Провалом.
+  const critGate = critSuccessOnlyFromRules(resolved.rules ?? [], resolved.ctx ?? ctx);
+  const critOnlyMiss = critGate.length > 0 && !criticalOutcome(rv, resolved.crit).success;
+  const autoFail = (resolved.autoFail ?? []).length > 0 || critOnlyMiss;
+  if (critOnlyMiss && !(resolved.autoFail ?? []).length) resolved.autoFail = critGate;
   const outcome0 = testOutcome(rv, eff, { autoSuccess: autoSuccess && !autoFail });
   const success = autoFail ? false : outcome0.success;
   // Минимум Провалов от правила (эффект autoFail.degrees, по умолчанию 1): если

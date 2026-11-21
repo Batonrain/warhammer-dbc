@@ -91,3 +91,83 @@ export function runicArtilleryActive(actor, { aiming = "" } = {}) {
   return [...(actor?.items ?? [])].some(i => i?.type === "psychicPower" && i.system?.isSustained
     && itemHasName(i, "Preternatural Awareness"));
 }
+
+/**
+ * Рунная Артиллерия: «поражает цели за пределами экстремальной дистанции при
+ * прямой видимости. Пуля пролетает тройную дальность за 1 Раунд (цель за
+ * экстремальной дистанцией получает попадание через Ход или несколько). Если
+ * цель сдвинулась за время полёта, выстрел автоматически промахивается».
+ * @returns {number} сколько Раундов летит пуля (0 — попадает сразу)
+ */
+export function runicFlightRounds(distM, rng) {
+  const d = Number(distM), r = Number(rng);
+  if (!Number.isFinite(d) || !(r > 0)) return 0;
+  const perRound = r * 3;
+  return d <= perRound ? 0 : Math.ceil(d / perRound) - 1;
+}
+
+/** Строка карточки выстрела: когда долетит пуля (пусто — попадает сразу). */
+export function runicFlightLine(distM, rng) {
+  const n = runicFlightRounds(distM, rng);
+  if (!n) return "";
+  return `ᚱ Рунная Артиллерия: до цели ${Math.round(Number(distM))} м, пуля летит ${Number(rng) * 3} м за Раунд — попадание через ${n} Раунд(а), в начале Хода Питати. Сдвинется цель за это время — выстрел промахивается сам.`;
+}
+
+// ── Пуля Искатель ───────────────────────────────────────────────────────────
+// «Вплетая в Рунный Выстрел Mind Over Matter (W+0), может вместо эффекта на
+// цели дать выстрелу один из эффектов». Успешная манифестация Mind Over Matter
+// с выбранным эффектом (combat/pitati.mjs → combat/psyker-elite-hooks.mjs)
+// кладёт номер эффекта флагом SEEKER_FLAG; его тратит следующий одиночный
+// выстрел рунной пулей — тот же приём, что у Сквозного Выстрела.
+
+export const SEEKER_FLAG = "seekerBulletReady";
+export const SEEKER_SIZE_RULES = Object.freeze(["core.sizeToHit", "core.deadeyeSize", "core.sharpshooterSize"]);
+
+/** Готовый эффект Пули Искателя (0…3) или null. */
+export function seekerReady(actor) {
+  const v = actor?.getFlag?.("warhammer-dbc", SEEKER_FLAG) ?? actor?.flags?.["warhammer-dbc"]?.[SEEKER_FLAG];
+  const n = Number(v);
+  return (v === null || v === undefined || v === "" || !Number.isInteger(n) || n < 0 || n >= SEEKER_EFFECTS.length) ? null : n;
+}
+
+const neg = v => Math.max(0, -(Number(v) || 0));
+
+/**
+ * Сколько вернуть в Порог эффект Пули Искателя по отмеченному в окне атаки:
+ *  0 — штраф Избирательной стрельбы и Размера цели ниже 0;
+ *  1 — Укрытие, штрафы стрельбы в рукопашную (своя и по связанной цели);
+ *  2 — цель вне прямой видимости: штрафы обзора (свет, дым, тьма).
+ * Эффект 3 (разворот после Избегания) Порога не трогает — кнопка карточки.
+ * @param {number|null} idx
+ * @param {{aimPenalty?:number, sizePenalty?:number, coverMod?:number, seekerMelee?:number, seekerLos?:number}} f
+ */
+export function seekerThresholdOffset(idx, f = {}) {
+  if (idx === 0) return neg(f.aimPenalty) + neg(f.sizePenalty);
+  if (idx === 1) return neg(f.coverMod) + neg(f.seekerMelee);
+  if (idx === 2) return neg(f.seekerLos);
+  return 0;
+}
+
+/** Пуля Искатель гасит Живой Щит (эффект 1): попадания не уходят на партнёра по Захвату. */
+export const seekerIgnoresGrappleCover = idx => idx === 1;
+
+// ── Выдержанный Взрыв ───────────────────────────────────────────────────────
+/** Флаг актора: точка разряда вплетённого взрыва {x, y, sceneId} — тратит кнопка шаблона силы. */
+export const TIMED_EXPLOSION_FLAG = "timedExplosionAt";
+
+/**
+ * «При промахе или успешном Избегании цели пуля разряжает вплетённый взрыв в
+ * 1 м позади цели с позиции Питати»: точка на продолжении линии стрелок → цель,
+ * за краем Базы цели ещё на 1 м. Координаты — пиксели сцены.
+ * @param {{x:number,y:number}} from  центр стрелка
+ * @param {{x:number,y:number}} to    центр цели
+ * @param {number} targetRadiusPx     радиус Базы цели
+ * @param {number} pxPerMeter
+ */
+export function timedExplosionPoint(from, to, targetRadiusPx, pxPerMeter) {
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const len = Math.hypot(dx, dy);
+  const ux = len ? dx / len : 1, uy = len ? dy / len : 0;
+  const off = (Number(targetRadiusPx) || 0) + (Number(pxPerMeter) || 0);
+  return { x: to.x + ux * off, y: to.y + uy * off };
+}

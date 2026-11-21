@@ -125,7 +125,8 @@ import { corpsePoisonAttack, hasPutridClarity, hasTrueRot } from "../rules/plagu
 import { superiorityDice } from "../rules/raven-talents.mjs";
 import { warSeerDamage, witchslayerArmed, WITCHSLAYER_FLAG } from "../rules/vitkis-talents.mjs";
 import { crescendoAimedHits } from "../rules/note-warrior-talents.mjs";
-import { PIERCING_SHOT_FLAG, hasTimedExplosion } from "../rules/runic-shot.mjs";
+import { PIERCING_SHOT_FLAG, hasTimedExplosion, runicArtilleryActive, runicFlightLine,
+         SEEKER_FLAG, SEEKER_EFFECTS, seekerReady, seekerIgnoresGrappleCover } from "../rules/runic-shot.mjs";
 import { bronenosetsWeaponBonus } from "../rules/bronenosets-talents.mjs";
 import { livingArsenalWeapon } from "../rules/obliterator-talents.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
@@ -1510,6 +1511,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     await actor.setFlag?.("warhammer-dbc", RUNIC_BULLETS_FLAG, runicBulletsLeft(actor) - 1);
   // Сквозной Выстрел (Питати): удвоение тPR — на один рунный выстрел.
   if (runic.piercing && opts.forcedRoll == null) await actor.unsetFlag?.("warhammer-dbc", PIERCING_SHOT_FLAG);
+  // Пуля Искатель (Питати): готовый эффект вплетённого Mind Over Matter тратится этим рунным выстрелом;
+  // на переигровке той же атаки — тот же эффект, что был (opts.talentPaid.seeker).
+  const seekerIdx = runic.used ? (opts.talentPaid?.seeker ?? seekerReady(actor)) : null;
+  if (seekerIdx != null && opts.forcedRoll == null && opts.talentPaid?.seeker == null) await actor.unsetFlag?.("warhammer-dbc", SEEKER_FLAG);
   // Убийца Ведьм: Sanctified — на одну атаку.
   if (witchslayerOn && opts.forcedRoll == null) await actor.unsetFlag?.("warhammer-dbc", WITCHSLAYER_FLAG);
   // Тех-Оружейник (rules/gunsmith-talents.mjs): +I.b к Dmg и Pen, раз на оружие до новой настройки (метка на оружии).
@@ -1704,6 +1709,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const skullBonus = skullOfferingBonus(actor, { isMelee, combatId: combatIdOf(actor) });
   // Димахер (Гладиатор): с двумя рукопашными — +очки Момента к урону каждого попадания.
   const dimacherus = dimacherusBonus(actor, { isMelee, momentum: momentumOf(actor) });
+  // Рунная Артиллерия (Питати): цель за экстремальной дистанцией — пуля летит тройную дальность за Раунд.
+  const runicFlightNote = (runic.used && runicArtilleryActive(actor, { aiming: actor.system?.aiming }))
+    ? runicFlightLine(attackerToken && targetToken ? measureTokens(attackerToken, targetToken)?.edgeM : null, Number(sys.range) || 0)
+    : "";
   // Трупный Яд Чумного Монаха в этой атаке (безоружная/интегральная) — для Гнилостного Просвещения и Истинной Гнили.
   const corpsePoisonOn = corpsePoisonAttack(actor, !item || isIntegralAttack(item));
   // Стойка Превосходства (Ворон, rules/raven-talents.mjs): рукопашная по лежащей цели — +2d10.
@@ -1781,6 +1790,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     superiorityN ? "🪶 Стойка Превосходства: +2d10 урона по лежащей цели (уже в бросках)." : "",
     crescendoAimed > 2 ? `🎼 Крещендо: первые ${crescendoAimed} попаданий — в выбранное место.` : "",
     runic.piercing ? "ᚱ Сквозной Выстрел: тPR удвоен. Нанёс урон после Поглощения или цель увернулась — следующая цель на линии огня получает попадание с уроном меньше на её Поглощение." : "",
+    runicFlightNote,
+    seekerIdx != null ? `ᚱ Пуля Искатель: ${SEEKER_EFFECTS[seekerIdx]}${seekerIdx === 3 ? " — если цель Избежит, кнопка «Развернуть пулю» ниже даёт ещё одно Попадание со спины." : " (уже в Пороге)."}` : "",
     (runic.used && !hit && hasTimedExplosion(actor)) ? "ᚱ Выдержанный Взрыв: вплетённый психический взрыв разряжается в 1 м позади цели (по линии от Питати)." : "",
     galvanicResonanceOn(actor, { item, isMelee, hit, aimed: !!aiming && aiming !== "none" })
       ? galvanicResonanceText(defenderActor?.system?.absorption, Array.from({ length: Math.max(1, hitsCount || 0) }, (_, i) => locForHit(i)), LOCATION_TO_ARMOR) : "",
@@ -2049,7 +2060,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Та же форма перенаправления, что у Наследия Предательства выше.
   const grappleCoverHits = [];
   if (hits.length) {
-    const coverPartner = grappleCoverPartner({ attackerToken, targetToken, targetActor: defenderActor, aimed: !!aimTarget?.value });
+    // Пуля Искатель (эффект «игнорировать Укрытие … и Живой Щит») обходит партнёра по Захвату.
+    const coverPartner = seekerIgnoresGrappleCover(seekerIdx) ? null
+      : grappleCoverPartner({ attackerToken, targetToken, targetActor: defenderActor, aimed: !!aimTarget?.value });
     if (coverPartner) {
       for (const d of hits) grappleCoverHits.push({ total: d.total, loc: d.loc, targetName: coverPartner.name, targetUuid: coverPartner.uuid });
       hits.length = 0;
@@ -2328,7 +2341,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // отдельным тестом. Строка в карточке, а не расчёт: «неиспользованных
   // Успехов защиты» система не хранит, а второй тест назначает стол.
   const pounderWeapon = isMelee ? pounderPair(actor) : null;
-  const pounderNote = (pounderWeapon && hit)
+  const pounderNote = (pounderWeapon?.solo && hit && String(pounderWeapon.main?.id) === String(item?.id))
+    ? "🔨 Молотильщик (Димахер, одно оружие): успешно Парировавший этот удар теряет все неиспользованные Успехи."
+    : (pounderWeapon && !pounderWeapon.solo && hit)
     ? "🔨 Молотильщик: успешно Парировавший этот удар теряет все неиспользованные Успехи "
       + "и парирует второе оружие пары отдельным тестом (если остались Реакции)."
     : "";
@@ -2631,6 +2646,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const storedOpts = { ...storedOptsBase, whack, bladeJugglerPenalty, talentPaid: {
     sureShot: sureShotPaid, killingStrike: killingStrikePaid, oneWillGoDown: owgdOn, haymaker: haymakerOn, weaponTech: weaponTech.bonus > 0, lens: !!lens.use, cooking: cooking ?? undefined,
     // Израсходованное Подношение и уровень Резонанса до атаки держатся и через переигровку-промах: следующая может снова попасть.
+    seeker: seekerIdx ?? undefined,
+    // Рунная пуля этого выстрела (Питати): кнопки Пули Искателя и Выдержанного Взрыва (combat/pitati.mjs).
+    runic: runic.used ? { dmg: runic.dmg, pen: runic.pen } : (opts.talentPaid?.runic ?? undefined),
     momentumMiss: momentumMissPaid || undefined, bloodOffering: ((hit || opts.talentPaid?.bloodOffering) && bloodOffering.sanctified) ? bloodOffering : undefined,
     resonanceStart: resonantTarget ? resonanceStart : opts.talentPaid?.resonanceStart },
     quadOtherRv: quadOther?.roll.total };
@@ -2644,6 +2662,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // Фактическое попадание карточки (Длань Кхорна, Атака Ненависти, беспомощная цель меняют его против куба):
       // от него зависит, принимает ли карточка «Успех» за Очко (apps/infamy-success.mjs).
       hit: !!hit,
+      // Успехи попадания (с надбавками Талантов) — Выпад Души Кенетаи прибавляет их к манифестации
+      // с кромки клинка (combat/kenetai.mjs), не спрашивая игрока.
+      deg: hit ? deg : 0,
       // Сколько кубов Тирантикоса лежит на этой карточке второй руки: кнопка «Пересчитать» (hooks.mjs) сверяет с ним.
       tyranthikosApplied: tyranthikosDice,
       threshold, rofMode, aimTarget: aimTarget ?? null, opts: storedOpts
@@ -2658,6 +2679,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (existing) { await existing.update(messageData); return { hit }; }
   }
   await ChatMessage.create(messageData);
+  // Соглашение Доблести (Кузнец Крови): атака психосиловым или чужим оружием нарушает обет.
+  if (!forcedRoll && !opts.skipAmmo) {
+    const { checkValourViolation } = await import("./valourous-accord.mjs");
+    await checkValourViolation(actor, "attack", item);
+  }
   // Лазерный Прицел (rules/laser-sight.mjs): точку лазера могут заметить — после любой дальнобойной
   // атаки с ним ГМу сам уходит шёпот со строками врагов (решение владельца 30.10.2026: не кнопка на
   // карточке стрелка, которому нажимать невыгодно). Переброс той же атаки (forcedRoll) точку не включает заново.

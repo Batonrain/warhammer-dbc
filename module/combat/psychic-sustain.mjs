@@ -35,6 +35,8 @@ export function sustainOffPatch(item) {
   if (item?.getFlag?.(NS, WOUND_FREE_FLAG)) upd[`flags.${NS}.-=${WOUND_FREE_FLAG}`] = null;
   // Зеркальная Душа: сила на копии души — снятие поддержания снимает и метку.
   if (item?.getFlag?.(NS, "mirrorSoul")) upd[`flags.${NS}.-=mirrorSoul`] = null;
+  // Клинки Братства: сила снята — и с клинков союзников.
+  if (item?.getFlag?.(NS, "bladesOfBrotherhood")) upd[`flags.${NS}.-=bladesOfBrotherhood`] = null;
   return upd;
 }
 

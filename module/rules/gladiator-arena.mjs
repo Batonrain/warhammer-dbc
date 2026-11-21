@@ -46,9 +46,40 @@ export function bestiariusExtra(actor, foe) {
 
 const isShield = w => w?.type === "weapon" && w.system?.shieldAP != null;
 
+/** Прижатое щитом оружие: { weaponUuid, weaponName, ownerName } на Гладиаторе. */
+export const SECUTOR_PIN_FLAG = "secutorPin";
+
+/** Что Гладиатор держит прижатым щитом (null — ничего). */
+export function secutorPinOf(actor) {
+  const v = actor?.flags?.[NS]?.[SECUTOR_PIN_FLAG] ?? actor?.getFlag?.(NS, SECUTOR_PIN_FLAG);
+  return v?.weaponUuid ? v : null;
+}
+
+/** Щит занят: Гладиатор держит им прижатое оружие — ни Парировать, ни бить им нельзя. */
+export function shieldPinning(actor, weapon) {
+  return !!secutorPinOf(actor) && isShield(weapon);
+}
+
+/**
+ * Кто прижал это оружие щитом (Секуторий): «лишая противника возможности
+ * использовать это оружие, пока Гладиатор его не отпустит».
+ * @param {object} weapon  оружие, которым хотят бить/парировать
+ * @param {Iterable<object>} actors  акторы сцены
+ * @returns {?object} Гладиатор или null
+ */
+export function weaponPinnedBy(weapon, actors) {
+  if (!weapon?.uuid) return null;
+  for (const a of actors ?? []) {
+    if (secutorPinOf(a)?.weaponUuid === weapon.uuid) return a;
+  }
+  return null;
+}
+
 /** Секуторий вооружён: щит и рукопашное оружие с Rng не больше 3 в руках. */
 export function secutoriusArmed(actor) {
   if (!hasSecutorius(actor)) return false;
+  // Щит прижимает чужое оружие — им не парируют, бонусов Секутория нет.
+  if (secutorPinOf(actor)) return false;
   const eq = [...(actor?.items ?? [])].filter(i => i?.type === "weapon" && i.system?.equipped);
   return eq.some(isShield) && eq.some(w => !isShield(w) && w.system?.weaponClass === "melee" && (Number(w.system?.range) || 0) <= 3);
 }

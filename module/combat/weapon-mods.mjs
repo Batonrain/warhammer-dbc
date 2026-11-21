@@ -7,6 +7,7 @@
 import { fullyArmedReliabilityBonus } from "./fully-armed.mjs";
 import { runtRifleIsLong } from "../rules/runt.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { brotherhoodBuffsFor } from "../rules/kenetai-talents.mjs";
 import { itemHasKey } from "../rules/item-marker.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { powerSettingEffects } from "../rules/power-setting.mjs";
@@ -206,6 +207,17 @@ export function getModEffects(actor, weapon, { profile = null } = {}) {
     fx.balanceMod += Number(wb.balanceMod) || 0;
     for (const p of (wb.addProps || [])) fx.addProps.push(p);
     fx.names.push(power.name);
+  }
+
+  // Клинки Братства (Кенетаи, rules/kenetai-talents.mjs): Психический Клинок союзного Кенетаи —
+  // и на этом рукопашном оружии, с вдвое меньшим эPR.
+  for (const { name, buff } of brotherhoodBuffsFor(actor, weapon)) {
+    fx.damageMod  += buff.damageMod;
+    fx.penMod     += buff.penMod;
+    fx.rangeMod   += buff.rangeMod;
+    fx.balanceMod += buff.balanceMod;
+    for (const p of buff.addProps) fx.addProps.push(p);
+    fx.names.push(name);
   }
 
   // Fully Armed / Во Всеоружии (Черта, wdbc-1rno) — +1 Надёжность для

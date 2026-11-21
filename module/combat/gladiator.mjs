@@ -9,7 +9,8 @@ import { postTestCard } from "../helpers/test-card.mjs";
 import { momentumOf, addMomentum } from "./momentum.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 import {
-  hasBloodyPerformance, hasRetiarius, hasMilitarius, unarmouredParts, bloodyPerformanceBonus, retiariusChainLength
+  hasBloodyPerformance, hasRetiarius, hasMilitarius, hasSecutorius, unarmouredParts, bloodyPerformanceBonus, retiariusChainLength,
+  SECUTOR_PIN_FLAG, secutorPinOf, weaponPinnedBy, shieldPinning
 } from "../rules/gladiator-arena.mjs";
 import { rollTestCard, firstTargetActor } from "./duelist-tests.mjs";
 
@@ -95,4 +96,65 @@ export async function useMilitarius(actor) {
       }, { rolls: [roll] });
     }
   });
+}
+
+// ── Секуторий: прижать оружие щитом ─────────────────────────────────────────
+
+/** Акторы токенов сцены — кто мог прижать оружие. */
+function sceneActors() {
+  const seen = new Set(), out = [];
+  for (const t of globalThis.canvas?.tokens?.placeables ?? []) {
+    const a = t.actor;
+    if (a && !seen.has(a.uuid)) { seen.add(a.uuid); out.push(a); }
+  }
+  return out;
+}
+
+/**
+ * Можно ли этим оружием бить/парировать: не прижато ли оно щитом Секутория и
+ * не прижимает ли сам щит чужое оружие. Возвращает причину отказа или "".
+ */
+export function secutorPinRefusal(actor, weapon) {
+  if (shieldPinning(actor, weapon)) {
+    const pin = secutorPinOf(actor);
+    return `«${weapon.name}» прижимает «${pin.weaponName}» (Секуторий) — щитом не пользоваться, пока не отпустите (кнопка Таланта).`;
+  }
+  const by = weaponPinnedBy(weapon, sceneActors());
+  if (by && by !== actor) return `«${weapon.name}» прижато щитом ${by.name} (Секуторий) — пользоваться им нельзя, пока Гладиатор не отпустит.`;
+  return "";
+}
+
+/** Кнопка «Прижать щитом» на карточке Парирования (rules/duelist-evasion.mjs). */
+export function bindSecutorPinButtons(html) {
+  for (const btn of html?.querySelectorAll?.(".wh-secutor-pin-btn:not([data-bound])") ?? []) {
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", async ev => {
+      ev.preventDefault();
+      const actor = await fromUuid(btn.dataset.actorUuid).catch(() => null);
+      if (!actor?.isOwner) return ui.notifications.warn("⚠️ Нет прав на Гладиатора.");
+      await pinWithShield(actor, btn.dataset.weaponUuid);
+    });
+  }
+}
+
+/** Секуторий: прижать оружие щитом (3 Успеха Парирования уже потрачены). */
+export async function pinWithShield(actor, weaponUuid) {
+  if (!actor || !hasSecutorius(actor)) return ui.notifications.warn("⚠️ У актора нет Таланта Секуторий.");
+  if (secutorPinOf(actor)) return ui.notifications.warn("⚠️ Щит уже прижимает оружие — сначала отпустите.");
+  const weapon = weaponUuid ? await fromUuid(weaponUuid).catch(() => null) : null;
+  if (!weapon) return ui.notifications.warn("⚠️ Оружие противника не найдено.");
+  await actor.setFlag(NS, SECUTOR_PIN_FLAG, { weaponUuid: weapon.uuid, weaponName: weapon.name, ownerName: weapon.parent?.name ?? "" });
+  await card(actor, "🛡️", "Секуторий: оружие прижато", [
+    `Потрачено 3 Успеха Парирования: «${esc(weapon.name)}»${weapon.parent ? ` (${esc(weapon.parent.name)})` : ""} прижато к земле щитом.`,
+    "Противник не может ни бить, ни парировать этим оружием; Гладиатор не пользуется щитом — система не даст ни тому, ни другому. Отпустить — кнопкой Таланта Секуторий."
+  ]);
+}
+
+/** Кнопка Таланта Секуторий: отпустить прижатое оружие. */
+export async function useSecutorius(actor) {
+  if (!actor || !hasSecutorius(actor)) return ui.notifications.warn("⚠️ У актора нет Таланта Секуторий.");
+  const pin = secutorPinOf(actor);
+  if (!pin) return ui.notifications.info("Секуторий: щит ничего не прижимает. Прижать — кнопкой на карточке Парирования (3 Успеха).");
+  await actor.unsetFlag(NS, SECUTOR_PIN_FLAG);
+  await card(actor, "🛡️", "Секуторий: оружие отпущено", [`«${esc(pin.weaponName)}» свободно, щит снова в деле.`]);
 }

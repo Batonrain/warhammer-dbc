@@ -42,7 +42,7 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { handHeldItems } from "./hands.mjs";
-import { hitSizeOf } from "./predicates.mjs";
+import { hitSizeOf, itemHasName } from "./predicates.mjs";
 import { CAP_TYRANTHIKOS } from "./dual-wield.mjs";
 
 export const CAP_CROSSBLOCK       = "dualWield.core.crossblock";
@@ -64,6 +64,24 @@ const isMeleeCat = (w, name) => cls(w) === "melee" && cat(w) === String(name).to
 const balanceOf  = w => Number.parseInt(w?.system?.balance ?? 0, 10) || 0;
 
 /**
+ * Димахер (Гладиатор): «может получать бонусы Талантов группы Два Оружия, даже
+ * если вооружён только одним из требуемых Талантом оружий, но только для
+ * требуемого оружия». Носителю каждой паре ниже хватает ОДНОГО подходящего
+ * оружия в руках; бонус тогда идёт только этому оружию (вторая половина пары —
+ * null, у Крестового Блока нечего суммировать — остаётся ступень Размера).
+ */
+export function dimacherusSolo(actor) {
+  return [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Dimacherus"));
+}
+
+/** Пара из подходящих: две — как обычно, одна — только с Димахером (off = null, solo). */
+function pairOf(actor, list) {
+  if (list.length >= 2) return { main: list[0], off: list[1] };
+  if (list.length === 1 && dimacherusSolo(actor)) return { main: list[0], off: null, solo: true };
+  return null;
+}
+
+/**
  * Что персонаж держит в руках сейчас. Отдельной функцией, чтобы у всех шести
  * Талантов был один ответ на вопрос «вооружён чем» — и чтобы тестам было куда
  * подставить руки, не собирая актора целиком.
@@ -82,8 +100,7 @@ export function heldWeapons(actor) {
  */
 export function crossblockPair(actor) {
   if (!hasRuleFlag(actor, CAP_CROSSBLOCK)) return null;
-  const melees = heldWeapons(actor).filter(w => cls(w) === "melee" && balanceOf(w) >= 0);
-  return melees.length >= 2 ? { main: melees[0], off: melees[1] } : null;
+  return pairOf(actor, heldWeapons(actor).filter(w => cls(w) === "melee" && balanceOf(w) >= 0));
 }
 
 /**
@@ -95,8 +112,7 @@ const POUNDER_CATEGORIES = ["топор", "булава", "молот"];
 
 export function pounderPair(actor) {
   if (!hasRuleFlag(actor, CAP_POUNDER)) return null;
-  const hits = heldWeapons(actor).filter(w => cls(w) === "melee" && POUNDER_CATEGORIES.includes(cat(w)));
-  return hits.length >= 2 ? { main: hits[0], off: hits[1] } : null;
+  return pairOf(actor, heldWeapons(actor).filter(w => cls(w) === "melee" && POUNDER_CATEGORIES.includes(cat(w))));
 }
 
 /**
@@ -115,15 +131,14 @@ export function pounderPair(actor) {
 export function maineGaucheParryReroll(actor, parryWeapon, attackedIds = []) {
   if (!hasRuleFlag(actor, CAP_MAINE_GAUCHE)) return false;
   if (!isMeleeCat(parryWeapon, "Нож")) return false;
-  if (heldWeapons(actor).length < 2) return false;
+  if (heldWeapons(actor).length < 2 && !dimacherusSolo(actor)) return false;
   return !attackedIds.map(String).includes(String(parryWeapon.id));
 }
 
 /** Дикарь: «вооружённый парными когтями». */
 export function savagePair(actor) {
   if (!hasRuleFlag(actor, CAP_SAVAGE)) return null;
-  const claws = heldWeapons(actor).filter(w => isMeleeCat(w, "Когти"));
-  return claws.length >= 2 ? { main: claws[0], off: claws[1] } : null;
+  return pairOf(actor, heldWeapons(actor).filter(w => isMeleeCat(w, "Когти")));
 }
 
 /**
@@ -152,7 +167,8 @@ export function savageExtraHits(actor, weapon) {
 export function gunGuardCancelsDodgeBonus(actor, firedWeapon) {
   if (!hasRuleFlag(actor, CAP_GUN_GUARD)) return false;
   if (!firedWeapon || cls(firedWeapon) === "melee" || cls(firedWeapon) === "pistol") return false;
-  return heldWeapons(actor).some(w => cls(w) === "melee" && balanceOf(w) >= -1);
+  // Димахер: винтовки в руках хватает — бонус касается только её выстрелов.
+  return dimacherusSolo(actor) || heldWeapons(actor).some(w => cls(w) === "melee" && balanceOf(w) >= -1);
 }
 
 /** Режимы стрельбы, которые книга считает «очередью» для этого Таланта. */

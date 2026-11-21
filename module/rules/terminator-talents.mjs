@@ -32,6 +32,29 @@ export function devourerGrappleSize(actor) {
   return hasItemNamed(actor, "Devourer", ["talent"]) ? 1 : 0;
 }
 
+export const hasDevourer = actor => hasItemNamed(actor, "Devourer", ["talent"]);
+
+/** Метка «Поглотитель идёт Напролом»: следующий сдвиг токена — сквозь стены и без Трудного Ландшафта. */
+export const DEVOURER_RAM_FLAG = "devourerRam";
+export const DEVOURER_RAM_ACTION = "devourerRam";
+export const devourerRamming = actor =>
+  !!(actor?.flags?.[NS]?.[DEVOURER_RAM_FLAG] ?? actor?.getFlag?.(NS, DEVOURER_RAM_FLAG));
+
+/**
+ * Рукопашное оружие Rng 0 или 1, которым Поглотитель бьёт сбитых Напролом/
+ * Повалить вместо урона приёма. Экипированное предпочтительнее; из нескольких —
+ * с большим средним уроном формулы (грубая оценка по числам в строке).
+ */
+export function devourerWeapon(actor) {
+  if (!hasDevourer(actor)) return null;
+  const reach = w => Number(w.system?.range ?? 0) || 0;
+  const avg = w => String(w.system?.damage ?? "").match(/\d+/g)?.map(Number).reduce((a, b) => a + b, 0) ?? 0;
+  const list = [...(actor?.items ?? [])].filter(w => w.type === "weapon" && w.system?.weaponClass === "melee"
+    && [0, 1].includes(reach(w)) && !w.system?.destroyed);
+  if (!list.length) return null;
+  return list.sort((a, b) => (!!b.system?.equipped - !!a.system?.equipped) || (avg(b) - avg(a)))[0];
+}
+
 /** Древковое ли рукопашное оружие. */
 export function isPolearm(item) {
   return item?.type === "weapon" && POLEARM_CATEGORIES.includes(String(item.system?.meleeCategory ?? "").trim());

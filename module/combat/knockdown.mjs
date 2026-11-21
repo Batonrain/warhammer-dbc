@@ -21,6 +21,7 @@ import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { writeToTarget, dealDamageToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
+import { devourerDamageSection } from "./devourer.mjs";
 
 /**
  * Разница в Размере (инициатор − цель). Итоговый Размер (sizeTotal, с
@@ -73,7 +74,10 @@ export async function resolveKnockdownSuccess(actor, { deg, target } = {}) {
       : `<div class="roll-threshold">${esc(target.name)} сбит(а) с ног (Ничком).</div>`
   ];
 
-  if (deg >= 5) {
+  // Поглотитель: сбитый получает урон рукопашным оружием Rng 0–1 вместо урона приёма.
+  const devourerHit = resisted ? "" : await devourerDamageSection(actor, target, "Повалить");
+  if (devourerHit) sections.push(devourerHit);
+  else if (deg >= 5) {
     const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
     const apply = await Dialog.confirm({
       title: "Повалить — доп. эффект (5+ Успехов)",

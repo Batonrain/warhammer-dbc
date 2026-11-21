@@ -64,6 +64,7 @@ import { darkApostleRules } from "./dark-apostle.mjs";
 import { mech2Rules } from "./mech2-sources.mjs";
 import { vitkisRules } from "./vitkis-talents.mjs";
 import { gladiatorRules } from "./gladiator-arena.mjs";
+import { hiddenPatternsRules } from "./raven-talents.mjs";
 import { astartesEliteRules } from "./astartes-elite-rules.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
@@ -420,6 +421,8 @@ registerRuleSource("darkApostle", a => darkApostleRules(a));
 // конкретной цели броска (ctx.targetActor) — rules/vitkis-talents.mjs, rules/gladiator-arena.mjs.
 registerRuleSource("vitkis", (a, ctx) => vitkisRules(a, ctx, globalThis.game?.combat?.started ? globalThis.game.combat.id : ""));
 registerRuleSource("gladiatorArena", (a, ctx) => gladiatorRules(a, ctx));
+// Скрытые Узоры (Ворон): Пси-Чутьё по Ворону в Стойке — только Критическим Успехом.
+registerRuleSource("ravenHiddenPatterns", (a, ctx) => hiddenPatternsRules(a, ctx));
 
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];

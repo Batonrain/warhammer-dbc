@@ -17,6 +17,7 @@ const moritat = () => import("../moritat-talents.mjs");
 const terminator = () => import("../terminator-talents.mjs");
 const obliterator = () => import("../obliterator-talents.mjs");
 const bloodSmith = () => import("../blood-smith-talents.mjs");
+const valour = () => import("../valourous-accord.mjs");
 
 const group = (load, names) => Object.fromEntries(names.map(n => [n, lazy(load, n)]));
 
@@ -34,5 +35,6 @@ export const API = {
   // Облитератор
   ...group(obliterator, ["useLivingArsenal", "useBulletEater", "useMutilator", "useSelfForging", "useShredder", "useToTheTeeth"]),
   // Кузнец Крови
-  ...group(bloodSmith, ["useRingOfBlood", "useDaemonPlate", "useUnforge"])
+  ...group(bloodSmith, ["useRingOfBlood", "useDaemonPlate", "useUnforge"]),
+  ...group(valour, ["useValourousAccord"])
 };

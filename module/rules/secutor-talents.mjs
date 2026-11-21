@@ -91,6 +91,55 @@ export function ordinatorStands(actor, { attacker = null, melee = false } = {}) 
   return !(melee && attacker && sizeOf(attacker) > sizeOf(actor));
 }
 
+/** Оружие техники в руках персонажа (предмет из компендиума орудий: vehicleMount.isMounted). */
+export const isVehicleWeaponInHand = (actor, weapon) =>
+  actor?.type !== "vehicle" && weapon?.type === "weapon" && !!weapon.system?.vehicleMount?.isMounted;
+
+/**
+ * «Главное орудие танка» — в данных такой метки нет; главным считаем орудие
+ * техники со свойством Ordnance (Боевая Пушка, Разрушитель, Сотрясатель…).
+ */
+export const isMainVehicleGun = weapon =>
+  (weapon?.system?.weaponProps ?? []).some(p => p?.key === "ordnance");
+
+/** Конечность: установленный имплант или предмет-оружие с таким именем. */
+const hasLimb = (actor, re) =>
+  [...(actor?.items ?? [])].some(i => (i.type === "implant" || i.type === "weapon") && re.test(String(i.name ?? "")));
+const SERVO_ARM_RE = /servo[- ]arm|серво[- ]рук/i;
+const TECH_DENDRITE_RE = /technical mechadendrite|технический мех/i;
+const MANIP_DENDRITE_RE = /manipulator mechadendrite|манипулятор/i;
+
+/** Ординатор с оружием техники в руках: стрельба на ходу всегда со штрафом. */
+export const ordinatorVehicleGun = (actor, weapon) => hasOrdinator(actor) && isVehicleWeaponInHand(actor, weapon);
+
+/**
+ * Отказ в выстреле из оружия техники для Ординатора: главное орудие в корпусе —
+ * нельзя; главное орудие танка в башне/спонсоне — нужны 3 конечности, одна из
+ * них Серво-Рука. "" — стрелять можно.
+ */
+export function ordinatorGunRefusal(actor, weapon) {
+  if (!ordinatorVehicleGun(actor, weapon) || !isMainVehicleGun(weapon)) return "";
+  if (String(weapon.system?.vehicleMount?.mount ?? "") === "hull")
+    return `Ординатор: ${weapon.name} — главное орудие в корпусе, с рук не стреляет.`;
+  if (!hasLimb(actor, SERVO_ARM_RE))
+    return `Ординатор: ${weapon.name} — главное орудие танка, нужны 3 конечности, одна из них Серво-Рука.`;
+  return "";
+}
+
+/** Заряжающий: технический и манипулирующий мехадендриты у Ординатора. */
+export const ordinatorLoader = actor =>
+  hasOrdinator(actor) && hasLimb(actor, TECH_DENDRITE_RE) && hasLimb(actor, MANIP_DENDRITE_RE);
+
+/**
+ * Rld −1 в ОД: 2·N → 2·(N−1), Полное (2) → ½ (1), ½ (1) → свободно (0).
+ */
+export function ordinatorLoaderCost(baseCost) {
+  const b = Number(baseCost) || 0;
+  if (b <= 0) return 0;
+  if (b <= 2) return b - 1;
+  return b - 2;
+}
+
 // ── Непрерывный Натиск ───────────────────────────────────────────────────────
 
 const targetKey = t => String(t?.uuid ?? t?.id ?? "");

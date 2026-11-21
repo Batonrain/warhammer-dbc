@@ -109,6 +109,9 @@ import { sabotageAimEntries } from "../rules/rogue-talents.mjs";
 import { empathAttackPreset } from "../rules/medusa-talents.mjs";
 import { hasRetiarius } from "../rules/gladiator-arena.mjs";
 import { livingArsenalOneHand } from "../rules/obliterator-talents.mjs";
+import { seekerReady, seekerThresholdOffset, SEEKER_EFFECTS } from "../rules/runic-shot.mjs";
+import { secutorPinRefusal } from "../combat/gladiator.mjs";
+import { ordinatorGunRefusal } from "../rules/secutor-talents.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -142,6 +145,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Натиск/Бег (movement-actions.mjs).
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
+  // Секуторий (Гладиатор, combat/gladiator.mjs): оружие, прижатое щитом, и сам занятый щит не бьют.
+  const pinWhy = secutorPinRefusal(actor, item);
+  if (pinWhy) return ui.notifications.warn(`⚠️ ${pinWhy}`);
+  // Ординатор: главные орудия техники — не из корпуса и только с Серво-Рукой.
+  const ordinatorWhy = ordinatorGunRefusal(actor, item);
+  if (ordinatorWhy) return ui.notifications.warn(`⚠️ ${ordinatorWhy}`);
   // Поле Дискорданта (rules/null-zones.mjs, как Haywire (7)): электрическое
   // стрелковое оружие не стреляет; рукопашное бьёт выключенным (ниже).
   if (fieldForbidsShot(actor, item, item.system?.weaponClass === "melee"))
@@ -1222,6 +1231,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <input type="checkbox" class="atk-mod-cb"
              ${m.id ? `id="${m.id}"` : ""}
              ${m.band ? `data-band="${m.band}"` : ""}
+             ${m.runicArtillery ? 'data-runic-artillery="1"' : ""}
+             ${(m.seeker || m.visionPenalty) ? `data-seeker="${m.seeker || "los"}"` : ""}
              data-value="${(isAF || isAS) ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
              ${isAS    ? 'data-autosuccess="true"' : ""}
@@ -1728,6 +1739,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
    *
    * @returns {{parts: {label:string, value:number}[], total: number}}
    */
+  const seekerIdx = isMelee ? null : seekerReady(actor);
   const thresholdParts = f => {
     const sel = resolveSelectionSafe(f);
     const baseParts = [
@@ -1864,7 +1876,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Парное оружие",        value: f.dualWield
         ? dualWieldMods(actor, item, actor.items.get(f.offHandId)).pair : 0 },
       // Полный Огонь (rules/full-fire.mjs): −10 каждому из двух выстрелов.
-      { label: "Полный Огонь",         value: (f.fullFire && fullFireOpts.length) ? FULL_FIRE_PENALTY : 0 }
+      { label: "Полный Огонь",         value: (f.fullFire && fullFireOpts.length) ? FULL_FIRE_PENALTY : 0 },
+      // Пуля Искатель (Питати, rules/runic-shot.mjs): вплетённый Mind Over Matter гасит выбранные штрафы
+      // одиночного выстрела рунной пулей.
+      { label: `Пуля Искатель${seekerIdx != null ? `: ${SEEKER_EFFECTS[seekerIdx]}` : ""}`,
+        value: (!isMelee && f.runicSingle && seekerIdx != null) ? seekerThresholdOffset(seekerIdx, f) : 0 }
     ];
     const base         = baseParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
     const rawModsSum    = modParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
