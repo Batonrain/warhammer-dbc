@@ -23,8 +23,8 @@ import { hardenedSoulDice, hasResilienceTalent, snakeEaterHalve } from "./rules/
 import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/hellish-resilience.mjs";
 import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marine.mjs";
 import { processMiasmaTurnStart, resolvePlagueMarineCombatEnd, rollAbominableFear, processWastelandRequest } from "./combat/plague-marine.mjs";
-import { syncRubricShield, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, regenerationReplacedSuccess, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
-import { hasShieldOfRubric } from "./rules/rubric-sorcerer.mjs";
+import { syncNexusInitiatives, regenerationTurnStart, rollRegeneration, regenerationReplacedSuccess, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
+import { syncTraitShields, needsTraitShieldSync } from "./combat/trait-shield.mjs";
 import { syncMechanicumImplants, releaseCellDemon, clearWhipOnCombatEnd, runDownTurnStart } from "./combat/warpsmith.mjs";
 import { isCellDevice } from "./rules/warpsmith.mjs";
 import { offerStatusResist } from "./combat/status-resist.mjs";
@@ -6086,12 +6086,13 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("createItem", (item, options, userId) => _armorFieldSync(item, userId));
   Hooks.on("deleteItem", (item, options, userId) => _armorFieldSync(item, userId));
 
-  // Щит Рубрики (Колдун Рубрики, combat/rubric-sorcerer.mjs): Черта даёт встроенный не перегружающийся щит-купол 1-50;
-  // снимается вместе с Чертой. Сверку делает только клиент, внёсший правку.
+  // Встроенные щиты Черт (combat/trait-shield.mjs): Щит Рубрики (Колдун Рубрики) и Тело Из Плотеметалла
+  // (Облитератор) дают не перегружающийся щит-купол 1-50; снимается вместе с Чертой. Сверку делает только
+  // клиент, внёсший правку.
   const _rubricShieldSync = (item, userId) => {
     if (item.type !== "trait" || !item.actor || userId !== game.user?.id) return;
-    if (!hasShieldOfRubric(item.actor) && !item.actor.items.some(i => i.type === "forcefield" && i.getFlag?.("warhammer-dbc", "rubricShield"))) return;
-    return syncRubricShield(item.actor);
+    if (!needsTraitShieldSync(item.actor)) return;
+    return syncTraitShields(item.actor);
   };
   Hooks.on("createItem", (item, options, userId) => _rubricShieldSync(item, userId));
   Hooks.on("deleteItem", (item, options, userId) => _rubricShieldSync(item, userId));

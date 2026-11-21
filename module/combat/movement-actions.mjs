@@ -72,6 +72,7 @@ import { uselessCount } from "../rules/useless-limbs.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
 import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from "../rules/dodge-talents.mjs";
 import { equippedTerminatorArmour } from "../rules/terminator-armour.mjs";
+import { heavyBodyMoveBan, heavyBodyLimitsRun } from "../rules/heavy-body.mjs";
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
 import { leapUpDenied, standUpExtraApCost } from "../rules/takedown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
@@ -499,7 +500,7 @@ export async function declareCharge(actor) {
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>${runAndGunOfferHtml(actor)}
-    <div class="roll-threshold">Перемещение до ${hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
+    <div class="roll-threshold">Перемещение до ${heavyBodyLimitsRun(actor) ? `${actor.system.movement?.charge ?? 0} м (тяжёлое тело — не дальше Полного Движения)` : hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
     <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, ${movementApCost(actor, 2)} ОД спишутся на броске атаки.</div>${movementApNote(actor)}
   </div>`);
 }
@@ -666,6 +667,9 @@ export async function declareRun(actor) {
     return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   // Частокол (стр. 15, wdbc-x1nz.2.66.9): «нельзя Натиск и Бег» — noRun несёт
   // только эта Стойка (Защитная запрещает лишь Натиск, см. noCharge выше).
+  // Тяжёлое тело (rules/heavy-body.mjs): Тело Из Плотеметалла, Громыхающий Гигант.
+  const heavyRunBan = heavyBodyMoveBan(actor, "run");
+  if (heavyRunBan) return ui.notifications.warn(`⚠️ ${heavyRunBan}`);
   const runStanceKey = actor.system?.meleeStance || "standard";
   if (MELEE_STANCES[runStanceKey]?.noRun) {
     return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);
@@ -1391,6 +1395,11 @@ export function showJumpDialog(actor) {
   // Терминаторская броня (стр. 235): «Не позволяет Прыгать» — Изящный Гигант этого не снимает.
   if (equippedTerminatorArmour(actor)) {
     ui.notifications.warn(`⚠️ ${actor.name}: Терминаторская броня не позволяет Прыгать.`);
+    return;
+  }
+  const heavyJumpBan = heavyBodyMoveBan(actor, "jump");
+  if (heavyJumpBan) {
+    ui.notifications.warn(`⚠️ ${actor.name}: ${heavyJumpBan}`);
     return;
   }
   const acro = skillTotal(actor, "acrobatics");

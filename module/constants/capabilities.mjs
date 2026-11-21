@@ -6819,7 +6819,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Облитератор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.obliterator.fleshmetalBody": {
     label: "Не способен носить броню или использовать обычное оружие и инструменты — формирует их из собственного тела.",
-    source: "Fleshmetal Body / Тело Из Плотеметалла", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — +10 Ран, weaponPropertyImmunity.haywire; остальное пишет в чат кнопка-памятка, считает ГМ"
+    source: "Fleshmetal Body / Тело Из Плотеметалла", reader: "ЧАСТИЧНО (21.11.2026): записи Конструктора на Черте — +10 Ран, weaponPropertyImmunity.haywire; щит-купол 1-50 — module/combat/trait-shield.mjs::syncTraitShields (Sahara 576-51a6); без Бега и Прыжков, Натиск ≤ Полного Движения, запрет брони — module/rules/heavy-body.mjs (module/rules/character/movement.mjs, module/combat/movement-actions.mjs::declareRun/showJumpDialog, module/sheets/tabs/gear.mjs::equipItem). Вручную: запрет обычного оружия и инструментов, вес 2 т"
   },
   "trait.elitnyeArhetipy.obliterator.livingArsenal": {
     label: "За полное действие может ассимилировать касанием любое оружие или механизм размера, которым может пользоваться космодесантник или персонаж п…",
@@ -6858,7 +6858,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Секутор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.sekutor.lumberingGiant": {
     label: "Массивный фрейм прочен, но медлителен. Весит 1,2 тонны, получает +10 Ран, но не может совершать Бег,",
-    source: "Lumbering Giant / Громыхающий Гигант", reader: "запись Конструктора в паке Черты: kind:wounds (+10 к максимуму Ран). Не смоделировано: остальные пункты книги (вес 1,2 т, запрет Бега и прочее) — ГМ вручную"
+    source: "Lumbering Giant / Громыхающий Гигант", reader: "запись Конструктора в паке Черты: kind:wounds (+10 к максимуму Ран); без Бега и Прыжков, Натиск ≤ Полного Движения (не больше SPD×2 за действие) — module/rules/heavy-body.mjs (module/rules/character/movement.mjs, module/combat/movement-actions.mjs::declareRun/showJumpDialog). Вручную: вес 1,2 т, автопровал Stealth на бесшумность, сумма движений за Ход (Полудвижение + Полное) не меряется"
   },
   "trait.elitnyeArhetipy.sekutor.paladinFrame": {
     label: "Фрейм почти полностью заменяет тело, оставляя головной и спинной мозг. Оборудован всеми кибернетическими чувствами Best.Q,",
@@ -8451,7 +8451,7 @@ export const CAPABILITIES = {
   "ability.shieldOfRubric": {
     label: "Щит Рубрики: встроенный чародейский щит-купол 1-50 без перегрузки, пока есть Черта",
     source: "Shield of Rubric / Щит Рубрики (packs-src/traits/Элитные_архетипы)",
-    reader: "module/combat/rubric-sorcerer.mjs::syncRubricShield (module/hooks.mjs, createItem/deleteItem) — Sahara 1-54b9"
+    reader: "module/combat/trait-shield.mjs::syncTraitShields (module/hooks.mjs, createItem/deleteItem; module/combat/rubric-sorcerer.mjs::syncRubricShield — прежнее имя) — Sahara 1-54b9"
   },
   "ability.infernalShells": {
     label: "Инфернальные Снаряды: за час 24 болта (единица боеприпаса) переделываются в Инферно-болты Тзинча",
