@@ -563,7 +563,9 @@ describe("общее требование к предикатам", () => {
     mechadendriteTraining: "utility",
     // Перегрузка Модулями Скитарии (rules/skitarii-modules.mjs).
     skitariiModulesOverLimit: true,
-    underBalefulDirge: true
+    underBalefulDirge: true,
+    // Дар Одержимого в Проявлении (Варп-Зрение вытесняет Ослепление, живая проверка pr-584).
+    manifestedGift: "Варп-Зрение"
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

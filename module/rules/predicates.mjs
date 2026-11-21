@@ -772,6 +772,10 @@ export const PREDICATES = {
   // входит в anyOf правила conditions.blinded.altSenses.
   blindsightActive: (actor, ctx, value) => blindsightActive(actor) === (value !== false),
 
+  // Дар Одержимого в Проявлении (manifestedGift ниже): `{ manifestedGift: "Варп-Зрение" }`.
+  // Входит в anyOf conditions.blinded.altSenses — Варп-Зрение снимает штрафы Ослепления (живая проверка pr-584-ws-30).
+  manifestedGift: (actor, ctx, value) => manifestedGift(actor, String(value ?? "")),
+
   // «Рядовой» (корбук стр. 4, system.rankAndFile): `true` — Рядовой, `false` —
   // чемпион. Гейт записей, которых у Рядовых по книге нет (Черты Человека).
   rankAndFile: (actor, ctx, value) => !!actor?.system?.rankAndFile === (value !== false),

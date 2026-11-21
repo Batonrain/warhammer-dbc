@@ -5503,6 +5503,14 @@ function _attachFateContextMenu(message, html) {
     if (combat.combatant) await processShooterTurnStart(combat.combatant);
   });
 
+  // Педаль в Пол (combat/pedal-to-metal.mjs): истёкшая метка снимается в начале Хода, чтобы SPD машины пересчитался.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    const { expirePedalMarks } = await import("./combat/pedal-to-metal.mjs");
+    await expirePedalMarks(combat);
+  });
+
   // Гравитонные зоны (module/regions/graviton-zone.mjs, wdbc-wlwf) — тот же
   // триггер, что и у «Остаётся»: усыхание на 1м привязано к началу Хода
   // именно СТРЕЛКА, своя отдельная пара Hooks.on по тому же принципу.
