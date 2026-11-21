@@ -10,6 +10,7 @@ import { releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandO
 import { useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite } from "../flesh-sculptor.mjs";
 import { useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts } from "../cognitae.mjs";
 import { synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura } from "../maester.mjs";
+import { useSoulDrinker, heartOfStoneInsight } from "../pact-traits.mjs";
 import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
 
 export const API = {
@@ -24,5 +25,7 @@ export const API = {
   // Когнитэ
   useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts,
   // Мейстер
-  synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura
+  synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura,
+  // Вампир, Когитор (Черты Пакта)
+  useSoulDrinker, heartOfStoneInsight
 };

@@ -6366,11 +6366,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Вампир — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.vampir.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   "trait.elitnyeArhetipy.vampir.soulDrinker": {
     label: "Когда укус опускает W жертвы до 0, та умирает, а Вампир получает дополнительно ½W.b (окр.",
-    source: "Soul Drinker / Испивающий Души", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Soul Drinker / Испивающий Души", reader: "module/combat/pact-traits.mjs useSoulDrinker (пул thirst, healActor, fatigueChangeFields)"
   },
   "trait.elitnyeArhetipy.vampir.supremeAvarice": {
     label: "Получает неизлечимое ментальное расстройство «Перфекционизм» на Тяжести −2, и его Тяжесть не может опуститься ниже −2.",
@@ -6598,7 +6598,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kogitor.heartOfStone": {
     label: "При заключении Пакта сердце Когитора трансмутирует из плоти в техномагический конструкт, в который заключается его душа,",
-    source: "Heart of Stone / Каменное Сердце", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Heart of Stone / Каменное Сердце", reader: "ЧАСТИЧНО: damageImmunity.warpWeapon (combat/damage.mjs warpSoak); module/combat/pact-traits.mjs heartOfStoneInsight. Сердце, Выжигание Души, Одержимость, криты головы — вручную"
   },
   "trait.elitnyeArhetipy.kogitor.infernalInspiration": {
     label: "Разум освобождён от многих ограничений смертного тела и способен на сверхъестественную концентрацию.",
@@ -6606,7 +6606,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kogitor.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта (Когитор)", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта (Когитор)", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Когнитэ — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kognite.hypnoProgramming": {
@@ -6786,7 +6786,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meyster.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта (Мейстер)", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта (Мейстер)", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   "trait.elitnyeArhetipy.meyster.savantOfLifeAndDeath": {
     label: "Имеет доступ к безграничным медицинским знаниям своего покровителя. Автоматически преуспевает во всех тестах медицинской диагностики и автом…",
@@ -6836,11 +6836,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Ревенант — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.revenant.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта (Ревенант)", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта (Ревенант)", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   "trait.elitnyeArhetipy.revenant.shadowOfVengeance": {
     label: "Считает Навыки Inquiry, Interrogate, Security и Stealth дружественными, а Acrobatics и Dodge — нейтральными, независимо от покровительства.",
-    source: "Shadow of Vengeance / Тень Отмщения", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — aptOverride: Inquiry, Interrogate, Security, Stealth дружественные; остальное пишет в чат кнопка-памятка, считает ГМ"
+    source: "Shadow of Vengeance / Тень Отмщения", reader: "module/rules/item-rules.mjs aptOverride (ally/neutral) → rules/aptitude-overrides.mjs resolveAptitudeOverride → rules/advance-category.mjs"
   },
   "trait.elitnyeArhetipy.revenant.vengeanceWeapon": {
     label: "Выбирает одно оружие Редкостью 1 или ниже (Космодесантники считают по Редкости аналогов для людей). Может сделать это оружие Best.",

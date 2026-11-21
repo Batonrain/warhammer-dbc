@@ -249,7 +249,7 @@ async function projectorEffect(p, key, upd) {
   switch (key) {
     case "regen": return ["Пациент немедленно делает дополнительную попытку Regeneration (тест T)."];
     case "fatigue": {
-      Object.assign(upd, fatigueChangeFields(p, Math.max(0, (Number(p.system?.fatigue?.value) || 0) - 1)));
+      Object.assign(upd, fatigueChangeFields(p, Math.max(0, (Number(p.system?.fatigue?.value) || 0) - 1)).fields);
       const r = await new Roll("1d5").evaluate();
       return [`−1 Усталости; восстановить <b>${r.total}</b> урона одной Характеристики (выберите на листе).`];
     }

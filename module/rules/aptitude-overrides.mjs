@@ -61,7 +61,7 @@ function nameHit(match, name, group, specialty = "") {
 export function resolveAptitudeOverride(actor, scope, name, group = "", ctx = {}) {
   if (!actor || !name) return null;
   const n = norm(name);
-  let ally = false, enemy = false;
+  let ally = false, enemy = false, neutral = false;
   for (const rule of collectRules(actor, ctx)) {
     for (const effect of rule?.effects ?? []) {
       if (effect?.kind !== "grantAptitudeOverride" || effect.scope !== scope) continue;
@@ -69,10 +69,12 @@ export function resolveAptitudeOverride(actor, scope, name, group = "", ctx = {}
       if (!hit) continue;
       if (effect.align === "enemy") enemy = true;
       else if (effect.align === "ally") ally = true;
+      else if (effect.align === "neutral") neutral = true; // Тень Отмщения: «нейтральные независимо от Покровительства»
     }
   }
   if (enemy) return "enemy";
   if (ally) return "ally";
+  if (neutral) return "neutral";
   return null;
 }
 

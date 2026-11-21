@@ -3974,7 +3974,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     if (mode === "aptOverride") {
       const scopeOpts = Object.entries(CAPABILITY_APT_SCOPE_LABELS)
         .map(([v, l]) => optHtml(v, l, (ent.capabilityAptScope || "skill") === v)).join("");
-      const alignOpts = [["ally", "Дружественный"], ["enemy", "Враждебный"]]
+      const alignOpts = [["ally", "Дружественный"], ["enemy", "Враждебный"], ["neutral", "Нейтральный"]]
         .map(([v, l]) => optHtml(v, l, (ent.capabilityAptAlign || "ally") === v)).join("");
       const matchHint = ent.capabilityAptScope === "characteristic"
         ? "ключ характеристики, точно: ws, bs, s, t, ag, int, per, wp, fel"

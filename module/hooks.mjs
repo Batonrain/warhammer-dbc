@@ -108,6 +108,7 @@ import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { mindImmunityBlocksPower } from "./rules/mind-immunity.mjs";
 import { trueRotBypassesImmunity, trueRotDamage } from "./rules/plague-monk-talents.mjs";
 import { lifeVirusOf, lifeVirusLossPatch } from "./rules/maester-talents.mjs";
+import { pactProtectionNote } from "./rules/pact-traits.mjs";
 import { tryDivineProtection, tryShieldOfContempt, postWarpOffers, runWarpOffer } from "./combat/warp-guard.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -485,6 +486,9 @@ export function registerHooks() {
             { sound: false });
           return;
         }
+        // Защита Пакта (Вампир/Когитор/Ревенант/Мейстер): телепатия «читает» ложь демона.
+        const pactNote = pactProtectionNote(targetActor, d.discipline);
+        if (pactNote) await postTestCard(targetActor, `<div class="wh-roll-result"><div class="roll-header">${rollIcon("shield", "#c98bff")}Защита Пакта — ${esc(targetActor.name)}</div><div class="roll-threshold">${esc(pactNote)}</div></div>`, { sound: false });
         // Не От Мира Сего (From Beyond): иммунитет к силам на разум (Телепатия:
         // Мезмеризм/Иллюзионизм), «если сам не пожелает» — спрашиваем, пустить ли.
         if (mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
