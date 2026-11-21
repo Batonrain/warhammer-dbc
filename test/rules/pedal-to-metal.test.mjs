@@ -19,3 +19,13 @@ describe("Педаль в Пол", () => {
     expect(sys.derived.effSpd).toBe(14);
   });
 });
+
+import { pedalExpired } from "../../module/rules/pedal-to-metal.mjs";
+describe("Педаль в Пол — снятие метки", () => {
+  it("истекает с началом следующего Хода водителя", () => {
+    const m = { bonus: 4, combatId: "c", round: 2, turn: 3 };
+    expect(pedalExpired(m, { id: "c", round: 2, turn: 5 })).toBe(false);
+    expect(pedalExpired(m, { id: "c", round: 3, turn: 3 })).toBe(true);
+    expect(pedalExpired({ bonus: 4, combatId: "" }, null)).toBe(false);
+  });
+});

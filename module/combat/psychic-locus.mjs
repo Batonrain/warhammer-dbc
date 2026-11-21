@@ -12,7 +12,7 @@ const NS = "warhammer-dbc";
 
 /** Где стоит псайкер относительно локуса: {sceneId, distanceM}. */
 export function locusHere(actor) {
-  const token = actor?.getActiveTokens?.(false, true)?.[0] ?? null;
+  const token = actor?.getActiveTokens?.(false)?.[0] ?? null;
   const loc = locusOf(actor);
   if (!token || !loc || !canvas?.ready) return { sceneId: "", distanceM: Infinity };
   const sceneId = canvas.scene?.id ?? "";
@@ -26,7 +26,7 @@ export function locusHere(actor) {
 /** Кнопка Таланта: 8 часов изучения, Psyniscience+0, при Успехе — новый локус (старый забыт). */
 export async function studyPsychicLocus(actor) {
   if (!actor || !hasPsychicLocus(actor)) return ui.notifications.warn("⚠️ У актора нет Таланта Психический Локус.");
-  const token = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+  const token = actor.getActiveTokens?.(false)?.[0] ?? null;
   if (!token || !canvas?.ready) return ui.notifications.warn("⚠️ Поставьте токен псайкера на изучаемое место.");
   const base = Number(actor.system?.skills?.psyniscience?.total) || 0;
   const rm = collectTestMods(actor, { kind: "skill", skill: "psyniscience", char: "per" });
