@@ -23,8 +23,16 @@ function alliesWhoSee(actor) {
   const side = token.document?.disposition ?? token.disposition;
   const candidates = canvas.tokens.placeables.filter(t => t.actor && t.actor !== actor
     && (t.document?.disposition ?? t.disposition) === side);
-  const seen = tokensThatCanSee(token, candidates, canvas.grid);
-  return [...new Map(seen.map(t => [t.actor.uuid, t.actor])).values()];
+  // Видимость считается по TokenDocument (sight, width/height в клетках) и scene.grid:
+  // плейсмент Token этих полей в нужном виде не несёт, и замер молча отвечал «не видит».
+  const seen = alliesSeeingDocs(token.document ?? token, candidates.map(t => t.document ?? t),
+    canvas.scene?.grid ?? canvas.grid);
+  return [...new Map(seen.filter(d => d.actor).map(d => [d.actor.uuid, d.actor])).values()];
+}
+
+/** Документы-кандидаты, которым виден документ Герольда (чистая функция для тестов). */
+export function alliesSeeingDocs(heraldDoc, candidateDocs, grid) {
+  return tokensThatCanSee(heraldDoc, candidateDocs, grid);
 }
 
 export async function useLivingBanner(actor) {

@@ -560,7 +560,9 @@ describe("общее требование к предикатам", () => {
     // Чувство, выбранное в окне теста Внимательности (ctx.sense).
     testSense: ["hearing"],
     // Обучение мехадендритам (Mechadendrite Use), утилитарные дендриты — wdbc-qbyvc.
-    mechadendriteTraining: "utility"
+    mechadendriteTraining: "utility",
+    // Дар Одержимого в Проявлении (Варп-Зрение вытесняет Ослепление, живая проверка pr-584).
+    manifestedGift: "Варп-Зрение"
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {
