@@ -24,6 +24,13 @@ const NS = "warhammer-dbc";
 export const ARSENAL_FLAG = "livingArsenal";
 export const SHOULDER_FLAG = "toTheTeeth";
 export const SHOULDER_MAX = 2;
+/** Метка встроенного щита Тела Из Плотеметалла (combat/trait-shield.mjs). */
+export const FLESHMETAL_SHIELD_FLAG = "fleshmetalShield";
+/** «Не перегружающийся силовой щит-купол 1-50». */
+export const FLESHMETAL_SHIELD_RATING = 50;
+
+/** Черта «Fleshmetal Body / Тело Из Плотеметалла» (не путать с Талантом Fleshmetal Механикума). */
+export const hasFleshmetalBody = actor => hasItemNamed(actor, "Fleshmetal Body", ["trait"]);
 
 const flagOf = (item, key) => item?.flags?.[NS]?.[key] ?? item?.getFlag?.(NS, key);
 
@@ -76,6 +83,12 @@ export function shredderHordeHits(magnitude) {
   return Math.min(6, Math.floor(Math.max(0, Number(magnitude) || 0) / 5));
 }
 
+/** Режим ближнего боя Расчленителя включён (Талант активирован). */
+export function mutilatorActive(actor) {
+  const item = [...(actor?.items ?? [])].find(i => i?.type === "talent" && String(i.name ?? "").startsWith("Mutilator"));
+  return !!item && isItemActivated(item);
+}
+
 /**
  * Расчленитель включён (Талант активирован): «должен перебрасывать успешные
  * тесты BS и неудачные тесты WS» — переброс обязательный (who:"forced", без
@@ -83,8 +96,7 @@ export function shredderHordeHits(magnitude) {
  * или лучший из двух.
  */
 export function mutilatorRules(actor) {
-  const item = [...(actor?.items ?? [])].find(i => i?.type === "talent" && String(i.name ?? "").startsWith("Mutilator"));
-  if (!item || !isItemActivated(item)) return [];
+  if (!mutilatorActive(actor)) return [];
   const lb = "🪚 Расчленитель: переброс успешного BS";
   const lw = "🪚 Расчленитель: переброс проваленного WS";
   return [

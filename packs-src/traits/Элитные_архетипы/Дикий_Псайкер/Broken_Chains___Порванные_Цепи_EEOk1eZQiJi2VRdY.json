@@ -5,7 +5,7 @@
   "folder": "zT2Ovr1Nc79zbuTy",
   "system": {
     "description": "",
-    "notes": "Каскадный грант подключён (wdbc-ddz): Трейты Hoverer (W.b) и Unnatural Willpower (+2) выдаются группами Механики. +3 бPR (эффективный Пси-Рейтинг), запрет жёсткой/силовой брони и неуязвимость к Haywire — по-прежнему не смоделированы (не грант предмета, а модификаторы других расчётов).",
+    "notes": "Частично реализовано (21.11.2026): Трейты Hoverer (W.b) и Unnatural Willpower (+2) выдаются записями Конструктора; иммунитет к Haywire — запись Конструктора; +3 бPR поверх Таланта Psy Rating (rules/character/final-pools.mjs) и запрет надеть жёсткую или силовую броню (sheets/tabs/gear.mjs::equipItem) — rules/wild-psyker-talents.mjs. Вручную: изоляция от воды и грязи — описание.",
     "benefit": "Аркано-механическая разгрузка вживлена в спину, затылок и руки, интегрирована в нервную систему. Даёт +3 бPR и Трейты Hoverer (W.b) и Unnatural W (+2), но не позволяет носить жёсткую или силовую броню. Порванные Цепи неуязвимы к эффектам Haywire и хорошо изолированы от воды и грязи.",
     "source": "Элитный архетип: Дикий Псайкер",
     "hasRating": false,
@@ -123,6 +123,12 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "W7MPFpXIwGW4KnwA",
+              "kind": "capability",
+              "capabilityKey": "weaponPropertyImmunity.haywire",
+              "label": "Порванные Цепи: иммунитет к Haywire"
             }
           ]
         },

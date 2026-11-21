@@ -10,6 +10,8 @@ import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
 import { on, esc } from "../../helpers/utils.mjs";
 import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand, isWristMounted } from "../../rules/hands.mjs";
+import { heavyBodyArmourBan } from "../../rules/heavy-body.mjs";
+import { brokenChainsArmourBan } from "../../rules/wild-psyker-talents.mjs";
 import { rollInfoguard as _rollInfoguard } from "../../apps/infoguard.mjs";
 import { showDelegateTestPicker as _showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { useDetonateGrenadeInRig } from "../../combat/draw-action.mjs";
@@ -74,6 +76,11 @@ export async function equipItem(item, equipped) {
     ui.notifications?.warn(`${item.name}: не хватает рук (свободно ${free} из ${max}) — сначала снимите что-то с рук.`);
     return;
   }
+  // Тяжёлое тело (rules/heavy-body.mjs): Облитератор брони не носит — только НОВОЕ надевание.
+  // Порванные Цепи (Дикий Псайкер, rules/wild-psyker-talents.mjs): без жёсткой и силовой брони.
+  const armourBan = equipped && item.parent
+    ? (heavyBodyArmourBan(item.parent, item) || brokenChainsArmourBan(item.parent, item)) : "";
+  if (armourBan) { ui.notifications?.warn(`${item.name}: ${armourBan}`); return; }
   // Hard (wdbc-8b5): блокируем только НОВОЕ надевание — существующие
   // «нелегальные» связки на старых листах не трогаем (тот же принцип, что
   // и у занятости рук выше).

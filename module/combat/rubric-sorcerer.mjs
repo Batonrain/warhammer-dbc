@@ -23,9 +23,9 @@
 import { hasRuleFlag } from "../rules/flags.mjs";
 import {
   REBORN_TEST_MOD, GOLEM_FLAG, GOLEM_LOYALTY, GOLEM_PROFILE_NAME, GOLEM_POSSESSION_HOURS, GOLEM_SOULS,
-  SHIELD_FLAG, SHIELD_RATING, ECHO_USAGE_FLAG, ECHO_PENDING_FLAG, STUPOR_FLAG,
+  SHIELD_FLAG, ECHO_USAGE_FLAG, ECHO_PENDING_FLAG, STUPOR_FLAG,
   INFERNAL_AMMO_NAME, INFERNAL_SHELLS_COUNT, INFERNAL_SHELLS_HOURS, SEKHMET_REGENERATION,
-  hasRubricOfAhriman, hasGolemMaster, hasShieldOfRubric, hasInfernalShells, hasPsychicEcho, hasSekhmet,
+  hasRubricOfAhriman, hasGolemMaster, hasInfernalShells, hasPsychicEcho, hasSekhmet,
   hasRebornInDust, pickMilderPeril, choiceThreshold, isGolem, golemMasterUuid, golemsOf, soulsFree, fallenGolems,
   nexusFreeGolems, nexusSlotsLeft, golemSlot, sekhmetStats, armourAblative, armourWithoutAblative,
   regenerationRating, regenerationSource, regenerationHeal, isWounded, possessionThreshold, warpLoreTotal, isOrdinaryBolt,
@@ -52,10 +52,10 @@ import { actorHasInfamyPoint } from "../apps/infamy-points.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { combatOfActor } from "./actor-combat.mjs";
 import { setPsychicVessel } from "../rules/psychic-vessel.mjs";
+import { traitShieldSpec, traitShieldData, traitShieldPlan, syncTraitShields } from "./trait-shield.mjs";
 
 const NS = "warhammer-dbc";
 const ICON = () => rollIcon("warp", "#7f5cff");
-const FORCEFIELD_IMG = "systems/warhammer-dbc/assets/item-icons/forcefield.svg";
 
 const worldActors = () => [...(globalThis.game?.actors ?? [])];
 const isDeceased = actor => !!actor?.getFlag?.(NS, "deceased");
@@ -112,49 +112,19 @@ export async function rollChoiceTest(actor) {
 }
 
 // ── Щит Рубрики ───────────────────────────────────────────────────────────
+// Общий механизм встроенных щитов Черт — combat/trait-shield.mjs; здесь
+// прежние имена для Колдуна Рубрики.
+
+const RUBRIC_SPEC = traitShieldSpec(SHIELD_FLAG);
 
 /** Данные встроенного щита-купола 1-50: чародейский, не перегружается, активен. */
-export function rubricShieldData() {
-  return {
-    name: "Shield of Rubric / Щит Рубрики",
-    type: "forcefield",
-    img: FORCEFIELD_IMG,
-    system: {
-      shieldNature: "warp", shieldType: "dome",
-      ratingMin: 1, ratingMax: SHIELD_RATING, overloadThreshold: 0,
-      currentRating: SHIELD_RATING, isSpecialRating: false,
-      equipped: true, status: "active", quality: "common", availability: 0, weight: 0
-    },
-    flags: { [NS]: { [SHIELD_FLAG]: true } }
-  };
-}
+export const rubricShieldData = () => traitShieldData(RUBRIC_SPEC);
 
 /** Что сделать со щитами Рубрики: создать, если Черта есть, а щита нет; снять лишнее. */
-export function rubricShieldPlan(actor) {
-  const have = [...(actor?.items ?? [])].filter(i => i?.type === "forcefield" && i.getFlag?.(NS, SHIELD_FLAG));
-  if (hasShieldOfRubric(actor)) return { create: have.length ? 0 : 1, remove: have.slice(1).map(i => i.id) };
-  return { create: 0, remove: have.map(i => i.id) };
-}
+export const rubricShieldPlan = actor => traitShieldPlan(actor, RUBRIC_SPEC);
 
-const shieldQueue = new Map();
-
-/**
- * Приводит встроенный щит в соответствие с Чертой «Щит Рубрики». Вызовы по одному актору идут строго по очереди:
- * архетип выдаёт три Черты одним createEmbeddedDocuments, хуки createItem стреляют подряд, и без очереди каждый
- * из них видел бы «щитов нет» и создавал свой.
- */
-export function syncRubricShield(actor) {
-  if (!actor?.isOwner) return Promise.resolve();
-  const key = actor.id ?? actor.uuid;
-  const run = async () => {
-    const { create, remove } = rubricShieldPlan(actor);
-    if (remove.length) await actor.deleteEmbeddedDocuments("Item", remove);
-    if (create) await actor.createEmbeddedDocuments("Item", [rubricShieldData()]);
-  };
-  const next = (shieldQueue.get(key) ?? Promise.resolve()).then(run, run);
-  shieldQueue.set(key, next);
-  return next.finally(() => { if (shieldQueue.get(key) === next) shieldQueue.delete(key); });
-}
+/** Приводит встроенный щит в соответствие с Чертой «Щит Рубрики» (очередь по актору — в trait-shield.mjs). */
+export const syncRubricShield = actor => syncTraitShields(actor, [RUBRIC_SPEC]);
 
 // ── Повелитель Големов ────────────────────────────────────────────────────
 

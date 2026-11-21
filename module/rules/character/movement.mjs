@@ -29,6 +29,7 @@ import { quadrupedMultiplier } from "../quadruped.mjs";
 import { amorphousSpd, AMORPHOUS_SPD_CAP, AMORPHOUS_SIZE_CAP, amorphousSizeShiftOf } from "../amorphous.mjs";
 import { frameSizeShift } from "../tech-assassin.mjs";
 import { coilsSpeedBonus } from "../electropriest.mjs";
+import { heavyBodyLimitsRun, heavyBodyMovementCap } from "../heavy-body.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -257,6 +258,10 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
       sprint:        hasSpeedTalent(actor, "sprint")
     }));
   }
+  // Тяжёлое тело (rules/heavy-body.mjs): Тело Из Плотеметалла и Громыхающий Гигант — Натиск и Бег
+  // не дальше Полного Движения (Расчленитель Облитератора в режиме ближнего боя снимает ограничение).
+  const heavyBody = flightSpd === null && heavyBodyLimitsRun(actor);
+  if (heavyBody) ({ halfMove, move, charge, run } = heavyBodyMovementCap({ halfMove, move, charge, run }));
 
   system.movement.halfMove = halfMove;
   // Не в схеме (производное): текущий SPD без множителей Черт — для подсказок листа (нарративная
@@ -307,6 +312,7 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   }
   if (expectedHalfMove !== spdNow) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
   if (sureTread) spdBreakdown.push({ label: "Надёжная Поступь: Бег (пешком ≤3×SPD)", value: null, cap: run });
+  if (heavyBody) spdBreakdown.push({ label: "Тяжёлое тело: Натиск и Бег (не дальше Полного Движения)", value: null, cap: charge });
   system.movement.spdBreakdown = spdBreakdown;
 
 }

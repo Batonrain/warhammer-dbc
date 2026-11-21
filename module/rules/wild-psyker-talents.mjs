@@ -51,6 +51,7 @@ const traits = actor => [...(actor?.items ?? [])].filter(i => i?.type === "trait
 const hasTalent = (actor, name) => [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, name));
 
 // ── Кто что умеет ──────────────────────────────────────────────────────────
+export const hasBrokenChains = actor => traits(actor).some(i => itemHasName(i, "Broken Chains"));
 export const hasShieldOfChains = actor => traits(actor).some(i => itemHasName(i, "Shield of Chains"));
 export const hasChainRejection = actor => traits(actor).some(i => itemHasName(i, "Chain Rejection"));
 export const hasChainScars = actor => hasTalent(actor, "Chain Scars");
@@ -60,6 +61,29 @@ export const hasHeartFire = actor => hasTalent(actor, "Heart Fire");
 export const hasPowerOverwhelming = actor => hasTalent(actor, "Power Overwhelming");
 export const hasResidualAbsorption = actor => hasTalent(actor, "Residual Absorption");
 export const hasWitheringCharge = actor => hasTalent(actor, "Withering Charge");
+
+// ── Порванные Цепи (Черта) ──────────────────────────────────────────────────
+//  «Даёт +3 бPR … но не позволяет носить жёсткую или силовую броню. Порванные
+//  Цепи неуязвимы к эффектам Haywire» (иммунитет — запись Конструктора
+//  weaponPropertyImmunity.haywire на Черте).
+
+/** +3 к базовому Пси-Рейтингу (rules/character/final-pools.mjs). */
+export const BROKEN_CHAINS_PR = 3;
+
+/** Прибавка Порванных Цепей к бPR: 3 у носителя Черты, иначе 0. */
+export const brokenChainsPrBonus = actor => (hasBrokenChains(actor) ? BROKEN_CHAINS_PR : 0);
+
+/**
+ * Причина запрета надеть броню или "" — можно. Жёсткая — свойство «hard»,
+ * силовая — armorType «power» (тот же признак, что wearsActivePowerArmour).
+ */
+export function brokenChainsArmourBan(actor, item) {
+  if (item?.type !== "armor" || !hasBrokenChains(actor)) return "";
+  const s = item.system ?? {};
+  if (s.armorType === "power") return "Порванные Цепи: силовую броню носить нельзя.";
+  if ((s.properties ?? []).includes("hard")) return "Порванные Цепи: жёсткую броню носить нельзя.";
+  return "";
+}
 
 // ── Числа актора ────────────────────────────────────────────────────────────
 /** бPR — базовый Пси-Рейтинг. */
