@@ -4068,27 +4068,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Архимаг — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhimag.exemptus": {
     label: "Умеют вырывать нити, связывающие умирающего псайкера с его дисциплиной, и вплетать в свою душу. Когда в поле зрения умирает другой псайкер,",
-    source: "Exemptus / Экземптус", reader: ""
+    source: "Exemptus / Экземптус", reader: "module/combat/archmagus.mjs::useExemptus (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.arhimag.innerEye": {
     label: "Эмпирейный взор фокусируется, не упуская ни одно заклинание. После успешного теста на Пси-Чутьё, может потратить Очко Бесчестия,",
-    source: "Inner Eye / Внутренний Глаз", reader: ""
+    source: "Inner Eye / Внутренний Глаз", reader: "module/combat/archmagus.mjs::useInnerEye → sheets/tabs/psychic.mjs::rollPsyniscience (innerEyePsyniscience)"
   },
   "elite.elitnyeArhetipy.arhimag.mirrorSoul": {
     label: "Создаёт в Варпе копию своей души, поддерживающую отдельные плетения психической энергии.",
-    source: "Mirror Soul / Зеркальная Душа", reader: ""
+    source: "Mirror Soul / Зеркальная Душа", reader: "module/combat/archmagus.mjs::useMirrorSoul → rules/archmagus-talents.mjs::mirrorSoulCost (rules/character.mjs, тPR)"
   },
   "elite.elitnyeArhetipy.arhimag.mysticFeint": {
     label: "Позволяет оставлять ложные следы своего колдовства в Варпе. При манифестации психосилы с Чародейским Посохом может пройти тест Deceive+0,",
-    source: "Mystic Feint / Мистический Финт", reader: ""
+    source: "Mystic Feint / Мистический Финт", reader: "module/combat/archmagus.mjs::useMysticFeint (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.arhimag.savantImmaterial": {
     label: "Известен обширным арсеналом психосил и скоростью их освоения. Изучая любую психосилу,",
-    source: "Savant Immaterial / Савант Имматериал", reader: ""
+    source: "Savant Immaterial / Савант Имматериал", reader: "module/combat/archmagus.mjs::useSavantImmaterial (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.arhimag.unlimitedPower": {
     label: "Невероятная мистическая сила пробивает контрмеры оппонентов. При манифестации психосилы,",
-    source: "Unlimited Power / Безграничная Сила", reader: ""
+    source: "Unlimited Power / Безграничная Сила", reader: "module/combat/archmagus.mjs::useUnlimitedPower (кнопка Таланта)"
   },
   // ── Элитные_архетипы\Архимагос — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhimagos.archDominus": {

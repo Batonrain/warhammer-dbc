@@ -77,6 +77,7 @@ import { locusHere, spendPsychicLocus } from "../../combat/psychic-locus.mjs";
 import { warpLockButtonsHtml, applyWarpLock, resetWarpLockHour, clearWarpLockMark } from "../../combat/warp-lock.mjs";
 // Элитные архетипы-псайкеры (Архимаг, Дикий Псайкер, Чернокнижник, Кенетаи…): точки окна манифестации.
 import { eliteManifestGate, eliteManifestEpr, eliteManifestRoll, eliteExtraPeril, eliteManifestAfter } from "../../combat/psyker-elite-hooks.mjs";
+import { innerEyeActiveNow, innerEyePsyniscience } from "../../combat/archmagus.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -1705,6 +1706,8 @@ function fruitLeftSustainRange(casterActor, bearerActor, power) {
 }
 
 export function rollPsyniscience(actor, rollSkill) {
+  // Внутренний Глаз (Архимаг): до конца боя/сцены — автоуспех вместо броска.
+  if (innerEyeActiveNow(actor)) return innerEyePsyniscience(actor);
   const def = SKILLS_DEF.psyniscience;
   const sk  = actor.system.skills?.psyniscience;
   // cannotUntrained (книга, стр. 57, сноска ²): тест вообще недоступен без

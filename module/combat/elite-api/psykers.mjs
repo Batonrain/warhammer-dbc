@@ -6,5 +6,6 @@
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
 import { WILD_PSYKER_API } from "../wild-psyker.mjs";
+import { ARCHMAGUS_API } from "../archmagus.mjs";
 
-export const API = { ...WILD_PSYKER_API };
+export const API = { ...WILD_PSYKER_API, ...ARCHMAGUS_API };

@@ -64,6 +64,7 @@ import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./bey
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 import { woundSustainSplit } from "./wound-in-reality.mjs";
 import { applyAlacritySkills } from "./wild-psyker-talents.mjs";
+import { mirrorSoulCost } from "./archmagus-talents.mjs";
 import { quadrupedMultiplier } from "./quadruped.mjs";
 
 /**
@@ -1217,6 +1218,8 @@ export function prepareCharacterDerived(actor, system) {
     // Рана в Реальности (Талант Псайканы, пачка I2): психосилы, помеченные «бесплатными», не снижают
     // тPR — платится только то, что осталось (rules/wound-in-reality.mjs). Без Таланта — не меняет ничего.
     if (sustainedCost > 0) sustainedCost = woundSustainSplit(actor).paid;
+    // Зеркальная Душа (Архимаг): силы на копии души тPR не снижают.
+    if (sustainedCost > 0) sustainedCost = Math.max(0, sustainedCost - mirrorSoulCost(actor));
     system.experience.spentTalents = autoTalentCost;
     system.experience.spentPsy = autoPsyCost;
     system.experience.spentTech = autoTechCost;

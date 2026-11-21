@@ -22,6 +22,8 @@ import { esc } from "../helpers/utils.mjs";
 import { rollPeril } from "./rubric-sorcerer.mjs";
 import { getPeril } from "../constants/psyker-tables.mjs";
 import { takePendingManifest } from "./psyker-elite-hooks-state.mjs";
+import { wizardStaffTestBonus } from "./archmagus.mjs";
+import { hasMagusSupreme } from "../rules/archmagus-talents.mjs";
 
 const small = (html, color = "") => `<div class="roll-threshold" style="font-size:0.85em;${color ? `color:${color};` : ""}">${html}</div>`;
 
@@ -48,6 +50,17 @@ export async function eliteManifestEpr(actor, item, opts, ePR, lines) {
     lines.push(small(`Мощь Переполняет: эPR ${e} ×2 = <b>${e * 2}</b>; Варп-Прорыв будет вызван сверх обычных Феноменов.`, "#a33"));
     e *= 2;
   }
+  // Чародейский Посох: тип Физическое (кнопка Черты) и Good.Q/Best.Q посоха — к Порогу.
+  // При перебросе opts.modifier уже несёт эти прибавки первой попытки.
+  if (!opts.reroll) {
+    const staffPhys = Number(boost.staff) || 0;
+    const { bonus: staffQ, staff } = wizardStaffTestBonus(actor);
+    const add = staffPhys + staffQ;
+    if (add) {
+      opts.modifier = (Number(opts.modifier) || 0) + add;
+      lines.push(small(`Чародейский Посох: +${add} к психотесту${staffPhys ? ` (тип Физическое +${staffPhys}, не меньше полудействия)` : ""}${staffQ ? ` (${esc(staff.name)}, качество +${staffQ})` : ""} — в «Модификаторе».`));
+    }
+  }
   return e;
 }
 
@@ -71,8 +84,11 @@ export async function eliteExtraPeril(actor, opts, allRolls) {
 }
 
 /** Строки карточки после исхода (и побочные метки). */
-export async function eliteManifestAfter(actor, item, opts, { success = false } = {}) {
+export async function eliteManifestAfter(actor, item, opts, { success = false, phenomena = false } = {}) {
   const out = [];
+  if (phenomena && hasMagusSupreme(actor)) {
+    out.push(small("Высший Магус: этот Феномен (не Прорыв) <b>не действует на самого Архимага</b>, на остальных — как обычно. Исключить союзников (1 Очко Бесчестия) или перенести Прорыв (3 Очка) — кнопкой Черты.", "#5a4a30"));
+  }
   const ow = Number(opts?.eliteBoost?.overwhelming) || 0;
   if (ow && success && item?.system?.sustainable) {
     out.push(small(`Мощь Переполняет: если «${esc(item.name)}» поддерживается — она развеется сама через ${ow} Ходов (W.b).`, "#a33"));
