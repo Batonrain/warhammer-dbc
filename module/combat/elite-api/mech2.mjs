@@ -5,4 +5,9 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { useBisection, useDisjoint, useModularAutonomy, useScorpio, useChrysalis, useParadoxVeil } from "../tech-assassin.mjs";
+
+export const API = {
+  // Тех Ассасин
+  useBisection, useDisjoint, useModularAutonomy, useScorpio, useChrysalis, useParadoxVeil
+};

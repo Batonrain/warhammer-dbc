@@ -26,6 +26,7 @@ import { VAST_SIZE_FLAG, vastSizeBonus } from "../strange-invulnerability.mjs";
 import { wearsActivePowerArmour, manifestedGift } from "../predicates.mjs";
 import { quadrupedMultiplier } from "../quadruped.mjs";
 import { amorphousSpd, AMORPHOUS_SPD_CAP, AMORPHOUS_SIZE_CAP, amorphousSizeShiftOf } from "../amorphous.mjs";
+import { frameSizeShift } from "../tech-assassin.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -78,6 +79,8 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     !!system.conditions?.grappling);
   // Аморфный: смена Размера раз в Ход (apps/amorphous-size.mjs) — только в итог, SPD не трогает.
   if (hasRuleFlag(actor, AMORPHOUS_SIZE_CAP)) system.sizeTotal += amorphousSizeShiftOf(actor);
+  // Тех Ассасин: жало Скорпиона −1, одна голова (Модульная Автономия) −2 — только в итог, SPD не трогает.
+  system.sizeTotal += frameSizeShift(actor);
   const stance  = system.meleeStance || "standard";
 
   let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);

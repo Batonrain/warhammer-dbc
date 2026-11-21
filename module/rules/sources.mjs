@@ -60,6 +60,7 @@ import { noiseMarineRules } from "./noise-marine.mjs";
 import { tipOfSpearRules } from "./tip-of-spear.mjs";
 import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
 import { darkApostleRules } from "./dark-apostle.mjs";
+import { mech2Rules } from "./mech2-sources.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -429,3 +430,6 @@ registerRuleSource("prophetOfGallerpox", a => {
                 label: "Техновирус Гэллерпокса" }]
   }];
 });
+
+// Элитные архетипы пачки mech2 (Тех Ассасин, Секутор, Электрожрец, Лорд Дискордант) — rules/mech2-sources.mjs.
+registerRuleSource("eliteMech2", (a, ctx) => mech2Rules(a, ctx));

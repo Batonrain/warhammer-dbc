@@ -158,7 +158,10 @@ describe("источники по умолчанию", () => {
                 // darkApostle (Тёмный Апостол, Sahara 1-54b9) — Литания Слаанеш: +30 на Командование Апостола.
                 "darkApostle", "devourerOfKnowledge", "dreadnought",
                 // drugWithdrawal (wdbc-gyqf2, 25.10.2026) — штраф зависимого наркотика, пока доза просрочена.
-                "drugWithdrawal", "hatred", "homeworld", "items",
+                "drugWithdrawal",
+                // eliteMech2 (21.11.2026) — пачка элитных архетипов mech2 (rules/mech2-sources.mjs).
+                "eliteMech2",
+                "hatred", "homeworld", "items",
                 // khorneBerserker (Берсерк Кхорна, Sahara 1-54b9) — Гвозди Мясника вне Ярости и Закалённое в Крови.
                 "khorneBerserker",
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",

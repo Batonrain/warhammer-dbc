@@ -5242,27 +5242,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Тех_Ассасин — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.tehAssasin.bisection": {
     label: "Разделяет фрейм на ещё больше независимых модулей на магнитных замках. При Уклонении от атаки (не по площади) может потратить на него 2 Когн…",
-    source: "Bisection / Рассечение", reader: ""
+    source: "Bisection / Рассечение", reader: "module/combat/tech-assassin.mjs::useBisection (кнопка Таланта: −2 ⚙, +1 Реакция Избегания)"
   },
   "elite.elitnyeArhetipy.tehAssasin.chrysalis": {
     label: "Аркано-механические репликаторы в головном модуле восстанавливают фрейм даже из одной головы.",
-    source: "Chrysalis / Куколка", reader: ""
+    source: "Chrysalis / Куколка", reader: "module/combat/tech-assassin.mjs::useChrysalis (кнопка: тест T+0, Regeneration 2 в лечение или отращивание; копилка — rules/tech-assassin.mjs::chrysalisProgress)"
   },
   "elite.elitnyeArhetipy.tehAssasin.cranialMantle": {
     label: "Участок Кибер-Мантии подсоединяется напрямую к головному мозгу вместо спинного. Может установить два своих механодендрита на голову вместо т…",
-    source: "Cranial Mantle / Черепная Мантия", reader: ""
+    source: "Cranial Mantle / Черепная Мантия", reader: "module/rules/tech-assassin.mjs::usableDendrites (без торса в деле 2 головных мехадендрита)"
   },
   "elite.elitnyeArhetipy.tehAssasin.disjoint": {
     label: "Отсечённые (но не уничтоженные) конечности всё ещё подчиняются командам. Могут совершать действия и атаки по правилам Multiple Arms,",
-    source: "Disjoint / Разделение", reader: ""
+    source: "Disjoint / Разделение", reader: "module/combat/tech-assassin.mjs::useDisjoint (кнопки отсоединить/присоединить, −1 ⚙ за присоединение)"
   },
   "elite.elitnyeArhetipy.tehAssasin.modularAutonomy": {
     label: "Каждый модуль фрейма самодостаточен. Может игнорировать Критические Эффекты и урон от ранений в конечность или торс, отсоединяя их.",
-    source: "Modular Autonomy / Модульная Автономия", reader: ""
+    source: "Modular Autonomy / Модульная Автономия", reader: "module/combat/tech-assassin.mjs::useModularAutonomy (кнопка) + rules/tech-assassin.mjs::frameSizeShift → rules/character/movement.mjs (Размер −2 без торса)"
   },
   "elite.elitnyeArhetipy.tehAssasin.scorpio": {
     label: "Когда обе ноги отсоединены, выпускает снизу торса длинное хребтоподобное жало. Уменьшает Размер на 1 и получает Трейт Parasite,",
-    source: "Scorpio / Скорпион", reader: ""
+    source: "Scorpio / Скорпион", reader: "module/rules/tech-assassin.mjs::frameSizeShift → rules/character/movement.mjs (Размер −1 без обеих ног); кнопка useScorpio"
   },
   // ── Элитные_архетипы\Укротитель — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.ukrotitel.barghesi": {
@@ -6960,7 +6960,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.tehAssasin.paradoxVeil": {
     label: "Наполовину технологическое, наполовину демоническое устройство стирает его с восприятия любых технологических сенсоров и Ноосферы: микрофоны…",
-    source: "Paradox Veil / Вуаль Парадокса", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Paradox Veil / Вуаль Парадокса", reader: "module/combat/tech-assassin.mjs::useParadoxVeil (режим раз в Раунд) + rules/tech-assassin.mjs::paradoxVeilRules (источник eliteMech2: автопровал Внимательности Механикум с Чертой Machine)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Укротитель — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.ukrotitel.beastMaster": {
