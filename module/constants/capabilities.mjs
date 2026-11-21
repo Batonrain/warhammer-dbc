@@ -6737,7 +6737,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.masterKazney.trophyTaker": {
     label: "Убив вражеского офицера, чемпиона или чудовище (по усмотрению ГМа), получает 1 очко Трофеев (макс. P.b).",
-    source: "Trophy Taker / Собиратель Трофеев", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): +1 Очко Трофеев за убитого офицера/чемпиона/чудовище — карточка с кнопкой «Трофей» после констатации смерти (module/sheets/tabs/body.mjs::setDeceased → module/combat/trophy-kill.mjs::offerTrophyAfterKill), решение ГМа; пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа). Траты как Очков Бесчестия на выслеживание/бой с офицерами — вручную"
+    source: "Trophy Taker / Собиратель Трофеев", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): +1 Очко Трофеев за убитого офицера/чемпиона/чудовище — карточка с кнопкой «Трофей» после констатации смерти (module/sheets/tabs/body.mjs::setDeceased → module/combat/trophy-kill.mjs::offerTrophyAfterKill), решение ГМа; пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа). Траты как Очков Бесчестия (Sahara task-0b3a): окно «Чем заплатить?» при Перебросе/+10/Успехе из меню карточки теста выслеживания/преследования/боя — module/rules/trophy-points.mjs::trophyInfamyOption, module/apps/infamy-points.mjs::spendFromInfamyPool(test); офицер/чемпион/чудовище ли цель — решение стола"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Медуза — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meduza.deadlyNaturalWeapon2Tentacles7Bite": {

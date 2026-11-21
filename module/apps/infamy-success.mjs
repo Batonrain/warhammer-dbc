@@ -14,6 +14,7 @@
 
 import { successBonusOutcome } from "../rules/fate-bonus.mjs";
 import { spendInfamyAbility } from "./infamy-points.mjs";
+import { infamyTestContext } from "../rules/trophy-points.mjs";
 import { runCardOnce, cardOnceUsed, markCardOnce } from "../combat/card-once.mjs";
 import { focusedWrathOnAttack } from "../combat/focused-wrath.mjs";
 import { postTestCard, testCardHtml, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
@@ -73,7 +74,8 @@ export async function spendSuccessOnCard(actor, message) {
   if (!target) { ui.notifications?.warn("К этой карточке Успех не дописать: тест провален, не распознан или Успех уже добавлен."); return false; }
   return runCardOnce(message, INFAMY_SUCCESS_FLAG, async () => {
     const out = {};
-    if (!await spendInfamyAbility(actor, "success", out)) return false;
+    // Тест карточки — Очки Трофеев платят «как Бесчестие» только за подходящий (rules/trophy-points.mjs).
+    if (!await spendInfamyAbility(actor, "success", out, { test: infamyTestContext(message) })) return false;
     let extra = out.successBonus ?? 1;
     let wrath = false;
     const atk = message.flags?.[NS]?.attack ?? null;

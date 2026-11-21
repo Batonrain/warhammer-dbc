@@ -38,6 +38,7 @@ import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.
 import { rollShockDeath, rollBleedingTest } from "./combat/shock-death.mjs";
 import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
 import { spendFromInfamyPool, spendPatronAbility, infamyResourceAvailable } from "./apps/infamy-points.mjs";
+import { infamyTestContext } from "./rules/trophy-points.mjs";
 import { dimIgnoredEffects } from "./combat/sweet-suffering.mjs";
 import { spendInfamyForFailSuccess, spendResourceForFailSuccess } from "./apps/infamy-fail-success.mjs";
 import { knowledgeOfAgesButtonHtml, rollKnowledgeOfAges } from "./apps/knowledge-of-ages.mjs";
@@ -4694,7 +4695,10 @@ function _attachFateContextMenu(message, html) {
     const fateVal  = fate?.value ?? 0;
     // Пул ресурса «как Очки Бесчестия» (Жажда, Очки Мести — rules/resource-pools.mjs):
     // чем платить, спросит сама трата (apps/infamy-points.mjs::spendFromInfamyPool).
-    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0 || infamyResourceAvailable(actor));
+    // Тест карточки — для трат «как Бесчестие» с условием на вид теста (Очки
+    // Трофеев: выслеживание/преследование/бой, rules/trophy-points.mjs).
+    const infamyTest = infamyTestContext(message);
+    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0 || infamyResourceAvailable(actor, { test: infamyTest }));
     const ft       = fateTerm(actor?.system);
 
     // Строим меню
@@ -4863,7 +4867,7 @@ function _attachFateContextMenu(message, html) {
       const spend = async () => {
         const r = champion
           ? await spendInspiringInfamy(champion, actor)
-          : await spendFromInfamyPool(actor, 1, "system.fate.value");
+          : await spendFromInfamyPool(actor, 1, "system.fate.value", { test: infamyTest });
         if (r && !champion) await actor.update({ "system.fate.value": r.poolValue });
         return r;
       };
@@ -5095,7 +5099,7 @@ function _attachFateContextMenu(message, html) {
           const r = await spendResource(actor, resDef.key, 1, { silent: true });
           return r ? { poolValue: r.after } : null;
         }
-        const r = await spendFromInfamyPool(actor, 1, "system.fate.value");
+        const r = await spendFromInfamyPool(actor, 1, "system.fate.value", { test: infamyTest });
         if (r) await actor.update({ "system.fate.value": r.poolValue });
         return r;
       };
