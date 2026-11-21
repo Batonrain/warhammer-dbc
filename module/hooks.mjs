@@ -3570,7 +3570,9 @@ export function registerHooks() {
         if (!executioner.isOwner) return ui.notifications.warn("Снять статусы может владелец исполнителя (или ГМ).");
         el.disabled = true;
         const { applyFieldExecutionClear } = await import("./combat/field-execution.mjs");
-        const freed = await applyFieldExecutionClear(executioner, game.actors ?? []);
+        // Подчинённые на несвязанных токенах — тоже (Sahara fanatic-back-to-back п.1).
+        const { worldAndTokenActors } = await import("./migrations/unlinked-tokens.mjs");
+        const freed = await applyFieldExecutionClear(executioner, worldAndTokenActors());
         ui.notifications.info(freed.length
           ? `Полевая Казнь: Шок/Подавление снято у ${freed.join(", ")}.`
           : "Полевая Казнь: снимать было не с кого.");

@@ -472,8 +472,11 @@ function fanaticRedirectButtons(fanaticIntercepts, hitNo) {
  */
 function fanaticInterceptSection(fanaticIntercepts) {
   if (!fanaticIntercepts.length) return "";
-  const rows = fanaticIntercepts.map(f => `
-    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: «Перехват» у попадания выше переносит урон на него (или выделите его токен и примените урон вручную).
+  // Те же подписи, что у кнопок «Перехват» (fanaticButtonNames): одноимённые
+  // носители различаются именем токена или номером (Sahara fanatic-back-to-back п.2).
+  const names = fanaticButtonNames(fanaticIntercepts);
+  const rows = fanaticIntercepts.map((f, idx) => `
+    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(names[idx])}</b>: «Перехват» у попадания выше переносит урон на него (или выделите его токен и примените урон вручную).
       ${f.freeUse
         ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
         : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}

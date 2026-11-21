@@ -622,6 +622,15 @@ describe("Спиной к Спине/Back to Back: показ носителей
     expect(html).toContain('class="wh-back-to-back-mark-used" data-fanatic-uuid="Actor.f1"');
     expect(html).not.toContain('class="wh-back-to-back-mark-used" data-fanatic-uuid="Actor.f2"');
   });
+
+  it("одноимённые носители в строке различаются именем токена (Sahara fanatic-back-to-back п.2)", () => {
+    const html = card({ fanaticIntercepts: [
+      { uuid: "Actor.f1", name: "Культист", tokenName: "Культист Альфа", freeUse: true },
+      { uuid: "Actor.f2", name: "Культист", tokenName: "Культист Бета", freeUse: true }
+    ] });
+    expect(html).toContain("носитель Fanatic — <b>Культист (Культист Альфа)</b>");
+    expect(html).toContain("носитель Fanatic — <b>Культист (Культист Бета)</b>");
+  });
 });
 
 describe("Спиной к Спине: кнопка переноса урона на Фанатика в группе каждого попадания", () => {
