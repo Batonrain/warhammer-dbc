@@ -8,10 +8,9 @@
 // activateItemUntil(…, { seconds }) по worldTime (rules/item-activation.mjs).
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { packDocById } from "../support/pack-doc.mjs";
 
-const STAGE2 = "packs-src/talents/Элитные_архетипы/Вампир/Pact_Stage_2___Стадия_Пакта_2_1vk7E1pan7QCL34X.json";
-const doc = JSON.parse(readFileSync(STAGE2, "utf8"));
+const doc = packDocById("packs-src/talents/Элитные_архетипы/Вампир", "1vk7E1pan7QCL34X");
 const entries = doc.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const traitBy = id => entries.find(e => e.kind === "trait" && e.sourceUuid === `Compendium.warhammer-dbc.traits.Item.${id}`);
 

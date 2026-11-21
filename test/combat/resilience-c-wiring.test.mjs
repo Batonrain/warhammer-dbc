@@ -68,7 +68,7 @@ describe("единая точка наложения подключена к и�
     expect(users.sort()).toEqual([
       "module/combat/bulldoze.mjs", "module/combat/clobber.mjs", "module/combat/crit-effect-parser.mjs", "module/combat/damage.mjs",
       "module/combat/dread-wail.mjs", "module/combat/grapple.mjs", "module/combat/hamstring.mjs", "module/combat/knockdown.mjs",
-      "module/combat/mount.mjs", "module/combat/pugilist-strikes.mjs", "module/combat/roundhouse.mjs", "module/combat/takedown.mjs", "module/hooks.mjs",
+      "module/combat/mount.mjs", "module/combat/pugilist-strikes.mjs", "module/combat/roundhouse.mjs", "module/combat/takedown.mjs", "module/combat/thirst-warp.mjs", "module/hooks.mjs",
       "module/rules/on-target-fail.mjs"
     ].sort());
   });

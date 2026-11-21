@@ -25,8 +25,9 @@
 
 import { itemIs } from "./item-marker.mjs";
 
-// Английская половина имени в паке — «Auto-senses Ports»; в книге — «Autosense Jacks».
-const JACKS_NAMES = ["Auto-senses Ports", "Autosense Jacks"];
+// Английская половина имени в паке — «Auto-senses Ports» (в книге — «Autosense Jacks»;
+// так в паке не называется, поэтому опознание только по имени пака).
+const JACKS_NAMES = ["Auto-senses Ports", "Порты Авточувств"];
 
 /** Порты Авточувств ли этот мод. */
 export const isAutosenseJacks = mod => JACKS_NAMES.some(n => itemIs(mod, "weaponMod", null, n));
