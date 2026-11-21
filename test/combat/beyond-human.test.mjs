@@ -179,3 +179,43 @@ describe("стыковка: меню Очков и карточки (hooks.mjs)"
     expect(HOOKS.slice(click, click + 400)).toMatch(/masteryAutoSuccessOnCard\(actor, skillTest, message\)/);
   });
 });
+
+// Sahara 62-6d8b п.3: тесты без листа (Страх, кнопки элитных архетипов) несут
+// Характеристику во флаге testChar — переброс за Очко получает «оставить первый».
+import { rerolledTestChar, TEST_CHAR_FLAG } from "../../module/combat/beyond-human.mjs";
+import { _executeFearRoll } from "../../module/combat/fear.mjs";
+import { rollCultTest } from "../../module/combat/cult-common.mjs";
+
+describe("Характеристика переброшенной карточки", () => {
+  it("тест с листа — из skillTest, иначе — из testChar", () => {
+    expect(rerolledTestChar({ skillTest: { char: "ag" }, [TEST_CHAR_FLAG]: "wp" })).toBe("ag");
+    expect(rerolledTestChar({ [TEST_CHAR_FLAG]: "wp" })).toBe("wp");
+    expect(rerolledTestChar({})).toBe(null);
+    expect(rerolledTestChar(undefined)).toBe(null);
+  });
+  it("hooks.mjs берёт Характеристику через rerolledTestChar", () => {
+    const at = HOOKS.indexOf("const bhChar");
+    expect(at).toBeGreaterThan(0);
+    expect(HOOKS.slice(at, at + 300)).toMatch(/rerolledTestChar\(message\.flags/);
+    expect(HOOKS.slice(at, at + 300)).toMatch(/charKey: bhChar/);
+  });
+  it("карточка Страха несёт testChar", async () => {
+    resetCaptured();
+    captured.nextRoll = 99;
+    const actor = { id: "a1", name: "Ф", items: [], effects: [], getFlag: () => undefined, update: async () => {},
+      createEmbeddedDocuments: async () => [],
+      system: { characteristics: { wp: { total: 40 } }, fatigue: { value: 0, max: 0 }, fate: { value: 0 } } };
+    await _executeFearRoll(actor, 1, "important", 0, 0);
+    expect(captured.chat.at(-1).flags?.[NS]?.[TEST_CHAR_FLAG]).toBe("wp");
+  });
+  it("карточка теста кнопки элитного архетипа (один тест) несёт testChar", async () => {
+    resetCaptured();
+    const actor = { id: "a2", uuid: "Actor.a2", name: "К", items: [], getFlag: () => undefined,
+      system: { characteristics: { wp: { total: 40 }, int: { total: 40 } }, skills: {} } };
+    await rollCultTest(actor, { title: "Т", tests: [{ char: "wp" }] });
+    expect(captured.chat.at(-1).flags?.[NS]?.[TEST_CHAR_FLAG]).toBe("wp");
+    resetCaptured();
+    await rollCultTest(actor, { title: "Т", tests: [{ skill: "deceive", charOverride: "int" }] });
+    expect(captured.chat.at(-1).flags?.[NS]?.[TEST_CHAR_FLAG]).toBe("int");
+  });
+});

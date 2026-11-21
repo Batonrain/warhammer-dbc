@@ -260,7 +260,7 @@ import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
 import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
 import { masteryAutoSuccessOnCard, masteryHasPoint } from "./combat/mastery.mjs";
-import { beyondHumanRerollData, beyondHumanDataOf, keepFirstButtonHtml, keepFirstResult,
+import { beyondHumanRerollData, beyondHumanDataOf, keepFirstButtonHtml, keepFirstResult, rerolledTestChar,
          BEYOND_HUMAN_FLAG } from "./combat/beyond-human.mjs";
 import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
 import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
@@ -4996,8 +4996,10 @@ function _attachFateContextMenu(message, html) {
 
       // За Гранью Человека: первый результат этого теста (его Характеристика
       // известна по флагу карточки Навыка/Характеристики с листа).
-      const bhTest = skillTest?.char ? beyondHumanRerollData(actor, {
-        charKey: skillTest.char, firstRv: roll.total, threshold, spend: champion ? null : reroll1 }) : null;
+      // Тест без листа (Страх, кнопки архетипов) несёт Характеристику во флаге testChar.
+      const bhChar = rerolledTestChar(message.flags?.["warhammer-dbc"]);
+      const bhTest = bhChar ? beyondHumanRerollData(actor, {
+        charKey: bhChar, firstRv: roll.total, threshold, spend: champion ? null : reroll1 }) : null;
 
       const rv  = newRoll.total;
       const hit = threshold !== null ? rv <= threshold : null;

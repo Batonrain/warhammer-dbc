@@ -16,6 +16,7 @@ import { rollD100WithReroll }                      from "../rules/test-kind-widg
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { autoTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
+import { TEST_CHAR_FLAG } from "../rules/beyond-human.mjs";
 // Пилюли крит-таблиц (wdbc-xql6) карточке Шока больше не нужны: строка
 // применяется сама (applyShockRow), кнопка лишь задвоила бы Без сознания.
 import { deathButtonHtml } from "./crit-effect-parser.mjs";
@@ -248,7 +249,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const canReroll = !!properties.demon && !success && !opts.free;
   await _postFearMsg(actor, "Тест Страха", r.label, wp, ratingMod + mod, rv, eff, success, dof, shockHtml, allRolls, {
     properties, rerollCtx: canReroll ? { ratingKey, type, infamy, mod, failUndo } : null,
-    faithCtx: faithCtx ? { ...faithCtx, failUndo } : null, charLabel: charKey === "int" ? "Int" : "W",
+    faithCtx: faithCtx ? { ...faithCtx, failUndo } : null, charLabel: charKey === "int" ? "Int" : "W", testChar: charKey || "wp",
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
     difficulty: tk.difficulty || 0, ruleParts: [...ruleMods.parts, ...autoParts], ignoreNote
@@ -622,7 +623,7 @@ export async function rollHeartAttack(actor) {
 export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
   { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "", charLabel = "W",
     kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, ruleParts = [],
-    ignoreNote = "" } = {}) {
+    ignoreNote = "", testChar = "wp" } = {}) {
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
   // будут цепляться за них (Хатред и т.п.); здесь же дают бесплатный переброс.
@@ -677,11 +678,13 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
     rolls: allRolls,
     // Кнопки карточки читают свой контекст из флагов сообщения: бесплатный
     // переброс «Демон» (hooks.mjs) и «Вера в прошлое» (Особенность Мира).
-    flags: (rerollCtx || faithCtx) ? {
+    // testChar — Характеристика теста для «За Гранью Человека» при перебросе за Очко (Sahara 62-6d8b).
+    flags: {
       "warhammer-dbc": {
+        [TEST_CHAR_FLAG]: testChar,
         ...(rerollCtx ? { fearTest: { actorId: actor.id, actorUuid: actor.uuid, properties, ...rerollCtx } } : {}),
         ...(faithCtx ? { faithInThePast: faithCtx } : {})
       }
-    } : null
+    }
   });
 }
