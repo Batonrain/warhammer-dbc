@@ -6,8 +6,13 @@
 
 #wh-hud {
   /* Слева отступ под угловой виджет «Окружение» (≈228px), чтобы HUD его не накрывал;
-     справа 0 — язычок хотбара внутри бара. Панель центрируется в оставшемся месте. */
-  position: fixed; left: 228px; right: 0; bottom: 0; z-index: 58;
+     справа — ширина, которую реально занимает правая колонка Foundry (#sidebar:
+     раскрытый чат или полоса вкладок), её ставит module/apps/hud.mjs::syncSidebarInset.
+     Раньше было right: 0, и на окне 1024 px раскрытый чат накрывал кнопку «Ход»
+     (Sahara hud-1024-px). Панель центрируется в оставшемся месте. */
+  position: fixed; left: 228px; right: var(--wh-hud-right, 0px); bottom: 0; z-index: 58;
+  /* Контейнер для @container ниже: узкое место — панели в две строки. */
+  container-type: inline-size;
   display: flex; justify-content: center; padding: 0 4px;
   pointer-events: none;              /* мимо панели клики уходят на карту */
   /* Тот же когитаторный набор переменных, что у .combat-cog
@@ -32,6 +37,13 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
   border: 2px solid #1f6f4a; border-bottom: none;
   border-radius: 6px 6px 0 0;
   box-shadow: 0 -3px 16px rgba(0,0,0,.65), inset 0 1px 0 rgba(77,255,166,.14);
+}
+/* Узкое место между «Окружением» и чатом (окно ≈1024 px): СТАТУС с кнопкой «Ход»
+   и вкладки вместе не помещаются — вкладки уходят второй строкой, а не под чат
+   (Sahara hud-1024-px). Порог — СТАТУС (~330) + минимум вкладок (280) + поля. */
+@container (max-width: 680px) {
+  .wh-hud-bar { flex-wrap: wrap; }
+  .wh-hud-bar .hud-tabgroup { flex: 1 1 100%; min-width: 0; }
 }
 /* Заклёпки по верхней грани. */
 .wh-hud-bar::before {
