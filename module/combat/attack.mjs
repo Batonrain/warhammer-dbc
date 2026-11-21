@@ -860,7 +860,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const rolls = [];
     const n = reverseOnly ? 1 : Math.max(2, opts.reroll.rolls || 2);
     for (let i = 0; i < n; i++) rolls.push(await new Roll("1d100").evaluate());
-    let picked = pickReroll(rolls.map(r => r.total), reverseOnly ? "keepBest" : opts.reroll.mode);
+    // Обязательный переброс Успеха/Провала (Расчленитель): исход первого броска — тем же разбором попадания.
+    const isSuccess = v => attackHitOutcome({ rv: v, threshold, isMelee, wp, forceHit: opts.forceHit,
+      forceFail: !isMelee && handOfKhorneBlocksRangedAttack(item), fixedSuccessDeg: opts.fixedSuccessDeg }).success;
+    let picked = pickReroll(rolls.map(r => r.total), reverseOnly ? "keepBest" : opts.reroll.mode, { isSuccess });
     if (reverseOnly || opts.reroll.reverse) picked = applyReverse(picked);
     roll = picked.reversed ? await new Roll(String(picked.value)).evaluate() : rolls[picked.index];
     rerollDropped = picked.dropped;

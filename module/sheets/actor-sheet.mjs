@@ -3343,16 +3343,16 @@ export class WarhammerCharacterSheet
     // Встречным — там просто opposed ещё не заполнен (заполнится ниже,
     // авто-резолвом), но галочка уже стоит.
     const opposedKind = opposedSelected || !!opposedAuto;
-    const forcedOpponentReroll = opposedKind
+    const forcedOpponentReroll = (opposedKind
       ? (autoResolved.rerolls || []).find(r => r.who === "opponent")
-      : null;
+      : null) || (autoResolved.rerolls || []).find(r => r.who === "forced");
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
     // BONE-Head / Костеголов: тест I в свой Ход в бою — Полное действие
     // (combat/bone-head.mjs); ОД не хватает — теста нет. Платит бросающий.
     if (!await payIntTestAction(this.actor, charKey)) return;
-    const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll, { confirmPick });
+    const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll, { confirmPick, isSuccess: v => v <= baseEff });
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
 
     // Авто-встречный тест (wdbc-j814): ручные поля (opposed) в приоритете —

@@ -690,7 +690,7 @@ export function openAttackDialog(ctx) {
               // Кубика: он не предлагается, а применяется. Тот же приоритет
               // «внешнее навязывание важнее своего», что у защиты —
               // combat/defense.mjs::_performDodge, forcedReroll.
-              reroll: (resolvedAttack.rerolls || []).find(r => r.who === "opponent")
+              reroll: (resolvedAttack.rerolls || []).find(r => r.who === "opponent" || r.who === "forced")
                       || f.reroll
                       || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined)
                       // Отмеченная Добыча (combat/marked-prey.mjs): Преимущество на атаки Казни по отмеченной цели.

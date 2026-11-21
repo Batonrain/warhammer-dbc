@@ -535,7 +535,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
 /** Режимы переброса, которые понимает бросок. Умолчание — «лучший из двух». */
 // "reverse" — «обратить бросок» (поменять местами десятки и единицы d100,
 // Ветеран Долгой Войны): один бросок, второго кубика нет.
-const REROLL_MODES = new Set(["keepBest", "keepWorst", "reverse"]);
+// "rerollSuccess"/"rerollFail" — обязательный переброс успешного/проваленного
+// броска, остаётся новый (Расчленитель): rules/reroll-pick.mjs.
+const REROLL_MODES = new Set(["keepBest", "keepWorst", "reverse", "rerollSuccess", "rerollFail"]);
 
 /**
  * Перебросы, доступные на ЭТОМ броске. Книга даёт их россыпью — «раз в Раунд
@@ -577,7 +579,10 @@ export function rerollsFromRules(rules, ctx = {}) {
       //                применяется без спроса в sheets/attack/dialog.mjs.
       // Схлопывать "opponent" в "self" нельзя: тогда наказание попадает в
       // список добровольных перебросов наказуемого, снятым по умолчанию.
-      const who = effect.who === "target" || effect.who === "opponent" ? effect.who : "self";
+      //   "forced"   — обязан перебросить сам носитель («должен перебрасывать»,
+      //                Расчленитель): применяется без спроса, как "opponent",
+      //                но без условия встречного теста.
+      const who = ["target", "opponent", "forced"].includes(effect.who) ? effect.who : "self";
       // target — область, как записана: бросок без диалога (Трудный Ландшафт,
       // combat/movement-terrain.mjs) берёт переброс сам и обязан брать только
       // СВОЙ, а не любой, чья область подошла по Ловкости или «all».

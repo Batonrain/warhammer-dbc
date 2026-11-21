@@ -77,9 +77,10 @@ export function shredderHordeHits(magnitude) {
 }
 
 /**
- * Расчленитель включён (Талант активирован): успешные BS перебрасываются
- * (Помеха — худший из двух: Успех остаётся, только если Успешны оба броска,
- * та же вероятность, что у «перебросить Успех»), проваленные WS — лучший из двух.
+ * Расчленитель включён (Талант активирован): «должен перебрасывать успешные
+ * тесты BS и неудачные тесты WS» — переброс обязательный (who:"forced", без
+ * галочки), и остаётся НОВЫЙ бросок (решение Сергея 21.11.2026), а не худший
+ * или лучший из двух.
  */
 export function mutilatorRules(actor) {
   const item = [...(actor?.items ?? [])].find(i => i?.type === "talent" && String(i.name ?? "").startsWith("Mutilator"));
@@ -87,7 +88,7 @@ export function mutilatorRules(actor) {
   const lb = "🪚 Расчленитель: переброс успешного BS";
   const lw = "🪚 Расчленитель: переброс проваленного WS";
   return [
-    { id: "astartes.mutilator.bs", label: lb, effects: [{ kind: "rollMode", target: ["weapon:ranged", "char:bs"], mode: "keepWorst", rolls: 2, label: lb }] },
-    { id: "astartes.mutilator.ws", label: lw, effects: [{ kind: "rollMode", target: ["weapon:melee", "char:ws"], mode: "keepBest", rolls: 2, label: lw }] }
+    { id: "astartes.mutilator.bs", label: lb, effects: [{ kind: "rollMode", target: ["weapon:ranged", "char:bs"], mode: "rerollSuccess", rolls: 2, who: "forced", label: lb }] },
+    { id: "astartes.mutilator.ws", label: lw, effects: [{ kind: "rollMode", target: ["weapon:melee", "char:ws"], mode: "rerollFail", rolls: 2, who: "forced", label: lw }] }
   ];
 }
