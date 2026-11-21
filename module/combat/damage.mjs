@@ -5,6 +5,7 @@ import { anointedShieldBonus, ANOINTED_SHIELD_FLAG } from "../rules/terminator-t
 import { momentumOnDamage } from "./momentum.mjs";
 import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
 import { isDaemonActor } from "../rules/predicates.mjs";
+import { daemonicTbBonus, bypassesDaemonic } from "../rules/daemonic-bypass.mjs";
 import { SWARM_CAP, swarmDamage } from "../rules/swarm.mjs";
 import { WARP_INSTABILITY_CAP, shouldBanish } from "../rules/warp-instability.mjs";
 import { warpInstabilityOnHurt, warpInstabilityOnDealt, banishToWarp } from "./warp-instability.mjs";
@@ -1038,6 +1039,7 @@ export async function applyDamageToActor(actor, damageData) {
 
   let tb, armorAP, effArmorAP, totalAbsorption;
   let hollowBonesHalved = false;
+  let daemonicTbIgnored = 0;   // Daemonic (X): сколько T.b срезал обход (подпись в карточке)
   let hardenedSoulBonus = 0;
   // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями этого
   // же вида урона — читается напрямую (см. adaptation.mjs, почему не через
@@ -1104,6 +1106,19 @@ export async function applyDamageToActor(actor, damageData) {
     }
     // Пестигор Плакальщик: T.b ×2 в течение 1 Раунда после применения (wdbc-gao07).
     tb = mournerTb(actor, tb);
+    // Daemonic (X): психосилы, Force/Sanctified/Warp Weapon, Демоническое и
+    // Руническое оружие, естественное оружие другого демона игнорируют +X к
+    // T.b от Трейта (rules/daemonic-bypass.mjs, Sahara daemonic-force-sanctified).
+    const daemonicTb = daemonicTbBonus(actor);
+    if (daemonicTb > 0) {
+      const atkWeapon = weaponUuid ? await fromUuid(weaponUuid).catch(() => null) : null;
+      const atkDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+      const attacker = atkDoc?.actor ?? atkDoc ?? null;
+      if (bypassesDaemonic({ weapon: atkWeapon, attacker, psychicPowerType: damageData?.psychicPowerType ?? null, sanctified })) {
+        daemonicTbIgnored = Math.min(tb, daemonicTb);
+        tb = Math.max(0, tb - daemonicTb);
+      }
+    }
     // Hollow Bones / Пустые Кости (Гарпия): T.b вдвое (окр.▲) против I(Cr).
     ({ tb, halved: hollowBonesHalved } = hollowBonesTb(actor, tb, damageSubtype));
     if (ignoreArmour) {
@@ -1804,6 +1819,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
   if (hollowBonesHalved) propNotes.push("Пустые Кости: T.b вдвое (окр.▲) против I(Cr)");
+  if (daemonicTbIgnored > 0) propNotes.push(`Daemonic: оружие игнорирует +${daemonicTbIgnored} к T.b от Трейта`);
   if (mournerNote) propNotes.push(mournerNote);
   if (adaptOnlyBonus > 0) propNotes.push(`Адаптация: +${adaptOnlyBonus} Поглощения`);
   if (rollingBonus > 0) propNotes.push(`Скользить за Ударами: +${rollingBonus} Поглощения (½A.b против безоружной атаки)`);
