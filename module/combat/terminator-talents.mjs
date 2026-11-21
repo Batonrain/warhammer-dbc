@@ -14,10 +14,13 @@ import {
   ANOINTED_SHIELD_FLAG, ANOINTED_SHIELD_BONUS, isPolearm, deathShroudDamageFormula
 } from "../rules/terminator-talents.mjs";
 import {
-  chooseOne, confirmBox, infoCard, payActions, payReaction, rollSkillCard, tokensAround, sameSide, setTargets, applyDamageButton
+  chooseOne, confirmBox, infoCard, payActions, payReaction, rollSkillCard, tokensAround, sameSide, setTargets, applyDamageButton,
+  actorToken
 } from "./astartes-elite-ui.mjs";
+import { tokensThatCanSee } from "../rules/vision-target.mjs";
 
 const NS = "warhammer-dbc";
+const ATRAMENTAR_FEAR = 3;
 
 /** Anointed / Помазанник: принял попадание за союзника — FL (Heresy)(W)+10 → +35 к рейтингу щита на это попадание. */
 export async function useAnointed(actor) {
@@ -32,7 +35,26 @@ export async function useAnointed(actor) {
   return undefined;
 }
 
-/** Atramentar / Атраментар: убийство в рукопашной → Реакция (или Атака другой рукой) → Страх 3 до конца сцены. */
+/**
+ * Враги, видящие актора сейчас (другая сторона, токен в поле зрения) — свидетели
+ * убийства для Атраментара.
+ */
+function enemiesInSight(actor) {
+  const token = actorToken(actor);
+  if (!token || !canvas?.ready) return [];
+  const side = token.document?.disposition ?? token.disposition;
+  const candidates = canvas.tokens.placeables.filter(t => t.actor && t.actor !== actor
+    && (t.document?.disposition ?? t.disposition) !== side);
+  const seen = tokensThatCanSee(token.document ?? token, candidates.map(t => t.document ?? t), canvas.grid);
+  return [...new Map(seen.map(t => [t.actor.uuid, t.actor])).values()];
+}
+
+/**
+ * Atramentar / Атраментар: убийство в рукопашной → Реакция (или Атака другой рукой) →
+ * Страх 3 до конца СЦЕНЫ и только против видевших убийство (решение Сергея 21.11.2026).
+ * Свидетели — враги, у которых Терминатор в поле зрения в момент нажатия; каждому —
+ * своя кнопка теста Страха (3) на карточке.
+ */
 export async function useAtramentar(actor, item) {
   if (!hasItemNamed(actor, "Atramentar", ["talent"])) return ui.notifications.warn("⚠️ У актора нет Таланта Атраментар.") && "нет Таланта";
   const pay = await chooseOne("Атраментар", [
@@ -41,9 +63,17 @@ export async function useAtramentar(actor, item) {
   ], { prompt: `${actor.name} убил противника в рукопашной. Чем заплатить?` });
   if (!pay) return "отмена";
   if (pay.id === "reaction" && !(await payReaction(actor, "Атраментар"))) return "нет Реакции";
-  const r = await activateItemUntil(item, { label: "Атраментар: Страх 3",
+  const r = await activateItemUntil(item, { label: "Атраментар: Страх 3", sceneOnly: true,
     text: `Убийство разрывает врага в клочья (${pay.id === "reaction" ? "Реакция" : "Атака другой рукой"} потрачена): Страх (3) против видевших его врагов.` });
-  return r;
+  if (r) return r;
+  const witnesses = enemiesInSight(actor);
+  await infoCard(actor, "💀", "Атраментар: свидетели убийства", [
+    witnesses.length
+      ? `Тест Страха (${ATRAMENTAR_FEAR}) проходят только враги, видевшие убийство (${witnesses.length}). Его бросает владелец свидетеля или ГМ.`
+      : "В поле зрения Терминатора нет врагов — Страх некому проходить. Если кто-то видел убийство, ГМ даёт ему тест Страха (3) из листа."
+  ], { sections: witnesses.map(w =>
+    `<button class="wh-pm-fear-btn" type="button" data-target-uuid="${esc(w.uuid)}" data-fear-rating="${ATRAMENTAR_FEAR}" data-source-name="${esc(actor.name)}">Тест Страха (${ATRAMENTAR_FEAR}): ${esc(w.name)}</button>`) });
+  return undefined;
 }
 
 /** Death Shroud / Саван Смерти: полное действие, древковое в двуручном хвате — по всем врагам в 1 м одним броском. */

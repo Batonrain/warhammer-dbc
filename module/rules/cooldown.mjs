@@ -55,13 +55,30 @@ const usageKey = flag => String(flag ?? "").replace(/\./g, "-");
  * лимит НА календарные сутки/месяцы) — эти пары не путать, они живут в
  * разных плоскостях флага (см. throttleCount/incrementThrottleCount).
  */
-function liveValue(unit) {
+function liveValue(unit, doc = null) {
   if (unit === "day")   return Math.floor((Number(game.time?.worldTime) || 0) / SECONDS_PER_DAY);
   if (unit === "month") return Math.floor((Number(game.time?.worldTime) || 0) / SECONDS_PER_MONTH);
   if (!game.combat) return undefined;
   if (unit === "round")  return game.combat.round;
   if (unit === "battle") return game.combat.id;
+  if (unit === "turn")   return turnValue(game.combat, doc?.actor ?? doc);
   return undefined;
+}
+
+/**
+ * «Раз в Ход» (решение Сергея 21.11.2026, Расковать): Ход — свой ход персонажа
+ * в Раунде, а не Раунд целиком. Номер Хода актора = номер Раунда, в котором
+ * начался его последний Ход: пока очередь в этом Раунде до него не дошла,
+ * идёт ещё Ход прошлого Раунда. Так метка сбрасывается в начале СВОЕГО Хода,
+ * а не на смене Раунда. Актор не в бою — как «раз в Раунд».
+ */
+export function turnValue(combat, actor) {
+  if (!combat) return undefined;
+  const round = Number(combat.round) || 0;
+  const turns = combat.turns ?? [];
+  const idx = actor ? turns.findIndex(c => c?.actor === actor || (!!actor.uuid && c?.actor?.uuid === actor.uuid)) : -1;
+  if (idx < 0) return round;
+  return idx > (Number(combat.turn) || 0) ? round - 1 : round;
 }
 
 /** Доступна ли Раз-в-<unit> возможность актора ("round" | "battle" |
@@ -75,7 +92,7 @@ export function isCapabilityAvailable(actor, flag, unit = "round") {
     const stored = actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.round;
     return stored === undefined || cur > stored + 1 || cur < stored;
   }
-  const current = liveValue(unit);
+  const current = liveValue(unit, actor);
   if (current === undefined) return true;
   const stored = actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.[unit];
   return stored !== current;
@@ -84,7 +101,7 @@ export function isCapabilityAvailable(actor, flag, unit = "round") {
 /** Отметить Раз-в-<unit> возможность актора потраченной в текущем <unit> (или в явно заданном `at`: старт боя звучит до того, как game.combat станет этим боем). */
 export async function markCapabilityUsed(actor, flag, unit = "round", at = undefined) {
   if (!actor) return;
-  const current = at ?? liveValue(unit);
+  const current = at ?? liveValue(unit, actor);
   if (current === undefined) return;
   await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`, { scope: unit, used: true, [unit]: current });
 }
@@ -151,11 +168,11 @@ export async function markWorldTimeCooldownUsed(doc, flag) {
  * worldTime с фиксированным интервалом в сутки (та же величина, что у
  * apps/sus-an-heal.mjs).
  */
-export const THROTTLE_UNITS = ["round", "battle", "scene", "session", "day", "month"];
+export const THROTTLE_UNITS = ["turn", "round", "battle", "scene", "session", "day", "month"];
 
 /** Готова ли троттлящаяся запись документа (актор/предмет) к запуску сейчас. */
 export function isThrottleReady(doc, flag, unit) {
-  if (unit === "round" || unit === "battle") return isCapabilityAvailable(doc, flag, unit);
+  if (unit === "turn" || unit === "round" || unit === "battle") return isCapabilityAvailable(doc, flag, unit);
   if (unit === "scene" || unit === "session") return !isRuleUsageUsed(doc, flag);
   if (unit === "day") return isWorldTimeCooldownReady(doc, flag, SECONDS_PER_DAY);
   if (unit === "month") return isWorldTimeCooldownReady(doc, flag, SECONDS_PER_MONTH);
@@ -164,7 +181,7 @@ export function isThrottleReady(doc, flag, unit) {
 
 /** Отмечает троттлящуюся запись документа использованной прямо сейчас. */
 export async function markThrottleUsed(doc, flag, unit) {
-  if (unit === "round" || unit === "battle") return markCapabilityUsed(doc, flag, unit);
+  if (unit === "turn" || unit === "round" || unit === "battle") return markCapabilityUsed(doc, flag, unit);
   if (unit === "scene" || unit === "session") return markRuleUsageUsed(doc, flag, unit);
   if (unit === "day" || unit === "month") return markWorldTimeCooldownUsed(doc, flag);
 }
@@ -190,8 +207,8 @@ export async function markThrottleUsed(doc, flag, unit) {
 export function throttleCount(doc, flag, unit) {
   const entry = doc?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`);
   if (!entry) return 0;
-  if (unit === "round" || unit === "battle" || unit === "day" || unit === "month") {
-    const current = liveValue(unit);
+  if (unit === "turn" || unit === "round" || unit === "battle" || unit === "day" || unit === "month") {
+    const current = liveValue(unit, doc);
     if (current === undefined) return 0;
     return entry[unit] === current ? (Number(entry.count) || 0) : 0;
   }
@@ -216,8 +233,8 @@ export async function incrementThrottleCount(doc, flag, unit, max) {
   const used = throttleCount(doc, flag, unit);
   if (used >= (Number(max) || 0)) return false;
   const patch = { scope: unit, count: used + 1 };
-  if (unit === "round" || unit === "battle" || unit === "day" || unit === "month") {
-    const current = liveValue(unit);
+  if (unit === "turn" || unit === "round" || unit === "battle" || unit === "day" || unit === "month") {
+    const current = liveValue(unit, doc);
     if (current === undefined) return false;
     patch[unit] = current;
   }

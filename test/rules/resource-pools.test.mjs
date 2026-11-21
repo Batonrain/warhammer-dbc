@@ -254,3 +254,33 @@ describe("spendFromInfamyPool: пул ресурса вместо Очка Бе�
     expect(a.system.resourcePools.thirst).toBe(2);
   });
 });
+
+describe("пул без потолка (resPoolMax «∞», Отец Крови)", () => {
+  const father = () => actorWith([itemWith("Отец Крови", [entry({ resPoolKey: "bloodFather", resPoolLabel: "Отец Крови", resPoolMax: "∞", resPoolGainAmount: "1" })])], { pools: { bloodFather: 37 } });
+
+  it("пул виден, значение не прижимается к числу", () => {
+    const a = father();
+    const d = resourcePoolDefs(a).get("bloodFather");
+    expect(d.unbounded).toBe(true);
+    expect(resourcePoolValue(a, "bloodFather")).toBe(37);
+  });
+
+  it("пополнение не упирается в потолок, восполнение «до максимума» не срабатывает", () => {
+    const a = father();
+    expect(resourceGainUpdates(a, "bloodFather", 5).after).toBe(42);
+    expect(resourceRefillUpdates(a, "battle").filled).toEqual([]);
+  });
+
+  it("лист показывает ∞", () => {
+    const row = resourcePoolsView(father()).find(r => r.key === "bloodFather");
+    expect(row.maxLabel).toBe("∞");
+    expect(row.max).toBe("");
+  });
+
+  it("паковая Черта Отец Крови — без потолка", () => {
+    const dir = "packs-src/traits/Элитные_архетипы/Виткис";
+    const file = readdirSync(dir).find(f => f.includes("Отец_Крови"));
+    const doc = JSON.parse(readFileSync(join(dir, file), "utf8"));
+    expect(resourcePoolDefs({ items: [doc], system: {} }).get("bloodFather")?.unbounded).toBe(true);
+  });
+});

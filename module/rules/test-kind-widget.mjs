@@ -45,7 +45,7 @@ import { esc } from "../helpers/utils.mjs";
  * @param {{confirmPick?:boolean}} [opts]
  * @returns {Promise<{roll:Roll, rv:number, rolls:Roll[], rerollNote:string}>}
  */
-export async function rollD100WithReroll(reroll, { confirmPick = false } = {}) {
+export async function rollD100WithReroll(reroll, { confirmPick = false, isSuccess = null } = {}) {
   // «Обратить бросок» (mode "reverse" или флаг reverse поверх Преимущества/
   // Помехи) — кубик один, второго не бросаем: обращается уже выбранный.
   const reverseOnly = reroll?.mode === "reverse";
@@ -53,7 +53,7 @@ export async function rollD100WithReroll(reroll, { confirmPick = false } = {}) {
   const rolls = [];
   for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
   const values = rolls.map(r => r.total);
-  const auto = pickReroll(values, reverseOnly ? "keepBest" : reroll?.mode);
+  const auto = pickReroll(values, reverseOnly ? "keepBest" : reroll?.mode, { isSuccess });
   let picked = (confirmPick && rolls.length > 1 && new Set(values).size > 1)
     ? await confirmRollPick(values, auto)
     : auto;

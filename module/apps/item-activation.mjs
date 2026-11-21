@@ -34,14 +34,15 @@ async function postCard(actor, title, text) {
  * Включить предмет до конца боя или сцены.
  * @returns {Promise<string|undefined>} строка — отказ (цена не списывается)
  */
-export async function activateItemUntil(item, { label = "", text = "" } = {}) {
+export async function activateItemUntil(item, { label = "", text = "", sceneOnly = false } = {}) {
   const actor = item?.actor ?? item?.parent ?? null;
   const name = label || item?.name || "Способность";
   if (!actor) return ui.notifications?.warn(`«${name}»: нет персонажа-владельца.`) || "нет владельца";
   if (activationState(item)) {
     return ui.notifications?.warn(`«${name}» уже действует до конца боя или сцены.`) || "уже включено";
   }
-  const combat = combatOfActor(actor);
+  // sceneOnly — «до конца сцены» (Атраментар): конец боя активацию не снимает.
+  const combat = sceneOnly ? null : combatOfActor(actor);
   await item.setFlag(NS, ACTIVATED_FLAG, activationData({
     combatId: combat?.started ? combat.id : "", at: game.time?.worldTime ?? 0
   }));

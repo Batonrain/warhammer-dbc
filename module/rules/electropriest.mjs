@@ -49,6 +49,8 @@ const energyOf = actor => Math.max(0, Number(actor?.system?.energy?.value) || 0)
  * другого Фрейма».
  */
 export const OTHER_FRAMES = ["Assassin Frame", "Paladin Frame", "Masterpiece Frame"];
+export const HOMINIS_FRAME = "Hominis Frame";
+export const hasHominisFrame = actor => hasItemNamed(actor, HOMINIS_FRAME, ["trait"]);
 export const otherFrameInstalled = actor => OTHER_FRAMES.some(n => hasItemNamed(actor, n, ["trait"]));
 
 /**
@@ -57,6 +59,10 @@ export const otherFrameInstalled = actor => OTHER_FRAMES.some(n => hasItemNamed(
  */
 export function electropriestActive(actor) {
   if (!hasPowerFromFlesh(actor)) return true;
+  // «Действуют только с фреймом Хоминис» (решение Сергея 21.11.2026): пока
+  // Фреймы — заготовки, признак тела — Черта «Фрейм Хоминис» (её выдаёт
+  // Архетип). Нет её — Архетип не действует, какой бы Фрейм ни стоял.
+  if (!hasHominisFrame(actor)) return false;
   if (otherFrameInstalled(actor)) return false;
   if (!hasItemNamed(actor, "Machine", ["trait"])) return true;
   return hasItemNamed(actor, "Fleshmetal", ["talent"]) || hasItemNamed(actor, "Mechanoid", ["mutation", "trait"])

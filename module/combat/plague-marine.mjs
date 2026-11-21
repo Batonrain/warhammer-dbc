@@ -107,10 +107,11 @@ async function postAbominableFear(actor, attackerUuid, attackerName) {
   }, { sound: false });
 }
 
-export async function rollAbominableFear(target) {
+/** Тест Страха цели с кнопки карточки. rating — рейтинг источника (по умолчанию Отвратной Физиологии; Атраментар даёт 3). */
+export async function rollAbominableFear(target, rating = ABOMINABLE_FEAR_RATING) {
   const infamy = Math.max(0, Number(target?.system?.characteristics?.inf?.total) || 0);
   const type = target?.hasPlayerOwner ? "important" : "normal";
-  return _executeFearRoll(target, ABOMINABLE_FEAR_RATING, type, infamy, 0, {});
+  return _executeFearRoll(target, Number(rating) || ABOMINABLE_FEAR_RATING, type, infamy, 0, {});
 }
 
 async function chooseDisease(carrier, diseases) {

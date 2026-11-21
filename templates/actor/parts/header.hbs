@@ -66,7 +66,7 @@
           Очки Мести… Максимум — авторасчёт от Черт и Стадий Пакта; «+» — пополнение пула
           (Испить кровь, Медитация), тратят — кнопки панели «Возможности сейчас». --}}
     {{#each resourcePools}}
-      <div class="header-cell fate-cell"> <label title="{{note}}">{{label}}</label> <div class="fate-values"> <input type="number" name="system.resourcePools.{{key}}" value="{{value}}" min="0" max="{{max}}"/> <span>/</span> <input type="number" value="{{max}}" readonly title="Авторасчёт: Черта архетипа и Стадии Пакта"/> {{#if gainLabel}}<button type="button" class="wh-slot-btn" data-action="resourcePoolGain" data-pool="{{key}}" title="{{gainLabel}}: +{{gainAmount}}">+</button>{{/if}} </div> </div>
+      <div class="header-cell fate-cell"> <label title="{{note}}">{{label}}</label> <div class="fate-values"> <input type="number" name="system.resourcePools.{{key}}" value="{{value}}" min="0" {{#unless unbounded}}max="{{max}}"{{/unless}}/> <span>/</span> <input type="text" value="{{maxLabel}}" readonly title="Авторасчёт: Черта архетипа и Стадии Пакта"/> {{#if gainLabel}}<button type="button" class="wh-slot-btn" data-action="resourcePoolGain" data-pool="{{key}}" title="{{gainLabel}}: +{{gainAmount}}">+</button>{{/if}} </div> </div>
     {{/each}}
     {{!-- Очки Трофеев Мастера Казней (rules/trophy-points.mjs, Sahara task-bbe1): ячейка только носителю; пояснения — в tooltip. --}}
     {{#if hasTrophyPoints}}

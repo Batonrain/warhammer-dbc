@@ -169,14 +169,20 @@ describe("Поглотитель", () => {
 describe("Сила Из Плоти: подавление Электрожреца", () => {
   const pff = T("Power From Flesh / Сила Из Плоти", "trait");
   const coils = T("Electropriest Coils / Катушки Электрожреца", "trait");
+  const hominis = T("Hominis Frame / Фрейм Хоминис", "trait");
   it("гаснет от Machine и от чужого Фрейма", () => {
-    expect(electropriestActive(actor([pff, coils]))).toBe(true);
-    expect(electropriestActive(actor([pff, T("Machine (2)", "trait")]))).toBe(false);
-    expect(electropriestActive(actor([pff, T("Machine (2)", "trait"), T("Fleshmetal")]))).toBe(true);
-    const framed = actor([pff, T("Paladin Frame / Фрейм Паладина", "trait")]);
+    expect(electropriestActive(actor([pff, hominis, coils]))).toBe(true);
+    expect(electropriestActive(actor([pff, hominis, T("Machine (2)", "trait")]))).toBe(false);
+    expect(electropriestActive(actor([pff, hominis, T("Machine (2)", "trait"), T("Fleshmetal")]))).toBe(true);
+    const framed = actor([pff, hominis, T("Paladin Frame / Фрейм Паладина", "trait")]);
     expect(otherFrameInstalled(framed)).toBe(true);
     expect(electropriestActive(framed)).toBe(false);
     expect(suppressedArchetypes(framed).has(ELECTROPRIEST)).toBe(true);
+  });
+  it("работает только с Фреймом Хоминис (решение 21.11.2026), сам Фрейм не гаснет", () => {
+    expect(electropriestActive(actor([pff, coils]))).toBe(false);
+    expect(suppressedArchetypes(actor([pff, coils])).has(ELECTROPRIEST)).toBe(true);
+    expect(suppressibleArchetypeOf(hominis)).toBeNull();
   });
   it("гасит Таланты и Черты Архетипа и его бонусы, но не саму Силу Из Плоти", () => {
     const a = actor([pff, coils, T("Machine", "trait")]);
@@ -224,5 +230,16 @@ describe("Соглашение Доблести", () => {
     expect(itemShouldBeSuppressed(b, ring, 500)).toBe(true);
     expect(itemShouldBeSuppressed(b, accord, 500)).toBe(false);
     expect(itemShouldBeSuppressed(b, ring, 1500)).toBe(false);
+  });
+});
+
+describe("Фрейм Хоминис: пересчёт подавления (живая проверка PR #588)", () => {
+  it("снятие/выдача Черты Хоминис и загрузка мира запускают syncArchetypeSuppression", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync("warhammer-dbc.mjs", "utf8");
+    const m = src.match(/const ARCH_SUPPRESS_TRIGGERS = (\/.*\/i);/);
+    const re = new Function(`return ${m[1]}`)();
+    expect(re.test("Hominis Frame / Фрейм Хоминис")).toBe(true);
+    expect(src).toMatch(/Hooks\.once\("ready"[\s\S]{0,600}syncArchetypeSuppression\(actor\)/);
   });
 });

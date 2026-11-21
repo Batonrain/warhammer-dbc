@@ -51,11 +51,11 @@ describe("До Зубов и Измельчитель", () => {
 });
 
 describe("Расчленитель", () => {
-  it("включён — Помеха на BS, лучший из двух на WS", () => {
+  it("включён — обязательный переброс успешного BS и проваленного WS, остаётся новый бросок", () => {
     const on = { items: [{ type: "talent", name: "Mutilator / Расчленитель", flags: { [NS]: { activated: { combatId: "", at: 0 } } } }] };
     const rules = mutilatorRules(on);
-    expect(rules[0].effects[0]).toMatchObject({ mode: "keepWorst", target: ["weapon:ranged", "char:bs"] });
-    expect(rules[1].effects[0]).toMatchObject({ mode: "keepBest", target: ["weapon:melee", "char:ws"] });
+    expect(rules[0].effects[0]).toMatchObject({ mode: "rerollSuccess", who: "forced", target: ["weapon:ranged", "char:bs"] });
+    expect(rules[1].effects[0]).toMatchObject({ mode: "rerollFail", who: "forced", target: ["weapon:melee", "char:ws"] });
     expect(mutilatorRules({ items: [{ type: "talent", name: "Mutilator" }] })).toEqual([]);
   });
 });

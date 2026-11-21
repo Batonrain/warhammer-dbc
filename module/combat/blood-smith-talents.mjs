@@ -20,20 +20,38 @@ import {
 
 const NS = "warhammer-dbc";
 
-/** Имя и W.b демона: из выделенной цели, иначе — вводом. */
+/**
+ * Имя и W.b конкретного демона (решение Сергея 21.11.2026: W.b — бонус Воли
+ * именно этого демона, никакого числа «по умолчанию»). Источник по порядку:
+ * выделенная цель → вписанное число → Бестиарий по имени (ГМу он открыт,
+ * игроку нет — тогда W.b называет ГМ и игрок вписывает его).
+ */
 async function askDemon(title) {
   const t = targetedActors()[0];
   const tName = t?.name ?? "";
   const tWb = Number(t?.system?.characteristics?.wp?.bonus) || 0;
-  const html = `<p>${t ? `Цель: ${esc(tName)}.` : "Цель не выделена — впишите демона."}</p>
+  const html = `<p>${t ? `Цель: ${esc(tName)}.` : "Цель не выделена — впишите демона. W.b возьмётся из Бестиария по имени; если Бестиарий закрыт, впишите W.b, который назовёт ГМ."}</p>
     <div class="form-group"><label>Демон</label><input type="text" name="dn" value="${esc(tName)}"></div>
-    <div class="form-group"><label>W.b демона</label><input type="number" name="dwb" value="${tWb || 4}"></div>`;
+    <div class="form-group"><label>W.b демона</label><input type="number" name="dwb" min="0" value="${tWb || ""}" placeholder="из цели или Бестиария"></div>`;
   const res = await foundry.applications.api.DialogV2.prompt({
     window: { title }, classes: ["warhammer-dbc", "wh-holo"], content: html,
-    ok: { label: "Дальше", callback: (_ev, button) => ({ name: String(button.form.elements.dn.value || "").trim(), wb: Number(button.form.elements.dwb.value) || 0 }) },
+    ok: { label: "Дальше", callback: (_ev, button) => ({ name: String(button.form.elements.dn.value || "").trim(), wbRaw: String(button.form.elements.dwb.value ?? "").trim() }) },
     rejectClose: false
   }).catch(() => null);
-  return res?.name ? res : null;
+  if (!res?.name) return null;
+  let wb = res.wbRaw === "" ? null : Math.max(0, Number(res.wbRaw) || 0);
+  if (wb == null && t && res.name === tName) wb = tWb;
+  if (wb == null) {
+    const { findBestiaryActor } = await import("../apps/demon-summon.mjs");
+    const src = await findBestiaryActor(res.name).catch(() => null);
+    const bWb = Number(src?.system?.characteristics?.wp?.bonus);
+    if (Number.isFinite(bWb) && bWb > 0) wb = bWb;
+  }
+  if (wb == null) {
+    ui.notifications.warn(`⚠️ W.b демона «${res.name}» неизвестен: выделите его целью или впишите W.b.`);
+    return null;
+  }
+  return { name: res.name, wb };
 }
 
 /** Ring of Blood / Кольцо Крови: исход поединка в кругу. */

@@ -109,7 +109,7 @@ const SERVO_ARM_RE = /servo[- ]arm|серво[- ]рук/i;
 const TECH_DENDRITE_RE = /technical mechadendrite|технический мех/i;
 const MANIP_DENDRITE_RE = /manipulator mechadendrite|манипулятор/i;
 
-/** Ординатор с оружием техники в руках: стрельба на ходу всегда со штрафом. */
+/** Ординатор с оружием техники в руках: гироскопы работают как Гиро-стабилизация (решение 21.11.2026). */
 export const ordinatorVehicleGun = (actor, weapon) => hasOrdinator(actor) && isVehicleWeaponInHand(actor, weapon);
 
 /**

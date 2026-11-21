@@ -3145,7 +3145,7 @@ Hooks.on("preUpdateItem", (item, changed) => {
 // Сила Из Плоти: Черта Machine, Талант Fleshmetal, мутация Механоид, чужой Фрейм
 // и сами Таланты/Черты Архетипа — появление или снятие любого из них пересчитывает,
 // погашен ли Электрожрец. Соглашение Доблести: надетая чужая броня — нарушение.
-const ARCH_SUPPRESS_TRIGGERS = /^(machine|fleshmetal|mechanoid|механоид|assassin frame|paladin frame|masterpiece frame|power from flesh)\b/i;
+const ARCH_SUPPRESS_TRIGGERS = /^(machine|fleshmetal|mechanoid|механоид|hominis frame|assassin frame|paladin frame|masterpiece frame|power from flesh)\b/i;
 function _archSuppressRelevant(item) {
   if (item?.type === "eliteArchetype") return true;
   if (!["trait", "talent", "mutation"].includes(item?.type)) return false;
@@ -3161,6 +3161,17 @@ for (const hook of ["createItem", "deleteItem"]) {
 Hooks.on("updateItem", (item, changes, _o, userId) => {
   if (userId !== game.user.id || !(item?.parent instanceof Actor)) return;
   valourOnEquip(item, changes).catch(e => console.error("Warhammer DBC | Соглашение Доблести:", e));
+});
+// Загрузка мира: условия подавления могли смениться без события предмета —
+// новая версия системы (Фрейм Хоминис стал обязательным, PR #588), истёкший
+// срок Соглашения Доблести. Пересчёт идемпотентен: без смены — ни одной записи.
+Hooks.once("ready", async () => {
+  if (game.users.activeGM !== game.user) return;
+  const { worldAndTokenActors } = await import("./module/migrations/unlinked-tokens.mjs");
+  for (const actor of worldAndTokenActors()) {
+    if (!actor?.items?.some?.(i => i.type === "eliteArchetype" || _archSuppressRelevant(i))) continue;
+    await syncArchetypeSuppression(actor).catch(e => console.error("Warhammer DBC | подавление Архетипа:", e));
+  }
 });
 
 // ── Пустота Парии / поле Дискорданта (rules/null-zones.mjs) ───────────────────

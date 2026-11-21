@@ -29,3 +29,17 @@ describe("Чемпион Терминатор", () => {
     expect(deathShroudDamageFormula({ system: { characteristics: { s: { bonus: 8 } } } }, spear)).toBe("1d10+3 + 8");
   });
 });
+
+describe("Атраментар (решение 21.11.2026)", () => {
+  it("Страх не общий: Талант не выдаёт Черту Fear, а включается до конца сцены", async () => {
+    const { readdirSync, readFileSync } = await import("node:fs");
+    const dir = "packs-src/talents/Элитные_архетипы";
+    const sub = readdirSync(dir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).find(d => readdirSync(`${dir}/${d}`).some(f => f.startsWith("Atramentar")));
+    const file = readdirSync(`${dir}/${sub}`).find(f => f.startsWith("Atramentar"));
+    const doc = JSON.parse(readFileSync(`${dir}/${sub}/${file}`, "utf8"));
+    const entries = doc.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
+    expect(entries.some(e => e.kind === "trait" && /Fear/.test(e.sourceName ?? ""))).toBe(false);
+    const src = readFileSync("module/combat/terminator-talents.mjs", "utf8");
+    expect(src).toMatch(/activateItemUntil\(item, \{[^}]*sceneOnly: true/);
+  });
+});
