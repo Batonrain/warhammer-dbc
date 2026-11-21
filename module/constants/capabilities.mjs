@@ -4093,27 +4093,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Архимагос — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhimagos.archDominus": {
     label: "Когитаторы и банки данных обрабатывают командные данные на множество потоков одновременно.",
-    source: "Arch-Dominus / Архи-Доминус", reader: ""
+    source: "Arch-Dominus / Архи-Доминус", reader: "combat/archmagos.mjs::useArchDominusCommand (кнопка: Команда за 2/4 ⚙ → sheets/tabs/command.mjs::rollCommand), rules/archmagos-talents.mjs::avatarOfMetalCost (−1 ⚙ Аватару)"
   },
   "elite.elitnyeArhetipy.arhimagos.avatarOfMetal": {
     label: "Разум полностью перехватывает контроль над одним из слуг. В свой Ход может взять под прямой контроль одного из подчинённых,",
-    source: "Avatar of Metal / Аватар Металла", reader: ""
+    source: "Avatar of Metal / Аватар Металла", reader: "combat/archmagos.mjs::useAvatarOfMetal (I Архимагоса вместо WS/BS слуги), Процесс — rules/technomystic-talents.mjs::processCostTotal ← archmagos-talents.mjs::avatarProcessCost"
   },
   "elite.elitnyeArhetipy.arhimagos.concordax": {
     label: "Достигает истинного машинного единения со слугами, сливая их сознание в единый вычислительный хор.",
-    source: "Concordax / Конкордакс", reader: ""
+    source: "Concordax / Конкордакс", reader: "combat/archmagos.mjs — источник правил «archmagosConcordax» (бонус ко всем тестам, кроме T, Архимагосу и машинным слугам «Под моим Присутствием»)"
   },
   "elite.elitnyeArhetipy.arhimagos.dogmatix": {
     label: "Мощь бинарных инкантаций сокрушает ноосферное присутствие низших Механикум. Удваивает все Успехи на встречных тестах Tech-Use, как в атаке,",
-    source: "Dogmatix / Догматикс", reader: ""
+    source: "Dogmatix / Догматикс", reader: "packs-src Dogmatix: testMod skill:techUse modValueMode successMul ×2 → rules/kind-outcome.mjs"
   },
   "elite.elitnyeArhetipy.arhimagos.infernax": {
     label: "Власть над машинами столь велика, что сковывает даже заключённых в них демонов. Считает демонические машины машинами, а не демонами,",
-    source: "Infernax / Инфернакс", reader: ""
+    source: "Infernax / Инфернакс", reader: "rules/archmagos-talents.mjs::isMachineServant (демоническая машина — машина для Конкордакса, калибровки, Аватара)"
   },
   "elite.elitnyeArhetipy.arhimagos.visioIrae": {
     label: "Ноосферный облик внушает благоговейный ужас в холодные механические сердца. Может потратить Очко Бесчестия,",
-    source: "Visio Irae / Лик Гнева", reader: ""
+    source: "Visio Irae / Лик Гнева", reader: "combat/archmagos.mjs::useVisioIrae (Очко Бесчестия → Талант включён до конца боя/сцены, Страх 3), снятие — combat/mech1-hooks.mjs"
   },
   // ── Элитные_архетипы\Архонт — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhont.ascendOfWeapon": {
@@ -6313,11 +6313,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимагос — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimagos.doctrinaImperative": {
     label: "Машинные слуги — продолжение его воли; может на ходу калибровать их прицелы и актуаторы.",
-    source: "Doctrina Imperative / Доктрина Императив", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Doctrina Imperative / Доктрина Императив", reader: "ЧАСТИЧНО: combat/archmagos.mjs::useDoctrinaCalibration (±3×I.b слугам до следующего Хода); прочее — за столом"
   },
   "trait.elitnyeArhetipy.arhimagos.masterpieceFrame": {
     label: "Оборудован восемью элементами бионики или кибернетики Best.Q на выбор игрока и может заменить их особые свойства от Качества на любые подход…",
-    source: "Masterpiece Frame / Фрейм Шедевра", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-66c1 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Masterpiece Frame / Фрейм Шедевра", reader: "packs-src Masterpiece Frame: equipment choice 8 имплантов Best.Q; rules/mechanicus-craft.mjs (+30 и Банк вдвое в Мастерской, apps/craft-workshop.mjs)"
   },
   "trait.elitnyeArhetipy.arhimagos.voiceOfOmnissiah": {
     label: "Командные протоколы опираются на глубочайшие базы кода. Распространяет эффект Таланта Binary Dominion на всех персонажей с Имплантами Механи…",

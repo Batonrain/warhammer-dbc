@@ -42,6 +42,8 @@ import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftB
          CRAFT_CRIT_LOSS_MIN, CRAFT_CRIT_LOSS_MAX } from "../rules/craft-advantage.mjs";
 import { CRAFTED_ITEMS_FLAG, craftedItemsOf, recordCreation, recordAssist, normalizeItemName } from "../rules/craft-memory.mjs";
 import { repairDestroyedWeapon } from "../combat/weapon-repair.mjs";
+// Фрейм Шедевра (Архимагос), Цепи Производства (Лакрималлус).
+import { mechanicusCraftShift, masterpieceEligible, masterpieceBank } from "../rules/mechanicus-craft.mjs";
 import { spendFromInfamyPool, actorInfamyPath } from "./infamy-points.mjs";
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { researchFindingItemData, researchJournalEntry, appendResearchJournal,
@@ -242,8 +244,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // Машины: итоговый Банк ×(Размер+1) — раньше подсказка просила учесть это
     // руками (wdbc-5il7), теперь размер вводится тут же и множится сразу.
     const machineSize = isMachine ? Math.max(0, Number(proj.machineSize) || 0) : 0;
-    const bank = repairNeedsBank ? null
+    const bankRaw = repairNeedsBank ? null
       : bankFor(baseBank, proj.quality, proj.improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
+    const bank = masterpieceBank(bankRaw, crafter, proj);
 
     return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable, repairNeedsBank,
       machineNote: isMachine, machineSize, crafter, isResearch, isStudy, proto };
@@ -651,7 +654,17 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       : craftShiftHours(crafter, { extraArms: Math.max(0, maxHands(crafter) - 2) }) + (slowBonus ? 4 : 0);
     const shiftHoursNote = shiftHours !== CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)
       ? `Гекатонхейр: смена длится ${String(shiftHours).replace(".", ",")} ч вместо ${CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)}` : "";
-    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus + engineseerBonus + tendrilBonus;
+    // Фрейм Шедевра: выбор на проект спрашивается один раз (rules/mechanicus-craft.mjs).
+    if (masterpieceEligible(crafter, proj) && proj.masterpieceFrame == null) {
+      proj.masterpieceFrame = !!(await foundry.applications.api.DialogV2.confirm({
+        window: { title: "Фрейм Шедевра" },
+        content: "<p>Взять +30 к тесту и Банк вдвое? Тогда изделие будет совместимо только с фреймом мастера.</p>",
+        rejectClose: false
+      }));
+      if (proj.masterpieceFrame) return this._rollShift(pid, chain);
+    }
+    const mech = mechanicusCraftShift(crafter, proj);
+    const limit = mech.bonus + R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus + engineseerBonus + tendrilBonus;
 
     // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
     // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
@@ -675,7 +688,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       else if (!held) proj.engineseerAutoAt = null;
     }
 
-    const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor, R.proto.reroll);
+    const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor, R.proto.reroll || mech.reroll);
     let rolls = [], roll = null, rv = null, dos, diceNote = "", crit;
     if (autoSuccess) {
       // Броска нет: смена идёт на I.b Успехов, критов нет.
@@ -819,6 +832,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${R.proto.reroll ? `<div class="wh-craft-roll-line ok">Прототипирование: предмет уже создавался в этом Качестве — переброс (лучший из двух кубиков).</div>` : ""}
           ${R.proto.halveBank ? `<div class="wh-craft-roll-line ok">Прототипирование: раньше создавался в Качестве ниже — множитель Банка от Качества вдвое.</div>` : ""}
           ${memoryNote ? `<div class="wh-craft-roll-line ok">${memoryNote}</div>` : ""}
+          ${mech.lines.map(l => `<div class="wh-craft-roll-line ok">${l}</div>`).join("")}
           ${repairNote ? `<div class="wh-craft-roll-line ok">${repairNote}</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
           ${torrentNote ? `<div class="wh-craft-roll-line ok">${torrentNote}</div>` : ""}

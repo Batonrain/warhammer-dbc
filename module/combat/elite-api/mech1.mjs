@@ -5,4 +5,9 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { useArchDominusCommand, useAvatarOfMetal, useDoctrinaCalibration, useVisioIrae } from "../archmagos.mjs";
+
+export const API = {
+  // Архимагос (combat/archmagos.mjs)
+  useArchDominusCommand, useAvatarOfMetal, useDoctrinaCalibration, useVisioIrae
+};
