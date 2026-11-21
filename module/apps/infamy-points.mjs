@@ -171,7 +171,7 @@ export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced 
   // преследования и боя (Sahara task-0b3a); трата с полосы теста не несёт.
   const trophyOpt = !forced && rest > 0 && trophyValue(actor) >= rest ? trophyInfamyOption(actor, test) : null;
   if (!forced && rest > 0 && (infamyResourcePossible(actor) || trophyOpt)) {
-    const options = [...infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold })
+    const options = [...infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold, test })
       .filter(d => rest <= 1 || d.asInfamyCap <= 0 || d.asInfamyCap >= rest), ...(trophyOpt ? [trophyOpt] : [])];
     if (options.length) {
       const choice = await chooseInfamyPayment(actor, options, { regularAvailable: cur >= rest });
@@ -248,7 +248,7 @@ export function infamyResourcePossible(actor) {
 export function infamyResourceAvailable(actor, { corThreshold = 0, test = null } = {}) {
   if (trophyInfamyOption(actor, test)) return true;
   if (!infamyResourcePossible(actor)) return false;
-  return infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold }).length > 0;
+  return infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold, test }).length > 0;
 }
 
 /** Есть ли чем платить за способность: обычный пул, временный запас или пул ресурса «как Бесчестие». */

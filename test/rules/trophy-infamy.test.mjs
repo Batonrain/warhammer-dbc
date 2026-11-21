@@ -88,3 +88,28 @@ describe("spendFromInfamyPool: Очко Трофеев вместо Очка Б�
     expect(infamyResourceAvailable(a, { test: { attack: true } })).toBe(true);
   });
 });
+
+// Очки Мести Ревенанта (Sahara 583-d28a): «как трата Очка Бесчестия на атаку».
+// Трата из карточки НЕ-атакующего теста Местью не оплачивается; трата с полосы
+// (теста нет — активация Таланта вроде Killing Strike) — по-прежнему можно.
+describe("Месть как Бесчестие — только на атаку", () => {
+  const revenant = () => {
+    const doc = hunter(0);
+    doc.items = [{ name: "Мстительный Дух", type: "trait", flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND",
+      entries: [{ kind: "resourcePool", resPoolKey: "vengeance", resPoolMax: "3", resPoolAsInfamy: true }] }] } } }];
+    doc.system.resourcePools = { vengeance: 2 };
+    return doc;
+  };
+  it("тест Навыка — Месть не предлагается; атака и полоса — да", async () => {
+    const { infamyResourceAvailable, spendFromInfamyPool } = await import("../../module/apps/infamy-points.mjs");
+    const a = revenant();
+    expect(infamyResourceAvailable(a, { test: { skill: "survival" } })).toBe(false);
+    expect(infamyResourceAvailable(a, { test: { attack: true } })).toBe(true);
+    expect(infamyResourceAvailable(a)).toBe(true);
+    const r = await spendFromInfamyPool(a, 1, "system.fate.value", { test: { skill: "charm" } });
+    expect(r.resourceSpent).toBeUndefined();
+    expect(a.system.resourcePools.vengeance).toBe(2);
+    const r2 = await spendFromInfamyPool(a, 1, "system.fate.value", { test: { attack: true } });
+    expect(r2.resourceSpent).toMatchObject({ key: "vengeance" });
+  });
+});

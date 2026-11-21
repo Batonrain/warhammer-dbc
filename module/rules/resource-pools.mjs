@@ -60,7 +60,9 @@ export const KNOWN_RESOURCE_POOLS = {
   // снимки Черты на акторах живых миров его не несут и миграция не нужна.
   thirst:      { label: "Жажда",            genitive: "Жажды",      unit: "Жажды", warpWoundsPerPoint: 5 },
   inspiration: { label: "Очки Вдохновения", genitive: "Вдохновения" },
-  vengeance:   { label: "Очки Мести",       genitive: "Мести" }
+  // asInfamyAttackOnly — «как трата Очка Бесчестия на атаку» (Мстительный Дух,
+  // Sahara 583-d28a): из карточки не-атакующего теста пул не предлагается.
+  vengeance:   { label: "Очки Мести",       genitive: "Мести", asInfamyAttackOnly: true }
 };
 
 export const RESOURCE_REFILL_UNITS = {
@@ -154,7 +156,8 @@ export function resourcePoolDefs(actor, { rollData = null } = {}) {
         max: 0, unbounded: false, refill: "", roundCap: 0, gainLabel: "", gainAmount: 0,
         asInfamy: false, asInfamyCap: 0, asInfamyCor: null, asInfamyNote: "",
         boostChars: new Set(), failChars: new Set(), sources: [],
-        warpWoundsPerPoint: Number(known.warpWoundsPerPoint) || 0
+        warpWoundsPerPoint: Number(known.warpWoundsPerPoint) || 0,
+        asInfamyAttackOnly: !!known.asInfamyAttackOnly
       };
       if (!d.label && e.resPoolLabel) d.label = String(e.resPoolLabel);
       if (isUnboundedPoolMax(e.resPoolMax)) d.unbounded = true;
@@ -305,10 +308,13 @@ export function warpSoakPoolDef(actor) {
 }
 
 /** Пулы, которыми можно заплатить вместо Очка Бесчестия прямо сейчас. */
-export function infamyResourceOptions(actor, { roundKey = "", corThreshold = 0 } = {}) {
+export function infamyResourceOptions(actor, { roundKey = "", corThreshold = 0, test = null } = {}) {
   const out = [];
   for (const d of resourcePoolDefs(actor).values()) {
     if (!d.asInfamy) continue;
+    // Пул «только на атаку» (Месть): тест карточки известен и он не атака — мимо.
+    // Без теста (трата с полосы: активация Killing Strike и т.п.) — разрешено.
+    if (d.asInfamyAttackOnly && test && !test.attack) continue;
     // «Считает при этом свою Cor 0-19»: способность с порогом Порчи выше —
     // этим пулом не оплачивается.
     if (d.asInfamyCor != null && Number(corThreshold) > d.asInfamyCor) continue;
