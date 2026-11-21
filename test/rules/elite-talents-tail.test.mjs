@@ -20,7 +20,7 @@ import { devourerWeapon, devourerRamming, DEVOURER_RAM_FLAG } from "../../module
 import { electropriestActive, otherFrameInstalled } from "../../module/rules/electropriest.mjs";
 import {
   suppressibleArchetypeOf, suppressedArchetypes, itemShouldBeSuppressed, timedSuppressions, valourViolation,
-  valourPenalty, TIMED_FLAG, BLOOD_SMITH, ELECTROPRIEST, VALOUR_SECONDS, VALOUR_OWN_FLAG
+  valourPenalty, valourExtension, TIMED_FLAG, BLOOD_SMITH, ELECTROPRIEST, VALOUR_SECONDS, VALOUR_OWN_FLAG
 } from "../../module/rules/archetype-suppression.mjs";
 import { hasItemNamed } from "../../module/rules/req-atom.mjs";
 
@@ -241,5 +241,19 @@ describe("Фрейм Хоминис: пересчёт подавления (жи
     const re = new Function(`return ${m[1]}`)();
     expect(re.test("Hominis Frame / Фрейм Хоминис")).toBe(true);
     expect(src).toMatch(/Hooks\.once\("ready"[\s\S]{0,600}syncArchetypeSuppression\(actor\)/);
+  });
+});
+
+// Соглашение Доблести: «8 дней или дольше по решению ГМа» (Sahara 587-fd8b) —
+// ГМ продлевает текущий срок покаяния на сколько угодно дней в окне Черты.
+describe("valourExtension — продление срока покаяния ГМом", () => {
+  it("прибавляет дни к текущему сроку", () => {
+    expect(valourExtension({ until: 1000, since: 0, reason: "x" }, 2)).toEqual({ until: 1000 + 2 * 86400, since: 0, reason: "x" });
+  });
+  it("дробные дни — целыми часами вверх не округляются, ноль/минус/нет срока — null", () => {
+    expect(valourExtension({ until: 0 }, 0.5).until).toBe(43200);
+    expect(valourExtension({ until: 1000 }, 0)).toBeNull();
+    expect(valourExtension({ until: 1000 }, -3)).toBeNull();
+    expect(valourExtension(null, 3)).toBeNull();
   });
 });
