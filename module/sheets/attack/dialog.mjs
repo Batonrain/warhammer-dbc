@@ -35,7 +35,7 @@ import { isGrappled } from "../../rules/predicates.mjs";
 import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
-import { finalExecutionGate, finalExecutionProps, commitFinalExecution } from "../../combat/final-execution.mjs";
+import { finalExecutionGate, finalExecutionProps, commitFinalExecution, finalExecutionAutoArm } from "../../combat/final-execution.mjs";
 import { executionPayProblem, commitExecutionStep } from "../../combat/execution.mjs";
 import { isExecutionWeapon } from "../../rules/execution.mjs";
 import { markedPreyAdvantage } from "../../combat/marked-prey.mjs";
@@ -197,7 +197,8 @@ export function openAttackDialog(ctx) {
   let deathDancePending = null; // { cost, agBonus } — выставлено кликом, читается в колбэке "roll"
   // Окончательная Казнь (Мастер Казней, combat/final-execution.mjs): тот же приём — кнопка вооружает, Очко Трофеев
   // списывается только при подтверждении атаки. { n, cost } — номер атаки серии и цена.
-  let finalExecutionPending = null;
+  // Продолжение Казни в оплаченной серии — взведено сразу (finalExecutionAutoArm, Sahara 2-3d54).
+  let finalExecutionPending = finalExecutionAutoArm(actor, techniqueOpts);
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
     classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],

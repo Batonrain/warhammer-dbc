@@ -16,7 +16,7 @@ import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../../module/combat/weapon-properties.mjs";
 import {
   hasFinalExecution, finalExecutionStep, finalExecutionProps, finalExecutionGate, commitFinalExecution,
-  finalExecutionRowHtml, FINAL_EXECUTION_TEXT
+  finalExecutionRowHtml, FINAL_EXECUTION_TEXT, finalExecutionAutoArm
 } from "../../module/combat/final-execution.mjs";
 import { mergeExtraProps } from "../../module/combat/attack-weapon.mjs";
 
@@ -148,6 +148,30 @@ describe("серия Окончательной Казни: цена и номе
     const a = actorWith([FINAL()], { value: 0 });
     expect(await commitFinalExecution(a)).toBe(false);
     expect(finalExecutionStep(a)).toEqual({ n: 0, cost: 1 });
+  });
+});
+
+describe("продолжающие атаки серии взводятся сами (Sahara 2-3d54)", () => {
+  it("окно продолжения Казни (executionFollow) в оплаченной серии — Окончательная Казнь взведена, бесплатно, следующий шаг", async () => {
+    const a = actorWith([FINAL()], { value: 1 });
+    await commitFinalExecution(a);
+    expect(finalExecutionAutoArm(a, { executionFollow: true })).toEqual({ n: 1, cost: 0 });
+  });
+
+  it("первая атака серии сама не взводится: Очко Трофеев тратит только кнопка", () => {
+    const a = actorWith([FINAL()], { value: 1 });
+    expect(finalExecutionAutoArm(a, { executionFollow: true })).toBeNull();
+  });
+
+  it("обычное окно атаки (не продолжение Казни) не взводится даже в оплаченной серии", async () => {
+    const a = actorWith([FINAL()], { value: 1 });
+    await commitFinalExecution(a);
+    expect(finalExecutionAutoArm(a, {})).toBeNull();
+    expect(finalExecutionAutoArm(a, null)).toBeNull();
+  });
+
+  it("без Таланта — нет", () => {
+    expect(finalExecutionAutoArm(actorWith([]), { executionFollow: true })).toBeNull();
   });
 });
 

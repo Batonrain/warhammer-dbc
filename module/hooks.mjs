@@ -5398,7 +5398,15 @@ function _attachFateContextMenu(message, html) {
   // temp-grant вне боя (истечение по worldTime у актора не в бою) отловит
   // updateWorldTime-хук ниже отдельно.
   Hooks.on("updateCombat", async (combat, changed) => {
-    if (!game.user.isGM || changed?.round === undefined) return;
+    if (!game.user.isGM) return;
+    // Смена Хода без смены Раунда: только temp-grant со сроком до Хода (expiresAtTurn — Страх Окончательной
+    // Казни, Sahara 2-3d54); прочие проходы ниже меряют Раунды и на каждый Ход не нужны.
+    if (changed?.round === undefined) {
+      if (changed?.turn === undefined) return;
+      for (const combatant of combat.combatants ?? [])
+        if (combatant.actor) await clearExpiredTempGrants(combatant.actor, { worldTime: game.time.worldTime, combat });
+      return;
+    }
     for (const combatant of combat.combatants ?? []) {
       if (combatant.actor) await clearExpiredTempGrants(combatant.actor, { worldTime: game.time.worldTime, combat });
       // Око Вызова (wdbc-1rno): в бою срок меряется РАУНДАМИ — боевой Раунд

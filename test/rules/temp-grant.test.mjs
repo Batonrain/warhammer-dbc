@@ -52,6 +52,23 @@ describe("isTempGrantExpired: unit=round", () => {
   });
 });
 
+describe("isTempGrantExpired: unit=round с точностью до Хода (expiresAtTurn)", () => {
+  // Ровно 1 Раунд от момента выдачи (Окончательная Казнь, Sahara 2-3d54): выдано в Раунде 4 на Ходу №2 —
+  // живёт до начала Хода №2 Раунда 5.
+  const grant = { unit: "round", combatId: "c1", expiresAtRound: 5, expiresAtTurn: 2, label: "Тест" };
+
+  it("тот же Раунд выдачи и следующий Раунд до того же Хода — не истекло", () => {
+    expect(isTempGrantExpired(grant, { combat: { id: "c1", round: 4, turn: 3 } })).toBe(false);
+    expect(isTempGrantExpired(grant, { combat: { id: "c1", round: 5, turn: 1 } })).toBe(false);
+  });
+
+  it("следующий Раунд, тот же Ход и дальше — истекло", () => {
+    expect(isTempGrantExpired(grant, { combat: { id: "c1", round: 5, turn: 2 } })).toBe(true);
+    expect(isTempGrantExpired(grant, { combat: { id: "c1", round: 5, turn: 4 } })).toBe(true);
+    expect(isTempGrantExpired(grant, { combat: { id: "c1", round: 6, turn: 0 } })).toBe(true);
+  });
+});
+
 describe("isTempGrantExpired: без метки/неизвестный unit", () => {
   it("нет tempGrant — не истекло (нечего снимать)", () => {
     expect(isTempGrantExpired(null, { worldTime: 9999 })).toBe(false);

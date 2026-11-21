@@ -46,6 +46,11 @@ export function isTempGrantExpired(tempGrant, { worldTime, combat } = {}) {
     // нечем, temp-grant считается истёкшим (та же логика, что «battle»-
     // семья cooldown.mjs: пропавший ориентир не продлевает возможность).
     if (!combat || combat.id !== tempGrant.combatId) return true;
+    // expiresAtTurn (необязательно) — срок ровно «N Раундов» от момента выдачи: в Раунде expiresAtRound
+    // метка гаснет с наступлением Хода с этим номером (Окончательная Казнь, Sahara 2-3d54). Без него —
+    // до конца Раунда expiresAtRound, как было.
+    if (tempGrant.expiresAtTurn != null && Number(combat.round) === Number(tempGrant.expiresAtRound))
+      return (Number(combat.turn) || 0) >= Number(tempGrant.expiresAtTurn);
     return Number(combat.round) > Number(tempGrant.expiresAtRound);
   }
   return false;

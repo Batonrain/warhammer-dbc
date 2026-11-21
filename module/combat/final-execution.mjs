@@ -11,7 +11,8 @@
 //  подтверждении атаки — закрытый диалог ничего не сжигает. Свойства Extreme/Proven едут в атаку записями
 //  `ruleProps` (attack.mjs доливает их в свойства оружия). Серия — Раунд боя (Казнь раз в Раунд, трейт
 //  Execution): первая атака серии платит Очко, следующие атаки того же Раунда продолжают её бесплатно, со
-//  свойствами сильнее (Extreme на 1 ниже — легче, Proven на 1 выше). Вне боя серий нет.
+//  свойствами сильнее (Extreme на 1 ниже — легче, Proven на 1 выше). Вне боя серий нет. Окно продолжения Казни
+//  в оплаченной серии взводит её само (finalExecutionAutoArm, Sahara 2-3d54).
 //  Черта «Казнь» (доп. атаки при не-убийстве) — combat/execution.mjs (Sahara fear-2, 30.10.2026).
 //
 //  Fear(2) за убийство (Sahara fear-2, решение владельца 30.10.2026 — автоматизировать). «Убивает» = смерть
@@ -101,6 +102,18 @@ export async function commitFinalExecution(actor) {
   return true;
 }
 
+/**
+ * Окно продолжения Казни (combat/execution.mjs::startExecutionFollow → techniqueOpts.executionFollow) в уже
+ * оплаченной серии этого Раунда: Окончательная Казнь взведена сама — книга даёт свойства «каждой следующей
+ * атаке Казни», выбора тут нет (Sahara 2-3d54). Первая атака серии сама не взводится: Очко Трофеев тратит
+ * только кнопка. null — не взводить.
+ */
+export function finalExecutionAutoArm(actor, techniqueOpts) {
+  if (!techniqueOpts?.executionFollow) return null;
+  const gate = finalExecutionGate(actor);
+  return gate.ok && gate.cost === 0 ? { n: gate.n, cost: 0 } : null;
+}
+
 /** Строка окна атаки: кнопка-«вооружение» и статус (наполняет dialog.mjs). Пусто — не носителю / не в ближнем бою. */
 export function finalExecutionRowHtml(actor, { isMelee = false } = {}) {
   if (!isMelee || !hasFinalExecution(actor)) return "";
@@ -146,7 +159,10 @@ export function finalExecutionFearItemData(source, combat) {
     [NS]: {
       ...data.flags?.[NS],
       [FINAL_EXECUTION_FEAR_FLAG]: true,
-      tempGrant: { unit: "round", combatId: combat?.id ?? "", expiresAtRound: (Number(combat?.round) || 0) + 1, label }
+      // Книга: «Fear (2) … на 1 Раунд» (Sahara 2-3d54) — ровно Раунд от убийства: до того же Хода следующего
+      // Раунда (expiresAtTurn), а не «остаток этого Раунда и весь следующий», как у прочих «N Раундов».
+      tempGrant: { unit: "round", combatId: combat?.id ?? "", expiresAtRound: (Number(combat?.round) || 0) + 1,
+        expiresAtTurn: Number(combat?.turn) || 0, label }
     }
   };
   return data;
