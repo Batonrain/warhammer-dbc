@@ -4603,15 +4603,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Инзорцист — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.inzortsist.blackHand": {
     label: "Касание открывает демонам путь к душе врага. Касаясь другого персонажа, может провести Инзорцизм,",
-    source: "Black Hand / Чёрная Рука", reader: ""
+    source: "Black Hand / Чёрная Рука", reader: "module/combat/insorcist.mjs::useBlackHand (кнопка Таланта / режим Инзорцизма; possessionStep + apps/possession-attack.mjs::possessHost)"
   },
   "elite.elitnyeArhetipy.inzortsist.daemonicLevy": {
     label: "Призыв могучего демона открывает путь для его свиты. Призывая Инзорцизмом демона с Inf 31+,",
-    source: "Daemonic Levy / Демоническое Ополчение", reader: ""
+    source: "Daemonic Levy / Демоническое Ополчение", reader: "module/combat/insorcist.mjs::useInsorcism (свита до Inf.b, rules/insorcist-talents.mjs::levyMax)"
   },
   "elite.elitnyeArhetipy.inzortsist.fleetingPossession": {
     label: "Проводя Инзорцизм, может вместо призыва в Истинной Форме вселить демона в оружие в руках или машину, которой касается.",
-    source: "Fleeting Possession / Мимолётная Одержимость", reader: ""
+    source: "Fleeting Possession / Мимолётная Одержимость", reader: "module/combat/insorcist.mjs::useInsorcism → fleetingIntoWeapon / processInsorcistTurnStart"
   },
   // ── Элитные_архетипы\Инкуб — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.inkub.coldFace": {
@@ -6563,15 +6563,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Инзорцист — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.inzortsist.insorcism": {
     label: "Извлекая запечатанное имя, призывает демона в Материум, используя собственную душу как якорь.",
-    source: "Insorcism / Инзорцизм", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Insorcism / Инзорцизм", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/insorcist.mjs::useInsorcism (призыв по печати Миньоном, урон Inf.b, запрет после изгнания); combat/insorcist-warp.mjs — Нестабильность рядом с Инзорцистом и учёт изгнания"
   },
   "trait.elitnyeArhetipy.inzortsist.markOfSubjugator": {
     label: "Душа отмечена связью с демонами. Демоны автоматически распознают его как поработителя своего рода при первом взгляде и получают Талант Hatre…",
-    source: "Mark of Subjugator / Метка Поработителя", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Mark of Subjugator / Метка Поработителя", reader: "РЕАЛИЗОВАНО (21.11.2026): rules/predicates.mjs::hatredTargetsOf (демоны → признак subjugator, rules/talent-targets.mjs) + combat/insorcist.mjs::useMarkOfSubjugator (порог Пси-Чутья)"
   },
   "trait.elitnyeArhetipy.inzortsist.nameSeal": {
     label: "Способен запечатать Истинное Имя демона в собственном разуме. Зная Истинное Имя, в присутствии демона (не более W м) может провести ритуал З…",
-    source: "Name Seal / Печать Имени", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Name Seal / Печать Имени", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/insorcist.mjs::useNameSeal / processInsorcistTurnStart (ритуал, печать, эффект T −Inf.b)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Инкуб — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.inkub.mercenaryOfTheMatter": {

@@ -89,8 +89,16 @@ export const TARGET_FEATURES = {
   // Безграничное Тщеславие Наги: «Ее Талант Hatred (Наги) также
   // распространяется на персонажей с мутацией „Звероподобный (Змея)“ или
   // „Центавр (Змея)“» — rules/naga-traits.mjs.
-  snakeMutation: { label: "Мутант-змея (Животный Гибрид/Центавр: Змея)", test: a => hasSnakeMutation(a) }
+  snakeMutation: { label: "Мутант-змея (Животный Гибрид/Центавр: Змея)", test: a => hasSnakeMutation(a) },
+  // Метка Поработителя (Инзорцист): демоны получают Hatred против носителя — predicates.mjs::hatredTargetsOf.
+  subjugator: { label: "Носитель Метки Поработителя", test: a => hasMarkOfSubjugatorTrait(a) }
 };
+
+/** Черта «Mark of Subjugator / Метка Поработителя» (свой разбор имени: predicates.mjs импортирует этот файл). */
+export function hasMarkOfSubjugatorTrait(actor) {
+  return [...(actor?.items ?? [])].some(i => i?.type === "trait" && String(i.name ?? "").replace(/^\[WIP\]\s*/, "")
+    .split("/").some(h => ["mark of subjugator", "метка поработителя"].includes(h.trim().toLowerCase())));
+}
 
 /** Мутации со змеиной субмутацией: «Центавр (Змея)» и «Звероподобный (Змея)» — в паке «Животный Гибрид». */
 const SNAKE_MUTATION_NAMES = ["centaur", "центавр", "animal hybrid", "животный гибрид"];

@@ -177,6 +177,7 @@ import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
 import { processWarlockTurnStart } from "./combat/warlock.mjs";
+import { processInsorcistTurnStart } from "./combat/insorcist.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -5711,6 +5712,8 @@ function _attachFateContextMenu(message, html) {
       await processWildPsykerTurnStart(nextCombatant.actor);
       // Тёмные Искусства (Чернокнижник): счётчик «как обычный псайкер» Мага-Каннибала / Последнего Эха.
       await processWarlockTurnStart(nextCombatant.actor);
+      // Инзорцист: ритуал Запечатывания и Мимолётная Одержимость — счёт Ходов.
+      await processInsorcistTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.

@@ -7,6 +7,7 @@
 
 import { WILD_PSYKER_API } from "../wild-psyker.mjs";
 import { ARCHMAGUS_API } from "../archmagus.mjs";
+import { INSORCIST_API } from "../insorcist.mjs";
 import { WARLOCK_API } from "../warlock.mjs";
 
-export const API = { ...WILD_PSYKER_API, ...ARCHMAGUS_API, ...WARLOCK_API };
+export const API = { ...WILD_PSYKER_API, ...ARCHMAGUS_API, ...WARLOCK_API, ...INSORCIST_API };

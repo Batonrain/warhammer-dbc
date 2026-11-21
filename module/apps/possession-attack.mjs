@@ -127,7 +127,7 @@ export async function attemptPossessionAttack(actor) {
 }
 
 /** Вселение: контроль над телом, +10 S/T эффектом, +1d10+3 Ран. */
-async function possessHost(host, possessor) {
+export async function possessHost(host, possessor) {
   await establishControl(host, possessor.uuid, { permanent: true });
   const r = await new Roll("1d10+3").evaluate();
   const bonus = r.total;
