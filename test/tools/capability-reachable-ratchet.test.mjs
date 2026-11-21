@@ -148,8 +148,6 @@ const ALLOWED = {
   // указателя `reader` на настоящий код. Скакуны (mount) читают имена Черт
   // из rules/mount.mjs / combat/mount.mjs, остальные — по именам в своих модулях.
   "trait.elitnyeArhetipy.sukkub.brutalChargeWsB": "включается по имени Черты (Brutal Charge (WS.b) / Жестокий Натиск), combat/attack.mjs brutalChargeDamageBonus — ключа Конструктора нет",
-  "trait.elitnyeArhetipy.arhimagos.doctrinaImperative": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.arhimagos.masterpieceFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
   "trait.elitnyeArhetipy.gerold.delegate": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.gerold.noblesseOblige": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.dlanArhonta.equalizeTheOdds": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
@@ -157,9 +155,6 @@ const ALLOWED = {
   "trait.elitnyeArhetipy.ierofant.grandAgitator": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.ierofant.masterOfMasses": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.lordDiskordant.corruptedNoosphere": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.astralConverter": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.digitalGhost": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.paragonCoil": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.sekutor.paladinFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
   "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.elektrozhrets.powerFromFlesh": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
