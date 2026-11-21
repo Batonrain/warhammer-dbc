@@ -205,6 +205,8 @@ export function aggregateAuto(props) {
     // Радиационная разновидность (wdbc-1rno.2) — вместе с unseen выше,
     // отдельный альт-канал засечения (rules/unseen-attack.mjs::isUnseenDetected).
     radiationSourced: false,
+    // Частичное Незримое (Телекинетический Клинок): −20 к Избеганиям незасекшего.
+    unseenPartial: false,
     // Свойства, автоматизированные позже (стр. 166-170): раньше были только
     // текстовыми напоминаниями и на расчёты не влияли.
     resonant: false,
@@ -286,6 +288,7 @@ export function aggregateAuto(props) {
     if (au.spray)         a.spray = true;
     if (au.unseen)        a.unseen = true;
     if (au.radiationSourced) a.radiationSourced = true;
+    if (au.unseenPartial) a.unseenPartial = true;
     if (au.blast)         a.blastRating = Math.max(a.blastRating, r);
     if (au.flame)         a.flame = true;
     if (au.corrosive)     a.corrosiveRating = Math.max(a.corrosiveRating, r);

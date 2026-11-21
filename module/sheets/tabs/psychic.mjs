@@ -66,6 +66,7 @@ import { leftSustainRange } from "../../rules/psy-range.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop } from "../../apps/force-blade-choice.mjs";
+import { runPsychicSummon } from "../../apps/telekinetic-blades.mjs";
 import { charDamageButtonHtml } from "../../combat/char-damage-button.mjs";
 import { voidBlocksPower, isIndirectPower } from "../../rules/null-zones.mjs";
 import { hasWoundInReality, woundAuraPhenMod, woundFreeToggleGate, WOUND_FREE_FLAG } from "../../rules/wound-in-reality.mjs";
@@ -1206,6 +1207,9 @@ export async function executePsychotest(actor, item, opts) {
   // накладывает временных свойств (weaponBuff остаётся как после последнего
   // снятия поддержания).
   if (success && sys.hasWeaponShop) await runForceBladeShop(item, deg);
+  // Клинки Силы (wdbc-1rno.28, apps/telekinetic-blades.mjs): Телекинетический Клинок кладёт
+  // призванные клинки на лист, Лезвие — усиление на одно оружие, Точный Телекинез — руки.
+  if (success) await runPsychicSummon(actor, item, { epr: ePR });
 
   // Телесная Конверсия — цена в Ранах (платится при использовании Пути)
   if (PATH.woundCost && !opts.reroll) {

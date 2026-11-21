@@ -68,6 +68,8 @@ import { activeSwarm }                                from "../rules/ethereal-sw
 import { consumeHiddenThreatPending }                 from "../rules/hidden-threat.mjs";
 import { consumeHairTriggerUnseenPending }            from "../rules/hair-trigger.mjs";
 import { isUnseenDetected }                           from "../rules/unseen-attack.mjs";
+import { isPsychicSummon }                            from "../rules/summoned-weapon.mjs";
+import { sustainsPrecisionTelekinesis, TK_PARTIAL_UNSEEN_MOD } from "../rules/telekinetic-blades.mjs";
 import { hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnifeWeapon, hasSniperAssassin, isBlindsideMarked, consumeBlindsideMark } from "../rules/unseen-talents.mjs";
 import { isOutsideDefenderView, resolveAttackerToken } from "./facing.mjs";
 import { sabotageWeaponOf, hasRogueTalent, razorsEdgeBonus, razorsEdgeEvasionHits, coupDeGraceActive,
@@ -753,7 +755,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // рукопашной), Шестое Чувство и т.п. Sonar Sense/Unnatural Senses цели
   // снимают это вместе с остальными штрафами слепоты (rules/blindness.mjs).
   const targetBlindedUnseen = !!defenderActor && suffersBlindness(defenderActor);
-  const unseen = !!(wp.unseen || hiddenThreatFlag || hairTriggerFlag || targetBlindedUnseen);
+  // Телекинетический Клинок (wdbc-1rno.28): с поддерживаемым Точным Телекинезом его атаки
+  // «становятся полностью невидимыми и получают тип Незримое».
+  const tkFullUnseen = !!wp.unseenPartial && sustainsPrecisionTelekinesis(actor);
+  const unseen = !!(wp.unseen || tkFullUnseen || hiddenThreatFlag || hairTriggerFlag || targetBlindedUnseen);
   // Сокрытая Угроза добавляет реактивному тесту засечения её собственный
   // −50 (её книжный текст, не общее правило стр. 32 — там штрафа нет).
   const unseenPenalty = hiddenThreatFlag ? -50 : 0;
@@ -2278,8 +2283,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // только при hit — тот же гейт, что у Уклонения/Парирования ниже
   // (defenderActor неизвестен раньше).
   const unseenRolledDetected = unseen && defenderActor
-    ? isUnseenDetected(defenderActor, { isPsychic: item?.type === "psychicPower", isRadiation: !!wp.radiationSourced })
+    ? isUnseenDetected(defenderActor, { isPsychic: item?.type === "psychicPower" || isPsychicSummon(item), isRadiation: !!wp.radiationSourced })
     : false;
+  // Частичное Незримое (Телекинетический Клинок): Избегание доступно, но незасекшая цель
+  // получает −20 (засекает тем же, чем психическую атаку — Варп-Зрение, Ноосканирование).
+  const partialUnseenPenalty = (wp.unseenPartial && !unseen && defenderActor
+    && !isUnseenDetected(defenderActor, { isPsychic: true })) ? TK_PARTIAL_UNSEEN_MOD : 0;
   // Blind Fighting / Бой Вслепую (wdbc-1rno.2, rules/unseen-talents.mjs):
   // «Может Избегать от Незримых атак в рукопашной со штрафом −20» — НЕ
   // тест засечения, альтернативный канал доступности, только в рукопашной.
@@ -2569,14 +2578,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // (безусловно) — у одного оружия сразу оба быть не могут (разные
         // weaponClass-ветки самой записи).
         dodgeMod: (hiddenAttack || feintBlocked || killingStrikeOn) ? -999
-          : meleeShotDodgeBonus + scatterDodgePenalty + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
+          : meleeShotDodgeBonus + scatterDodgePenalty + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0) + partialUnseenPenalty + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item) + whack.penalty - bladeJugglerPenalty,
         dodgeModRecoil: (!hiddenAttack && !feintBlocked && !killingStrikeOn && hasEvasionRecoilImperative(defenderActor))
-          ? meleeShotDodgeBonus + scatterDodgePenalty + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
+          ? meleeShotDodgeBonus + scatterDodgePenalty + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0) + partialUnseenPenalty + critHitPenalty + wideBurstPenalty + sureShotPenalty + cookingPenalty + focusEvasion
             + swiftLegacyMeleeDodgePenalty(item) + swiftLegacyRangedDodgePenalty(item) + whack.penalty - bladeJugglerPenalty
           : null,
         // Unarmed Master (стр. 62): Захват мастера Парировать нельзя — тот же порог −999.
-        parryMod: (hiddenAttack || feintBlocked || killingStrikeOn || (isMelee && grappleUnparryable(actor, techOpts.technique))) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + critHitPenalty + focusEvasion + whack.penalty - bladeJugglerPenalty,
+        parryMod: (hiddenAttack || feintBlocked || killingStrikeOn || (isMelee && grappleUnparryable(actor, techOpts.technique))) ? -999 : (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0) + partialUnseenPenalty + critHitPenalty + focusEvasion + whack.penalty - bladeJugglerPenalty,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
@@ -2601,7 +2610,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // подпись, откуда он взялся, чтобы не выглядеть немотивированным штрафом.
         note: [techOpts.chatNote, whack.note,
           bladeJugglerPenalty ? `🔪 Жонглёр Клинком: Избегания цели от этой атаки −${bladeJugglerPenalty}.` : "",
-          blindFightingBypass ? "Бой Вслепую: Незримая атака, Уклонение/Парирование в рукопашной −20 без засечения." : ""]
+          blindFightingBypass ? "Бой Вслепую: Незримая атака, Уклонение/Парирование в рукопашной −20 без засечения." : "",
+          partialUnseenPenalty ? "👻 Невидимый клинок: цель его не засекла — Уклонение/Парирование −20." : ""]
           .filter(Boolean).join(" ")
       },
       notes: {

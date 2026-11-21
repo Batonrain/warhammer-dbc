@@ -30,7 +30,9 @@ export function sustainOffPatch(item) {
     "system.sustainedEpr": null,
     "system.sustainedTargetUuid": ""
   };
-  if (item?.system?.hasWeaponShop) upd["system.effects.weaponBuff"] = forceBladeShopClear();
+  // Телекинетическое Лезвие пишет усиление тем же каналом (apps/telekinetic-blades.mjs).
+  if (item?.system?.hasWeaponShop || (item?.type === "psychicPower" && itemHasName(item, "Telekinetic Edge")))
+    upd["system.effects.weaponBuff"] = forceBladeShopClear();
   if (item?.getFlag?.(NS, "fruitOfFleshLockUuid")) upd[`flags.${NS}.-=fruitOfFleshLockUuid`] = null;
   if (item?.getFlag?.(NS, WOUND_FREE_FLAG)) upd[`flags.${NS}.-=${WOUND_FREE_FLAG}`] = null;
   // Зеркальная Душа: сила на копии души — снятие поддержания снимает и метку.

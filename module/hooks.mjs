@@ -281,7 +281,7 @@ import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } f
 import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
 import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
 import { minionPatronUpdate } from "./rules/minion-patron.mjs";
-import { isDaemonicArmament } from "./rules/daemonic-armament.mjs";
+import { dissolvesOnChange, orphanedSummons } from "./rules/summoned-weapon.mjs";
 import { jacksToDisconnect } from "./rules/autosense-jacks.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
@@ -6080,15 +6080,22 @@ function _attachFateContextMenu(message, html) {
       m.update({ "system.active": false }).catch(() => {});
   });
 
-  // Демоническое Вооружение (rules/daemonic-armament.mjs): «если персонаж
-  // роняет оружие или его выбивают у него из рук, оружие растворяется» —
-  // снятая галочка «Снаряжено» (или «Хранится») и есть «покинуло руку».
-  // Удаляет только клиент, внёсший правку.
+  // Призванное оружие (rules/summoned-weapon.mjs): Демоническое Вооружение, Телекинетический
+  // Клинок. «Роняет или выбивают из рук — растворяется»: снятая галочка «Снаряжено» (или
+  // «Хранится») и есть «покинуло руку». Источник снят с листа или психосила больше не
+  // поддерживается — призванное без источника растворяется тоже. Удаляет только клиент,
+  // внёсший правку.
+  const _dropOrphanSummons = (actor, userId) => {
+    if (userId !== game.user?.id || !actor) return;
+    const orphans = orphanedSummons(actor);
+    if (orphans.length) actor.deleteEmbeddedDocuments("Item", orphans.map(i => i.id)).catch(() => {});
+  };
   Hooks.on("updateItem", (item, changes, options, userId) => {
-    if (userId !== game.user?.id || !item.actor || !isDaemonicArmament(item)) return;
-    const sys = changes?.system ?? {};
-    if (sys.equipped === false || sys.stored === true) item.delete().catch(() => {});
+    if (userId !== game.user?.id || !item.actor) return;
+    if (dissolvesOnChange(item, changes)) { item.delete().catch(() => {}); return; }
+    if (item.type === "psychicPower" && changes?.system?.isSustained === false) _dropOrphanSummons(item.actor, userId);
   });
+  Hooks.on("deleteItem", (item, options, userId) => _dropOrphanSummons(item.actor, userId));
 
   // Защитное поле друкхарийской брони (wdbc-j8cn, combat/armor-field-shield.mjs):
   // встроенный щит живёт, пока броня надета и режим включён. Сверку делает

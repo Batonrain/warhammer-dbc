@@ -28,6 +28,7 @@ import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
 import { runtForbidsOneHand } from "./runt.mjs";
 import { ironGardenHandsDiscount, ironGardenSharesHand } from "./iron-garden.mjs";
 import { livingArsenalOneHand, isShoulderWeapon } from "./obliterator-talents.mjs";
+import { precisionTelekinesisArms } from "./telekinetic-blades.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -227,7 +228,8 @@ export function baseHandsFromTraits(actor) {
     .map(t => Number(t.system?.rating) || 0)
     .filter(n => n > 0);
   const base = ratings.length ? Math.max(...ratings) : BASE_HANDS;
-  return base + Math.max(0, Number(actor?.system?.extraHands) || 0) + brotherhoodArms(actor);
+  return base + Math.max(0, Number(actor?.system?.extraHands) || 0) + brotherhoodArms(actor)
+    + precisionTelekinesisArms(actor);
 }
 
 /** Дар Одержимого «Братство»: доп. пара рук (Multiple Arms +2), пока демон проявлен (Разобрать eyupr). */
