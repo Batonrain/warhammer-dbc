@@ -15,6 +15,7 @@ import { narrowestDoorCrossed, isSqueeze } from "../rules/squeeze.mjs";
 import { actorBaseSizeCells, isBaseTrackedActor } from "./tactical-map.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { tokenDocAfterUpdate } from "../helpers/token-after-update.mjs";
 
 /** Стены-двери сцены (WALL_DOOR_TYPES: 0 none, 1 door, 2 secret — оба варианта считаются). */
 function doorWallsOnScene(scene) {
@@ -100,7 +101,9 @@ export function initSqueezeHooks() {
     const scene = tokenDoc.parent;
     const gridSize = scene?.grid?.size || 100;
     const fromCenter = centerOf(before.x, before.y, tokenDoc.width, tokenDoc.height, gridSize);
-    const toCenter   = centerOf(tokenDoc.x, tokenDoc.y, tokenDoc.width, tokenDoc.height, gridSize);
+    // Куда пришёл — из changes (анимированное перемещение, Sahara 589-updatetoken).
+    const at = tokenDocAfterUpdate(tokenDoc, changes);
+    const toCenter   = centerOf(at.x, at.y, tokenDoc.width, tokenDoc.height, gridSize);
     const doorWalls  = doorWallsOnScene(scene);
 
     const result = checkSqueeze({ fromCenter, toCenter, doorWalls, cellPx: gridSize, baseSize });

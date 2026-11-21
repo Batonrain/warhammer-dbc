@@ -50,6 +50,7 @@ import { aggregateAuto, resolveWeaponProps } from "./weapon-properties.mjs";
 import { rollSuppressionTest } from "./suppression.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { tokenDocAfterUpdate } from "../helpers/token-after-update.mjs";
 
 const NS = "warhammer-dbc";
 const FLAG_KEY = "overwatch";
@@ -227,7 +228,9 @@ export function initOverwatchHooks() {
       if (state.triggeredUuids.includes(tokenDoc.uuid)) continue;
       const shooterToken = enemyToken(shooter, tokenDoc);
       if (!shooterToken) continue;
-      if (!isMoverInSector(shooterToken, state, tokenDoc)) continue;
+      // Позиция после апдейта — из changes: при анимированном перетаскивании
+      // документ ещё стоит на старом месте (Sahara 589-updatetoken, как task-bc09).
+      if (!isMoverInSector(shooterToken, state, tokenDocAfterUpdate(tokenDoc, changes))) continue;
       await offerOverwatchShot(shooter, tokenDoc, { auto: true });
     }
   });

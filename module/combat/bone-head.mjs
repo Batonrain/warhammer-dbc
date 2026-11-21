@@ -35,6 +35,7 @@ import { isEncounterActive, hasActionEconomy, isOwnTurn, spendActionPoints } fro
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { tokenDocAfterUpdate } from "../helpers/token-after-update.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const NS = "warhammer-dbc";
@@ -166,7 +167,8 @@ export function initBoneHeadHooks() {
   Hooks.on("updateToken", async (tokenDoc, changes, options, userId) => {
     if (userId !== game.user?.id) return;
     if (!Object.hasOwn(changes, "x") && !Object.hasOwn(changes, "y")) return;
-    await checkHaywireFieldExit(tokenDoc);
+    // Позиция после апдейта — из changes (анимированное перемещение, Sahara 589-updatetoken).
+    await checkHaywireFieldExit(tokenDocAfterUpdate(tokenDoc, changes));
   });
 }
 
