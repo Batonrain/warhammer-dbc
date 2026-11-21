@@ -14,7 +14,8 @@ import { resolveCardRadiantPresence } from "./combat/radiant-presence.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { attackWeapon }                from "./combat/attack-snapshot.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack, revertCardFailure, failUndoLineHtml } from "./combat/fear.mjs";
-import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG } from "./rules/fail-undo.mjs";
+import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG, cardFailUndo } from "./rules/fail-undo.mjs";
+import { rerollFailConsequences } from "./rules/kind-outcome.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
@@ -4958,17 +4959,26 @@ function _attachFateContextMenu(message, html) {
         : "";
 
       // Последствия провала исходной карточки (Шок Инфернальной Воли, Ступор Гипно-Шрамов; task-e30b): переброс
-      // стал успехом — снимаются; провалился снова — остаются, а откат переезжает на новую карточку (исходную
-      // помечаем, чтобы не откатить дважды). Переброс идёт мимо общего исхода, поэтому НОВЫЙ Шок за 4+ Провала
-      // здесь не бросается — это записано в label mutation.infernalWill (constants/capabilities.mjs).
+      // стал успехом — снимаются. Тест известен (skillTest с листа) — переброс заменяет бросок целиком: старые
+      // последствия снимаются и при новом провале, а новые считаются по НОВОМУ броску (rerollFailConsequences,
+      // Sahara failundo п.1). Тест не известен — по-старому: провал снова — откат переезжает на новую карточку
+      // (исходную помечаем, чтобы не откатить дважды).
+      const rederive = !!(skillTest && threshold !== null);
       const prevFailUndo = failUndoOf(message);
       let failUndoLine = "";
       let carriedFailUndo = null;
-      const failPlan = rerollFailUndoPlan({ prevFailUndo, hit, settled: cardOnceUsed(message, FAIL_UNDO_SETTLED_FLAG) });
+      const failPlan = rerollFailUndoPlan({ prevFailUndo, hit, settled: cardOnceUsed(message, FAIL_UNDO_SETTLED_FLAG), rederive });
       if (failPlan.revert) failUndoLine = failUndoLineHtml(await revertCardFailure(message));
       else if (failPlan.carry) {
         carriedFailUndo = prevFailUndo;
         await revertCardFailure(message, { keep: true });
+      }
+      if (rederive) {
+        const fresh = await rerollFailConsequences(actor, { rv, threshold, ctx: {
+          actor, kind: "skill", skill: skillTest.skill || undefined, group: skillTest.group || undefined,
+          specialty: skillTest.specialty || undefined, char: skillTest.char } });
+        failUndoLine += fresh.html;
+        if (fresh.failUndo) carriedFailUndo = cardFailUndo(actor, fresh.failUndo);
       }
 
       // Blessed Fits/Благословенные Припадки (Общие Мутации, wdbc-1rno):

@@ -50,6 +50,55 @@ const FAIL_DEGREE_HANDLERS = {
 };
 
 /**
+ * «Провалил тест на N+ Провала» (rules/fail-degree-triggers.mjs): запустить сработавшие последствия, их
+ * откаты — в `failUndo` (мутирует) под именем обработчика. Возвращает html для карточки. Ошибка последствия
+ * не роняет сам бросок.
+ */
+async function runFailDegreeTriggers(actor, outcome, ctx, failUndo) {
+  let html = "";
+  for (const t of matchFailDegreeTriggers(outcome, ctx ?? {}, flag => hasRuleFlag(actor, flag))) {
+    const run = FAIL_DEGREE_HANDLERS[t.handler];
+    if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
+    try {
+      const res = await run(actor, { deg: outcome.deg, ctx: ctx ?? {}, trigger: t });
+      // Последствие возвращает строку карточки либо { html, undo } (откат — в failUndo под именем обработчика).
+      if (typeof res === "string") html += res;
+      else if (res) {
+        html += res.html ?? "";
+        if (res.undo) failUndo[t.handler] = res.undo;
+      }
+    } catch (e) {
+      console.error(`Warhammer DBC | Ошибка последствия «${t.id}»:`, e);
+    }
+  }
+  return html;
+}
+
+/**
+ * Последствия провала для «Переброс за Очко» (hooks.mjs, doReroll; Sahara failundo п.1). Переброс заменяет
+ * исходный бросок, поэтому и последствия считаются заново — по НОВОМУ броску: Ступор Гипно-Шрамов при Крит.
+ * Провале теста I и триггеры «N+ Провала» (Шок Инфернальной Воли). Исход — тот же testOutcome/criticalOutcome,
+ * что у общего исхода; доп. Провалы правил (failDegMod) сюда не входят — переброс их не знает и раньше.
+ * @param {object} actor
+ * @param {{rv:number, threshold:number, ctx:object}} p  ctx — как у resolveKindOutcome (kind/skill/char/actor)
+ * @returns {Promise<{html:string, failUndo:?object, success:boolean, deg:number}>}
+ */
+export async function rerollFailConsequences(actor, { rv, threshold, ctx }) {
+  const { success, deg } = testOutcome(rv, threshold);
+  const crit = criticalOutcome(rv, resolveTest(ctx).crit);
+  const failUndo = {};
+  let html = "";
+  if (hypnoScarsStun(crit, ctx, hasRuleFlag(actor, HYPNO_SCARS))) {
+    const { applyHypnoScarsStun } = await import("../combat/replicant.mjs");
+    const stun = await applyHypnoScarsStun(actor);
+    html += stun.html;
+    if (stun.undo) failUndo.hypno = stun.undo;
+  }
+  if (!success) html += await runFailDegreeTriggers(actor, { success, deg, crit }, ctx, failUndo);
+  return { html, failUndo: Object.keys(failUndo).length ? failUndo : null, success, deg };
+}
+
+/**
  * Виды теста — независимые: любое подмножество combined/extended/opposed
  * может быть задано разом на одном вызове (стр. 25-26, wdbc-y9i8, «довести по
  * букве правил» — книга нигде не пишет, что они взаимоисключающие: Крафт
@@ -329,22 +378,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // ИТОГОВОЙ степени провала (baseDeg, с failDegMod внутри), после крита: часть
   // правил исключает Крит. Провал. Ошибка последствия не роняет сам бросок —
   // тот же принцип, что у авто-скриптов выше.
-  for (const t of matchFailDegreeTriggers({ success, deg: baseDeg, crit: critEff }, ctx ?? {},
-    flag => hasRuleFlag(actor, flag))) {
-    const run = FAIL_DEGREE_HANDLERS[t.handler];
-    if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
-    try {
-      const res = await run(actor, { deg: baseDeg, ctx: ctx ?? {}, trigger: t });
-      // Последствие возвращает строку карточки либо { html, undo } (откат — в failUndo под именем обработчика).
-      if (typeof res === "string") critLine += res;
-      else if (res) {
-        critLine += res.html ?? "";
-        if (res.undo) failUndo[t.handler] = res.undo;
-      }
-    } catch (e) {
-      console.error(`Warhammer DBC | Ошибка последствия «${t.id}»:`, e);
-    }
-  }
+  critLine += await runFailDegreeTriggers(actor, { success, deg: baseDeg, crit: critEff }, ctx, failUndo);
 
   let extendedLine = "";
   if (extended) {
