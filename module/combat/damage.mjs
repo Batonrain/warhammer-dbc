@@ -1,6 +1,7 @@
 // module/combat/damage.mjs
 
 import { chainShieldIntercept } from "./wild-psyker.mjs";
+import { AURA_OF_CHAOS_FLAG, auraOfChaosPhenomenon } from "../rules/twin-spirit.mjs";
 import { anointedShieldBonus, ANOINTED_SHIELD_FLAG } from "../rules/terminator-talents.mjs";
 import { momentumOnDamage } from "./momentum.mjs";
 import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
@@ -56,6 +57,8 @@ import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
 import { putrescenceOffer } from "./putrescence.mjs";
 import { sharedPainOffer } from "./shared-pain.mjs";
+import { shareSoulBondDamage } from "./soul-binding.mjs";
+import { hasHorrorSplit } from "../rules/horror-split.mjs";
 import { paybackOfferHtml } from "./payback.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
@@ -620,6 +623,23 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   let overloadRolls = [];
   let overloadExtraHtml = "";
   if (overloaded) ({ overloadRolls, overloadExtraHtml } = await _applyShieldOverload(shieldItem, actor, s, { attackerUuid, isRetaliation }));
+
+  // Аура Хаоса (Дар Одержимого, apps/twin-spirit.mjs): «на любом дубле при
+  // успешном броске на щит он вызывает Феномен» — бросок по таблице сразу.
+  if (shieldItem.getFlag?.("warhammer-dbc", AURA_OF_CHAOS_FLAG) && auraOfChaosPhenomenon(rv, blocked)) {
+    const { getPhenomenon, getPeril } = await import("../constants/psyker-tables.mjs");
+    const pr = await new Roll("1d100").evaluate();
+    const phen = getPhenomenon(pr.total);
+    overloadRolls.push(pr);
+    let peril = "";
+    if (phen.peril) {
+      const pp = await new Roll("1d100").evaluate();
+      overloadRolls.push(pp);
+      const p = getPeril(pp.total);
+      peril = ` Варп-Прорыв: d100 = <b>${pp.total}</b> — <b>${esc(p.label)}</b>. ${esc(p.text)}`;
+    }
+    overloadExtraHtml += `<div class="roll-threshold" style="color:#a050c0;">Аура Хаоса: дубль ${rv} — Психический Феномен. d100 = <b>${pr.total}</b> — <b>${esc(phen.label)}</b>. ${esc(phen.text)}${peril}</div>`;
+  }
 
   // ── Тип щита для отображения ──────────────────────────────────────────────
   const typeLabels = { dome: "Купол", deflector: "Дефлект.", penetrating: "Сквозной" };
@@ -1506,6 +1526,12 @@ export async function applyDamageToActor(actor, damageData) {
     netDamage = sp.net;
     if (sp.note) putrescenceNote = putrescenceNote ? `${putrescenceNote} ${sp.note}` : sp.note;
   }
+  // Ритуал Связывания Души (combat/soul-binding.mjs): урон Варп-Оружия после поглощения — поровну со связанными душами.
+  if (warpSoak && netDamage > 1 && !stunManeuver) {
+    const bond = await shareSoulBondDamage(actor, netDamage);
+    netDamage = bond.net;
+    if (bond.note) putrescenceNote = putrescenceNote ? `${putrescenceNote} ${bond.note}` : bond.note;
+  }
 
   // Расплата (Талант Дредноутов, combat/payback.mjs): непоглощённый урон от Ненавистного — пилоту кнопка ответной атаки.
   let paybackHtml = "";
@@ -1585,6 +1611,13 @@ export async function applyDamageToActor(actor, damageData) {
 
   const woundLoss = await applyWoundLoss(actor, netDamage);
   let { currentWounds, newWounds, newCritical, gotCritical } = woundLoss;
+  // Разделение Ужасов (combat/horror-split.mjs, Sahara 578-1f7a): ниже 0 Ран не от
+  // священного/варп-оружия — кнопка «Разделиться» (2, под Локусом Трансмогрификации — 3).
+  let horrorSplitHtml = "";
+  if (woundLoss.gotCritical && hasHorrorSplit(actor)) {
+    const { horrorSplitButtonHtml } = await import("./horror-split.mjs");
+    horrorSplitHtml = horrorSplitButtonHtml(actor, { crossedZero: true, sanctified, warpWeapon: warpSoak });
+  }
   // Рой: Критических Эффектов нет — при Ранах ниже 0 уничтожен (метка «погиб», Критические не копятся).
   let swarmDestroyedNote = "";
   // Рубрикант (rules/rubricae.mjs): Раны ниже 0 — рассыпается грудой пустых доспехов, та же ветка.
@@ -1820,6 +1853,7 @@ export async function applyDamageToActor(actor, damageData) {
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);
   if (paybackHtml) propEffectNotes.push(paybackHtml);
+  if (horrorSplitHtml) propEffectNotes.push(horrorSplitHtml);
   // Касание Энтропии сработала ВЫШЕ, до расчёта поглощения (см. там) — здесь
   // только подпись, чтобы игрок видел, почему броня вдруг не удержала.
   if (entropyLost > 0) {

@@ -16,6 +16,7 @@ import { conditionRemoveFields, fatigueChangeFields } from "../sheets/tabs/condi
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { spendReaction } from "./action-economy.mjs";
+import { projectorRegenValue, PROJECTOR_REGEN_FLAG } from "../rules/rubric-sorcerer.mjs";
 import { healActor } from "./heal-target.mjs";
 import {
   LIFE_VIRUS_FLAG, LV_PATIENTS_FLAG, DOSES_POOL, CULTIVATION_POOL, LIFE_VIRUS_SECONDS, AURA_RADIUS,
@@ -220,6 +221,10 @@ export async function useProjector(actor) {
     Object.assign(upd, { "system.wounds.ablative": r.ablative, "system.wounds.ablativeMax": r.ablativeMax,
       [`flags.${NS}.${LIFE_VIRUS_FLAG}.contribution`]: next });
     lines.push(`Аблативные Раны вируса: ${f.contribution} → <b>${next}</b> (Сверхукрепление до ${lifeVirusRow(stage).overcharge}). Бонус к следующему тесту T на Regeneration: ${lifeVirusRow(stage).regenBonus}.`);
+    // Бонус ложится меткой на пациента и сам тратится его следующим тестом T
+    // Регенерации (combat/rubric-sorcerer.mjs::rollRegeneration, task-4ae5).
+    const regenBonus = projectorRegenValue(lifeVirusRow(stage).regenBonus);
+    if (regenBonus != null) upd[`flags.${NS}.${PROJECTOR_REGEN_FLAG}`] = regenBonus;
   } else {
     for (let i = 0; i < times; i++) lines.push(...await projectorEffect(p, pick.eff, upd));
   }

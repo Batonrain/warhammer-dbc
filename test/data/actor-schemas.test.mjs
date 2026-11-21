@@ -194,6 +194,8 @@ const DEVIATIONS = {
     // Хаосита от субрасы (Наследник +1, Затупленный −уровень) — сверка главы
     // I, 26.09.2026, гораздо позже template.json.
     subraceTier: 1, infamyMaxMod: 0,
+    // Лист демона Двойного Духа (rules/twin-spirit.mjs, Sahara 577-02de) — uuid Актора-демона.
+    "possession.demonUuid": "",
     // Ручная ГМ-надбавка к Лимиту Атак за Ход (combat/attack-limit.mjs,
     // wdbc-6rj) — заведена гораздо позже template.json.
     attackLimitBonus: 0,

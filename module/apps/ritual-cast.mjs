@@ -20,6 +20,8 @@
 import { RITUAL_TYPES_MAP, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY, CURSE_SYMPATHY,
          lookupAversion, buildRitualSkills, ritualSkillOption, ritualDegrees, charAbbr,
          applyRitualItem } from "../constants/rituals.mjs";
+import { isSoulBindingRitual } from "../rules/soul-binding.mjs";
+import { soulBindingButtonHtml } from "../combat/soul-binding.mjs";
 import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
 import { WARP_GODS, WARP_GODS_MAP } from "../constants/veil.mjs";
 import { godRelationCat } from "../constants/patronage.mjs";
@@ -576,6 +578,8 @@ export async function castRitual(R, actor, {
       </div>`
     : "";
 
+  // Ритуал Связывания Души (Sahara 581-ddee): после успеха — встречный тест с целью кнопкой карточки.
+  const soulBindHtml = (success && isSoulBindingRitual(item)) ? soulBindingButtonHtml(actor, deg) : "";
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Класс `wh-ritual-card` идёт в classes: styles/ui/veil.css рисует по нему
   // блок провала ритуала селектором `.wh-ritual-card .rf-*`, то есть класс
@@ -593,7 +597,7 @@ export async function castRitual(R, actor, {
       ? outcomeHtml(true, `Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}`)
       : outcomeHtml(false, `Ритуал провален — ${Math.abs(deg)} Провал(ов)`),
     sections: [
-      demonHtml, herdHtml, failHtml, costHtml, condHtml,
+      demonHtml, herdHtml, soulBindHtml, failHtml, costHtml, condHtml,
       `<details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>`
     ]
   }), { rolls: allRolls });

@@ -6,7 +6,8 @@
 //
 //  Цепочка урона (combat/damage.mjs) спрашивает перед применением Ран — тот же
 //  приём, что Гниль Внутри (combat/putrescence.mjs). У демона Двойного Духа нет
-//  своего листа, поэтому перенесённый урон пишется строкой в карточку для ГМа.
+//  своего Актора не всегда — перенесённый урон списывается с пула «Раны демона»
+//  вкладки «Одержимость»; пула нет — строкой в карточку для ГМа.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
@@ -32,6 +33,15 @@ export async function sharedPainOffer(actor, netDamage) {
   const path = actorInfamyPath(actor);
   const spend = await spendFromInfamyPool(actor, 1, path);
   if (!spend) return { net, note: "" };
-  if (spend.poolSpent) await actor.update({ [path]: spend.poolValue });
-  return { net: 1, note: `👥 Общая Боль: Очко Бесчестия, непоглощённый урон ${net} → 1; ${net - 1} урона принимает дух демона (ГМ учитывает).` };
+  const upd = spend.poolSpent ? { [path]: spend.poolValue } : {};
+  // Пул Ран духа демона на вкладке «Одержимость» (заполняется листом демона, apps/twin-spirit.mjs).
+  const dw = actor.system?.possession?.demonWounds ?? {};
+  const hasPool = (Number(dw.max) || 0) > 0;
+  const left = (Number(dw.value) || 0) - (net - 1);
+  if (hasPool) upd["system.possession.demonWounds.value"] = left;
+  if (Object.keys(upd).length) await actor.update(upd);
+  const tail = !hasPool ? "(ГМ учитывает)"
+    : left < 0 ? `— Раны демона ${left}: Одержимый выходит из Проявления и не войдёт, пока демон не восстановит 1 Рану`
+    : `— Раны демона ${left}/${dw.max}`;
+  return { net: 1, note: `👥 Общая Боль: Очко Бесчестия, непоглощённый урон ${net} → 1; ${net - 1} урона принимает дух демона ${tail}.` };
 }

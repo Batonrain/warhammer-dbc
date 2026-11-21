@@ -1093,6 +1093,25 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
         return;
       }
+      if (data.action === "horrorSplit") {
+        // Разделение Ужасов (module/combat/horror-split.mjs): Бестиарий скрыт от
+        // игрока — меньших Ужасов создаёт ГМ.
+        const { spawnHorrorSplit } = await import("./module/combat/horror-split.mjs");
+        const res = await spawnHorrorSplit(String(data.actorUuid ?? ""), Math.min(3, Math.max(1, Number(data.count) || 2)), String(data.into ?? "").slice(0, 100));
+        if (!res.ok) console.warn("Warhammer DBC | Разделение Ужасов:", res.reason);
+        return;
+      }
+      if (data.action === "createTwinDemon") {
+        // Лист демона Двойного Духа (module/apps/twin-spirit.mjs) — тот же приём,
+        // что summonDemon: копию из скрытого Бестиария создаёт ГМ. Просящий
+        // обязан владеть хостом.
+        const { createTwinDemonSheet } = await import("./module/apps/twin-spirit.mjs");
+        const host = await fromUuid(String(data.hostUuid ?? "")).catch(() => null);
+        if (!host || !(requester?.isGM || host.testUserPermission?.(requester, "OWNER"))) return;
+        const res = await createTwinDemonSheet(host);
+        if (!res.ok) console.warn("Warhammer DBC | Лист демона:", res.reason);
+        return;
+      }
       if (data.action === "createGolem") {
         // Голем Рубрики (Повелитель Големов, module/combat/rubric-sorcerer.mjs) — тот же приём, что summonDemon:
         // Бестиарий скрыт от игрока, актора-Миньона и токен создаёт активный ГМ по плану из диалога игрока.
@@ -2919,6 +2938,43 @@ registerSceneLiveRecalc({
     filter: item => !item.getFlag("warhammer-dbc", "auraSource"),
   },
 });
+
+// ── Двойной Дух (module/apps/twin-spirit.mjs): Проявление, лист демона,
+// Высший Одержимый меняют то, что хосту положено (щит Ауры Хаоса, Черты
+// Текучего/Наслоения, Локус Симбиоза). Сверяет клиент, внёсший правку; ГМ
+// заодно пересчитывает ауры — Локус Симбиоза задевает только Проявленных.
+// Правка Характеристик листа демона — пересверка его хоста (рейтинг щита 1-W).
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  const poss = changes.system?.possession;
+  const touchesPoss = poss && ("manifested" in poss || "demonUuid" in poss || "greaterPossessed" in poss || "demon" in poss);
+  const hostUuid = doc.getFlag?.("warhammer-dbc", "twinSpiritHost");
+  const touchesDemon = hostUuid && (changes.system?.characteristics || changes.items);
+  if (!touchesPoss && !touchesDemon) return;
+  if (game.user.isGM && touchesPoss) checkAuras();
+  if (game.user.id !== userId) return;
+  const { syncTwinSpirit } = await import("./module/apps/twin-spirit.mjs");
+  const host = touchesPoss ? doc : await fromUuid(hostUuid).catch(() => null);
+  if (host) await syncTwinSpirit(host);
+});
+// Ритуал Связывания Души (module/combat/soul-binding.mjs): умерла связанная
+// цель — её Ритуалисту тест W−30, провал — −2d10 W навсегда. Только на
+// переходе «жив → мёртв» и только у клиента, отметившего смерть.
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  if (game.user.id !== userId || changes.flags?.["warhammer-dbc"]?.deceased !== true) return;
+  if (!doc.getFlag?.("warhammer-dbc", "soulBondPartners")?.length) return;
+  const { onSoulBondDeath } = await import("./module/combat/soul-binding.mjs");
+  await onSoulBondDeath(doc);
+});
+// Дар взяли или сняли посреди Проявления — та же сверка.
+for (const hook of ["createItem", "deleteItem"]) {
+  Hooks.on(hook, async (item, options, userId) => {
+    const host = item.parent;
+    if (game.user.id !== userId || !host?.system?.possession?.manifested) return;
+    if (item.type !== "talent" || !String(item.name ?? "").includes("Дар:")) return;
+    const { syncTwinSpirit } = await import("./module/apps/twin-spirit.mjs");
+    await syncTwinSpirit(host);
+  });
+}
 
 // ── Круги ауры на канвасе (wdbc-7t0z, хвост wdbc-995w) — тот же живой
 // пересчёт, что у выдачи эффектов выше, но БЕЗ isGM-гейта: чисто визуальный

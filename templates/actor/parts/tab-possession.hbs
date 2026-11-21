@@ -81,6 +81,34 @@
     </div>
   </header>
 
+  {{!-- ЛИСТ ДЕМОНА — Актор «daemon» Двойного Духа (apps/twin-spirit.mjs) --}}
+  <section class="poss-panel poss-demon-sheet" data-collapse-key="poss-demon-sheet">
+    <div class="poss-panel-title" data-action="panelCollapse">ЛИСТ ДЕМОНА{{#if possession.demon}} <span class="poss-band">{{possession.demon.name}}</span>{{/if}}</div>
+    {{#if possession.demon}}
+    <div class="poss-manifest-grid">
+      <div class="poss-mcell"><span>WS</span><b>{{possession.demon.ws}}</b></div>
+      <div class="poss-mcell"><span>BS</span><b>{{possession.demon.bs}}</b></div>
+      <div class="poss-mcell"><span>W</span><b>{{possession.demon.wp}}</b></div>
+      <div class="poss-mcell"><span>Inf</span><b>{{possession.demon.inf}}</b></div>
+      <div class="poss-mcell"><span>Пси-рейтинг</span><b>{{possession.demon.psyRating}}</b></div>
+      <div class="poss-mcell"><span>Аура Хаоса</span><b>щит {{possession.demonWShield}}</b></div>
+    </div>
+    <div class="poss-swaprow">
+      <button type="button" class="poss-demon-open" title="Открыть Актора-демона: Навыки, Таланты, психосилы, Локусы">Открыть лист демона</button>
+      {{#if possession.introspection}}<button type="button" class="poss-introspection" title="Раз в Ход, полудействие: Charm/Logic vs W демона — уговорить проявить +1 Дар. Бонус Forbidden Lore (Daemons) +{{possession.introspection.bonus}}">Интроспекция</button>{{/if}}
+      {{#if possession.mentor}}<button type="button" class="poss-mentor" title="Дар «Ментор»: до 3 Навыков/Талантов демона на время Проявления">Ментор</button>{{/if}}
+      {{#if possession.sharedSorcery}}<button type="button" class="poss-shared-sorcery" title="Вторая душа раз в Раунд манифестирует психосилу демона (простой 1/3 Раунда после полу-/полного действия)">Общее Колдовство</button>{{/if}}
+      {{#if possession.risingTogether}}<button type="button" class="poss-rising" title="Восходя Вместе: демон становится Возвышенным">Восходя Вместе</button>{{/if}}
+      {{#if possession.greaterTalent}}<button type="button" class="poss-greater" title="Высший Одержимый: демон — Герольд с Inf = ½ Inf хоста">Высший Одержимый</button>{{/if}}
+    </div>
+    {{#if possession.sharedSlaughter}}<div class="poss-note">Общая Бойня: на промахе в Проявлении — кнопка «Переброс — Общая Бойня» в меню Очков карточки (раз в Ход, меньший WS/BS из хоста и демона).</div>{{/if}}
+    {{else}}
+    <div class="poss-note">У демона нет своего листа — WS/BS/W, психосилы и Локус демона система не знает. Создайте лист: копия демона из Бестиария, привязанная к этому персонажу.</div>
+    <div class="poss-swaprow"><button type="button" class="poss-demon-create">Создать лист демона</button></div>
+    {{/if}}
+    {{#if possession.spider}}<div class="poss-note">Дар «Паук»: по стенам и потолку ногами — Полуход {{possession.spider.half}} / Ход {{possession.spider.move}} м; на четвереньках — полная скорость ({{possession.spider.fullHalf}} / {{possession.spider.fullMove}} м). Высоту на карте система не ведёт — двигайте токен по стене как по полу.</div>{{/if}}
+  </section>
+
   {{!-- ПРОЯВЛЕНИЕ: таблица по Cor --}}
   <section class="poss-panel poss-manifest" data-collapse-key="poss-manifest">
     <div class="poss-panel-title" data-action="panelCollapse">ПРОЯВЛЕНИЕ <span class="poss-band">{{possession.prof.band}}</span> <span class="poss-cor">Cor {{possession.cor}}</span></div>
@@ -120,7 +148,7 @@
     <div class="poss-syms">
       <div><span>Соц. бонус хост↔демон</span><b>+{{possession.socialBonus}}</b></div>
       <div><span>W хоста против перехвата</span><b>+{{possession.hostWBonus}}</b></div>
-      <div><span>Макс. контроль демона</span><b>{{possession.controlHours}} ч</b></div>
+      <div><span>Макс. контроль демона</span><b>{{#if possession.controlUnlimited}}без предела (W демона выше){{else}}{{possession.controlHours}} ч{{/if}}</b></div>
     </div>
   </section>
 

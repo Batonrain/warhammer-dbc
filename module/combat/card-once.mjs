@@ -19,6 +19,10 @@ const NS = "warhammer-dbc";
 export const CARD_ONCE_FLAGS = [
   // Танец Пламени: цель с этой карточки уже выбрана (rules/fire-dance.mjs).
   "fireDanceUsed",
+  // Ритуал Связывания Души: встречный тест с карточки ритуала брошен (combat/soul-binding.mjs).
+  "soulBindingRolled",
+  // Разделение Ужасов: меньшие Ужасы с этой карточки урона уже созданы (combat/horror-split.mjs).
+  "horrorSplitDone",
   // Бастион против Тарана, Ас Оператор, Избавление Аркхана (остаток Талантов, 20.11.2026).
   "ramBastionUsed", "aceOperatorUsed", "arkhanUsed",
   "tipOfSpearUsed", "mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",

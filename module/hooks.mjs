@@ -244,6 +244,8 @@ import { OVERPOWER_CARD_FLAG, startOverpower } from "./combat/overpower.mjs";
 import { FURIOUS_ASSAULT_CARD_FLAG } from "./combat/furious-assault.mjs";
 import { ONE_WILL_GO_DOWN_CARD_FLAG } from "./combat/one-will-go-down.mjs";
 import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./combat/pugilist-strikes.mjs";
+import { twinDemonOf, sharedSlaughterOffered, sharedSlaughterThreshold, SHARED_SLAUGHTER_TURN_FLAG } from "./rules/twin-spirit.mjs";
+import { isCapabilityAvailable as isTurnCapAvailable, markCapabilityUsed as markTurnCapUsed } from "./rules/cooldown.mjs";
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
@@ -1355,6 +1357,32 @@ export function registerHooks() {
     // Призыв Духов Стада (wdbc-xxb7) — кнопка карточки успешного проведения
     // Ритуала «Summon Herd Spirits» (module/apps/ritual-cast.mjs); сам диалог
     // распределения (module/apps/herd-spirits-summon.mjs) GM-only внутри себя.
+    // Разделение Ужасов (combat/horror-split.mjs): спавн меньших Ужасов — раз на карточку.
+    html.querySelectorAll(".wh-horror-split-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { requestHorrorSplit } = await import("./combat/horror-split.mjs");
+        await runCardOnce(message, "horrorSplitDone", async () => {
+          await requestHorrorSplit(el.dataset.actorUuid, parseInt(el.dataset.count) || 2, el.dataset.into);
+          return true;
+        }, "Этот Ужас уже разделился.");
+      });
+    });
+
+    // Ритуал Связывания Души (combat/soul-binding.mjs): встречный тест и метка связи — раз на карточку.
+    html.querySelectorAll(".wh-soul-binding-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Ритуалист не найден."); return; }
+        const { bindSoulsFromCard } = await import("./combat/soul-binding.mjs");
+        await runCardOnce(message, "soulBindingRolled", async () => { await bindSoulsFromCard(actor, parseInt(el.dataset.deg) || 1); return true; },
+          "Связывание с этой карточки уже проведено.");
+      });
+    });
+
     html.querySelectorAll(".wh-herd-spirits-btn").forEach(btn => {
       btn.addEventListener("click", async ev => {
         ev.preventDefault();
@@ -4692,7 +4720,11 @@ export async function _executeSoulBurn(attacker, target) {
     const dice  = hasResilienceTalent(target, "hardenedSoul")
       ? hardenedSoulDice(net, target.system.characteristics?.int?.bonus) : net;
     const dRoll = await new Roll(`${dice}d10`).evaluate(); allRolls.push(dRoll);
-    const dmg   = dRoll.total;
+    const rolled = dRoll.total;
+    // Ритуал Связывания Души: урон Выжигания делится поровну со связанными (combat/soul-binding.mjs).
+    const { shareSoulBondDamage } = await import("./combat/soul-binding.mjs");
+    const bond = await shareSoulBondDamage(target, rolled);
+    const dmg   = bond.net;
     // Непоглощаемый урон напрямую в Раны (затем в Критические)
     const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
       await applyWoundLoss(target, dmg);
@@ -4700,8 +4732,9 @@ export async function _executeSoulBurn(attacker, target) {
     const soulDestroyed = newCritical >= woundDeathThreshold(maxWounds);
     dmgNote = `
       <div class="roll-damage-section">
-        <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${dmg}</b> (${dice}d10 за ${net} Успех(ов)${dice !== net ? `, Укреплённая Душа: −${net - dice} куб.` : ""})</div>
+        <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${rolled}</b> (${dice}d10 за ${net} Успех(ов)${dice !== net ? `, Укреплённая Душа: −${net - dice} куб.` : ""})</div>
         <div class="roll-threshold">Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>
+        ${bond.note ? `<div class="roll-threshold">${bond.note}</div>` : ""}
         ${soulDestroyed ? `<div class="roll-threshold" style="color:#8b0000;"><b>${rollIcon("skull","#ff6b6b")}Душа разорвана на куски — цель уничтожена!</b></div>` : ""}
         ${await _reaperWeave(attacker, target, dmg, maxWounds)}
       </div>`;
@@ -4906,6 +4939,17 @@ function _attachFateContextMenu(message, html) {
       roundAvailable: isRoundCapabilityAvailable(atkCtxActor, BLADEMASTER_ROUND_FLAG)
     })) ? _makeFateMenuItem("Переброс — Мастер Клинка (раз в Раунд, без траты Очка)", true) : null;
     if (btnBlademaster) menu.appendChild(btnBlademaster);
+
+    // Общая Бойня (Одержимый, rules/twin-spirit.mjs): раз в Ход промах в Проявлении
+    // перебрасывается без Очка, но по меньшему WS/BS из хоста и демона (лист демона).
+    const slaughterDemon = atkCtxItem ? twinDemonOf(atkCtxActor) : null;
+    const slaughter = (atkCtxItem && sharedSlaughterOffered(atkCtxActor, {
+      charKey: atkCtx.charKey, rv: atkCtx.rv, threshold: atkCtx.threshold, rerolled: atkRerolled,
+      turnAvailable: isTurnCapAvailable(atkCtxActor, SHARED_SLAUGHTER_TURN_FLAG, "turn"), demon: slaughterDemon
+    })) ? sharedSlaughterThreshold(atkCtx.threshold, atkCtx.charKey, atkCtxActor, slaughterDemon) : null;
+    const btnSlaughter = slaughter
+      ? _makeFateMenuItem(`Переброс — Общая Бойня (раз в Ход, ${atkCtx.charKey.toUpperCase()} ${slaughter.lower}, Предел ${slaughter.threshold})`, true) : null;
+    if (btnSlaughter) menu.appendChild(btnSlaughter);
 
     // Хирургия Легиона (Апотекарий): проваленный тест Medicae / For.Lore
     // (Astartes Implants), брошенный с листа, — за Очко засчитать с 1 Успехом.
@@ -5171,6 +5215,24 @@ function _attachFateContextMenu(message, html) {
         return true;
       }, "Эта атака уже переброшена.");
       if (done) ui.notifications.info(`🗡️ ${atkCtxActor.name}: Мастер Клинка — переброс проваленной атаки без траты Очка.`);
+    });
+
+    // ── Общая Бойня: переброс промаха меньшим WS/BS, раз в Ход ───────────
+    btnSlaughter?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      if (!isTurnCapAvailable(atkCtxActor, SHARED_SLAUGHTER_TURN_FLAG, "turn")) {
+        ui.notifications.warn("Общая Бойня уже использована в этом Ходу.");
+        return;
+      }
+      const done = await runCardOnce(message, "attackRerolled", async () => {
+        await markTurnCapUsed(atkCtxActor, SHARED_SLAUGHTER_TURN_FLAG, "turn");
+        await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, slaughter.threshold,
+          atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
+        return true;
+      }, "Эта атака уже переброшена.");
+      if (done) ui.notifications.info(`⛧ ${atkCtxActor.name}: Общая Бойня — переброс промаха по меньшему ${atkCtx.charKey.toUpperCase()} (${slaughter.lower}).`);
     });
 
     // ── Хирургия Легиона: провал → Успех с 1 Успехом ─────────────────────
