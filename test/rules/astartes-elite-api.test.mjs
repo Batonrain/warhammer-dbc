@@ -10,7 +10,8 @@ const MODULES = {
   "../../module/combat/moritat-talents.mjs": ["useBeltFeed", "useFlyBy"],
   "../../module/combat/terminator-talents.mjs": ["useAnointed", "useAtramentar", "useDeathShroud"],
   "../../module/combat/obliterator-talents.mjs": ["useLivingArsenal", "useBulletEater", "useMutilator", "useSelfForging", "useShredder", "useToTheTeeth"],
-  "../../module/combat/blood-smith-talents.mjs": ["useRingOfBlood", "useDaemonPlate", "useUnforge"]
+  "../../module/combat/blood-smith-talents.mjs": ["useRingOfBlood", "useDaemonPlate", "useUnforge"],
+  "../../module/combat/valourous-accord.mjs": ["useValourousAccord"]
 };
 
 describe("API пачки astartes", () => {

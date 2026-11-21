@@ -178,7 +178,9 @@ describe("источники по умолчанию", () => {
                 // possessionWeaponGifts (Разобрать m9zer, 20.11.2026) — Дары-усилители на слитом оружии.
                 "possessionWeaponGifts", "prophetOfGallerpox",
                 // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».
-                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook",
+                "psychicSustainTarget", "race", "rage",
+                // ravenHiddenPatterns (Ворон, 21.11.2026) — Скрытые Узоры: Стойку засекает только Критический Успех.
+                "ravenHiddenPatterns", "requisitionTalents", "resilienceTalents", "serumHook",
                 // sharedConsciousness (Кенетаи, 21.11.2026) — Общее Сознание: +2/+5 к тестам WS за связанного в радиусе.
                 "sharedConsciousness", "situational", "situationalSocialTalents", "skitarii", "socialTalents", "synesthesia", "targetSocialTalents",
                 // tipOfSpear (Острие Копья, 20.11.2026) — бесплатный переброс атаки по знаку Глашатая.
