@@ -46,8 +46,10 @@ describe("максимум Очков Бесчестия со сдвигом с�
   // (actorInfamyMax), у не-Хаосита не читается infamyMaxMod — поэтому две записи
   // («fate» и «infamy») действуют каждая у своего мировоззрения САМИ, без
   // условия «Когда» и без пересинхронизации при смене мировоззрения.
+  // «rating» — рейтинг самой Черты (Избранный Судьбой (X), dbc-262): у Черты
+  // с рейтингом 1 это те же +1.
   const poolTargets = doc => entriesOf(doc).filter(e => e.kind === "poolMax")
-    .map(e => [e.poolTarget || "fate", Number(e.value)]);
+    .map(e => [e.poolTarget || "fate", e.value === "rating" ? Number(doc.system?.rating) || 0 : Number(e.value)]);
   it.each([
     ["Предсказание «Не спрашивай почему ты служишь»", "packs-src/divinations", "Sefr52Z3oSiSAYS2"],
     ["Эльданар", SUB, "dHESmFkEql3xjb98"],

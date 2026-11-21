@@ -53,7 +53,7 @@ import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment, onItemQualityChanged,
          syncNullZoneSuppression, syncArchetypeSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
-         getItemMechanics, findMechEntryById } from "./module/apps/mechanics.mjs";
+         getItemMechanics, findMechEntryById, hasPendingWhenEntries } from "./module/apps/mechanics.mjs";
 import { entryWhenOk } from "./module/rules/mech-when.mjs";
 import { isItemActive, syncOrphanedModEffects, syncWhenGatedEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
@@ -2350,12 +2350,23 @@ Hooks.on("updateItem", async (item, changes, options, userId) => {
   if (game.user.id !== userId || item.type !== "armor" || !(item.parent instanceof Actor)) return;
   if (changes.system?.equipped === undefined) return;
   await syncWhenGatedEffects(item.parent);
+  await applyPendingWhenEntries(item.parent);
 });
 for (const hook of ["createItem", "deleteItem"]) {
   Hooks.on(hook, async (item, options, userId) => {
     if (game.user.id !== userId || item.type !== "armor" || !(item.parent instanceof Actor)) return;
     await syncWhenGatedEffects(item.parent);
+    await applyPendingWhenEntries(item.parent);
   });
+}
+
+// Разовые записи с «Когда» от брони (Черты, ИЛИ-выбор +5 к Характеристике
+// Чемпиона-Терминатора), пропущенные при выдаче, пока броня лежала в рюкзаке:
+// надели броню — доигрываем (5-c24e).
+async function applyPendingWhenEntries(actor) {
+  for (const it of actor.items.contents ?? [...actor.items]) {
+    if (it.type !== "armor" && hasPendingWhenEntries(it)) await applyItemMechanics(it);
+  }
 }
 
 // Best.Q-биоимплант Друкхари (wdbc-ukpu, шаг 3): выбор бонусного эффекта при

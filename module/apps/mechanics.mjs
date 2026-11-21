@@ -3652,6 +3652,28 @@ function appliedEntryIds(item) {
   return new Set();
 }
 
+/**
+ * Есть ли у предмета запись (или ИЛИ-группа) с условием «Когда», которая при
+ * выдаче была пропущена, а теперь условие выполнено. Чемпион-Терминатор (5-c24e):
+ * архетип выдаёт броню в рюкзак, «+5 к WS/BS» и Черты брони при выдаче
+ * пропускаются — надели броню позже, и их надо доиграть (applyItemMechanics
+ * идемпотентен: уже применённое не повторит).
+ */
+export function hasPendingWhenEntries(item) {
+  const actor = item?.parent;
+  if (!actor) return false;
+  const applied = appliedEntryIds(item);
+  const hasWhen = e => e?.when && Object.keys(e.when).length > 0;
+  // ИЛИ-группа: выбор ещё не сделан, а хоть одна ветка «с Когда» теперь проходит.
+  // И-группа: любая её запись (или вложенная группа) недоиграна.
+  const pending = group => (group?.operator === "OR"
+    ? !orChoiceMade(group, applied) && (group.entries || []).some(b => hasWhen(b) && entryWhenOk(actor, b, item))
+    : (group?.entries || []).some(e => (e.kind === "group" && e.group)
+      ? pending(e.group)
+      : hasWhen(e) && !applied.has(e.id) && entryWhenOk(actor, e, item)));
+  return getItemMechanics(item).some(pending);
+}
+
 /** id всех записей механики предмета, включая вложенные подгруппы. */
 export function allMechEntryIds(item) {
   return collectMechEntries(getItemMechanics(item)).allIds;

@@ -41,7 +41,7 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
-import { volleyThrowApplies, VOLLEY_ROF_MIN, VOLLEY_ROF_MAX } from "../rules/throwing-talents.mjs";
+import { volleyThrowApplies, VOLLEY_ROF_MIN, VOLLEY_ROF_MAX, balearicSbBonus, thrownRange } from "../rules/throwing-talents.mjs";
 import { sightEffectsOf }                     from "../rules/sight-effects.mjs";
 import { unstablePlatformPenalty, plasmaMasteryBlastChoice } from "../rules/damage-talents.mjs";
 import { MAXIMAL_RNG_BONUS }                  from "../rules/maximal-mode.mjs";
@@ -1132,12 +1132,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // подобные моды дальности метательному не полагаются (gripRangeMult не
   // умножает эту ветку).
   // Бросок на Бегу (Талант Метания, techniqueOpts.freeShot === "runningThrow"): Rng уменьшается до S.b×2.
+  // Балеарец (dbc-162): «добавляет ½A.b к S.b в расчёте дальности и урона».
   const gripRange = sys.weaponClass === "thrown"
-    ? sBonus * (techniqueOpts.freeShot === "runningThrow" ? 2 : 3)
+    ? thrownRange(sBonus + balearicSbBonus(actor), techniqueOpts.freeShot === "runningThrow")
     : Math.round((Number(sys.range) || 0) * gripRangeMult);
 
   let rangeInfoHtml = "";
-  if (!isMelee && sys.range > 0) {
+  // У метательного в паке range: 0 — сетка дистанций всё равно нужна: Rng живой, S.b×3 (dbc-162).
+  if (!isMelee && gripRange > 0) {
     const rng     = gripRange;
     // Снаряд техники с rangeOverride заменяет дальность орудия (rules/ammo-override.mjs).
     const rngOver = ammoOverrides(ammoSys).range;

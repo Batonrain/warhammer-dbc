@@ -2700,8 +2700,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Командование (глава «Командование»): метка Концентрации огня гасится
   // атакой; Синхронный Натиск и счётчик Залпового Огня — после атаки
   // подчинённого (combat/command-state.mjs). Переброс (forcedRoll) — та же
-  // атака, второй раз не считается.
-  if (!forcedRoll) {
+  // атака, второй раз не считается; переброс за Очко Судьбы / Огневую Точку /
+  // Мастера Клинка идёт с skipAmmo без forcedRoll — тоже та же атака (dbc-131).
+  if (!forcedRoll && !opts.skipAmmo) {
     try {
       const cs = await import("./command-state.mjs");
       if (focusFireOn) await cs.updateOrRelay(actor, { "flags.warhammer-dbc.-=focusFire": null });
