@@ -33,8 +33,9 @@ import { isItemActive } from "../apps/effects.mjs";
 import { rescaleTraitByRating } from "../apps/mechanics.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import {
-  INFERNAL_FAMILIARITY_CAP, INFERNAL_FAMILIARITY_DREAD_REDUCTION, isDaemonicDread, reduceDaemonicDread
+  INFERNAL_FAMILIARITY_CAP, dreadReductionTotal, isDaemonicDread, reduceDaemonicDread
 } from "../rules/defiance-talents.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -124,7 +125,9 @@ export function targetIsAuraImmune(targetActor, immuneTraitNames) {
  * прогон мог заметить, что Талант взяли или потеряли, и выдать штраф заново.
  */
 export function dreadReductionFor(targetActor) {
-  return hasTalentCapability(targetActor, INFERNAL_FAMILIARITY_CAP) ? INFERNAL_FAMILIARITY_DREAD_REDUCTION : 0;
+  // Вязи-щиты (Отвращения/Безмятежности/Неизбежности) — ключом Возможности установленной вязи.
+  return dreadReductionTotal(key => key === INFERNAL_FAMILIARITY_CAP
+    ? hasTalentCapability(targetActor, key) : hasRuleFlag(targetActor, key));
 }
 
 /** Плоская (2D) дистанция центров токенов-документов, в метрах сцены. */

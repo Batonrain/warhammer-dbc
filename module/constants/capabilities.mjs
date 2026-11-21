@@ -7813,9 +7813,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "runicWeave.shieldOfRevulsion": {
-    label: "−5 к штрафу W от демонического присутствия — самого расчёта штрафа W от демонического присутствия нигде в коде нет (Трейт-заглушка), не автоматизировано",
+    label: "−5 к штрафу W от демонического присутствия (ауры Daemonic Presence); складывается с Инфернальным Знакомством и другими щитами",
     source: "Руническая Вязь «Щит Отвращения» (Core, стр. 433)",
-    reader: ""
+    reader: "module/rules/defiance-talents.mjs::dreadReductionTotal (RUNIC_DREAD_SHIELDS) ← module/regions/auras.mjs::dreadReductionFor: штраф Daemonic Dread от ауры для носителя установленной вязи смягчается, при нуле не выдаётся (Sahara runic-weaves-29)"
   },
   "runicWeave.twins": {
     label: "Оглушение на 1 Раунд не развеивает силы, манифестированные через Медитацию — нет кода, снимающего поддерживаемые силы при Оглушении, некуда встраивать исключение, не автоматизировано",
@@ -7863,9 +7863,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "runicWeave.shieldOfSerenity": {
-    label: "−10 к штрафу W от демонического присутствия — тот же пробел, что у «Щита Отвращения»: расчёта штрафа нет вообще, не автоматизировано",
+    label: "−10 к штрафу W от демонического присутствия (ауры Daemonic Presence); складывается с Инфернальным Знакомством и другими щитами",
     source: "Руническая Вязь «Щит Безмятежности» (Core, стр. 433)",
-    reader: ""
+    reader: "module/rules/defiance-talents.mjs::dreadReductionTotal (RUNIC_DREAD_SHIELDS) ← module/regions/auras.mjs::dreadReductionFor: штраф Daemonic Dread от ауры для носителя установленной вязи смягчается, при нуле не выдаётся (Sahara runic-weaves-29)"
   },
   "runicWeave.whiteNoise": {
     label: "Излучает хаотичный Варп — пси-чутьё видит факт манифестации, но не природу сил и не поддерживаемые — нет уровней детализации у Пси-чутья в коде, не автоматизировано",
@@ -7903,9 +7903,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "runicWeave.shieldOfInevitability": {
-    label: "Полностью нивелирует штраф W от демонического присутствия — тот же пробел, что у «Щита Отвращения»/«Безмятежности»: расчёта штрафа нет вообще, не автоматизировано",
+    label: "Полностью нивелирует штраф W от демонического присутствия (ауры Daemonic Presence): штраф не выдаётся",
     source: "Руническая Вязь «Щит Неизбежности» (Core, стр. 434)",
-    reader: ""
+    reader: "module/rules/defiance-talents.mjs::dreadReductionTotal (RUNIC_DREAD_SHIELDS) ← module/regions/auras.mjs::dreadReductionFor: штраф Daemonic Dread от ауры для носителя установленной вязи смягчается, при нуле не выдаётся (Sahara runic-weaves-29)"
   },
   "runicWeave.aegisOfGnelle": {
     label: "½AP брони (окр.▼) действует против Варп-оружия. На технику (по вязи на сторону) — не автоматизировано: урон технике идёт через combat/vehicle.mjs, не через эту точку",
