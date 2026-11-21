@@ -8802,14 +8802,14 @@ export const CAPABILITIES = {
     reader: "module/combat/warpsmith.mjs::forgeSigil; module/rules/warpsmith.mjs::holdsSigilFor, ::isBrokenFor — Sahara 1-54b9"
   },
   "ability.cellOfShame": {
-    label: "Ячейка Позора: 5 Ходов и For.Lore (Daemons)−20 — Сломленный демон заключён в устройство и навсегда теряет 10 W и 15 Inf; устройство не требует перезарядки, а при его уничтожении демон на свободе (Сломлен, но с волей до Владычества). Не автоматизировано: иммунитет устройства к Haywire, Феномены вместо клина и перегрева",
+    label: "Ячейка Позора: 5 Ходов и For.Lore (Daemons)−20 — Сломленный демон заключён в устройство и навсегда теряет 10 W и 15 Inf; устройство не требует перезарядки, а при его уничтожении демон на свободе (Сломлен, но с волей до Владычества); устройство иммунно к Haywire, Критический Провал вызывает Феномен вместо клина и перегрева",
     source: "Cell of Shame / Ячейка Позора (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/warpsmith.mjs::useCellOfShame, ::releaseCellDemon (module/hooks.mjs, deleteItem); module/rules/ammo-free.mjs::ammoIsFree (isCellDevice) — Sahara 1-54b9"
+    reader: "module/combat/warpsmith.mjs::useCellOfShame, ::releaseCellDemon (module/hooks.mjs, deleteItem); module/rules/ammo-free.mjs::ammoIsFree (isCellDevice) — Sahara 1-54b9; Haywire — rules/armour-penalty.mjs::powerArmourKilledByHaywire (силовая броня на Ячейке не гаснет) и строка карточки ЭМИ (rules/warpsmith.mjs::haywireImmuneDevices в combat/damage.mjs::_applyHaywire); Феномены — rules/warpsmith.mjs::cellPhenomenonOn в combat/attack.mjs (вместо Клина/Перегрева, рукопашное — на Крит. Провале) → combat/warpsmith.mjs::rollCellPhenomenon (Sahara haywire, 21.11.2026)"
   },
   "ability.empyreanWhip": {
     label: "Эмпирейная Плеть: полное действие, комбинированный тест For.Lore (Daemons)−20 и Command(I)−10 — Сломленные демонические машины в радиусе I м до конца боя управляются напрямую, как Миньоны",
     source: "Empyrean Whip / Эмпирейная Плеть (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/warpsmith.mjs::useEmpyreanWhip, ::clearWhipOnCombatEnd (module/hooks.mjs, deleteCombat), ::performWarpsmithWrite (запись warpsmith, whip) — Sahara 1-54b9"
+    reader: "module/combat/warpsmith.mjs::useEmpyreanWhip (машина — rules/warpsmith.mjs::isDaemonEngine: техника или Трейт Machine), ::clearWhipOnCombatEnd (module/hooks.mjs, deleteCombat), ::performWarpsmithWrite (запись warpsmith, whip) — Sahara 1-54b9"
   },
   "ability.forgeOfOne": {
     label: "Кузница Одного: Очко Бесчестия — собрать известный паттерн техники или оболочку демонической машины (R3 и ниже) из обломков за сутки; запись сборки и карточка. Ремонт в поле без кузницы — без кнопки",
@@ -8819,7 +8819,7 @@ export const CAPABILITIES = {
   "ability.runDown": {
     label: "Загнать: свободное действие раз в Ход, Очко Бесчестия — Сломленной машине +30 ко всем Характеристикам и 1 временное Очко Бесчестия до начала следующего Хода Кузнеца; в начале его Хода машина теряет 3d10 Структуры, Беспомощна 1d5 Раундов, демон теряет 1d5 W навсегда",
     source: "Run Down / Загнать (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/warpsmith.mjs::useRunDown, ::runDownTurnStart (module/hooks.mjs), ::performWarpsmithWrite (записи runDown, runDownPay) — Sahara 1-54b9"
+    reader: "module/combat/warpsmith.mjs::useRunDown (машина — rules/warpsmith.mjs::isDaemonEngine), ::runDownTurnStart (module/hooks.mjs), ::performWarpsmithWrite (записи runDown, runDownPay) — Sahara 1-54b9"
   },
   "warpforged.regeneration": {
     label: "Регенерация 1 Раны каждые 20−T.b минут (по часам Календаря, пока ранен)",

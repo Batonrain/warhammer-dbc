@@ -124,5 +124,13 @@ export const HAYWIRE_POWER_ARMOUR_OFF_MIN = 7;
 export function powerArmourKilledByHaywire(actor, intensity) {
   if ((Number(intensity) || 0) < HAYWIRE_POWER_ARMOUR_OFF_MIN) return [];
   return (actor?.items ?? []).filter(i =>
-    i.type === "armor" && i.system?.equipped && i.system?.armorType === "power" && i.system?.active !== false);
+    i.type === "armor" && i.system?.equipped && i.system?.armorType === "power" && i.system?.active !== false
+    && !onCellOfShame(i));
 }
+
+/**
+ * Броня на Ячейке Позора Варп-кузнеца «иммунна к Haywire» (флаг cellOfShame —
+ * rules/warpsmith.mjs::isCellDevice; здесь та же проверка без импорта, чтобы не
+ * тянуть в расчёт брони граф warpsmith → predicates).
+ */
+const onCellOfShame = i => !!(i?.flags?.["warhammer-dbc"]?.cellOfShame ?? i?.getFlag?.("warhammer-dbc", "cellOfShame"));
