@@ -10,6 +10,7 @@
 
 import { hasWormMaster, wormSwarmCap, wormSwarmBonusWounds, sanitizeWormBonus,
          WORM_SWARM_NAME, WORM_SWARM_FLAG, WORM_MASTER_MOD } from "../rules/worm-master.mjs";
+import { isReleasedSwarm } from "../rules/worm-king-talents.mjs";
 import { spawnDemonOnScene } from "../apps/demon-summon.mjs";
 import { rollTraitTest } from "./trait-test.mjs";
 import { hasActionEconomy, canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
@@ -18,8 +19,9 @@ const NS = "warhammer-dbc";
 
 export function activeSwarmsOf(master) {
   if (!master?.uuid) return [];
+  // Свободный Скиталец (Король Червей): отпущенный Рой в лимит Cor.b не входит.
   return [...(game.actors ?? [])].filter(a => a.getFlag?.(NS, WORM_SWARM_FLAG) === master.uuid
-    && a.getActiveTokens?.(false, true)?.length);
+    && !isReleasedSwarm(a) && a.getActiveTokens?.(false, true)?.length);
 }
 
 /** Только ГМ: Рой на сцену, Раны, метка хозяина. */

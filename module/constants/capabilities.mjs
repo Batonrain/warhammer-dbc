@@ -4752,7 +4752,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Король_Червей — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.korolChervey.freeRoamer": {
     label: "Может отпустить один из конструктов из-под прямого контроля, убрав его из лимита Cor.b.",
-    source: "Free Roamer / Свободный Скиталец", reader: ""
+    source: "Free Roamer / Свободный Скиталец", reader: "module/combat/worm-king.mjs releaseSwarm; combat/worm-master.mjs activeSwarmsOf не считает отпущенных"
   },
   "elite.elitnyeArhetipy.korolChervey.kingSPlate": {
     label: "Один из Роёв обволакивает его и становится живым доспехом из хитина и мышц. За полудействие поглощает один Рой в базовом контакте: рой уничт…",
@@ -4760,15 +4760,15 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.korolChervey.maggotMark": {
     label: "Может создать крохотного опарыша и одарить им слугу или союзника. Опарыш зарывается в плоть и отмечает носителя как союзника для конструктов…",
-    source: "Maggot Mark / Метка Опарыша", reader: ""
+    source: "Maggot Mark / Метка Опарыша", reader: "module/combat/worm-king.mjs markWithMaggot (метка maggotMarkOf)"
   },
   "elite.elitnyeArhetipy.korolChervey.shellGuard": {
     label: "За три полных действия один из Роёв под прямым контролем поглощает от 200 кг плоти и окукливается (куколка беспомощна, теряет Трейт Swarm).",
-    source: "Shell Guard / Стражи Панциря", reader: ""
+    source: "Shell Guard / Стражи Панциря", reader: "module/combat/worm-king.mjs pupateShellGuard (шаблоны, срок куколки)"
   },
   "elite.elitnyeArhetipy.korolChervey.wormwalker": {
     label: "За полное действие один из Роёв растекается и набрасывается на трупы в радиусе 7м, забираясь внутрь и замещая мышцы и органы чувств.",
-    source: "Wormwalker / Червеход", reader: ""
+    source: "Wormwalker / Червеход", reader: "module/combat/worm-king.mjs useWormwalker (трупы в 7 м, −5 Ран Роя за труп)"
   },
   // ── Элитные_архетипы\Кузнец_Крови — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kuznetsKrovi.bloodShield": {
@@ -6650,7 +6650,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Король_Червей — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.korolChervey.handOfPlenty": {
     label: "Избран вести свой народ и обеспечивать всем необходимым. Расширяя рой паразитов, может создавать еду, питьё,",
-    source: "Hand of Plenty / Рука Изобилия", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Hand of Plenty / Рука Изобилия", reader: "module/combat/worm-king.mjs useHandOfPlenty (Cor.b×100)"
   },
   "trait.elitnyeArhetipy.korolChervey.verminousConduit": {
     label: "Благословенные Нурглом черви в плоти служат проводником мистической силы. Получает +1 к эPR психосил Нургла и Биомантии.",
