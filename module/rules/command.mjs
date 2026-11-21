@@ -15,6 +15,7 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName } from "./predicates.mjs";
+import { cyberShepherdReach } from "./lacrimallus-talents.mjs";
 
 /**
  * Ключи преимуществ Командного Присутствия в порядке книги.
@@ -157,6 +158,14 @@ export function suppressionBonus(actor) {
  *   всё же доходят, это отдельно проверяет вызывающая сводка.
  */
 export function commandReachFor(actorType, benefitKey = "", actor = null, { moraleLost = false } = {}) {
+  // Кибер-Пастырь (Лакрималлус): Орда тех-траллов получает Команды «как если бы
+  // была одиночным персонажем» — тест Командования по ней Tech-Use(I) (за столом).
+  const shepherd = actorType === "horde" && cyberShepherdReach(actor);
+  if (shepherd) {
+    const r = commandReachFor("character", benefitKey, actor, { moraleLost });
+    r.notes.unshift("Кибер-Пастырь: Орда тех-траллов получает Команды как одиночный персонаж (тест — Tech-Use(I)).");
+    return r;
+  }
   // Оглох/Без сознания (wdbc-x1nz.2.90): не доходит ВСЁ — и Команды, и
   // Присутствие. Раньше Присутствие глухоту не проверяло вовсе.
   const blockedBy = commandBlockReason(actor);

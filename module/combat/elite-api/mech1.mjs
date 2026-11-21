@@ -6,8 +6,11 @@
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
 import { useArchDominusCommand, useAvatarOfMetal, useDoctrinaCalibration, useVisioIrae } from "../archmagos.mjs";
+import { useToilseerCrew, useAssemblyLine, useChainsOfProduction, useInhumanResources, useRapidEmbrace, useThrallOverclock } from "../lacrimallus.mjs";
 
 export const API = {
   // Архимагос (combat/archmagos.mjs)
-  useArchDominusCommand, useAvatarOfMetal, useDoctrinaCalibration, useVisioIrae
+  useArchDominusCommand, useAvatarOfMetal, useDoctrinaCalibration, useVisioIrae,
+  // Лакрималлус (combat/lacrimallus.mjs)
+  useToilseerCrew, useAssemblyLine, useChainsOfProduction, useInhumanResources, useRapidEmbrace, useThrallOverclock
 };

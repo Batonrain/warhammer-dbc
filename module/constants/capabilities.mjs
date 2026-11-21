@@ -4794,27 +4794,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Лакрималлус — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.lakrimallus.assemblyLine": {
     label: "Программирует рабов на простое независимое производство. Орды Миньонов тех-траллов пассивно генерируют 1 Успех за каждые 3 Магнитуды в сутки…",
-    source: "Assembly Line / Сборочная Линия", reader: ""
+    source: "Assembly Line / Сборочная Линия", reader: "combat/lacrimallus.mjs::useAssemblyLine (Успехи Орд тех-траллов за сутки → пул resourcePool assemblyLine)"
   },
   "elite.elitnyeArhetipy.lakrimallus.chainsOfProduction": {
     label: "Модифицирует рабов минимальной кибернетикой для Ноосферной синхронизации. За 1 минуту может аугментировать человека,",
-    source: "Chains of Production / Цепи Производства", reader: ""
+    source: "Chains of Production / Цепи Производства", reader: "rules/mechanicus-craft.mjs (переброс Крафта в apps/craft-workshop.mjs), combat/lacrimallus.mjs::useChainsOfProduction (смерть на 1–3)"
   },
   "elite.elitnyeArhetipy.lakrimallus.cyberShepherd": {
     label: "Командные алгоритмы позволяют дирижировать ордами траллов в бою. Может давать Команды Ордам тех-траллов,",
-    source: "Cyber-Shepherd / Кибер-Пастырь", reader: ""
+    source: "Cyber-Shepherd / Кибер-Пастырь", reader: "rules/command.mjs::commandReachFor ← rules/lacrimallus-talents.mjs::cyberShepherdReach (Орда тех-траллов получает Команды)"
   },
   "elite.elitnyeArhetipy.lakrimallus.inhumanResources": {
     label: "Продвинутые хирургические алгоритмы позволяют рациональнее расходовать плоть мёртвых.",
-    source: "Inhuman Resources / Бесчеловечные Ресурсы", reader: ""
+    source: "Inhuman Resources / Бесчеловечные Ресурсы", reader: "rules/lacrimallus-talents.mjs::corpsesPerThrall, combat/lacrimallus.mjs::useInhumanResources/useRapidEmbrace"
   },
   "elite.elitnyeArhetipy.lakrimallus.rapidEmbrace": {
     label: "Если имеет медицинский механодендрит и 2 механодендрита, может вместо 1 минуты потратить на подъём тех-тралла из трупов в пределах 3м от себ…",
-    source: "Rapid Embrace / Быстрые Объятья", reader: ""
+    source: "Rapid Embrace / Быстрые Объятья", reader: "combat/lacrimallus.mjs::useRapidEmbrace (полудействие + 2 ⚙, трупы на тралла)"
   },
   "elite.elitnyeArhetipy.lakrimallus.thrallOverclock": {
     label: "Алгоритмы оптимизации понукают траллов к повышенной эффективности ценой износа. Тех-траллы и Орды могут перебрасывать тесты,",
-    source: "Thrall Overclock / Разгон Траллов", reader: ""
+    source: "Thrall Overclock / Разгон Траллов", reader: "combat/lacrimallus.mjs::useThrallOverclock (1d10 непогл. R тралла / Магнитуда Орды)"
   },
   // ── Элитные_архетипы\Ламия — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.lamiya.crueltyOfThePoison": {
@@ -6676,7 +6676,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.lakrimallus.toilseer": {
     label: "Может использовать Миньонов-сервиторов и тех-траллов как ассистентов в тестах Крафта даже без нужных Навыков (Орды считаются как 1 ассистент…",
-    source: "Toilseer / Трудовидец", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Toilseer / Трудовидец", reader: "combat/lacrimallus.mjs::useToilseerCrew (ассистенты и бригады Крафта из сервиторов/тех-траллов)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Ламия — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.lamiya.blessingOfShaimesh": {
