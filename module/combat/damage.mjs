@@ -45,6 +45,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { BONELESS_CAP, bonelessDamage, isFractureCrit } from "../rules/boneless.mjs";
 import { hasPugilistTalent, rollingWithPunchesBonus } from "../rules/pugilist-talents.mjs";
 import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN_FLAG } from "../rules/resilience-talents.mjs";
 import { headGuardOffer } from "./head-guard.mjs";
@@ -910,6 +911,12 @@ export async function applyDamageToActor(actor, damageData) {
   // Отвратная Физиология Чумного Десантника: Реакция + T+30 — урон от этого противника уменьшается на Успехи.
   damageData = await abominableOnHit(actor, damageData);
 
+  // Бескостный (rules/boneless.mjs, wdbc-1rno.9): ½ I(Cr) Dmg (окр.▲) до Поглощения.
+  if (hasRuleFlag(actor, BONELESS_CAP)) {
+    const bl = bonelessDamage(damageData.rawDamage, damageData.damageType, damageData.damageSubtype);
+    if (bl.halved) damageData = { ...damageData, rawDamage: bl.raw, bonelessHalved: true };
+  }
+
   // Рой (rules/swarm.mjs): обычные атаки (без Blast/Flame/Spray/Scatter) наносят половину урона до Поглощения.
   if (hasRuleFlag(actor, SWARM_CAP)) {
     damageData = { ...damageData, rawDamage: swarmDamage(damageData.rawDamage, {
@@ -1682,7 +1689,15 @@ export async function applyDamageToActor(actor, damageData) {
     const attackerDoc = await fromUuid(attackerUuid).catch(() => null);
     critFlat = criticalEffectFlatBonus(attackerDoc, reaperWeaponItem ?? braveHeartWeaponItem);
   }
-  const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical + critFlat) : null;
+  let critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical + critFlat) : null;
+  // Бескостный (wdbc-1rno.9): «игнорирует все Критические Эффекты от
+  // переломов» — строка таблицы про сломанные кости не действует целиком
+  // (Критические Раны остаются), в карточке — строка-причина.
+  let bonelessCritNote = "";
+  if (critEffect && isFractureCrit(critEffect) && hasRuleFlag(actor, BONELESS_CAP)) {
+    bonelessCritNote = `<div class="dmg-tb-note">🦴 Бескостный: Критический Эффект — перелом, костей нет — не действует («${esc(critEffect.replace(/<[^>]+>/g, "").slice(0, 80))}…»).</div>`;
+    critEffect = null;
+  }
 
   // Cast Out of Death/Изгнанный из Смерти (Нургл, wdbc-1rno): «после ЛЮБОГО
   // Критического Эффекта... регенерирует к −7 в течение 7ч» — не действует
@@ -1849,6 +1864,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
   if (hollowBonesHalved) propNotes.push("Пустые Кости: T.b вдвое (окр.▲) против I(Cr)");
+  if (damageData.bonelessHalved) propNotes.push("Бескостный: I(Cr) Dmg вдвое (окр.▲) до Поглощения");
   if (daemonicTbIgnored > 0) propNotes.push(`Daemonic: оружие игнорирует +${daemonicTbIgnored} к T.b от Трейта`);
   if (mournerNote) propNotes.push(mournerNote);
   if (adaptOnlyBonus > 0) propNotes.push(`Адаптация: +${adaptOnlyBonus} Поглощения`);
@@ -1948,6 +1964,7 @@ export async function applyDamageToActor(actor, damageData) {
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
+      ${bonelessCritNote}
       ${critPillsHtml(critPills, actor.uuid, netDamage, { side: LOCATION_TO_SIDE[hitLocation] || "" })}
       ${critEffect ? critCharDamageHtml(critEffect, actor.uuid) : ""}
       ${critEffect ? dropButtonHtml(critEffect, actor.uuid, LOCATION_TO_SIDE[hitLocation] || "") : ""}

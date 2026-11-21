@@ -23,6 +23,7 @@ import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
 import { NULL_ZONE_RULES } from "./library/null-zones.mjs";
+import { BONELESS_RULES } from "./library/boneless.mjs";
 import { SKITARII_RULES } from "./library/skitarii.mjs";
 import { BALEFUL_DIRGE_RULES } from "./library/baleful-dirge.mjs";
 import { YIGORI_RULES } from "./library/yigori.mjs";
@@ -89,6 +90,9 @@ registerRuleSource("core", () => CORE_AND_TRAIT_RULES);
 // Пустота Парии (library/null-zones.mjs): штрафы псайкерам/демонам в ауре и
 // социальные штрафы самого Парии — отбор по условию when, как у «core».
 registerRuleSource("nullZones", () => NULL_ZONE_RULES);
+
+// Бескостный в аморфной форме (library/boneless.mjs, wdbc-1rno.9) — отбор по when.
+registerRuleSource("boneless", () => BONELESS_RULES);
 
 // Перегрузка Модулями Скитарии (library/skitarii.mjs) — отбор по условию when.
 registerRuleSource("skitarii", () => SKITARII_RULES);

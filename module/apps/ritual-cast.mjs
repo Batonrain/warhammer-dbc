@@ -27,6 +27,7 @@ import { MARK_LABELS } from "../constants/talent-requirements.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { ringWeaveBonus } from "../rules/runic-weave.mjs";
 import { hasRubricOfAhriman, ritualPerilPick } from "../rules/rubric-sorcerer.mjs";
+import { ritualVoidBreak, VOID_RITUAL_TEXT } from "../rules/null-zones.mjs";
 import { ritualVeilGate, ritualVeilMessage } from "../rules/veil-steps.mjs";
 import { veilShift } from "../constants/scene-nexus.mjs";
 import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
@@ -451,6 +452,19 @@ export async function castRitual(R, actor, {
   fallbackChoiceFn = chooseFallbackSacrifice
 } = {}) {
   if (!actor) { ui.notifications?.warn("Ритуал: не выбран Ритуалист."); return null; }
+  // Пустота Парии (task-1452): ритуал в ауре мгновенно обрывается без
+  // последствий срыва, Пария не участвует ни ритуалистом, ни ассистентом.
+  // Обрыв — не провал: Цены Ошибки, Феномена и Завесы нет.
+  const voidBreak = ritualVoidBreak(actor, (R?.assistantList ?? []).map(a => a?.actor).filter(Boolean));
+  if (voidBreak) {
+    await postTestCard(actor, testCardHtml({
+      icon: `${veilIcon("ritual")} `, title: `Ритуал: ${esc(R?.name || item?.name || RITUAL_TYPES_MAP[R?.type]?.label || R?.type || "")}`,
+      classes: "wh-ritual-card",
+      threshold: `<div class="roll-threshold">${esc(voidBreak.actor.name)}: ${VOID_RITUAL_TEXT[voidBreak.reason]}</div>`,
+      outcome: outcomeHtml(false, "Ритуал оборван — без последствий")
+    }), { sound: false });
+    return { success: false, deg: 0, threshold: null, roll: null, voidBroken: voidBreak.reason };
+  }
   const veilGate = veilGateFn(item, actor);
   if (!veilGate.ok) {
     if (!game.user?.isGM) {

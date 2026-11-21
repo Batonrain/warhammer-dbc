@@ -17,9 +17,13 @@ export const WARP_INSTAB_HURT_FLAG = "warpInstabHurt";
 export const WARP_INSTAB_DEALT_FLAG = "warpInstabDealt";
 export const WARP_BANISHED_FLAG = "bannedToWarp";
 
-/** Нужен ли тест в конце Хода: урон получен и в этом Ходу своего урона не нанесено. */
-export function instabilityTestNeeded({ hurt, dealt }) {
-  return !!hurt && !dealt;
+/**
+ * Нужен ли тест в конце Хода: урон получен и в этом Ходу своего урона не
+ * нанесено. В Пустоте Парии (inVoid) — каждый Ход, «независимо от нанесения
+ * или получения урона» (rules/null-zones.mjs, task-1452).
+ */
+export function instabilityTestNeeded({ hurt, dealt, inVoid = false }) {
+  return !!inVoid || (!!hurt && !dealt);
 }
 
 /** Формула урона при провале: 1d5 + число Провалов (степени неудачи). */

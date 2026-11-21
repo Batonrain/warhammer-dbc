@@ -69,6 +69,7 @@ import {
 import { mutationCatalog } from "../constants/mutations.mjs";
 import { resonanceCap } from "../rules/resonance.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
+import { isPariah, pariahTouchOutcome } from "../rules/null-zones.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
 import { hasCloudCognition, hasMotiveEucharist, hasApocryphaCoil, planCloudCognition, planMotiveEucharist,
@@ -181,6 +182,16 @@ export function checkTargetWrite(op, ctx = {}) {
 
   // Спой Мне! (Шумовой Десантник): урон — одно целое 2…20 (2d10), награда — без полезной нагрузки и только палачу
   // или поклоннику Слаанеш; Стена Диссонанса: токен и точка, дальность сверяет ГМ при исполнении.
+  // Касание Парии (task-1452): непоглощаемые Раны псайкеру (бPR) или демону
+  // (3d10) — одно целое 1…30; инициатор обязан быть Парией, цель — псайкером
+  // или демоном (rules/null-zones.mjs::pariahTouchOutcome сверяет ГМ).
+  if (op.kind === "pariahTouch") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "amount")) return { ok: false, reason: "pariahTouch: лишние поля" };
+    if (!Number.isInteger(op.amount) || op.amount < 1 || op.amount > 30) return { ok: false, reason: "pariahTouch: урон вне 1…30" };
+    if (!isPariah(ctx.initiator)) return { ok: false, reason: "инициатор не Пария" };
+    if (ctx.target && !["daemon", "psyker"].includes(pariahTouchOutcome(ctx.target).kind)) return { ok: false, reason: "цель не псайкер и не демон" };
+    return { ok: true };
+  }
   if (op.kind === "singForMeDamage") {
     if (Object.keys(op).some(k => k !== "kind" && k !== "amount")) return { ok: false, reason: "singForMeDamage: лишние поля" };
     if (!Number.isInteger(op.amount) || op.amount < 2 || op.amount > 20) return { ok: false, reason: "singForMeDamage: урон вне 2…20" };
@@ -464,6 +475,10 @@ async function _performTargetWrite(target, op, initiator) {
   if (op.kind === "livingBannerBoon") {
     const { changeActorInfamy } = await import("../apps/infamy-points.mjs");
     return changeActorInfamy(target, 1);
+  }
+  if (op.kind === "pariahTouch") {
+    const { applyWoundLoss } = await import("../rules/wounds.mjs");
+    return applyWoundLoss(target, Number(op.amount));
   }
   if (op.kind === "singForMeDamage" || op.kind === "singForMeBoon" || op.kind === "wallPush") {
     const { performNoiseMarineWrite } = await import("./noise-marine.mjs");

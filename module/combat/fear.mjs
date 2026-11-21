@@ -33,6 +33,8 @@ import { cardOnceUsed, markCardOnce } from "./card-once.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }            from "../constants/skills.mjs";
 import { fearIgnore, FEAR_IGNORE_LABELS }          from "../rules/fear-ignore.mjs";
 import { moraleAutoPass }                          from "../rules/morale-auto.mjs";
+import { voidRerollsMorale, voidStripsMoraleAuto } from "../rules/null-zones.mjs";
+import { pariahVoidMoraleReroll }                  from "../rules/pariah-morale.mjs";
 import { JADED_CAP }                               from "../rules/courage-talents.mjs";
 import { INFERNAL_FAMILIARITY_CAP }                from "../rules/defiance-talents.mjs";
 import { stampedeNoteHtml }                        from "../rules/stampede.mjs";
@@ -157,15 +159,20 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // Таланта; сверхъестественные ужасы «пугают как обычно», их различает стол.
   const moraleAuto = moraleAutoPass(actor);
   const jadedAuto = !!properties.mundaneHorror && hasTalentCapability(actor, JADED_CAP);
-  const autoPass = ignore.autoPass
+  // Пустота Парии (task-1452): псайкер или демон в ауре «игнорирует любые
+  // эффекты, что позволяли бы им проходить эти тесты автоматически» — весь
+  // список ниже не действует (Ярость/Бесстрашный гасит уже moraleAutoPass).
+  const voidNoAuto = voidStripsMoraleAuto(actor);
+  const autoPass = !voidNoAuto && (ignore.autoPass
                    || !!moraleAuto
                    || jadedAuto
                    || hasRuleFlag(actor, "sarcophagus.autoPassFear")
                    // «Извне» (Медуза) — и по имени: старая копия без ключа (приёмка #581).
                    || hasAbility(actor, FEAR_IMMUNE_FLAG, "Извне", "trait")
-                   || !!properties.intoTheJawsOfHell;
+                   || !!properties.intoTheJawsOfHell);
   const autoParts = [];
   if (moraleAuto && moraleAuto.by !== "rage") autoParts.push(moraleAuto.label);
+  if (voidNoAuto) autoParts.push("🕳 Пустота Парии: автоуспехи Морали не действуют");
   if (jadedAuto) autoParts.push("Пресыщенный: земной ужас — автоуспех");
   // Видимая причина сниженного рейтинга: иначе игрок видит «Страх 1» у демона Страха 2.
   if (infernalFamiliar && !properties.unignorable) {
@@ -177,7 +184,11 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     : "";
 
   const reroll = tk.reroll || null;
-  const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
+  // Пустота Парии (task-1452): успешный тест Морали перебрасывается. Успех
+  // судится по базовому Порогу — надбавки Комбинированного/Адаптации ниже
+  // к тесту Страха не приходят.
+  const { roll, rv, rolls, rerollNote } = await pariahVoidMoraleReroll(
+    await rollD100WithReroll(reroll), baseEff, voidRerollsMorale(actor));
 
   const outcome = await resolveKindOutcome(actor, {
     baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,

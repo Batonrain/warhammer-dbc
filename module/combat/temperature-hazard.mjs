@@ -47,8 +47,8 @@ export async function rollTempHazardTest(actor) {
     return ui.notifications?.info(`${actor.name}: Бриз держит вокруг комфортную температуру — тест не нужен.`);
   }
   // Пылающее Тело: «иммунитет к экстремальным температурам» — и жара, и холод.
-  // Подавление пламени тестом W+0 на 1 час (вместе с иммунитетами) не смоделировано:
-  // пока Мутация на персонаже, иммунитет действует всегда.
+  // Подавленное тестом W+0 пламя (combat/burning-body.mjs) гасит мутацию через
+  // isItemActive — иммунитет тогда сам пропадает из hasRuleFlag.
   if (hasRuleFlag(actor, BURNING_BODY_CAPABILITY)) {
     return ui.notifications?.info(`${actor.name}: Пылающее Тело — иммунитет к экстремальным температурам, тест не нужен.`);
   }

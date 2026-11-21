@@ -17,6 +17,7 @@
 import { NO_ENERGY_WEAPON_CAP, isEnergyWeapon } from "../../rules/mechanicus-monk-traits.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { planeAttackBlockReason } from "../../rules/incorporeal.mjs";
+import { veilPierceAllows, VEIL_PIERCE_FLAG } from "../../rules/spatial-instability.mjs";
 import { FAST_MOVE_FLAG } from "../../rules/hard-target.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -280,7 +281,14 @@ export function openAttackDialog(ctx) {
             });
             return false;
           }
-          const planeWhy = planeAttackBlockReason(actor, targetActor);
+          let planeWhy = planeAttackBlockReason(actor, targetActor);
+          // Ненависть сквозь Завесу (Пространственная Нестабильность, субм. 8,
+          // wdbc-1rno.8): пройденный тест W−20 пускает ОДНУ рукопашную атаку
+          // бесплотного по этой материальной цели — флаг гасится здесь же.
+          if (planeWhy && veilPierceAllows(actor.getFlag?.("warhammer-dbc", VEIL_PIERCE_FLAG), targetActor?.uuid, isMelee)) {
+            planeWhy = "";
+            await actor.unsetFlag("warhammer-dbc", VEIL_PIERCE_FLAG);
+          }
           if (planeWhy) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),

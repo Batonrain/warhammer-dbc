@@ -154,7 +154,7 @@ describe("источники по умолчанию", () => {
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant",
                 // astartesElite (21.11.2026) — дары соратникам Герольда и др., знамя Ни Шагу Назад.
-                "astartesElite", "awarenessTalents", "balefulDirge", "beastmanShaman", "commandSubstitution",
+                "astartesElite", "awarenessTalents", "balefulDirge", "beastmanShaman", "boneless", "commandSubstitution",
                 "conditions", "core",
                 "daemonInevitability",
                 // darkApostle (Тёмный Апостол, Sahara 1-54b9) — Литания Слаанеш: +30 на Командование Апостола.

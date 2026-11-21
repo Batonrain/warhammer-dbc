@@ -5490,6 +5490,57 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteItem", async (item, options, userId) => {
     if (userId === game.user?.id) await onDiscordantFieldLeft(item);
   });
+  // Поле Дискорданта, хвосты (combat/discordant-field.mjs, task-be12): вход —
+  // бросок до заклинивания механики и отключение силовой брони, выход — сброс
+  // счётчика и броня обратно. Тот же клиент, что выдал/снял Черту-метку.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId !== game.user?.id) return;
+    const { onFieldMarkCreated } = await import("./combat/discordant-field.mjs");
+    await onFieldMarkCreated(item);
+  });
+  Hooks.on("deleteItem", async (item, options, userId) => {
+    if (userId !== game.user?.id) return;
+    const { onFieldMarkDeleted } = await import("./combat/discordant-field.mjs");
+    await onFieldMarkDeleted(item);
+  });
+  // Начало Хода в поле: счётчик до заклинивания механики.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    if (!combat.combatant?.actor) return;
+    const { fieldTurnStart } = await import("./combat/discordant-field.mjs");
+    await fieldTurnStart(combat.combatant.actor);
+  });
+  // Ход времени: биоорганы в поле (T+0 каждые 10 мин, убыль Провалов 1/час).
+  Hooks.on("updateWorldTime", async worldTime => {
+    if (!game.users.activeGM?.isSelf || !canvas?.scene) return;
+    const { fieldBioTick } = await import("./combat/discordant-field.mjs");
+    const seen = new Set();
+    for (const tok of canvas.scene.tokens) {
+      const a = tok.actor;
+      if (!a || seen.has(a.uuid)) continue;
+      seen.add(a.uuid);
+      await fieldBioTick(a, worldTime);
+    }
+  });
+  // Пылающее Тело (combat/burning-body.mjs, wdbc-1rno.16): противник в Борьбе
+  // с носителем горит в начале своего Хода; подавленное пламя через час
+  // возвращается само.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    if (!combat.combatant?.actor) return;
+    const { burningGrappleTurnStart } = await import("./combat/burning-body.mjs");
+    await burningGrappleTurnStart(combat.combatant.actor);
+  });
+  Hooks.on("updateWorldTime", async worldTime => {
+    if (!game.users.activeGM?.isSelf) return;
+    const { burningExpiryTick } = await import("./combat/burning-body.mjs");
+    for (const a of game.actors ?? []) await burningExpiryTick(a, worldTime);
+    for (const tok of canvas?.scene?.tokens ?? []) {
+      if (tok.actor && !tok.actorLink) await burningExpiryTick(tok.actor, worldTime);
+    }
+  });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
   // wdbc-1rno: «Cor.b минут»/«Cor.b Раундов» у активируемых Мутаций вроде
