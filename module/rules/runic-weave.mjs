@@ -58,3 +58,37 @@ export function ringWeaveBonus(has, R, item) {
   if (!isCircleRitual(R, item)) return null;
   return RING_WEAVES.find(w => has(w.key)) ?? null;
 }
+
+// ── Выгорающие вязи (Жнец — 3 применения; стр. 434) ──────────────────────────
+// «С каждым применением вязь частично выгорает и после N использований теряет
+// все мистические свойства». Счётчик — флаг на самой вязи; выгоревшая вязь
+// перестаёт быть активной (apps/effects.mjs::isItemActive), то есть её ключ
+// Возможности пропадает сам.
+export const RUNE_USES_FLAG = "runeUses";
+export const RUNE_BURNED_FLAG = "runeBurnedOut";
+export const REAPER_KEY = "runicWeave.reaper";
+export const REAPER_USES = 3;
+
+const NS = "warhammer-dbc";
+
+/** Вязь выгорела. */
+export const isRuneBurnedOut = item => !!item?.flags?.[NS]?.[RUNE_BURNED_FLAG];
+
+/** Первая невыгоревшая вязь актора, несущая этот ключ Возможности. */
+export function weaveItemWithKey(actor, key) {
+  return [...(actor?.items ?? [])].find(i => i?.type === "runicWeave" && !isRuneBurnedOut(i)
+    && (i.flags?.[NS]?.mechanics ?? []).some(g => (g?.entries ?? [])
+      .some(e => e?.kind === "capability" && e.capabilityKey === key))) ?? null;
+}
+
+/** После применения: новый счётчик и выгорела ли. */
+export function weaveAfterUse(item, maxUses) {
+  const used = (Number(item?.flags?.[NS]?.[RUNE_USES_FLAG]) || 0) + 1;
+  return { used, burnedOut: used >= maxUses, left: Math.max(0, maxUses - used) };
+}
+
+/** Жнец: Выжигание Души нанесло вдвое больше максимума Ран цели. */
+export function reaperTriggers(damage, targetMaxWounds) {
+  const max = Number(targetMaxWounds) || 0;
+  return max > 0 && (Number(damage) || 0) >= 2 * max;
+}

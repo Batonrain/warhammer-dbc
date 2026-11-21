@@ -124,6 +124,8 @@ function isItemActiveBase(item) {
       // Правило одно, в листе rules/item-gates.mjs (общее с остальными читателями).
       return isImplantActive(item);
     case "runicWeave": {
+      // Выгоревшая вязь (Жнец после 3 применений, rules/runic-weave.mjs) свойств больше не даёт.
+      if (item.flags?.["warhammer-dbc"]?.runeBurnedOut) return false;
       // "region" (помещение/стены) — не читается отсюда вовсе: живой пересчёт
       // там клонирует предмет-источник тем, чей токен стоит в Region (см.
       // module/regions/runic-weave-zone.mjs), а сам клон сюда попадает уже

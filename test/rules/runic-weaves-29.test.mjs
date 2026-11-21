@@ -47,3 +47,25 @@ describe("Длань Кольценосца / Владыки Колец — ри
     expect(ringWeaveBonus(has("runicWeave.handOfTheRingbearer"), { type: "summon" })).toBeNull();
   });
 });
+
+import { reaperTriggers, weaveAfterUse, weaveItemWithKey, isRuneBurnedOut, REAPER_KEY, REAPER_USES } from "../../module/rules/runic-weave.mjs";
+import { isItemActive } from "../../module/apps/effects.mjs";
+
+describe("Жнец — Выжигание Души и выгорание", () => {
+  const weave = (flags = {}) => ({ id: "w", type: "runicWeave", system: { installedOnType: "vehicle" },
+    flags: { "warhammer-dbc": { ...flags, mechanics: [{ entries: [{ kind: "capability", capabilityKey: REAPER_KEY }] }] } } });
+  it("срабатывает от урона ≥ 2× максимума Ран цели", () => {
+    expect(reaperTriggers(20, 10)).toBe(true);
+    expect(reaperTriggers(19, 10)).toBe(false);
+    expect(reaperTriggers(5, 0)).toBe(false);
+  });
+  it("три применения — выгорает и перестаёт быть активной", () => {
+    expect(weaveAfterUse(weave(), REAPER_USES)).toEqual({ used: 1, burnedOut: false, left: 2 });
+    expect(weaveAfterUse(weave({ runeUses: 2 }), REAPER_USES)).toEqual({ used: 3, burnedOut: true, left: 0 });
+    const burned = weave({ runeBurnedOut: true });
+    expect(isRuneBurnedOut(burned)).toBe(true);
+    expect(isItemActive(burned)).toBe(false);
+    expect(isItemActive(weave())).toBe(true);
+    expect(weaveItemWithKey({ items: [burned] }, REAPER_KEY)).toBeNull();
+  });
+});

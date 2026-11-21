@@ -282,6 +282,7 @@ import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
 import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
 import { minionPatronUpdate } from "./rules/minion-patron.mjs";
 import { dissolvesOnChange, orphanedSummons } from "./rules/summoned-weapon.mjs";
+import { REAPER_KEY, REAPER_USES, RUNE_USES_FLAG, RUNE_BURNED_FLAG, weaveItemWithKey, weaveAfterUse, reaperTriggers } from "./rules/runic-weave.mjs";
 import { jacksToDisconnect } from "./rules/autosense-jacks.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
@@ -4676,6 +4677,7 @@ export async function _executeSoulBurn(attacker, target) {
         <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${dmg}</b> (${dice}d10 за ${net} Успех(ов)${dice !== net ? `, Укреплённая Душа: −${net - dice} куб.` : ""})</div>
         <div class="roll-threshold">Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>
         ${soulDestroyed ? `<div class="roll-threshold" style="color:#8b0000;"><b>${rollIcon("skull","#ff6b6b")}Душа разорвана на куски — цель уничтожена!</b></div>` : ""}
+        ${await _reaperWeave(attacker, target, dmg, maxWounds)}
       </div>`;
   }
 
@@ -4699,6 +4701,26 @@ export async function _executeSoulBurn(attacker, target) {
       `<details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>`
     ]
   }, { rolls: allRolls });
+}
+
+/**
+ * Руническая Вязь «Жнец» (core стр. 434, Sahara runic-weaves-29): Выжигание Души нанесло вдвое
+ * больше максимума Ран цели — псайкер восстанавливает W.b цели Ран; после трёх применений вязь
+ * выгорает (rules/runic-weave.mjs). «Или урона в Характеристику по выбору» — строкой в карточке:
+ * лечение Ран делается само, иной выбор ГМ отменяет правкой листа.
+ * @returns {Promise<string>} строка карточки
+ */
+async function _reaperWeave(attacker, target, dmg, maxWounds) {
+  if (!reaperTriggers(dmg, maxWounds) || !hasFleshmetalFlag(attacker, REAPER_KEY)) return "";
+  const weave = weaveItemWithKey(attacker, REAPER_KEY);
+  if (!weave) return "";
+  const heal = Number(target.system?.characteristics?.wp?.bonus) || 0;
+  const { healActor } = await import("./combat/heal-target.mjs");
+  const res = await healActor(attacker, heal).catch(() => ({ applied: 0 }));
+  const { used, burnedOut, left } = weaveAfterUse(weave, REAPER_USES);
+  await weave.update({ [`flags.warhammer-dbc.${RUNE_USES_FLAG}`]: used, [`flags.warhammer-dbc.${RUNE_BURNED_FLAG}`]: burnedOut });
+  if (burnedOut) { const { syncItemEffectsDisabled } = await import("./apps/effects.mjs"); await syncItemEffectsDisabled(weave); }
+  return `<div class="roll-threshold">Руническая Вязь «Жнец»: ${esc(attacker.name)} восстанавливает <b>${res.applied}</b> Ран (W.b цели ${heal}; вместо Ран можно вернуть урон Характеристики — поправьте лист). ${burnedOut ? "Вязь выгорела и больше не действует." : `Осталось применений: ${left}.`}</div>`;
 }
 
 // ── Контекстное меню судьбы ───────────────────────────────────────────────────
