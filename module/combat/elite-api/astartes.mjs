@@ -4,28 +4,35 @@
 // по имени ключа (module/apps/item-script.mjs → ELITE_SCRIPT_API). Свой файл на
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
+//
+// Модули кнопок грузятся лениво, в момент нажатия: статический импорт тянул
+// весь боевой граф (damage.mjs, gm-relay.mjs …) в item-script.mjs и замыкал
+// циклы импорта — моки тестов переставали срабатывать.
 
-import { ancientBannerLost, useGreaterHerald, useStandYourGround, useVillainousHonour, useDelegate, noblesseObligeSlip } from "../gerold-talents.mjs";
-import { useVeilRender, useRift, useSpeedOfThought, useWarpTrail } from "../warp-talon-talents.mjs";
-import { useBeltFeed, useFlyBy } from "../moritat-talents.mjs";
-import { useAnointed, useAtramentar, useDeathShroud } from "../terminator-talents.mjs";
-import { useLivingArsenal, useBulletEater, useMutilator, useSelfForging, useShredder, useToTheTeeth } from "../obliterator-talents.mjs";
-import { useRingOfBlood, useDaemonPlate, useUnforge } from "../blood-smith-talents.mjs";
-import { useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater } from "../bronenosets-talents.mjs";
+const lazy = (load, name) => async (...args) => (await load())[name](...args);
+const bronenosets = () => import("../bronenosets-talents.mjs");
+const gerold = () => import("../gerold-talents.mjs");
+const warpTalon = () => import("../warp-talon-talents.mjs");
+const moritat = () => import("../moritat-talents.mjs");
+const terminator = () => import("../terminator-talents.mjs");
+const obliterator = () => import("../obliterator-talents.mjs");
+const bloodSmith = () => import("../blood-smith-talents.mjs");
+
+const group = (load, names) => Object.fromEntries(names.map(n => [n, lazy(load, n)]));
 
 export const API = {
   // Броненосец
-  useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater,
+  ...group(bronenosets, ["useChaosGreatbow", "useDivineShield", "dedicateChaosSteed", "useSinEater"]),
   // Герольд
-  ancientBannerLost, useGreaterHerald, useStandYourGround, useVillainousHonour, useDelegate, noblesseObligeSlip,
+  ...group(gerold, ["ancientBannerLost", "useGreaterHerald", "useStandYourGround", "useVillainousHonour", "useDelegate", "noblesseObligeSlip"]),
   // Коготь Варпа
-  useVeilRender, useRift, useSpeedOfThought, useWarpTrail,
+  ...group(warpTalon, ["useVeilRender", "useRift", "useSpeedOfThought", "useWarpTrail"]),
   // Моритат
-  useBeltFeed, useFlyBy,
+  ...group(moritat, ["useBeltFeed", "useFlyBy"]),
   // Чемпион Терминатор
-  useAnointed, useAtramentar, useDeathShroud,
+  ...group(terminator, ["useAnointed", "useAtramentar", "useDeathShroud"]),
   // Облитератор
-  useLivingArsenal, useBulletEater, useMutilator, useSelfForging, useShredder, useToTheTeeth,
+  ...group(obliterator, ["useLivingArsenal", "useBulletEater", "useMutilator", "useSelfForging", "useShredder", "useToTheTeeth"]),
   // Кузнец Крови
-  useRingOfBlood, useDaemonPlate, useUnforge
+  ...group(bloodSmith, ["useRingOfBlood", "useDaemonPlate", "useUnforge"])
 };
