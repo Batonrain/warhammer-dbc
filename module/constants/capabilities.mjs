@@ -5288,19 +5288,19 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чемпион_Терминатор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chempionTerminator.anointed": {
     label: "Раз в Раунд может без траты Реакции парировать атаку по дружественному персонажу в 1м от него, или получить попадание вместо него.",
-    source: "Anointed / Помазанник", reader: ""
+    source: "Anointed / Помазанник", reader: "module/combat/terminator-talents.mjs::useAnointed → метка anointedShield, combat/damage.mjs::_rollActiveShield (+35)"
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атраментар", reader: ""
+    source: "Atramentar / Атраментар", reader: "module/combat/terminator-talents.mjs::useAtramentar (активация до конца сцены → Fear 3 записью «Когда включено»)"
   },
   "elite.elitnyeArhetipy.chempionTerminator.deathShroud": {
     label: "Если вооружён древковым оружием в двуручном хвате, может за полное действие совершить Стандартную Базовую атаку по всем противникам в радиус…",
-    source: "Death Shroud / Саван Смерти", reader: ""
+    source: "Death Shroud / Саван Смерти", reader: "module/combat/terminator-talents.mjs::useDeathShroud"
   },
   "elite.elitnyeArhetipy.chempionTerminator.devourer": {
     label: "Совершая Напролом, может проноситься сквозь укреплённые стены и игнорирует Трудный Ландшафт.",
-    source: "Devourer / Поглотитель", reader: ""
+    source: "Devourer / Поглотитель", reader: "module/combat/grapple.mjs::grappleSize → rules/terminator-talents.mjs::devourerGrappleSize"
   },
   "elite.elitnyeArhetipy.chempionTerminator.justaerin": {
     label: "Уменьшает штраф за атаки с двух рук на 10, если вооружён винтовкой и рукопашным оружием (считается сам). Вручную: считается двумя персонажами в численном перевесе; винтовки как пистолеты и тяжёлое как винтовки для стрельбы в рукопашной.",
@@ -5312,7 +5312,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chempionTerminator.phoenician": {
     label: "Если вооружён древковым оружием в двуручном хвате, может совершать Прыжок или Вольт и не получает обычного штрафа −10 к Уклонению.",
-    source: "Phoenician / Фениксиец", reader: ""
+    source: "Phoenician / Фениксиец", reader: "module/sheets/attack/dialog.mjs (Обратный Удар) → rules/terminator-talents.mjs::phoenicianMainProfile"
   },
   "elite.elitnyeArhetipy.chempionTerminator.tyranthikos": {
     label: "Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых. Две тяжёлые, одна цель Размера 2+, попали обе — +2d10 Dmg первому попаданию второй атаки. Укрытия теряют 1d10 AP вместо 1.",

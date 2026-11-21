@@ -8,6 +8,7 @@
 import { ancientBannerLost, useGreaterHerald, useStandYourGround, useVillainousHonour, useDelegate, noblesseObligeSlip } from "../gerold-talents.mjs";
 import { useVeilRender, useRift, useSpeedOfThought, useWarpTrail } from "../warp-talon-talents.mjs";
 import { useBeltFeed, useFlyBy } from "../moritat-talents.mjs";
+import { useAnointed, useAtramentar, useDeathShroud } from "../terminator-talents.mjs";
 import { useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater } from "../bronenosets-talents.mjs";
 
 export const API = {
@@ -18,5 +19,7 @@ export const API = {
   // Коготь Варпа
   useVeilRender, useRift, useSpeedOfThought, useWarpTrail,
   // Моритат
-  useBeltFeed, useFlyBy
+  useBeltFeed, useFlyBy,
+  // Чемпион Терминатор
+  useAnointed, useAtramentar, useDeathShroud
 };
