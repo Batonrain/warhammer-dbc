@@ -8457,12 +8457,12 @@ export const CAPABILITIES = {
   "ability.rubricOfAhriman": {
     label: "Рубрика Аримана: два броска на Варп-Прорыв (берётся меньший) и на Мутации; тест W−30 открывает выбор мутации из всей таблицы",
     source: "Rubric of Ahriman / Рубрика Аримана (packs-src/traits/Элитные_архетипы)",
-    reader: "module/combat/rubric-sorcerer.mjs::rollPeril, ::rollChoiceTest (module/sheets/tabs/psychic.mjs, module/combat/calm-warp.mjs, module/sheets/tabs/mutations.mjs::rollMutationOrGift) — Sahara 1-54b9"
+    reader: "module/combat/rubric-sorcerer.mjs::rollPeril, ::rollChoiceTest (module/sheets/tabs/psychic.mjs, module/combat/calm-warp.mjs, module/sheets/tabs/mutations.mjs::rollMutationOrGift); Прорыв при провале ритуала — module/apps/ritual-cast.mjs::ritualFailure → rules/rubric-sorcerer.mjs::ritualPerilPick (остаток PR #596) — Sahara 1-54b9"
   },
   "ability.golemMaster": {
     label: "Повелитель Големов: 8 душ; Голем Рубрики — средний Миньон-демон с фиксированной Лояльностью 30; вселение 9 часов и тест For.Lore(Warp)−10",
     source: "Golem Master / Повелитель Големов (packs-src/traits/Элитные_архетипы)",
-    reader: "module/combat/rubric-sorcerer.mjs::startGolemCreation, ::spawnGolem, module/rules/rubric-sorcerer.mjs::soulsFree, module/rules/minion-build.mjs::minionLoyalty — Sahara 1-54b9"
+    reader: "module/combat/rubric-sorcerer.mjs::startGolemCreation, ::spawnGolem, module/rules/rubric-sorcerer.mjs::soulsFree, module/rules/minion-build.mjs::minionLoyalty; 9 часов обряда — в Календарь (advanceRiteClock) — Sahara 1-54b9"
   },
   "ability.shieldOfRubric": {
     label: "Щит Рубрики: встроенный чародейский щит-купол 1-50 без перегрузки, пока есть Черта",
@@ -8472,7 +8472,7 @@ export const CAPABILITIES = {
   "ability.infernalShells": {
     label: "Инфернальные Снаряды: за час 24 болта (единица боеприпаса) переделываются в Инферно-болты Тзинча",
     source: "Infernal Shells / Инфернальные Снаряды (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/rubric-sorcerer.mjs::useInfernalShells (кнопка вкладки БОЙ) — Sahara 1-54b9"
+    reader: "module/combat/rubric-sorcerer.mjs::useInfernalShells (кнопка вкладки БОЙ; час резьбы — в Календарь) — Sahara 1-54b9"
   },
   "ability.nexusOfSouls": {
     label: "Узы Душ: связанный Голем действует в Инициативу колдуна и служит его Псайбером — носителем манифестации колдуна (rules/psychic-vessel.mjs; чувства и телепатия — на столе)",

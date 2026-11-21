@@ -68,6 +68,21 @@ const confirm = (title, text, yes, no) => foundry.applications.api.DialogV2.conf
   window: { title }, content: `<p>${text}</p>`, yes: { label: yes }, no: { label: no }, rejectClose: false
 }).then(r => !!r).catch(() => false);
 
+/**
+ * Обряды Колдуна Рубрики двигают Календарь сами (остаток PR #596; тот же приём, что Отдых —
+ * sheets/tabs/conditions.mjs::advanceRestClock): game.time.advance доступен только ГМу, у игрока
+ * карточка просит ГМа сдвинуть время.
+ * @returns {Promise<string>} строка карточки
+ */
+async function advanceRiteClock(hours) {
+  const time = globalThis.game?.time;
+  if (globalThis.game?.user?.isGM && typeof time?.advance === "function") {
+    await time.advance(hours * 3600);
+    return `Календарь сдвинут на ${hours} ч.`;
+  }
+  return `Время двигает ГМ — сдвиньте Календарь на ${hours} ч.`;
+}
+
 // ── Рубрика Аримана ───────────────────────────────────────────────────────
 
 /**
@@ -323,7 +338,7 @@ export async function startGolemCreation(master) {
   if (!success) {
     await postTestCard(master, {
       icon: ICON(), title: `Повелитель Големов — ${esc(master.name)}`, threshold: statLine,
-      lines: [`<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов. Душа осталась свободной, снаряжение не потрачено.</div>`],
+      lines: [`<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов (${await advanceRiteClock(GOLEM_POSSESSION_HOURS)}). Душа осталась свободной, снаряжение не потрачено.</div>`],
       outcome: outcomeHtml(false, "Вселение не удалось")
     }, { rolls });
     return null;
@@ -348,7 +363,7 @@ export async function startGolemCreation(master) {
   }
 
   const lines = [
-    `<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов. Потрачено: ${armour ? esc(armour.name) : "комплект брони не отмечен"}${chosenWeapons.length ? `; оружие Голема: ${chosenWeapons.map(w => esc(w.name)).join(", ")}` : ""}.</div>`,
+    `<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов (${await advanceRiteClock(GOLEM_POSSESSION_HOURS)}). Потрачено: ${armour ? esc(armour.name) : "комплект брони не отмечен"}${chosenWeapons.length ? `; оружие Голема: ${chosenWeapons.map(w => esc(w.name)).join(", ")}` : ""}.</div>`,
     `<div class="roll-threshold">Свободных душ осталось: <b>${Math.max(0, st.free - 1)}</b> из ${st.max}. Лояльность Голема ${GOLEM_LOYALTY}${plan.terminatorArmour ? "; Терминаторский Голем: +10 WS и S, Regeneration 6" : ""}.</div>`,
     res?.relayed ? `<div class="roll-threshold">Голема и токен создаёт Мастер; снаряжение спишется с листа, только когда Голем будет создан.</div>` : ""
   ];
@@ -665,7 +680,7 @@ export async function useInfernalShells(actor) {
   }
   await postTestCard(actor, {
     icon: ICON(), title: `Инфернальные Снаряды — ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">${INFERNAL_SHELLS_HOURS} час резьбы: ${INFERNAL_SHELLS_COUNT} болтов («${esc(source.name)}») стали Инферно-болтами Тзинча.</div>`],
+    lines: [`<div class="roll-threshold">${INFERNAL_SHELLS_HOURS} час резьбы (${await advanceRiteClock(INFERNAL_SHELLS_HOURS)}): ${INFERNAL_SHELLS_COUNT} болтов («${esc(source.name)}») стали Инферно-болтами Тзинча.</div>`],
     outcome: outcomeHtml(true, "Инферно-болты готовы")
   }, { sound: false });
   return true;

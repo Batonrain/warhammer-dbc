@@ -315,6 +315,25 @@ describe("Повелитель Големов: создание", () => {
     expect(lastCard()).toContain("Голем не создан");
   });
 
+  it("обряд вселения — 9 часов в Календарь (у игрока — просьба к ГМу)", async () => {
+    const a = hero({ items: [itemOf(GOLEM_MASTER)] });
+    globalThis.game.actors = [a];
+    const advanced = [];
+    globalThis.game.time.advance = async sec => { advanced.push(sec); };
+    captured.nextRoll = 99;
+    prompt({ armourId: "", terminator: false, weaponIds: [] });
+    await startGolemCreation(a);
+    expect(advanced).toEqual([9 * 3600]);
+    expect(lastCard()).toContain("Календарь сдвинут на 9 ч.");
+    globalThis.game.user.isGM = false;
+    prompt({ armourId: "", terminator: false, weaponIds: [] });
+    await startGolemCreation(a);
+    globalThis.game.user.isGM = true;
+    delete globalThis.game.time.advance;
+    expect(advanced).toHaveLength(1);
+    expect(lastCard()).toContain("сдвиньте Календарь на 9 ч.");
+  });
+
   it("провал теста: душа и снаряжение целы, Голема нет", async () => {
     const armour = armourItem();
     const a = hero({ items: [itemOf(GOLEM_MASTER), armour] });
@@ -705,6 +724,17 @@ describe("Инфернальные Снаряды", () => {
     expect(a.created[0].system.quantity).toBe(1);
     expect(a.created[0].name).toBe(INFERNO.name);
     expect(lastCard()).toContain("Инферно-болтами Тзинча");
+  });
+
+  it("час резьбы двигает Календарь у ГМа (остаток PR #596)", async () => {
+    stubPack();
+    const advanced = [];
+    globalThis.game.time.advance = async sec => { advanced.push(sec); };
+    const a = hero({ items: [itemOf(SHELLS), itemOf(STANDARD_BOLTS, { quantity: 1 })] });
+    await useInfernalShells(a);
+    delete globalThis.game.time.advance;
+    expect(advanced).toEqual([3600]);
+    expect(lastCard()).toContain("Календарь сдвинут на 1 ч.");
   });
 
   it("при повторе количество Инферно-болтов растёт, а не дублируется", async () => {

@@ -73,6 +73,20 @@ export function pickMilderPeril(a, b) {
   return second < first ? { keep: second, drop: first } : { keep: first, drop: second };
 }
 
+/**
+ * Прорыв при провале ритуала (apps/ritual-cast.mjs::ritualFailure). Там Прорыв — это бросок цены
+ * ошибки, ушедший за 75 (Феномен перерастает в Прорыв). Рубрика Аримана: второй бросок, берётся
+ * меньший, но не ниже порога Прорыва — бросок уже Прорыв, выбор кубика его не отменяет (догадка:
+ * книга говорит «выбирает один из двух бросков на Прорыв», а не «избегает Прорыва»).
+ * @param {number} first   итог первого броска (с надбавками)
+ * @param {number} second  итог второго броска (с теми же надбавками)
+ * @param {number} [floor] порог таблицы Прорывов (75)
+ */
+export function ritualPerilPick(first, second, floor = 75) {
+  const { keep, drop } = pickMilderPeril(first, second);
+  return { keep: Math.max(Number(floor) || 0, keep), drop };
+}
+
 /** Порог теста W−30 (выбор мутации): W + суммарные модификаторы − 30. */
 export function choiceThreshold(wp, modsTotal = 0) {
   return (Number(wp) || 0) + (Number(modsTotal) || 0) + CHOICE_TEST_MOD;

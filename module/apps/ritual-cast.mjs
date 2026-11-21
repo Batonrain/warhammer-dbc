@@ -26,6 +26,7 @@ import { godRelationCat } from "../constants/patronage.mjs";
 import { MARK_LABELS } from "../constants/talent-requirements.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { ringWeaveBonus } from "../rules/runic-weave.mjs";
+import { hasRubricOfAhriman, ritualPerilPick } from "../rules/rubric-sorcerer.mjs";
 import { ritualVeilGate, ritualVeilMessage } from "../rules/veil-steps.mjs";
 import { veilShift } from "../constants/scene-nexus.mjs";
 import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
@@ -385,7 +386,7 @@ async function ritualCostSection(R, actor, item, success, allRolls) {
 }
 
 /** Резолюция провала: Отвращение Варпа / Феномен / Прорыв / «Что Посеешь…» / ничего. */
-async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
+async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn, actor = null) {
   const kind = RITUAL_TYPES_MAP[R.type]?.failure || "phenomenon";
   if (kind === "none") return "";
   const prBonus = R.psyker ? Math.min(R.psykerBonus || 0, prMax) : 0;
@@ -409,14 +410,23 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
   }
   // phenomenon / breach
   const { roll: fRoll, note: wpNote } = await warprodD100(R, allRolls);
-  const total = fRoll.total + extra;
+  let total = fRoll.total + extra;
   const asBreach = kind === "breach" || total >= 75;
+  // Рубрика Аримана / Душесвязанный (Колдун Рубрики, остаток PR #596): на Прорыв — два броска,
+  // берётся меньший (rules/rubric-sorcerer.mjs::ritualPerilPick; как rollPeril у психосил).
+  let twoRollNote = "";
+  if (asBreach && actor && (hasRubricOfAhriman(actor) || hasRuleFlag(actor, "psychic.perilTwoRolls"))) {
+    const second = await new Roll("1d100").evaluate(); allRolls.push(second);
+    const pick = ritualPerilPick(total, second.total + extra, kind === "breach" ? 0 : 75);
+    twoRollNote = `<div class="rf-text">${hasRubricOfAhriman(actor) ? "Рубрика Аримана" : "Душесвязанный"}: второй бросок на Прорыв ${second.total}${extraTxt} = ${second.total + extra} — взят ${pick.keep}, отброшен ${pick.drop}.</div>`;
+    total = pick.keep;
+  }
   const obj = asBreach ? getPeril(total) : getPhenomenon(total);
   const nm = obj.label || obj.name || (asBreach ? "Варп-Прорыв" : "Феномен");
   const tx = obj.text || obj.effect || obj.desc || "";
   const failLabel = asBreach ? `${veilIcon("storm")} Варп-Прорыв` : `${veilIcon("star")} Психический Феномен`;
   return `<div class="wh-ritual-fail wv-tier-thin">
-    <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${esc(nm)}</div>${wpNote}
+    <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${esc(nm)}</div>${wpNote}${twoRollNote}
     ${tx ? `<div class="rf-text">${esc(tx)}</div>` : ""}</div>`;
 }
 
@@ -532,7 +542,7 @@ export async function castRitual(R, actor, {
   }
   R.warprod = hasWarprod(actor);
   const failHtml = success ? ""
-    : fallbackHtml + (ignoreFailure ? "" : await ritualFailure(R, Math.abs(deg), d.prMax, allRolls, veilShiftFn));
+    : fallbackHtml + (ignoreFailure ? "" : await ritualFailure(R, Math.abs(deg), d.prMax, allRolls, veilShiftFn, actor));
   const costHtml = ignoreFailure ? "" : await ritualCostSection(R, actor, item, success, allRolls);
   const condHtml = success ? conditionPillsHtml(item) : "";
   // Токен демона — только движковый тип "summon" (действительно материализует

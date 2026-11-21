@@ -10,7 +10,7 @@ import { describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
 import {
   GOLEM_SOULS, GOLEM_LOYALTY, hasRubricOfAhriman, hasGolemMaster, hasShieldOfRubric, hasInfernalShells, hasPsychicEcho,
-  hasSekhmet, hasRebornInDust, nexusCopies, pickMilderPeril, choiceThreshold, isGolem, golemsOf, soulsBound, soulsFree,
+  hasSekhmet, hasRebornInDust, nexusCopies, pickMilderPeril, ritualPerilPick, choiceThreshold, isGolem, golemsOf, soulsBound, soulsFree,
   fallenGolems, nexusFreeGolems, nexusSlotsLeft, golemSlot, sekhmetStats, armourAblative, armourWithoutAblative,
   regenerationRating, possessionThreshold, warpLoreTotal, regenerationHeal, isWounded, isOrdinaryBolt,
   shellsBatch
@@ -68,6 +68,12 @@ describe("Рубрика Аримана", () => {
     expect(pickMilderPeril(70, 12)).toEqual({ keep: 12, drop: 70 });
     expect(pickMilderPeril(12, 70)).toEqual({ keep: 12, drop: 70 });
     expect(pickMilderPeril(40, 40)).toEqual({ keep: 40, drop: 40 });
+  });
+
+  it("Прорыв при провале ритуала: меньший из двух, но не ниже порога Прорыва 75", () => {
+    expect(ritualPerilPick(95, 80)).toEqual({ keep: 80, drop: 95 });
+    expect(ritualPerilPick(95, 30)).toEqual({ keep: 75, drop: 95 });
+    expect(ritualPerilPick(60, 30, 0)).toEqual({ keep: 30, drop: 60 });
   });
 
   it("порог выбора мутации — W−30 с модификаторами", () => {
