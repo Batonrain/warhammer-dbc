@@ -6,8 +6,7 @@
 // незасекшего, с Точным Телекинезом — Незримое; ещё клинок на PR 4+/7+/10+.
 
 import "../support/foundry-stub.mjs";
-import fs from "node:fs";
-import path from "node:path";
+import { packDocById } from "../support/pack-doc.mjs";
 import { describe, it, expect } from "vitest";
 import {
   telekineticBladeCount, telekineticBladeWeaponData, isTelekineticBladeCandidate,
@@ -20,9 +19,8 @@ import { DAEMONIC_ARMAMENT_FLAG } from "../../module/rules/daemonic-armament.mjs
 import { baseHandsFromTraits } from "../../module/rules/hands.mjs";
 import { aggregateAuto, resolveWeaponPropsList } from "../../module/combat/weapon-properties.mjs";
 
-const read = f => JSON.parse(fs.readFileSync(path.resolve(f), "utf8"));
-const sword = read("packs-src/weapons/Имперское/Рукопашное/Примитивное/Sword___Меч_xt9bG5qJ2JLarOXG.json");
-const club = read("packs-src/weapons/Имперское/Рукопашное/Примитивное/Club___Дубинка_iYetscOhjmfXcaPF.json");
+const sword = packDocById("packs-src/weapons/Имперское/Рукопашное/Примитивное", "xt9bG5qJ2JLarOXG");
+const club = packDocById("packs-src/weapons/Имперское/Рукопашное/Примитивное", "iYetscOhjmfXcaPF");
 const IMP = ["Имперское", "Рукопашное", "Примитивное"];
 const power = (name, sustained, id = "p1") => ({ id, type: "psychicPower", name, system: { isSustained: sustained } });
 

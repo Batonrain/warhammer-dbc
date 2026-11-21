@@ -5,14 +5,12 @@
 // выбранное оружие. Диалог — заглушка DialogV2 (test/support/foundry-stub.mjs).
 
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import fs from "node:fs";
-import path from "node:path";
+import { packDocById } from "../support/pack-doc.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { runPsychicSummon } from "../../module/apps/telekinetic-blades.mjs";
 import { summonsOf } from "../../module/rules/summoned-weapon.mjs";
 
-const sword = JSON.parse(fs.readFileSync(path.resolve(
-  "packs-src/weapons/Имперское/Рукопашное/Примитивное/Sword___Меч_xt9bG5qJ2JLarOXG.json"), "utf8"));
+const sword = packDocById("packs-src/weapons/Имперское/Рукопашное/Примитивное", "xt9bG5qJ2JLarOXG");
 const folder = { name: "Примитивное", folder: { name: "Рукопашное", folder: { name: "Имперское", folder: null } } };
 const swordDoc = { ...sword, uuid: "Compendium.warhammer-dbc.weapons.Item.sword", folder, toObject: () => structuredClone(sword) };
 
