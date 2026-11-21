@@ -129,6 +129,7 @@ import { crescendoAimedHits } from "../rules/note-warrior-talents.mjs";
 import { PIERCING_SHOT_FLAG, hasTimedExplosion, runicArtilleryActive, runicFlightLine,
          SEEKER_FLAG, SEEKER_EFFECTS, seekerReady, seekerIgnoresGrappleCover } from "../rules/runic-shot.mjs";
 import { bronenosetsWeaponBonus } from "../rules/bronenosets-talents.mjs";
+import { possessionWeaponGiftDamage } from "../rules/possession-weapon-gifts.mjs";
 import { livingArsenalWeapon } from "../rules/obliterator-talents.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
@@ -350,8 +351,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Адаптивная Отрава Наги (rules/naga-traits.mjs): «Укус Наги использует
   // кубик 1d10 вместо 1d5» — тот же сдвиг, что в Борьбе (grapple.mjs::_doBite).
   if (isBiteName(item) && hasRuleFlag(actor, VENOM_BITE_CAPABILITY)) effDamage = venomBiteDamage(effDamage);
-  const effDmgType = eff.damageType;
-  const effDmgSubtype = eff.damageSubtype;
+  // Дары-усилители Одержимого на слитом оружии (rules/possession-weapon-gifts.mjs):
+  // Молниевое Поле — урон E и +2 Dmg/Pen, Варп-Пламя — E(Fl), Лезвия Душ — урон вдвое.
+  const giftDmg = possessionWeaponGiftDamage(actor, item);
+  const effDmgType = giftDmg.damageType || eff.damageType;
+  const effDmgSubtype = giftDmg.damageType ? giftDmg.damageSubtype : eff.damageSubtype;
   let   effPen0    = eff.penetration;
 
   // ── Особые свойства оружия (+ от установленных модификаций) ───────────────
@@ -1549,7 +1553,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Непрерывный Натиск (Секутор): запомнить цель — следующая атака по ней получит +3 за каждую предыдущую подряд.
   if (opts.forcedRoll == null) await noteSustainedAssault(actor, defenderActor);
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen + runic.pen + destructorPen + exaltedWpn.pen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen + runic.pen + destructorPen + exaltedWpn.pen + giftDmg.pen,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen + reliable.pen
   });
 
@@ -1734,7 +1738,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const superiorityN = (hit && superiorityDice(actor, { isMelee, targetProne: !!defenderActor?.system?.conditions?.prone })) ? 2 : 0;
   // Провидец Войны (Виткис): +Успехи к урону рукопашных по цели — rules/vitkis-talents.mjs.
   const warSeerDmg = hit ? warSeerDamage(actor, defenderActor, { isMelee, combatId: game.combat?.started ? game.combat.id : "" }) : 0;
-  const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus + warSeerDmg + exaltedWpn.dmg;
+  const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus + warSeerDmg + exaltedWpn.dmg + giftDmg.dmg;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
   // Сварщик (rules/gunsmith-talents.mjs): признак на кнопки «Применить урон» — доп.
@@ -1798,6 +1802,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     twinFateNote,
     (hit && destructorPen) ? `⚙️ Деструктор: +${destructorPen} к Pen (½I.b при Структурном Анализе, уже учтено).` : "",
     (hit && exaltedWpn.note) ? exaltedWpn.note : "",
+    (hit && giftDmg.note) ? giftDmg.note : "",
     (hit && dimacherus) ? `⚔️ Димахер: +${dimacherus} к урону каждого попадания (очки Момента, уже в формуле).` : "",
     bloodOfMartyrsNote(defenderActor, { selective: !!aimTarget?.value, hit, worldTime: game.time?.worldTime }),
     warSeerDmg ? `👁️ Провидец Войны: +${warSeerDmg} к урону по цели (уже в формуле).` : "",
@@ -2010,6 +2015,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // Ку де Гра (rules/rogue-talents.mjs::coupDeGraceActive): «как если бы цель была Беспомощной» — тот же ×2.
       // Один Из Нас Падёт: «удвоить ее Dmg (до Поглощения)» — то же ×2 до Поглощения, не складывается с Беспомощной.
       if (opts.doubleDamage || coupDeGrace || owgdOn) total *= 2;
+      // Дар «Лезвия Душ»: «урон уменьшается до поглощения вдвое» (окр.▲) — после ×2, тоже до Поглощения.
+      if (giftDmg.halve) total = Math.ceil(total / 2);
       // У техники Экстремальный урон переводится в её Критический Эффект через
       // отрицательную Структуру (при применении урона), а не по таблице существ.
       const { hasExtreme, extremeLevel, critEffect, exRoll } = await rollExtremeDamage(dmgRoll, {

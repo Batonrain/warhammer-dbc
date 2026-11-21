@@ -4010,7 +4010,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Усилители — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryUsiliteli.bladesOfTheSoul": {
     label: "Оружие получает Warp Weapon, но урон уменьшается до поглощения вдвое (окр.▲).",
-    source: "Blades of the Soul / Дар: Лезвия Душ", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Warp Weapon слитому оружию в Проявлении; половина урона вручную"
+    source: "Blades of the Soul / Дар: Лезвия Душ", reader: "module/rules/possession-weapon-gifts.mjs — Warp Weapon слитому оружию в Проявлении; possessionWeaponGiftDamage.halve — урон до поглощения вдвое в combat/attack.mjs"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.daemonicVenom": {
     label: "Оружие получает Felling (½Cor.b, окр.▲) и Toxic (½Cor.b, окр.▲).",
@@ -4018,11 +4018,11 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryUsiliteli.lightningField": {
     label: "Оружие: +2 Dmg и Pen, наносит E, получает Power Field.",
-    source: "Lightning Field / Дар: Молниевое Поле", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Power Field слитому оружию в Проявлении; +2 Dmg/Pen и тип E вручную"
+    source: "Lightning Field / Дар: Молниевое Поле", reader: "module/rules/possession-weapon-gifts.mjs — Power Field слитому оружию в Проявлении; possessionWeaponGiftDamage — +2 Dmg/Pen и тип E в combat/attack.mjs"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.warpflame": {
     label: "Оружие наносит E(Fl) и получает Flame.",
-    source: "Warpflame / Дар: Варп-Пламя", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Flame слитому оружию в Проявлении; тип E(Fl) вручную"
+    source: "Warpflame / Дар: Варп-Пламя", reader: "module/rules/possession-weapon-gifts.mjs — Flame слитому оружию в Проявлении; possessionWeaponGiftDamage — тип E(Fl) в combat/attack.mjs"
   },
   // ── Таланты_одержимых\Таланты_архетипа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.talantyArhetipa.greaterPossessed": {
