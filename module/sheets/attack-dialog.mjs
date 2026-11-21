@@ -106,6 +106,7 @@ import { fullFireOptions, FULL_FIRE_PENALTY } from "../rules/full-fire.mjs";
 import { hasPowerSetting, powerModeOf, POWER_MODES } from "../rules/power-setting.mjs";
 import { batpackAvailable, batpackRangePenalty } from "../rules/batpack-dump.mjs";
 import { sabotageAimEntries } from "../rules/rogue-talents.mjs";
+import { livingArsenalOneHand } from "../rules/obliterator-talents.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -299,8 +300,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // винтовку и длинную винтовку (обе в классе basic, стр. 171) можно держать
   // одной рукой. Тот же список собирает rules/hands.mjs::availableRangedGrips —
   // иначе окно атаки разрешило бы хват, которого бюджет рук не знает.
-  const oneHandRifleGrip = (!isMelee && sys.weaponClass === "basic"
-                         && hasRuleFlag(actor, "weapon.oneHandedRifle")) ? "1р" : null;
+  const oneHandRifleGrip = ((!isMelee && sys.weaponClass === "basic"
+                         && hasRuleFlag(actor, "weapon.oneHandedRifle"))
+                         // Живой Арсенал (Облитератор): ассимилированные винтовки и тяжёлое (rules/hands.mjs — то же).
+                         || (!isMelee && livingArsenalOneHand(actor, item))) ? "1р" : null;
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60): книга
   // разрешает одну руку и отдельно оговаривает, что дальность при этом НЕ
   // режется — в отличие от модификации Pistol Grip. Список оружия именной, а

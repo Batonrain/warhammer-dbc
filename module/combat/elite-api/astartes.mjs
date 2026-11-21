@@ -9,6 +9,7 @@ import { ancientBannerLost, useGreaterHerald, useStandYourGround, useVillainousH
 import { useVeilRender, useRift, useSpeedOfThought, useWarpTrail } from "../warp-talon-talents.mjs";
 import { useBeltFeed, useFlyBy } from "../moritat-talents.mjs";
 import { useAnointed, useAtramentar, useDeathShroud } from "../terminator-talents.mjs";
+import { useLivingArsenal, useBulletEater, useMutilator, useSelfForging, useShredder, useToTheTeeth } from "../obliterator-talents.mjs";
 import { useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater } from "../bronenosets-talents.mjs";
 
 export const API = {
@@ -21,5 +22,7 @@ export const API = {
   // Моритат
   useBeltFeed, useFlyBy,
   // Чемпион Терминатор
-  useAnointed, useAtramentar, useDeathShroud
+  useAnointed, useAtramentar, useDeathShroud,
+  // Облитератор
+  useLivingArsenal, useBulletEater, useMutilator, useSelfForging, useShredder, useToTheTeeth
 };

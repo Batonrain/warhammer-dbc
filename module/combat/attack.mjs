@@ -119,6 +119,7 @@ import { twinFateWorse } from "../rules/twin-fate.mjs";
 import { hasItemNamed } from "../rules/req-atom.mjs";
 import { dimacherusBonus } from "../rules/gladiator-talents.mjs";
 import { bronenosetsWeaponBonus } from "../rules/bronenosets-talents.mjs";
+import { livingArsenalWeapon } from "../rules/obliterator-talents.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -1041,7 +1042,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
   // Распыление клинит не по броску атаки, а по первому кубику урона (стр. 168,
   // sprayJamFace) — общий порог по d100 к нему неприменим, см. sprayJam ниже.
-  const jamAt    = jamThreshold(wp);
+  // Живой Арсенал (Облитератор, rules/obliterator-talents.mjs): оружие никогда не Заклинивает.
+  const arsenalNoJam = livingArsenalWeapon(actor, item);
+  const jamAt    = arsenalNoJam ? null : jamThreshold(wp);
   const jamNoteAt = (!isMelee && !wp.spray && sys.weaponClass !== "thrown") ? jamAt : undefined;
   // Метательное (стр. 40, wdbc-x1nz.2.58): «При Критическом Промахе,
   // метательное оружие не Заклинивает» — исключено из общего механизма
@@ -1895,7 +1898,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // Клин Распыления (стр. 168): 9 у обычного, 8-9 у Ненадёжного и хуже,
       // никогда у Надёжного и лучше — по ПЕРВОМУ кубику на урон (первому
       // брошенному, а не оставленному Рвущим), и только у первого попадания.
-      if (i === 0 && !isMelee && wp.spray && sprayJamFace(wp) !== null) {
+      if (i === 0 && !isMelee && wp.spray && !arsenalNoJam && sprayJamFace(wp) !== null) {
         if (sprayJams(baseDieResult, wp)) sprayJam = { face: baseDieResult, at: sprayJamFace(wp) };
       }
       let deflagrateHit = false;

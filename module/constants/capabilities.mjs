@@ -5024,7 +5024,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.obliterator.bulletEater": {
     label: "Может поглощать специализированные боеприпасы и хранить их внутри тела. Может заряжать их в подходящее оружие и менять боеприпасы в оружии,",
-    source: "Bullet Eater / Пожиратель Пуль", reader: ""
+    source: "Bullet Eater / Пожиратель Пуль", reader: "module/combat/obliterator-talents.mjs::useBulletEater"
   },
   "elite.elitnyeArhetipy.obliterator.fireproof": {
     label: "Бронированное тело отращивает огнеупорный слой и систему пожаротушения. Получает иммунитет к эффекту Горения и +5 AP против E(Fl) Dmg.",
@@ -5032,19 +5032,19 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.obliterator.mutilator": {
     label: "Модифицирует себя для ближнего боя. Может за полудействие потерять Трейт Auto-Stabilized и убрать ограничение на Бег и скорость Натиска,",
-    source: "Mutilator / Расчленитель", reader: ""
+    source: "Mutilator / Расчленитель", reader: "module/combat/obliterator-talents.mjs::useMutilator; перебросы — rules/obliterator-talents.mjs::mutilatorRules (источник astartesElite)"
   },
   "elite.elitnyeArhetipy.obliterator.selfForging": {
     label: "Может поглощать броню так же, как оружие и инструменты. Поглощение занимает 5 минут вместо полного действия и позволяет отращивать модификац…",
-    source: "Self-Forging / Самоперековывание", reader: ""
+    source: "Self-Forging / Самоперековывание", reader: "module/combat/obliterator-talents.mjs::useSelfForging (частично: системы брони — вручную)"
   },
   "elite.elitnyeArhetipy.obliterator.shredder": {
     label: "Сконцентрировавшись, способен ощетиниться десятками или сотнями небольших стволов, палящих во все стороны.",
-    source: "Shredder / Измельчитель", reader: ""
+    source: "Shredder / Измельчитель", reader: "module/combat/obliterator-talents.mjs::useShredder, rules/obliterator-talents.mjs::shredderHordeHits"
   },
   "elite.elitnyeArhetipy.obliterator.toTheTeeth": {
     label: "За полудействие может потратить Очко Бесчестия, чтобы отрастить любую винтовку или пистолет как наплечное оружие до конца боя/сцены.",
-    source: "To the Teeth / До Зубов", reader: ""
+    source: "To the Teeth / До Зубов", reader: "module/combat/obliterator-talents.mjs::useToTheTeeth; rules/hands.mjs (isShoulderWeapon — рук не занимает)"
   },
   // ── Элитные_архетипы\Питати — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.pitati.livingBullet": {
@@ -6822,7 +6822,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.obliterator.livingArsenal": {
     label: "За полное действие может ассимилировать касанием любое оружие или механизм размера, которым может пользоваться космодесантник или персонаж п…",
-    source: "Living Arsenal / Живой Арсенал", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Living Arsenal / Живой Арсенал", reader: "module/combat/obliterator-talents.mjs::useLivingArsenal; combat/attack.mjs (без Заклинивания), rules/ammo-free.mjs, rules/hands.mjs → rules/obliterator-talents.mjs"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Питати — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.pitati.runicBullet": {
