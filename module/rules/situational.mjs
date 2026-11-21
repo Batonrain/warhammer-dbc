@@ -69,6 +69,7 @@ import { itemHasName } from "./predicates.mjs";
 import { isInRage } from "./rage.mjs";
 import { dragonKnightRules } from "./dragon-knight.mjs";
 import { passengerTestMod } from "./mount.mjs";
+import { placeboActive } from "./medic-chemistry.mjs";
 import { armorQualityAgilityPenalty } from "../constants/quality.mjs";
 
 /**
@@ -196,6 +197,8 @@ export function fatiguePenalty(actor, charKey) {
   // Усталости» — полный иммунитет, а не отсрочка порога (в отличие от grace
   // выше, которая лишь отодвигает начало штрафа).
   if (actorHasCapability(actor, "mutation.feelsNoPain")) return 0;
+  // Плацебо (Талант Медика, rules/medic-chemistry.mjs): Успехи Раундов «иммунитет к эффектам Усталости».
+  if (placeboActive(actor, { now: globalThis.game?.time?.worldTime ?? 0, combat: globalThis.game?.combat ?? null })) return 0;
   // Desiccated / Иссушенный (wdbc-1rno): «Усталость накладывает на персонажа
   // штраф −20 вместо обычного −10».
   return actorHasCapability(actor, "mutation.desiccated") ? -20 : -10;

@@ -22,6 +22,11 @@ export function hasPutrescenceWithin(actor) {
   return [...(actor?.items ?? [])].some(i => i?.type === "trait" && itemHasName(i, "Putrescence Within"));
 }
 
+/** Long Hand of Corrosion / Длинная Рука Коррозии — Гниль Внутри и против стрелкового. */
+export function hasLongHandOfCorrosion(actor) {
+  return [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Long Hand of Corrosion"));
+}
+
 /** Оружие Наследия, Демоническое или Священное — ему только Poor.Q. */
 export function putrescenceResistant(weapon) {
   const s = weapon?.system ?? {};
@@ -53,11 +58,13 @@ const confirm = (title, text, yes, no) => foundry.applications.api.DialogV2.conf
  */
 export async function putrescenceOffer(actor, netDamage, { melee = false, weaponUuid = "" } = {}) {
   const net = Number(netDamage) || 0;
-  if (!actor || !melee || net <= 0 || !hasPutrescenceWithin(actor) || !actorHasInfamyPoint(actor)) return { net, note: "" };
+  // Длинная Рука Коррозии (Талант Чумного Монаха): Черта работает и против стрелкового оружия.
+  const longHand = !melee && !!weaponUuid && hasLongHandOfCorrosion(actor);
+  if (!actor || (!melee && !longHand) || net <= 0 || !hasPutrescenceWithin(actor) || !actorHasInfamyPoint(actor)) return { net, note: "" };
   const corB = Math.max(0, Number(actor.system?.corruptionBonus) || 0);
   const weapon = weaponUuid ? await fromUuid(weaponUuid).catch(() => null) : null;
   const ok = await confirm("Гниль Внутри",
-    `${esc(actor.name)} получает непоглощённый урон от рукопашного оружия: <b>${net}</b>. Потратить Очко Бесчестия: урон −${corB} (Cor.b, не меньше 1)${
+    `${esc(actor.name)} получает непоглощённый урон от ${melee ? "рукопашного" : "стрелкового"} оружия: <b>${net}</b>. Потратить Очко Бесчестия: урон −${corB} (Cor.b, не меньше 1)${
       weapon ? `, а «${esc(weapon.name)}» ${putrescenceResistant(weapon) ? "становится Poor.Q" : "становится бесполезным"} до конца сцены` : ""}?`,
     "Потратить Очко", "Нет");
   if (!ok) return { net, note: "" };

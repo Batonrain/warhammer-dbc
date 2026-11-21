@@ -39,8 +39,14 @@ export const SPEED_TALENTS = {
 /** Есть ли у актора этот Талант Скорости (по имени предмета ИЛИ по ключу Возможности). */
 export function hasSpeedTalent(actor, id) {
   const t = SPEED_TALENTS[id];
+  // Разбежаться! (Лидерство, combat/fan-out.mjs): Reposition «на этот бой» — метка с id боя.
+  if (id === "reposition" && actor?.flags?.["warhammer-dbc"]?.[FAN_OUT_FLAG]
+      && actor.flags["warhammer-dbc"][FAN_OUT_FLAG] === globalThis.game?.combat?.id) return true;
   return !!t && hasAbility(actor, t.key, t.name, "talent");
 }
+
+/** Метка Разбежаться!: id боя, в котором у бойца есть Reposition. */
+export const FAN_OUT_FLAG = "fanOutReposition";
 
 // ── Стоимость действий ──────────────────────────────────────────────────────
 

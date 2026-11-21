@@ -114,6 +114,11 @@ import { terrorSniperEligible }                       from "../rules/terror-snip
 import { misfireCandidates, hasTargetSelection }      from "../rules/target-selection.mjs";
 import { laserDotOffered }                            from "../rules/laser-sight.mjs";
 import { hasFlamerTalent, pyromaniacActive, torrentActive, torrentBlastRadius, torrentMaxDistance } from "../rules/flamer-talents.mjs";
+import { musicDeg, symphonyProps } from "../rules/battle-music.mjs";
+import { twinFateWorse } from "../rules/twin-fate.mjs";
+import { hasItemNamed } from "../rules/req-atom.mjs";
+import { dimacherusBonus } from "../rules/gladiator-talents.mjs";
+import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
 import { bayonetShotButtonsHtml, independentShotOfferHtml } from "./free-shot.mjs";
@@ -140,7 +145,8 @@ import { tenacityButtonHtml } from "./tenacity.mjs";
 import { executionOfferHtml } from "./execution.mjs";
 import { shockerGrantsShocking, wallopConcussiveRating, sparksAvailable, welderMarksHit, irradiateMode,
   lensTuningShot, LENS_CHARGES_FLAG, litanyReliability, litanyCoversWeapon, LITANY_CLEANED_FLAG,
-  weaponTechShot, WEAPON_TECH_SPENT_FLAG, igniterZone, IGNITER_NOTES } from "../rules/gunsmith-talents.mjs";
+  weaponTechShot, WEAPON_TECH_SPENT_FLAG, igniterZone, IGNITER_NOTES, galvanicResonanceOn, galvanicResonanceText } from "../rules/gunsmith-talents.mjs";
+import { LOCATION_TO_ARMOR } from "./damage.mjs";
 import { WIDE_BURST_RATING_CUT, CAGE_FIRING_RATING_CUT } from "../rules/wide-burst.mjs";
 import { saturationFireCoverShots, sureShotApplies, sureShotDodgePenalty, cageFiringApplies, CAGE_FIRING_EVADE_COST, controlledBurstApplies, controlledBurstRof, eyeOfVengeanceBonus, eyeOfVengeanceAvailable, EYE_OF_VENGEANCE_FLAG, crackShotBonus, cripplingStrikeBonus, doubleTapActive, doubleTapLocation, doubleTapHits, onThisMarkActive, appliedPhysicsShift } from "../rules/gunner-talents.mjs";
 import { isBiteName } from "../rules/integral-rating.mjs";
@@ -419,6 +425,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Поджигатель (там же): Избирательный выстрел Фосфорным оружием — эффект по месту; кнопки
   // свойств несут зону (data-wp-igniter), а Blinding/Flame считаются в hooks.mjs::_applyWeaponPropEffect.
   const igniter = igniterZone(actor, { item, isMelee, aimValue: aimTarget?.value }) || "";
+  // Симфония (Воин Ноты, rules/battle-music.mjs): музыка на 6+ Успехов — Felling (Успехи−5) и Precise.
+  const symphony = hasItemNamed(actor, "Symphony", ["talent"])
+    ? symphonyProps(musicDeg(actor, { combat: game.combat?.started ? game.combat : null, now: game.time?.worldTime ?? 0 }),
+      { isMelee, thrown: sys.weaponClass === "thrown" }) : [];
+  for (const p of symphony) {
+    const i = _mergedEntries.findIndex(x => x.key === p.key);
+    if (i < 0) _mergedEntries.push(p);
+    else if ((Number(p.rating) || 0) > (Number(_mergedEntries[i].rating) || 0)) _mergedEntries[i] = { ..._mergedEntries[i], rating: p.rating };
+  }
   const wallopOn = wallopRating != null && !_mergedEntries.some(x => x.key === "concussive");
   if (wallopOn) _mergedEntries.push({ key: "concussive", rating: wallopRating });
   // Выпуск Батареи (rules/batpack-dump.mjs): лаз-оружию с Power Setting на эту атаку — Storm(2), +1d10 Dmg (ниже),
@@ -850,6 +865,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     const [main, other, otherOutcome] = secondIsBetter ? [secondRoll, roll, o1] : [roll, secondRoll, o2];
     roll = main;
     quadOther = { roll: other, hit: otherOutcome.success, deg: otherOutcome.deg };
+  }
+  // Двойная Судьба (Ворон, rules/twin-fate.mjs): переброс WS за Очко хуже
+  // исходного — остаётся исходный бросок, Очко возвращается.
+  let twinFateNote = "";
+  const twinRv = Number(opts.twinFate?.rv);
+  if (twinRv > 0 && opts.forcedRoll == null && !quadOther) {
+    const probe = v => attackHitOutcome({ rv: v, threshold, isMelee, wp, forceHit: opts.forceHit, fixedSuccessDeg: opts.fixedSuccessDeg });
+    if (twinFateWorse(probe(twinRv), probe(roll.total))) {
+      const worse = roll.total;
+      roll = await new Roll(String(twinRv)).evaluate();
+      const { changeActorInfamy } = await import("../apps/infamy-points.mjs");
+      const back = await changeActorInfamy(actor, 1);
+      twinFateNote = `🎲 Двойная Судьба: переброс (${worse}) хуже исходного — остаётся ${twinRv}${back.changed ? ", Очко Бесчестия возвращено" : ""}.`;
+    } else twinFateNote = `🎲 Двойная Судьба: переброс не хуже исходного (${twinRv}) — Очко потрачено.`;
   }
   const rv       = roll.total;
   const rollMode = game.settings.get("core", "rollMode");
@@ -1644,7 +1673,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const coupDeGrace = hit && coupDeGraceActive({
     actor, weapon: item, gripKey: opts.gripKey, aimValue: aimTarget?.value, targetActor: defenderActor, isMelee });
   const skullBonus = skullOfferingBonus(actor, { isMelee, combatId: combatIdOf(actor) });
-  const flatBonus = runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  // Димахер (Гладиатор): с двумя рукопашными — +очки Момента к урону каждого попадания.
+  const dimacherus = dimacherusBonus(actor, { isMelee, momentum: momentumOf(actor) });
+  const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
   // Сварщик (rules/gunsmith-talents.mjs): признак на кнопки «Применить урон» — доп.
@@ -1703,6 +1734,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     lens.use ? `🔍 Настройка Линз: заряд потрачен — Felling (${lens.felling}) и Precise на эту атаку; осталось зарядов: ${lens.charges}.` : "",
     litanyRel ? "🧼 Литания Чистки: оружие чищено за последние сутки — Надёжность +1." : "",
     (hit && tankHunter.penBonus) ? `🎯 Охотник на Танки: +${tankHunter.penBonus} к Pen (2×I.b, уже учтено) — слабые места этой модели техники опознаны.` : "",
+    (!isMelee && wp.spray && ashMantleActive(actor)) ? ashMantleNote(actor) : "",
+    (isMelee && hit && fistfulActive(actor)) ? fistfulNote(actor, defenderActor) : "",
+    twinFateNote,
+    (hit && dimacherus) ? `⚔️ Димахер: +${dimacherus} к урону каждого попадания (очки Момента, уже в формуле).` : "",
+    galvanicResonanceOn(actor, { item, isMelee, hit, aimed: !!aiming && aiming !== "none" })
+      ? galvanicResonanceText(defenderActor?.system?.absorption, Array.from({ length: Math.max(1, hitsCount || 0) }, (_, i) => locForHit(i)), LOCATION_TO_ARMOR) : "",
     (!isMelee && wp.spray && hasFlamerTalent(actor, "friendlyFire")) ? "🔥 Дружественный Огонь: тест отмены Распыления у всех, кто не враг стрелка по токенам, получает +30 (кнопка теста считает сама)." : "",
     torrentOn ? `🌊 Поток: расход боеприпасов удвоен (${ammoSpent}); вместо конуса — шаблон Blast(${torrentBlastRadius(Number(sys.range) || 0)} м) в пределах ${torrentMaxDistance(Number(sys.range) || 0)} м и прямой видимости, попадание по правилам Spray (тест на отмену у каждой цели).` : "",
     (hit && pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame })) ? "🔥 Пироман: цели перебрасывают успешный тест против загорания, а в укрытии — ещё −20 (кнопка «Горение» считает сама). Укрытия под шаблоном (кнопка «Разместить шаблон») загорятся на 1d5+1 Раундов, стоящий в них в конце Хода — тоже." : "",
@@ -2229,7 +2266,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // выше, но проверка не одноразовая галочка, а персистентный флаг ЦЕЛИ
   // (module/combat/feint-press.mjs), снимается в конце Хода АТАКУЮЩЕГО,
   // а не этим выстрелом.
-  const feintBlocked = !hiddenAttack && feintBlocksEvasion(defenderActor, actor);
+  const feintBlocked = (!hiddenAttack && feintBlocksEvasion(defenderActor, actor))
+    // Пригоршня Грома (Таланты Дредноутов): выстрел встроенным по той же цели после попадания кулаком.
+    || (!hiddenAttack && !isMelee && fistfulBlocks(actor, defenderActor, game.combat?.started ? game.combat : null));
+  if (!isMelee && actor?.getFlag?.("warhammer-dbc", FISTFUL_FLAG)) await actor.unsetFlag("warhammer-dbc", FISTFUL_FLAG);
 
   // Затрещина (Талант Пугилиста, стр. 62, combat/whack.mjs): безоружный удар
   // рукой с одноручным оружием — первый раз по не видевшему приём −30 на

@@ -354,3 +354,40 @@ export function litanyReliability(actor, { item, isMelee, cleaned, worldTime }) 
   const age = Number(worldTime) - at;
   return age >= 0 && age < LITANY_WINDOW_SECONDS ? 1 : 0;
 }
+
+// ── Гальванический Резонанс ─────────────────────────────────────────────────
+//  «Попадая в цель из Гальванического оружия после любого прицеливания,
+//  персонаж узнаёт расчётные Т.b, АР брони (и отдельно АР укрытия щитов) цели
+//  против E(El) Dmg в участке тела, в который попал.» Поглощение актора
+//  (system.absorption, documents/actor.mjs) хранит AP + T.b по участку,
+//  noShield — без щитов, toughnessBonus — сам T.b.
+
+/** Срабатывает ли: попадание, Гальваническое, было прицеливание. */
+export function galvanicResonanceOn(actor, { item, isMelee, hit, aimed }) {
+  return !!hit && !isMelee && !!aimed && isGalvanicWeapon(item)
+    && [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Galvanic Resonance"));
+}
+
+/**
+ * Строка карточки: T.b и AP по каждому задетому участку.
+ * @param {object} absorption system.absorption цели
+ * @param {string[]} locs участки попаданий («Голова», «Торс», …)
+ * @param {Record<string,string>} locToKey LOCATION_TO_ARMOR
+ */
+export function galvanicResonanceText(absorption, locs, locToKey) {
+  if (!absorption) return "";
+  const tb = Number(absorption.toughnessBonus) || 0;
+  const seen = new Set();
+  const parts = [];
+  for (const loc of locs) {
+    if (!loc || seen.has(loc)) continue;
+    seen.add(loc);
+    const key = locToKey[loc] || "body";
+    const full = Number(absorption[key]) || 0;
+    const noShield = Number(absorption.noShield?.[key] ?? absorption[key]) || 0;
+    const ap = Math.max(0, noShield - tb);
+    const shield = Math.max(0, full - noShield);
+    parts.push(`${loc}: АР ${ap}${shield ? ` + щит ${shield}` : ""}`);
+  }
+  return parts.length ? `⚡ Гальванический Резонанс: у цели T.b ${tb}; ${parts.join("; ")}.` : "";
+}

@@ -1549,7 +1549,7 @@ export const CAPABILITIES = {
   // ── Скитарии
   "skitarii.core.boonOfOmnissiah": {
     label: "Подключившись к электросети и имея нужные сырые материалы, Скитарий за смену работы без инструментов и тестов может создать или перезарядить…",
-    source: "Boon of Omnissiah / Дар Омниссии", reader: ""
+    source: "Boon of Omnissiah / Дар Омниссии", reader: "module/combat/skitarii-modules.mjs::useBoonOfOmnissiah (кнопка Таланта) + module/rules/skitarii-modules.mjs::boonWeaponOk"
   },
   "skitarii.core.cyberdeacon": {
     label: "Скитарий может генерировать и накапливать мотивирующую силу как персонаж с Имплантами Механикум, но на 1 в Ход меньше.",
@@ -1557,15 +1557,15 @@ export const CAPABILITIES = {
   },
   "skitarii.core.deliveranceOfArkhan": {
     label: "Попав в поле Haywire интенсивностью 7+, Скитарий может получить 1 Усталости или потратить 1 заряд Актуаторных Банков,",
-    source: "Deliverance of Arkhan / Избавление Аркхана", reader: ""
+    source: "Deliverance of Arkhan / Избавление Аркхана", reader: "module/combat/skitarii-modules.mjs::arkhanHaywireNote (карточка ЭМИ 7+, combat/damage.mjs::_applyHaywire) + useDeliveranceOfArkhan (кнопка .wh-arkhan-btn, module/hooks.mjs)"
   },
   "skitarii.core.shiftingMantle": {
     label: "Раз в Ход за ментальное свободное действие Скитарий может отключить один Модуль и/или включить другой.",
-    source: "Shifting Mantle / Смещающаяся Мантия", reader: ""
+    source: "Shifting Mantle / Смещающаяся Мантия", reader: "module/combat/skitarii-modules.mjs::toggleSkitariiModule (кнопка .skitarii-module-toggle на вкладке Эффекты, флаг импланта disabled) + module/rules/skitarii-modules.mjs::moduleLimits (mantle +2 установленных), mantleSwapAllowed"
   },
   "skitarii.core.skitariiAlpha": {
     label: "Скитарий увеличивает максимум своих установленных и активных Модулей на 1.",
-    source: "Skitarii Alpha / Скитарий Альфа", reader: ""
+    source: "Skitarii Alpha / Скитарий Альфа", reader: "module/rules/skitarii-modules.mjs::moduleLimits (alpha) + module/rules/predicates.mjs::skitariiModulesOverLimit + module/rules/library/skitarii.mjs (−30 сверх лимита)"
   },
   // ── Мудрец
   "sage.core.foresight": {
@@ -1840,11 +1840,11 @@ export const CAPABILITIES = {
   // ── Оккультист
   "occultist.core.brainwashing": {
     label: "Потратив смену работы и пройдя Interrogate+0 vs W+0 против жертвы, персонаж может заставить её добровольно поучаствовать в одном ритуале (ка…",
-    source: "Brainwashing / Промывка Мозгов", reader: ""
+    source: "Brainwashing / Промывка Мозгов", reader: "module/combat/ritual-talents.mjs::useBrainwashing — встречный Interrogate vs W, доброволец отмечается на карточке ритуала (apps/ritual-cast.mjs)"
   },
   "occultist.core.divineMask": {
     label: "Потратив 15 минут и Очко Бесчестия, персонаж на Cor.b часов считается имеющим покровительство одного из Богов для ритуалов и демонического в…",
-    source: "Divine Mask / Божественная Маска", reader: ""
+    source: "Divine Mask / Божественная Маска", reader: "module/rules/ritual-talents.mjs::divineMaskGod ← apps/ritual-cast.mjs::autoSummonMods (покровительство на Cor.b часов), +1d5 Порчи — ritualCostSection"
   },
   "occultist.core.dominator": {
     label: "Преимущество на тест Владычества (R.type===\"dominion\", roll×2+keepBest, module/rules/dominator.mjs) — авто, кнопка «Провести ритуал» без доп. диалога.",
@@ -1883,12 +1883,12 @@ export const CAPABILITIES = {
     reader: "ЧАСТИЧНО: module/rules/requisition.mjs::rarityShifts — Редкость Записи −1 при добыче реквизицией (module/apps/requisition.mjs); I−20/I+0 — справочный расчёт module/rules/occultist-talents.mjs::ritePuzzlerLearnMod"
   },
   "occultist.core.scapegoat": {
-    label: "Потратив смену работы на ритуальную подготовку другого разумного существа для определённого ритуала, при Успехе цена или цена ошибки, применявшиеся бы к ритуалисту, применяются к этой жертве. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (перепроверка Sahara 3-2a39, 19.10.2026): «цена»/«цена ошибки» — текстовые поля предмета-ритуала (system.cost/failureCost, module/data/item/ritual.mjs), книга даёт разную прозу на каждый ритуал, числа для переноса в системе нет и не планируется.",
-    source: "Scapegoat / Козёл Отпущения", reader: ""
+    label: "Потратив смену работы на ритуальную подготовку другого разумного существа для определённого ритуала, при Успехе цена или цена ошибки, применявшиеся бы к ритуалисту, применяются к этой жертве.",
+    source: "Scapegoat / Козёл Отпущения", reader: "module/rules/ritual-talents.mjs::scapegoatFor ← apps/ritual-cast.mjs::ritualCostSection (цена ритуала ложится на жертву)"
   },
   "occultist.core.warprod": {
-    label: "Персонаж делает все броски на цену ритуала 2 раза, выбирая один. Ассистируя, главный ритуалист не может переносить на него цену ритуала/провала без его согласия. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ (перепроверка Sahara 3-2a39, 19.10.2026): та же причина, что Scapegoat — цена ритуала текстовая, дайсов в коде на неё нет.",
-    source: "Warprod / Варпоотвод", reader: ""
+    label: "Персонаж делает все броски на цену ритуала 2 раза, выбирая один. Ассистируя, главный ритуалист не может переносить на него цену ритуала/провала без его согласия.",
+    source: "Warprod / Варпоотвод", reader: "module/apps/ritual-cast.mjs::warprodD100 и ritualCostSection — кубики цены и цены ошибки бросаются дважды, берётся меньший"
   },
   // ── Внимательность
   "awareness.core.analyticalEye": {
@@ -1912,8 +1912,8 @@ export const CAPABILITIES = {
     reader: "module/rules/awareness-talents.mjs (heightenedSensesOf, awarenessTalentRules)"
   },
   "awareness.core.lightSleeper": {
-    label: "Не смоделировано (сверка главы 3): в системе нет Состояния «Спит» и штрафов P/Awareness за сон — Таланту нечего отменять. Текст лежит как есть; появится сон как Состояние — Чуткий Сон снимет его штраф для тестов P и Awareness.",
-    source: "Light Sleeper / Чуткий Сон", reader: ""
+    label: "Спящий персонаж с Талантом в тестах P и Awareness считается бодрствующим.",
+    source: "Light Sleeper / Чуткий Сон", reader: "module/rules/library/conditions.mjs — conditions.asleep (−30 к тестам от P у спящего, lacksTrait Light Sleeper)"
   },
   "awareness.core.lipReading": {
     label: "Не смоделировано (сверка главы 3): чтение по губам — повествование, тесты обычно не нужны, а когда ГМ их просит, это обычный тест Awareness без особых последствий. Автоматизировать нечего.",
@@ -2094,7 +2094,7 @@ export const CAPABILITIES = {
   // ── Пилот
   "pilot.core.aceOperator": {
     label: "Персонаж может потратить Очко Бесчестия, чтобы уменьшить число Провалов на вождение техники на A.b, потенциально превращая Провал в Успех,",
-    source: "Ace Operator / Ас Оператор", reader: ""
+    source: "Ace Operator / Ас Оператор", reader: "module/combat/ace-operator.mjs::aceOperatorButtonHtml/useAceOperator ← combat/vehicle.mjs (Вираж, Трудный Ландшафт)"
   },
   "pilot.core.dive": {
     label: "Находясь на Высокой высоте, пилот может вместо Виража спуститься на Приземную высоту и избежать всех атак по нему,",
@@ -2144,7 +2144,7 @@ export const CAPABILITIES = {
   },
   "pilot.core.tankCommander": {
     label: "Когда персонаж занимает станцию командира машины, весь экипаж может действовать в Инициативу командира,",
-    source: "Tank Commander / Танковый Командир", reader: ""
+    source: "Tank Commander / Танковый Командир", reader: "module/combat/ace-operator.mjs::useTankCommander — Инициатива экипажа"
   },
   // ── Два оружия
   "dualWield.core.allGunsBlazing": {
@@ -2605,7 +2605,7 @@ export const CAPABILITIES = {
   // ── Социальные
   "social.core.balefulDirge": {
     label: "Действие: Свободное (Физическое, Ментальное). До начала следующего Хода персонажа все существа в 30м, слышащие его,",
-    source: "Baleful Dirge / Мрачный Плач", reader: ""
+    source: "Baleful Dirge / Мрачный Плач", reader: "module/combat/baleful-dirge.mjs::useBalefulDirge/resistBalefulDirge (кнопки) + module/rules/baleful-dirge.mjs::underBalefulDirge → predicates.mjs + rules/library/baleful-dirge.mjs (−10 кроме T)"
   },
   "social.core.cluesFromTheCrowds": {
     label: "Персонаж может потратить сутки на расспрос в толпах мира-улья. Целенаправленные поиски дают +10 к тестам Inquiry.",
@@ -2706,7 +2706,7 @@ export const CAPABILITIES = {
   },
   "weaponsmith.core.galvanicResonance": {
     label: "Попадая в цель из Гальванического оружия после любого прицеливания, персонаж узнаёт расчётные Т.b,",
-    source: "Galvanic Resonance / Гальванический Резонанс", reader: ""
+    source: "Galvanic Resonance / Гальванический Резонанс", reader: "module/rules/gunsmith-talents.mjs::galvanicResonanceOn/galvanicResonanceText → заметка карточки атаки (combat/attack.mjs)"
   },
   "weaponsmith.core.igniter": {
     label: "При Избирательном выстреле из Фосфорного оружия оно получает доп. эффекты по цели: Голова — Blinding игнорирует визоры/авточувства;",
@@ -2772,7 +2772,7 @@ export const CAPABILITIES = {
   // ── Медик
   "medic.core.antivenom": {
     label: "За полудействие, потратив 3 дозы Детокса, 1 Очко Бесчестия и пройдя тест Scholastic Lore (Chymistry)(I)+0,",
-    source: "Antivenom / Противоядие", reader: ""
+    source: "Antivenom / Противоядие", reader: "module/combat/medic-chemistry.mjs::makeAntivenom/giveAntivenom ← sheets/tabs/drugs.mjs::applyDrug (иммунитет к яду, rules/medic-chemistry.mjs::antivenomImmune)"
   },
   "medic.core.butAScratch": {
     label: "Персонаж автоматически проходит тесты на Первую Помощь легко раненным персонажам.",
@@ -2786,7 +2786,7 @@ export const CAPABILITIES = {
   },
   "medic.core.cook": {
     label: "Имея набор разнообразных химикатов, персонаж может потратить Очко Бесчестия и за 5 минут приготовить I.b смесей,",
-    source: "Cook / Повар", reader: ""
+    source: "Cook / Повар", reader: "module/combat/medic-chemistry.mjs::cookMixes/giveCookMix — смесь утоляет зависимость (startWithdrawal)"
   },
   "medic.core.councilium": {
     label: "Персонаж удваивает максимум ассистентов для любого теста лечения (до 4 для Первой Помощи),",
@@ -2795,7 +2795,7 @@ export const CAPABILITIES = {
   },
   "medic.core.deepDetox": {
     label: "Потратив 2 дозы Детокса и 1 дозу Стимма, персонаж тестом Trade(Chymist)+0 готовит дозу глубокой детоксикации против определённого наркотика.",
-    source: "Deep Detox / Глубокая Детоксикация", reader: ""
+    source: "Deep Detox / Глубокая Детоксикация", reader: "module/combat/medic-chemistry.mjs::makeDeepDetox/giveDeepDetox — снятие пост-эффекта и Оглушение"
   },
   "medic.core.fastStitches": {
     label: "Персонаж может провести тест на Первую Помощь как одно полное действие, но считает свой I.b вдвое ниже (окр.▲) для эффективности.",
@@ -2822,7 +2822,7 @@ export const CAPABILITIES = {
   },
   "medic.core.placebo": {
     label: "За полудействие персонаж может ввести что-то другому и пройти комбинированный тест Deceive(I)+0 и Medicae(I)−10,",
-    source: "Placebo / Плацебо", reader: ""
+    source: "Placebo / Плацебо", reader: "module/combat/medic-chemistry.mjs::usePlacebo ← rules/situational.mjs::fatiguePenalty (placeboActive)"
   },
   "medic.core.poisoner": {
     label: "Нанося Избирательное попадание оружием со свойством Toxic или заряженным ядом, цель должна перебрасывать успешные тесты против этого яда,",
@@ -2860,7 +2860,7 @@ export const CAPABILITIES = {
   },
   "medic.core.triage": {
     label: "Персонаж может оказывать медицинский уход до 10×I.b пациентам в смену (8 часов).",
-    source: "Triage / Триаж", reader: ""
+    source: "Triage / Триаж", reader: "module/rules/medic-chemistry.mjs::triageCap ← sheets/tabs/healing.mjs::assignCare"
   },
   // ── Лидерство
   "leadership.core.adjutant": {
@@ -2877,7 +2877,7 @@ export const CAPABILITIES = {
   },
   "leadership.core.battleSigns": {
     label: "Отряд персонажа может общаться его языком жестов, если «говорящий» в поле зрения «слушающего». Передаются только простые концепты;",
-    source: "Battle Signs / Боевые Жесты", reader: ""
+    source: "Battle Signs / Боевые Жесты", reader: "module/rules/command.mjs::battleSignsReach ← commandBlockReason (Оглохший получает Команды жестами)"
   },
   "leadership.core.bravado": {
     label: "Персонаж считает свой уровень Риска на 1 выше реального, если он не равен 1.",
@@ -2901,7 +2901,7 @@ export const CAPABILITIES = {
   },
   "leadership.core.fanOut": {
     label: "В начале боя сразу после бросков Инициативы персонаж может пройти Command (P)+0 (с бонусами Слаженности),",
-    source: "Fan Out! / Разбежаться!", reader: ""
+    source: "Fan Out! / Разбежаться!", reader: "module/combat/fan-out.mjs::useFanOut ← rules/speed-talents.mjs::hasSpeedTalent (метка fanOutReposition = id боя)"
   },
   "leadership.core.fieldExecution": {
     label: "Когда подчинённый в Шоке/Подавлен/запуган/отступает, персонаж может пройти Intimidate(W)+0 vs W+0 против него и при успехе атаковать его как…",
@@ -3225,7 +3225,7 @@ export const CAPABILITIES = {
   },
   "psyker.core.dreamingOfMind": {
     label: "Талант позволяет поддерживать одну выбранную психосилу даже во сне или без сознания (или Оглушённым, если Оглушение прерывает поддержку).",
-    source: "Dreaming of Mind / Сон Разума", reader: ""
+    source: "Dreaming of Mind / Сон Разума", reader: "module/combat/psychic-sustain.mjs::dropSustainOnSleep/dreamingKeepId (хук updateActor в module/hooks.mjs), chooseDreamingPower"
   },
   "psyker.core.fastWeaving": {
     label: "В начале боя сразу после бросков инициативы персонаж получает 2 полудействия, которые может потратить только на психосилы без типа «Атака».",
@@ -3664,11 +3664,11 @@ export const CAPABILITIES = {
   // ── Дредноуты — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.drednouty.ashMantle": {
     label: "Может использовать орудия со свойством Spray, даже будучи связанным в рукопашной, и вместо обычного шаблона нанести попадание этим орудием п…",
-    source: "Ash Mantle / Мантия Пепла", reader: ""
+    source: "Ash Mantle / Мантия Пепла", reader: "module/combat/dreadnought-talents.mjs::ashMantleActive/ashMantleNote (заметка с кнопкой на карточке атаки Spray, combat/attack.mjs) + targetAshMantleRing (кнопка .wh-ash-mantle-btn, module/hooks.mjs)"
   },
   "elite.drednouty.bastion": {
     label: "Подвергшись Тарану, может пройти тест Parry+0 со штрафом −10 за каждый Размер таранящей машины выше своего: при Успехе не получает урона и н…",
-    source: "Bastion / Бастион", reader: ""
+    source: "Bastion / Бастион", reader: "module/combat/dreadnought-talents.mjs::resolveBastion (кнопка .wh-ram-bastion-btn на карточке Тарана, combat/vehicle.mjs::_resolveRam; module/hooks.mjs)"
   },
   "elite.drednouty.coreMemories": {
     label: "Увеличивает максимум Здравомыслия на 5. Можно брать до I.b раз. Смоделировано (module/rules/dreadnought.mjs::sanityMax) — считается автоматически в prepareDerivedData.",
@@ -3688,7 +3688,7 @@ export const CAPABILITIES = {
   },
   "elite.drednouty.fistfulOfThunder": {
     label: "Попав по цели рукопашным орудием, может немедленно атаковать встроенным в него орудием ту же цель или другую в базовом контакте с ним и изна…",
-    source: "Fistful of Thunder / Пригоршня Грома", reader: ""
+    source: "Fistful of Thunder / Пригоршня Грома", reader: "module/combat/dreadnought-talents.mjs::fistfulNote/markFistful (кнопка .wh-fistful-btn после попадания в рукопашной) + fistfulBlocks (combat/attack.mjs: выстрел по той же цели без Избеганий)"
   },
   "elite.drednouty.ironWrath": {
     label: "Сохраняет способность стрелять как обычно и игнорирует штраф к BS от Ярости. В Ярости не обязан двигаться к ближайшей цели быстрее Шага,",
@@ -3997,7 +3997,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryTransformatsiya.manyEyed": {
     label: "Круговое зрение; выглядывает из укрытия рукой/ногой вместо головы.",
-    source: "Many-Eyed / Дар: Многоглазый", reader: ""
+    source: "Many-Eyed / Дар: Многоглазый", reader: "module/rules/possession-talents.mjs::manyEyedSightAngle (360° в Проявлении) → module/combat/facing.mjs::isOutsideDefenderView"
   },
   "elite.talantyOderzhimyh.daryTransformatsiya.massiveMaw": {
     label: "Bite + Deadly Natural Weapon (Укус) от Проявления; при попадании укусом — Захват; может не наносить урон.",
@@ -4055,7 +4055,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSlaughter": {
     label: "В Проявлении считается двумя персонажами для численного превосходства; раз в Ход переброс промаха меньшим WS/BS.",
-    source: "Shared Slaughter / Общая Бойня", reader: ""
+    source: "Shared Slaughter / Общая Бойня", reader: "module/rules/possession-talents.mjs::outnumberWeight (за двоих в Проявлении) → module/combat/tactical-map.mjs::meleeContactCount"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSorcery": {
     label: "Неконтролирующая душа раз в Раунд манифестирует психосилу (своб./полу-/полное действие; штраф-простой после полу-/полного).",
@@ -4331,7 +4331,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Воин_Ноты — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.voinNoty.aria": {
     label: "Рассекая воздух элегантными дугами, клинки издают божественную музыку. Вооружённый клинковым оружием с Балансом не ниже 0,",
-    source: "Aria / Ария", reader: ""
+    source: "Aria / Ария", reader: "module/combat/battle-music.mjs::useAria (кнопка Таланта) → метка hearingMusic (rules/battle-music.mjs)"
   },
   "elite.elitnyeArhetipy.voinNoty.crescendo": {
     label: "Врываясь в рукопашную, сеет смерть стремительными сериями атак. Может совершать Быструю Атаку или Молниеносную Атаку с каждой руки в Ход,",
@@ -4347,11 +4347,11 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voinNoty.overture": {
     label: "Порченая душа всегда настроена на мелодии, льющиеся сквозь Шесть Кругов Искушения. Может потратить Очко Бесчестия,",
-    source: "Overture / Увертюра", reader: ""
+    source: "Overture / Увертюра", reader: "module/combat/battle-music.mjs::useOverture (кнопка, 1 Очко Бесчестия) → метка hearingMusic"
   },
   "elite.elitnyeArhetipy.voinNoty.symphony": {
     label: "Под божественную гармонию музыки клинки поражают врагов со сверхъестественной точностью.",
-    source: "Symphony / Симфония", reader: ""
+    source: "Symphony / Симфония", reader: "module/rules/battle-music.mjs::musicDeg/symphonyProps → combat/attack.mjs (Felling и Precise при музыке 6+)"
   },
   "elite.elitnyeArhetipy.voinNoty.waltz": {
     label: "Лёгкими танцующими движениями обходит телохранителей и свиту, добираясь напрямую к цели.",
@@ -4388,7 +4388,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voron.twinFate": {
     label: "Постигает ещё более продвинутые техники контроля судьбы своих клинков. Когда тратит Очко Бесчестия для переброса теста WS и результат перебр…",
-    source: "Twin Fate / Двойная Судьба", reader: ""
+    source: "Twin Fate / Двойная Судьба", reader: "module/rules/twin-fate.mjs (twinFateApplies/twinFateWorse) ← module/hooks.mjs (переброс атаки за Очко: opts.twinFate) ← module/combat/attack.mjs (исходный бросок остаётся, Очко возвращается)"
   },
   // ── Элитные_архетипы\Герольд — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.gerold.ancient": {
@@ -4419,7 +4419,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gladiator.dimacherus": {
     label: "Сражается в агрессивном стиле, используя оружие в каждой руке. Если вооружён хотя бы двумя рукопашными оружиями,",
-    source: "Dimacherus / Димахер", reader: ""
+    source: "Dimacherus / Димахер", reader: "module/rules/gladiator-talents.mjs::dimacherusBonus → combat/attack.mjs flatBonus"
   },
   "elite.elitnyeArhetipy.gladiator.malearius": {
     label: "Сражается метеоритным молотом, танцуя на его реактивных струях как артист. Вооружённый метеоритным молотом и не нося броню прочнее AP4 ни на…",
@@ -4986,7 +4986,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.moritat.mortido": {
     label: "Танцует на грани верной гибели. В начале своего Хода, если в его поле зрения есть противники, может потратить все свои Реакции,",
-    source: "Mortido / Мортидо", reader: ""
+    source: "Mortido / Мортидо", reader: "module/combat/elite-buttons.mjs::useMortido (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.moritat.outgun": {
     label: "Винтовки движутся в руках с лёгкостью и грацией пистолетов. Может считать любую винтовку, которую держит в одной руке,",
@@ -5383,7 +5383,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chumnoyMonah.longHandOfCorrosion": {
     label: "Порченная плоть монаха служит лучшим проводником силы паразитов, позволяя им защищать его даже от атак издали,",
-    source: "Long Hand of Corrosion / Длинная Рука Коррозии", reader: ""
+    source: "Long Hand of Corrosion / Длинная Рука Коррозии", reader: "module/combat/putrescence.mjs::putrescenceOffer (hasLongHandOfCorrosion — и стрелковое)"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.putridClarity": {
     label: "Медитируя над природой жизни и смерти, монах глубже проникает в тайны ядов и полнее раскрывает смертоносный потенциал своих паразитов.",
@@ -6295,7 +6295,7 @@ export const CAPABILITIES = {
   },
   "talent.beastmanSubrace.tzaangorEnlightened": {
     label: "Часовой ритуал без тестов — Диск Тзинча под управлением, как ритуал Трансформации Диска; 3d10 урона в W.",
-    source: "Tzaangor Enlightened / Тзаангор Просвещённый", reader: ""
+    source: "Tzaangor Enlightened / Тзаангор Просвещённый", reader: "module/combat/ritual-talents.mjs::useTzaangorDisc — Диск Тзинча и 3d10 урона в W"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимаг — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimag.magusSupreme": {

@@ -49,6 +49,7 @@ import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS, withoutBoughtSuccess }  from "./rules/fate-bonus.mjs";
 import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
 import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
+import { twinFateApplies }                 from "./rules/twin-fate.mjs";
 import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit, unrulySaddleKey } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
@@ -1734,6 +1735,55 @@ export function registerHooks() {
         // Один бросок на карточку Тарана (иначе провал можно было бы перебрасывать до успеха).
         const done = await runCardOnce(message, "ramPirouetteUsed", async () => !!(await resolveRamPirouette(actor, rammer)),
           "Пируэт против этого Тарана уже проходили.");
+        if (done) el.disabled = true;
+      });
+    });
+
+    // Мантия Пепла (Талант Дредноутов): Spray по кольцу 2 м — отметить цели.
+    html.querySelectorAll(".wh-ash-mantle-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.attackerUuid;
+        const { targetAshMantleRing } = await import("./combat/dreadnought-talents.mjs");
+        await targetAshMantleRing(uuid);
+      });
+    });
+
+    // Пригоршня Грома (Талант Дредноутов): метка на выстрел встроенным без Избеганий.
+    html.querySelectorAll(".wh-fistful-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { markFistful } = await import("./combat/dreadnought-talents.mjs");
+        if (await markFistful(el.dataset.attackerUuid, el.dataset.targetUuid)) el.disabled = true;
+      });
+    });
+
+    // Мрачный Плач (Социальные): W+0 слушателя (combat/baleful-dirge.mjs).
+    html.querySelectorAll(".wh-dirge-test-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const singerUuid = ev.currentTarget.dataset.singerUuid;
+        const listener = requireControlledActor("⚠️ Выберите токен слушателя на сцене!");
+        if (!listener) return;
+        const { resistBalefulDirge } = await import("./combat/baleful-dirge.mjs");
+        await resistBalefulDirge(listener, singerUuid);
+      });
+    });
+
+    // Бастион (Талант Дредноутов): Parry Шагохода против Тарана (combat/dreadnought-talents.mjs).
+    html.querySelectorAll(".wh-ram-bastion-btn").forEach(btn => {
+      if (cardOnceUsed(message, "ramBastionUsed")) btn.disabled = true;
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const walker = requireControlledActor("⚠️ Выберите токен Дредноута, которого таранят!");
+        if (!walker) return;
+        const rammer = el.dataset.attackerUuid ? await fromUuid(el.dataset.attackerUuid).catch(() => null) : null;
+        if (!rammer) return ui.notifications.warn("⚠️ Таранящая машина не найдена.");
+        const { resolveBastion } = await import("./combat/dreadnought-talents.mjs");
+        const done = await runCardOnce(message, "ramBastionUsed", async () => !!(await resolveBastion(walker, rammer)),
+          "Бастион против этого Тарана уже проходили.");
         if (done) el.disabled = true;
       });
     });
@@ -3845,6 +3895,28 @@ export function registerHooks() {
       });
     });
 
+    // Ас Оператор (combat/ace-operator.mjs): −A.b Провалов вождения за Очко Бесчестия, раз на карточку.
+    html.querySelectorAll(".wh-ace-operator-btn").forEach(btn => {
+      if (cardOnceUsed(message, "aceOperatorUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { useAceOperator } = await import("./combat/ace-operator.mjs");
+        if (await useAceOperator(message, el.dataset)) el.disabled = true;
+      });
+    });
+
+    // Избавление Аркхана: +1 Усталость, бионика держится в поле Haywire 7+.
+    html.querySelectorAll(".wh-arkhan-btn").forEach(btn => {
+      if (cardOnceUsed(message, "arkhanUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { useDeliveranceOfArkhan } = await import("./combat/skitarii-modules.mjs");
+        if (await useDeliveranceOfArkhan(message, el.dataset)) el.disabled = true;
+      });
+    });
+
     // Непоглощаемый урон в Ходовую техники (Трудный Ландшафт) → Структура
     html.querySelectorAll(".wh-vehicle-track-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -4716,6 +4788,8 @@ function _attachFateContextMenu(message, html) {
           // За Гранью Человека: данные о первом результате едут в опциях атаки
           // (они ложатся во флаги новой карточки). Старую метку убираем —
           // переброс переброшенной карточки считается от неё самой.
+          // Двойная Судьба (Ворон, rules/twin-fate.mjs): исходный бросок едет в атаку — хуже переброс, остаётся он.
+          const twinOk = twinFateApplies(atkActor, { charKey: atk.charKey, champion: !!champion });
           const bhAtk = beyondHumanRerollData(atkActor, {
             charKey: atk.charKey, firstRv: atk.rv, threshold: atk.threshold,
             spend: champion ? null : reroll1 });
@@ -4726,7 +4800,8 @@ function _attachFateContextMenu(message, html) {
           const wrathReroll = wrathApplies && !atk.opts?.reroll;
           delete atkOpts[BEYOND_HUMAN_FLAG];
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
-            atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}) });
+            atk.rofMode, atk.aimTarget, { ...atkOpts, skipAmmo: true, ...(bhAtk ? { [BEYOND_HUMAN_FLAG]: bhAtk } : {}),
+              twinFate: (twinOk && !wrathReroll) ? { rv: atk.rv } : undefined });
           // Исходная карточка переброшена — бесплатный переброс Огневой Точки
           // с неё больше не предлагается (переброс переброса).
           await markCardOnce(message, "attackRerolled");
@@ -5712,6 +5787,12 @@ function _attachFateContextMenu(message, html) {
     if (game.user.id !== userId) return;
     if (!grappleReleaseTriggered(changes)) return;
     await maybeAutoReleaseGrapple(actor);
+  });
+  // Уснул или потерял сознание — поддержание психосил прерывается (кроме силы Сна Разума).
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    const { sleepDropTriggered, dropSustainOnSleep } = await import("./combat/psychic-sustain.mjs");
+    if (sleepDropTriggered(changes)) await dropSustainOnSleep(actor);
   });
   // Кувырок (Талант Избегания, глава 3): сбит с ног — предложить Acrobatics+0.
   // Тот же userId-гвард: карточку пишет только клиент, поставивший Состояние.

@@ -40,6 +40,7 @@ import { runReanimate } from "../../combat/reanimate.mjs";
 const surgeryLabel = pen => `Медицина−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
 import { legionSurgeryPass, offerSusAnWake } from "../../combat/legion-surgery.mjs";
 import { healActor } from "../../combat/heal-target.mjs";
+import { triageCap } from "../../rules/medic-chemistry.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -1070,6 +1071,13 @@ export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = 
 export async function assignCare(medic, patient) {
   if (!patient.system?.healing) { ui.notifications.warn(`${patient.name}: лечение по Календарю не ведётся для этого типа.`); return; }
   const same = patient.system.healing.caregiver === medic.uuid;
+  // Триаж (rules/medic-chemistry.mjs): уход до 10×I.b пациентов в смену — счёт по листам мира.
+  const cap = triageCap(medic);
+  const onCare = [...(game.actors ?? [])].filter(a => a.system?.healing?.caregiver === medic.uuid).length;
+  if (!same && cap != null && onCare >= cap) {
+    ui.notifications.warn(`Триаж: у ${medic.name} уже ${onCare} пациентов на уходе из ${cap} (10×I.b).`);
+    return;
+  }
   try {
     await patient.update({ "system.healing.caregiver": same ? "" : medic.uuid });
   } catch {
@@ -1078,7 +1086,7 @@ export async function assignCare(medic, patient) {
   }
   await sendHealChatMsg(medic, patient, rollIcon("heart","#ff8a8a"), "Мед. уход", [same
     ? `${esc(medic.name)} больше не ухаживает за пациентом.`
-    : `${esc(medic.name)} берёт пациента на уход: тест Medicae (+0, критическому −10) в начале каждого периода лечения — успех сокращает его до 8 ч или лечит критического как тяжёлого.`]);
+    : `${esc(medic.name)} берёт пациента на уход: тест Medicae (+0, критическому −10) в начале каждого периода лечения — успех сокращает его до 8 ч или лечит критического как тяжёлого.${cap != null ? ` Триаж: на уходе ${onCare + 1} из ${cap}.` : ""}`]);
 }
 
 /** Расчёт и применение лечения к пациенту + сообщение в чат. */

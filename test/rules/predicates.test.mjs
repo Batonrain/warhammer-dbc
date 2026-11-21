@@ -561,6 +561,9 @@ describe("общее требование к предикатам", () => {
     testSense: ["hearing"],
     // Обучение мехадендритам (Mechadendrite Use), утилитарные дендриты — wdbc-qbyvc.
     mechadendriteTraining: "utility",
+    // Перегрузка Модулями Скитарии (rules/skitarii-modules.mjs).
+    skitariiModulesOverLimit: true,
+    underBalefulDirge: true,
     // Дар Одержимого в Проявлении (Варп-Зрение вытесняет Ослепление, живая проверка pr-584).
     manifestedGift: "Варп-Зрение"
   };

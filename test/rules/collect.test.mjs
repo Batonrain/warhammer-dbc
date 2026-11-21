@@ -152,7 +152,7 @@ describe("источники по умолчанию", () => {
     // только бо́льшая подмена; "skill:command" убран из leadershipTalents и
     // occultistTalents.
     expect([...getRuleSources().map(([key]) => key)].sort())
-      .toEqual(["addiction", "adjutant", "awarenessTalents", "beastmanShaman", "commandSubstitution",
+      .toEqual(["addiction", "adjutant", "awarenessTalents", "balefulDirge", "beastmanShaman", "commandSubstitution",
                 "conditions", "core",
                 "daemonInevitability",
                 // darkApostle (Тёмный Апостол, Sahara 1-54b9) — Литания Слаанеш: +30 на Командование Апостола.
@@ -171,7 +171,7 @@ describe("источники по умолчанию", () => {
                 // possessionWeaponGifts (Разобрать m9zer, 20.11.2026) — Дары-усилители на слитом оружии.
                 "possessionWeaponGifts", "prophetOfGallerpox",
                 // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».
-                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia", "targetSocialTalents",
+                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "skitarii", "socialTalents", "synesthesia", "targetSocialTalents",
                 // tipOfSpear (Острие Копья, 20.11.2026) — бесплатный переброс атаки по знаку Глашатая.
                 "tipOfSpear",
                 // woundAura (Рана в Реальности, Sahara 3-28, пачка I2, 26.10.2026) — −5 Пси-чутьё и +10 Варп-Нестабильность в ауре.

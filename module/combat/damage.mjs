@@ -23,6 +23,7 @@ import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
+import { arkhanHaywireNote } from "./skitarii-modules.mjs";
 import { ablativeDamage, mountRangedApBonus, unrulyRiders } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
@@ -321,7 +322,9 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   // мозговой имплант — 3+ автопровал тестов I, 7+ Ступор (combat/bone-head.mjs).
   // rating — радиус поля: вышедший за него Огрин освобождается сам.
   const boneHeadNote = await applyHaywireToBoneHead(actor, total, rating);
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}`;
+  // Избавление Аркхана (Скитарии): 7+ — бионика держится ценой 1 Усталости.
+  const arkhanNote = arkhanHaywireNote(actor, total);
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}${arkhanNote}`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────

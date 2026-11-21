@@ -266,6 +266,8 @@ const DEVIATIONS = {
     // позже template.json (module/constants/conditions.mjs).
     "conditions.resonance": false,
     "conditions.resonanceLevel": 0,
+    // Спит (остаток Талантов, 20.11.2026) — заведено гораздо позже template.json.
+    "conditions.asleep": false,
     // Стазис (wdbc-1rno) — заведено гораздо позже template.json, на основе
     // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
     "conditions.stasis": false,
