@@ -37,7 +37,7 @@ describe("Рунный Выстрел", () => {
   const pitati = (bullets) => ({ items: [{ type: "trait", name: "Runic Shot / Рунный Выстрел" }],
     system: { psyker: { rating: 5, sustain: 0 } }, flags: { "warhammer-dbc": { runicBullets: bullets } } });
   it("одиночный выстрел с пулей: +тPR Dmg, +½тPR Pen", () => {
-    expect(runicShotBonus(pitati(2), { toggles: { runicShot: true }, rofMode: "single" })).toEqual({ dmg: 5, pen: 2, used: true });
+    expect(runicShotBonus(pitati(2), { toggles: { runicShot: true }, rofMode: "single" })).toEqual({ dmg: 5, pen: 2, used: true, piercing: false });
     expect(runicShotBonus(pitati(2), { toggles: { runicShot: true }, rofMode: "semi" }).used).toBe(false);
     expect(runicShotBonus(pitati(0), { toggles: { runicShot: true }, rofMode: "single" }).used).toBe(false);
   });

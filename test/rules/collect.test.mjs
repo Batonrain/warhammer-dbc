@@ -161,6 +161,8 @@ describe("источники по умолчанию", () => {
                 "drugWithdrawal",
                 // eliteMech2 (21.11.2026) — пачка элитных архетипов mech2 (rules/mech2-sources.mjs).
                 "eliteMech2",
+                // gladiatorArena (Гладиатор, 21.11.2026) — Бестиарий: второй бонус Момента против естественного оружия.
+                "gladiatorArena",
                 "hatred", "homeworld", "items",
                 // khorneBerserker (Берсерк Кхорна, Sahara 1-54b9) — Гвозди Мясника вне Ярости и Закалённое в Крови.
                 "khorneBerserker",
@@ -179,6 +181,8 @@ describe("источники по умолчанию", () => {
                 "sharedConsciousness", "situational", "situationalSocialTalents", "skitarii", "socialTalents", "synesthesia", "targetSocialTalents",
                 // tipOfSpear (Острие Копья, 20.11.2026) — бесплатный переброс атаки по знаку Глашатая.
                 "tipOfSpear",
+                // vitkis (Виткис, 21.11.2026) — Провидец Войны и Книга Битвы.
+                "vitkis",
                 // woundAura (Рана в Реальности, Sahara 3-28, пачка I2, 26.10.2026) — −5 Пси-чутьё и +10 Варп-Нестабильность в ауре.
                 "warpTouchedHealMistrust", "woundAura", "yigori"]);
   });

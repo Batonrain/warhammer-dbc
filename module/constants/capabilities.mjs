@@ -4306,27 +4306,27 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.vitkis.bloodFeud": {
     label: "Гнев и мудрость сочетаются в его душе, открывая разум к ещё большим тайнам битвы. Когда использует War Seer против Ненавистного врага,",
-    source: "Blood Feud / Кровная Вражда", reader: ""
+    source: "Blood Feud / Кровная Вражда", reader: "module/rules/vitkis-talents.mjs::bloodFeudPersistent (Провидец до конца боя) → combat/vitkis.mjs::useWarSeer"
   },
   "elite.elitnyeArhetipy.vitkis.bookOfBattle": {
     label: "Может читать движения врага как раскрытую книгу. Когда использует War Seer для усиления урона или попадания своих рукопашных атак,",
-    source: "Book of Battle / Книга Битвы", reader: ""
+    source: "Book of Battle / Книга Битвы", reader: "module/rules/vitkis-talents.mjs::vitkisRules (−3×Успехи цели на атаки по Виткису) + combat/vitkis.mjs::useWarSeer (+1 Реакция на Парирование)"
   },
   "elite.elitnyeArhetipy.vitkis.brothersAtArms": {
     label: "Когда Виткис берёт на себя основную ответственность в битве, Бог Крови вознаграждает его смелость дополнительным прозрением.",
-    source: "Brothers at Arms / Братья по Оружию", reader: ""
+    source: "Brothers at Arms / Братья по Оружию", reader: "module/combat/vitkis.mjs::distributeWarSeer (Приказы вдобавок к эффекту)"
   },
   "elite.elitnyeArhetipy.vitkis.harderTheyFall": {
     label: "Зная слабые и сильные места противника, использует его размер и вес против него. Когда использует Трейт War Seer против цели Размером больше…",
-    source: "Harder They Fall / Тем Больнее Им Падать", reader: ""
+    source: "Harder They Fall / Тем Больнее Им Падать", reader: "module/rules/vitkis-talents.mjs::harderTheyFallDeg (Успехи ×Размер)"
   },
   "elite.elitnyeArhetipy.vitkis.splitVision": {
     label: "Может концентрировать своё видение на нескольких врагах или нескольких аспектах боевого стиля одного противника.",
-    source: "Split Vision / Разделённое Видение", reader: ""
+    source: "Split Vision / Разделённое Видение", reader: "module/rules/vitkis-talents.mjs::warSeerMaxSplits → combat/vitkis.mjs::distributeWarSeer"
   },
   "elite.elitnyeArhetipy.vitkis.witchslayer": {
     label: "Комбинируя полученную от Кхорна мудрость и свои знания о ведьмах, может направлять как свой клинок, так и чужие,",
-    source: "Witchslayer / Убийца Ведьм", reader: ""
+    source: "Witchslayer / Убийца Ведьм", reader: "module/combat/vitkis.mjs::useWitchslayer → rules/vitkis-talents.mjs::witchslayerArmed → combat/attack.mjs (Sanctified)"
   },
   // ── Элитные_архетипы\Воин_Ноты — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.voinNoty.aria": {
@@ -4335,15 +4335,15 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voinNoty.crescendo": {
     label: "Врываясь в рукопашную, сеет смерть стремительными сериями атак. Может совершать Быструю Атаку или Молниеносную Атаку с каждой руки в Ход,",
-    source: "Crescendo / Крещендо", reader: ""
+    source: "Crescendo / Крещендо", reader: "module/rules/note-warrior-talents.mjs::crescendoAimedHits → combat/attack.mjs locForHit"
   },
   "elite.elitnyeArhetipy.voinNoty.finale": {
     label: "Шок и ужас на лицах врагов питает его тщеславие. Убив или парализовав рукопашной или метательной атакой вражеского чемпиона,",
-    source: "Finale / Финале", reader: ""
+    source: "Finale / Финале", reader: "module/combat/note-warrior.mjs::useFinale (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.voinNoty.leitmotif": {
     label: "Когда чует на себе внимание враждебного чемпиона, Тёмный Принц ниспосылает ему мелодию, раскрывающую секреты противника.",
-    source: "Leitmotif / Лейтмотив", reader: ""
+    source: "Leitmotif / Лейтмотив", reader: "module/combat/note-warrior.mjs::useLeitmotif (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.voinNoty.overture": {
     label: "Порченая душа всегда настроена на мелодии, льющиеся сквозь Шесть Кругов Искушения. Может потратить Очко Бесчестия,",
@@ -4355,36 +4355,36 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voinNoty.waltz": {
     label: "Лёгкими танцующими движениями обходит телохранителей и свиту, добираясь напрямую к цели.",
-    source: "Waltz / Вальс", reader: ""
+    source: "Waltz / Вальс", reader: "module/rules/note-warrior-talents.mjs::waltzContestOptions → combat/techniques.mjs (Напролом)"
   },
   // ── Элитные_архетипы\Ворон — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.voron.acupuncture": {
     label: "Точечным иглоукалыванием тонко настраивает механику своего тела и рунических узоров в нём. Может за полудействие поменять текущую Стойку,",
-    source: "Acupuncture / Акупунктура", reader: ""
+    source: "Acupuncture / Акупунктура", reader: "module/rules/raven-talents.mjs::maxRavenStances → combat/raven.mjs::chooseRavenStance"
   },
   "elite.elitnyeArhetipy.voron.flowReader": {
     label: "Сквозь биения своей порченной души Ворон более чутко ощущает потоки судьбы. Получает 2 бонусных Очка Бесчестия вместо 1 каждый Ход от Трейта…",
-    source: "Flow Reader / Чтец Течения", reader: ""
+    source: "Flow Reader / Чтец Течения", reader: "запись Конструктора resourcePool (+1 к пополнению bladesOfFate) → combat/raven.mjs::processBladesOfFateTurnStart"
   },
   "elite.elitnyeArhetipy.voron.hiddenPatterns": {
     label: "Совершенствует сокрытие рунических узоров, дарующих ему силу, скрывая их даже от чувств Одарённых.",
-    source: "Hidden Patterns / Скрытые Узоры", reader: ""
+    source: "Hidden Patterns / Скрытые Узоры", reader: "module/combat/raven.mjs::chooseRavenStance (строка карточки Стойки)"
   },
   "elite.elitnyeArhetipy.voron.leverage": {
     label: "Техники Ворона позволяют полагаться на навык в приёмах, что требуют грубой силы. Может использовать WS вместо S и Deceive вместо Athletics в…",
-    source: "Leverage / Рычаг", reader: ""
+    source: "Leverage / Рычаг", reader: "module/rules/raven-talents.mjs::ravenContestOptions/ravenResistOptions → combat/techniques.mjs, combat/opposed-contest.mjs"
   },
   "elite.elitnyeArhetipy.voron.passBy": {
     label: "Уходя из-под атаки, умелым манёвром заставляет врага сделать пару лишних шагов и зайти ему за спину. Избегая рукопашной атаки на 5+ Успехов,",
-    source: "Pass By / Пропустить", reader: ""
+    source: "Pass By / Пропустить", reader: "module/combat/raven.mjs::usePassBy (кнопка) + rules/raven-talents.mjs::ravenEvasionNotes (строка защиты)"
   },
   "elite.elitnyeArhetipy.voron.redirectBlow": {
     label: "Противники в рукопашной с Вороном должны опасаться не только его, но и друг друга. Когда Ворон связан в рукопашной,",
-    source: "Redirect Blow / Перенаправить Удар", reader: ""
+    source: "Redirect Blow / Перенаправить Удар", reader: "module/combat/raven.mjs::useRedirectBlow (кнопка, раз в Раунд)"
   },
   "elite.elitnyeArhetipy.voron.trip": {
     label: "Выбивая врага из баланса выпад за выпадом, Ворон опрокидывает его наземь. Когда побеждает в любом атакующем встречном тесте WS на 5+ Успехов…",
-    source: "Trip / Подножка", reader: ""
+    source: "Trip / Подножка", reader: "module/rules/raven-talents.mjs::tripApplies → combat/raven.mjs::tripAfterContest ← combat/opposed-contest.mjs::runContestOutcome"
   },
   "elite.elitnyeArhetipy.voron.twinFate": {
     label: "Постигает ещё более продвинутые техники контроля судьбы своих клинков. Когда тратит Очко Бесчестия для переброса теста WS и результат перебр…",
@@ -4415,7 +4415,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Гладиатор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.gladiator.bestiarius": {
     label: "Обучен сражаться со зверями, ксеносами или демонами, не использующими оружие. Получает удвоенный бонус от Момента на атаки по противникам и…",
-    source: "Bestiarius / Бестиарий", reader: ""
+    source: "Bestiarius / Бестиарий", reader: "module/rules/gladiator-arena.mjs::gladiatorRules (атака) + rules/duelist-evasion.mjs (Избегания)"
   },
   "elite.elitnyeArhetipy.gladiator.dimacherus": {
     label: "Сражается в агрессивном стиле, используя оружие в каждой руке. Если вооружён хотя бы двумя рукопашными оружиями,",
@@ -4427,15 +4427,15 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gladiator.militarius": {
     label: "Сражается в оборонительной позиции, используя копьё или винтовку со штыком, изображая имперского гвардейца.",
-    source: "Militarius / Милитарий", reader: ""
+    source: "Militarius / Милитарий", reader: "module/combat/gladiator.mjs::useMilitarius (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.gladiator.retiarius": {
     label: "Сражается с расстояния, изматывая врагов оружием на цепях. Присоединив метательное или одноручное рукопашное оружие к броне на своей руке це…",
-    source: "Retiarius / Ретиарий", reader: ""
+    source: "Retiarius / Ретиарий", reader: "module/sheets/attack-dialog.mjs (WS для метательного) + combat/gladiator.mjs::useRetiariusReturn"
   },
   "elite.elitnyeArhetipy.gladiator.secutorius": {
     label: "Полагается на свой щит, чтобы сблизиться с противником. Вооружённый щитом и рукопашным оружием с Rng не более 3,",
-    source: "Secutorius / Секуторий", reader: ""
+    source: "Secutorius / Секуторий", reader: "module/rules/gladiator-arena.mjs::secutoriusParryExtra/secutoriusPinOffered → rules/duelist-evasion.mjs → combat/defense.mjs"
   },
   // ── Элитные_архетипы\Дикий_Псайкер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.dikiyPsayker.chainsOfAlacrity": {
@@ -5049,23 +5049,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Питати — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.pitati.livingBullet": {
     label: "Пропитывает узоры на рунных пулях собственной кровью, делая их продолжением плоти. Может вплетать психосилы Биомантии,",
-    source: "Living Bullet / Живая Пуля", reader: ""
+    source: "Living Bullet / Живая Пуля", reader: "module/rules/runic-shot.mjs::runicWeaveAllowed → combat/pitati.mjs::weaveRunicPower"
   },
   "elite.elitnyeArhetipy.pitati.piercingShot": {
     label: "Переполняет пулю чистой психической мощью, превращая её в пушечное ядро. При Рунном Выстреле может вместо вплетения психосилы за полудействи…",
-    source: "Piercing Shot / Сквозной Выстрел", reader: ""
+    source: "Piercing Shot / Сквозной Выстрел", reader: "module/combat/pitati.mjs::usePiercingShot → rules/runic-shot.mjs::runicShotBonus (тPR ×2)"
   },
   "elite.elitnyeArhetipy.pitati.runicArtillery": {
     label: "Способен стрелять с невероятной дальностью. Совершая рунный выстрел после Полного Прицеливания при поддержании психосилы Preternatural Aware…",
-    source: "Runic Artillery / Рунная Артиллерия", reader: ""
+    source: "Runic Artillery / Рунная Артиллерия", reader: "module/rules/runic-shot.mjs::runicArtilleryActive → rules/range-penalty-immunity.mjs"
   },
   "elite.elitnyeArhetipy.pitati.seekerBullet": {
     label: "Пуля способна огибать препятствия и разворачиваться к цели. Вплетая в Рунный Выстрел Mind Over Matter (W+0),",
-    source: "Seeker Bullet / Пуля Искатель", reader: ""
+    source: "Seeker Bullet / Пуля Искатель", reader: "module/combat/pitati.mjs::weaveRunicPower (эффект выстрела Mind Over Matter)"
   },
   "elite.elitnyeArhetipy.pitati.timedExplosion": {
     label: "Умело заряжает пули психическими взрывами, чтобы они взорвались на расстоянии цели. Вплетая любой психический взрыв в Рунный Выстрел,",
-    source: "Timed Explosion / Выдержанный Взрыв", reader: ""
+    source: "Timed Explosion / Выдержанный Взрыв", reader: "module/rules/runic-shot.mjs::isPsychicBlast → combat/pitati.mjs, combat/attack.mjs (строка промаха)"
   },
   // ── Элитные_архетипы\Ревенант — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.revenant.revenantPactStage1": {

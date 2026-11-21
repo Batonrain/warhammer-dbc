@@ -122,6 +122,10 @@ import { destructorPenBonus, meleeShotClass } from "../rules/secutor-talents.mjs
 import { noteSustainedAssault } from "./secutor.mjs";
 import { bloodOfMartyrsNote } from "../rules/hierophant-talents.mjs";
 import { corpsePoisonAttack, hasPutridClarity, hasTrueRot } from "../rules/plague-monk-talents.mjs";
+import { superiorityDice } from "../rules/raven-talents.mjs";
+import { warSeerDamage, witchslayerArmed, WITCHSLAYER_FLAG } from "../rules/vitkis-talents.mjs";
+import { crescendoAimedHits } from "../rules/note-warrior-talents.mjs";
+import { PIERCING_SHOT_FLAG, hasTimedExplosion } from "../rules/runic-shot.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -438,6 +442,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (i < 0) _mergedEntries.push(p);
     else if ((Number(p.rating) || 0) > (Number(_mergedEntries[i].rating) || 0)) _mergedEntries[i] = { ..._mergedEntries[i], rating: p.rating };
   }
+  // Убийца Ведьм (Виткис, rules/vitkis-talents.mjs): за Очко Бесчестия рукопашная атака под Провидцем — Sanctified.
+  const witchslayerOn = witchslayerArmed(actor, { isMelee });
+  if (witchslayerOn && !_mergedEntries.some(x => x.key === "sanctified")) _mergedEntries.push({ key: "sanctified" });
   const wallopOn = wallopRating != null && !_mergedEntries.some(x => x.key === "concussive");
   if (wallopOn) _mergedEntries.push({ key: "concussive", rating: wallopRating });
   // Выпуск Батареи (rules/batpack-dump.mjs): лаз-оружию с Power Setting на эту атаку — Storm(2), +1d10 Dmg (ниже),
@@ -1209,10 +1216,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Двойной Выстрел (rules/gunner-talents.mjs): 1-е попадание — Торс, 2-е —
   // Голова, остальные отброшены (hitsCount ниже). Жёстко, до Избеганий.
   const doubleTapOn = doubleTapActive(actor, { opts, isMelee, rofMode, aimValue: aimTarget?.value, targetIsVehicle });
+  // Крещендо (Воин Ноты): Избирательная Быстрая/Молниеносная — первые ½A.b (▲) попаданий в выбранное место.
+  const crescendoAimed = crescendoAimedHits(actor, { aimed: !!aimTarget?.value, technique: opts.isSwift ? "swift" : opts.isLightning ? "lightning" : "" });
   const locForHit = (i) => {
     if (doubleTapOn) return doubleTapLocation(i);
     if (wp.impulse && !targetIsVehicle && !wp.extraHits && (i + 1) % 4 === 0) return "Сочленение / Шея";
-    return locationForHit(i, { label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart });
+    return locationForHit(i, { label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart, aimedCount: crescendoAimed });
   };
 
   // Fanning / Быстрый Курок (wdbc-fy33, стр. 39): RoF Длинной очереди 2..BS.b
@@ -1492,6 +1501,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const runic = runicShotBonus(actor, { toggles, isMelee, rofMode });
   if (runic.used && !opts.skipAmmo && opts.forcedRoll == null)
     await actor.setFlag?.("warhammer-dbc", RUNIC_BULLETS_FLAG, runicBulletsLeft(actor) - 1);
+  // Сквозной Выстрел (Питати): удвоение тPR — на один рунный выстрел.
+  if (runic.piercing && opts.forcedRoll == null) await actor.unsetFlag?.("warhammer-dbc", PIERCING_SHOT_FLAG);
+  // Убийца Ведьм: Sanctified — на одну атаку.
+  if (witchslayerOn && opts.forcedRoll == null) await actor.unsetFlag?.("warhammer-dbc", WITCHSLAYER_FLAG);
   // Тех-Оружейник (rules/gunsmith-talents.mjs): +I.b к Dmg и Pen, раз на оружие до новой настройки (метка на оружии).
   const weaponTech = weaponTechShot(actor, { item, isMelee, toggles, replay: !!opts.talentPaid?.weaponTech,
     spent: item.getFlag?.("warhammer-dbc", WEAPON_TECH_SPENT_FLAG) });
@@ -1686,7 +1699,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const dimacherus = dimacherusBonus(actor, { isMelee, momentum: momentumOf(actor) });
   // Трупный Яд Чумного Монаха в этой атаке (безоружная/интегральная) — для Гнилостного Просвещения и Истинной Гнили.
   const corpsePoisonOn = corpsePoisonAttack(actor, !item || isIntegralAttack(item));
-  const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  // Стойка Превосходства (Ворон, rules/raven-talents.mjs): рукопашная по лежащей цели — +2d10.
+  const superiorityN = (hit && superiorityDice(actor, { isMelee, targetProne: !!defenderActor?.system?.conditions?.prone })) ? 2 : 0;
+  // Провидец Войны (Виткис): +Успехи к урону рукопашных по цели — rules/vitkis-talents.mjs.
+  const warSeerDmg = hit ? warSeerDamage(actor, defenderActor, { isMelee, combatId: game.combat?.started ? game.combat.id : "" }) : 0;
+  const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus + warSeerDmg;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
   // Сварщик (rules/gunsmith-talents.mjs): признак на кнопки «Применить урон» — доп.
@@ -1751,6 +1768,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     (hit && destructorPen) ? `⚙️ Деструктор: +${destructorPen} к Pen (½I.b при Структурном Анализе, уже учтено).` : "",
     (hit && dimacherus) ? `⚔️ Димахер: +${dimacherus} к урону каждого попадания (очки Момента, уже в формуле).` : "",
     bloodOfMartyrsNote(defenderActor, { selective: !!aimTarget?.value, hit, worldTime: game.time?.worldTime }),
+    warSeerDmg ? `👁️ Провидец Войны: +${warSeerDmg} к урону по цели (уже в формуле).` : "",
+    witchslayerOn ? "🗡️ Убийца Ведьм: атака Sanctified (Очко Бесчестия потрачено)." : "",
+    superiorityN ? "🪶 Стойка Превосходства: +2d10 урона по лежащей цели (уже в бросках)." : "",
+    crescendoAimed > 2 ? `🎼 Крещендо: первые ${crescendoAimed} попаданий — в выбранное место.` : "",
+    runic.piercing ? "ᚱ Сквозной Выстрел: тPR удвоен. Нанёс урон после Поглощения или цель увернулась — следующая цель на линии огня получает попадание с уроном меньше на её Поглощение." : "",
+    (runic.used && !hit && hasTimedExplosion(actor)) ? "ᚱ Выдержанный Взрыв: вплетённый психический взрыв разряжается в 1 м позади цели (по линии от Питати)." : "",
     galvanicResonanceOn(actor, { item, isMelee, hit, aimed: !!aiming && aiming !== "none" })
       ? galvanicResonanceText(defenderActor?.system?.absorption, Array.from({ length: Math.max(1, hitsCount || 0) }, (_, i) => locForHit(i)), LOCATION_TO_ARMOR) : "",
     (!isMelee && wp.spray && hasFlamerTalent(actor, "friendlyFire")) ? "🔥 Дружественный Огонь: тест отмены Распыления у всех, кто не враг стрелка по токенам, получает +30 (кнопка теста считает сама)." : "",
@@ -1822,7 +1845,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // решило, что цель — та самая, назначенная Короткой Командой
   // (sheets/attack/dialog.mjs), сюда приезжает уже готовое число кубов.
   const bringItDownDice = hit ? Math.max(0, Number(opts.bringItDownDice) || 0) : 0;
-  const bonusDice = (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bringItDownDice + raptorDice + (batpackOn && hit ? BATPACK_BONUS_DICE : 0) + bonusDamageDice({
+  const bonusDice = superiorityN + (focusFireBonusOn && hit ? 2 : 0) + tyranthikosDice + bringItDownDice + raptorDice + (batpackOn && hit ? BATPACK_BONUS_DICE : 0) + bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
     pointBlank: !!opts.pointBlank, meleeShot: !!opts.meleeShot,
     ammoDice: ammoSys?.damageDiceMod,

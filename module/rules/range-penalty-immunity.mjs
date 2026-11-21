@@ -18,6 +18,7 @@
 import { itemIs } from "./item-marker.mjs";
 import { hasColdEyes } from "./cold-eyes.mjs";
 import { sightGrants, SIGHT_EFFECT } from "./sight-effects.mjs";
+import { runicArtilleryActive } from "./runic-shot.mjs";
 
 export const MARKSMAN_CAPABILITY = "rangedCore.core.marksman";
 
@@ -32,6 +33,8 @@ export function longRangeImmunityReason(actor, installedMods = [], { aiming = ""
   const items = [...(actor?.items ?? [])];
   if (items.some(i => itemIs(i, "talent", MARKSMAN_CAPABILITY, "Marksman"))) return "Снайпер";
   if (hasColdEyes(actor)) return "Холодные Глаза";
+  // Рунная Артиллерия (Питати): рунный выстрел после Полного Прицеливания под Сверхъестественной Внимательностью.
+  if (runicArtilleryActive(actor, { aiming })) return "Рунная Артиллерия (рунный выстрел)";
   if (aiming && aiming !== "none") {
     // Оптический, Джинн и Омни-Прицел (rules/sight-effects.mjs).
     const scope = sightGrants(installedMods, SIGHT_EFFECT.longRange);

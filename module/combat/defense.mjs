@@ -1,5 +1,6 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
 import { momentumOnEvade } from "./momentum.mjs";
+import { duelistEvasionMod, duelistEvasionNotes } from "../rules/duelist-evasion.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
 import { offHandParryPenalty } from "../rules/off-hand.mjs";
@@ -312,7 +313,10 @@ export async function _performDodge(actor, {
   const wicDodgePenalty = phantomCopiesDodgePenalty(attackerActor, isMelee);
   // Чарующее Присутствие (Слаанеш): −10 на Избегания против атак демона.
   const alluringPenalty = alluringPresencePenalty(attackerActor);
-  const preGazeThreshold = baseThreshold + wicDodgePenalty + alluringPenalty;
+  // Бестиарий, Провидец Войны (rules/duelist-evasion.mjs) — по атакующему.
+  const duelDodge = duelistEvasionMod(actor, attackerActor, { kind: "dodge", isMelee, combatId: game.combat?.started ? game.combat.id : "" });
+  modParts.push(...duelDodge.parts);
+  const preGazeThreshold = baseThreshold + wicDodgePenalty + alluringPenalty + duelDodge.mod;
   if (wicDodgePenalty !== 0) modParts.push(`Фантомные Копии атакующего ${wicDodgePenalty}`);
   if (alluringPenalty !== 0) modParts.push(`Чарующее Присутствие атакующего ${alluringPenalty}`);
   // Взор Неизбежности (стр. …, wdbc-1rno.3): защищающийся видит глаза
@@ -429,6 +433,7 @@ export async function _performDodge(actor, {
     threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
     outcome: outcomeHtml,
     sections: [leftoverNote, recoilSection, overpenSection, stunningSection,
+      ...duelistEvasionNotes(actor, { kind: "dodge", passed, deg, isMelee }).map(t => `<div class="roll-defense-note">${t}</div>`),
       // Ускользнуть: провал Уклонения от Захвата можно перебросить кнопкой (раз в Раунд, без второй Реакции).
       (!passed && slipRerollAvailable)
         ? slipRerollSectionHtml(actor, { extraMod, forcedReroll, hitsCount, attackerUuid, isMelee, burst, attackerIsHorde, attackId, itemUuid, evadeCost })
@@ -903,7 +908,10 @@ export async function _performParry(actor, {
   // Чарующее Присутствие (Слаанеш): −10 на Избегания против атак демона (Парирование — тоже Избегание).
   const alluringParryPenalty = alluringPresencePenalty(attackerActor);
   if (alluringParryPenalty) modParts.push(`Чарующее Присутствие атакующего ${alluringParryPenalty}`);
-  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty + armedVsUnarmedBonus + alluringParryPenalty;
+  // Бестиарий, Секуторий, Провидец Войны (rules/duelist-evasion.mjs).
+  const duelParry = duelistEvasionMod(actor, attackerActor, { kind: "parry", isMelee, attackerWeapon, parryWeapon: meleeWeapon, combatId: game.combat?.started ? game.combat.id : "" });
+  modParts.push(...duelParry.parts);
+  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty + armedVsUnarmedBonus + alluringParryPenalty + duelParry.mod;
 
   // Взор Неизбежности (стр. …, wdbc-1rno.3) — тот же приём, что у Уклонения
   // (_performDodge): защищающийся видит глаза атакующего-носителя Дара —
@@ -1262,6 +1270,7 @@ export async function _performParry(actor, {
       : ""],
     outcome: outcomeHtml,
     sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, attackerPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, bladeBindingHtml, riposteHtml,
+      ...duelistEvasionNotes(actor, { kind: "parry", passed, deg, isMelee, attackerWeapon }).map(t => `<div class="roll-defense-note">${t}</div>`),
       // Перебросы Черт и Талантов (rules/defence-reroll.mjs) — кнопкой после провала, окна у защиты нет.
       defenceRerollSectionHtml(defenceRerollsFor(actor, "parry", { attackerActor, isMelee, passed, rerolled: !!reroll }), "parry")]
   }, { rolls: allRolls, flags: defenceTestFlags(actor, "parry", {

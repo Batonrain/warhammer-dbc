@@ -34,6 +34,7 @@ import { resolveOpposed } from "../rules/test-kind.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { ravenResistOptions } from "../rules/raven-talents.mjs";
 
 const SOCKET = "system.warhammer-dbc";
 
@@ -59,6 +60,12 @@ export function dropContest(id) { PENDING.delete(id); }
 export function sideValue(actor, { skill = "", char = "" } = {}) {
   if (skill) {
     const sk = actor?.system?.skills?.[skill];
+    // «Навык(другая Характеристика)» — Deceive(WS) Ложного Клинка, Athletics(WS)
+    // Рычага (rules/raven-talents.mjs): Характеристика стороны + Ранг Навыка.
+    if (char && SKILLS_DEF[skill]?.char && char !== SKILLS_DEF[skill].char) {
+      return (Number(actor?.system?.characteristics?.[char]?.total) || 0)
+        + (SKILL_RANKS[sk?.rank ?? "untrained"]?.bonus ?? -20) + (Number(sk?.mod) || 0);
+    }
     if (sk?.total != null) return Number(sk.total) || 0;
     const c = SKILLS_DEF[skill]?.char;
     // Навыка на листе нет вовсе (NPC-заглушка) — нетренированный: −20.
@@ -71,7 +78,8 @@ export function sideValue(actor, { skill = "", char = "" } = {}) {
 export function sideLabel({ skill = "", char = "" } = {}) {
   if (skill) {
     const def = SKILLS_DEF[skill];
-    const c = CHARACTERISTICS[def?.char]?.abbr ?? def?.char ?? "";
+    const ck = char || def?.char;
+    const c = CHARACTERISTICS[ck]?.abbr ?? ck ?? "";
     return `${def?.en ?? skill}(${c})`;
   }
   return CHARACTERISTICS[char]?.abbr ?? char;
@@ -79,7 +87,7 @@ export function sideLabel({ skill = "", char = "" } = {}) {
 
 /** Контекст для rules/roll-mods.mjs::collectTestMods. */
 export function sideContext(side) {
-  const char = side.skill ? SKILLS_DEF[side.skill]?.char : side.char;
+  const char = side.skill ? (side.char || SKILLS_DEF[side.skill]?.char) : side.char;
   return side.skill ? { kind: "skill", char, skill: side.skill } : { kind: "skill", char };
 }
 
@@ -115,8 +123,10 @@ export function registerContest(actor, techDef, result, opponents) {
   const how = opts.map(sideLabel).join(" или ");
   // Контрфинт (глава 3): против Финта защитник может сопротивляться
   // Awareness(P) вместо WS — вариант добавляется только ему.
-  const optsFor = o => (techDef.label === "Финт" && hasDodgeTalent(o, "counterfeint"))
+  const optsFor0 = o => (techDef.label === "Финт" && hasDodgeTalent(o, "counterfeint"))
     ? [...opts, { skill: "awareness", char: "", mod: 0 }] : opts;
+  // Ложный Клинок / Рычаг защищающегося Ворона — Deceive(WS), Athletics(WS)…
+  const optsFor = o => { const base = optsFor0(o); return [...base, ...ravenResistOptions(o, base)]; };
   const buttons = opponents.map(o => `
     <button type="button" class="wh-contest-resist-btn"
       data-contest-id="${id}" data-user-id="${game.user.id}"
@@ -345,5 +355,8 @@ export async function runContestOutcome({ contestId, opponentUuid, initiatorWins
       lines: [`<div class="roll-threshold" style="font-size:0.88em;">${entry.techDef.note}</div>`]
     }, { sound: false });
   }
+  // Подножка (Ворон): перевес 5+ в атакующем встречном WS — цель Размером до 1 Ничком.
+  const { tripAfterContest } = await import("./raven.mjs");
+  await tripAfterContest(actor, target, { side: entry.result.side, margin });
   return true;
 }
