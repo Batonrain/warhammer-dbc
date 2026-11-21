@@ -26,17 +26,19 @@ import { spendResource, resourceCostGate } from "./resource-pools.mjs";
  * Черта актора этот тест не покрывает. `testLabel` уходит в data-атрибут,
  * чтобы карточка-итог назвала тест.
  */
-export function infamyFailSuccessButtonsHtml(actor, { skill, char, success, testLabel = "" } = {}) {
+export function infamyFailSuccessButtonsHtml(actor, { skill, char, success, testLabel = "", regeneration = false } = {}) {
   if (!actor || success) return "";
-  const options = infamyFailSuccessOptions(flag => hasRuleFlag(actor, flag), { skill, char, success });
+  // Тест Регенерации — не тест Навыка/Черты для Очков Бесчестия, только пулы.
+  const options = regeneration ? [] : infamyFailSuccessOptions(flag => hasRuleFlag(actor, flag), { skill, char, success });
   // Пулы ресурсов архетипов (Очки Вдохновения Когитора: «при Провале любого
-  // теста I или W заменить его 1 Успехом», rules/resource-pools.mjs).
-  const pools = resourceFailSuccessOptions(actor, char);
+  // теста I или W заменить его 1 Успехом», Культивация Мейстера — только
+  // Medicae и тест T Регенерации; rules/resource-pools.mjs).
+  const pools = resourceFailSuccessOptions(actor, char, { skill, regeneration });
   if (!options.length && !pools.length) return "";
   const poolBtns = pools.map(d => {
     const gate = resourceCostGate(actor, d.key, 1);
     return `<button type="button" class="wh-resource-fail-success-btn" data-actor-uuid="${esc(actor.uuid)}"
-      data-pool="${esc(d.key)}" data-test-label="${esc(testLabel)}" ${gate.disabled ? "disabled" : ""}
+      data-pool="${esc(d.key)}" data-test-label="${esc(testLabel)}"${regeneration ? ' data-regeneration="1"' : ""} ${gate.disabled ? "disabled" : ""}
       title="${esc(gate.title || `Потратить ${resourceAmountLabel(d.key, 1, d)}: тест засчитывается успешным на 1 Успех`)}">✦ ${esc(d.label)}: 1 → Успех (1)</button>`;
   });
   return `<div class="roll-threshold">${poolBtns.join(" ")}${options.map(o =>

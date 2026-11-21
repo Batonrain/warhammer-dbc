@@ -32,6 +32,9 @@
 //    resPoolBoostChars   Характеристики, тест которых можно поднять на +10 за 1 очко
 //    resPoolFailChars    Характеристики, провал теста которых можно заменить
 //                        Успехом с 1 Успехом за 1 очко
+//    resPoolFailSkills   то же, но уже: ключи Навыков ("medicae") и особый
+//                        тест "regeneration" — тест T Трейта Regeneration
+//                        (Культивация Мейстера, Sahara 586-fe9d)
 //
 //  Хранение: текущее значение — system.resourcePools.<ключ> (число), счётчик
 //  траты в этом Раунде — flags.warhammer-dbc.resourcePoolRound.<ключ> =
@@ -155,7 +158,7 @@ export function resourcePoolDefs(actor, { rollData = null } = {}) {
         key, label: "", genitive: known.genitive ?? "", unit: known.unit ?? "",
         max: 0, unbounded: false, refill: "", roundCap: 0, gainLabel: "", gainAmount: 0,
         asInfamy: false, asInfamyCap: 0, asInfamyCor: null, asInfamyNote: "",
-        boostChars: new Set(), failChars: new Set(), sources: [],
+        boostChars: new Set(), failChars: new Set(), failSkills: new Set(), sources: [],
         warpWoundsPerPoint: Number(known.warpWoundsPerPoint) || 0,
         asInfamyAttackOnly: !!known.asInfamyAttackOnly
       };
@@ -173,6 +176,7 @@ export function resourcePoolDefs(actor, { rollData = null } = {}) {
       if (!d.asInfamyNote && e.resPoolAsInfamyNote) d.asInfamyNote = String(e.resPoolAsInfamyNote);
       for (const c of charList(e.resPoolBoostChars)) d.boostChars.add(c);
       for (const c of charList(e.resPoolFailChars)) d.failChars.add(c);
+      for (const c of charList(e.resPoolFailSkills)) d.failSkills.add(c);
       d.sources.push(item.name);
       defs.set(key, d);
     }
@@ -183,6 +187,7 @@ export function resourcePoolDefs(actor, { rollData = null } = {}) {
     if (!d.genitive) d.genitive = d.label;
     d.boostChars = [...d.boostChars];
     d.failChars = [...d.failChars];
+    d.failSkills = [...d.failSkills];
     if (d.max <= 0) defs.delete(key);
   }
   return defs;
@@ -331,11 +336,18 @@ export function resourceBoostOptions(actor, charKey) {
   return [...resourcePoolDefs(actor).values()].filter(d => d.boostChars.includes(c));
 }
 
-/** Пулы, которыми можно заменить провал теста этой Характеристики Успехом. */
-export function resourceFailSuccessOptions(actor, charKey) {
+/**
+ * Пулы, которыми можно заменить провал этого теста Успехом: по Характеристике
+ * (failChars), по Навыку теста (`skill`) или тесту T Регенерации
+ * (`regeneration`) — failSkills.
+ */
+export function resourceFailSuccessOptions(actor, charKey, { skill = "", regeneration = false } = {}) {
   const c = String(charKey ?? "").toLowerCase();
-  if (!c) return [];
-  return [...resourcePoolDefs(actor).values()].filter(d => d.failChars.includes(c));
+  const sk = String(skill ?? "").toLowerCase();
+  return [...resourcePoolDefs(actor).values()].filter(d =>
+    (c && d.failChars.includes(c))
+    || (sk && d.failSkills.includes(sk))
+    || (regeneration && d.failSkills.includes("regeneration")));
 }
 
 /** Строки для листа: { key, label, value, max, refillLabel, gainLabel, gainAmount, note }. */
@@ -347,6 +359,7 @@ export function resourcePoolsView(actor) {
     if (d.asInfamy) notes.push(`Можно тратить как Очки Бесчестия${d.asInfamyCap > 0 ? ` (до ${d.asInfamyCap} за Раунд)` : ""}${d.asInfamyCor != null ? `, Порча при этом считается не выше ${d.asInfamyCor}` : ""}${d.asInfamyNote ? `: ${d.asInfamyNote}` : ""}.`);
     if (d.boostChars.length) notes.push(`+10 к тесту (${d.boostChars.join(", ")}) за очко — меню карточки теста.`);
     if (d.failChars.length) notes.push(`Провал теста (${d.failChars.join(", ")}) → Успех за очко — кнопка в карточке.`);
+    if (d.failSkills.length) notes.push(`Провал теста (${d.failSkills.map(k => k === "regeneration" ? "T Регенерации" : k).join(", ")}) → Успех за очко — кнопка в карточке.`);
     notes.push(`Источник: ${d.sources.join(", ")}.`);
     return {
       key: d.key, label: d.label, value: resourcePoolValue(actor, d.key, d),

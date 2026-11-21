@@ -4010,7 +4010,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Усилители — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryUsiliteli.bladesOfTheSoul": {
     label: "Оружие получает Warp Weapon, но урон уменьшается до поглощения вдвое (окр.▲).",
-    source: "Blades of the Soul / Дар: Лезвия Душ", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Warp Weapon слитому оружию в Проявлении; половина урона вручную"
+    source: "Blades of the Soul / Дар: Лезвия Душ", reader: "module/rules/possession-weapon-gifts.mjs — Warp Weapon слитому оружию в Проявлении; possessionWeaponGiftDamage.halve — урон до поглощения вдвое в combat/attack.mjs"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.daemonicVenom": {
     label: "Оружие получает Felling (½Cor.b, окр.▲) и Toxic (½Cor.b, окр.▲).",
@@ -4018,11 +4018,11 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryUsiliteli.lightningField": {
     label: "Оружие: +2 Dmg и Pen, наносит E, получает Power Field.",
-    source: "Lightning Field / Дар: Молниевое Поле", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Power Field слитому оружию в Проявлении; +2 Dmg/Pen и тип E вручную"
+    source: "Lightning Field / Дар: Молниевое Поле", reader: "module/rules/possession-weapon-gifts.mjs — Power Field слитому оружию в Проявлении; possessionWeaponGiftDamage — +2 Dmg/Pen и тип E в combat/attack.mjs"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.warpflame": {
     label: "Оружие наносит E(Fl) и получает Flame.",
-    source: "Warpflame / Дар: Варп-Пламя", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Flame слитому оружию в Проявлении; тип E(Fl) вручную"
+    source: "Warpflame / Дар: Варп-Пламя", reader: "module/rules/possession-weapon-gifts.mjs — Flame слитому оружию в Проявлении; possessionWeaponGiftDamage — тип E(Fl) в combat/attack.mjs"
   },
   // ── Таланты_одержимых\Таланты_архетипа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.talantyArhetipa.greaterPossessed": {
@@ -4035,7 +4035,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.realityRipple": {
     label: "Проявление или смена любого числа Даров за свободное действие, получая 1 Порчи.",
-    source: "Reality Ripple / Рябь Реальности", reader: ""
+    source: "Reality Ripple / Рябь Реальности", reader: "module/sheets/tabs/possession.mjs::toggleManifest — в бою Проявление за полудействие, с Талантом выбор «свободно за 1 Порчу»"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.risingTogether": {
     label: "Демон становится Возвышенным (вариации выбирает игрок).",
@@ -6135,7 +6135,7 @@ export const CAPABILITIES = {
   },
   "trait.warpGifted": {
     label: "Врождённая психосила.",
-    source: "Warp Gifted / Одарённый Варпом", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Warp Gifted / Одарённый Варпом", reader: "module/combat/warp-gifted.mjs::useWarpGifted (кнопка Черты: психосила, Характеристика теста W или другая по решению ГМа, подтверждение без Daemonic) → module/sheets/tabs/psychic.mjs::executePsychotest (opts.castChar, opts.warpGifted); rules/warp-gifted.mjs"
   },
   "trait.warpInstability": {
     label: "Может быть изгнан в Варп при уроне.",
@@ -6659,7 +6659,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.korolChervey.wormMaster": {
     label: "В бою может мистически размножать рои паразитов, формируя аморфные боевые конструкты.",
-    source: "Worm Master / Повелитель Червей", reader: "module/combat/worm-master.mjs::useWormMaster — кнопка Черты: предел Cor.b, полное действие, W−10, Рой из Бестиария с +10 Ран за Успех сверх первого. Поддержание каждый Ход — вручную"
+    source: "Worm Master / Повелитель Червей", reader: "module/combat/worm-master.mjs::useWormMaster — кнопка Черты: предел Cor.b, полное действие, W−10, Рой из Бестиария с +10 Ран за Успех сверх первого; wormUpkeepTurnStart/wormUpkeep — карточка начала Хода «полудействие / 1d5 R / рассеять» (hooks.mjs updateCombat, .wh-worm-upkeep-btn), dismissWormSwarms"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Кузнец_Крови — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kuznetsKrovi.ringOfBlood": {
@@ -6775,7 +6775,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Мейстер — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meyster.cultivation": {
     label: "Вирус Жизни в теле пациента собирает его страдания и боль, накапливая их для сбора Мейстером. Каждый раз,",
-    source: "Cultivation / Культивация", reader: "module/combat/maester.mjs harvestFrom; hooks.mjs preUpdateActor lifeVirusLossPatch; пул cultivation (failChars int,t)"
+    source: "Cultivation / Культивация", reader: "module/combat/maester.mjs harvestFrom; hooks.mjs preUpdateActor lifeVirusLossPatch; пул cultivation (failSkills medicae, regeneration — кнопка на провале Medicae и теста T Регенерации, combat/rubric-sorcerer.mjs::rollRegeneration)"
   },
   "trait.elitnyeArhetipy.meyster.deathlessOath": {
     label: "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0);",

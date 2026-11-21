@@ -49,6 +49,7 @@ import { addCondition, removeCondition } from "../sheets/tabs/conditions.mjs";
 import { setDeceased } from "../sheets/tabs/body.mjs";
 import { spendInfamyPoint } from "./noise-marine.mjs";
 import { actorHasInfamyPoint } from "../apps/infamy-points.mjs";
+import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { combatOfActor } from "./actor-combat.mjs";
 
 const NS = "warhammer-dbc";
@@ -514,9 +515,30 @@ export async function rollRegeneration(actor, { auto = false } = {}) {
   await postTestCard(actor, {
     icon: ICON(), title: `Регенерация — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: byCor ? "Cor+0" : "T+0", base: t, parts: mods.parts.map(esc), threshold, rv }),
-    outcome: outcomeHtml(success, success ? `Успех (${deg}) — восстановлено ${applied} Ран` : "Провал — Раны не восстановились")
+    outcome: outcomeHtml(success, success ? `Успех (${deg}) — восстановлено ${applied} Ран` : "Провал — Раны не восстановились"),
+    // Провал теста T Регенерации → Успех за очко пула (Культивация Мейстера,
+    // Sahara 586-fe9d). Вариант Cor+0 Дара Одержимого — не «тест T», кнопки нет.
+    sections: (success || byCor) ? [] : [infamyFailSuccessButtonsHtml(actor,
+      { char: "t", success, testLabel: "Регенерация", regeneration: true })]
   }, { rolls });
   return success;
+}
+
+/**
+ * Провал теста Регенерации заменён Успехом (кнопка пула на карточке,
+ * hooks.mjs → apps/infamy-fail-success.mjs): Раны восстанавливаются, как при
+ * успехе. Возвращает число восстановленных Ран.
+ */
+export async function regenerationReplacedSuccess(actor) {
+  const rating = regenerationRating(actor);
+  if (!rating || !isWounded(actor)) return 0;
+  const applied = await healByRegeneration(actor, regenerationHeal(rating));
+  await postTestCard(actor, {
+    icon: ICON(), title: `Регенерация — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Провал заменён Успехом: восстановлено <b>${applied}</b> Ран.</div>`],
+    outcome: outcomeHtml(true, "Регенерация")
+  }, { sound: false });
+  return applied;
 }
 
 /** Кнопка «Психическое Эхо» для карточки успешной манифестации ("" — не положена). */

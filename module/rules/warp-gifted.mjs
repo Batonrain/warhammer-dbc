@@ -9,9 +9,24 @@
 //  (sheets/tabs/psychic.mjs::executePsychotest) с mPR = X в Обычном режиме:
 //  порог там и так «Характеристика + 5×эPR», то есть W+5×X. Флаг warpGifted
 //  отключает Феномены и потолок тPR (у не-псайкера тPR 0).
+//
+//  Sahara 584-daemonic: «или другую Характеристику, если та лучше подходит —
+//  по решению ГМа» — выбор в окне кнопки (castChar → executePsychotest);
+//  «Трейт может иметь только персонаж с Трейтом Daemonic» — warpGiftedAllowed,
+//  кнопка без Daemonic спрашивает подтверждение. Навык вместо Характеристики
+//  окно не предлагает — это ГМ решает за столом.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, isDaemonActor } from "./predicates.mjs";
+import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+
+/** Характеристики, которые ГМ может назначить психотесту вместо W (Влияние — не тест). */
+export const WARP_GIFTED_CAST_CHARS = Object.keys(CHARACTERISTICS).filter(k => k !== "inf");
+
+/** Черта положена только демону или носителю Daemonic. */
+export function warpGiftedAllowed(actor) {
+  return isDaemonActor(actor);
+}
 
 /** Предельный PR силы, которую может знать Одарённый Варпом: «не требует PR6 или выше». */
 export const WARP_GIFTED_MAX_POWER_PR = 5;
@@ -38,7 +53,8 @@ export function warpGiftedPowers(actor) {
     && powerRequiredPr(i) <= WARP_GIFTED_MAX_POWER_PR);
 }
 
-/** Опции психотеста для Черты: PR X, Обычный режим, без Феноменов. */
-export function warpGiftedCastOpts(x) {
-  return { mPR: x, prMod: 0, mode: "normal", path: "", warpGifted: true };
+/** Опции психотеста для Черты: PR X, Обычный режим, без Феноменов; Характеристика теста — W, если ГМ не выбрал другую. */
+export function warpGiftedCastOpts(x, castChar = "wp") {
+  const key = WARP_GIFTED_CAST_CHARS.includes(castChar) ? castChar : "wp";
+  return { mPR: x, prMod: 0, mode: "normal", path: "", warpGifted: true, castChar: key };
 }

@@ -1168,7 +1168,7 @@ export function blankMechEntry(kind = "characteristic") {
     resPoolKey: "", resPoolLabel: "", resPoolMax: "", resPoolRefill: "",
     resPoolRoundCap: "", resPoolGainLabel: "", resPoolGainAmount: "",
     resPoolAsInfamy: false, resPoolAsInfamyCap: "", resPoolAsInfamyCor: "", resPoolAsInfamyNote: "",
-    resPoolBoostChars: "", resPoolFailChars: "",
+    resPoolBoostChars: "", resPoolFailChars: "", resPoolFailSkills: "",
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -1304,6 +1304,7 @@ export function describeMechEntry(entry) {
       if (String(entry.resPoolAsInfamyCap ?? "").trim()) parts.push(`как Бесчестие за Раунд +${entry.resPoolAsInfamyCap}`);
       if (entry.resPoolBoostChars) parts.push(`+10 к тестам ${entry.resPoolBoostChars}`);
       if (entry.resPoolFailChars) parts.push(`провал ${entry.resPoolFailChars} → Успех`);
+      if (entry.resPoolFailSkills) parts.push(`провал теста ${entry.resPoolFailSkills} → Успех`);
       return `Пул «${name}»${parts.length ? `: ${parts.join(", ")}` : ""}`;
     }
     case "terrainIgnore": {
@@ -4363,7 +4364,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       ${f("resPoolAsInfamyCor", "Порча не выше (при такой трате)", "«Считает при этом свою Cor 0-19» — пиши 19")}
       ${f("resPoolAsInfamyNote", "ограничение траты (текстом)", "Напоминание игроку в окне выбора, код не проверяет")}
       ${f("resPoolBoostChars", "+10 к тестам: int, wp", "Ключи Характеристик через запятую: +10 к тесту за 1 очко из меню карточки")}
-      ${f("resPoolFailChars", "провал → Успех: int, wp", "Ключи Характеристик через запятую: кнопка в карточке проваленного теста")}`;
+      ${f("resPoolFailChars", "провал → Успех: int, wp", "Ключи Характеристик через запятую: кнопка в карточке проваленного теста")}
+      ${f("resPoolFailSkills", "провал → Успех: medicae, regeneration", "Ключи Навыков через запятую (regeneration — тест T Регенерации): кнопка в карточке проваленного теста")}`;
   }
 
   if (ent.kind === "poolMax") {

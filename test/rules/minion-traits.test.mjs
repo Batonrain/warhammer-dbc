@@ -103,3 +103,16 @@ describe("связь таблицы с компендиумом", () => {
     expect(missing).toEqual([]);
   });
 });
+
+// Sahara 578-legion: корбук стр. 111 называет Legion среди Трейтов скакуна
+// «по цене ½». Раньше строки не было — Черты «Legion / Легион» не было в паке.
+describe("Трейт скакуна Legion", () => {
+  it("в таблице: ½ очка, только Миньону со Steed", () => {
+    expect(MINION_TRAITS.Legion).toMatchObject({ cost: 0.5, requires: "Steed" });
+    expect(traitEntry("Legion / Легион").key).toBe("Legion");
+  });
+
+  it("Черта существа «Legion / Легион» есть в паке Черт", () => {
+    expect(packTraitNames()).toContain("Legion / Легион");
+  });
+});

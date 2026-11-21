@@ -11,9 +11,11 @@
 //  Усилители ложатся на слитое оружие: его id хранит флаг актора
 //  FUSED_WEAPON_FLAG (кнопка Дара «Слияние», combat/possession-fusion.mjs).
 //  Действуют, пока демон проявлен, — источник правил отдаёт grantWeaponProp
-//  на атаку именно этим оружием. Вручную: тип урона E/E(Fl), +2 Dmg и Pen
-//  Молниевого Поля, половина урона Лезвий Душ (эффекта «урон/Пробиваемость»
-//  в правилах нет).
+//  на атаку именно этим оружием. Урон, Пробиваемость и тип урона записи
+//  правил не выражают (в Конструкторе нет вида «урон/Pen/тип урона оружия»),
+//  поэтому их отдаёт possessionWeaponGiftDamage, а складывает в атаку
+//  combat/attack.mjs — тем же приёмом, что Броненосец (bronenosets-talents.mjs).
+//  Вручную: запрет менять хват слитого оружия.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { itemHasName, manifestedGift } from "./predicates.mjs";
@@ -63,4 +65,33 @@ export function possessionWeaponGiftRules(actor, ctx = {}) {
     id: `possessionWeaponGift.${p.key}.${n}`, label: p.label, when: {},
     effects: [{ kind: "grantWeaponProp", target: "attack", propKey: p.key, rating: p.rating }]
   }));
+}
+
+/**
+ * Урон слитого оружия от Даров (Sahara 584-e-e-fl-2-dmg-pen):
+ *   Молниевое Поле — +2 Dmg и Pen, тип E;
+ *   Варп-Пламя — тип E(Fl). Оба вместе — E(Fl): Fl лишь уточняет тот же E,
+ *     а +2 Dmg/Pen Молниевого Поля остаются;
+ *   Лезвия Душ — урон до поглощения вдвое (окр.▲), halve.
+ * @returns {{dmg:number, pen:number, damageType:string, damageSubtype:string, halve:boolean, note:string}}
+ */
+export function possessionWeaponGiftDamage(actor, weapon) {
+  const out = { dmg: 0, pen: 0, damageType: "", damageSubtype: "", halve: false, note: "" };
+  const id = fusedWeaponId(actor);
+  if (!id || !weapon || weapon.id !== id || !hasGift(actor, "Слияние")) return out;
+  const parts = [];
+  if (hasGift(actor, "Молниевое Поле")) {
+    out.dmg += 2; out.pen += 2; out.damageType = "energy";
+    parts.push("Молниевое Поле: +2 Dmg и Pen, урон E");
+  }
+  if (hasGift(actor, "Варп-Пламя")) {
+    out.damageType = "energy"; out.damageSubtype = "flame";
+    parts.push("Варп-Пламя: урон E(Fl)");
+  }
+  if (hasGift(actor, "Лезвия Душ")) {
+    out.halve = true;
+    parts.push("Лезвия Душ: урон до поглощения вдвое (окр.▲)");
+  }
+  if (parts.length) out.note = `👹 Дары-усилители — ${parts.join("; ")} (уже в уроне).`;
+  return out;
 }

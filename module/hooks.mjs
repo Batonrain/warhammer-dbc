@@ -23,7 +23,7 @@ import { hardenedSoulDice, hasResilienceTalent, snakeEaterHalve } from "./rules/
 import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/hellish-resilience.mjs";
 import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marine.mjs";
 import { processMiasmaTurnStart, resolvePlagueMarineCombatEnd, rollAbominableFear, processWastelandRequest } from "./combat/plague-marine.mjs";
-import { syncRubricShield, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
+import { syncRubricShield, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, regenerationReplacedSuccess, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
 import { hasShieldOfRubric } from "./rules/rubric-sorcerer.mjs";
 import { syncMechanicumImplants, releaseCellDemon, clearWhipOnCombatEnd, runDownTurnStart } from "./combat/warpsmith.mjs";
 import { isCellDevice } from "./rules/warpsmith.mjs";
@@ -111,6 +111,7 @@ import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { mindImmunityBlocksPower } from "./rules/mind-immunity.mjs";
 import { trueRotBypassesImmunity, trueRotDamage } from "./rules/plague-monk-talents.mjs";
 import { lifeVirusOf, lifeVirusLossPatch } from "./rules/maester-talents.mjs";
+import { wormUpkeepTurnStart, wormUpkeep } from "./combat/worm-master.mjs";
 import { pactProtectionNote } from "./rules/pact-traits.mjs";
 import { tryDivineProtection, tryShieldOfContempt, postWarpOffers, runWarpOffer } from "./combat/warp-guard.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
@@ -793,6 +794,8 @@ export function registerHooks() {
         const done = await spendResourceForFailSuccess(actor, el.dataset.pool || "",
           { testLabel: el.dataset.testLabel || "", message });
         if (done) el.disabled = true;
+        // Провал теста T Регенерации заменён Успехом (Культивация Мейстера) — Раны лечатся как при успехе.
+        if (done && el.dataset.regeneration === "1") await regenerationReplacedSuccess(actor);
       });
     });
 
@@ -1016,6 +1019,20 @@ export function registerHooks() {
         if (!target.isOwner) return ui.notifications.warn("⚠️ Тест Страха бросает владелец цели (или ГМ).");
         el.disabled = true;
         await rollAbominableFear(target, el.dataset.fearRating);
+      });
+    });
+
+    // Повелитель Червей (combat/worm-master.mjs): цена Роя за Ход или рассеивание — раз на карточку.
+    html.querySelectorAll(".wh-worm-upkeep-btn").forEach(btn => {
+      if (cardOnceUsed(message, "wormUpkeepDone")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid || "").catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Решает владелец Повелителя Червей (или ГМ).");
+        const done = await runCardOnce(message, "wormUpkeepDone", () => wormUpkeep(actor, el.dataset.mode || ""),
+          "Эта карточка поддержания Роя уже решена.");
+        if (done) el.closest(".roll-defense-btns")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
       });
     });
 
@@ -5812,6 +5829,8 @@ function _attachFateContextMenu(message, html) {
       // Колдун Рубрики: Ступор поднятых Големов снимается в начале Хода колдуна; Регенерация (X) — тест T+0 / Эхо.
       await clearRebornStupor(nextCombatant.actor);
       await regenerationTurnStart(nextCombatant.actor);
+      // Повелитель Червей: пока Рой под контролем — полудействие или 1d5 R за Ход (combat/worm-master.mjs).
+      await wormUpkeepTurnStart(nextCombatant.actor);
       await runDownTurnStart(nextCombatant.actor);
       // Пожиратель Времени/Devourer of Time (Тзинч, wdbc-1rno): «застигнутые
       // Врасплох теряют полудействие в [обладателя дара] второй Ход» — такт
