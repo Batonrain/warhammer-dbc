@@ -1330,6 +1330,19 @@ export function registerHooks() {
     // Призыв Духов Стада (wdbc-xxb7) — кнопка карточки успешного проведения
     // Ритуала «Summon Herd Spirits» (module/apps/ritual-cast.mjs); сам диалог
     // распределения (module/apps/herd-spirits-summon.mjs) GM-only внутри себя.
+    // Ритуал Связывания Души (combat/soul-binding.mjs): встречный тест и метка связи — раз на карточку.
+    html.querySelectorAll(".wh-soul-binding-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Ритуалист не найден."); return; }
+        const { bindSoulsFromCard } = await import("./combat/soul-binding.mjs");
+        await runCardOnce(message, "soulBindingRolled", async () => { await bindSoulsFromCard(actor, parseInt(el.dataset.deg) || 1); return true; },
+          "Связывание с этой карточки уже проведено.");
+      });
+    });
+
     html.querySelectorAll(".wh-herd-spirits-btn").forEach(btn => {
       btn.addEventListener("click", async ev => {
         ev.preventDefault();
@@ -4667,7 +4680,11 @@ export async function _executeSoulBurn(attacker, target) {
     const dice  = hasResilienceTalent(target, "hardenedSoul")
       ? hardenedSoulDice(net, target.system.characteristics?.int?.bonus) : net;
     const dRoll = await new Roll(`${dice}d10`).evaluate(); allRolls.push(dRoll);
-    const dmg   = dRoll.total;
+    const rolled = dRoll.total;
+    // Ритуал Связывания Души: урон Выжигания делится поровну со связанными (combat/soul-binding.mjs).
+    const { shareSoulBondDamage } = await import("./combat/soul-binding.mjs");
+    const bond = await shareSoulBondDamage(target, rolled);
+    const dmg   = bond.net;
     // Непоглощаемый урон напрямую в Раны (затем в Критические)
     const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
       await applyWoundLoss(target, dmg);
@@ -4675,8 +4692,9 @@ export async function _executeSoulBurn(attacker, target) {
     const soulDestroyed = newCritical >= woundDeathThreshold(maxWounds);
     dmgNote = `
       <div class="roll-damage-section">
-        <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${dmg}</b> (${dice}d10 за ${net} Успех(ов)${dice !== net ? `, Укреплённая Душа: −${net - dice} куб.` : ""})</div>
+        <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${rolled}</b> (${dice}d10 за ${net} Успех(ов)${dice !== net ? `, Укреплённая Душа: −${net - dice} куб.` : ""})</div>
         <div class="roll-threshold">Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>
+        ${bond.note ? `<div class="roll-threshold">${bond.note}</div>` : ""}
         ${soulDestroyed ? `<div class="roll-threshold" style="color:#8b0000;"><b>${rollIcon("skull","#ff6b6b")}Душа разорвана на куски — цель уничтожена!</b></div>` : ""}
       </div>`;
   }

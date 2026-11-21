@@ -56,6 +56,7 @@ import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
 import { putrescenceOffer } from "./putrescence.mjs";
 import { sharedPainOffer } from "./shared-pain.mjs";
+import { shareSoulBondDamage } from "./soul-binding.mjs";
 import { paybackOfferHtml } from "./payback.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
@@ -1515,6 +1516,12 @@ export async function applyDamageToActor(actor, damageData) {
     const sp = await sharedPainOffer(actor, netDamage);
     netDamage = sp.net;
     if (sp.note) putrescenceNote = putrescenceNote ? `${putrescenceNote} ${sp.note}` : sp.note;
+  }
+  // Ритуал Связывания Души (combat/soul-binding.mjs): урон Варп-Оружия после поглощения — поровну со связанными душами.
+  if (warpSoak && netDamage > 1 && !stunManeuver) {
+    const bond = await shareSoulBondDamage(actor, netDamage);
+    netDamage = bond.net;
+    if (bond.note) putrescenceNote = putrescenceNote ? `${putrescenceNote} ${bond.note}` : bond.note;
   }
 
   // Расплата (Талант Дредноутов, combat/payback.mjs): непоглощённый урон от Ненавистного — пилоту кнопка ответной атаки.

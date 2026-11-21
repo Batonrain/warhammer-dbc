@@ -2948,6 +2948,15 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
   const host = touchesPoss ? doc : await fromUuid(hostUuid).catch(() => null);
   if (host) await syncTwinSpirit(host);
 });
+// Ритуал Связывания Души (module/combat/soul-binding.mjs): умерла связанная
+// цель — её Ритуалисту тест W−30, провал — −2d10 W навсегда. Только на
+// переходе «жив → мёртв» и только у клиента, отметившего смерть.
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  if (game.user.id !== userId || changes.flags?.["warhammer-dbc"]?.deceased !== true) return;
+  if (!doc.getFlag?.("warhammer-dbc", "soulBondPartners")?.length) return;
+  const { onSoulBondDeath } = await import("./module/combat/soul-binding.mjs");
+  await onSoulBondDeath(doc);
+});
 // Дар взяли или сняли посреди Проявления — та же сверка.
 for (const hook of ["createItem", "deleteItem"]) {
   Hooks.on(hook, async (item, options, userId) => {
