@@ -4861,27 +4861,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Малагра — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.malagra.fellDischarge": {
     label: "Может обратить сердце мотивирующей силы Механикум против него самого. Успешно используя Numerica Dominion,",
-    source: "Fell Discharge / Жестокая Разрядка", reader: ""
+    source: "Fell Discharge / Жестокая Разрядка", reader: "combat/malagra.mjs::useFellDischarge (Катушка цели → 0, Раны мимо брони и T, Усталость, Оглушение 1 Раунд)"
   },
   "elite.elitnyeArhetipy.malagra.iovex": {
     label: "Мощь мотивирующей силы покоряется его воле. Когда Совершенная Катушка активирована, может увеличивать урон всех Люминен Техночудес на 1d10 и…",
-    source: "Iovex / Йовекс", reader: ""
+    source: "Iovex / Йовекс", reader: "sheets/tabs/tech.mjs::activateTechMiracle ← rules/malagra-talents.mjs::malagraMiracleMods (+1d10 урона, +½P.b Pen, Компенсатор проваливается)"
   },
   "elite.elitnyeArhetipy.malagra.magnetomorphosis": {
     label: "Мастерство в манипуляции магнитными полями не знает равных. Активируя Ferric Commandment, вместо двух магнитных рук получает I.",
-    source: "Magnetomorphosis / Магнитоморфоз", reader: ""
+    source: "Magnetomorphosis / Магнитоморфоз", reader: "combat/malagra.mjs::useMagnetomorphosis (бюджет I.b — rules/malagra-talents.mjs::magnetoPlan; AE кокона +AP / Страх 2)"
   },
   "elite.elitnyeArhetipy.malagra.prescontax": {
     label: "Мысли и тайны Механикум открыты перед Малагрой. Используя Numerica Delving, чтобы прочесть память жертвы,",
-    source: "Prescontax / Пресконтакс", reader: ""
+    source: "Prescontax / Пресконтакс", reader: "combat/malagra.mjs::usePrescontax (+1d5 воспоминаний, авто-провал жертвы)"
   },
   "elite.elitnyeArhetipy.malagra.rogoex": {
     label: "Раскрывает функции поведенческих анализаторов в кортексе, позволяющие предсказывать мыслительные процессы других посвящённых.",
-    source: "Rogoex / Рогоекс", reader: ""
+    source: "Rogoex / Рогоекс", reader: "combat/malagra.mjs::useRogoex (For.Lore (Mechanicum)(I) вместо Scrutiny/Intimidate/Interrogate — combat/mech1-rolls.mjs)"
   },
   "elite.elitnyeArhetipy.malagra.venefactor": {
     label: "Рутины таинств Бога Машины выжжены в схемах и памяти, став столь же естественными, как работа респираторного блока.",
-    source: "Venefactor / Вэнефактор", reader: ""
+    source: "Venefactor / Вэнефактор", reader: "combat/malagra.mjs::processMalagraTurnStart (+1 ОД и +1 Реакция в начале Хода; ограничение трат — за игроком)"
   },
   // ── Элитные_архетипы\Мастер_Казней — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.masterKazney.finalExecution": {
@@ -6703,11 +6703,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Малагра — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.malagra.astralConverter": {
     label: "Реактор в сердце черпает силу из крохотной звезды, заключённой техниками Тёмной Эры Технологий.",
-    source: "Astral Converter / Астральный Конвертер", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-f5c8 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Astral Converter / Астральный Конвертер", reader: "rules/character/final-pools.mjs (база Катушки ≥10 ← malagra-talents.mjs::astralConverterBase), combat/malagra.mjs::processMalagraTurnStart (+1 заряд)"
   },
   "trait.elitnyeArhetipy.malagra.digitalGhost": {
     label: "Ноосферные протоколы способны проскользнуть мимо внимания самого бдительного наблюдателя, не оставляя следов.",
-    source: "Digital Ghost / Цифровой Призрак", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-8fc7 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Digital Ghost / Цифровой Призрак", reader: "combat/malagra.mjs::useDigitalGhost (Stealth(P)+0 — combat/mech1-rolls.mjs)"
   },
   "trait.elitnyeArhetipy.malagra.malagraCortex": {
     label: "Кортикальные импланты экранированы гексаграмматическими кодами и защищают разум от вторжения чужой воли.",
@@ -6715,7 +6715,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.malagra.paragonCoil": {
     label: "Комплекс электромагнитных имплантов окутывает его мантией магнитного поля и нимбом сияния. Оснащён Люминен Конденсаторами, Маглев Спиралями,",
-    source: "Paragon Coil / Совершенная Катушка", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-f5c8 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Paragon Coil / Совершенная Катушка", reader: "packs-src Paragon Coil: 4 equipment Best.Q; combat/malagra.mjs::useParagonCoil → rules/malagra-talents.mjs::paragonIntBonus в sheets/tabs/tech.mjs::activateTechMiracle"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Мастер_Казней — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.masterKazney.execution": {

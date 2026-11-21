@@ -24,6 +24,8 @@ import { findTechImperative } from "../../constants/tech-imperatives.mjs";
 import { applyImperative } from "../../rules/imperative.mjs";
 import { isPsalmUnseenFortressItem, psalmUnseenFortressGrant } from "../../rules/psalm-unseen-fortress.mjs";
 import { hasElectrovigour } from "../../rules/electrovigour.mjs";
+// Малагра: Совершенная Катушка, Йовекс (rules/malagra-talents.mjs).
+import { malagraMiracleMods } from "../../rules/malagra-talents.mjs";
 import { pickReroll } from "../../rules/reroll-pick.mjs";
 import { markUnseenDetectedUntilNextTurn } from "../../rules/unseen-attack.mjs";
 import { testOutcome } from "../../rules/roll-outcome.mjs";
@@ -206,7 +208,20 @@ export async function activateTechMiracle(actor, item) {
   let compX = sys.miracleType === "compensator" ? (sys.rating || 0) : 0;
   const compExtra = (sys.extraTypes || []).find(e => e.type === "compensator");
   if (compExtra) compX = Math.max(compX, compExtra.x || 0);
-  if (compX > 0 && enCost > 0) {
+  // Малагра: снимок до траты зарядов — Катушка активна, пока заряды есть.
+  let malagra = malagraMiracleMods(actor, item);
+  // Йовекс — «может»: при Компенсаторе спрашиваем, стоит ли +1d10 потери снижения цены.
+  if (malagra.autoFailComp && compX > 0 && enCost > 0) {
+    const take = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Йовекс — ${actor.name}` },
+      content: `<p>Усилить «${esc(item.name)}»: урон +1d10, Pen +${malagra.pen}? Тогда тест Компенсатора проваливается сам (цена ${enCost} ⚡).</p>`,
+      rejectClose: false
+    });
+    if (!take) malagra = malagraMiracleMods(actor, item, { iovex: false });
+  }
+  if (compX > 0 && enCost > 0 && malagra.autoFailComp) {
+    compLine = `<div class="roll-threshold" style="font-size:0.85em;">Компенсатор (X${compX}): Йовекс — провал без броска, цена ${enCost} ⚡</div>`;
+  } else if (compX > 0 && enCost > 0) {
     const compBonus = actor.system.techCompBonus || 0;
     const tTot   = actor.system.characteristics?.t?.total ?? 0;
     const compTh = tTot - 10 * compX + compBonus;
@@ -308,14 +323,13 @@ export async function activateTechMiracle(actor, item) {
   if (success && sys.damage) {
     // Качество Железа модифицирует I.b в формулах эффектов/дальности (best +1, poor −1).
     let chars = actor.system.characteristics;
-    if (ironIbDelta && chars?.int) {
+    if ((ironIbDelta || malagra.ib || malagra.i) && chars?.int) {
       chars = foundry.utils.deepClone(chars);
-      chars.int.bonus = (chars.int.bonus || 0) + ironIbDelta;
+      chars.int.bonus = (chars.int.bonus || 0) + ironIbDelta + malagra.ib;
+      chars.int.total = (chars.int.total || 0) + malagra.i;
     }
-    const f = applyDamageDiceMods(
-      resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0),
-      wp
-    );
+    const baseF = resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0);
+    const f = applyDamageDiceMods(malagra.extraDice ? `${baseF} + ${malagra.extraDice}` : baseF, wp);
     try {
       const dmgRoll = await new Roll(f).evaluate();
       allRolls.push(dmgRoll);
@@ -323,7 +337,7 @@ export async function activateTechMiracle(actor, item) {
       const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType, hitLocation: "Торс", attacker: actor });
       if (ext.exRoll) allRolls.push(ext.exRoll);
       const dt  = DAMAGE_TYPES[sys.damageType] || sys.damageType;
-      const pen = sys.penetration || 0;
+      const pen = (sys.penetration || 0) + malagra.pen;
       const extStr = ext.hasExtreme ? `
           <div class="roll-extreme-block">
             <b>Экстремальный урон</b> · d5: ${ext.extremeLevel}
@@ -432,6 +446,7 @@ export async function activateTechMiracle(actor, item) {
     lines: [
       ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : "",
       compLine,
+      ...malagra.lines.map(l => `<div class="roll-threshold" style="font-size:0.85em;">${l}</div>`),
       omnimnesisLine ? `<div class="roll-threshold" style="font-size:0.85em;">${omnimnesisLine}</div>` : "",
       costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
