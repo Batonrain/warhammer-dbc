@@ -171,6 +171,9 @@ function isItemActiveBase(item) {
       // Сверхъестественная мутация/Дар в Пустоте Парии (rules/null-zones.mjs) —
       // свой флаг, чтобы выход из ауры не снял подавление Чистой Формы.
       if (item.getFlag?.("warhammer-dbc", "nullSuppressed")) return false;
+      // Подавлена самим носителем на срок (Пылающее Тело: тест W+0 гасит пламя
+      // и все его эффекты на 1 час — combat/burning-body.mjs, wdbc-1rno.16).
+      if (item.getFlag?.("warhammer-dbc", "selfSuppressed")) return false;
       if (sys.activatable) return !!sys.active;
       return true;
     // Талант с ручным тумблером (Солипсизм: «проиграв социальное

@@ -140,6 +140,7 @@ import { bayonetShotButtonsHtml, independentShotOfferHtml } from "./free-shot.mj
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
+import { burningRetaliationHtml } from "./burning-body.mjs";
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { suffersBlindness } from "../rules/blindness.mjs";
 import { evadesHordeAsSingle } from "../rules/horde-single-target.mjs";
@@ -2337,6 +2338,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       counterAttackBlock = cc.html;
       allRolls.push(...cc.rolls);
     }
+    // Пылающее Тело (wdbc-1rno.16, combat/burning-body.mjs): рукопашная с
+    // Rng 0-1 или Захват по носителю — тест A+0 атакующего, провал — пламя.
+    const bb = await burningRetaliationHtml(defenderActor, actor, {
+      isMelee, technique: techOpts.technique || "", hit,
+      edgeM: (attackerToken && targetToken) ? measureTokens(attackerToken, targetToken)?.edgeM ?? null : null
+    });
+    counterAttackBlock += bb.html;
+    allRolls.push(...bb.rolls);
   }
 
   // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода

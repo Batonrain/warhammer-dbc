@@ -5486,6 +5486,24 @@ function _attachFateContextMenu(message, html) {
       await fieldBioTick(a, worldTime);
     }
   });
+  // Пылающее Тело (combat/burning-body.mjs, wdbc-1rno.16): противник в Борьбе
+  // с носителем горит в начале своего Хода; подавленное пламя через час
+  // возвращается само.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    if (!combat.combatant?.actor) return;
+    const { burningGrappleTurnStart } = await import("./combat/burning-body.mjs");
+    await burningGrappleTurnStart(combat.combatant.actor);
+  });
+  Hooks.on("updateWorldTime", async worldTime => {
+    if (!game.users.activeGM?.isSelf) return;
+    const { burningExpiryTick } = await import("./combat/burning-body.mjs");
+    for (const a of game.actors ?? []) await burningExpiryTick(a, worldTime);
+    for (const tok of canvas?.scene?.tokens ?? []) {
+      if (tok.actor && !tok.actorLink) await burningExpiryTick(tok.actor, worldTime);
+    }
+  });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
   // wdbc-1rno: «Cor.b минут»/«Cor.b Раундов» у активируемых Мутаций вроде

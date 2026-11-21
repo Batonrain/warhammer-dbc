@@ -8,6 +8,7 @@ import { pariahTouch } from "../pariah-touch.mjs";
 import { activateSpatialInstability, returnToReality, extendSpatialInstability, toggleDreamWalk,
          hatredThroughVeil, warpDominionTest, breachTheVeil } from "../spatial-instability.mjs";
 import { bonelessStand, toggleBonelessQuadruped } from "../boneless.mjs";
+import { suppressBurningBody, restoreBurningBody } from "../burning-body.mjs";
 
 export const API = {
   // Пария: касание (task-1452)
@@ -16,5 +17,7 @@ export const API = {
   activateSpatialInstability, returnToReality, extendSpatialInstability, toggleDreamWalk,
   hatredThroughVeil, warpDominionTest, breachTheVeil,
   // Бескостный (wdbc-1rno.9)
-  bonelessStand, toggleBonelessQuadruped
+  bonelessStand, toggleBonelessQuadruped,
+  // Пылающее Тело (wdbc-1rno.16)
+  suppressBurningBody, restoreBurningBody
 };
