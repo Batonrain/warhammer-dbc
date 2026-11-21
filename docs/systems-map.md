@@ -505,6 +505,22 @@
   (`movement-actions.mjs::clearStaleMovedFlags` из `combatStart`): расстановка
   токенов до боя не должна блокировать Скорость Сокола. Ограничение: толчок, который
   стол тянет руками, ставит флаг тому, чей токен потянули.
+- **Пулы ресурсов элитных архетипов (20.11.2026):** Жажда Вампира, Очки Вдохновения
+  Когитора, Очки Мести Ревенанта — один общий механизм. Пул задают ДАННЫЕ: запись
+  Конструктора `kind:"resourcePool"` на Черте/Таланте (`rules/resource-pools.mjs`);
+  записи с одним ключом складываются (Черта — база, Стадии Пакта — прибавки к
+  максимуму, лимиту траты за Раунд, пополнению). Живой запрос, при выдаче ничего не
+  пишется. Значение — `system.resourcePools.<ключ>`, счётчик Раунда —
+  `flags.warhammer-dbc.resourcePoolRound`. Ячейка в шапке листа с «+» (пополнение,
+  `apps/resource-pools.mjs::gainResource`); траты — цена `capabilityCostPool:"res:<ключ>"`
+  у записей `script` (`combat/capability-cost.mjs`, панель «Возможности сейчас»);
+  восполнение в начале боя (`hooks.mjs`, combatStart), с новой сценой и в конце сессии
+  (`apps/game-session.mjs`). Пул «как Очки Бесчестия» — выбор «чем платить» в общей
+  точке `apps/infamy-points.mjs::spendFromInfamyPool` (Порча при этом не выше
+  `resPoolAsInfamyCor`); «+10 за очко» — меню карточки теста; «провал → Успех» —
+  кнопка в карточке (`apps/infamy-fail-success.mjs`). Сверка с таблицами Стадий —
+  `test/rules/resource-pools.test.mjs`. Очки Трофеев и Руны Сигиллитов — старые
+  отдельные пулы, на общий механизм не переведены.
 - **Очки Трофеев (Sahara task-bbe1, 27.10.2026):** пул `system.trophyPoints`
   `{value, max}` (`data/actor/_creature.mjs`), максимум = P.b у носителя
   (`rules/trophy-points.mjs`, пересчёт в `rules/character.mjs`), ячейка «Трофеи» в

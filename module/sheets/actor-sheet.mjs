@@ -74,6 +74,7 @@ import { infamyContext, changeInfamy, restoreInfamy, spendInfamy, actorInfamyMax
 import { tempInfamyInfo } from "../rules/temp-infamy.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
+import { gainResource } from "../apps/resource-pools.mjs";
 import { runMechScriptEntry } from "../apps/mechanics.mjs";
 import { applyTouchedByFates } from "../rules/daemon-locus.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
@@ -199,6 +200,8 @@ async function onTrophyJudgement() {
   else if (res.reason === "full") ui.notifications.warn("⚠️ Пул Очков Трофеев уже полон (максимум P.b).");
 }
 function onTrophyMarkPrey() { return markPreyFromTarget(this.actor); }
+// «+» у пула ресурса архетипа (Испить кровь, Медитация…) — apps/resource-pools.mjs.
+function onResourcePoolGain(event, target) { return gainResource(this.actor, target.dataset.pool); }
 
 // ── Возможности сейчас: кнопка «Потратить» у записей с ценой (wdbc-1dc8) ──
 // Цена не сериализуется в DOM — пересчитывается свежей ruleFlagCost на клик,
@@ -878,6 +881,7 @@ export class WarhammerCharacterSheet
       portrait: whenEditable(onPortrait),
       trophyJudgement: whenEditable(onTrophyJudgement),
       trophyMarkPrey: whenEditable(onTrophyMarkPrey),
+      resourcePoolGain: whenEditable(onResourcePoolGain),
       infamyMinus: whenEditable(onInfamyMinus),
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),

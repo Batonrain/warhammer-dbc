@@ -37,9 +37,9 @@ import { isSocialSkill } from "./rules/resolve-test.mjs";
 import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.mjs";
 import { rollShockDeath, rollBleedingTest } from "./combat/shock-death.mjs";
 import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
-import { spendFromInfamyPool, spendPatronAbility } from "./apps/infamy-points.mjs";
+import { spendFromInfamyPool, spendPatronAbility, infamyResourceAvailable } from "./apps/infamy-points.mjs";
 import { dimIgnoredEffects } from "./combat/sweet-suffering.mjs";
-import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
+import { spendInfamyForFailSuccess, spendResourceForFailSuccess } from "./apps/infamy-fail-success.mjs";
 import { knowledgeOfAgesButtonHtml, rollKnowledgeOfAges } from "./apps/knowledge-of-ages.mjs";
 import { onAdroitTraitCreated }          from "./apps/adroit.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
@@ -51,6 +51,8 @@ import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
 import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
 import { twinFateApplies }                 from "./rules/twin-fate.mjs";
 import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
+import { refillResourcePoolsOnCombatStart, spendResource } from "./apps/resource-pools.mjs";
+import { resourceBoostOptions, resourcePoolValue } from "./rules/resource-pools.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit, unrulySaddleKey } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
@@ -730,6 +732,22 @@ export function registerHooks() {
         if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
         if (!actor.isOwner) { ui.notifications?.warn("Тратить Очко Бесчестия может только владелец персонажа."); return; }
         const done = await spendInfamyForFailSuccess(actor, el.dataset.capability || "",
+          { testLabel: el.dataset.testLabel || "", message });
+        if (done) el.disabled = true;
+      });
+    });
+
+    // То же за 1 очко пула ресурса архетипа (Очки Вдохновения Когитора,
+    // apps/infamy-fail-success.mjs::spendResourceForFailSuccess). Замок карточки общий.
+    html.querySelectorAll(".wh-resource-fail-success-btn").forEach(btn => {
+      if (cardOnceUsed(message, "infamyFailSuccessUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
+        if (!actor.isOwner) { ui.notifications?.warn("Тратить очки пула может только владелец персонажа."); return; }
+        const done = await spendResourceForFailSuccess(actor, el.dataset.pool || "",
           { testLabel: el.dataset.testLabel || "", message });
         if (done) el.disabled = true;
       });
@@ -4598,7 +4616,9 @@ function _attachFateContextMenu(message, html) {
     // Очки судьбы (название зависит от персонажа: Судьба/Бесчестье/Боль)
     const fate     = actor?.system?.fate;
     const fateVal  = fate?.value ?? 0;
-    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0);
+    // Пул ресурса «как Очки Бесчестия» (Жажда, Очки Мести — rules/resource-pools.mjs):
+    // чем платить, спросит сама трата (apps/infamy-points.mjs::spendFromInfamyPool).
+    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0 || infamyResourceAvailable(actor));
     const ft       = fateTerm(actor?.system);
 
     // Строим меню
@@ -4729,6 +4749,16 @@ function _attachFateContextMenu(message, html) {
           masteryHasPoint(actor), !masteryHasPoint(actor) ? "Нет Очков Бесчестия" : "")
       : null;
     if (btnMastery) menu.appendChild(btnMastery);
+
+    // +10 за очко пула ресурса архетипа (Очки Вдохновения Когитора: «+10 на любой
+    // тест I или W, складывается») — тест Характеристики из флага карточки.
+    const boostPools = (actor && skillTest?.char) ? resourceBoostOptions(actor, skillTest.char) : [];
+    const poolBonusBtns = boostPools.map(d => {
+      const b = _makeFateMenuItem(`+10 за очко: ${d.label} (${resourcePoolValue(actor, d.key, d)})`, resourcePoolValue(actor, d.key, d) > 0,
+        resourcePoolValue(actor, d.key, d) > 0 ? "" : `Нет: ${d.label}`);
+      menu.appendChild(b);
+      return { b, d };
+    });
 
     document.body.appendChild(menu);
 
@@ -4974,22 +5004,29 @@ function _attachFateContextMenu(message, html) {
     // ── +10 к броску ──────────────────────────────────────────────────────
     // champion — Чемпион с Вдохновляющим Присутствием, чьё Очко тратится вместо
     // своего (null — обычное +10 за своё).
-    const doBonus = async (ev2, champion = null) => {
+    const doBonus = async (ev2, champion = null, resDef = null) => {
       ev2.stopPropagation();
       menu.remove();
       document.removeEventListener("click", closeMenu);
 
-      if (!champion && (!canSpend || boostBan)) return;
+      if (!champion && !resDef && (!canSpend || boostBan)) return;
 
       // Списание одного Очка: чужое — у Чемпиона (combat/inspiring-presence.mjs),
-      // своё — с временным запасом первым (wdbc-e728).
+      // своё — с временным запасом первым (wdbc-e728); resDef — очко пула ресурса.
       const spendBonusPoint = async () => {
         if (champion) return spendInspiringInfamy(champion, actor);
+        if (resDef) {
+          const r = await spendResource(actor, resDef.key, 1, { silent: true });
+          return r ? { poolValue: r.after } : null;
+        }
         const r = await spendFromInfamyPool(actor, 1, "system.fate.value");
         if (r) await actor.update({ "system.fate.value": r.poolValue });
         return r;
       };
-      const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)` : "";
+      const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)`
+        : resDef ? ` (${resDef.label})` : "";
+      // Подпись траты: Очко Бесчестия/Судьбы или очко пула ресурса архетипа.
+      const ftb = resDef ? { one: `очко «${resDef.label}»`, word: resDef.label } : ft;
 
       const roll = rolls[0];
       if (!roll) return;
@@ -5013,7 +5050,7 @@ function _attachFateContextMenu(message, html) {
             atkB.rofMode, atkB.aimTarget,
             { ...(atkB.opts || {}), forcedRoll: rv, skipAmmo: true });
           ui.notifications.info(
-            `➕ ${actor.name} тратит ${ft.one}${payerNote}: +${boost} к атаке${boost > FATE_BONUS ? " (Сфокусированный Гнев)" : ""}! Осталось: ${bonus1.poolValue}`);
+            `➕ ${actor.name} тратит ${ftb.one}${payerNote}: +${boost} к атаке${boost > FATE_BONUS ? " (Сфокусированный Гнев)" : ""}! Осталось: ${bonus1.poolValue}`);
           return;
         }
       }
@@ -5050,10 +5087,10 @@ function _attachFateContextMenu(message, html) {
       // («было → стало»), и бросок подписан «тот же, куб не перебрасывается» —
       // обе идут своими строками, чтобы вид не поменялся.
       await postTestCard(actor, {
-        title: `+10 за ${ft.one}`,
+        title: `+10 за ${ftb.one}`,
         lines: [
           `<div class="roll-damage-meta">
-            ${ft.word} потрачена${esc(payerNote)} (осталось: ${bonus1.poolValue})
+            ${ftb.word} потрачена${esc(payerNote)} (осталось: ${bonus1.poolValue})
           </div>`,
           `<div class="roll-threshold">
             Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
@@ -5067,10 +5104,11 @@ function _attachFateContextMenu(message, html) {
       }, { rolls: [roll], sound: false, speaker: message.speaker });
 
       ui.notifications.info(
-        `✨ ${actor.name} тратит ${ft.one}${payerNote} на +10! Осталось: ${bonus1.poolValue}`
+        `✨ ${actor.name} тратит ${ftb.one}${payerNote} на +10! Осталось: ${bonus1.poolValue}`
       );
     };
     btnBonus.addEventListener("click", ev2 => doBonus(ev2));
+    for (const { b, d } of poolBonusBtns) b.addEventListener("click", ev2 => doBonus(ev2, null, d));
     btnSuccess?.addEventListener("click", async ev2 => {
       ev2.stopPropagation();
       menu.remove();
@@ -5476,6 +5514,9 @@ function _attachFateContextMenu(message, html) {
     // только ГМ, как и соседи по этому хуку. У актора без Черты «Магия
     // Сигиллитов» функция молча выходит.
     if (game.user.isGM) await processSigilliteRunesCombatStart(combat);
+    // Пулы ресурсов архетипов (Очки Мести Ревенанта — «восстанавливаются в начале
+    // каждого боя или сцены», rules/resource-pools.mjs): до максимума у бойцов.
+    if (game.user.isGM) await refillResourcePoolsOnCombatStart(combat);
     // Заготовленная Руна (wdbc-p2it): «в начале боя персонаж может выбрать
     // одну руну» — диалог выбора, тем же тактом и тем же GM-гейтом, что и
     // соседи по этому хуку (Колдовское Лезвие/Руны Сигиллитов выше).

@@ -22,6 +22,7 @@ import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { hasRuneMagic }                          from "../rules/sigillite-runes.mjs";
 import { hasTrophyPoints, hasTrophiesOfJudgement, hasMarkedPrey } from "../rules/trophy-points.mjs";
+import { resourcePoolsView } from "../rules/resource-pools.mjs";
 import { ignoresWeight }                         from "../rules/encumbrance.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -480,6 +481,9 @@ export function characterContext(actor) {
   context.hasSigilliteRunes = hasRuneMagic(actor);
   // Очки Трофеев (Мастер Казней, Sahara task-bbe1) — ячейка шапки только носителю.
   context.hasTrophyPoints = hasTrophyPoints(actor);
+  // Пулы ресурсов элитных архетипов (Жажда, Вдохновение, Месть — rules/resource-pools.mjs):
+  // ячейка шапки на каждый пул, который дают Черты/Таланты актора.
+  context.resourcePools = resourcePoolsView(actor);
   // Кнопки ячейки: ⚖ Трофеи Приговора (возврат Очка, решает ГМ) и 🎯 Отмеченная Добыча (combat/marked-prey.mjs).
   context.hasTrophiesOfJudgement = hasTrophiesOfJudgement(actor);
   context.hasMarkedPrey = hasMarkedPrey(actor);

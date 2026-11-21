@@ -474,6 +474,7 @@ import { ELITE_ARCHETYPES }                   from "../constants/elite-archetype
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCapabilityCost } from "../combat/capability-cost.mjs";
+import { KNOWN_RESOURCE_POOLS, RESOURCE_REFILL_UNITS } from "../rules/resource-pools.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { CONDITIONS, CONDITIONS_DEF, conditionLevelField, isConditionMark } from "../constants/conditions.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
@@ -700,6 +701,7 @@ const KIND_LABELS = {
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
   aura: "Аура (эффект на окружающих)",
+  resourcePool: "Пул ресурса архетипа (Жажда, Вдохновение, Месть…)",
   group: "Вложенная группа",
   script: "Код"
 };
@@ -1158,6 +1160,13 @@ export function blankMechEntry(kind = "characteristic") {
     // запись — только кнопка «▶ Запустить»; иначе кнопки с ценой и откатом
     // срабатывали бы при выдаче Черты в Мастере создания.
     scriptOnGrant: false,
+    // resourcePool — пул ресурса элитного архетипа (rules/resource-pools.mjs):
+    // записи с одним ключом складываются (Черта задаёт пул, Стадии Пакта —
+    // прибавки). Живой запрос, при выдаче ничего не пишет.
+    resPoolKey: "", resPoolLabel: "", resPoolMax: "", resPoolRefill: "",
+    resPoolRoundCap: "", resPoolGainLabel: "", resPoolGainAmount: "",
+    resPoolAsInfamy: false, resPoolAsInfamyCap: "", resPoolAsInfamyCor: "", resPoolAsInfamyNote: "",
+    resPoolBoostChars: "", resPoolFailChars: "",
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -1281,6 +1290,20 @@ export function describeMechEntry(entry) {
       return "Щит: не срабатывает по локациям без надетой брони (и требует надетой Жёсткой брони на торсе)";
     case "burningGrace":
       return "Горение: пока активен — при поджигании ≤10 урона даёт 1d5 Ходов без эффектов Горения (автоматически)";
+    case "resourcePool": {
+      if (!entry.resPoolKey) return "Пул ресурса: (не задан ключ)";
+      const name = entry.resPoolLabel || KNOWN_RESOURCE_POOLS[entry.resPoolKey]?.label || entry.resPoolKey;
+      const parts = [];
+      if (String(entry.resPoolMax ?? "").trim()) parts.push(`максимум ${/^-/.test(String(entry.resPoolMax)) ? "" : "+"}${entry.resPoolMax}`);
+      if (String(entry.resPoolRoundCap ?? "").trim()) parts.push(`за Раунд +${entry.resPoolRoundCap}`);
+      if (entry.resPoolRefill) parts.push(`восполняется ${RESOURCE_REFILL_UNITS[entry.resPoolRefill] ?? entry.resPoolRefill}`);
+      if (String(entry.resPoolGainAmount ?? "").trim()) parts.push(`${entry.resPoolGainLabel || "пополнение"} +${entry.resPoolGainAmount}`);
+      if (entry.resPoolAsInfamy) parts.push("как Очки Бесчестия");
+      if (String(entry.resPoolAsInfamyCap ?? "").trim()) parts.push(`как Бесчестие за Раунд +${entry.resPoolAsInfamyCap}`);
+      if (entry.resPoolBoostChars) parts.push(`+10 к тестам ${entry.resPoolBoostChars}`);
+      if (entry.resPoolFailChars) parts.push(`провал ${entry.resPoolFailChars} → Успех`);
+      return `Пул «${name}»${parts.length ? `: ${parts.join(", ")}` : ""}`;
+    }
     case "terrainIgnore": {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
@@ -1556,6 +1579,8 @@ function isEntryComplete(e) {
       return true; // без полей — сама запись и есть флаг, нечему быть незаполненным
     case "burningGrace":
       return true; // без полей — сама запись и есть флаг, нечему быть незаполненным
+    case "resourcePool":
+      return !!String(e.resPoolKey ?? "").trim();
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "counterAttack":
@@ -2193,6 +2218,11 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   if (entry.kind === "script") {
     // Кнопки «▶ Запустить» при выдаче не срабатывают — только записи с «При выдаче».
     if (entry.scriptOnGrant) await executeItemCode(sourceItem, entry.code, null);
+    return;
+  }
+
+  if (entry.kind === "resourcePool") {
+    // Живой запрос (rules/resource-pools.mjs::resourcePoolDefs) — при выдаче ничего не пишем.
     return;
   }
 
@@ -4252,6 +4282,26 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     out += `<input type="text" class="mech-rollmod-label" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.label || "")}" placeholder="Имя модификатора" ${dis}/>
       <input type="number" class="mech-rollmod-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="±значение" ${dis}/>`;
     return out;
+  }
+
+  if (ent.kind === "resourcePool") {
+    const f = (field, ph, title = "", w = "") => `<input type="text" class="mech-respool-field" data-field="${field}" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent[field] ?? "")}" placeholder="${esc(ph)}" title="${esc(title || MECH_FORMULA_HINT)}" ${w ? `style="width:${w}"` : ""} ${dis}/>`;
+    const known = Object.entries(KNOWN_RESOURCE_POOLS).map(([k, m]) => `<option value="${esc(k)}">${esc(m.label)}</option>`).join("");
+    const refillOpts = Object.entries(RESOURCE_REFILL_UNITS).map(([v, l]) => optHtml(v, `Восполнение: ${l}`, (ent.resPoolRefill || "") === v)).join("");
+    return `<input type="text" class="mech-respool-field" data-field="resPoolKey" list="mech-respool-keys-${ent.id}" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.resPoolKey ?? "")}" placeholder="ключ: thirst / inspiration / vengeance" title="Записи с одним ключом складываются: Черта задаёт пул, Стадии Пакта — прибавки" ${dis}/>
+      <datalist id="mech-respool-keys-${ent.id}">${known}</datalist>
+      ${f("resPoolLabel", "подпись на листе", "Подпись пула на листе (берётся первая непустая)")}
+      ${f("resPoolMax", "+ к максимуму")}
+      <select class="mech-respool-field" data-field="resPoolRefill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${refillOpts}</select>
+      ${f("resPoolRoundCap", "+ к лимиту за Раунд", "Сколько можно потратить за Раунд боя (пусто/0 у всех записей — без лимита)")}
+      ${f("resPoolGainLabel", "кнопка пополнения", "Подпись кнопки «+» у пула на листе (Испить кровь, Медитация…)")}
+      ${f("resPoolGainAmount", "+ к пополнению", "Сколько даёт кнопка «+» (складывается по записям)")}
+      <label class="grant-when-negate-label" title="Пул можно тратить вместо Очка Бесчестия (Переброс, +10, Успех, способности полосы)"><input type="checkbox" class="mech-respool-field" data-field="resPoolAsInfamy" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.resPoolAsInfamy ? "checked" : ""} ${dis}/> как Бесчестие</label>
+      ${f("resPoolAsInfamyCap", "+ к лимиту «как Бесчестие» за Раунд")}
+      ${f("resPoolAsInfamyCor", "Порча не выше (при такой трате)", "«Считает при этом свою Cor 0-19» — пиши 19")}
+      ${f("resPoolAsInfamyNote", "ограничение траты (текстом)", "Напоминание игроку в окне выбора, код не проверяет")}
+      ${f("resPoolBoostChars", "+10 к тестам: int, wp", "Ключи Характеристик через запятую: +10 к тесту за 1 очко из меню карточки")}
+      ${f("resPoolFailChars", "провал → Успех: int, wp", "Ключи Характеристик через запятую: кнопка в карточке проваленного теста")}`;
   }
 
   if (ent.kind === "poolMax") {
