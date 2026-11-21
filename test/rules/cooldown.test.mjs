@@ -14,7 +14,7 @@ import {
   isRuleUsageUsed, markRuleUsageUsed,
   worldTimeRemaining, isWorldTimeCooldownReady, markWorldTimeCooldownUsed,
   THROTTLE_UNITS, isThrottleReady, markThrottleUsed,
-  throttleCount, isThrottleCountAvailable, incrementThrottleCount
+  throttleCount, isThrottleCountAvailable, incrementThrottleCount, turnValue
 } from "../../module/rules/cooldown.mjs";
 
 function actorWithFlags() {
@@ -201,8 +201,8 @@ describe("isThrottleReady / markThrottleUsed — диспетчер «Часто
     };
   }
 
-  it("THROTTLE_UNITS перечисляет ровно 6 единиц", () => {
-    expect(THROTTLE_UNITS).toEqual(["round", "battle", "scene", "session", "day", "month"]);
+  it("THROTTLE_UNITS перечисляет ровно 7 единиц", () => {
+    expect(THROTTLE_UNITS).toEqual(["turn", "round", "battle", "scene", "session", "day", "month"]);
   });
 
   it("round: делегирует в isCapabilityAvailable/markCapabilityUsed", async () => {
@@ -375,5 +375,49 @@ describe("throttleCount / isThrottleCountAvailable / incrementThrottleCount — 
     globalThis.game.time = { worldTime: 30 * 86400 + 10 };
     expect(throttleCount(doc, "flag", "month")).toBe(0);
     expect(isThrottleCountAvailable(doc, "flag", "month", 2)).toBe(true);
+  });
+});
+
+describe("turn — «раз в Ход» (Ход своего персонажа, не Раунд)", () => {
+  // Порядок: A (0), B (1). Метка Хода сбрасывается в начале СВОЕГО Хода.
+  const mk = () => {
+    const store = {};
+    return { uuid: Math.random().toString(36), getFlag: (s, k) => store[`${s}.${k}`], setFlag: async (s, k, v) => { store[`${s}.${k}`] = v; } };
+  };
+
+  it("turnValue: до своего Хода в Раунде идёт Ход прошлого Раунда", () => {
+    const a = mk(), b = mk();
+    const combat = { round: 2, turn: 0, turns: [{ actor: a }, { actor: b }] };
+    expect(turnValue(combat, a)).toBe(2);
+    expect(turnValue(combat, b)).toBe(1);
+    combat.turn = 1;
+    expect(turnValue(combat, b)).toBe(2);
+    expect(turnValue(combat, mk())).toBe(2);
+    expect(turnValue(undefined, a)).toBeUndefined();
+  });
+
+  it("использовал в чужой Ход после своего — до своего следующего Хода нельзя, даже в новом Раунде", async () => {
+    const a = mk(), b = mk();
+    const turns = [{ actor: a }, { actor: b }];
+    globalThis.game.combat = { round: 1, turn: 0, turns };
+    await markThrottleUsed(a, "flag", "turn");
+    globalThis.game.combat = { round: 1, turn: 1, turns };
+    expect(isThrottleReady(a, "flag", "turn")).toBe(false);
+    globalThis.game.combat = { round: 2, turn: 0, turns };
+    expect(isThrottleReady(a, "flag", "turn")).toBe(true);
+    // B использовал в Ход A второго Раунда — это ещё его Ход первого Раунда.
+    await markThrottleUsed(b, "flag", "turn");
+    globalThis.game.combat = { round: 2, turn: 1, turns };
+    expect(isThrottleReady(b, "flag", "turn")).toBe(true);
+  });
+
+  it("предмет меряет Ход своего владельца", async () => {
+    const a = mk(), b = mk();
+    const turns = [{ actor: a }, { actor: b }];
+    const item = { ...mk(), actor: b };
+    globalThis.game.combat = { round: 3, turn: 0, turns };
+    await markThrottleUsed(item, "flag", "turn");
+    globalThis.game.combat = { round: 3, turn: 1, turns };
+    expect(isThrottleReady(item, "flag", "turn")).toBe(true);
   });
 });

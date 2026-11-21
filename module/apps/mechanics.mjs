@@ -584,6 +584,7 @@ const COHESION_ROLE_OPTIONS = [
 // напрямую), т.к. тут нужны русские лейблы для <select>, а не сами значения.
 const SCRIPT_THROTTLE_OPTIONS = [
   { value: "",        label: "Без ограничения" },
+  { value: "turn",    label: "Раз в Ход" },
   { value: "round",   label: "Раз в Раунд" },
   { value: "battle",  label: "Раз за бой" },
   { value: "scene",   label: "Раз за сцену" },
