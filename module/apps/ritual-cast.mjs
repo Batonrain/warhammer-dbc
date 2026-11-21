@@ -42,6 +42,7 @@ import { evaluateAssistants, tallyAssistants, reserveVictims, maxReserveAssistan
   from "../rules/ritual-assistants.mjs";
 import { DARK_SEER_FLAG, darkSeerAdvantage } from "../rules/dark-seer.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { boundByBloodSacrifice } from "../rules/blood-smith-talents.mjs";
 import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { hasWarprod, warprodPick, splitCostDice, ritualCostText, scapegoatFor, divineMaskGod,
          brainwashedAssistants, brainwashedList, SCAPEGOAT_FLAG, BRAINWASHED_FLAG } from "../rules/ritual-talents.mjs";
@@ -166,7 +167,11 @@ export function ritualThreshold(R, actor, item) {
   // Модификаторов Призыва про незнание демона, гасятся безусловно.
   const KNOWLEDGE_PENALTY_KEYS = ["littleKnown", "nothingKnown", "falseKnow"];
   const eruditeInfernal = isSummonLike && hasEruditeInfernal(actor);
+  // Связанный Кровью (Кузнец Крови, rules/blood-smith-talents.mjs): Призыв порабощённого демона —
+  // восемь капель крови дают эффект жертвоприношения.
+  const bloodSacrifice = isSummonLike && boundByBloodSacrifice(actor, R.type, R.demonName);
   const summonOn = key => {
+    if (key === "sacrifice" && bloodSacrifice) return true;
     if (eruditeInfernal && KNOWLEDGE_PENALTY_KEYS.includes(key)) return false;
     if (key === "mark") return marked;
     // Строка Покровительства читается «но не метку» — с Меткой её нет вовсе.
@@ -179,7 +184,7 @@ export function ritualThreshold(R, actor, item) {
   const autoMark   = !!auto?.mark;
   const autoPatron = !!(auto?.patronage && summonOn("patronage"));
   const autoEnemy  = !!auto?.enemy;
-  const isAuto = key => (key === "mark" && autoMark)
+  const isAuto = key => (key === "sacrifice" && bloodSacrifice) || (key === "mark" && autoMark)
                      || (key === "patronage" && autoPatron)
                      || (key === "enemyMark" && autoEnemy);
   const summonTotal = RITUAL_SUMMON_MODS.reduce(
@@ -205,6 +210,7 @@ export function ritualThreshold(R, actor, item) {
     { label: "Сложность ритуала", val: R.gmMod || 0 },
     ...(assistTotal ? [{ label: `Жертва ассистентов ×${sacrificed}`, val: assistTotal }] : []),
     ...(summonTotal ? [{ label: "Модификаторы призыва", val: summonTotal }] : []),
+    ...(bloodSacrifice ? [{ label: "Связанный Кровью: восемь капель крови вместо жертвы", val: summonModValue("sacrifice") }] : []),
     ...(autoMark ? [{ label: `Метка ${godLabel}`, val: summonModValue("mark") }] : []),
     ...(autoPatron ? [{ label: `Покровительство ${godLabel} (без Метки)`, val: summonModValue("patronage") }] : []),
     ...(autoEnemy ? [{ label: `Враждебный Бог: ${WARP_GODS_MAP[auto.enemyGod]?.label || auto.enemyGod}`,

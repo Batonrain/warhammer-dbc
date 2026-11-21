@@ -27,6 +27,7 @@
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { gunArmAppliesTo, GUN_ARM_CLASSES } from "./gun-arm.mjs";
 import { isCellDevice } from "./warpsmith.mjs";
+import { livingArsenalAmmoFree } from "./obliterator-talents.mjs";
 
 export { GUN_ARM_CLASSES };
 
@@ -53,6 +54,8 @@ export function ammoIsFree(item, actor) {
   // Без актора спрашивать возможность не у кого: Дар — свойство стрелка, а не
   // предмета (оружие в компендиуме или в боковой панели ничьё).
   if (!actor) return false;
+  // Живой Арсенал (Облитератор): неограниченный стандартный боеприпас ассимилированного оружия.
+  if (livingArsenalAmmoFree(actor, item)) return true;
   // Дар действует на ОДНО вросшее оружие, а не на любой пистолет в рюкзаке
   // (wdbc-spsd) — какое именно, помечено на самом оружии, см. rules/gun-arm.mjs.
   return gunArmAppliesTo(item, actor);

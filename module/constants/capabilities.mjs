@@ -4164,15 +4164,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Броненосец — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.bronenosets.chaosGreatbow": {
     label: "Луки обычных смертных неспособны выдержать силу Броненосца. Получив в руки огромный металлический лук,",
-    source: "Chaos Greatbow / Великий Лук Хаоса", reader: ""
+    source: "Chaos Greatbow / Великий Лук Хаоса", reader: "module/rules/bronenosets-talents.mjs::bronenosetsWeaponBonus → combat/attack.mjs (кнопка useChaosGreatbow)"
   },
   "elite.elitnyeArhetipy.bronenosets.chosenFlame": {
     label: "Мощь Богов вливается в оружие Броненосца, манифестируясь на кромках лезвий как призрачное пламя.",
-    source: "Chosen Flame / Избранное Пламя", reader: ""
+    source: "Chosen Flame / Избранное Пламя", reader: "module/rules/bronenosets-talents.mjs::chosenFlameOn/bronenosetsWeaponBonus → combat/attack.mjs (активация до конца боя/сцены)"
   },
   "elite.elitnyeArhetipy.bronenosets.divineShield": {
     label: "Сила Богов, струящаяся сквозь доспех, вливается в его щит. Экипировав щит, может концентрироваться на нём минуту и трансформировать его: щит…",
-    source: "Divine Shield / Божественный Щит", reader: ""
+    source: "Divine Shield / Божественный Щит", reader: "module/combat/bronenosets-talents.mjs::useDivineShield (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.bronenosets.exaltedPlate": {
     label: "Порча в душе Броненосца проникает в его латы и укрепляет их. Может потратить Очко Бесчестия, чтобы до конца боя или сцены получить +½Cor.",
@@ -4180,23 +4180,23 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.bronenosets.hedgehog": {
     label: "Узкие ломкие шипы вырастают из лат. Броня получает модификацию «Шипы», но наносимый шипами урон получает свойство Crippling (½Cor.b, окр.▲),",
-    source: "Hedgehog / Дикобраз", reader: ""
+    source: "Hedgehog / Дикобраз", reader: "module/combat/counter-attack.mjs (kind:counterAttack на Таланте) + rules/bronenosets-talents.mjs::hedgehogCrippling"
   },
   "elite.elitnyeArhetipy.bronenosets.potence": {
     label: "Мощь божественных лат позволяет использовать двуручное оружие одной рукой. Может использовать двуручное рукопашное оружие или одноручное рук…",
-    source: "Potence / Могущество", reader: ""
+    source: "Potence / Могущество", reader: "module/rules/bronenosets-talents.mjs::potenceGripActive/potenceBalance → sheets/attack-dialog.mjs, apps/hud.mjs, sheets/attack/selection.mjs, combat/defense.mjs"
   },
   "elite.elitnyeArhetipy.bronenosets.riderOfChaos": {
     label: "Сила, дарованная Богами, вливается в его боевого зверя. Может потратить 8 часов, чтобы ритуально посвятить скакуна себе на службу — тот мути…",
-    source: "Rider of Chaos / Всадник Хаоса", reader: ""
+    source: "Rider of Chaos / Всадник Хаоса", reader: "module/combat/bronenosets-talents.mjs::dedicateChaosSteed (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.bronenosets.sinEater": {
     label: "Могучие владыки Броненосцев черпают силу из душ тех, кого сразили на пути к славе. Когда Броненосец убивает другого чемпиона Хаоса,",
-    source: "Sin Eater / Пожиратель Греха", reader: ""
+    source: "Sin Eater / Пожиратель Греха", reader: "module/combat/bronenosets-talents.mjs::useSinEater (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.bronenosets.sorcererSPlate": {
     label: "Латы Броненосцев, искушённых в колдовских практиках, отражаются в эмпиреях, защищая сами их души.",
-    source: "Sorcerer's Plate / Латы Чародея", reader: ""
+    source: "Sorcerer's Plate / Латы Чародея", reader: "module/rules/bronenosets-talents.mjs::sorcerersPlateDeg → rules/kind-outcome.mjs; armor.apVsWarpFull на Таланте → combat/damage.mjs"
   },
   // ── Элитные_архетипы\Вампир — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.vampir.pactStage1": {
@@ -4393,15 +4393,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Герольд — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.gerold.ancient": {
     label: "Удостаивается чести нести в бой знамя или икону банды. Знамя должно включать геральдику банды, икона — религиозную иконографию.",
-    source: "Ancient / Древний", reader: ""
+    source: "Ancient / Древний", reader: "module/combat/gerold-talents.mjs::ancientAfterBanner (из combat/living-banner.mjs) и ancientBannerLost; −10 — rules/astartes-elite-rules.mjs (источник astartesElite)"
   },
   "elite.elitnyeArhetipy.gerold.greaterHerald": {
     label: "Одним лишь представлением способен возвысить кого-то в глазах слушателей, укрепив его авторитет и репутацию.",
-    source: "Greater Herald / Высший Герольд", reader: ""
+    source: "Greater Herald / Высший Герольд", reader: "module/combat/gerold-talents.mjs::useGreaterHerald → дар herald, rules/astartes-elite-common.mjs::boonRules (источник astartesElite)"
   },
   "elite.elitnyeArhetipy.gerold.standYourGround": {
     label: "Установив стяг на позицию, провозглашает владычество банды над этим местом. За полудействие может установить знамя/икону на позиции,",
-    source: "Stand Your Ground / Ни Шагу Назад", reader: ""
+    source: "Stand Your Ground / Ни Шагу Назад", reader: "module/rules/gerold-talents.mjs::standYourGroundRules (источник astartesElite); кнопка combat/gerold-talents.mjs::useStandYourGround"
   },
   "elite.elitnyeArhetipy.gerold.tipOfTheSpear": {
     label: "На острие атаки вдохновляет боевых братьев личным примером. Попав по противнику хотя бы одной атакой ближнего боя,",
@@ -4410,7 +4410,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gerold.villainousHonour": {
     label: "Может выжать из побед наибольшее влияние на соратников. Убив вражеского чемпиона, знаменосца или лорда (убив,",
-    source: "Villainous Honour / Честь Злодеев", reader: ""
+    source: "Villainous Honour / Честь Злодеев", reader: "module/combat/gerold-talents.mjs::useVillainousHonour → дар morale, rules/astartes-elite-common.mjs::boonRules"
   },
   // ── Элитные_архетипы\Гладиатор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.gladiator.bestiarius": {
@@ -4710,23 +4710,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Коготь_Варпа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kogotVarpa.rift": {
     label: "Впиваясь в разлом реальности, обрушивает его внутрь себя, вызывая взрыв Варп-энергий. Когда открывает разрыв в Варп,",
-    source: "Rift / Разлом", reader: ""
+    source: "Rift / Разлом", reader: "module/combat/warp-talon-talents.mjs::useRift (кнопка Таланта), rules/warp-talon-talents.mjs::riftDice/riftSummons/riftHits"
   },
   "elite.elitnyeArhetipy.kogotVarpa.speedOfThought": {
     label: "Расстояние и время лишены смысла в Варпе. Находясь в Варпе, может потратить полное действие и пройти тест Navigation(Warp)+0,",
-    source: "Speed of Thought / Со Скоростью Мысли", reader: ""
+    source: "Speed of Thought / Со Скоростью Мысли", reader: "module/combat/warp-talon-talents.mjs::useSpeedOfThought (только в Варпе — rules/warp-talon-talents.mjs::inWarp)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.vulture": {
     label: "Может восстанавливать мистические силы, поглощая частицы души жертвы после смерти. Получает ½Cor.b (окр.▲) дополнительных Очков Бесчестия,",
-    source: "Vulture / Стервятник", reader: ""
+    source: "Vulture / Стервятник", reader: "пул resourcePool «vulture» на Таланте; трата — module/combat/warp-talon-talents.mjs::useVeilRender/useRift (payVeil)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpFlash": {
     label: "Раны в реальности, открываемые Когтями Варпа, выпускают наружу противоестественный не-свет, пожирающий обычное освещение.",
-    source: "Warp Flash / Варп Вспышка", reader: ""
+    source: "Warp Flash / Варп Вспышка", reader: "module/combat/warp-talon-talents.mjs::warpFlash (из useVeilRender на входе и выходе)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpTrail": {
     label: "Может преследовать жертв по следу, что оставляют их души. Может пройти тест Awareness−30,",
-    source: "Warp Trail / Варп-След", reader: ""
+    source: "Warp Trail / Варп-След", reader: "module/combat/warp-talon-talents.mjs::useWarpTrail, rules/warp-talon-talents.mjs::warpTrailMod"
   },
   // ── Элитные_архетипы\Колдун_Рубрики — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.koldunRubriki.infernalShells": {
@@ -4777,11 +4777,11 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.boundByBlood": {
     label: "Узы порабощённого демона с Кузнецом пробивают Завесу, позволяя протащить демона обратно в реальность через существующую трещину.",
-    source: "Bound by Blood / Связанный Кровью", reader: ""
+    source: "Bound by Blood / Связанный Кровью", reader: "module/apps/ritual-cast.mjs (строка жертвы) → rules/blood-smith-talents.mjs::boundByBloodSacrifice"
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.daemonPlate": {
     label: "Может вселить порабощённого демона в любой полный доспех. Такой демонический доспех даёт владельцу Трейты Daemonic,",
-    source: "Daemon Plate / Демонические Латы", reader: ""
+    source: "Daemon Plate / Демонические Латы", reader: "module/combat/blood-smith-talents.mjs::useDaemonPlate (Механика на доспехе)"
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.fealty": {
     label: "Поработив демона в схватке, может потребовать его Истинное Имя, и тот обязан его раскрыть.",
@@ -4789,7 +4789,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.unforge": {
     label: "Одного слова достаточно, чтобы разрушить своё демоническое оружие. Раз в Ход за свободное действие может уничтожить одно демоническое оружие…",
-    source: "Unforge / Расковать", reader: ""
+    source: "Unforge / Расковать", reader: "module/combat/blood-smith-talents.mjs::useUnforge, rules/blood-smith-talents.mjs::unforgeFormula"
   },
   // ── Элитные_архетипы\Лакрималлус — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.lakrimallus.assemblyLine": {
@@ -4970,15 +4970,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Моритат — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.moritat.beltFeed": {
     label: "Модифицирует ранец для хранения болтов или пуль и создаёт продвинутую ленту, подающую патроны.",
-    source: "Belt Feed / Ленточное Питание", reader: ""
+    source: "Belt Feed / Ленточное Питание", reader: "module/combat/moritat-talents.mjs::useBeltFeed (метка beltFed, пул beltFeed), rules/moritat-talents.mjs::beltFeedTransfer"
   },
   "elite.elitnyeArhetipy.moritat.flyBy": {
     label: "Способен танцевать в воздухе вокруг врагов, появляясь в их поле зрения на долю секунды для меткого выстрела и скрываясь от ответного огня.",
-    source: "Fly-By / Пролётом", reader: ""
+    source: "Fly-By / Пролётом", reader: "module/combat/moritat-talents.mjs::useFlyBy → combat/free-shot.mjs (вид flyBy), rules/moritat-talents.mjs::flyByBlockReason"
   },
   "elite.elitnyeArhetipy.moritat.lightningFingers": {
     label: "Может применять Таланты Quick Draw и Quick Store к пистолетам с питанием от кабеля или ленты и не получает штрафов на вытягивание и складыва…",
-    source: "Lightning Fingers / Молниеносные Пальцы", reader: ""
+    source: "Lightning Fingers / Молниеносные Пальцы", reader: "module/constants/rig.mjs::inAwkwardRigLocation → rules/moritat-talents.mjs::lightningFingersIgnoresRig"
   },
   "elite.elitnyeArhetipy.moritat.loneWarrior": {
     label: "Полагается только на себя. Когда в пределах 15м нет ни одного дружественного персонажа, не получает преимуществ дружественных психосил и не находится в секторе обстрела дружественного Караула,",
@@ -4990,7 +4990,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.moritat.outgun": {
     label: "Винтовки движутся в руках с лёгкостью и грацией пистолетов. Может считать любую винтовку, которую держит в одной руке,",
-    source: "Outgun / Огневая Мощь", reader: ""
+    source: "Outgun / Огневая Мощь", reader: "Возможность weapon.oneHandedRifle (rules/hands.mjs); rules/moritat-talents.mjs::outgunRifle (Молниеносные Пальцы)"
   },
   // ── Элитные_архетипы\Ночной_Демон — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.nochnoyDemon.darknessIsOurHome": {
@@ -5024,7 +5024,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.obliterator.bulletEater": {
     label: "Может поглощать специализированные боеприпасы и хранить их внутри тела. Может заряжать их в подходящее оружие и менять боеприпасы в оружии,",
-    source: "Bullet Eater / Пожиратель Пуль", reader: ""
+    source: "Bullet Eater / Пожиратель Пуль", reader: "module/combat/obliterator-talents.mjs::useBulletEater"
   },
   "elite.elitnyeArhetipy.obliterator.fireproof": {
     label: "Бронированное тело отращивает огнеупорный слой и систему пожаротушения. Получает иммунитет к эффекту Горения и +5 AP против E(Fl) Dmg.",
@@ -5032,19 +5032,19 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.obliterator.mutilator": {
     label: "Модифицирует себя для ближнего боя. Может за полудействие потерять Трейт Auto-Stabilized и убрать ограничение на Бег и скорость Натиска,",
-    source: "Mutilator / Расчленитель", reader: ""
+    source: "Mutilator / Расчленитель", reader: "module/combat/obliterator-talents.mjs::useMutilator; перебросы — rules/obliterator-talents.mjs::mutilatorRules (источник astartesElite)"
   },
   "elite.elitnyeArhetipy.obliterator.selfForging": {
     label: "Может поглощать броню так же, как оружие и инструменты. Поглощение занимает 5 минут вместо полного действия и позволяет отращивать модификац…",
-    source: "Self-Forging / Самоперековывание", reader: ""
+    source: "Self-Forging / Самоперековывание", reader: "module/combat/obliterator-talents.mjs::useSelfForging (частично: системы брони — вручную)"
   },
   "elite.elitnyeArhetipy.obliterator.shredder": {
     label: "Сконцентрировавшись, способен ощетиниться десятками или сотнями небольших стволов, палящих во все стороны.",
-    source: "Shredder / Измельчитель", reader: ""
+    source: "Shredder / Измельчитель", reader: "module/combat/obliterator-talents.mjs::useShredder, rules/obliterator-talents.mjs::shredderHordeHits"
   },
   "elite.elitnyeArhetipy.obliterator.toTheTeeth": {
     label: "За полудействие может потратить Очко Бесчестия, чтобы отрастить любую винтовку или пистолет как наплечное оружие до конца боя/сцены.",
-    source: "To the Teeth / До Зубов", reader: ""
+    source: "To the Teeth / До Зубов", reader: "module/combat/obliterator-talents.mjs::useToTheTeeth; rules/hands.mjs (isShoulderWeapon — рук не занимает)"
   },
   // ── Элитные_архетипы\Питати — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.pitati.livingBullet": {
@@ -5288,19 +5288,19 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чемпион_Терминатор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chempionTerminator.anointed": {
     label: "Раз в Раунд может без траты Реакции парировать атаку по дружественному персонажу в 1м от него, или получить попадание вместо него.",
-    source: "Anointed / Помазанник", reader: ""
+    source: "Anointed / Помазанник", reader: "module/combat/terminator-talents.mjs::useAnointed → метка anointedShield, combat/damage.mjs::_rollActiveShield (+35)"
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атраментар", reader: ""
+    source: "Atramentar / Атраментар", reader: "module/combat/terminator-talents.mjs::useAtramentar (активация до конца сцены → Fear 3 записью «Когда включено»)"
   },
   "elite.elitnyeArhetipy.chempionTerminator.deathShroud": {
     label: "Если вооружён древковым оружием в двуручном хвате, может за полное действие совершить Стандартную Базовую атаку по всем противникам в радиус…",
-    source: "Death Shroud / Саван Смерти", reader: ""
+    source: "Death Shroud / Саван Смерти", reader: "module/combat/terminator-talents.mjs::useDeathShroud"
   },
   "elite.elitnyeArhetipy.chempionTerminator.devourer": {
     label: "Совершая Напролом, может проноситься сквозь укреплённые стены и игнорирует Трудный Ландшафт.",
-    source: "Devourer / Поглотитель", reader: ""
+    source: "Devourer / Поглотитель", reader: "module/combat/grapple.mjs::grappleSize → rules/terminator-talents.mjs::devourerGrappleSize"
   },
   "elite.elitnyeArhetipy.chempionTerminator.justaerin": {
     label: "Уменьшает штраф за атаки с двух рук на 10, если вооружён винтовкой и рукопашным оружием (считается сам). Вручную: считается двумя персонажами в численном перевесе; винтовки как пистолеты и тяжёлое как винтовки для стрельбы в рукопашной.",
@@ -5312,7 +5312,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chempionTerminator.phoenician": {
     label: "Если вооружён древковым оружием в двуручном хвате, может совершать Прыжок или Вольт и не получает обычного штрафа −10 к Уклонению.",
-    source: "Phoenician / Фениксиец", reader: ""
+    source: "Phoenician / Фениксиец", reader: "module/sheets/attack/dialog.mjs (Обратный Удар) → rules/terminator-talents.mjs::phoenicianMainProfile"
   },
   "elite.elitnyeArhetipy.chempionTerminator.tyranthikos": {
     label: "Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых. Две тяжёлые, одна цель Размера 2+, попали обе — +2d10 Dmg первому попаданию второй атаки. Укрытия теряют 1d10 AP вместо 1.",
@@ -6467,7 +6467,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Герольд — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.gerold.delegate": {
     label: "Представляет интересы всей верхушки банды и говорит от её имени. Если геральдика на его броне отображает личную символику одного из членов б…",
-    source: "Delegate / Делегат", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Delegate / Делегат", reader: "module/combat/gerold-talents.mjs::useDelegate (кнопка Черты)"
   },
   "trait.elitnyeArhetipy.gerold.livingBanner": {
     label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 или Charm(F)+10 и восстановить одно ранее потраче…",
@@ -6475,7 +6475,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.gerold.noblesseOblige": {
     label: "Высокое доверие налагает большую ответственность — его провалы навлекают позор на всю банду.",
-    source: "Noblesse Oblige / Благородство Обязывает", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Noblesse Oblige / Благородство Обязывает", reader: "module/combat/gerold-talents.mjs::noblesseObligeSlip (скрипт по Крит. Провалу); потеря преимуществ Архетипа после Страха/Подавления — вручную"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Гладиатор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.gladiator.bloodyPerformance": {
@@ -6620,7 +6620,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Коготь_Варпа — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogotVarpa.veilRender": {
     label: "Потратив Очко Бесчестия и полудействие, может разорвать когтями реальность и нырнуть в Варп по ту сторону.",
-    source: "Veil Render / Разрыватель Завесы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Veil Render / Разрыватель Завесы", reader: "module/combat/warp-talon-talents.mjs::useVeilRender (активация до конца боя/сцены = в Варпе; запись trait Unnatural Senses «Когда включено»)"
   },
   "trait.elitnyeArhetipy.kogotVarpa.vorpalClaws": {
     label: "Руки и ноги искажаются в длинные когти, потрескивающие энергией Варпа. Считаются Когтями с профилем: Когти.P, Rng 1, Dmg 1d10+4 R, Pen 7,",
@@ -6663,7 +6663,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Кузнец_Крови — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kuznetsKrovi.ringOfBlood": {
     label: "Победив демона в ритуальном поединке, может поработить его. Перед призывом демона может заключить себя и его в ритуальный круг,",
-    source: "Ring of Blood / Кольцо Крови", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Ring of Blood / Кольцо Крови", reader: "module/combat/blood-smith-talents.mjs::useRingOfBlood, rules/blood-smith-talents.mjs::ringOfBloodWeaponUpdate/enslavedList"
   },
   "trait.elitnyeArhetipy.kuznetsKrovi.valourousAccord": {
     label: "Связан жёстким кодексом чести — полагаться только на собственные силы. Если использует психосилы, психосиловое оружие,",
@@ -6822,7 +6822,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.obliterator.livingArsenal": {
     label: "За полное действие может ассимилировать касанием любое оружие или механизм размера, которым может пользоваться космодесантник или персонаж п…",
-    source: "Living Arsenal / Живой Арсенал", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Living Arsenal / Живой Арсенал", reader: "module/combat/obliterator-talents.mjs::useLivingArsenal; combat/attack.mjs (без Заклинивания), rules/ammo-free.mjs, rules/hands.mjs → rules/obliterator-talents.mjs"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Питати — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.pitati.runicBullet": {

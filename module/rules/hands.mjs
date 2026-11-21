@@ -27,6 +27,7 @@ import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
 import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
 import { runtForbidsOneHand } from "./runt.mjs";
 import { ironGardenHandsDiscount, ironGardenSharesHand } from "./iron-garden.mjs";
+import { livingArsenalOneHand, isShoulderWeapon } from "./obliterator-talents.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -102,6 +103,8 @@ function availableRangedGrips(item, actor, auto) {
   // в нём и «Винтовка», и «Длинная Винтовка», стр. 171) можно держать одной
   // рукой (wdbc-f7iw, wdbc-6tzk).
   if (item.system?.weaponClass === "basic" && hasRuleFlag(actor, "weapon.oneHandedRifle")) addExtra("1р");
+  // Живой Арсенал (Облитератор): ассимилированные винтовки и тяжёлое — одной рукой без штрафа.
+  if (livingArsenalOneHand(actor, item)) addExtra("1р");
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60) — тот же
   // список читает окно атаки; расходиться этим двум местам нельзя.
   if (isPathOneHandedWeapon(item) && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) addExtra("1р");
@@ -175,6 +178,8 @@ export function weaponHandsRequired(item, actor = item?.parent) {
   // стоит ДО ветвления melee/ranged (wdbc-9dg8). Пальцевое (перстень на палец)
   // здесь же — по книге его можно надеть на каждый палец и стрелять
   // одновременно с оружием в той же руке.
+  // До Зубов (Облитератор, rules/obliterator-talents.mjs): наплечное оружие рук не занимает.
+  if (isShoulderWeapon(item)) return 0;
   const auto = effectiveAuto(item, actor);
   if (auto.independent || auto.wrist || auto.digital) return 0;
   if (sys.weaponClass === "melee") return MELEE_GRIP_HANDS[currentMeleeGrip(item)] ?? 1;

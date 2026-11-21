@@ -1,6 +1,7 @@
 // module/combat/damage.mjs
 
 import { chainShieldIntercept } from "./wild-psyker.mjs";
+import { anointedShieldBonus, ANOINTED_SHIELD_FLAG } from "../rules/terminator-talents.mjs";
 import { momentumOnDamage } from "./momentum.mjs";
 import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
 import { isDaemonActor } from "../rules/predicates.mjs";
@@ -578,7 +579,10 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   const subtypeOverride = damageSubtype
     ? _shieldSubtypeEntries(shieldItem).find(e => e.shieldSubtypeMode === "override" && e.shieldSubtypeKey === damageSubtype && Number(e.shieldSubtypeRatingMax) > 0)
     : null;
-  const rating = subtypeOverride ? Number(subtypeOverride.shieldSubtypeRatingMax) : (s.currentRating ?? 0);
+  // Помазанник (Чемпион Терминатор, rules/terminator-talents.mjs): разовые +35 к рейтингу против этого попадания.
+  const anointedBonus = anointedShieldBonus(actor);
+  const rating = (subtypeOverride ? Number(subtypeOverride.shieldSubtypeRatingMax) : (s.currentRating ?? 0)) + anointedBonus;
+  if (anointedBonus) await actor.unsetFlag("warhammer-dbc", ANOINTED_SHIELD_FLAG);
 
   // Бросок d100
   const roll = await new Roll("1d100").evaluate();
@@ -627,7 +631,7 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
     outcome: `<span class="${resultClass}">${resultLabel}</span>`,
     sections: [
       `<div class="roll-threshold" style="font-size:0.85em; opacity:0.8;">
-          Рейтинг: <b>${rating}</b>
+          Рейтинг: <b>${rating}</b>${anointedBonus ? ` (Помазанник +${anointedBonus})` : ""}
           ${threshold > 0 ? `| Порог перегрузки: <b>${threshold}</b>` : ""}
           | Тип: <b>${typeLabel}</b>
           | Природа: <b>${natureLabel}</b>

@@ -16,6 +16,7 @@ import { tokensThatCanSee } from "../rules/vision-target.mjs";
 import { actorHasInfamyPoint, actorInfamyPath, spendFromInfamyPool, actorInfamyValue, actorInfamyMax } from "../apps/infamy-points.mjs";
 import { hasLivingBanner, livingBannerSkill, livingBannerRecipients, LIVING_BANNER_MOD } from "../rules/living-banner.mjs";
 import { writeToTarget } from "./gm-relay.mjs";
+import { ancientAfterBanner } from "./gerold-talents.mjs";
 
 function alliesWhoSee(actor) {
   const token = actor?.getActiveTokens?.(false, true)?.[0] ?? null;
@@ -59,5 +60,7 @@ export async function useLivingBanner(actor) {
     threshold: rollStatLine({ label: `${skill.label} (F)`, base: skill.total, parts: [`+${LIVING_BANNER_MOD}`, ...rm.parts], threshold, rv: roll.total }),
     outcome
   }, { rolls: [roll] });
+  // Древний (Герольд): после Стяга — тест W+0 вернуть потраченное Очко.
+  await ancientAfterBanner(actor);
   return { success, deg };
 }

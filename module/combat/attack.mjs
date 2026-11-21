@@ -126,6 +126,8 @@ import { superiorityDice } from "../rules/raven-talents.mjs";
 import { warSeerDamage, witchslayerArmed, WITCHSLAYER_FLAG } from "../rules/vitkis-talents.mjs";
 import { crescendoAimedHits } from "../rules/note-warrior-talents.mjs";
 import { PIERCING_SHOT_FLAG, hasTimedExplosion } from "../rules/runic-shot.mjs";
+import { bronenosetsWeaponBonus } from "../rules/bronenosets-talents.mjs";
+import { livingArsenalWeapon } from "../rules/obliterator-talents.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -807,6 +809,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (qAuto.losesPrimitive) wp.primitive = false;
   // Unarmed Master / Безоружный Мастер (стр. 62): безоружные атаки теряют Primitive.
   if (unarmedLosesPrimitive(actor, item)) wp.primitive = false;
+  // Броненосец (rules/bronenosets-talents.mjs): Великий Лук Хаоса / Избранное Пламя — +Dmg/+Pen, без Primitive.
+  const exaltedWpn = bronenosetsWeaponBonus(actor, item, { isMelee });
+  if (exaltedWpn.losesPrimitive) wp.primitive = false;
   // Наследие Бойни (H1, стр. 426), стрелковая ветка: «Понижает СВОЮ Надёжность
   // ДО −2 при стрельбе нелетальными боеприпасами» — абсолютное значение, не
   // дельта, поэтому присваивание, а не += (rules/legacy-weapon.mjs::
@@ -1048,7 +1053,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
   // Распыление клинит не по броску атаки, а по первому кубику урона (стр. 168,
   // sprayJamFace) — общий порог по d100 к нему неприменим, см. sprayJam ниже.
-  const jamAt    = jamThreshold(wp);
+  // Живой Арсенал (Облитератор, rules/obliterator-talents.mjs): оружие никогда не Заклинивает.
+  const arsenalNoJam = livingArsenalWeapon(actor, item);
+  const jamAt    = arsenalNoJam ? null : jamThreshold(wp);
   const jamNoteAt = (!isMelee && !wp.spray && sys.weaponClass !== "thrown") ? jamAt : undefined;
   // Метательное (стр. 40, wdbc-x1nz.2.58): «При Критическом Промахе,
   // метательное оружие не Заклинивает» — исключено из общего механизма
@@ -1522,7 +1529,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Непрерывный Натиск (Секутор): запомнить цель — следующая атака по ней получит +3 за каждую предыдущую подряд.
   if (opts.forcedRoll == null) await noteSustainedAssault(actor, defenderActor);
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen + runic.pen + destructorPen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen + runic.pen + destructorPen + exaltedWpn.pen,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen + reliable.pen
   });
 
@@ -1703,7 +1710,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const superiorityN = (hit && superiorityDice(actor, { isMelee, targetProne: !!defenderActor?.system?.conditions?.prone })) ? 2 : 0;
   // Провидец Войны (Виткис): +Успехи к урону рукопашных по цели — rules/vitkis-talents.mjs.
   const warSeerDmg = hit ? warSeerDamage(actor, defenderActor, { isMelee, combatId: game.combat?.started ? game.combat.id : "" }) : 0;
-  const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus + warSeerDmg;
+  const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus + warSeerDmg + exaltedWpn.dmg;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
   // Сварщик (rules/gunsmith-talents.mjs): признак на кнопки «Применить урон» — доп.
@@ -1766,6 +1773,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     (isMelee && hit && fistfulActive(actor)) ? fistfulNote(actor, defenderActor) : "",
     twinFateNote,
     (hit && destructorPen) ? `⚙️ Деструктор: +${destructorPen} к Pen (½I.b при Структурном Анализе, уже учтено).` : "",
+    (hit && exaltedWpn.note) ? exaltedWpn.note : "",
     (hit && dimacherus) ? `⚔️ Димахер: +${dimacherus} к урону каждого попадания (очки Момента, уже в формуле).` : "",
     bloodOfMartyrsNote(defenderActor, { selective: !!aimTarget?.value, hit, worldTime: game.time?.worldTime }),
     warSeerDmg ? `👁️ Провидец Войны: +${warSeerDmg} к урону по цели (уже в формуле).` : "",
@@ -1926,7 +1934,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // Клин Распыления (стр. 168): 9 у обычного, 8-9 у Ненадёжного и хуже,
       // никогда у Надёжного и лучше — по ПЕРВОМУ кубику на урон (первому
       // брошенному, а не оставленному Рвущим), и только у первого попадания.
-      if (i === 0 && !isMelee && wp.spray && sprayJamFace(wp) !== null) {
+      if (i === 0 && !isMelee && wp.spray && !arsenalNoJam && sprayJamFace(wp) !== null) {
         if (sprayJams(baseDieResult, wp)) sprayJam = { face: baseDieResult, at: sprayJamFace(wp) };
       }
       let deflagrateHit = false;

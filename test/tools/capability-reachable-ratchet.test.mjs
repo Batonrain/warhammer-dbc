@@ -85,7 +85,8 @@ const ALLOWED = {
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат
   // имена массивом, литерала в вызове itemHasName анализатор не видит).
-  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен",
+  // С 21.11.2026 литерал есть: hasItemNamed(actor, "Flyer") в Пролётом
+  // (combat/moritat-talents.mjs) — исключение снято.
 
   // Чистый Разум (module/rules/training-advantage.mjs::hasClearMind, курс
   // Обучения): включатель — имя Черты через itemHasName внутри hasItem(actor,
@@ -148,8 +149,6 @@ const ALLOWED = {
   // указателя `reader` на настоящий код. Скакуны (mount) читают имена Черт
   // из rules/mount.mjs / combat/mount.mjs, остальные — по именам в своих модулях.
   "trait.elitnyeArhetipy.sukkub.brutalChargeWsB": "включается по имени Черты (Brutal Charge (WS.b) / Жестокий Натиск), combat/attack.mjs brutalChargeDamageBonus — ключа Конструктора нет",
-  "trait.elitnyeArhetipy.gerold.delegate": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.gerold.noblesseOblige": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.dlanArhonta.equalizeTheOdds": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.dlanArhonta.establishedRole": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.multipleArms":"включается по имени Черты (Multiple Arms / Многорукий), rules/hands.mjs isMultipleArmsTrait — флага нет",
