@@ -4710,23 +4710,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Коготь_Варпа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kogotVarpa.rift": {
     label: "Впиваясь в разлом реальности, обрушивает его внутрь себя, вызывая взрыв Варп-энергий. Когда открывает разрыв в Варп,",
-    source: "Rift / Разлом", reader: ""
+    source: "Rift / Разлом", reader: "module/combat/warp-talon-talents.mjs::useRift (кнопка Таланта), rules/warp-talon-talents.mjs::riftDice/riftSummons/riftHits"
   },
   "elite.elitnyeArhetipy.kogotVarpa.speedOfThought": {
     label: "Расстояние и время лишены смысла в Варпе. Находясь в Варпе, может потратить полное действие и пройти тест Navigation(Warp)+0,",
-    source: "Speed of Thought / Со Скоростью Мысли", reader: ""
+    source: "Speed of Thought / Со Скоростью Мысли", reader: "module/combat/warp-talon-talents.mjs::useSpeedOfThought (только в Варпе — rules/warp-talon-talents.mjs::inWarp)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.vulture": {
     label: "Может восстанавливать мистические силы, поглощая частицы души жертвы после смерти. Получает ½Cor.b (окр.▲) дополнительных Очков Бесчестия,",
-    source: "Vulture / Стервятник", reader: ""
+    source: "Vulture / Стервятник", reader: "пул resourcePool «vulture» на Таланте; трата — module/combat/warp-talon-talents.mjs::useVeilRender/useRift (payVeil)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpFlash": {
     label: "Раны в реальности, открываемые Когтями Варпа, выпускают наружу противоестественный не-свет, пожирающий обычное освещение.",
-    source: "Warp Flash / Варп Вспышка", reader: ""
+    source: "Warp Flash / Варп Вспышка", reader: "module/combat/warp-talon-talents.mjs::warpFlash (из useVeilRender на входе и выходе)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpTrail": {
     label: "Может преследовать жертв по следу, что оставляют их души. Может пройти тест Awareness−30,",
-    source: "Warp Trail / Варп-След", reader: ""
+    source: "Warp Trail / Варп-След", reader: "module/combat/warp-talon-talents.mjs::useWarpTrail, rules/warp-talon-talents.mjs::warpTrailMod"
   },
   // ── Элитные_архетипы\Колдун_Рубрики — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.koldunRubriki.infernalShells": {
@@ -6620,7 +6620,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Коготь_Варпа — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogotVarpa.veilRender": {
     label: "Потратив Очко Бесчестия и полудействие, может разорвать когтями реальность и нырнуть в Варп по ту сторону.",
-    source: "Veil Render / Разрыватель Завесы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Veil Render / Разрыватель Завесы", reader: "module/combat/warp-talon-talents.mjs::useVeilRender (активация до конца боя/сцены = в Варпе; запись trait Unnatural Senses «Когда включено»)"
   },
   "trait.elitnyeArhetipy.kogotVarpa.vorpalClaws": {
     label: "Руки и ноги искажаются в длинные когти, потрескивающие энергией Варпа. Считаются Когтями с профилем: Когти.P, Rng 1, Dmg 1d10+4 R, Pen 7,",
