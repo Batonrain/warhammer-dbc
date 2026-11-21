@@ -42,6 +42,7 @@ import { hasAbility } from "../../rules/ability-by-key.mjs";
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
 import { sightEffectsOf } from "../../rules/sight-effects.mjs";
+import { sightAiming } from "../../rules/autosense-jacks.mjs";
 import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
 import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
 import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
@@ -358,7 +359,8 @@ export function situationalMods(v) {
   // Слабый свет/Тьма и Дым гасятся раздельно.
   {
     const mods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
-    const aiming = actor?.system?.aiming;
+    // Порты Авточувств (rules/autosense-jacks.mjs): прицелы и без Прицеливания.
+    const aiming = sightAiming(mods, actor?.system?.aiming);
     const why = {
       light: lightPenaltyImmunityReason(actor, mods, { aiming }),
       smoke: smokePenaltyImmunityReason(actor, mods, { aiming })
@@ -715,12 +717,14 @@ export function situationalMods(v) {
   // половины одной фразой) снимают −10. Запрет «Высокая высота» они НЕ
   // снимают — это не штраф (вопрос владельцу в тикете).
   if (!isMelee) {
-    const aiming = actor?.system?.aiming;
+    const activeMods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
+    // Порты Авточувств (rules/autosense-jacks.mjs): прицелы и без Прицеливания.
+    const aiming = sightAiming(activeMods, actor?.system?.aiming);
     const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
       ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
     // Предсказатель Движения или Омни-Прицел (rules/sight-effects.mjs): подпись — имя самого прицела.
     const predictor = (!!aiming && aiming !== "none" && weapon)
-      ? getActiveMods(actor, weapon, { profile: weaponProfile }).find(m => !!sightEffectsOf(m).aimIgnoresRunning)
+      ? activeMods.find(m => !!sightEffectsOf(m).aimIgnoresRunning)
       : null;
     const why = tracking ? "Прицел на Упреждение"
       : predictor ? (String(predictor.name ?? "").split("/").pop().trim() || "Предсказатель Движения") : null;
@@ -731,8 +735,9 @@ export function situationalMods(v) {
   // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
   // приёмом, что Зенитное гасит «Цель бежит» (выше).
   if (!isMelee) {
-    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [],
-                                        { aiming: actor?.system?.aiming });
+    const rangeMods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
+    const why = longRangeImmunityReason(actor, rangeMods,
+                                        { aiming: sightAiming(rangeMods, actor?.system?.aiming) });
     if (why) {
       for (const m of specificMods) {
         if ((m.label === "Дальняя дистанция" || m.label === "Экстремальная дистанция") && !m.immune) {

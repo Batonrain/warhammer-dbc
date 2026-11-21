@@ -276,6 +276,7 @@ import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
 import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
 import { minionPatronUpdate } from "./rules/minion-patron.mjs";
 import { isDaemonicArmament } from "./rules/daemonic-armament.mjs";
+import { jacksToDisconnect } from "./rules/autosense-jacks.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -5989,6 +5990,16 @@ function _attachFateContextMenu(message, html) {
     if (userId === game.user?.id && changes?.system?.active === false) {
       await promptDisabledArmourForkTest(item.actor);
     }
+  });
+
+  // Порты Авточувств (rules/autosense-jacks.mjs): «при складывании оружия
+  // провода отстреливаются… при каждом взятии в руки нужно вставлять заново» —
+  // снятое «Снаряжено» или «Хранится» отключает порты этого оружия. Правит
+  // только клиент, внёсший правку.
+  Hooks.on("updateItem", (item, changes, options, userId) => {
+    if (userId !== game.user?.id || item.type !== "weapon" || !item.actor) return;
+    for (const m of jacksToDisconnect(item.actor, item, changes))
+      m.update({ "system.active": false }).catch(() => {});
   });
 
   // Демоническое Вооружение (rules/daemonic-armament.mjs): «если персонаж

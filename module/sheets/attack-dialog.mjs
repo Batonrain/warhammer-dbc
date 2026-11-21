@@ -43,6 +43,7 @@ import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods,
 import { hasRuleFlag }                        from "../rules/flags.mjs";
 import { volleyThrowApplies, VOLLEY_ROF_MIN, VOLLEY_ROF_MAX, balearicSbBonus, thrownRange } from "../rules/throwing-talents.mjs";
 import { sightEffectsOf }                     from "../rules/sight-effects.mjs";
+import { sightAiming }                        from "../rules/autosense-jacks.mjs";
 import { unstablePlatformPenalty, plasmaMasteryBlastChoice } from "../rules/damage-talents.mjs";
 import { MAXIMAL_RNG_BONUS }                  from "../rules/maximal-mode.mjs";
 import { RIPOSTE_EVASION_PENALTY, stockGripActive } from "../rules/melee-talents.mjs";
@@ -1857,7 +1858,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Полу-/Полного Прицеливания» — только Коллиматорный Прицел реально
       // подключён (aimAttackMod), остальные упираются в отдельные пробелы
       // (wdbc-1rno.29/.31/.36/.37/.38).
-      { label: "Прицел (пока Прицеливаюсь)", value: (currentAiming === "none" || f.onThisMark) ? 0
+      // Порты Авточувств (rules/autosense-jacks.mjs): прицел работает и без Прицеливания.
+      { label: "Прицел (пока Прицеливаюсь)", value: (sightAiming(installedMods, currentAiming) === "none" || f.onThisMark) ? 0
         : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) },
       // Команды и Шок (ruleAutoMods выше) — в базе, а не в modParts: как и в
       // диалоге броска навыка (actor-sheet.mjs), автоматические модификаторы

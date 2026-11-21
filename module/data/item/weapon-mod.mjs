@@ -33,6 +33,10 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
       // (combat/weapon-mods.mjs::modWornRequirementMet), не отдельное поле.
       // Не путать с requirement выше — то текст «на что ставится/как установить».
       requiresWorn: stringList("Работает, только пока на персонаже есть"),
+      // Включаемый мод (Порты Авточувств: «подключено», rules/autosense-jacks.mjs) —
+      // та же пара, что у Модификаций брони (data/item/armor-mod.mjs).
+      activatable:  new BooleanField({ initial: false, label: "Включаемая" }),
+      active:       new BooleanField({ initial: false, label: "Включена" }),
       installedOn:  new StringField({ initial: "", label: "Установлена на" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
       // Хранится не при себе (wdbc-6rj) — не учитывается в Нагрузке; см.
