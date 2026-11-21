@@ -118,6 +118,8 @@ import { musicDeg, symphonyProps } from "../rules/battle-music.mjs";
 import { twinFateWorse } from "../rules/twin-fate.mjs";
 import { hasItemNamed } from "../rules/req-atom.mjs";
 import { dimacherusBonus } from "../rules/gladiator-talents.mjs";
+import { destructorPenBonus, meleeShotClass } from "../rules/secutor-talents.mjs";
+import { noteSustainedAssault } from "./secutor.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -1499,8 +1501,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const weaponTechBonus = weaponTech.bonus;
   // Охотник на Танки (rules/tank-hunter.mjs): +2×I.b к Pen против опознанной в этом бою модели техники.
   const tankHunter = tankHunterForAttack(actor, { isMelee, targetActor: defenderActor });
+  // Деструктор (Секутор, rules/secutor-talents.mjs): +½I.b к Pen, пока работает Структурный Анализ, по высокотехнологичной цели.
+  const destructorPen = destructorPenBonus(actor, { targetActor: defenderActor, combatId: combatIdOf(actor), intBonus: chars.int?.bonus,
+    structural: hasRuleFlag(actor, STRUCTURAL_ANALYSIS_CAP) && structuralAnalysisBonus({ selective: !!aimTarget?.value, single: isMelee || rofMode === "single", intBonus: chars.int?.bonus }) > 0 });
+  // Непрерывный Натиск (Секутор): запомнить цель — следующая атака по ней получит +3 за каждую предыдущую подряд.
+  if (opts.forcedRoll == null) await noteSustainedAssault(actor, defenderActor);
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen + runic.pen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen + runic.pen + destructorPen,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen + reliable.pen
   });
 
@@ -1737,6 +1744,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     (!isMelee && wp.spray && ashMantleActive(actor)) ? ashMantleNote(actor) : "",
     (isMelee && hit && fistfulActive(actor)) ? fistfulNote(actor, defenderActor) : "",
     twinFateNote,
+    (hit && destructorPen) ? `⚙️ Деструктор: +${destructorPen} к Pen (½I.b при Структурном Анализе, уже учтено).` : "",
     (hit && dimacherus) ? `⚔️ Димахер: +${dimacherus} к урону каждого попадания (очки Момента, уже в формуле).` : "",
     galvanicResonanceOn(actor, { item, isMelee, hit, aimed: !!aiming && aiming !== "none" })
       ? galvanicResonanceText(defenderActor?.system?.absorption, Array.from({ length: Math.max(1, hitsCount || 0) }, (_, i) => locForHit(i)), LOCATION_TO_ARMOR) : "",
@@ -2251,7 +2259,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (но не в рукопашной) получают −20.
   const scatterDodgePenalty = (wp.scatter && !isMelee && !opts.meleeShot && (opts.shortRange || opts.pointBlank)) ? -20 : 0;
   const meleeShotDodgeBonus = techOpts.targetDodgeMod
-    ?? ((opts.meleeShot && sys.weaponClass !== "pistol" && !gunGuardCancelsDodgeBonus(actor, item)) ? (wp.carbine ? 10 : 30) : 0);
+    ?? ((opts.meleeShot && meleeShotClass(actor, item, { noMeleeFire: !!wp.noMeleeFire }).cls !== "pistol" && !gunGuardCancelsDodgeBonus(actor, item)) ? (wp.carbine ? 10 : 30) : 0);
 
   // Скрытая атака (стр. 12, wdbc-x1nz.2.29): «Избегание невозможно от атаки,
   // о которой цель не знает» — атакующий сам объявляет это галочкой в окне

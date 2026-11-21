@@ -40,8 +40,9 @@ describe("Черты, ждущие подсистему", () => {
   // записи Конструктора и читателя «ЧАСТИЧНО»; 20.11.2026 — Кортекс Малагры
   // (множитель Успехов, successMul); 20.11.2026 Живой Стяг и Повелитель Червей
   // получили свои кнопки (combat/living-banner.mjs, combat/worm-master.mjs).
-  it("17 Черт, у каждой в читателе номер задачи Sahara", () => {
-    expect(waiting).toHaveLength(17);
+  // 21.11.2026 (пачка mech2): Фрейм Паладина получил механику — 17 → 16.
+  it("16 Черт, у каждой в читателе номер задачи Sahara", () => {
+    expect(waiting).toHaveLength(16);
     for (const [k, v] of waiting) expect(v.reader, k).toMatch(/task-[0-9a-f]{4}/);
   });
 });

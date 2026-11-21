@@ -5,10 +5,12 @@
 // ничего, что ведёт обратно к sources.mjs (AGENTS.md, «циклы импорта»).
 
 import { paradoxVeilRules } from "./tech-assassin.mjs";
+import { secutorRules } from "./secutor-talents.mjs";
 
 /** Правила пачки для броска актора (actor, ctx). */
 export function mech2Rules(actor, ctx = {}) {
   return [
-    ...paradoxVeilRules(actor, ctx)
+    ...paradoxVeilRules(actor, ctx),
+    ...secutorRules(actor, ctx)
   ];
 }

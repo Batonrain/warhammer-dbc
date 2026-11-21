@@ -45,6 +45,7 @@ import { sightEffectsOf } from "../../rules/sight-effects.mjs";
 import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
 import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
 import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
+import { meleeShotClass } from "../../rules/secutor-talents.mjs";
 
 /** Подписи диспозиции токена — для примечания «Связан в Рукопашной». */
 const DISPOSITION_LABELS = { "-2": "Тайный", "-1": "Враждебный", 0: "Нейтральный", 1: "Дружественный" };
@@ -89,6 +90,8 @@ export function situationalMods(v) {
     // Профиль атаки (Тандем: моды встроенного оружия действуют и на гасители штрафов — combat/weapon-mods.mjs).
     weaponProfile = null,
   } = v;
+  // Мирмидон (Секутор): винтовка — как пистолет, тяжёлое/длинная винтовка — как винтовка в стрельбе в рукопашной.
+  const meleeShot = meleeShotClass(actor, weapon, { noMeleeFire: !!wp?.noMeleeFire });
 
   // Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
   // 428), второе предложение: «В первый Раунд боя оружие может атаковать
@@ -552,8 +555,8 @@ export function situationalMods(v) {
     // связан в ближнем бою» — штрафа за стрельбу в рукопашной нет (Sahara pyromaniac-20 п.3); бонус Уклонения
     // цели (meleeShotDodgeBonus, attack.mjs) не тронут.
     { id: "atk-melee-shot", label: "Стрельба в рукопашную",
-      value: (weapon?.system?.weaponClass === "pistol" || pointBlankForced) ? 0 : -20,
-      note: weapon?.system?.weaponClass === "pistol" ? "Пистолет: без штрафов в рукопашную"
+      value: (meleeShot.cls === "pistol" || pointBlankForced) ? 0 : -20,
+      note: meleeShot.cls === "pistol" ? (meleeShot.myrmidon ? "Мирмидон: винтовка как пистолет — без штрафов в рукопашную" : "Пистолет: без штрафов в рукопашную")
         : pointBlankForced ? "Штыковая Атака: выстрел как в упор, без штрафа за стрельбу в рукопашной" : undefined },
     // Связан в Рукопашной (стр. 30, wdbc-x1nz.2.64): полный запрет стрелять в
     // цели ВНЕ рукопашной, если стрелок сам заперт врагом с рукопашным
@@ -591,11 +594,12 @@ export function situationalMods(v) {
     // weaponClass "heavy" гейтится напрямую, без отдельного флага в паке.
     { label: "Тяжёлое/Длинная Винтовка: нельзя стрелять в рукопашную",
       value: 0,
-      autofail: weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire,
-      immune: !(weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire),
+      autofail: meleeShot.noMeleeFire,
+      immune: !meleeShot.noMeleeFire,
       autoCheck: !!measured?.contact && measured.contact !== "none",
-      note: (weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire)
-        ? "класс оружия не допускает стрельбу в ближнем бою (стр. 40)" : undefined },
+      note: meleeShot.noMeleeFire
+        ? "класс оружия не допускает стрельбу в ближнем бою (стр. 40)"
+        : meleeShot.myrmidon ? "Мирмидон: считается винтовкой — стрелять в рукопашной можно" : undefined },
     // Стр. 40: «Стрельба в ближнем бою считается дистанцией в упор, но имеет
     // модификатор на попадание +0, как будто это боевая дистанция» — контакт
     // Баз (measured.contact, tactical-map.mjs::measureTokens) уже даёт

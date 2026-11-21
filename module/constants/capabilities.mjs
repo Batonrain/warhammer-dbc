@@ -5091,7 +5091,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Секутор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.sekutor.destructor": {
     label: "Структурные анализаторы способны заметить мельчайшую слабину в броне. Может потратить Очко Бесчестия,",
-    source: "Destructor / Деструктор", reader: ""
+    source: "Destructor / Деструктор", reader: "module/combat/secutor.mjs::useDestructor (кнопка, 1 Очко Бесчестия) → rules/secutor-talents.mjs::destructorPenBonus → combat/attack.mjs Pen"
   },
   "elite.elitnyeArhetipy.sekutor.fusillade": {
     label: "Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых (считается сам). Вручную: тяжёлое оружие в баллистическом механодендрите без штрафов.",
@@ -5099,19 +5099,19 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.sekutor.gunzerker": {
     label: "Холодная ненависть Секутора более контролируема, чем у биологических существ. В начале Хода может пройти тест W+0,",
-    source: "Gunzerker / Берсерк-Стрелок", reader: ""
+    source: "Gunzerker / Берсерк-Стрелок", reader: "module/combat/secutor.mjs::useGunzerker (тест W+0) → rules/secutor-talents.mjs::secutorRules (Ненависть +10 в стрельбе, источник eliteMech2)"
   },
   "elite.elitnyeArhetipy.sekutor.myrmidon": {
     label: "Интегрировал боевые алгоритмы суб-ордена Мирмидонов. Может считать винтовки пистолетами,",
-    source: "Myrmidon / Мирмидон", reader: ""
+    source: "Myrmidon / Мирмидон", reader: "module/rules/secutor-talents.mjs::meleeShotClass → sheets/attack/mods.mjs (стрельба в рукопашной) и combat/attack.mjs (бонус Уклонения цели)"
   },
   "elite.elitnyeArhetipy.sekutor.ordinator": {
     label: "Мощные внутренние гироскопы всегда удерживают его на ногах. Не может быть сбит с ног,",
-    source: "Ordinator / Ординатор", reader: ""
+    source: "Ordinator / Ординатор", reader: "module/rules/secutor-talents.mjs::ordinatorStands → rules/condition-guards.mjs (иммунитет к «Сбит с ног») и combat/status-resist.mjs (исключение — рукопашный приём того, кто больше)"
   },
   "elite.elitnyeArhetipy.sekutor.sustainedAssault": {
     label: "С каждой атакой вносит правки в боевые алгоритмы, подстраиваясь под цель. Если атакует одну и ту же цель несколько раз подряд без переключен…",
-    source: "Sustained Assault / Непрерывный Натиск", reader: ""
+    source: "Sustained Assault / Непрерывный Натиск", reader: "module/rules/secutor-talents.mjs::sustainedAssaultBonus (источник eliteMech2, +3 за атаку подряд); счёт — combat/secutor.mjs::noteSustainedAssault из combat/attack.mjs"
   },
   // ── Элитные_архетипы\Сибарит — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.sibarit.dracon": {
@@ -6861,7 +6861,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.sekutor.paladinFrame": {
     label: "Фрейм почти полностью заменяет тело, оставляя головной и спинной мозг. Оборудован всеми кибернетическими чувствами Best.Q,",
-    source: "Paladin Frame / Фрейм Паладина", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-66c1 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Paladin Frame / Фрейм Паладина", reader: "ЧАСТИЧНО (21.11.2026): запись Конструктора kind:talent выдаёт Stonewall / Стена; бионика Best.Q — Хирургикон вручную"
   },
   "trait.elitnyeArhetipy.sekutor.structuralAnalysis": {
     label: "Церебральные импланты позволяют определять слабые места в любой структуре и поражать их. Проводя одиночную Избирательную атаку,",
