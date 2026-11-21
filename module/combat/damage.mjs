@@ -1,5 +1,6 @@
 // module/combat/damage.mjs
 
+import { chainShieldIntercept } from "./wild-psyker.mjs";
 import { momentumOnDamage } from "./momentum.mjs";
 import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
 import { isDaemonActor } from "../rules/predicates.mjs";
@@ -993,6 +994,12 @@ export async function applyDamageToActor(actor, damageData) {
   // называет подвид, а не жёстко на нём завязан код.
   if (damageSubtype && !ignoreSubtypeImmunity
       && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
+
+  // Щит Цепей (Дикий Псайкер, combat/wild-psyker.mjs): попадание бьёт по Ранам Щита
+  // (AP бPR, поглощение W.b); игнорируют его те, кто игнорирует чародейский щит-купол.
+  const chainShield = await chainShieldIntercept(actor, { rawDamage, penetration, weaponName,
+    ignored: ignoreShield || ignoreDomeShields || sanctified });
+  if (chainShield.handled) return;
 
   // Прикрытие Головы (Талант Стойкости): раз в Раунд попадание в голову можно
   // перенести на руку. Здесь, а не раньше: попадание, которое щит аннулировал или

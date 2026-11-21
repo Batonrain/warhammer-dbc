@@ -63,6 +63,7 @@ import { sharedFormationInitBonus } from "./combat-formation.mjs";
 import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 import { woundSustainSplit } from "./wound-in-reality.mjs";
+import { applyAlacritySkills } from "./wild-psyker-talents.mjs";
 import { quadrupedMultiplier } from "./quadruped.mjs";
 
 /**
@@ -1024,6 +1025,8 @@ export function prepareCharacterDerived(actor, system) {
       // вроде «Внимательный к деталям»), а не прибавка от снаряжения.
       sk.total = charVal + rankBonus + (Number(sk.mod) || 0);
     }
+    // Цепи Стремительности (Дикий Псайкер): W вместо A в Acrobatics и Dodge.
+    applyAlacritySkills(actor, skills, chars);
 
     // ── Групповые навыки ──────────────────────────────────────────────────
     const groupSkills = system.groupSkills || {};

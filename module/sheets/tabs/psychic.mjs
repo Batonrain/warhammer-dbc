@@ -75,6 +75,8 @@ import { warpLockBlocksManifest } from "../../rules/warp-lock.mjs";
 import { hasPsychicLocus, locusUsable } from "../../rules/psychic-locus.mjs";
 import { locusHere, spendPsychicLocus } from "../../combat/psychic-locus.mjs";
 import { warpLockButtonsHtml, applyWarpLock, resetWarpLockHour, clearWarpLockMark } from "../../combat/warp-lock.mjs";
+// Элитные архетипы-псайкеры (Архимаг, Дикий Псайкер, Чернокнижник, Кенетаи…): точки окна манифестации.
+import { eliteManifestGate, eliteManifestEpr, eliteManifestRoll, eliteExtraPeril, eliteManifestAfter } from "../../combat/psyker-elite-hooks.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -819,6 +821,8 @@ export async function executePsychotest(actor, item, opts) {
   // Манифест. PR с учётом модификатора (таланты/ситуации: PR±N), мин. 0.
   const prMod = opts.prMod || 0;
   const mPR   = Math.max(0, (opts.mPR || 0) + prMod);
+  const eliteGate = eliteManifestGate(actor, item, opts, { mPR });
+  if (eliteGate) { ui.notifications.warn(`⚠️ ${actor.name}: «${item.name}» — ${eliteGate}`); return; }
   // Психическое Возрождение (rules/psyker-talents.mjs): mPR выше потолка тPR —
   // только за Очко Бесчестия, метка живёт до начала следующего Хода. Нет Очка —
   // манифестации нет (spendCapabilityCost уже сказал об этом игроку).
@@ -922,6 +926,8 @@ export async function executePsychotest(actor, item, opts) {
   } else if (opts.spite && hasPsychicSpite(actor)) {
     talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;color:#a33;">Психическая Злоба не применена: цель не из Ненавистных.</div>`);
   }
+  // Элитные архетипы: Пламя Сердца / Мощь Переполняет (эPR), Чародейский Посох (Порог).
+  ePR = await eliteManifestEpr(actor, item, opts, ePR, talentLines);
   const eprTest = ePR + (spiteChoice === "test" ? PSYCHIC_SPITE_BONUS : 0);
   const conduitRolls = [];
   if (opts.conduit && hasWarpConduit(actor)) {
@@ -1088,6 +1094,8 @@ export async function executePsychotest(actor, item, opts) {
     success = true;
     deg = Math.max(1, mPR);
   }
+  // Варп-Танцор (Чернокнижник): второй бросок A, берётся худший.
+  ({ success, deg } = await eliteManifestRoll(actor, item, opts, { success, deg, rv }, talentLines, allRolls));
 
   // ── Будет ли Феномен — решается СРАЗУ после психотеста ────────────────────
   // Раньше определялось ниже, прямо перед броском Феномена. Вынесено сюда
@@ -1491,6 +1499,10 @@ export async function executePsychotest(actor, item, opts) {
         </div>`;
     phenSection += warpLockButtonsHtml(actor);
   }
+  // Мощь Переполняет (Дикий Псайкер): Варп-Прорыв сверх обычных Феноменов/Прорывов.
+  const eliteExtra = await eliteExtraPeril(actor, opts, allRolls);
+  if (eliteExtra) { phenSection += eliteExtra + warpLockButtonsHtml(actor); perilTriggered = true; forcedPeril = true; }
+  talentLines.push(...await eliteManifestAfter(actor, item, opts, { success, deg, ePR, phenomena, perilTriggered }));
 
   // ── Варп-Шок: не-Хаоситы получают Порчу при Феномене (1d5 при Прорыве) ──────
   let warpShockSection = "";

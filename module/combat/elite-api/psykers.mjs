@@ -5,4 +5,6 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { WILD_PSYKER_API } from "../wild-psyker.mjs";
+
+export const API = { ...WILD_PSYKER_API };

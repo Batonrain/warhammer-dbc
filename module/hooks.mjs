@@ -175,6 +175,7 @@ import { sweepTimedEffects, onTimedEffectExpired, clearDreadWailFear } from "./c
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollConditionCharTest } from "./combat/condition-ticks.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
+import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -5705,6 +5706,8 @@ function _attachFateContextMenu(message, html) {
       // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
       // тактом, что и регенерация Аблативных Ран выше.
       await processSigilliteRunesTurnStart(nextCombatant.actor);
+      // Щит Цепей (Дикий Псайкер): регенерация тPR/бPR и метки Талантов «до следующего Хода».
+      await processWildPsykerTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.

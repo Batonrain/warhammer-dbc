@@ -4440,31 +4440,31 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Дикий_Псайкер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.dikiyPsayker.chainsOfAlacrity": {
     label: "Фокусируя волю на движительных рунах Цепей, перемещается с пугающей скоростью. В начале своего Хода, сразу после регенерации Щита,",
-    source: "Chains of Alacrity / Цепи Стремительности", reader: ""
+    source: "Chains of Alacrity / Цепи Стремительности", reader: "module/combat/wild-psyker.mjs::useChainsOfAlacrity (кнопка); rules/wild-psyker-talents.mjs::applyAlacritySkills/alacrityFlightSpd → rules/character.mjs, character/movement.mjs"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.chainScars": {
     label: "Воспалённая плоть вокруг соединений Порванных Цепей укреплена порчей. Когда получает урон в Характеристики от Трейтов и Талантов этого Архет…",
-    source: "Chain Scars / Шрамы Цепей", reader: ""
+    source: "Chain Scars / Шрамы Цепей", reader: "module/combat/wild-psyker.mjs::chainSelfDamage (тест Cor+10 на урон в Характеристики от архетипа)"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.deathEater": {
     label: "Порванные Цепи собирают эхо психической энергии от смерти. Если с начала его предыдущего Хода в пределах Cor м умер хотя бы один разумный пе…",
-    source: "Death Eater / Пожиратель Смерти", reader: ""
+    source: "Death Eater / Пожиратель Смерти", reader: "module/combat/wild-psyker.mjs::useDeathEater (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.heartFire": {
     label: "Может перегрузить Цепи, выжав из себя дополнительную психическую силу ценой ускоренного отторжения.",
-    source: "Heart Fire / Пламя Сердца", reader: ""
+    source: "Heart Fire / Пламя Сердца", reader: "module/combat/wild-psyker.mjs::useHeartFire → combat/psyker-elite-hooks.mjs::eliteManifestEpr"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.powerOverwhelming": {
     label: "Высвобождая всю накопленную энергию Цепей, обрушивает психическую мощь апокалиптической силы. Если Щит имеет полный запас Ран,",
-    source: "Power Overwhelming / Мощь Переполняет", reader: ""
+    source: "Power Overwhelming / Мощь Переполняет", reader: "module/combat/wild-psyker.mjs::usePowerOverwhelming → combat/psyker-elite-hooks.mjs::eliteManifestEpr/eliteExtraPeril"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.residualAbsorption": {
     label: "Учится втягивать в щит остаточные энергии развеянных психосил. Когда в пределах W.b м от него развеивается поддерживаемая психосила,",
-    source: "Residual Absorption / Остаточное Поглощение", reader: ""
+    source: "Residual Absorption / Остаточное Поглощение", reader: "module/combat/wild-psyker.mjs::onPsyPowerPreUpdate (хук preUpdateItem, warhammer-dbc.mjs)"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.witheringCharge": {
     label: "Убийственное касание Цепей иссушает искру жизни, чтобы быстро восстановить заряд Щита. В любой момент, даже вне своего Хода,",
-    source: "Withering Charge / Иссушающий Заряд", reader: ""
+    source: "Withering Charge / Иссушающий Заряд", reader: "module/combat/wild-psyker.mjs::useWitheringCharge → chainShieldIntercept (AP и W.b ×2)"
   },
   // ── Элитные_архетипы\Длань_Архонта — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.dlanArhonta.archsybarite": {
