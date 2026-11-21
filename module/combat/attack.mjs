@@ -131,6 +131,7 @@ import { PIERCING_SHOT_FLAG, hasTimedExplosion, runicArtilleryActive, runicFligh
 import { bronenosetsWeaponBonus } from "../rules/bronenosets-talents.mjs";
 import { possessionWeaponGiftDamage } from "../rules/possession-weapon-gifts.mjs";
 import { livingArsenalWeapon } from "../rules/obliterator-talents.mjs";
+import { coilsBrutalCharge } from "../rules/electropriest.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -1586,8 +1587,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (текст Черты: «при совершении Натиска или Верховой Атаки»). rofMode у
   // рукопашной всегда "melee" (база живёт в opts.baseKey из диалога) —
   // прежний гейт rofMode==="charge" не срабатывал никогда.
+  // Катушки Электрожреца без одежды: Brutal Charge (½W.b) рукопашному E(El) (rules/electropriest.mjs).
   const chargeBonus = (isMelee && (baseIsCharge(opts.baseKey) || baseIsMountedAttack(opts.baseKey)))
-    ? brutalChargeDamageBonus(actor) : 0;
+    ? brutalChargeDamageBonus(actor) + coilsBrutalCharge(actor, { isMelee, damageSubtype: ammoDmgSubtype || effDmgSubtype }) : 0;
   // Кровавое Пламя (wdbc-1rno): +2 Dmg за каждого убитого этим оружием с
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.

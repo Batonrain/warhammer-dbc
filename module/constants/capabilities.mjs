@@ -7028,7 +7028,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Электрожрец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": {
     label: "Сеть накопителей и эмиттеров расходится через тело от блока священных машин на спине;",
-    source: "Electropriest Coils / Катушки Электрожреца", reader: "ЧАСТИЧНО (21.11.2026): rules/electropriest.mjs — максимум заряда (character/final-pools.mjs), SPD (character/movement.mjs), Инициатива, Уклонение/Внимательность (источник eliteMech2), Компенсатор и Люминен (sheets/tabs/tech.mjs); кнопки combat/electropriest.mjs. Одежда без AP и Brutal Charge — ГМ"
+    source: "Electropriest Coils / Катушки Электрожреца", reader: "ЧАСТИЧНО (21.11.2026): rules/electropriest.mjs — максимум заряда (character/final-pools.mjs), SPD (character/movement.mjs), Инициатива, Уклонение/Внимательность (источник eliteMech2), Компенсатор и Люминен (sheets/tabs/tech.mjs), Brutal Charge (½W.b) рукопашному E(El) (combat/attack.mjs::coilsBrutalCharge); кнопки combat/electropriest.mjs. Одежда без AP — ГМ"
   },
   "trait.elitnyeArhetipy.elektrozhrets.motiveStimulation": {
     label: "Считает S, T и A дружественными Характеристиками независимо от Покровительства, за счёт постоянной электростимуляции мышц, придающей тонус,",

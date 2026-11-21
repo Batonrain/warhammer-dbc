@@ -18,7 +18,8 @@
 //    • SPD — rules/character/movement.mjs (coilsSpeedBonus);
 //    • Инициатива — rules/character/final-pools.mjs (coilsInitiativeBonus);
 //    • Уклонение и Внимательность — источник eliteMech2 (electropriestRules);
-//    • Компенсатор и Люминен — sheets/tabs/tech.mjs (coilsTechBonus).
+//    • Компенсатор и Люминен — sheets/tabs/tech.mjs (coilsTechBonus);
+//    • Brutal Charge рукопашного E(El) — combat/attack.mjs (coilsBrutalCharge).
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasItemNamed } from "./req-atom.mjs";
@@ -95,6 +96,16 @@ export const coilsEnergyMaxBonus = actor => (coilsOn(actor) ? wpBonus(actor) : 0
 export const coilsSpeedBonus = actor => (bareOn(actor) ? energyOf(actor) : 0);
 /** Без одежды: +W.b к Инициативе. */
 export const coilsInitiativeBonus = actor => (bareOn(actor) ? wpBonus(actor) : 0);
+
+/**
+ * Без одежды: «Трейт Brutal Charge (½W.b, окр.▲) для рукопашного оружия E(El)
+ * Dmg». Гейт Натиска/Верховой Атаки — у вызывающего (combat/attack.mjs, как у
+ * самой Черты Brutal Charge).
+ */
+export function coilsBrutalCharge(actor, { isMelee = false, damageSubtype = "" } = {}) {
+  if (!isMelee || damageSubtype !== "electrical" || !bareOn(actor)) return 0;
+  return Math.ceil(wpBonus(actor) / 2);
+}
 
 /** Техночудо Люминен (подвид в паке). */
 export const isLuminen = power => power?.type === "techPower" && /люминен|luminen/i.test(String(power.system?.subtype ?? ""));
