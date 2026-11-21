@@ -119,6 +119,7 @@ export function activateCraftListeners(root, sheet) {
   on(craftRoot, "[name=critloss]", "change", e => upd(e.currentTarget, p => p.critLoss = craftCritLossBase(e.target.value)));
   on(craftRoot, "[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
   on(craftRoot, "[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
+  on(craftRoot, "[name=mutantfit]", "change", e => upd(e.currentTarget, p => { p.mutantFit = e.target.checked; p.baseBank = null; }));
   on(craftRoot, "[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
   on(craftRoot, "[name=hookup]", "change", e => upd(e.currentTarget, p => p.hookUp = e.target.checked));
   on(craftRoot, "[name=dicemode]", "change", e => upd(e.currentTarget, p => p.diceMode = e.target.value));

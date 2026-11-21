@@ -364,16 +364,18 @@ export function requisitionModifier({ rarity = 0, quantity = 1, quality = "commo
  * @param {string}  [o.place]       место реквизиции узла (ключ из constants/requisition-places.mjs,
  *   «Таблица Модификаторов реквизиции»); только в режиме узла; не задано — Цивилизованный мир
  * @param {object}  [o.placeFlags]  условия места, отмеченные в окне ({suzerain: true, …})
+ * @param {boolean} [o.mutantFit]   броня на заказ под мутанта — Редкость +1 (core, «Броня и Мутации», wdbc-x1nz.4)
  */
 export function requisitionPlan(actor, { item = null, name = "", rarity, quantity = 1, quality = "common",
-  consumable, cls, local = 0, archonInf = null, node = false, nodeType, place, placeFlags = {} } = {}) {
+  consumable, cls, local = 0, archonInf = null, node = false, nodeType, place, placeFlags = {}, mutantFit = false } = {}) {
   const baseRaw = rarity === undefined ? itemRarity(item) : rarity;
   const unrated = baseRaw == null;
   const baseRarity = unrated ? 0 : Number(baseRaw) || 0;
   const klass = { ...itemClass(item), ...(cls ?? {}) };
   // Место — только у узла корабля: таблица говорит «Редкость … узлов» и «Узлы недоступны».
   const where = node ? placeEffect(place, { item, actor, flags: placeFlags }) : null;
-  const shifts = [...rarityShifts(actor, klass), ...(where?.shifts ?? [])];
+  const shifts = [...rarityShifts(actor, klass), ...(where?.shifts ?? []),
+    ...(mutantFit && !node ? [{ id: "mutantFit", value: 1, label: "Броня на заказ под мутанта: Редкость +1" }] : [])];
   const eff = effectiveRarity(baseRarity, shifts);
   // Узлу Количество не нужно: один узел — одна покупка, ступень даёт тип узла.
   const isConsumable = node ? false : (consumable ?? isConsumableItem(item));

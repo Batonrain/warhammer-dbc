@@ -19,7 +19,8 @@
 import { CRAFT_CATEGORIES, CRAFT_QUALITY, CRAFT_TOOLS, RARITY_LABELS, RARITY_ORDER,
          RESEARCH_KINDS, CRAFT_MATERIALS, bankFromTable,
          buildAvailableSkills, findSkillOption, suggestOption,
-         computeCombined, bankFor, degreesOfSuccess, reqSkillLabel, POLYMATH_CHAIN_MAX } from "../constants/craft.mjs";
+         computeCombined, bankFor, degreesOfSuccess, reqSkillLabel, POLYMATH_CHAIN_MAX,
+         MUTANT_FIT_MOD, MUTANT_FIT_CATEGORIES, mutantFitBaseBank, mutantFitApplies } from "../constants/craft.mjs";
 import { craftIcon } from "../constants/craft-icons.mjs";
 import { VAT_QUALITY, BIO_TARGET_QUALITY, BIO_TEST_SKILLS, BIO_OUTCOMES,
          VAT_ENTRY_REQ, TEMPLATE_RESEARCH, vatPlan, failQuality,
@@ -229,15 +230,19 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // Прототипирование (Талант, 3-3a64): по журналу уже созданного (rules/craft-memory.mjs)
     // снимает -20 Улучшения у предмета, что создал/ассистировал, и вдвое режет множитель Банка.
     const proto = prototypingEffects(crafter, proj);
-    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: proj.improve && !proto.noImprovePenalty ? -20 : 0,
-      hookUpMod: hookUpCraftMod(crafter, proj) };
+    // Доводка брони под мутанта (wdbc-x1nz.4): +10 к тесту, свой Банк; Улучшение с ней не складывается.
+    const mutantFit = mutantFitApplies(proj, category?.key);
+    const improve = proj.improve && !mutantFit;
+    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: improve && !proto.noImprovePenalty ? -20 : 0,
+      hookUpMod: hookUpCraftMod(crafter, proj), mutantFitMod: mutantFit ? MUTANT_FIT_MOD : 0 };
     const combined = computeCombined(selectedOpts, mods);
 
     // Ремонт (wdbc-53of9): книга Банка ремонта не называет, таблица создания к нему не относится —
     // Банк вписывает игрок, пока он пуст, цели нет (bank = null) и ГОТОВО не наступает.
     const isRepair = proj.mode === "craft" && !!proj.repair;
     const repairNeedsBank = isRepair && proj.baseBank == null;
-    const tableBank = isResearch || isRepair ? null : bankFromTable(category, proj.rarity);
+    const tableBank = isResearch || isRepair ? null
+      : mutantFit ? mutantFitBaseBank(proj.rarity) : bankFromTable(category, proj.rarity);
     const notCraftable = !isResearch && !isRepair && tableBank === null && proj.baseBank == null;
     const baseBank = proj.baseBank ?? (isResearch ? 20 : repairNeedsBank ? null : (tableBank ?? 10));
     const isMachine = !!category?.machine && !isResearch;
@@ -245,10 +250,10 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // руками (wdbc-5il7), теперь размер вводится тут же и множится сразу.
     const machineSize = isMachine ? Math.max(0, Number(proj.machineSize) || 0) : 0;
     const bankRaw = repairNeedsBank ? null
-      : bankFor(baseBank, proj.quality, proj.improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
+      : bankFor(baseBank, proj.quality, improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
     const bank = masterpieceBank(bankRaw, crafter, proj);
 
-    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable, repairNeedsBank,
+    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable, repairNeedsBank, mutantFit,
       machineNote: isMachine, machineSize, crafter, isResearch, isStudy, proto };
   }
 
@@ -432,6 +437,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
       critLoss: craftCritLossBase(proj.critLoss), critLossMin: CRAFT_CRIT_LOSS_MIN, critLossMax: CRAFT_CRIT_LOSS_MAX,
       gmMod: proj.gmMod, assistants: proj.assistants, improve: proj.improve, monotony: proj.monotony,
+      // Доводка брони под мутанта: галочка видна у Крафта брони (не ремонт).
+      mutantFitAvail: proj.mode === "craft" && !proj.repair && MUTANT_FIT_CATEGORIES.includes(R.category?.key),
+      mutantFit: !!R.mutantFit, mutantFitModVal: R.mods.mutantFitMod,
       hookUp: !!proj.hookUp, hookUpAvail: hookUpAvailable(R.crafter, proj),
       diceMode: proj.diceMode || "normal",
       // Медленная Смена/Киберпроповедник (wdbc-u0by) — галочка видна только
@@ -513,6 +521,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=critloss]", "change", e => upd(e.currentTarget, p => p.critLoss = craftCritLossBase(e.target.value)));
     on("[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
     on("[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
+    on("[name=mutantfit]", "change", e => upd(e.currentTarget, p => { p.mutantFit = e.target.checked; p.baseBank = null; }));
     on("[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
     on("[name=hookup]", "change", e => upd(e.currentTarget, p => p.hookUp = e.target.checked));
     on("[name=dicemode]", "change", e => upd(e.currentTarget, p => p.diceMode = e.target.value));

@@ -132,6 +132,8 @@ async function askDetails(actor, item, { node = false } = {}) {
         <label><input type="checkbox" name="legion"/> Легион</label>
         <label><input type="checkbox" name="ritual"/> Запись ритуала</label>
       </fieldset>` : ""}
+      ${!node && (manual || item?.type === "armor") ? `<label title="Книга, «Броня и Мутации»: броня под мутанта, чьё тело сильно отличается от человеческого, делается на заказ — Редкость +1. Подогнать уже имеющуюся броню — проект «Доводка под мутанта» в Мастерской.">
+        <input type="checkbox" name="mutantFit"/> Броня на заказ под мутанта (Редкость +1)</label>` : ""}
       <label title="Книга: предмета может не быть в пределах досягаемости контактов, или его мало. Поправка ГМа — число, оно просто прибавится.">
         Поправка ГМа (местная распространённость) <input type="number" name="local" value="0" step="5"/></label>
       ${hasRequisitionTalent(actor, "whateverYouWant") ? `
@@ -164,6 +166,7 @@ async function askDetails(actor, item, { node = false } = {}) {
             legion: !!get(f, "legion").checked, ritual: !!get(f, "ritual").checked
           } : null,
           local: Number(get(f, "local").value) || 0,
+          mutantFit: !!get(f, "mutantFit")?.checked,
           // Пусто — не по требованию Архонта (null), число — Inf.b Архонта.
           archonInf: get(f, "archonInf")?.value?.trim() ? Number(get(f, "archonInf").value) : null,
           grant: !!get(f, "grant")?.checked
@@ -236,7 +239,7 @@ export async function openRequisition(actor, sheet = actor?.sheet) {
   const plan = requisitionPlan(actor, {
     item, name: v.name, rarity: v.rarity, quantity: v.quantity, quality: v.quality,
     consumable: v.consumable, cls: v.cls ?? undefined, local: v.local, archonInf: v.archonInf,
-    node, nodeType: node ? v.nodeType : undefined,
+    node, nodeType: node ? v.nodeType : undefined, mutantFit: !!v.mutantFit,
     place: node ? v.place : undefined, placeFlags: node ? v.placeFlags : undefined
   });
   // Страховка к погашенной кнопке окна: недоступное место — отказ с причиной до броска.
