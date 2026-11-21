@@ -174,6 +174,7 @@ import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-f
 import { migrateDiseaseActive } from "./module/migrations/disease-active.mjs";
 import { migrateDiseaseActiveAll } from "./module/migrations/disease-active-all.mjs";
 import { migratePlagueMarineRot } from "./module/migrations/plague-marine-rot.mjs";
+import { migrateHominisFrame } from "./module/migrations/hominis-frame.mjs";
 import { migratePactDisorderGrant } from "./module/migrations/pact-disorder-grant.mjs";
 import { migrateStrangeTechniqueEffect } from "./module/migrations/strange-technique-effect.mjs";
 import { migrateDrugAddictionFlag } from "./module/migrations/drug-addiction-flag.mjs";
@@ -522,6 +523,7 @@ Hooks.once("init", () => {
     "diseaseActiveTokensVersion",
     "diseaseActiveAllTokensVersion",
     "plagueMarineRotTokensVersion",
+    "hominisFrameTokensVersion",
     "pactDisorderGrantTokensVersion",
     "strangeTechniqueEffectTokensVersion",
     "drugAddictionFlagTokensVersion"
@@ -721,6 +723,11 @@ Hooks.once("init", () => {
 
   // Версия выдачи Гнили Нургла уже созданным Чумным Десантникам (одноразовая, wdbc-jb0zt)
   game.settings.register("warhammer-dbc", "plagueMarineRotVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия выдачи «Фрейма Хоминис» уже созданным Электрожрецам (Sahara 588-551f)
+  game.settings.register("warhammer-dbc", "hominisFrameVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1276,7 +1283,7 @@ Hooks.once("ready", async () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migratePactDisorderGrant, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migrateHominisFrame, migratePactDisorderGrant, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1646,6 +1653,12 @@ Hooks.once("ready", async () => {
   await runMigrationGate({
     key: "plagueMarineRotVersion", tokensKey: "plagueMarineRotTokensVersion", label: "Гниль Нургла у Чумных Десантников",
     full: () => migratePlagueMarineRot(), tokensOnly: () => migratePlagueMarineRot({ tokensOnly: true })
+  });
+  // Идемпотентна: Черта уже на листе — ничего (migrations/hominis-frame.mjs, Sahara 588-551f).
+  // Ручной перезапуск: game.warhammerDBC.migrateHominisFrame()
+  await runMigrationGate({
+    key: "hominisFrameVersion", tokensKey: "hominisFrameTokensVersion", label: "Фрейм Хоминис у Электрожрецов",
+    full: () => migrateHominisFrame(), tokensOnly: () => migrateHominisFrame({ tokensOnly: true })
   });
   // Идемпотентна: расстройство уже на листе — ничего (migrations/pact-disorder-grant.mjs).
   await runMigrationGate({
