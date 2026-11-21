@@ -14,7 +14,9 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
-import { skillTestValue } from "../rules/astartes-elite-common.mjs";
+import { skillTestValue, boonString, boonNow, ELITE_BOON_FLAG } from "../rules/astartes-elite-common.mjs";
+import { tokensThatCanSee } from "../rules/vision-target.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 
 /** Выбор одного из списка ({id, label}) — null при отказе. Один вариант — без вопроса. */
 export async function chooseOne(title, options, { prompt = "" } = {}) {
@@ -155,4 +157,28 @@ export function applyDamageButton({ damage, pen = 0, type = "impact", label = ""
       data-haywire="" data-haywire-dmg2="" data-through-shot="0" data-has-extreme="0">
       ${text || `Применить урон: <b>${Number(damage) || 0}</b>`}
     </button>`;
+}
+
+/** Соратники (та же сторона), видящие актора — как у Живого Стяга (combat/living-banner.mjs). */
+export function alliesInSight(actor) {
+  const token = actorToken(actor);
+  if (!token || !canvas?.ready) return [];
+  const side = token.document?.disposition ?? token.disposition;
+  const candidates = canvas.tokens.placeables.filter(t => t.actor && t.actor !== actor
+    && (t.document?.disposition ?? t.disposition) === side);
+  const seen = tokensThatCanSee(token, candidates, canvas.grid);
+  return [...new Map(seen.map(t => [t.actor.uuid, t.actor])).values()];
+}
+
+/**
+ * Выдать дар «до конца боя/сцены» (rules/astartes-elite-common.mjs). Чужому
+ * актору пишет ГМ (gm-relay.mjs, RELAY_TARGET_FLAGS). Бой — бой получателя,
+ * иначе бой выдавшего.
+ * @returns {Promise<boolean>}
+ */
+export async function grantBoon(target, key, { value = 0, label = "" }, initiator) {
+  const nowT = boonNow(target);
+  const nowI = initiator ? boonNow(initiator) : { combatId: "", sceneId: "" };
+  const str = boonString({ combatId: nowT.combatId || nowI.combatId, sceneId: nowT.sceneId || nowI.sceneId, value, label });
+  return writeToTarget(target, { kind: "update", data: { [`flags.warhammer-dbc.${ELITE_BOON_FLAG}.${key}`]: str } }, initiator);
 }

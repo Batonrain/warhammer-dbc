@@ -4393,15 +4393,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Герольд — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.gerold.ancient": {
     label: "Удостаивается чести нести в бой знамя или икону банды. Знамя должно включать геральдику банды, икона — религиозную иконографию.",
-    source: "Ancient / Древний", reader: ""
+    source: "Ancient / Древний", reader: "module/combat/gerold-talents.mjs::ancientAfterBanner (из combat/living-banner.mjs) и ancientBannerLost; −10 — rules/astartes-elite-rules.mjs (источник astartesElite)"
   },
   "elite.elitnyeArhetipy.gerold.greaterHerald": {
     label: "Одним лишь представлением способен возвысить кого-то в глазах слушателей, укрепив его авторитет и репутацию.",
-    source: "Greater Herald / Высший Герольд", reader: ""
+    source: "Greater Herald / Высший Герольд", reader: "module/combat/gerold-talents.mjs::useGreaterHerald → дар herald, rules/astartes-elite-common.mjs::boonRules (источник astartesElite)"
   },
   "elite.elitnyeArhetipy.gerold.standYourGround": {
     label: "Установив стяг на позицию, провозглашает владычество банды над этим местом. За полудействие может установить знамя/икону на позиции,",
-    source: "Stand Your Ground / Ни Шагу Назад", reader: ""
+    source: "Stand Your Ground / Ни Шагу Назад", reader: "module/rules/gerold-talents.mjs::standYourGroundRules (источник astartesElite); кнопка combat/gerold-talents.mjs::useStandYourGround"
   },
   "elite.elitnyeArhetipy.gerold.tipOfTheSpear": {
     label: "На острие атаки вдохновляет боевых братьев личным примером. Попав по противнику хотя бы одной атакой ближнего боя,",
@@ -4410,7 +4410,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gerold.villainousHonour": {
     label: "Может выжать из побед наибольшее влияние на соратников. Убив вражеского чемпиона, знаменосца или лорда (убив,",
-    source: "Villainous Honour / Честь Злодеев", reader: ""
+    source: "Villainous Honour / Честь Злодеев", reader: "module/combat/gerold-talents.mjs::useVillainousHonour → дар morale, rules/astartes-elite-common.mjs::boonRules"
   },
   // ── Элитные_архетипы\Гладиатор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.gladiator.bestiarius": {
@@ -6467,7 +6467,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Герольд — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.gerold.delegate": {
     label: "Представляет интересы всей верхушки банды и говорит от её имени. Если геральдика на его броне отображает личную символику одного из членов б…",
-    source: "Delegate / Делегат", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Delegate / Делегат", reader: "module/combat/gerold-talents.mjs::useDelegate (кнопка Черты)"
   },
   "trait.elitnyeArhetipy.gerold.livingBanner": {
     label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 или Charm(F)+10 и восстановить одно ранее потраче…",
@@ -6475,7 +6475,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.gerold.noblesseOblige": {
     label: "Высокое доверие налагает большую ответственность — его провалы навлекают позор на всю банду.",
-    source: "Noblesse Oblige / Благородство Обязывает", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Noblesse Oblige / Благородство Обязывает", reader: "module/combat/gerold-talents.mjs::noblesseObligeSlip (скрипт по Крит. Провалу); потеря преимуществ Архетипа после Страха/Подавления — вручную"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Гладиатор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.gladiator.bloodyPerformance": {

@@ -5,9 +5,12 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
+import { ancientBannerLost, useGreaterHerald, useStandYourGround, useVillainousHonour, useDelegate, noblesseObligeSlip } from "../gerold-talents.mjs";
 import { useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater } from "../bronenosets-talents.mjs";
 
 export const API = {
   // Броненосец
-  useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater
+  useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater,
+  // Герольд
+  ancientBannerLost, useGreaterHerald, useStandYourGround, useVillainousHonour, useDelegate, noblesseObligeSlip
 };

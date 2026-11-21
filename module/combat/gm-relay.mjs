@@ -100,7 +100,9 @@ export const RELAY_TARGET_FLAGS = Object.freeze([
   "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold", "vastGrappleSize",
   "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner",
   // Разбежаться! (combat/fan-out.mjs): id боя, в котором у члена отряда есть Reposition.
-  "fanOutReposition"
+  "fanOutReposition",
+  // Дары соратникам пачки «astartes» (rules/astartes-elite-common.mjs): строка «бой|сцена|число|подпись».
+  "astartesBoon.morale", "astartesBoon.herald"
 ]);
 /** Состояния, которые можно наложить/снять на цель из этих приёмов. */
 export const RELAY_TARGET_CONDITIONS = Object.freeze(["grappling", "prone"]);

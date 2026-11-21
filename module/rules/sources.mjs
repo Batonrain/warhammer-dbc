@@ -60,6 +60,7 @@ import { noiseMarineRules } from "./noise-marine.mjs";
 import { tipOfSpearRules } from "./tip-of-spear.mjs";
 import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
 import { darkApostleRules } from "./dark-apostle.mjs";
+import { astartesEliteRules } from "./astartes-elite-rules.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -429,3 +430,7 @@ registerRuleSource("prophetOfGallerpox", a => {
                 label: "Техновирус Гэллерпокса" }]
   }];
 });
+
+// Элитные архетипы пачки «astartes» (Герольд и др.): дары соратникам «до конца
+// боя/сцены» и знамя Ни Шагу Назад — rules/astartes-elite-rules.mjs.
+registerRuleSource("astartesElite", a => astartesEliteRules(a));
