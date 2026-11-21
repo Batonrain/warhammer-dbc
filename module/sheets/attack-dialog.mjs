@@ -110,6 +110,13 @@ import { empathAttackPreset } from "../rules/medusa-talents.mjs";
 import { hasRetiarius } from "../rules/gladiator-arena.mjs";
 import { livingArsenalOneHand } from "../rules/obliterator-talents.mjs";
 
+/** Префиксы id правил элитных архетипов, чей auto-бонус идёт в Порог атаки (см. ruleAutoMods). */
+export const ELITE_ATTACK_AUTO_MODS = [
+  "vitkis.warSeer.hit", "vitkis.bookOfBattle", "gladiator.bestiarius",
+  "kenetai.sharedConsciousness", "secutor.sustainedAssault", "secutor.gunzerker",
+  "archmagos.concordax", "astartes.boon."
+];
+
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
 // в showAttackDialog/showAttackDialogNoWeapon ниже.
@@ -498,7 +505,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Пассажир верхом: «−10 на все физические действия» — атака тоже (rules/mount.mjs::passengerTestMod)
       || m.ruleId === "situational.passenger"
       // Скакун под меткой Драконьего Рыцаря: +3×Успехи на все Атаки (rules/dragon-knight.mjs)
-      || m.ruleId === "situational.dragonKnight")
+      || m.ruleId === "situational.dragonKnight"
+      // Элитные архетипы (#586): бонусы, у которых своего пути в Порог атаки нет —
+      // Провидец Войны и Книга Битвы (Виткис), Бестиарий, Общее Сознание,
+      // Непрерывный Натиск и Берсерк-Стрелок, Конкордакс, дары Герольда.
+      || ELITE_ATTACK_AUTO_MODS.some(id => String(m.ruleId ?? "").startsWith(id)))
   });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -1999,9 +2010,10 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // даёт атаке: «+10 к любому удару» с Черты просто не доезжал (wdbc-t8dt,
   // найдено живой проверкой — синтетическое правило area:attack не попадало
   // ни в сумму, ни в карточку).
-  const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
-  const fatigue  = bodyMods.total;
+  // Цель — в контекст: правила «по цели» (Провидец Войны, Книга Битвы, Бестиарий) без неё молчат.
   const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws", targetActor });
+  const fatigue  = bodyMods.total;
   // Повалена/Оглушена цель — +20, тем же кодом, что окно атаки
   // (wdbc-x1nz.2.97 п.6); Ослеплённый бьёт с −30 WS, как строка «Ослеплён»
   // окна (wdbc-x1nz.2.89) — здесь галочек нет, поэтому сразу в Порог.
