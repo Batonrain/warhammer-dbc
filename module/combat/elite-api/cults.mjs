@@ -7,6 +7,7 @@
 
 import { useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet } from "../plague-monk.mjs";
 import { releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty } from "../worm-king.mjs";
+import { useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite } from "../flesh-sculptor.mjs";
 import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
 
 export const API = {
@@ -15,5 +16,7 @@ export const API = {
   // Чумной Монах
   useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet,
   // Король Червей
-  releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty
+  releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty,
+  // Скульптор Плоти
+  useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite
 };

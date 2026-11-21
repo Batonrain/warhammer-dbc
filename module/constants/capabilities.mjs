@@ -5162,19 +5162,19 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Скульптор_Плоти — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.skulptorPloti.appolyon": {
     label: "Может изменять одного подопытного месяцами до полной неузнаваемости. Может потратить Очко Бесчестия,",
-    source: "Appolyon / Аполион", reader: ""
+    source: "Appolyon / Аполион", reader: "module/combat/flesh-sculptor.mjs useFleshmolding (галочка Аполион)"
   },
   "elite.elitnyeArhetipy.skulptorPloti.eidolon": {
     label: "Позволяет превратить живого человека в податливую сжатую плоть, обвивающую его словно змея. Потратив три полных действия и тест Medicae+0,",
-    source: "Eidolon / Эйдолон", reader: ""
+    source: "Eidolon / Эйдолон", reader: "module/combat/flesh-sculptor.mjs eidolonAbsorb / eidolonHeal; пул flesh (resourcePool)"
   },
   "elite.elitnyeArhetipy.skulptorPloti.narcissus": {
     label: "Мастерство позволяет проводить операции на себе. Может проводить ритуал Лепки Плоти на себе,",
-    source: "Narcissus / Нарцисс", reader: ""
+    source: "Narcissus / Нарцисс", reader: "module/combat/flesh-sculptor.mjs useFleshmolding (ритуал на себе) / malleableRedistribute"
   },
   "elite.elitnyeArhetipy.skulptorPloti.sculpturite": {
     label: "Живые жертвенные палитры Скульптуриты создаются из Миньонов-людей. Проводит изменённый ритуал Лепки Плоти,",
-    source: "Sculpturite / Скульптурит", reader: ""
+    source: "Sculpturite / Скульптурит", reader: "module/combat/flesh-sculptor.mjs makeSculpturite / redistributeSculpturite; rules/flesh-sculptor-talents.mjs sculpturiteMedicaeBonus"
   },
   // ── Элитные_архетипы\Суккуб — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.sukkub.bloodDancer": {
@@ -6888,11 +6888,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Скульптор_Плоти — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.skulptorPloti.insanelyMalleable": {
     label: "Власть над собственной плотью позволяет изменять её за секунды. За полудействие может потратить Очко Бесчестия и пройти тест Medicae−10,",
-    source: "Insanely Malleable / Безумно Податливый", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Insanely Malleable / Безумно Податливый", reader: "module/combat/flesh-sculptor.mjs useInsanelyMalleable / malleableHour / malleableRedistribute"
   },
   "trait.elitnyeArhetipy.skulptorPloti.riteOfFleshmolding": {
     label: "Имея доступ к операционной, освящённой как храм Слаанеш, к одному подопытному и хотя бы одному донору (разумные существа),",
-    source: "Rite of Fleshmolding / Ритуал Лепки Плоти", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Rite of Fleshmolding / Ритуал Лепки Плоти", reader: "module/combat/flesh-sculptor.mjs useFleshmolding (тест, Успехи, выдача Трейтов из компендиума, крит Провала)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Суккуб — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.sukkub.brideOfDeath": {
