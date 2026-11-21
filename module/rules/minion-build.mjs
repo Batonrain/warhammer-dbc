@@ -346,6 +346,41 @@ export function traitEntry(name) {
 }
 
 /**
+ * Какой предмет компендиума Трейтов брать за строку таблицы книги. Имена в паке
+ * двуязычные («Bite / Укус (X)»), а таблица знает только английский ключ.
+ * Раньше брался первый документ, чьё имя ВКЛЮЧАЛО ключ: индекс пака идёт в
+ * порядке _id, и Миньон-зверь вместо «Bite / Укус (X)» получал Черту Медузы
+ * «Deadly Natural Weapon (2, Tentacles; 7, Bite)» с её Щупальцами и Укусом
+ * Медузы (живая проверка 21.11.2026). Так же «Psyker» ловил «Chaos Psyker»,
+ * «Machine» — «Machine Spirit Thief», «Fanatic» — «Locus of Fanaticism».
+ *
+ * Теперь имя должно НАЧИНАТЬСЯ с ключа, а из подходящих выигрывает:
+ * «Ключ / … (X)» → «Ключ / …» → «Ключ (X…)» → «Ключ (…)»; при равенстве —
+ * Трейт из корня пака, а не из папки архетипа/расы.
+ * @param {Iterable<{name:string, folder?:string|null}>} index  индекс пака
+ * @param {string} name  ключ таблицы MINION_TRAITS
+ * @returns {object|null} запись индекса
+ */
+export function pickMinionTraitEntry(index, name) {
+  const want = String(MINION_TRAITS[name]?.pack ?? name ?? "");
+  if (!want) return null;
+  const rank = n => {
+    if (n.startsWith(`${want} /`)) return /\(X/.test(n) ? 0 : 1;
+    if (n.startsWith(`${want} (X`)) return 2;
+    if (n.startsWith(`${want} (`)) return 3;
+    return -1;
+  };
+  let best = null, bestScore = Infinity;
+  for (const entry of index ?? []) {
+    const r = rank(String(entry?.name ?? ""));
+    if (r < 0) continue;
+    const score = r * 2 + (entry.folder ? 1 : 0);
+    if (score < bestScore) { best = entry; bestScore = score; }
+  }
+  return best;
+}
+
+/**
  * Что говорит таблица о Трейте для этой пары «группа + сила»: можно ли его
  * взять, сколько стоит, каков базовый Рейтинг и на сколько его поднимает
  * лишнее очко. `reason` — почему нельзя, если нельзя.
