@@ -9,6 +9,8 @@
 //                          Чародейский Посох)
 //   eliteManifestRoll   — после броска психотеста (Варп-Танцор: второй
 //                          бросок A, берётся худший)
+//   eliteShotShape      — число попаданий/Pen/Dmg психосилы (Оккультный Клинок,
+//                          Фокусированный Шторм)
 //   eliteExtraPeril     — Прорыв сверх обычного (Мощь Переполняет)
 //   eliteManifestAfter  — строки карточки после исхода (Высший Магус,
 //                          Последнее Эхо, Маг-Каннибал)
@@ -27,6 +29,10 @@ import { hasMagusSupreme } from "../rules/archmagus-talents.mjs";
 import { darkArtsGate, warpDanceOutcome } from "../rules/warlock-talents.mjs";
 import { warlockAfterManifest } from "./warlock.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { occultShotShape, hasFocusedStorm, hasBladesOfBrotherhood, brotherhoodEpr, SHARED_MIND_FLAG, sharedMindRange } from "../rules/kenetai-talents.mjs";
+import { markOccultBladeUse } from "./kenetai-state.mjs";
+import { parseRangeMeters } from "../rules/psy-range.mjs";
+import { actorsDistance } from "./psyker-elite-common.mjs";
 
 const small = (html, color = "") => `<div class="roll-threshold" style="font-size:0.85em;${color ? `color:${color};` : ""}">${html}</div>`;
 
@@ -38,6 +44,8 @@ export function eliteManifestGate(actor, item, opts, { mPR = 0 } = {}) {
   const g = darkArtsGate(actor, { path: opts.path || "", mode: opts.mode || "normal", action: item?.system?.action });
   if (!g.ok) return g.reason;
   opts.warpDance = g.warpDance;
+  // Оккультный Клинок (Кенетаи): манифестация с кромки клинка — без Путей Силы.
+  if (opts.occultBlade && opts.path) return "Оккультный Клинок: манифестация без Путей Силы.";
   return "";
 }
 
@@ -74,7 +82,17 @@ export async function eliteManifestEpr(actor, item, opts, ePR, lines) {
 
 /** После броска психотеста: возможно, другой исход. */
 export async function eliteManifestRoll(actor, item, opts, res, lines, rolls) {
-  if (!opts.warpDance) return { success: res.success, deg: res.deg };
+  const out = opts.warpDance ? await warpDanceRoll(actor, res, lines, rolls) : { success: res.success, deg: res.deg };
+  // Выпад Души (Кенетаи): Успехи попадания Выпадом — к Успехам силы со встречным тестом.
+  const thrust = Math.max(0, Math.trunc(Number(opts.occultBlade?.thrust) || 0));
+  if (thrust && out.success && item?.system?.resistChar) {
+    out.deg += thrust;
+    lines.push(small(`Выпад Души: +${thrust} Успехов попадания Выпадом → <b>${out.deg}</b> Успехов против встречного теста.`));
+  }
+  return out;
+}
+
+async function warpDanceRoll(actor, res, lines, rolls) {
   // Варп-Танцор: второй бросок — A вместо Характеристики силы, те же поправки Порога.
   const ag = Number(actor?.system?.characteristics?.ag?.total) || 0;
   const agThreshold = (Number(res.threshold) || 0) - (Number(res.charVal) || 0) + ag;
@@ -84,6 +102,22 @@ export async function eliteManifestRoll(actor, item, opts, res, lines, rolls) {
   const out = warpDanceOutcome({ success: res.success, deg: res.deg }, agRes);
   lines.push(small(`Варп-Танцор: сила получает тип <b>Физическое</b>; второй бросок A — ${roll.total} против ${agThreshold}: ${agRes.success ? "успех" : "провал"} (${agRes.deg}). Берётся худший: <b>${out.success ? `успех, ${out.deg}` : `провал, ${out.deg}`}</b>. Дубли на A Феноменов не вызывают.`));
   return out;
+}
+
+/**
+ * Форма попаданий урона психосилы: { hits, pen, dmg, noTemplate, line }.
+ * Оккультный Клинок — одно попадание по цели атаки без шаблона; с Фокусированным
+ * Штормом лишние попадания Шторма/Обстрела — в Pen, радиус Взрыва и дальность
+ * Дыхания — в Dmg.
+ */
+export function eliteShotShape(actor, item, opts, { shootType = "", hits = 1, blast = 0, damagePR = 0 } = {}) {
+  if (!opts?.occultBlade) return { hits, pen: 0, dmg: 0, noTemplate: false, line: "" };
+  const focused = hasFocusedStorm(actor);
+  const rangeM = parseRangeMeters(item?.system?.range ?? "", damagePR) || 0;
+  const shape = occultShotShape({ shootType, hits, blast, rangeM, focused });
+  const extra = shape.pen ? ` Фокусированный Шторм: +${shape.pen} Pen (за ${hits - 1} несостоявшихся попаданий).`
+    : shape.dmg ? ` Фокусированный Шторм: +${shape.dmg} Dmg (${shootType === "blast" ? `радиус ${blast} м` : `дальность ${rangeM} м`}).` : "";
+  return { ...shape, line: small(`Оккультный Клинок: одно попадание по цели атаки, Избегать нельзя; шаблона нет.${extra}`, "#335") };
 }
 
 /** Прорыв сверх обычного (HTML) или "". */
@@ -100,12 +134,22 @@ export async function eliteExtraPeril(actor, opts, allRolls) {
 }
 
 /** Строки карточки после исхода (и побочные метки). */
-export async function eliteManifestAfter(actor, item, opts, { success = false, phenomena = false, perilTriggered = false } = {}) {
+export async function eliteManifestAfter(actor, item, opts, { success = false, ePR = 0, phenomena = false, perilTriggered = false } = {}) {
   const out = [];
   // Чернокнижник: Последнее Эхо после Жертвы, Маг-Каннибал прерывается Феноменом.
   out.push(...await warlockAfterManifest(actor, { path: opts.path || "", phenomena, perilTriggered, reroll: !!opts.reroll }));
   if (phenomena && hasMagusSupreme(actor)) {
     out.push(small("Высший Магус: этот Феномен (не Прорыв) <b>не действует на самого Архимага</b>, на остальных — как обычно. Исключить союзников (1 Очко Бесчестия) или перенести Прорыв (3 Очка) — кнопкой Черты.", "#5a4a30"));
+  }
+  // Оккультный Клинок: отметка «раз в Раунд» (свободное действие уже не списало ОД).
+  if (opts.occultBlade && !opts.reroll) await markOccultBladeUse(actor, opts.occultBlade.weaponUuid);
+  // Клинки Братства: Психический Клинок — и на оружие связанных Общим Сознанием в радиусе, эPR вдвое меньше.
+  if (success && item?.system?.powerType === "psychicBlade" && hasBladesOfBrotherhood(actor)) {
+    const members = (actor.getFlag?.("warhammer-dbc", SHARED_MIND_FLAG)?.members ?? [])
+      .map(u => { try { return fromUuidSync(u); } catch { return null; } }).filter(Boolean);
+    const range = sharedMindRange(actor);
+    const near = members.filter(m => { const d = actorsDistance(actor, m); return d == null || d <= range; });
+    if (near.length) out.push(small(`Клинки Братства: «${esc(item.name)}» и на рукопашном оружии ${near.map(m => esc(m.name)).join(", ")} с эPR <b>${brotherhoodEpr(ePR)}</b> (½, окр.▲). Поддержание на союзниках — ещё одна отдельная сила для тPR.`, "#335"));
   }
   const ow = Number(opts?.eliteBoost?.overwhelming) || 0;
   if (ow && success && item?.system?.sustainable) {

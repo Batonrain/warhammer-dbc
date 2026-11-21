@@ -178,6 +178,7 @@ import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
 import { processWarlockTurnStart } from "./combat/warlock.mjs";
 import { processInsorcistTurnStart } from "./combat/insorcist.mjs";
+import { injectOccultBladeButtons, kenetaiSoulBurnGate } from "./combat/kenetai.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -414,6 +415,8 @@ export function registerHooks() {
     // Огонь Души (module/combat/soulfire.mjs) — кнопка силы рядом с каждой
     // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
     injectSoulfireButtons(html);
+    // Оккультный Клинок (Кенетаи, combat/kenetai.mjs) — кнопка на рукопашном попадании Психосиловым оружием.
+    injectOccultBladeButtons(html);
 
     // Состояние, наложенное Ритуалом (module/apps/ritual-cast.mjs) — пилюля
     // в карточке успешного проведения; ГМ тащит её на лист актора, которому
@@ -4489,6 +4492,9 @@ export async function _executeSoulBurn(attacker, target) {
   if (hasFleshmetalFlag(target, "soulBurnImmunity")) {
     return ui.notifications.warn(`${target.name}: Выжигание Души бесполезно — душа спрятана в Варпе (Странная Неуязвимость).`);
   }
+  // Оккультный Клинок (Кенетаи): не в один Раунд с Выжиганием Души.
+  const kenetaiBlock = await kenetaiSoulBurnGate(attacker);
+  if (kenetaiBlock) return ui.notifications.warn(`⚠️ ${kenetaiBlock}`);
   // Божественная Защита цели (wdbc-nzzgn): на 10 по d10 эффект игнорируется.
   if (await tryDivineProtection(target, "Выжигание Души")) return;
   const allRolls = [];

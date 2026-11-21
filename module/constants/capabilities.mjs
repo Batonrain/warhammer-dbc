@@ -4642,27 +4642,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Кенетаи — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kenetai.bladesOfBrotherhood": {
     label: "Мистическая сила клинков перетекает в клинки братьев по оружию. Манифестируя Психический Клинок на своё оружие,",
-    source: "Blades of Brotherhood / Клинки Братства", reader: ""
+    source: "Blades of Brotherhood / Клинки Братства", reader: "module/combat/psyker-elite-hooks.mjs::eliteManifestAfter (Психический Клинок → союзники Общего Сознания, rules/kenetai-talents.mjs::brotherhoodEpr)"
   },
   "elite.elitnyeArhetipy.kenetai.focusedStorm": {
     label: "Заклинания с лезвия Оккультного Клинка фокусируют мощь в точку. При использовании Оккультного Клинка для манифестации Психического Шторма ил…",
-    source: "Focused Storm / Фокусированный Шторм", reader: ""
+    source: "Focused Storm / Фокусированный Шторм", reader: "module/rules/kenetai-talents.mjs::occultShotShape → combat/psyker-elite-hooks.mjs::eliteShotShape → sheets/tabs/psychic.mjs (урон психосилы)"
   },
   "elite.elitnyeArhetipy.kenetai.soulThrust": {
     label: "Клинок пробивает не только плоть, но и психическую защиту. Если попадает приёмом Выпад и использует Оккультный Клинок для манифестации психо…",
-    source: "Soul Thrust / Выпад Души", reader: ""
+    source: "Soul Thrust / Выпад Души", reader: "module/combat/kenetai.mjs::useOccultBlade (ввод Успехов) → combat/psyker-elite-hooks.mjs::eliteManifestRoll"
   },
   "elite.elitnyeArhetipy.kenetai.spellBreaker": {
     label: "Клинок разрубает нити заклинаний, опутывающих цель. При использовании Оккультного Клинка может вместо манифестации пройти психотест W+0 vs W…",
-    source: "Spell Breaker / Разрушитель Чар", reader: ""
+    source: "Spell Breaker / Разрушитель Чар", reader: "module/combat/kenetai.mjs::useOccultBlade → spellBreaker (встречный W, снятие эффекта)"
   },
   "elite.elitnyeArhetipy.kenetai.wayOfTwoBlades": {
     label: "Подобно Кенетаи Ордена Шакала, идёт в бой с двумя Психосиловыми клинками. Может применять Оккультный Клинок два раза в Раунд,",
-    source: "Way of Two Blades / Путь Двух Клинков", reader: ""
+    source: "Way of Two Blades / Путь Двух Клинков", reader: "module/rules/kenetai-talents.mjs::occultBladeAllowed / soulBurnBlockedByOccultBlade"
   },
   "elite.elitnyeArhetipy.kenetai.wideBerth": {
     label: "Незримые нити, связывающие сознания, поддерживают связь на большем расстоянии. Удваивает радиус действия Трейта Общее Сознание.",
-    source: "Wide Berth / Пространство для Маневра", reader: ""
+    source: "Wide Berth / Пространство для Маневра", reader: "module/rules/kenetai-talents.mjs::sharedMindRange (×2)"
   },
   // ── Элитные_архетипы\Когитор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kogitor.cogitorPactStage1": {
@@ -6585,11 +6585,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Кенетаи — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kenetai.occultBlade": {
     label: "Способны формировать сложные психосилы на кромке клинка. Раз в Раунд после успешной рукопашной атаки Психосиловым оружием может за свободное…",
-    source: "Occult Blade / Оккультный Клинок", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Occult Blade / Оккультный Клинок", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/kenetai.mjs::injectOccultBladeButtons/useOccultBlade (кнопка на карточке попадания), окно манифестации — opts.freeAction/occultBlade (psyker-elite-hooks.mjs::eliteManifestGate/eliteShotShape), запрет с Выжиганием Души — kenetaiSoulBurnGate"
   },
   "trait.elitnyeArhetipy.kenetai.sharedConsciousness": {
     label: "В бою Кенетаи и соратники действуют как единый организм. Потратив 5 минут на ритуал, может телепатически соединить свой разум с разумами до…",
-    source: "Shared Consciousness / Общее Сознание", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Shared Consciousness / Общее Сознание", reader: "ЧАСТИЧНО (21.11.2026): module/combat/kenetai.mjs::useSharedConsciousness (связь), бонус WS — rules/kenetai-talents.mjs::sharedConsciousnessRules (источник rules/sources.mjs); Инициатива/обзор/парирование за союзника — стол"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Когитор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogitor.dreamChaser": {
