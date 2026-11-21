@@ -5,4 +5,9 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
+
+export const API = {
+  // Иерофант
+  useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses
+};

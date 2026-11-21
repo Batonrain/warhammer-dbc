@@ -4553,27 +4553,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Иерофант — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.ierofant.bloodOfMartyrs": {
     label: "Верные последователи готовы отдать за него жизнь. Когда находится в Орде, созданной Трейтом Великий Агитатор,",
-    source: "Blood of Martyrs / Кровь Мучеников", reader: ""
+    source: "Blood of Martyrs / Кровь Мучеников", reader: "module/rules/hierophant-talents.mjs bloodOfMartyrsNote — строка карточки атаки (combat/attack.mjs)"
   },
   "elite.elitnyeArhetipy.ierofant.hail": {
     label: "Даже обычные булыжники становятся смертельным оружием, когда их метает толпа. Орды под Командным Присутствием могут отказываться от части ст…",
-    source: "Hail / Град", reader: ""
+    source: "Hail / Град", reader: "module/combat/hierophant.mjs useHail (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.ierofant.livingTide": {
     label: "Фанатичные орды сметают стены и укрепления и порой переворачивают танки. Может использовать доп. детальную команду (2 Успеха),",
-    source: "Living Tide / Живая Волна", reader: ""
+    source: "Living Tide / Живая Волна", reader: "module/combat/hierophant.mjs useLivingTide (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.ierofant.mobJustice": {
     label: "Ненависть, взращённая в душах, даёт плоды, когда они проливают кровь угнетателей. Когда Орда под его командованием имеет Талант Hatred и уби…",
-    source: "Mob Justice / Правосудие Толпы", reader: ""
+    source: "Mob Justice / Правосудие Толпы", reader: "module/combat/hierophant.mjs useMobJustice (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.ierofant.profaneCardinal": {
     label: "По мере совращения паствы его власть над их душами крепнет. Получает бонус к тестам командования и взаимодействия с паствой Хаосопоклонников…",
-    source: "Profane Cardinal / Нечестивый Кардинал", reader: ""
+    source: "Profane Cardinal / Нечестивый Кардинал", reader: "packs-src Profane Cardinal: testMod formula ceil(infv/2) → rules/item-rules.mjs"
   },
   "elite.elitnyeArhetipy.ierofant.zealousMasses": {
     label: "Заведённые проповедями орды бросаются на врагов, невзирая на опасность. Может потратить Очко Бесчестия,",
-    source: "Zealous Masses / Фанатичные Толпы", reader: ""
+    source: "Zealous Masses / Фанатичные Толпы", reader: "module/combat/hierophant.mjs useZealousMasses (кнопка Таланта)"
   },
   // ── Элитные_архетипы\Избиратель_Плоти — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.izbiratelPloti.anyHandsAnyKind": {
@@ -6541,11 +6541,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Иерофант — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.ierofant.grandAgitator": {
     label: "Речи зажигают пламя праведной ярости и рвения к битве. Выступая перед толпой, может пройти комбинированный тест Charm+0 и Scholastic Lore(Im…",
-    source: "Grand Agitator / Великий Агитатор", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Grand Agitator / Великий Агитатор", reader: "module/combat/hierophant.mjs useGrandAgitator (кнопка Черты); метка agitatorHorde — rules/hierophant-talents.mjs"
   },
   "trait.elitnyeArhetipy.ierofant.masterOfMasses": {
     label: "Глубокое понимание души толпы позволяет управлять ордами умело и точно, как опытный офицер дисциплинированными солдатами.",
-    source: "Master of Masses / Владыка Масс", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Master of Masses / Владыка Масс", reader: "module/rules/command-substitution.mjs (Charm вместо Command для Орды), module/combat/horde-psych.mjs (Храбрость — психоурон вдвое)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Избиратель_Плоти — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.izbiratelPloti.daemonic2": {

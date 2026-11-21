@@ -154,8 +154,6 @@ const ALLOWED = {
   "trait.elitnyeArhetipy.gerold.noblesseOblige": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.dlanArhonta.equalizeTheOdds": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.dlanArhonta.establishedRole": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.ierofant.grandAgitator": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.ierofant.masterOfMasses": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.lordDiskordant.corruptedNoosphere": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
   "trait.elitnyeArhetipy.malagra.astralConverter": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
   "trait.elitnyeArhetipy.malagra.digitalGhost": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
