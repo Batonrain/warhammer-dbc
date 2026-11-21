@@ -256,7 +256,7 @@ export async function _showContestDialog(actor, techDef) {
             ui.notifications?.warn(`⚠️ ${techDef.label}: Атака в этом Ходу уже была (стр. 12).`);
             return;
           }
-          if (techDef.apCost && !(await spendActionPoints(actor, techDef.apCost, { physical: true }))) {
+          if (techDef.apCost && !(await spendActionPoints(actor, techDef.apCost, { physical: true, attack: !!techDef.isAttack }))) {
             ui.notifications?.warn(`⚠️ ${techDef.label}: не хватает ОД (${techDef.apCost}).`);
             return;
           }

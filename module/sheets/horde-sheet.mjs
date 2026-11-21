@@ -666,7 +666,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       ui.notifications.warn(`⚠️ ${actor.name}: Атака в этот Ход уже была.`);
       return false;
     }
-    if (!await spendActionPoints(actor, 1, { physical: true })) {
+    if (!await spendActionPoints(actor, 1, { physical: true, attack: true })) {
       ui.notifications.warn("⚠️ Не хватает ОД.");
       return false;
     }

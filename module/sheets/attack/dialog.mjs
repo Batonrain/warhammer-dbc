@@ -508,7 +508,7 @@ export function openAttackDialog(ctx) {
               ? dualWieldActionType(ownActionType, offActionType(dualOff))
               : ownActionType);
             const apCost = (isMelee && baseIsCharge(sel.baseKey)) ? movementApCost(actor, baseApCost) : baseApCost;
-            if (!await spendActionPoints(actor, apCost, { physical: true })) {
+            if (!await spendActionPoints(actor, apCost, { physical: true, attack: true })) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
             }

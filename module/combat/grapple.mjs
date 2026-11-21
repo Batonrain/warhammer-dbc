@@ -1179,7 +1179,7 @@ async function _payThrowOrSwing(actor, label, free = false) {
     return false;
   }
   const cost = grappleHands(actor) >= 2 ? 1 : 2;
-  if (!(await spendActionPoints(actor, cost, { physical: true }))) {
+  if (!(await spendActionPoints(actor, cost, { physical: true, attack: true }))) {
     ui.notifications.warn(`⚠️ ${label}: не хватает ОД (${cost === 1 ? "Полудействие — держит двумя руками" : "Полное действие"}).`);
     return false;
   }
