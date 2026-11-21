@@ -34,7 +34,7 @@ import { mechFormulaTotalSafe } from "../rules/mech-formula.mjs";
  * combat/damage.mjs::applyDamageToActor, где проверяются остальные ключи
  * этого пространства имён.
  */
-const LEGACY_IMMUNITY_TRAITS = { haywire: ["Warp Talon Suit", "Fleshmetal Body"] };
+const LEGACY_IMMUNITY_TRAITS = { haywire: ["Warp Talon Suit", "Fleshmetal Body", "Broken Chains"] };
 
 export function hasWeaponPropertyImmunity(actor, propKey) {
   if (hasRuleFlag(actor, `weaponPropertyImmunity.${propKey}`)) return true;

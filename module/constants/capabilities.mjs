@@ -6498,7 +6498,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Дикий_Псайкер — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.dikiyPsayker.brokenChains": {
     label: "Аркано-механическая разгрузка вживлена в спину, затылок и руки, интегрирована в нервную систему. Даёт +3 бPR и Трейты Hoverer (W.",
-    source: "Broken Chains / Порванные Цепи", reader: "записи Конструктора в паке Черты: kind:trait выдаёт Hoverer (W.b) и Unnatural Willpower (+2). Не смоделировано: +3 бPR и прочие пункты книги — ГМ вручную"
+    source: "Broken Chains / Порванные Цепи", reader: "записи Конструктора в паке Черты: kind:trait выдаёт Hoverer (W.b) и Unnatural Willpower (+2), capability weaponPropertyImmunity.haywire; +3 бPR — module/rules/wild-psyker-talents.mjs::brokenChainsPrBonus (module/rules/character/final-pools.mjs, поверх Таланта Psy Rating); запрет жёсткой и силовой брони — ::brokenChainsArmourBan (module/sheets/tabs/gear.mjs::equipItem). Вручную: изоляция от воды и грязи"
   },
   "trait.elitnyeArhetipy.dikiyPsayker.chainRejection": {
     label: "Порванные Цепи медленно высасывают жизнь. Каждую неделю получает 1 урона в S и T, который нельзя восстановить отдыхом и медитацией;",

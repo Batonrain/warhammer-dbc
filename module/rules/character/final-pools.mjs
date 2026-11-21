@@ -24,6 +24,7 @@ import { initiativeCharKey, fastestHandBonus, initiativeHint,
 import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } from "../legacy-weapon.mjs";
 import { apocryphaMax, hasApocryphaCoil } from "../technomystic-resources.mjs";
 import { coilsEnergyMaxBonus, coilsInitiativeBonus } from "../electropriest.mjs";
+import { brokenChainsPrBonus } from "../wild-psyker-talents.mjs";
 
 /**
  * @param {object} actor            актор — для возможностей (hasRuleFlag) и предметов
@@ -138,7 +139,10 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
   if (system.psyker) {
     const derivedPR = psyRatingFromTalents(actor.items);
     system.psyker.ratingFromTalent = derivedPR !== null;
-    if (derivedPR !== null) system.psyker.rating = derivedPR;
+    // Порванные Цепи (Дикий Псайкер): +3 бPR. Только поверх Таланта: хранимое поле (бестиарий/NPC без
+    // Таланта) задаётся статблоком целиком и уже включает прибавку — иначе каждая правка поля на листе
+    // записывала бы +3 сверху.
+    if (derivedPR !== null) system.psyker.rating = derivedPR + brokenChainsPrBonus(actor);
 
     // sustainedCost уже посчитан выше, в общем проходе по actor.items
     // (вместе с autoPsyCost) — тот же item.type "psychicPower".
