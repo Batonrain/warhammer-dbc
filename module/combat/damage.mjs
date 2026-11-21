@@ -57,6 +57,7 @@ import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
 import { putrescenceOffer } from "./putrescence.mjs";
 import { sharedPainOffer } from "./shared-pain.mjs";
 import { shareSoulBondDamage } from "./soul-binding.mjs";
+import { hasHorrorSplit } from "../rules/horror-split.mjs";
 import { paybackOfferHtml } from "./payback.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
@@ -1602,6 +1603,13 @@ export async function applyDamageToActor(actor, damageData) {
 
   const woundLoss = await applyWoundLoss(actor, netDamage);
   let { currentWounds, newWounds, newCritical, gotCritical } = woundLoss;
+  // Разделение Ужасов (combat/horror-split.mjs, Sahara 578-1f7a): ниже 0 Ран не от
+  // священного/варп-оружия — кнопка «Разделиться» (2, под Локусом Трансмогрификации — 3).
+  let horrorSplitHtml = "";
+  if (woundLoss.gotCritical && hasHorrorSplit(actor)) {
+    const { horrorSplitButtonHtml } = await import("./horror-split.mjs");
+    horrorSplitHtml = horrorSplitButtonHtml(actor, { crossedZero: true, sanctified, warpWeapon: warpSoak });
+  }
   // Рой: Критических Эффектов нет — при Ранах ниже 0 уничтожен (метка «погиб», Критические не копятся).
   let swarmDestroyedNote = "";
   // Рубрикант (rules/rubricae.mjs): Раны ниже 0 — рассыпается грудой пустых доспехов, та же ветка.
@@ -1825,6 +1833,7 @@ export async function applyDamageToActor(actor, damageData) {
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);
   if (paybackHtml) propEffectNotes.push(paybackHtml);
+  if (horrorSplitHtml) propEffectNotes.push(horrorSplitHtml);
   // Касание Энтропии сработала ВЫШЕ, до расчёта поглощения (см. там) — здесь
   // только подпись, чтобы игрок видел, почему броня вдруг не удержала.
   if (entropyLost > 0) {

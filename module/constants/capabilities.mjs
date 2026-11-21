@@ -594,11 +594,9 @@ export const CAPABILITIES = {
   "horror.splitsIntoThree": {
     label: "Ужасы при смерти делятся на 3, а не на 2",
     source: "Локус Трансмогрификации (стр. 32)",
-    // Нечего гейтить (сверено wdbc-smc, 31.08.2026): базовой механики «Ужасы
-    // при смерти делятся на 2» в коде нет вовсе — grep по horde-sheet.mjs/
-    // horde-damage.mjs пуст. Этот Локус меняет параметр несуществующего
-    // правила; сперва нужна сама базовая механика деления Орды на смерти.
-    reader: ""
+    // Базовое деление (Sahara 578-1f7a): кнопка «Разделение» на карточке урона
+    // Ужаса ниже 0 Ран; Локус дружественного Герольда Тзинча в ½W м — 3 вместо 2.
+    reader: "module/combat/horror-split.mjs::underTransmogrification → horrorSplitButtonHtml (combat/damage.mjs)"
   },
   "ignore.lingerTemplates": {
     label: "Игнорирует шаблоны со свойством Linger",

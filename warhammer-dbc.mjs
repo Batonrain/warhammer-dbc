@@ -1093,6 +1093,14 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
         return;
       }
+      if (data.action === "horrorSplit") {
+        // Разделение Ужасов (module/combat/horror-split.mjs): Бестиарий скрыт от
+        // игрока — меньших Ужасов создаёт ГМ.
+        const { spawnHorrorSplit } = await import("./module/combat/horror-split.mjs");
+        const res = await spawnHorrorSplit(String(data.actorUuid ?? ""), Math.min(3, Math.max(1, Number(data.count) || 2)), String(data.into ?? "").slice(0, 100));
+        if (!res.ok) console.warn("Warhammer DBC | Разделение Ужасов:", res.reason);
+        return;
+      }
       if (data.action === "createTwinDemon") {
         // Лист демона Двойного Духа (module/apps/twin-spirit.mjs) — тот же приём,
         // что summonDemon: копию из скрытого Бестиария создаёт ГМ. Просящий

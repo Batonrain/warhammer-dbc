@@ -1330,6 +1330,19 @@ export function registerHooks() {
     // Призыв Духов Стада (wdbc-xxb7) — кнопка карточки успешного проведения
     // Ритуала «Summon Herd Spirits» (module/apps/ritual-cast.mjs); сам диалог
     // распределения (module/apps/herd-spirits-summon.mjs) GM-only внутри себя.
+    // Разделение Ужасов (combat/horror-split.mjs): спавн меньших Ужасов — раз на карточку.
+    html.querySelectorAll(".wh-horror-split-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const { requestHorrorSplit } = await import("./combat/horror-split.mjs");
+        await runCardOnce(message, "horrorSplitDone", async () => {
+          await requestHorrorSplit(el.dataset.actorUuid, parseInt(el.dataset.count) || 2, el.dataset.into);
+          return true;
+        }, "Этот Ужас уже разделился.");
+      });
+    });
+
     // Ритуал Связывания Души (combat/soul-binding.mjs): встречный тест и метка связи — раз на карточку.
     html.querySelectorAll(".wh-soul-binding-btn").forEach(btn => {
       btn.addEventListener("click", async ev => {
