@@ -1651,6 +1651,17 @@ Spray); Парирование открывает только Боевой Гн
   Порче ХОЗЯИНА, не своей.
 - Одержимость: `constants/possession.mjs`, `mount-possession.mjs` (демон в
   скакуне/байке), `sheets/tabs/possession.mjs`.
+- Лист демона Двойного Духа: Актор «daemon» (копия из Бестиария), ссылка у
+  хоста в `system.possession.demonUuid`. Чистая часть — `rules/twin-spirit.mjs`
+  (WS/BS/W/Inf/пси-профиль/Локусы демона; Общая Бойня, Аура Хаоса,
+  Интроспекция, Ментор, Общее Колдовство, Черты Даров-форм), обвязка —
+  `apps/twin-spirit.mjs` (создание листа сокетом `createTwinDemon`, сверка
+  по Проявлению из хука `updateActor` в `warhammer-dbc.mjs`). Локус Симбиоза —
+  аура с `requireManifested` (`regions/auras.mjs`).
+- Разделение Ужасов (Розовый → Синие → Серные, Локус Трансмогрификации):
+  `rules/horror-split.mjs` + `combat/horror-split.mjs` (кнопка карточки урона).
+- Ритуал Связывания Души: `rules/soul-binding.mjs` + `combat/soul-binding.mjs`
+  (встречный тест с карточки ритуала, деление урона Выжигания/Варп-Оружия).
 - `rules/daemon-locus.mjs` (радиус Локуса Герольда), `daemonblood.mjs`
   (+`apps`, психосила «Кровь Демонов»).
 - Бесчестие: `apps/infamy-points.mjs` (общий пул), `rules/starting-infamy.mjs`,
