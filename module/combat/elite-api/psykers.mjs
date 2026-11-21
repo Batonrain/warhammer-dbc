@@ -5,4 +5,11 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { WILD_PSYKER_API } from "../wild-psyker.mjs";
+import { ARCHMAGUS_API } from "../archmagus.mjs";
+import { INSORCIST_API } from "../insorcist.mjs";
+import { KENETAI_API } from "../kenetai.mjs";
+import { MEDUSA_API } from "../medusa.mjs";
+import { WARLOCK_API } from "../warlock.mjs";
+
+export const API = { ...WILD_PSYKER_API, ...ARCHMAGUS_API, ...WARLOCK_API, ...INSORCIST_API, ...KENETAI_API, ...MEDUSA_API };

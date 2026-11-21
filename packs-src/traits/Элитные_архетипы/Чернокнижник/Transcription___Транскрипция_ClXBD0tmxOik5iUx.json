@@ -5,7 +5,7 @@
   "folder": "dgGeBduYKCx8DXtL",
   "system": {
     "description": "",
-    "notes": "Меняет способ изучения психодисциплин (нет врождённого фокуса, изучает иначе) — переопределение правила прогрессии персонажа, не число теста. Механика ждёт задачу Sahara 22-dbc-114 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Частично (21.11.2026): кнопка ведёт дни обучения психосиле — у другого Чернокнижника без теста, у другого псайкера тест Scholastic Lore (Occult)−10 за день (Интерпретатор — с Преимуществом), счёт засчитанных и пропавших дней по каждой силе. Вручную: сколько дней нужно и отсутствие врождённого фокуса (кроме божественных) — выбор фокусов на листе не запрещён.",
     "benefit": "Нуждается в глубоком понимании механизмов, а не инстинктивном. Не имеет врождённого фокуса ни на одну психодисциплину, кроме божественных. Может изучать психосилы как обычные псайкеры и без тестов проходить обучение психосилам от других Чернокнижников, но при обучении от других псайкеров должен проходить тест Scholastic Lore(Occult)−10 за каждый день, иначе весь этот день впустую.",
     "source": "Элитный архетип: Чернокнижник",
     "hasRating": false,
@@ -37,11 +37,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "tClHjNhPZOyBmiEs",
+          "id": "suLZzPs5kRLFvAYR",
           "operator": "AND",
           "entries": [
             {
-              "id": "4vWGKQu5ljPf66H1",
+              "id": "d1ryIECjB1OE1jwA",
               "kind": "script",
               "group": null,
               "corruptionValue": "1",
@@ -128,8 +128,8 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механика ждёт задачу): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Транскрипция: день обучения",
+              "code": "// Транскрипция: день обучения психосиле — у Чернокнижника без теста, у псайкера Schol.Lore(Occult)−10 (combat/warlock.mjs).\nawait useTranscription(actor);",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {

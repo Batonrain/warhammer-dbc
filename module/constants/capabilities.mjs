@@ -4068,27 +4068,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Архимаг — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhimag.exemptus": {
     label: "Умеют вырывать нити, связывающие умирающего псайкера с его дисциплиной, и вплетать в свою душу. Когда в поле зрения умирает другой псайкер,",
-    source: "Exemptus / Экземптус", reader: ""
+    source: "Exemptus / Экземптус", reader: "module/combat/archmagus.mjs::useExemptus (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.arhimag.innerEye": {
     label: "Эмпирейный взор фокусируется, не упуская ни одно заклинание. После успешного теста на Пси-Чутьё, может потратить Очко Бесчестия,",
-    source: "Inner Eye / Внутренний Глаз", reader: ""
+    source: "Inner Eye / Внутренний Глаз", reader: "module/combat/archmagus.mjs::useInnerEye → sheets/tabs/psychic.mjs::rollPsyniscience (innerEyePsyniscience)"
   },
   "elite.elitnyeArhetipy.arhimag.mirrorSoul": {
     label: "Создаёт в Варпе копию своей души, поддерживающую отдельные плетения психической энергии.",
-    source: "Mirror Soul / Зеркальная Душа", reader: ""
+    source: "Mirror Soul / Зеркальная Душа", reader: "module/combat/archmagus.mjs::useMirrorSoul → rules/archmagus-talents.mjs::mirrorSoulCost (rules/character.mjs, тPR)"
   },
   "elite.elitnyeArhetipy.arhimag.mysticFeint": {
     label: "Позволяет оставлять ложные следы своего колдовства в Варпе. При манифестации психосилы с Чародейским Посохом может пройти тест Deceive+0,",
-    source: "Mystic Feint / Мистический Финт", reader: ""
+    source: "Mystic Feint / Мистический Финт", reader: "module/combat/archmagus.mjs::useMysticFeint (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.arhimag.savantImmaterial": {
     label: "Известен обширным арсеналом психосил и скоростью их освоения. Изучая любую психосилу,",
-    source: "Savant Immaterial / Савант Имматериал", reader: ""
+    source: "Savant Immaterial / Савант Имматериал", reader: "module/combat/archmagus.mjs::useSavantImmaterial (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.arhimag.unlimitedPower": {
     label: "Невероятная мистическая сила пробивает контрмеры оппонентов. При манифестации психосилы,",
-    source: "Unlimited Power / Безграничная Сила", reader: ""
+    source: "Unlimited Power / Безграничная Сила", reader: "module/combat/archmagus.mjs::useUnlimitedPower (кнопка Таланта)"
   },
   // ── Элитные_архетипы\Архимагос — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhimagos.archDominus": {
@@ -4440,31 +4440,31 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Дикий_Псайкер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.dikiyPsayker.chainsOfAlacrity": {
     label: "Фокусируя волю на движительных рунах Цепей, перемещается с пугающей скоростью. В начале своего Хода, сразу после регенерации Щита,",
-    source: "Chains of Alacrity / Цепи Стремительности", reader: ""
+    source: "Chains of Alacrity / Цепи Стремительности", reader: "module/combat/wild-psyker.mjs::useChainsOfAlacrity (кнопка); rules/wild-psyker-talents.mjs::applyAlacritySkills/alacrityFlightSpd → rules/character.mjs, character/movement.mjs"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.chainScars": {
     label: "Воспалённая плоть вокруг соединений Порванных Цепей укреплена порчей. Когда получает урон в Характеристики от Трейтов и Талантов этого Архет…",
-    source: "Chain Scars / Шрамы Цепей", reader: ""
+    source: "Chain Scars / Шрамы Цепей", reader: "module/combat/wild-psyker.mjs::chainSelfDamage (тест Cor+10 на урон в Характеристики от архетипа)"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.deathEater": {
     label: "Порванные Цепи собирают эхо психической энергии от смерти. Если с начала его предыдущего Хода в пределах Cor м умер хотя бы один разумный пе…",
-    source: "Death Eater / Пожиратель Смерти", reader: ""
+    source: "Death Eater / Пожиратель Смерти", reader: "module/combat/wild-psyker.mjs::useDeathEater (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.heartFire": {
     label: "Может перегрузить Цепи, выжав из себя дополнительную психическую силу ценой ускоренного отторжения.",
-    source: "Heart Fire / Пламя Сердца", reader: ""
+    source: "Heart Fire / Пламя Сердца", reader: "module/combat/wild-psyker.mjs::useHeartFire → combat/psyker-elite-hooks.mjs::eliteManifestEpr"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.powerOverwhelming": {
     label: "Высвобождая всю накопленную энергию Цепей, обрушивает психическую мощь апокалиптической силы. Если Щит имеет полный запас Ран,",
-    source: "Power Overwhelming / Мощь Переполняет", reader: ""
+    source: "Power Overwhelming / Мощь Переполняет", reader: "module/combat/wild-psyker.mjs::usePowerOverwhelming → combat/psyker-elite-hooks.mjs::eliteManifestEpr/eliteExtraPeril"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.residualAbsorption": {
     label: "Учится втягивать в щит остаточные энергии развеянных психосил. Когда в пределах W.b м от него развеивается поддерживаемая психосила,",
-    source: "Residual Absorption / Остаточное Поглощение", reader: ""
+    source: "Residual Absorption / Остаточное Поглощение", reader: "module/combat/wild-psyker.mjs::onPsyPowerPreUpdate (хук preUpdateItem, warhammer-dbc.mjs)"
   },
   "elite.elitnyeArhetipy.dikiyPsayker.witheringCharge": {
     label: "Убийственное касание Цепей иссушает искру жизни, чтобы быстро восстановить заряд Щита. В любой момент, даже вне своего Хода,",
-    source: "Withering Charge / Иссушающий Заряд", reader: ""
+    source: "Withering Charge / Иссушающий Заряд", reader: "module/combat/wild-psyker.mjs::useWitheringCharge → chainShieldIntercept (AP и W.b ×2)"
   },
   // ── Элитные_архетипы\Длань_Архонта — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.dlanArhonta.archsybarite": {
@@ -4603,15 +4603,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Инзорцист — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.inzortsist.blackHand": {
     label: "Касание открывает демонам путь к душе врага. Касаясь другого персонажа, может провести Инзорцизм,",
-    source: "Black Hand / Чёрная Рука", reader: ""
+    source: "Black Hand / Чёрная Рука", reader: "module/combat/insorcist.mjs::useBlackHand (кнопка Таланта / режим Инзорцизма; possessionStep + apps/possession-attack.mjs::possessHost)"
   },
   "elite.elitnyeArhetipy.inzortsist.daemonicLevy": {
     label: "Призыв могучего демона открывает путь для его свиты. Призывая Инзорцизмом демона с Inf 31+,",
-    source: "Daemonic Levy / Демоническое Ополчение", reader: ""
+    source: "Daemonic Levy / Демоническое Ополчение", reader: "module/combat/insorcist.mjs::useInsorcism (свита до Inf.b, rules/insorcist-talents.mjs::levyMax)"
   },
   "elite.elitnyeArhetipy.inzortsist.fleetingPossession": {
     label: "Проводя Инзорцизм, может вместо призыва в Истинной Форме вселить демона в оружие в руках или машину, которой касается.",
-    source: "Fleeting Possession / Мимолётная Одержимость", reader: ""
+    source: "Fleeting Possession / Мимолётная Одержимость", reader: "module/combat/insorcist.mjs::useInsorcism → fleetingIntoWeapon / processInsorcistTurnStart"
   },
   // ── Элитные_архетипы\Инкуб — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.inkub.coldFace": {
@@ -4642,27 +4642,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Кенетаи — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kenetai.bladesOfBrotherhood": {
     label: "Мистическая сила клинков перетекает в клинки братьев по оружию. Манифестируя Психический Клинок на своё оружие,",
-    source: "Blades of Brotherhood / Клинки Братства", reader: ""
+    source: "Blades of Brotherhood / Клинки Братства", reader: "module/combat/psyker-elite-hooks.mjs::eliteManifestAfter (Психический Клинок → союзники Общего Сознания, rules/kenetai-talents.mjs::brotherhoodEpr)"
   },
   "elite.elitnyeArhetipy.kenetai.focusedStorm": {
     label: "Заклинания с лезвия Оккультного Клинка фокусируют мощь в точку. При использовании Оккультного Клинка для манифестации Психического Шторма ил…",
-    source: "Focused Storm / Фокусированный Шторм", reader: ""
+    source: "Focused Storm / Фокусированный Шторм", reader: "module/rules/kenetai-talents.mjs::occultShotShape → combat/psyker-elite-hooks.mjs::eliteShotShape → sheets/tabs/psychic.mjs (урон психосилы)"
   },
   "elite.elitnyeArhetipy.kenetai.soulThrust": {
     label: "Клинок пробивает не только плоть, но и психическую защиту. Если попадает приёмом Выпад и использует Оккультный Клинок для манифестации психо…",
-    source: "Soul Thrust / Выпад Души", reader: ""
+    source: "Soul Thrust / Выпад Души", reader: "module/combat/kenetai.mjs::useOccultBlade (ввод Успехов) → combat/psyker-elite-hooks.mjs::eliteManifestRoll"
   },
   "elite.elitnyeArhetipy.kenetai.spellBreaker": {
     label: "Клинок разрубает нити заклинаний, опутывающих цель. При использовании Оккультного Клинка может вместо манифестации пройти психотест W+0 vs W…",
-    source: "Spell Breaker / Разрушитель Чар", reader: ""
+    source: "Spell Breaker / Разрушитель Чар", reader: "module/combat/kenetai.mjs::useOccultBlade → spellBreaker (встречный W, снятие эффекта)"
   },
   "elite.elitnyeArhetipy.kenetai.wayOfTwoBlades": {
     label: "Подобно Кенетаи Ордена Шакала, идёт в бой с двумя Психосиловыми клинками. Может применять Оккультный Клинок два раза в Раунд,",
-    source: "Way of Two Blades / Путь Двух Клинков", reader: ""
+    source: "Way of Two Blades / Путь Двух Клинков", reader: "module/rules/kenetai-talents.mjs::occultBladeAllowed / soulBurnBlockedByOccultBlade"
   },
   "elite.elitnyeArhetipy.kenetai.wideBerth": {
     label: "Незримые нити, связывающие сознания, поддерживают связь на большем расстоянии. Удваивает радиус действия Трейта Общее Сознание.",
-    source: "Wide Berth / Пространство для Маневра", reader: ""
+    source: "Wide Berth / Пространство для Маневра", reader: "module/rules/kenetai-talents.mjs::sharedMindRange (×2)"
   },
   // ── Элитные_архетипы\Когитор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kogitor.cogitorPactStage1": {
@@ -4911,23 +4911,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Медуза — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.meduza.alienConsciousnessAlienPowers": {
     label: "Медуза игнорирует все психосилы Телепатии, применяя свои эффекты на противников как обычно и игнорируя урон от телепатических сил.",
-    source: "Alien Consciousness, Alien Powers / Чуждое Сознание, Чуждые Силы", reader: ""
+    source: "Alien Consciousness, Alien Powers / Чуждое Сознание, Чуждые Силы", reader: "module/hooks.mjs (гейт Теста Сопротивления: Телепатия не действует на медузу, «Извне» цели не гасит её силы) + combat/medusa.mjs::useEmotionalExplosion; rules/medusa-talents.mjs::hasAlienConsciousness"
   },
   "elite.elitnyeArhetipy.meduza.emotionalExplosion": {
     label: "Получает дополнительную атаку для трейта Эмпат — Emotional Explosion (Exotic Пистолет, дальность 70 м, S/–/–, Незримая).",
-    source: "Emotional Explosion / Эмоциональный Взрыв", reader: ""
+    source: "Emotional Explosion / Эмоциональный Взрыв", reader: "module/combat/medusa.mjs::useEmotionalExplosion / processMedusaTurnStart; оружие выдаёт запись Конструктора kind:equipment"
   },
   "elite.elitnyeArhetipy.meduza.emotionalVision": {
     label: "Получает Unnatural Senses (W), реагирующее на всех живых существ, способных ощущать эмоции — даже слабые и холодные вроде прагматизма.",
-    source: "Emotional Vision / Эмоциональное Зрение", reader: ""
+    source: "Emotional Vision / Эмоциональное Зрение", reader: "запись Конструктора kind:trait (Unnatural Senses, рейтинг wpv) + module/combat/medusa.mjs::useEmotionalVision (W−30)"
   },
   "elite.elitnyeArhetipy.meduza.extremeSensations": {
     label: "Когда во время битвы вражеский псайкер впервые получает критический эффект, медуза может пройти тест W+10 и при успехе немедленно объявить с…",
-    source: "Extreme Sensations / Экстремальные Ощущения", reader: ""
+    source: "Extreme Sensations / Экстремальные Ощущения", reader: "module/combat/medusa.mjs::useExtremeSensations / processMedusaTurnStart"
   },
   "elite.elitnyeArhetipy.meduza.materialWreck": {
     label: "Получает изменённую версию Волны Эмпатии, теряющую Warp Weapon и наносящую урон вражеской технике.",
-    source: "Material Wreck / Материальное Крушение", reader: ""
+    source: "Material Wreck / Материальное Крушение", reader: "запись Конструктора kind:equipment (оружие Material Wreck) + rules/medusa-talents.mjs::empathAttackPreset (+бPR, тест W)"
   },
   // ── Элитные_архетипы\Мейстер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.meyster.maesterPactStage1": {
@@ -5321,31 +5321,31 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чернокнижник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chernoknizhnik.cannibalMage": {
     label: "Ритуальный каннибализм позволяет поглотить остатки души жертвы для усиления манифестаций. За полное действие может съесть глаз, кусок мозга,",
-    source: "Cannibal Mage / Маг-Каннибал", reader: ""
+    source: "Cannibal Mage / Маг-Каннибал", reader: "module/combat/warlock.mjs::useCannibalMage / warlockAfterManifest; rules/warlock-talents.mjs::darkArtsGate"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.finalEcho": {
     label: "Растягивает энергию жертвоприношения, придавая колдовству гибкость истинного псайкера. После манифестации психосилы с Путём Жертва,",
-    source: "Final Echo / Последнее Эхо", reader: ""
+    source: "Final Echo / Последнее Эхо", reader: "module/combat/warlock.mjs::warlockAfterManifest (Путь «Жертва» → darkArtsFree)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.highRitualist": {
     label: "Глубокое понимание оккультных механизмов позволяет подчинять Эмпиреи силой чистого разума. Может использовать I вместо W и P в психотестах.",
-    source: "High Ritualist / Высший Ритуалист", reader: ""
+    source: "High Ritualist / Высший Ритуалист", reader: "module/rules/warlock-talents.mjs::highRitualistKey → sheets/tabs/psychic.mjs::resolvePsyCastAttr"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.interpreter": {
     label: "Способен освоить даже экзотические психосилы. Может обучаться редким дисциплинам у псайкеров и при обучении у псайкеров получает Преимущество на все тесты Транскрипции. НЕ реализовано: тестов «Транскрипции» в системе нет вовсе (grep по всему module/ — ни одного вызова, только текст здесь и в elite-archetypes.mjs) — Преимущество нечему давать, пока эта механика (вероятно, копирование психосил) не построена отдельно. См. bd «Разобрать».",
-    source: "Interpreter / Интерпретатор", reader: ""
+    source: "Interpreter / Интерпретатор", reader: "module/combat/warlock.mjs::useTranscription (Преимущество)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.listener": {
     label: "Частично трансмутирует свою душу, открывая её течениям Варпа. Может использовать Пси-Чутьё как псайкер.",
-    source: "Listener / Слушающий", reader: ""
+    source: "Listener / Слушающий", reader: "module/combat/warlock.mjs::useListener (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.silentStudent": {
     label: "Способен собрать эхо психосилы в формулу для своих инкантаций. После 8 ч изучения места, где недавно проходила манифестация психосилы,",
-    source: "Silent Student / Тихий Ученик", reader: ""
+    source: "Silent Student / Тихий Ученик", reader: "module/combat/warlock.mjs::useSilentStudent (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.warpDancer": {
     label: "Позволяет фокусировать энергии Варпа сложными пассами и стойками, подобно боевым искусствам.",
-    source: "Warp Dancer / Варп-Танцор", reader: ""
+    source: "Warp Dancer / Варп-Танцор", reader: "module/rules/warlock-talents.mjs::darkArtsGate/warpDanceOutcome → combat/psyker-elite-hooks.mjs::eliteManifestRoll"
   },
   // ── Элитные_архетипы\Чумной_Десантник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chumnoyDesantnik.bileSpit": {
@@ -6300,15 +6300,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимаг — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimag.magusSupreme": {
     label: "Тонкий контроль над ненадёжными силами Варпа. Феномены (но не Прорывы), вызванные им самим, не воздействуют на него,",
-    source: "Magus Supreme / Высший Магус", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Magus Supreme / Высший Магус", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/archmagus.mjs::useMagusSupreme + combat/psyker-elite-hooks.mjs::eliteManifestAfter (строка Феномена)"
   },
   "trait.elitnyeArhetipy.arhimag.masteryOfForm": {
     label: "Полезные мутации — знак благосклонности Тзинча. Потратив 9 часов на медитацию и Очко Бесчестия, может тестом For.",
-    source: "Mastery of Form / Мастерство Формы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Mastery of Form / Мастерство Формы", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/archmagus.mjs::useMasteryOfForm"
   },
   "trait.elitnyeArhetipy.arhimag.wizardStaff": {
     label: "Посох — фокус и проводник психической силы. Вооружённый психосиловым посохом в двуручном хвате,",
-    source: "Wizard Staff / Чародейский Посох", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Wizard Staff / Чародейский Посох", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/archmagus.mjs::useWizardStaff / wizardStaffTestBonus → combat/psyker-elite-hooks.mjs::eliteManifestEpr"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимагос — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimagos.doctrinaImperative": {
@@ -6501,11 +6501,11 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.dikiyPsayker.chainRejection": {
     label: "Порванные Цепи медленно высасывают жизнь. Каждую неделю получает 1 урона в S и T, который нельзя восстановить отдыхом и медитацией;",
-    source: "Chain Rejection / Отторжение Цепей", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Chain Rejection / Отторжение Цепей", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/wild-psyker.mjs::chainRejectionClock (combat/condition-clock.mjs)"
   },
   "trait.elitnyeArhetipy.dikiyPsayker.shieldOfChains": {
     label: "Защищён мощным психическим щитом из Порванных Цепей. Полученное попадание наносится по Щиту (бPR×3 Ран, бPR AP, поглощает через W.",
-    source: "Shield of Chains / Щит Цепей", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Shield of Chains / Щит Цепей", reader: "РЕАЛИЗОВАНО (21.11.2026): пул chainShield (запись Конструктора) + module/combat/wild-psyker.mjs::chainShieldIntercept (combat/damage.mjs), processWildPsykerTurnStart"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Длань_Архонта — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.dlanArhonta.equalizeTheOdds": {
@@ -6563,15 +6563,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Инзорцист — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.inzortsist.insorcism": {
     label: "Извлекая запечатанное имя, призывает демона в Материум, используя собственную душу как якорь.",
-    source: "Insorcism / Инзорцизм", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Insorcism / Инзорцизм", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/insorcist.mjs::useInsorcism (призыв по печати Миньоном, урон Inf.b, запрет после изгнания); combat/insorcist-warp.mjs — Нестабильность рядом с Инзорцистом и учёт изгнания"
   },
   "trait.elitnyeArhetipy.inzortsist.markOfSubjugator": {
     label: "Душа отмечена связью с демонами. Демоны автоматически распознают его как поработителя своего рода при первом взгляде и получают Талант Hatre…",
-    source: "Mark of Subjugator / Метка Поработителя", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Mark of Subjugator / Метка Поработителя", reader: "РЕАЛИЗОВАНО (21.11.2026): rules/predicates.mjs::hatredTargetsOf (демоны → признак subjugator, rules/talent-targets.mjs) + combat/insorcist.mjs::useMarkOfSubjugator (порог Пси-Чутья)"
   },
   "trait.elitnyeArhetipy.inzortsist.nameSeal": {
     label: "Способен запечатать Истинное Имя демона в собственном разуме. Зная Истинное Имя, в присутствии демона (не более W м) может провести ритуал З…",
-    source: "Name Seal / Печать Имени", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Name Seal / Печать Имени", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/insorcist.mjs::useNameSeal / processInsorcistTurnStart (ритуал, печать, эффект T −Inf.b)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Инкуб — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.inkub.mercenaryOfTheMatter": {
@@ -6585,11 +6585,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Кенетаи — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kenetai.occultBlade": {
     label: "Способны формировать сложные психосилы на кромке клинка. Раз в Раунд после успешной рукопашной атаки Психосиловым оружием может за свободное…",
-    source: "Occult Blade / Оккультный Клинок", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Occult Blade / Оккультный Клинок", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/kenetai.mjs::injectOccultBladeButtons/useOccultBlade (кнопка на карточке попадания), окно манифестации — opts.freeAction/occultBlade (psyker-elite-hooks.mjs::eliteManifestGate/eliteShotShape), запрет с Выжиганием Души — kenetaiSoulBurnGate"
   },
   "trait.elitnyeArhetipy.kenetai.sharedConsciousness": {
     label: "В бою Кенетаи и соратники действуют как единый организм. Потратив 5 минут на ритуал, может телепатически соединить свой разум с разумами до…",
-    source: "Shared Consciousness / Общее Сознание", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Shared Consciousness / Общее Сознание", reader: "ЧАСТИЧНО (21.11.2026): module/combat/kenetai.mjs::useSharedConsciousness (связь), бонус WS — rules/kenetai-talents.mjs::sharedConsciousnessRules (источник rules/sources.mjs); Инициатива/обзор/парирование за союзника — стол"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Когитор — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogitor.dreamChaser": {
@@ -6745,7 +6745,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meduza.empath": {
     label: "Медуза получает дополнительные профили атак, совершаемые через тест W: Eyeburst (Глазная Вспышка), Empathy (Эмпатия), Coma (Кома),",
-    source: "Empath / Эмпат", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Empath / Эмпат", reader: "РЕАЛИЗОВАНО (21.11.2026): записи Конструктора kind:equipment выдают пять атак медузы; rules/medusa-talents.mjs::empathAttackPreset → sheets/attack-dialog.mjs (W, бонус урона +бPR)"
   },
   "trait.elitnyeArhetipy.meduza.fromBeyond": {
     label: "Чуждое сознание: сопротивление воздействиям на разум.",
@@ -6761,7 +6761,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meduza.medusae": {
     label: "Сознание персонажа объединяется с медузой. Медуза должна получать эмоции как пищу: без хотя бы одной сильной эмоции в месяц она дематериализ…",
-    source: "Medusae / Медуза", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Medusae / Медуза", reader: "ЧАСТИЧНО (21.11.2026): module/combat/medusa.mjs::useMedusae (Плод), medusaHungerClock (combat/condition-clock.mjs), пул medusaGrowth и эффект defenseMax +2 в паке Черты; обмен чувствами, бPR медузы, учёба и прочее — стол"
   },
   "trait.elitnyeArhetipy.meduza.parasite": {
     label: "Медуза существует за счёт носителя.",
@@ -6979,11 +6979,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Чернокнижник — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chernoknizhnik.darkArts": {
     label: "Работает аналогично Трейту Psyker (PR2), но исключительно в части использования психосил.",
-    source: "Dark Arts / Тёмные Искусства", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — psyker.alwaysBound; остальное пишет в чат кнопка-памятка, считает ГМ"
+    source: "Dark Arts / Тёмные Искусства", reader: "ЧАСТИЧНО (21.11.2026): psyker.alwaysBound (Конструктор) + rules/warlock-talents.mjs::darkArtsGate → combat/psyker-elite-hooks.mjs::eliteManifestGate (Пути Силы, Обычный режим, без реакций); PR ≤ Cor.b и прочее — стол"
   },
   "trait.elitnyeArhetipy.chernoknizhnik.transcription": {
     label: "Нуждается в глубоком понимании механизмов, а не инстинктивном. Не имеет врождённого фокуса ни на одну психодисциплину, кроме божественных.",
-    source: "Transcription / Транскрипция", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Transcription / Транскрипция", reader: "ЧАСТИЧНО (21.11.2026): module/combat/warlock.mjs::useTranscription (дни обучения, тест)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Чумной_Десантник — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chumnoyDesantnik.abominablePhysiology": {

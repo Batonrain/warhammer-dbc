@@ -5,7 +5,7 @@
   "folder": "zT2Ovr1Nc79zbuTy",
   "system": {
     "description": "",
-    "notes": "Активный щит с формулой ёмкости/поглощения от бPR/W.b/T.b — новая механика активного щита (не броня/Shield-предмет), нет готового канала. Механика ждёт задачу Sahara 22-dbc-114 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026): Раны Щита — ячейка «Щит Цепей» в шапке листа (бPR×3, полный в начале боя). Попадание по псайкеру сначала бьёт Щит: AP = бPR (Пробитие срезает), поглощение через W.b вместо T.b, остаток — Ранам Щита; когда Раны кончаются, Щит отключается, лишний урон пропадает, дальше урон идёт как обычно, пока Щит не регенерирует все Раны. В начале Хода +тPR Ран (Завеса 3+ — +бPR, отрицательная Завеса — ничего). Игнорируют Щит атаки, игнорирующие щиты (Омывание/Варп), щиты-купола (Пила) и Освящённое. Карточка в чат на каждое попадание.",
     "benefit": "Защищён мощным психическим щитом из Порванных Цепей. Полученное попадание наносится по Щиту (бPR×3 Ран, бPR AP, поглощает через W.b вместо T.b). В начале каждого Хода Щит восстанавливает тPR Ран. Когда Щит теряет все Раны, он отключается, но весь «лишний» урон игнорируется; пока отключён, Псайкер получает урон как без Трейта. Щит включается обратно, только когда регенерирует все Раны. Игнорируется атаками, которые игнорировали бы чародейский щит-купол. При отрицательном истончении Завесы (Имперские храмы) не регенерирует Раны; при истончении Завесы 3+ (демонический мир) регенерирует бPR Ран вместо тPR.",
     "source": "Элитный архетип: Дикий Псайкер",
     "hasRating": false,
@@ -37,12 +37,12 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "XfE7g30gvEj1seJ1",
+          "id": "G3SZ9RYg5EPLe5x7",
           "operator": "AND",
           "entries": [
             {
-              "id": "7gXPTcx29Zg4ZFnH",
-              "kind": "script",
+              "id": "B88pOd1k1v0vNDMW",
+              "kind": "resourcePool",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -128,14 +128,27 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механика ждёт задачу): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "",
+              "code": "",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "resPoolKey": "chainShield",
+              "resPoolLabel": "Щит Цепей",
+              "resPoolMax": "3*pr",
+              "resPoolRefill": "battle",
+              "resPoolRoundCap": "",
+              "resPoolGainLabel": "",
+              "resPoolGainAmount": "0",
+              "resPoolAsInfamy": false,
+              "resPoolAsInfamyCap": "",
+              "resPoolAsInfamyCor": "",
+              "resPoolAsInfamyNote": "",
+              "resPoolBoostChars": "",
+              "resPoolFailChars": ""
             }
           ]
         }

@@ -22,6 +22,8 @@
 //  погашенный таймер.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { chainRejectionClock } from "./wild-psyker.mjs";
+import { medusaHungerClock } from "./medusa.mjs";
 import { fatigueChangeFields, announceFatigueChange, conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { uselessClockStep, SIDE_LABELS } from "../rules/useless-limbs.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -204,6 +206,10 @@ export const CONDITION_CLOCK_HANDLERS = [
   { id: "gloriousRust", run: gloriousRustClock },
   { id: "ironCage", run: ironCageClock },
   { id: "warpforgedRegen", run: warpforgedRegenClock },
+  // Отторжение Цепей (Дикий Псайкер): 1 урона в S и T каждую неделю — combat/wild-psyker.mjs.
+  { id: "chainRejection", run: chainRejectionClock },
+  // Медуза: без сильной эмоции месяц — голод (карточка ГМу).
+  { id: "medusaHunger", run: medusaHungerClock },
 ];
 
 async function charLossClock(actor, { to }) {

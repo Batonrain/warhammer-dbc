@@ -179,6 +179,12 @@ import { sweepTimedEffects, onTimedEffectExpired, clearDreadWailFear } from "./c
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollConditionCharTest } from "./combat/condition-ticks.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
+import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
+import { processWarlockTurnStart } from "./combat/warlock.mjs";
+import { processInsorcistTurnStart } from "./combat/insorcist.mjs";
+import { injectOccultBladeButtons, kenetaiSoulBurnGate } from "./combat/kenetai.mjs";
+import { processMedusaTurnStart } from "./combat/medusa.mjs";
+import { hasAlienConsciousness } from "./rules/medusa-talents.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -417,6 +423,8 @@ export function registerHooks() {
     // Огонь Души (module/combat/soulfire.mjs) — кнопка силы рядом с каждой
     // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
     injectSoulfireButtons(html);
+    // Оккультный Клинок (Кенетаи, combat/kenetai.mjs) — кнопка на рукопашном попадании Психосиловым оружием.
+    injectOccultBladeButtons(html);
 
     // Состояние, наложенное Ритуалом (module/apps/ritual-cast.mjs) — пилюля
     // в карточке успешного проведения; ГМ тащит её на лист актора, которому
@@ -489,12 +497,22 @@ export function registerHooks() {
             { sound: false });
           return;
         }
+        // Чуждое Сознание (Медуза): психосилы Телепатии на неё не действуют вовсе.
+        if (hasAlienConsciousness(targetActor) && String(d.discipline || "").toLowerCase() === "telepathy") {
+          await postTestCard(targetActor, `<div class="wh-roll-result">
+            <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Чуждое Сознание — ${esc(targetActor.name)}</div>
+            <div class="roll-threshold">Медуза игнорирует психосилы Телепатии: эффект и урон не действуют, тест Сопротивления не нужен.</div>
+            </div>`, { sound: false });
+          return;
+        }
         // Защита Пакта (Вампир/Когитор/Ревенант/Мейстер): телепатия «читает» ложь демона.
         const pactNote = pactProtectionNote(targetActor, d.discipline);
         if (pactNote) await postTestCard(targetActor, `<div class="wh-roll-result"><div class="roll-header">${rollIcon("shield", "#c98bff")}Защита Пакта — ${esc(targetActor.name)}</div><div class="roll-threshold">${esc(pactNote)}</div></div>`, { sound: false });
+        // Чуждые Силы (Медуза-заклинатель): «Извне» противника не учитывается.
+        const alienCaster = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
         // Не От Мира Сего (From Beyond): иммунитет к силам на разум (Телепатия:
         // Мезмеризм/Иллюзионизм), «если сам не пожелает» — спрашиваем, пустить ли.
-        if (mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
+        if (!hasAlienConsciousness(alienCaster) && mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
           const allow = await foundry.applications.api.DialogV2.confirm({
             window: { title: `Не От Мира Сего — ${targetActor.name}` },
             content: `<p>${esc(d.label || "Психосила")} влияет на разум. Иммунитет гасит её. Пожелает ли ${esc(targetActor.name)}, чтобы сила подействовала?</p>`,
@@ -4499,6 +4517,9 @@ export async function _executeSoulBurn(attacker, target) {
   if (hasFleshmetalFlag(target, "soulBurnImmunity")) {
     return ui.notifications.warn(`${target.name}: Выжигание Души бесполезно — душа спрятана в Варпе (Странная Неуязвимость).`);
   }
+  // Оккультный Клинок (Кенетаи): не в один Раунд с Выжиганием Души.
+  const kenetaiBlock = await kenetaiSoulBurnGate(attacker);
+  if (kenetaiBlock) return ui.notifications.warn(`⚠️ ${kenetaiBlock}`);
   // Божественная Защита цели (wdbc-nzzgn): на 10 по d10 эффект игнорируется.
   if (await tryDivineProtection(target, "Выжигание Души")) return;
   const allRolls = [];
@@ -5727,6 +5748,14 @@ function _attachFateContextMenu(message, html) {
       // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
       // тактом, что и регенерация Аблативных Ран выше.
       await processSigilliteRunesTurnStart(nextCombatant.actor);
+      // Щит Цепей (Дикий Псайкер): регенерация тPR/бPR и метки Талантов «до следующего Хода».
+      await processWildPsykerTurnStart(nextCombatant.actor);
+      // Тёмные Искусства (Чернокнижник): счётчик «как обычный псайкер» Мага-Каннибала / Последнего Эха.
+      await processWarlockTurnStart(nextCombatant.actor);
+      // Инзорцист: ритуал Запечатывания и Мимолётная Одержимость — счёт Ходов.
+      await processInsorcistTurnStart(nextCombatant.actor);
+      // Медуза: ОД от Эмоционального Взрыва и Экстремальных Ощущений.
+      await processMedusaTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.

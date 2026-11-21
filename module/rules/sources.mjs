@@ -41,6 +41,7 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { sharedConsciousnessRules } from "./kenetai-talents.mjs";
 import { possessionWeaponGiftRules } from "./possession-weapon-gifts.mjs";
 import { rageRules } from "./rage.mjs";
 import { socialTalentRules } from "./social-talents.mjs";
@@ -201,6 +202,9 @@ registerRuleSource("targetSocialTalents", () => TARGET_SOCIAL_TALENT_RULES);
 // переброс встречного социального теста против цели, которую персонаж
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Общее Сознание (Кенетаи): +2/+5 к тестам WS за каждого связанного союзника в радиусе — rules/kenetai-talents.mjs.
+registerRuleSource("sharedConsciousness", a => sharedConsciousnessRules(a));
 
 // Дары Одержимого для оружия (Разобрать m9zer): атака слитым оружием в Проявлении
 // получает Reinforced и свойства Даров-усилителей — rules/possession-weapon-gifts.mjs.

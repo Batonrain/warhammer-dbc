@@ -19,6 +19,7 @@ import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/a
 import { hasRuleFlag } from "../flags.mjs";
 import { SURE_TREAD, sureTreadMovementCap } from "../squat-traits.mjs";
 import { flightSpeedOf } from "../flight-speed.mjs";
+import { alacrityFlightSpd } from "../wild-psyker-talents.mjs";
 import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
 import { speedMultiplierTraitsOf, speedMultipliersFor } from "../speed-multipliers.mjs";
 import { mechRollData } from "../mech-formula.mjs";
@@ -97,7 +98,7 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // открывает ему полёт тем же гейтом). Из двух скоростей полёта берётся бóльшая.
   const wingsSpd = manifestedGift(actor, "Крылья") ? agBonus * 2 : null;
   const traitFlightSpd = IN_FLIGHT.has(system.movement?.altitude)
-    ? flightSpeedOf(actor?.items ?? [], mechRollData(actor)) : null;
+    ? alacrityFlightSpd(actor, flightSpeedOf(actor?.items ?? [], mechRollData(actor))) : null;
   const flightSpd = !IN_FLIGHT.has(system.movement?.altitude) ? null
     : (wingsSpd !== null && (traitFlightSpd === null || wingsSpd > traitFlightSpd)) ? wingsSpd : traitFlightSpd;
   if (flightSpd !== null) {

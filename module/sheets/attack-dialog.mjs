@@ -105,6 +105,7 @@ import { fullFireOptions, FULL_FIRE_PENALTY } from "../rules/full-fire.mjs";
 import { hasPowerSetting, powerModeOf, POWER_MODES } from "../rules/power-setting.mjs";
 import { batpackAvailable, batpackRangePenalty } from "../rules/batpack-dump.mjs";
 import { sabotageAimEntries } from "../rules/rogue-talents.mjs";
+import { empathAttackPreset } from "../rules/medusa-talents.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -1663,6 +1664,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     badgesHtml,
     bandHtml,
     charKey,
+    // Эмпат (Медуза): атаки медузы — тестом W, урон +бPR (rules/medusa-talents.mjs).
+    ...empathAttackPreset(actor, item),
     charSwapWhy,
     charVal,
     commonMods,
