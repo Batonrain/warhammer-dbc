@@ -91,6 +91,7 @@ import { lockedPatron, enforcedPatron, patronLockMessage, PATRON_LOCK_PREFIX } f
 import { optionalIntegralEntries, integralEntrySelected, INTEGRAL_CHOSEN_FLAG } from "./module/rules/integral-rating.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
+import { CORRUPTION_IMMUNE_CAP, corruptionWithImmunity } from "./module/rules/rubricae.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
   from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
@@ -3004,6 +3005,14 @@ Hooks.on("preUpdateActor", (doc, changes) => {
   if (keep !== newCor) {
     foundry.utils.setProperty(changes, "system.corruption.value", keep);
     ui.notifications?.info(`${doc.name}: в Пустоте Парии Порча не прибавляется.`);
+    return;
+  }
+  // Рубрикант (rules/rubricae.mjs): «не получает Порчу» — прирост отменяется, снижение проходит.
+  if (!hasRuleFlag(doc, CORRUPTION_IMMUNE_CAP)) return;
+  const immune = corruptionWithImmunity(doc.system?.corruption?.value, newCor);
+  if (immune !== newCor) {
+    foundry.utils.setProperty(changes, "system.corruption.value", immune);
+    ui.notifications?.info(`${doc.name}: не получает Порчу.`);
   }
 });
 

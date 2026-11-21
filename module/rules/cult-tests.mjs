@@ -19,9 +19,13 @@ const charTotal = (actor, key) => Number(actor?.system?.characteristics?.[key]?.
  */
 export function cultTestBase(actor, t = {}) {
   if (t.skill) {
-    const char = t.charOverride || SKILLS_DEF[t.skill]?.char || "int";
+    const own = SKILLS_DEF[t.skill]?.char || "int";
+    const char = t.charOverride || own;
     const total = actor?.system?.skills?.[t.skill]?.total;
-    const base = Number.isFinite(Number(total)) && total != null ? Number(total) : charTotal(actor, char) - 20;
+    // «Навык(Характеристика)» — Навык на другой Характеристике (Deceive(I) Вуали Лжи):
+    // ранг и бонусы Навыка те же, Характеристика своей заменяется на указанную.
+    const shift = char === own ? 0 : charTotal(actor, char) - charTotal(actor, own);
+    const base = Number.isFinite(Number(total)) && total != null ? Number(total) + shift : charTotal(actor, char) - 20;
     return { base, char, skill: t.skill, group: null };
   }
   if (t.group) {

@@ -24,6 +24,7 @@ import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mj
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { combinedThreshold } from "../rules/test-kind.mjs";
 import { cultTestOutcome, cultTestLabel, cultTestBase } from "../rules/cult-tests.mjs";
+import { TEST_CHAR_FLAG } from "../rules/beyond-human.mjs";
 import { canSpendActionPoints, spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 
 export const NS = "warhammer-dbc";
@@ -125,8 +126,10 @@ export async function rollCultTest(actor, {
   const bases = [];
   const thresholds = [];
   const labels = [];
+  const chars = [];
   for (const t of tests) {
     const { base, char, skill, group } = cultTestBase(actor, t);
+    chars.push(char);
     const ctx = { kind: "skill", char, targetActor };
     if (skill) ctx.skill = skill;
     if (group) { ctx.group = group; ctx.specialty = t.specLabel ?? t.spec; }
@@ -155,6 +158,10 @@ export async function rollCultTest(actor, {
     outcome: outcomeHtml(ok, ok
       ? `Успех — ${deg} ${_degWord(deg)}${success ? `. ${success}` : ""}`
       : `Провал — ${deg} ${_degWord(deg)}${failure ? `. ${failure}` : ""}`)
-  }, { rolls: [roll] });
+  }, {
+    rolls: [roll],
+    // Один тест — его Характеристика для «За Гранью Человека» при перебросе за Очко (Sahara 62-6d8b).
+    ...(tests.length === 1 && chars[0] ? { flags: { "warhammer-dbc": { [TEST_CHAR_FLAG]: chars[0] } } } : {})
+  });
   return { success: ok, deg, threshold, rv, roll };
 }

@@ -33,3 +33,28 @@ describe("Когнитэ", () => {
     expect(timedFlagActive(a, "perfectMask", 10)).toBe(false);
   });
 });
+
+// Sahara 581-7bb9: Вуаль Лжи — прокси-личность: Deceive(I)+0 против Успехов атакующего.
+import { hasVeilOfLies, veilProxyAccepted } from "../../module/rules/cognitae-talents.mjs";
+import { cultTestBase } from "../../module/rules/cult-tests.mjs";
+
+describe("Вуаль Лжи: прокси-личность", () => {
+  it("Черта узнаётся по имени", () => {
+    expect(hasVeilOfLies({ items: [trait("Veil of Lies / Вуаль Лжи")] })).toBe(true);
+    expect(hasVeilOfLies({ items: [] })).toBe(false);
+  });
+  it("принята, если тест Deceive успешен и Успехов не меньше, чем у атакующего", () => {
+    expect(veilProxyAccepted({ success: true, deg: 2 }, 2)).toBe(true);
+    expect(veilProxyAccepted({ success: true, deg: 3 }, 2)).toBe(true);
+    expect(veilProxyAccepted({ success: true, deg: 1 }, 2)).toBe(false);
+    expect(veilProxyAccepted({ success: false, deg: 3 }, 0)).toBe(false);
+    expect(veilProxyAccepted({ success: true, deg: 1 }, 0)).toBe(true);
+  });
+  it("Deceive(I): база навыка с Интеллектом вместо Общительности", () => {
+    const actor = { system: { characteristics: { fel: { total: 30 }, int: { total: 45 } }, skills: { deceive: { total: 40 } } } };
+    expect(cultTestBase(actor, { skill: "deceive", charOverride: "int" })).toMatchObject({ base: 55, char: "int", skill: "deceive" });
+    expect(cultTestBase(actor, { skill: "deceive" }).base).toBe(40);
+    const untrained = { system: { characteristics: { fel: { total: 30 }, int: { total: 45 } }, skills: {} } };
+    expect(cultTestBase(untrained, { skill: "deceive", charOverride: "int" }).base).toBe(25);
+  });
+});

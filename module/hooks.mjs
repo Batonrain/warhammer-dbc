@@ -166,6 +166,7 @@ import { sweepExpiredControl, releaseControlOnCombatEnd } from "./rules/actor-co
 import { checkMimicWireSurgery, cutMimicWire, startMimicWireSurgery, confirmMimicWireExtraction, captureWithMimicWire } from "./apps/volunteer-actor.mjs";
 import { checkAbandonedHostDeath } from "./apps/maggot-parasite.mjs";
 import { beginParasiticContact, tearOffParasite } from "./apps/parasite-trait.mjs";
+import { useVeilOfLiesProxy } from "./combat/cognitae.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
 import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
 import { processWarpEaterMonthCheck } from "./rules/warp-eater.mjs";
@@ -259,7 +260,7 @@ import { takedownKnockdown, TAKEDOWN_CARD_FLAG } from "./combat/takedown.mjs";
 import { clearCombatFormationOnCombatEnd } from "./combat/combat-formation.mjs";
 import { masteryAutoSuccessOffer } from "./rules/mastery.mjs";
 import { masteryAutoSuccessOnCard, masteryHasPoint } from "./combat/mastery.mjs";
-import { beyondHumanRerollData, beyondHumanDataOf, keepFirstButtonHtml, keepFirstResult,
+import { beyondHumanRerollData, beyondHumanDataOf, keepFirstButtonHtml, keepFirstResult, rerolledTestChar,
          BEYOND_HUMAN_FLAG } from "./combat/beyond-human.mjs";
 import { hasLegionSurgery, legionSurgeryTestEligible } from "./rules/legion-surgery.mjs";
 import { legionSurgeryOnCard } from "./combat/legion-surgery.mjs";
@@ -3391,6 +3392,19 @@ export function registerHooks() {
       });
     });
 
+    // Вуаль Лжи (Когнитэ, Sahara 581-7bb9): прокси-личность с карточки пытки —
+    // тест Deceive(I)+0 жертвы против Успехов пытающего (apps/torture.mjs).
+    html.querySelectorAll(".wh-veil-proxy-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Подсунуть прокси-личность может владелец Когнитэ (или ГМ).");
+        el.disabled = true;
+        await useVeilOfLiesProxy(actor, { attackerSuccesses: Number(el.dataset.successes) || 0, attackerName: el.dataset.attackerName || "" });
+      });
+    });
+
     // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): бросок 1d10+1
     // против значения Крит.Эффекта, что накормил носителя (кнопка появляется
     // в самой карточке крита, combat/damage.mjs). При успехе (бросок НИЖЕ
@@ -4982,8 +4996,10 @@ function _attachFateContextMenu(message, html) {
 
       // За Гранью Человека: первый результат этого теста (его Характеристика
       // известна по флагу карточки Навыка/Характеристики с листа).
-      const bhTest = skillTest?.char ? beyondHumanRerollData(actor, {
-        charKey: skillTest.char, firstRv: roll.total, threshold, spend: champion ? null : reroll1 }) : null;
+      // Тест без листа (Страх, кнопки архетипов) несёт Характеристику во флаге testChar.
+      const bhChar = rerolledTestChar(message.flags?.["warhammer-dbc"]);
+      const bhTest = bhChar ? beyondHumanRerollData(actor, {
+        charKey: bhChar, firstRv: roll.total, threshold, spend: champion ? null : reroll1 }) : null;
 
       const rv  = newRoll.total;
       const hit = threshold !== null ? rv <= threshold : null;

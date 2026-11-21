@@ -22,9 +22,14 @@
 //  «своё» — первый результат оставить можно, но Очко Чемпиона не возвращается.
 //  [допущение] Дальше первого переброса не идём: «первый» — результат
 //  карточки, с которой переброшено.
+//  Тесты без листа (Страх, кнопки элитных архетипов — combat/fear.mjs,
+//  combat/cult-common.mjs::rollCultTest) кладут Характеристику во флаг
+//  testChar (Sahara 62-6d8b п.3) — кнопка есть и у их переброса.
 // ════════════════════════════════════════════════════════════════════════
 
-import { canKeepFirstResult, firstResultOutcome } from "../rules/beyond-human.mjs";
+import { canKeepFirstResult, firstResultOutcome, TEST_CHAR_FLAG, rerolledTestChar } from "../rules/beyond-human.mjs";
+
+export { TEST_CHAR_FLAG, rerolledTestChar };
 import { changeActorInfamy } from "../apps/infamy-points.mjs";
 import { grantTempInfamy, tempInfamyInfo } from "../rules/temp-infamy.mjs";
 import { runCardOnce } from "./card-once.mjs";

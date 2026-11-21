@@ -7,6 +7,7 @@ import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
 import { isDaemonActor } from "../rules/predicates.mjs";
 import { daemonicTbBonus, bypassesDaemonic } from "../rules/daemonic-bypass.mjs";
 import { SWARM_CAP, swarmDamage } from "../rules/swarm.mjs";
+import { CRUMBLE_CAP, crumblesOnWoundLoss } from "../rules/rubricae.mjs";
 import { WARP_INSTABILITY_CAP, shouldBanish } from "../rules/warp-instability.mjs";
 import { warpInstabilityOnHurt, warpInstabilityOnDealt, banishToWarp } from "./warp-instability.mjs";
 import { mockeryOfLifeOnDamage, bloodGodOnKill } from "./demon-god-traits.mjs";
@@ -1578,11 +1579,15 @@ export async function applyDamageToActor(actor, damageData) {
   let { currentWounds, newWounds, newCritical, gotCritical } = woundLoss;
   // Рой: Критических Эффектов нет — при Ранах ниже 0 уничтожен (метка «погиб», Критические не копятся).
   let swarmDestroyedNote = "";
-  if (hasRuleFlag(actor, SWARM_CAP) && gotCritical) {
+  // Рубрикант (rules/rubricae.mjs): Раны ниже 0 — рассыпается грудой пустых доспехов, та же ветка.
+  const isSwarm = hasRuleFlag(actor, SWARM_CAP);
+  if ((isSwarm && gotCritical) || crumblesOnWoundLoss(hasRuleFlag(actor, CRUMBLE_CAP), gotCritical)) {
     await actor.update({ "system.wounds.critical": Number(woundLoss.currentCritical) || 0, "flags.warhammer-dbc.deceased": true });
     gotCritical = false;
     newCritical = Number(woundLoss.currentCritical) || 0;
-    swarmDestroyedNote = `<div class="dmg-tb-note">Рой уничтожен: Раны ниже 0 — Критических Эффектов нет.</div>`;
+    swarmDestroyedNote = isSwarm
+      ? `<div class="dmg-tb-note">Рой уничтожен: Раны ниже 0 — Критических Эффектов нет.</div>`
+      : `<div class="dmg-tb-note">Раны ниже 0 — ${esc(actor.name)} рассыпается грудой пустых доспехов (Рубрикант).</div>`;
   }
   // Варп-Нестабильность: цель получила урон / атакующий нанёс урон; Раны ниже 0 — изгнание в Варп.
   await warpInstabilityOnHurt(actor, netDamage);
