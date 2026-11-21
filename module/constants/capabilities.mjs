@@ -5808,8 +5808,8 @@ export const CAPABILITIES = {
     source: "Master of Machines / Повелитель Машин", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
   },
   "trait.myOwnMaster": {
-    label: "Коды командования для Боевых Лат Скитария не работают. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ: кодов командования (Катехизисы Командования Лат, Binary Dominion) как механики в системе нет — читать нечему (сверка Архетипов 28.09.2026).",
-    source: "My Own Master / Сам Себе Хозяин", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    label: "Коды командования для Боевых Лат Скитария не работают.",
+    source: "My Own Master / Сам Себе Хозяин", reader: "module/rules/binary-dominion.mjs::hasMyOwnMaster — Скитарий с Чертой не цель Бинарного Владычества (isBinaryCommandTarget: нет подмены Command → Tech-Use, binaryDominionRisk не поднимает Риск до 3). «Обязан выполнять команды Механикус» Лат — повествование, ведёт ГМ (Sahara 530-my-own-master, 21.11.2026)"
   },
   "trait.masterOfMindsOfMonKeigh": {
     label: "Если Люди под его командованием не знают его природы (или признают лидером) — за Очко Судьбы даёт им Fearless (с инстинктом самосохранения)…",

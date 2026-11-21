@@ -206,3 +206,21 @@ describe("Бинарная Паства: Миньон-человек в лата
     expect(slotUsage([slotTalent], [m]).free).toHaveLength(1);
   });
 });
+
+// Сам Себе Хозяин (Черта Архетипа Скитарий, Sahara 530-my-own-master): «Коды
+// командования для Боевых Лат Скитария не работают» — Бинарное Владычество
+// держится на этих кодах (Катехизисы Командования Лат), поэтому такой Скитарий
+// не цель подмены Command → Tech-Use и не поднимает Риск до 3.
+describe("Сам Себе Хозяин", () => {
+  const ownMaster = () => ({ type: "character", items: [trait("My Own Master / Сам Себе Хозяин"), plate()], system: { archetype: "skitarii" } });
+  it("Скитарий с Чертой — не цель Бинарного Владычества", () => {
+    expect(isSkitariiActor(ownMaster())).toBe(true);
+    expect(isBinaryCommandTarget(ownMaster())).toBe(false);
+    expect(binaryDominionCommandBonus(commander(), { targetActor: ownMaster() })).toBe(0);
+    expect(binaryDominionCommandBonus(commander(), { targetActor: skitarius() })).toBe(25);
+  });
+  it("Риск отряда с таким Скитарием не меняется", () => {
+    expect(binaryDominionRisk(commander(), 1, [ownMaster()])).toBe(1);
+    expect(binaryDominionRisk(commander(), 1, [skitarius()])).toBe(3);
+  });
+});
