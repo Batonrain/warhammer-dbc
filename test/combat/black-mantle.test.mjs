@@ -335,6 +335,8 @@ describe("Чёрная Мантия: переключение режима ст�
     expect(await setBlackMantleOn(t.item, true)).toBe(false);
     expect(t.flags[BLACK_MANTLE_ON_FLAG]).toBeUndefined();
     expect(t.updates).toEqual([]);
+    // task-71de: отказ не молчит — игрок видит, что дело в ОД.
+    expect(captured.warnings.join(" ")).toMatch(/не хватает ОД/);
   });
 
   it("то же состояние (включено → включить) ничего не стоит и не пишет", async () => {
@@ -398,6 +400,8 @@ describe("тумблер на листе Таланта", () => {
     expect(html).toContain("black-mantle-cb");
     expect(html).toMatch(/disabled/);
     expect(html).not.toContain("checked");
+    // Sahara xix: панель помечена недоступной — CSS красит тумблер серым.
+    expect(html).toContain("black-mantle-unavailable");
     expect(html).toMatch(/недоступ/i);
     // у остальных легионов тумблер живой
     expect(blackMantleHtml(m, { id: "a", system: { geneSeed: { legion: "IX", chapter: "" } } })).not.toMatch(/disabled/);

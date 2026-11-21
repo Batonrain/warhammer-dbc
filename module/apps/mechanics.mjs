@@ -2097,6 +2097,11 @@ async function resolveTalentSpecChoice(entry) {
  * полученный ЗАРАНЕЕ через resolveDirectAsk (Promise.all соседей в
  * applyGroupEntries) — если задан, повторно диалог/коллектор не зовём.
  */
+/** Талант с целями «на выбор» (targetChoiceCount): цели спрашивает окно целей, а не выбор специализации. */
+function asksTalentTargets(entry) {
+  return entry?.kind === "talent" && Number(entry.targetChoiceCount) > 0 && !entry.targets?.length;
+}
+
 export async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set(), preAsked = null) {
   // Подгруппа — не запись, а узел И/ИЛИ: отыгрываются её листья, отметку
   // получают тоже они.
@@ -2136,7 +2141,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   // Талант с целями «на выбор» (Peer/Hatred/Good Reputation: Придворный, Отступник,
   // Предсказание — dbc-152): игрок выбирает targetChoiceCount целей до выдачи,
   // они ложатся в system.targets (читатели rules/hatred.mjs, social-talents.mjs).
-  if (entry.kind === "talent" && Number(entry.targetChoiceCount) > 0 && !entry.targets?.length) {
+  const askedTargets = asksTalentTargets(entry);
+  if (askedTargets) {
     const { promptTargetChoices, targetChoiceLabel } = await import("./target-choice.mjs");
     const src = await resolveMechSource(entry);
     const title = String(src?.name || entry.sourceName || "Талант").split("/").pop().trim();
@@ -2147,7 +2153,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
 
   // Талант «любые N» (rules/talent-spec-choice.mjs) — выбор специализаций до
   // выдачи, тем же диалогом/коллектором Мастера, что у Навыков.
-  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null) {
+  // Цели уже выбраны окном выше — «любая» в специализации была лишь подписью
+  // к ним, второй вопрос («Выбор специализации») не задаём (task-eb2d).
+  if (entry.kind === "talent" && !askedTargets && anySpecCount(entry.specialization) != null) {
     const resolved = preAsked ?? await resolveTalentSpecChoice(entry);
     if (!resolved.length) return;
     entry = resolved[0];
@@ -3616,7 +3624,7 @@ async function resolveDirectAsk(entry, applied, sourceItem, actor) {
     return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
   }
   // Талант «любые N» — тем же пакетом, что Навыки «на выбор».
-  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null
+  if (entry.kind === "talent" && !asksTalentTargets(entry) && anySpecCount(entry.specialization) != null
       && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
     return { type: "spec", resolved: await resolveTalentSpecChoice(entry) };
   }

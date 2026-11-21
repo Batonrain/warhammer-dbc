@@ -18,7 +18,7 @@
 
 import { itemIs } from "../rules/item-marker.mjs";
 import { BLACK_MANTLE_KEY, BLACK_MANTLE_ON_FLAG, blackMantleAvailable } from "../rules/radiation-scene.mjs";
-import { spendActionPoints } from "../combat/action-economy.mjs";
+import { spendActionPoints, actionBlockReason } from "../combat/action-economy.mjs";
 
 const SYSTEM = "warhammer-dbc";
 /** «За полудействие» — 1 ОД, как у Расплавления и Драконьего Рыцаря. */
@@ -56,7 +56,13 @@ export async function setBlackMantleOn(item, on) {
     await item.setFlag(SYSTEM, BLACK_MANTLE_ON_FLAG, false);
     return true;
   }
-  if (actor && !(await spendActionPoints(actor, HALF_ACTION_AP))) return false;
+  if (actor && !(await spendActionPoints(actor, HALF_ACTION_AP))) {
+    // spendActionPoints молчит, когда ОД просто кончились (пишет только про
+    // Оглушение и т.п.) — без строки игрок видел лишь откат галочки (task-71de).
+    if (!actionBlockReason(actor, {}))
+      ui.notifications?.warn(`⚠️ ${actor.name}: не хватает ОД — переключение Чёрной Мантии стоит полудействие (1 ОД).`);
+    return false;
+  }
   await item.setFlag(SYSTEM, BLACK_MANTLE_ON_FLAG, want);
   return true;
 }
@@ -65,7 +71,7 @@ export async function setBlackMantleOn(item, on) {
 export function blackMantleHtml(item, actor) {
   if (!isBlackMantleItem(item) || !actor) return "";
   if (!blackMantleAvailable(actor)) {
-    return `<div class="black-mantle-panel">
+    return `<div class="black-mantle-panel black-mantle-unavailable">
     <label class="black-mantle-toggle">
       <input type="checkbox" class="black-mantle-cb" data-item-id="${item.id}" disabled/>
       Усиленный режим Меланохрома

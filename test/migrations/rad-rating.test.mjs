@@ -94,7 +94,7 @@ describe("Рад проставлен там, где в книге он есть
   });
 
   it("свойства Twin Rad Cleanser и Karachnos не потеряны при вставке Рад", () => {
-    expect(props("Twin Rad Cleanser").map(p => p.key)).toEqual(["felling", "rad", "spray", "twinLinked"]);
+    expect(props("Twin Rad Cleanser").map(p => p.key)).toEqual(["felling", "rad", "spray", "twinLinked", "unseen", "radiationSourced"]);
     expect(props("Karachnos Missile Battery").map(p => p.key)).toEqual(["arcing", "blast", "flush", "rad", "tearing", "toxic"]);
   });
 });

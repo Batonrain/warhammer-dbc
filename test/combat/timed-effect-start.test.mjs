@@ -54,3 +54,21 @@ describe("timedEffectData — start", () => {
     expect("start" in timedEffectData(base)).toBe(false);
   });
 });
+
+// dbc-78 / wdbc-p95ph: Боевой Клич вне боя — ядро гасило эффект «на 1 Раунд»
+// по Календарю через секунды. Вне начатого боя срок — бессрочный, снимает
+// подметание в начале Хода носителя.
+import { grantTimedEffect, OUT_OF_COMBAT_DURATION } from "../../module/combat/timed-effects.mjs";
+describe("grantTimedEffect вне боя", () => {
+  const saved = globalThis.game;
+  afterEach(() => { globalThis.game = saved; });
+  it("без начатого боя — эффект без срока", async () => {
+    globalThis.game = { ...(saved || {}), combat: null, combats: { get: () => null, contents: [], [Symbol.iterator]: function* () {} }, time: { worldTime: 1 } };
+    const created = [];
+    const a = { id: "a1", effects: [], getActiveTokens: () => [],
+      createEmbeddedDocuments: async (_t, list) => { created.push(...list); return list; } };
+    await grantTimedEffect(a, { key: "warCry", name: "Клич", changes: [{ key: "system.fearRating", value: 1 }] });
+    expect(created[0].duration).toEqual(OUT_OF_COMBAT_DURATION);
+    expect("start" in created[0]).toBe(false);
+  });
+});

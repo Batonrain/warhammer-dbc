@@ -146,6 +146,33 @@ export function sureTreadIgnoresTerrain(actor, passed, degrees) {
   return !!passed && Number(degrees) >= 3 && !!actor && hasRuleFlag(actor, SURE_TREAD);
 }
 
+/** Флаг актора: Надёжная Поступь сняла замедление Ландшафта на этот Ход (2-0f13). */
+export const SURE_TREAD_UNSLOWED_FLAG = "sureTreadUnslowed";
+
+/**
+ * Метка «этого Хода»: бой, Раунд и Ход трекера; вне боя — игровое время, после
+ * которого метка живёт 6 секунд (один Ход по книге).
+ */
+export function sureTreadTurnStamp(combat = globalThis.game?.combat, worldTime = globalThis.game?.time?.worldTime) {
+  if (combat?.started) return { combatId: combat.id, round: combat.round, turn: combat.turn };
+  return { worldTime: Number(worldTime) || 0 };
+}
+
+/**
+ * Действует ли ещё «Ландшафт не замедляет» по сохранённой метке. Зона Трудного
+ * Ландшафта (regions/difficult-terrain.mjs) по ней снимает удвоение цены пути.
+ */
+export function sureTreadUnslowedActive(stamp, combat = globalThis.game?.combat, worldTime = globalThis.game?.time?.worldTime) {
+  if (!stamp || typeof stamp !== "object") return false;
+  if (stamp.combatId != null) {
+    return !!combat?.started && combat.id === stamp.combatId
+      && combat.round === stamp.round && combat.turn === stamp.turn;
+  }
+  if (combat?.started) return false;
+  const dt = (Number(worldTime) || 0) - (Number(stamp.worldTime) || 0);
+  return dt >= 0 && dt < 6;
+}
+
 /**
  * «Не может двигаться пешком более 3×SPD в Ход»: Натиск и так 3×SPD, Бег
  * (6×SPD) урезается до него. Числа, уже уменьшенные Поваленным/потерей ног,

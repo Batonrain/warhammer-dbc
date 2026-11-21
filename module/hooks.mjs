@@ -4073,6 +4073,22 @@ async function _applyShipHullDamage(dmg) {
 // Экспорт с подчёркиванием — тот же приём, что _resolveSoulBurn выше:
 // внутренняя функция обработчика клика, но тестируемая напрямую (wdbc-5tz),
 // без симуляции самого клика по карточке чата.
+/**
+ * Подсказка «сначала примените урон» для кнопок «при пробитии брони» (Rad/Toxic…).
+ * Называет ЦЕЛЬ атаки с карточки, а не выделенный токен: выделен стрелок — игрок
+ * видел его имя и думал, что урон надо применять к нему (wdbc-rad-button-msg).
+ */
+export function breachFirstWarning(label, actor, messageId) {
+  const targetUuid = globalThis.game?.messages?.get?.(messageId)?.flags?.["warhammer-dbc"]?.attack?.targetUuid;
+  const target = targetUuid ? globalThis.fromUuidSync?.(targetUuid) : null;
+  const targetActor = target?.actor ?? target ?? null;
+  const tail = "эффект срабатывает только при пробитии брони (Shift — наложить вручную).";
+  if (targetActor && targetActor.uuid !== actor?.uuid) {
+    return `⚠️ ${label}: выделен ${actor?.name ?? "не тот токен"}, а цель атаки — ${targetActor.name}. Выделите ${targetActor.name} и сначала примените к нему урон этой атаки — ${tail}`;
+  }
+  return `⚠️ ${label}: сначала примените урон этой атаки к ${targetActor?.name ?? actor?.name ?? "цели"} — ${tail}`;
+}
+
 export async function _applyWeaponPropEffect(ds, { messageId = "", force = false } = {}) {
   // forceActorUuid (wdbc-z5mn) — цель уже известна на 100% (Встречная атака:
   // Shocking у Электродуги бьёт по нападающему, не по выбранному на сцене
@@ -4206,7 +4222,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   if (ds.wpOnBreach === "1" && !force && messageId && actor.type !== "vehicle" && actor.type !== "horde") {
     const rec = actor.getFlag?.("warhammer-dbc", "lastBreach");
     if (rec?.messageId !== messageId) {
-      return ui.notifications.warn(`⚠️ ${label}: сначала примените урон этой атаки к ${actor.name} — эффект срабатывает только при пробитии брони (Shift — наложить вручную).`);
+      return ui.notifications.warn(breachFirstWarning(label, actor, messageId));
     }
     // Облучить: для свойства Rad пробитие считается без удвоения AP (radBreached пишет damage.mjs).
     const breachedForThis = (propKey === "rad" && rec.radBreached != null) ? rec.radBreached : rec.breached;

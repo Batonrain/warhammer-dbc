@@ -16,6 +16,7 @@ import { measureTokens } from "../combat/tactical-map.mjs";
 import { rangeBandKey } from "../rules/tactical-map.mjs";
 import { vehicleWeaponProfile } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { ammoOverrides, effectiveAmmoRange } from "../rules/ammo-override.mjs";
 import { _getCompatibleAmmo, _showAmmoSelectDialog } from "../combat/reload.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
@@ -595,6 +596,10 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     const sys = item.system;
     const vm  = sys.vehicleMount || {};
     const isMelee = sys.weaponClass === "melee" || sys.weaponClass === "thrown";
+    // Заряженный снаряд (task-8ff8): шапка и дальность — как у выстрела
+    // (combat/attack.mjs берёт Dmg/Pen снаряда вместо базы орудия).
+    const shell = (!isMelee && sys.loadedAmmoId) ? this.actor.items.get(sys.loadedAmmoId) : null;
+    const shellHead = vehicleShellHeader(sys, shell);
 
     // BS оператора: персонаж на привязанном месте → его BS; иначе, если у машины
     // есть Автопилот (Autonomous), стреляет он своим BS; иначе базовый 35.
@@ -709,19 +714,20 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     // pointBlank/short схлопываются в «+10», long/extreme — в «−10».
     const vfTarget = (!isMelee && vehicleToken) ? [...(game.user?.targets ?? [])][0] : null;
     const vfMeasured = (vehicleToken && vfTarget) ? measureTokens(vehicleToken, vfTarget) : null;
-    const vfBandKey = vfMeasured ? rangeBandKey(vfMeasured.edgeM, Number(sys.range)) : null;
+    const vfBandKey = vfMeasured ? rangeBandKey(vfMeasured.edgeM, shellHead.range) : null;
     const vfAutoRange = vfBandKey === "pointBlank" || vfBandKey === "short" ? "10"
                        : vfBandKey === "long" || vfBandKey === "extreme" || vfBandKey === "out" ? "-10"
                        : "0";
-    const vfRangeNote = vfMeasured ? `<div class="atk-range-info" style="font-size:0.82em;">Измеренная дистанция: ${vfMeasured.edgeM} м${Number(sys.range) ? ` (Дальность оружия: ${sys.range} м)` : ""}</div>${vfBandKey === "out" ? `
-      <div class="atk-recharge-warn">⚠ Цель вне дальности: ${vfMeasured.edgeM} м при максимуме ${Number(sys.range) * 3} м (3×Rng)</div>` : ""}` : "";
+    const vfRangeNote = vfMeasured ? `<div class="atk-range-info" style="font-size:0.82em;">Измеренная дистанция: ${vfMeasured.edgeM} м${shellHead.range ? ` (Дальность оружия: ${shellHead.range} м)` : ""}</div>${vfBandKey === "out" ? `
+      <div class="atk-recharge-warn">⚠ Цель вне дальности: ${vfMeasured.edgeM} м при максимуме ${shellHead.range * 3} м (3×Rng)</div>` : ""}` : "";
 
     // Без <form>: DialogV2 сам оборачивает содержимое в форму, и вложенная
     // ломала бы button.form, через который читаются поля.
     const content = `
       <div class="wh-vehicle-dialog" style="padding:6px;">
         <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(item.name)}</span>
-          <span style="opacity:.7">(${sys.damage || "—"}, Проб. ${sys.penetration || 0}, ${MOUNT_TYPES[vm.mount] || "—"})</span></div>
+          <span style="opacity:.7">(${esc(shellHead.damage || "—")}, Проб. ${shellHead.penetration || 0}, ${MOUNT_TYPES[vm.mount] || "—"})</span>${shellHead.shellName
+            ? `<div class="atk-range-info" style="font-size:0.82em;">Заряжен: ${esc(shellHead.shellName)}</div>` : ""}</div>
         <div class="atk-dlg-row"><label>BS оператора${opName ? ` (${opName})` : ""}:</label><input id="vf-bs" type="number" value="${opBS}"/></div>
         <div class="atk-dlg-row"><label>Установленная модификация к попаданию:</label><input id="vf-atkbonus" type="number" value="${(sys.attackBonus || 0) + aimBonus}"/></div>
         ${aimBonus ? `<div class="atk-range-info" style="font-size:0.82em;">Залп: первое орудие станции получает Прицеливание (+${aimBonus}), уже учтено выше.</div>` : ""}
@@ -822,4 +828,19 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     // а Залп как действие уже завершён (ОД потрачены, заметка отправлена).
     this._showVehicleFireDialog(first, { aimBonus: 10 });
   }
+}
+
+/**
+ * Урон/пробитие/дальность для шапки окна стрельбы техники с учётом заряженного
+ * снаряда (rules/ammo-override.mjs): абсолютные значения снаряда заменяют базу
+ * орудия — так же, как при самом выстреле (task-8ff8).
+ */
+export function vehicleShellHeader(sys, shell) {
+  const ov = ammoOverrides(shell?.system);
+  return {
+    damage:      ov.damage ?? sys?.damage ?? "",
+    penetration: ov.penetration ?? (Number(sys?.penetration) || 0),
+    range:       shell ? effectiveAmmoRange(Number(sys?.range) || 0, shell.system) : (Number(sys?.range) || 0),
+    shellName:   shell?.name ?? ""
+  };
 }

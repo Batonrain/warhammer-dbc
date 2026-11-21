@@ -812,3 +812,20 @@ describe("Первая Помощь и отдых по книге (wdbc-x1nz.2.1
     });
   });
 });
+
+// task-2577: лечащая психосила/Дар вносится через Отдых + «Доп. Раны» — галочка
+// «Лечил своей силой» делает лечение «от другого» (Недоверие к Лечению).
+import { healingHealer } from "../../module/sheets/tabs/healing.mjs";
+describe("healingHealer: кто лечил «от другого»", () => {
+  const medic = { name: "Псайкер" };
+  it("Отдых без ухода и без силы — тело лечится само", () => {
+    expect(healingHealer("rest", {}, medic)).toBeNull();
+  });
+  it("Отдых + «Лечил своей силой» — лечащий передаётся", () => {
+    expect(healingHealer("rest", { byPower: true }, medic)).toBe(medic);
+  });
+  it("Первая Помощь и Мед. уход — как раньше", () => {
+    expect(healingHealer("firstAid", {}, medic)).toBe(medic);
+    expect(healingHealer("bedRest", { care: true }, medic)).toBe(medic);
+  });
+});

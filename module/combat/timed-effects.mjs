@@ -53,6 +53,9 @@ export function timedEffectData({ key, name, img, changes, combat = null, durati
   };
 }
 
+/** Срок эффекта, выданного вне боя: без срока (value null), ядро его не гасит. */
+export const OUT_OF_COMBAT_DURATION = Object.freeze({ value: null, units: "seconds", expiry: null });
+
 /** Эффекты актора, выданные способностью `key`. */
 export function timedEffectsOf(actor, key) {
   return [...(actor?.effects ?? [])].filter(e => {
@@ -85,7 +88,13 @@ export async function grantTimedEffect(actor, spec, caster = null) {
   const old = timedEffectsOf(actor, spec.key).map(e => e.id).filter(Boolean);
   if (old.length) await actor.deleteEmbeddedDocuments("ActiveEffect", old);
   const start = effectStartOf(actor, combat);
-  const [effect] = (await actor.createEmbeddedDocuments("ActiveEffect", [timedEffectData({ ...spec, combat, start })])) ?? [];
+  const data = timedEffectData({ ...spec, combat, start });
+  // Вне начатого боя срок в Раундах ядро считает по Календарю и гасит эффект
+  // через секунды (Боевой Клич вне боя: Страх +1 пропадал за 3–4 с, dbc-78 /
+  // wdbc-p95ph). «До следующего Хода» вне боя наступить не может: эффект
+  // бессрочный, снимает его подметание в начале Хода носителя (sweepTimedEffects).
+  if (!combat) data.duration = OUT_OF_COMBAT_DURATION;
+  const [effect] = (await actor.createEmbeddedDocuments("ActiveEffect", [data])) ?? [];
   return effect ?? null;
 }
 

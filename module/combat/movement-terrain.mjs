@@ -19,7 +19,8 @@ import { collectTestMods } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
-import { SURE_TREAD, sureTreadTerrainBase, sureTreadIgnoresTerrain } from "../rules/squat-traits.mjs";
+import { SURE_TREAD, sureTreadTerrainBase, sureTreadIgnoresTerrain,
+         SURE_TREAD_UNSLOWED_FLAG, sureTreadTurnStamp } from "../rules/squat-traits.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { litanyAutoPassesTerrain } from "../rules/dark-apostle.mjs";
 import { devourerRamming } from "../rules/terminator-talents.mjs";
@@ -188,6 +189,9 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels,
 
   // Надёжная Поступь: «На 3+ Успеха Трудный Ландшафт вовсе не замедляет его».
   const unslowed = sureTreadIgnoresTerrain(actor, passed, deg);
+  // Раньше это была только фраза в карточке, а зона всё равно удваивала цену
+  // пути (2-0f13). Метка Хода на акторе — зона читает её в _getTerrainEffects.
+  if (unslowed) await actor.setFlag?.("warhammer-dbc", SURE_TREAD_UNSLOWED_FLAG, sureTreadTurnStamp());
   const outcome = passed
     ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.${unslowed
         ? " Надёжная Поступь: Трудный Ландшафт в этот Ход не замедляет (SPD не делится вдвое)." : ""}`)

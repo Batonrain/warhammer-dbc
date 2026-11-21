@@ -12,6 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
+import { SURE_TREAD_UNSLOWED_FLAG, sureTreadUnslowedActive } from "../rules/squat-traits.mjs";
 
 // Без префикса пакета — см. комментарий у LINGER_ZONE_TYPE (module/regions/linger-zone.mjs).
 export const DIFFICULT_TERRAIN_TYPE = "difficultTerrain";
@@ -74,6 +75,10 @@ export class DifficultTerrainBehaviorType extends foundry.data.regionBehaviors.R
   // по правилу (стр. 29), независимо от того, какие галочки включены.
   /** @override */
   _getTerrainEffects(token, segment, options) {
+    // Надёжная Поступь (Скват) на 3+ Успеха: «Трудный Ландшафт вовсе не
+    // замедляет его» — в этот Ход зона цену пути не удваивает (2-0f13).
+    const stamp = token?.actor?.getFlag?.("warhammer-dbc", SURE_TREAD_UNSLOWED_FLAG);
+    if (sureTreadUnslowedActive(stamp)) return [];
     return [{ name: "difficulty", difficulty: 2 }];
   }
 

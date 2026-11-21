@@ -1675,3 +1675,25 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     await this.actor.update({ "system.members": members });
   }
 }
+
+/**
+ * Актор, занимающий пост или стоящий в составе Отряда (по uuid актора или его
+ * токена). Нужен, чтобы перерисовать открытый лист Отряда, когда меняется не
+ * сам Отряд, а его командир — например, тот запел Боевую Песнь (task-371e).
+ */
+export function squadReferencesActor(squadSystem, actor) {
+  if (!squadSystem || !actor) return false;
+  const uuids = new Set([actor.uuid, ...(actor.getActiveTokens?.(false, true) ?? []).map(t => t?.uuid)].filter(Boolean));
+  if (!uuids.size) return false;
+  const posts = Object.values(squadSystem.posts || {});
+  return [...posts, ...(squadSystem.members || [])].some(p => p?.uuid && uuids.has(p.uuid));
+}
+
+// Флаги команд (Боевая Песнь и т.п.) живут на командире, а не на Отряде —
+// открытый лист Отряда сам об этом не узнаёт и держит устаревший чип «Песня».
+globalThis.Hooks?.on?.("updateActor", (actor) => {
+  for (const app of globalThis.foundry?.applications?.instances?.values?.() ?? []) {
+    if (!(app instanceof WarhammerSquadSheet) || !app.rendered || app.actor === actor) continue;
+    if (squadReferencesActor(app.actor?.system, actor)) app.render();
+  }
+});

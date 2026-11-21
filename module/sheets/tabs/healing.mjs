@@ -261,6 +261,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
       <div class="atk-dlg-row" data-mode="disease"><label>Болезнь:</label><select id="heal-disease-item"><option value="">— не указано —</option></select></div>
       <div class="atk-dlg-row"><label>Мод. теста:</label><input type="number" id="heal-mod" value="0" style="width:60px;"/></div>
       <div class="atk-dlg-row" data-mode="firstAid,rest,bedRest,passive"><label title="Напр. Мастер-Хирургеон +2">Доп. Раны:</label><input type="number" id="heal-bonus" value="0" style="width:60px;"/></div>
+      <div class="atk-dlg-row" data-mode="rest,bedRest,passive"><label title="Лечащая психосила, Дар, техночудо: вылечил ДРУГОЙ своей силой — для Недоверия к Лечению (Затронутый Варпом) это лечение «от другого»"><input type="checkbox" id="heal-by-power"/> Лечил своей силой (психосила, Дар)</label></div>
       <div id="heal-note" class="atk-range-info" style="font-size:0.84em;"></div>
       ${refHtml}
     </div>`;
@@ -369,6 +370,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
             theatre:    !!form.querySelector("#heal-theatre")?.checked,
             mod:        num("#heal-mod"),
             bonus:      num("#heal-bonus"),
+            byPower:    !!form.querySelector("#heal-by-power")?.checked,
             limb:       form.querySelector("#heal-limb")?.value,
             bodySide:   form.querySelector("#heal-body-side")?.value || "",
             diseaseCare: form.querySelector("#heal-disease-care")?.value,
@@ -1242,7 +1244,9 @@ export async function applyHealing(medic, patient, rawOpts) {
       // Мед. уход. Отдых/Постельный режим/Пассивное без ухода — тело лечится само,
       // кто бы ни нажал кнопку (лечащий не передаётся). Отказ в правах на метку
       // не выдаёт себя за невылеченные Раны (mistrustFailed).
-      const res = await healActor(patient, applied, { healer: (mode === "firstAid" || care) ? medic : null });
+      // «Лечил своей силой» (task-2577): Раны от лечащей психосилы/Дара вносят
+      // через Отдых + «Доп. Раны» — это тоже лечение от другого.
+      const res = await healActor(patient, applied, { healer: healingHealer(mode, { care, byPower: opts.byPower }, medic) });
       lines.push(`${rollIcon("heart","#ff8a8a")}Восстановлено Ран: <b>${applied}</b>${applied < heal ? " (ограничено нехваткой)" : ""}.`);
       if (res.mistrust) lines.push(res.mistrust);
       if (res.mistrustFailed) lines.push(`${rollIcon("warn","#ffb84d")}Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).`);
@@ -1258,4 +1262,13 @@ export async function applyHealing(medic, patient, rawOpts) {
   }
 
   await sendHealChatMsg(medic, patient, rollIcon("heart","#ff8a8a"), "Лечение", lines, rolls);
+}
+
+/**
+ * Кто лечил «от другого» для Недоверия к Лечению: медик своим тестом (Первая
+ * Помощь, Мед. уход) или своей силой (галочка «Лечил своей силой» — психосила,
+ * Дар, техночудо, task-2577). Отдых без того и другого — тело лечится само.
+ */
+export function healingHealer(mode, { care = false, byPower = false } = {}, medic = null) {
+  return (mode === "firstAid" || care || byPower) ? medic : null;
 }

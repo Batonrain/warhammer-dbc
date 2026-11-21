@@ -15,6 +15,7 @@
 // любой другой (Приём зависит от Базы, Стойка/Приём/Хват — от Профиля через
 // категорию оружия, categoryFor/trainingFor ниже).
 
+import { hateAttackDegrees } from "../rules/focused-wrath.mjs";
 import { isPlagueHorn, hornRegrowLeft, regrowLabel } from "../rules/lodged-horn.mjs";
 import { hardTargetPenalty } from "../rules/hard-target.mjs";
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
@@ -750,6 +751,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашной, и в стрелковой атаке; подходит ли выбранная Характеристика,
   // проверяет бросок — её можно сменить в самом окне.
   const hateAttackAvailable = khornePatron(actor);
+  // С Сфокусированным Гневом по Ненавистной цели в рукопашной — Inf.b Успехов,
+  // а не 1: подпись галочки говорит то же, что потом засчитает бросок (dbc-74).
+  const hateAttackSuccesses = hateAttackAvailable
+    ? hateAttackDegrees(actor, { isMelee, targetActor: attackCtx.targetActor }) : 1;
   // forceBase — нейтральная стартовая База вместо персистентной (Контратака,
   // стр. 12: это атака со штрафом −10, персистентная «Полная Атака» +30 сюда
   // протекать не должна). Игрок волен сменить её в окне, как обычно.
@@ -1690,6 +1695,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     autoCoverMod,
     autoHitAvailable,
     hateAttackAvailable,
+    hateAttackSuccesses,
     autoMountRangedMod,
     mountRangedNote,
     badgesHtml,
@@ -1956,6 +1962,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     fanningActive,
     autoHitAvailable,
     hateAttackAvailable,
+    hateAttackSuccesses,
     fullAttackForced,
     forcedDefenceReroll,
     helplessAutoMelee,
