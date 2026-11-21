@@ -6775,7 +6775,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Мейстер — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meyster.cultivation": {
     label: "Вирус Жизни в теле пациента собирает его страдания и боль, накапливая их для сбора Мейстером. Каждый раз,",
-    source: "Cultivation / Культивация", reader: "module/combat/maester.mjs harvestFrom; hooks.mjs preUpdateActor lifeVirusLossPatch; пул cultivation (failChars int,t)"
+    source: "Cultivation / Культивация", reader: "module/combat/maester.mjs harvestFrom; hooks.mjs preUpdateActor lifeVirusLossPatch; пул cultivation (failSkills medicae, regeneration — кнопка на провале Medicae и теста T Регенерации, combat/rubric-sorcerer.mjs::rollRegeneration)"
   },
   "trait.elitnyeArhetipy.meyster.deathlessOath": {
     label: "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0);",

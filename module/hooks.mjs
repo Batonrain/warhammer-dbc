@@ -22,7 +22,7 @@ import { hardenedSoulDice, hasResilienceTalent, snakeEaterHalve } from "./rules/
 import { hellishResilienceTurnEnd, clearHellishResilience } from "./combat/hellish-resilience.mjs";
 import { painIsPleasureTurnEnd, clearPainIsPleasure } from "./combat/noise-marine.mjs";
 import { processMiasmaTurnStart, resolvePlagueMarineCombatEnd, rollAbominableFear, processWastelandRequest } from "./combat/plague-marine.mjs";
-import { syncRubricShield, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
+import { syncRubricShield, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, regenerationReplacedSuccess, usePsychicEcho, clearRebornStupor } from "./combat/rubric-sorcerer.mjs";
 import { hasShieldOfRubric } from "./rules/rubric-sorcerer.mjs";
 import { syncMechanicumImplants, releaseCellDemon, clearWhipOnCombatEnd, runDownTurnStart } from "./combat/warpsmith.mjs";
 import { isCellDevice } from "./rules/warpsmith.mjs";
@@ -788,6 +788,8 @@ export function registerHooks() {
         const done = await spendResourceForFailSuccess(actor, el.dataset.pool || "",
           { testLabel: el.dataset.testLabel || "", message });
         if (done) el.disabled = true;
+        // Провал теста T Регенерации заменён Успехом (Культивация Мейстера) — Раны лечатся как при успехе.
+        if (done && el.dataset.regeneration === "1") await regenerationReplacedSuccess(actor);
       });
     });
 

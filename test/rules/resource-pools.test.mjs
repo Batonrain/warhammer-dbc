@@ -163,6 +163,29 @@ describe("траты вместо Очка Бесчестия, +10, провал
     expect(resourceBoostOptions(a, "s")).toEqual([]);
     expect(resourceFailSuccessOptions(a, "INT").map(d => d.key)).toEqual(["inspiration"]);
   });
+
+  // Sahara 586-fe9d: Культивация Мейстера — «при Провале любого теста Medicae»
+  // и «теста T для Regeneration», а не любого теста Int/T.
+  it("провал → Успех по Навыку и по тесту T Регенерации (resPoolFailSkills)", () => {
+    const a = actorWith([itemWith("Культ", [entry({ resPoolKey: "cultivation", resPoolMax: "3", resPoolFailSkills: "Medicae, regeneration" })])]);
+    expect(resourceFailSuccessOptions(a, "int", { skill: "medicae" }).map(d => d.key)).toEqual(["cultivation"]);
+    expect(resourceFailSuccessOptions(a, "t", { regeneration: true }).map(d => d.key)).toEqual(["cultivation"]);
+    expect(resourceFailSuccessOptions(a, "int", { skill: "logic" })).toEqual([]);
+    expect(resourceFailSuccessOptions(a, "int")).toEqual([]);
+    expect(resourceFailSuccessOptions(a, "t")).toEqual([]);
+  });
+});
+
+describe("Культивация Мейстера в паке", () => {
+  it("кнопка провала — только Medicae и тест T Регенерации", () => {
+    const file = "packs-src/traits/Элитные_архетипы/Мейстер/Cultivation___Культивация_kwWDudWg7pG9lOkV.json";
+    const doc = JSON.parse(readFileSync(join(import.meta.dirname, "../..", file), "utf8"));
+    const a = actorWith([doc]);
+    expect(resourceFailSuccessOptions(a, "int", { skill: "medicae" }).map(d => d.key)).toEqual(["cultivation"]);
+    expect(resourceFailSuccessOptions(a, "t", { regeneration: true }).map(d => d.key)).toEqual(["cultivation"]);
+    expect(resourceFailSuccessOptions(a, "int", { skill: "logic" })).toEqual([]);
+    expect(resourceFailSuccessOptions(a, "t")).toEqual([]);
+  });
 });
 
 describe("подписи и лист", () => {
