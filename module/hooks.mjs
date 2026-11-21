@@ -1038,6 +1038,21 @@ export function registerHooks() {
       });
     });
 
+    // Монозависимый (combat/monodevotant.mjs, Sahara 582): исход ломки — решает ГМ, раз на карточку.
+    html.querySelectorAll(".wh-monodevotant-btn").forEach(btn => {
+      if (cardOnceUsed(message, "monodevotantDone")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (!game.user?.isGM) return ui.notifications.warn("Исход ломки решает ГМ.");
+        const actor = await fromUuid(el.dataset.actorUuid || "").catch(() => null);
+        const { resolveMonodevotantWithdrawal } = await import("./combat/monodevotant.mjs");
+        const done = await runCardOnce(message, "monodevotantDone", () => resolveMonodevotantWithdrawal(actor, el.dataset.mode || ""),
+          "Исход ломки уже решён.");
+        if (done) el.closest(".roll-defense-btns")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+      });
+    });
+
     // Регенерация (Трейт Regeneration (X), Голем Рубрики и все с Трейтом): тест T+0 или пропуск действий — раз на карточку.
     html.querySelectorAll(".wh-regen-btn").forEach(btn => {
       if (cardOnceUsed(message, "regenerationDone")) btn.disabled = true;
@@ -5543,6 +5558,8 @@ function _attachFateContextMenu(message, html) {
       await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
       // Инзорцизм (Sahara 586-w-b): призванный демон уходит в Варп через W.b суток.
       await processInsorcismExpiry(actor, game.time.worldTime);
+      // Монозависимый (Sahara 582): ломка выросла — карточка-развилка ГМу (держится / уходит / умирает).
+      await (await import("./combat/monodevotant.mjs")).processMonodevotantWithdrawal(actor, game.time.worldTime);
       // Око Вызова/Дар Кхорна (wdbc-1rno): не брошенный за минуту вызов —
       // 2d10+8 урона в Раны чемпиону. Тот же такт, что временные выдачи Черт
       // выше — оба живут по worldTime, а не по Раунду.

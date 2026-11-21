@@ -5,7 +5,8 @@
 
 import { describe, it, expect } from "vitest";
 import { monodevotantPenalty, monodevotantDaysLeft, monodevotantRules, monodevotantTrait,
-         SUBSTANCE_AT_FLAG, GRACE_DAYS_FLAG } from "../../module/rules/monodevotant.mjs";
+         SUBSTANCE_AT_FLAG, GRACE_DAYS_FLAG, NOTICED_FLAG, withdrawalNoticeDue, withdrawalOutcomeUpdate }
+  from "../../module/rules/monodevotant.mjs";
 import { packDocuments } from "../support/pack-docs.mjs";
 
 const DAY = 86400;
@@ -41,5 +42,21 @@ describe("Черта в паке", () => {
     expect(monodevotantTrait({ items: [d] })).toBe(d);
     const e = d.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).find(x => x.scriptOnPanel);
     expect(e.code).toMatch(/giveMonodevotantSubstance\(actor, item\)/);
+  });
+});
+
+describe("исход ломки — развилка ГМа (Sahara 582)", () => {
+  const noticed = (t, pen) => { t.flags["warhammer-dbc"][NOTICED_FLAG] = pen; return t; };
+  it("спрашивается, когда штраф появился или вырос, и не повторяется на той же ступени", () => {
+    expect(withdrawalNoticeDue(trait(0, 5), 4 * DAY)).toBe(0);
+    expect(withdrawalNoticeDue(trait(0, 5), 5 * DAY)).toBe(10);
+    expect(withdrawalNoticeDue(noticed(trait(0, 5), 10), 5 * DAY + 100)).toBe(0);
+    expect(withdrawalNoticeDue(noticed(trait(0, 5), 10), 6 * DAY)).toBe(15);
+    expect(withdrawalNoticeDue(null, 6 * DAY)).toBe(0);
+  });
+  it("уходит — связь с хозяином рвётся; умирает — метка смерти; держится — ничего", () => {
+    expect(withdrawalOutcomeUpdate("leave")).toEqual({ "system.masterUuid": "" });
+    expect(withdrawalOutcomeUpdate("die")).toEqual({ "flags.warhammer-dbc.deceased": true });
+    expect(withdrawalOutcomeUpdate("stay")).toBeNull();
   });
 });

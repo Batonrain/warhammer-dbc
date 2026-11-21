@@ -81,3 +81,31 @@ export function monodevotantRules(actor, now) {
     effects: [{ kind: "rollBonus", target: "all", value: -pen, label, auto: true }]
   }];
 }
+
+// ── Исход ломки — развилка ГМа (Sahara 582) ─────────────────────────────────
+// «От длительной ломки Миньон может покинуть своего хозяина или даже умереть»:
+// книга не даёт ни теста, ни срока — решает ГМ. Система не решает за него, но
+// и не молчит: каждый раз, когда штраф ломки вырос (наступил новый день без
+// дозы), ГМу приходит карточка с тремя кнопками — держится / уходит от
+// хозяина / умирает. Последний показанный штраф — флаг на Черте, чтобы одна и
+// та же ступень не спрашивалась дважды; новая доза снимает метку.
+export const NOTICED_FLAG = "monodevotantNoticedPenalty";
+export const WITHDRAWAL_OUTCOMES = ["stay", "leave", "die"];
+
+/**
+ * Пора ли спросить ГМа об исходе ломки: штраф > 0 и вырос с прошлого вопроса.
+ * @returns {number} текущий штраф, если пора; иначе 0
+ */
+export function withdrawalNoticeDue(trait, now) {
+  if (!trait) return 0;
+  const pen = monodevotantPenalty(flagOf(trait, SUBSTANCE_AT_FLAG), flagOf(trait, GRACE_DAYS_FLAG), now);
+  if (!pen) return 0;
+  return pen > (Number(flagOf(trait, NOTICED_FLAG)) || 0) ? pen : 0;
+}
+
+/** Правка Миньона по выбранному исходу (null — ничего не меняется). */
+export function withdrawalOutcomeUpdate(outcome) {
+  if (outcome === "leave") return { "system.masterUuid": "" };
+  if (outcome === "die") return { "flags.warhammer-dbc.deceased": true };
+  return null;
+}

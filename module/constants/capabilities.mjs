@@ -5837,7 +5837,7 @@ export const CAPABILITIES = {
   },
   "trait.monodevotant": {
     label: "Переброс неудачных тестов Лояльности; без субстанции 1d10+W.b дней — штраф −10 ко всем Характеристикам (−5 за каждый доп. день);",
-    source: "Monodevotant / Монозависимый", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::hasMonodevotant → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (провал теста Лояльности перебрасывается сам). Ломка без субстанции — памятка kind:script в чат"
+    source: "Monodevotant / Монозависимый", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::hasMonodevotant → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (провал теста Лояльности перебрасывается сам); ломка — rules/monodevotant.mjs::monodevotantRules (штраф по Календарю), кнопка дозы combat/monodevotant.mjs::giveMonodevotantSubstance; «покинуть хозяина или умереть» — карточка-развилка ГМу при каждом росте ломки (combat/monodevotant.mjs::processMonodevotantWithdrawal, hooks.mjs updateWorldTime, кнопки .wh-monodevotant-btn; Sahara 582)"
   },
   "trait.multipleArms": {
     label: "Рейтинг = общее число рук (бюджет рук) и +1 Атака за Ход на каждую пару рук сверх первой (нечётная лишняя рука — пара), но не больше 2+P.b рук за Ход (handsUsablePerTurn). Не автоматизировано: независимые пары (выстрел + рукопашная в один Ход), счёт по парам для Талантов «Два оружия».",

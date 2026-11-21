@@ -24,6 +24,8 @@ export const CARD_ONCE_FLAGS = [
   "tipOfSpearUsed", "mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
   // Повелитель Червей: поддержание Роя за Ход решено (combat/worm-master.mjs, Sahara 584-1d5-r).
   "wormUpkeepDone",
+  // Монозависимый: исход ломки решён ГМом (combat/monodevotant.mjs, Sahara 582).
+  "monodevotantDone",
   // Трата Очка «Успех» из меню карточки теста (apps/infamy-success.mjs): +Успех дописан в эту карточку.
   "infamySuccessAdded",
   // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).
