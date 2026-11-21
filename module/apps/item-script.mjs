@@ -91,6 +91,7 @@ import { useBalefulDirge } from "../combat/baleful-dirge.mjs";
 import { useAria, useOverture } from "../combat/battle-music.mjs";
 import { useMortido } from "../combat/elite-buttons.mjs";
 import { chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL } from "./unnatural-choice.mjs";
+import { ELITE_SCRIPT_API } from "../combat/elite-api/index.mjs";
 import { inspiredRest } from "./infernal-inspiration.mjs";
 import { gainResource, spendResource } from "./resource-pools.mjs";
 import { resourcePoolDef } from "../rules/resource-pools.mjs";
@@ -264,7 +265,10 @@ export async function executeItemCode(item, code, event, extra = {}) {
   const actor = item.actor ?? null;
   const token = actor?.getActiveTokens?.(false)[0] ?? null;
   const speaker = ChatMessage.getSpeaker({ actor, token });
-  const extraNames = Object.keys(extra);
+  // Помощники элитных архетипов (combat/elite-api/*) идут тем же путём, что и
+  // extra: ключ объекта — имя переменной в коде скрипта. Явный extra сильнее.
+  const allExtra = { ...ELITE_SCRIPT_API, ...extra };
+  const extraNames = Object.keys(allExtra);
   const fn = new AsyncFunction(
     "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event",
     "woundLossUpdates", "isTokenInSight", "tokensThatCanSee",
@@ -306,7 +310,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
     rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, studyPsychicLocus, useMortido, useAria, useOverture, useBalefulDirge, useBoonOfOmnissiah, useTankCommander, useFanOut, chooseDreamingPower, cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo, prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc, useWarpGifted,
     inspiredRest, gainResource, spendResource, resourcePoolDef,
-    ...extraNames.map(k => extra[k])
+    ...extraNames.map(k => allExtra[k])
   );
 }
 
