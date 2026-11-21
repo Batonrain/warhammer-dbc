@@ -5,4 +5,18 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { useArchDominusCommand, useAvatarOfMetal, useDoctrinaCalibration, useVisioIrae } from "../archmagos.mjs";
+import { useToilseerCrew, useAssemblyLine, useChainsOfProduction, useInhumanResources, useRapidEmbrace, useThrallOverclock } from "../lacrimallus.mjs";
+import { useParagonCoil, useDigitalGhost, useFellDischarge, useMagnetomorphosis, usePrescontax, useRogoex } from "../malagra.mjs";
+import { useVassalAp, useVassalSwap, useAwakening, useNeuronist, useBrainContainerPrep, useBrainExtract } from "../monarch.mjs";
+
+export const API = {
+  // Архимагос (combat/archmagos.mjs)
+  useArchDominusCommand, useAvatarOfMetal, useDoctrinaCalibration, useVisioIrae,
+  // Лакрималлус (combat/lacrimallus.mjs)
+  useToilseerCrew, useAssemblyLine, useChainsOfProduction, useInhumanResources, useRapidEmbrace, useThrallOverclock,
+  // Малагра (combat/malagra.mjs)
+  useParagonCoil, useDigitalGhost, useFellDischarge, useMagnetomorphosis, usePrescontax, useRogoex,
+  // Монарх (combat/monarch.mjs)
+  useVassalAp, useVassalSwap, useAwakening, useNeuronist, useBrainContainerPrep, useBrainExtract
+};

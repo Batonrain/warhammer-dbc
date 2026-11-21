@@ -4093,27 +4093,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Архимагос — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhimagos.archDominus": {
     label: "Когитаторы и банки данных обрабатывают командные данные на множество потоков одновременно.",
-    source: "Arch-Dominus / Архи-Доминус", reader: ""
+    source: "Arch-Dominus / Архи-Доминус", reader: "combat/archmagos.mjs::useArchDominusCommand (кнопка: Команда за 2/4 ⚙ → sheets/tabs/command.mjs::rollCommand), rules/archmagos-talents.mjs::avatarOfMetalCost (−1 ⚙ Аватару)"
   },
   "elite.elitnyeArhetipy.arhimagos.avatarOfMetal": {
     label: "Разум полностью перехватывает контроль над одним из слуг. В свой Ход может взять под прямой контроль одного из подчинённых,",
-    source: "Avatar of Metal / Аватар Металла", reader: ""
+    source: "Avatar of Metal / Аватар Металла", reader: "combat/archmagos.mjs::useAvatarOfMetal (I Архимагоса вместо WS/BS слуги), Процесс — rules/technomystic-talents.mjs::processCostTotal ← archmagos-talents.mjs::avatarProcessCost"
   },
   "elite.elitnyeArhetipy.arhimagos.concordax": {
     label: "Достигает истинного машинного единения со слугами, сливая их сознание в единый вычислительный хор.",
-    source: "Concordax / Конкордакс", reader: ""
+    source: "Concordax / Конкордакс", reader: "combat/archmagos.mjs — источник правил «archmagosConcordax» (бонус ко всем тестам, кроме T, Архимагосу и машинным слугам «Под моим Присутствием»)"
   },
   "elite.elitnyeArhetipy.arhimagos.dogmatix": {
     label: "Мощь бинарных инкантаций сокрушает ноосферное присутствие низших Механикум. Удваивает все Успехи на встречных тестах Tech-Use, как в атаке,",
-    source: "Dogmatix / Догматикс", reader: ""
+    source: "Dogmatix / Догматикс", reader: "packs-src Dogmatix: testMod skill:techUse modValueMode successMul ×2 → rules/kind-outcome.mjs"
   },
   "elite.elitnyeArhetipy.arhimagos.infernax": {
     label: "Власть над машинами столь велика, что сковывает даже заключённых в них демонов. Считает демонические машины машинами, а не демонами,",
-    source: "Infernax / Инфернакс", reader: ""
+    source: "Infernax / Инфернакс", reader: "rules/archmagos-talents.mjs::isMachineServant (демоническая машина — машина для Конкордакса, калибровки, Аватара)"
   },
   "elite.elitnyeArhetipy.arhimagos.visioIrae": {
     label: "Ноосферный облик внушает благоговейный ужас в холодные механические сердца. Может потратить Очко Бесчестия,",
-    source: "Visio Irae / Лик Гнева", reader: ""
+    source: "Visio Irae / Лик Гнева", reader: "combat/archmagos.mjs::useVisioIrae (Очко Бесчестия → Талант включён до конца боя/сцены, Страх 3), снятие — combat/mech1-hooks.mjs"
   },
   // ── Элитные_архетипы\Архонт — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.arhont.ascendOfWeapon": {
@@ -4794,27 +4794,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Лакрималлус — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.lakrimallus.assemblyLine": {
     label: "Программирует рабов на простое независимое производство. Орды Миньонов тех-траллов пассивно генерируют 1 Успех за каждые 3 Магнитуды в сутки…",
-    source: "Assembly Line / Сборочная Линия", reader: ""
+    source: "Assembly Line / Сборочная Линия", reader: "combat/lacrimallus.mjs::useAssemblyLine (Успехи Орд тех-траллов за сутки → пул resourcePool assemblyLine)"
   },
   "elite.elitnyeArhetipy.lakrimallus.chainsOfProduction": {
     label: "Модифицирует рабов минимальной кибернетикой для Ноосферной синхронизации. За 1 минуту может аугментировать человека,",
-    source: "Chains of Production / Цепи Производства", reader: ""
+    source: "Chains of Production / Цепи Производства", reader: "rules/mechanicus-craft.mjs (переброс Крафта в apps/craft-workshop.mjs), combat/lacrimallus.mjs::useChainsOfProduction (смерть на 1–3)"
   },
   "elite.elitnyeArhetipy.lakrimallus.cyberShepherd": {
     label: "Командные алгоритмы позволяют дирижировать ордами траллов в бою. Может давать Команды Ордам тех-траллов,",
-    source: "Cyber-Shepherd / Кибер-Пастырь", reader: ""
+    source: "Cyber-Shepherd / Кибер-Пастырь", reader: "rules/command.mjs::commandReachFor ← rules/lacrimallus-talents.mjs::cyberShepherdReach (Орда тех-траллов получает Команды)"
   },
   "elite.elitnyeArhetipy.lakrimallus.inhumanResources": {
     label: "Продвинутые хирургические алгоритмы позволяют рациональнее расходовать плоть мёртвых.",
-    source: "Inhuman Resources / Бесчеловечные Ресурсы", reader: ""
+    source: "Inhuman Resources / Бесчеловечные Ресурсы", reader: "rules/lacrimallus-talents.mjs::corpsesPerThrall, combat/lacrimallus.mjs::useInhumanResources/useRapidEmbrace"
   },
   "elite.elitnyeArhetipy.lakrimallus.rapidEmbrace": {
     label: "Если имеет медицинский механодендрит и 2 механодендрита, может вместо 1 минуты потратить на подъём тех-тралла из трупов в пределах 3м от себ…",
-    source: "Rapid Embrace / Быстрые Объятья", reader: ""
+    source: "Rapid Embrace / Быстрые Объятья", reader: "combat/lacrimallus.mjs::useRapidEmbrace (полудействие + 2 ⚙, трупы на тралла)"
   },
   "elite.elitnyeArhetipy.lakrimallus.thrallOverclock": {
     label: "Алгоритмы оптимизации понукают траллов к повышенной эффективности ценой износа. Тех-траллы и Орды могут перебрасывать тесты,",
-    source: "Thrall Overclock / Разгон Траллов", reader: ""
+    source: "Thrall Overclock / Разгон Траллов", reader: "combat/lacrimallus.mjs::useThrallOverclock (1d10 непогл. R тралла / Магнитуда Орды)"
   },
   // ── Элитные_архетипы\Ламия — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.lamiya.crueltyOfThePoison": {
@@ -4861,27 +4861,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Малагра — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.malagra.fellDischarge": {
     label: "Может обратить сердце мотивирующей силы Механикум против него самого. Успешно используя Numerica Dominion,",
-    source: "Fell Discharge / Жестокая Разрядка", reader: ""
+    source: "Fell Discharge / Жестокая Разрядка", reader: "combat/malagra.mjs::useFellDischarge (Катушка цели → 0, Раны мимо брони и T, Усталость, Оглушение 1 Раунд)"
   },
   "elite.elitnyeArhetipy.malagra.iovex": {
     label: "Мощь мотивирующей силы покоряется его воле. Когда Совершенная Катушка активирована, может увеличивать урон всех Люминен Техночудес на 1d10 и…",
-    source: "Iovex / Йовекс", reader: ""
+    source: "Iovex / Йовекс", reader: "sheets/tabs/tech.mjs::activateTechMiracle ← rules/malagra-talents.mjs::malagraMiracleMods (+1d10 урона, +½P.b Pen, Компенсатор проваливается)"
   },
   "elite.elitnyeArhetipy.malagra.magnetomorphosis": {
     label: "Мастерство в манипуляции магнитными полями не знает равных. Активируя Ferric Commandment, вместо двух магнитных рук получает I.",
-    source: "Magnetomorphosis / Магнитоморфоз", reader: ""
+    source: "Magnetomorphosis / Магнитоморфоз", reader: "combat/malagra.mjs::useMagnetomorphosis (бюджет I.b — rules/malagra-talents.mjs::magnetoPlan; AE кокона +AP / Страх 2)"
   },
   "elite.elitnyeArhetipy.malagra.prescontax": {
     label: "Мысли и тайны Механикум открыты перед Малагрой. Используя Numerica Delving, чтобы прочесть память жертвы,",
-    source: "Prescontax / Пресконтакс", reader: ""
+    source: "Prescontax / Пресконтакс", reader: "combat/malagra.mjs::usePrescontax (+1d5 воспоминаний, авто-провал жертвы)"
   },
   "elite.elitnyeArhetipy.malagra.rogoex": {
     label: "Раскрывает функции поведенческих анализаторов в кортексе, позволяющие предсказывать мыслительные процессы других посвящённых.",
-    source: "Rogoex / Рогоекс", reader: ""
+    source: "Rogoex / Рогоекс", reader: "combat/malagra.mjs::useRogoex (For.Lore (Mechanicum)(I) вместо Scrutiny/Intimidate/Interrogate — combat/mech1-rolls.mjs)"
   },
   "elite.elitnyeArhetipy.malagra.venefactor": {
     label: "Рутины таинств Бога Машины выжжены в схемах и памяти, став столь же естественными, как работа респираторного блока.",
-    source: "Venefactor / Вэнефактор", reader: ""
+    source: "Venefactor / Вэнефактор", reader: "combat/malagra.mjs::processMalagraTurnStart (+1 ОД и +1 Реакция в начале Хода; ограничение трат — за игроком)"
   },
   // ── Элитные_архетипы\Мастер_Казней — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.masterKazney.finalExecution": {
@@ -4953,19 +4953,19 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Монарх — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.monarh.awakening": {
     label: "Электростимуляцией и ослаблением рунических цепей пробуждает вассала к полному бодрствованию.",
-    source: "Awakening / Пробуждение", reader: ""
+    source: "Awakening / Пробуждение", reader: "combat/monarch.mjs::useAwakening (+3 к ОД вассала, встречный W+0 — rules/test-kind.mjs::resolveOpposed)"
   },
   "elite.elitnyeArhetipy.monarh.cerebralChanneling": {
     label: "Тонкая калибровка контрольных цепей Короны позволяет эффективнее координировать долговременные усилия вассалов.",
-    source: "Cerebral Channeling / Церебральный Поток", reader: ""
+    source: "Cerebral Channeling / Церебральный Поток", reader: "combat/monarch.mjs::useVassalAp ← rules/monarch-talents.mjs::vassalApCost (поддержание вдвое, окр.▼)"
   },
   "elite.elitnyeArhetipy.monarh.dragonMonarch": {
     label: "Может одновременно контролировать несколько подключённых мозгов. Позволяет одновременно активировать ещё одного порабощённого псайкера (кажд…",
-    source: "Dragon Monarch / Монарх Дракон", reader: ""
+    source: "Dragon Monarch / Монарх Дракон", reader: "packs-src Dragon Monarch: resourcePool vassalApDragon; combat/monarch.mjs::processMonarchTurnStart (+1 ОД)"
   },
   "elite.elitnyeArhetipy.monarh.neuronist": {
     label: "Научился обучать одного из вассалов. Может тратить свой опыт, чтобы изучать новые психосилы для одного из своих псайкеров.",
-    source: "Neuronist / Нейронист", reader: ""
+    source: "Neuronist / Нейронист", reader: "combat/monarch.mjs::useNeuronist (опыт → experience.spentOther)"
   },
   // ── Элитные_архетипы\Моритат — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.moritat.beltFeed": {
@@ -6313,11 +6313,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимагос — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimagos.doctrinaImperative": {
     label: "Машинные слуги — продолжение его воли; может на ходу калибровать их прицелы и актуаторы.",
-    source: "Doctrina Imperative / Доктрина Императив", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Doctrina Imperative / Доктрина Императив", reader: "ЧАСТИЧНО: combat/archmagos.mjs::useDoctrinaCalibration (±3×I.b слугам до следующего Хода); прочее — за столом"
   },
   "trait.elitnyeArhetipy.arhimagos.masterpieceFrame": {
     label: "Оборудован восемью элементами бионики или кибернетики Best.Q на выбор игрока и может заменить их особые свойства от Качества на любые подход…",
-    source: "Masterpiece Frame / Фрейм Шедевра", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-66c1 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Masterpiece Frame / Фрейм Шедевра", reader: "packs-src Masterpiece Frame: equipment choice 8 имплантов Best.Q; rules/mechanicus-craft.mjs (+30 и Банк вдвое в Мастерской, apps/craft-workshop.mjs)"
   },
   "trait.elitnyeArhetipy.arhimagos.voiceOfOmnissiah": {
     label: "Командные протоколы опираются на глубочайшие базы кода. Распространяет эффект Таланта Binary Dominion на всех персонажей с Имплантами Механи…",
@@ -6676,7 +6676,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.lakrimallus.toilseer": {
     label: "Может использовать Миньонов-сервиторов и тех-траллов как ассистентов в тестах Крафта даже без нужных Навыков (Орды считаются как 1 ассистент…",
-    source: "Toilseer / Трудовидец", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Toilseer / Трудовидец", reader: "combat/lacrimallus.mjs::useToilseerCrew (ассистенты и бригады Крафта из сервиторов/тех-траллов)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Ламия — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.lamiya.blessingOfShaimesh": {
@@ -6703,11 +6703,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Малагра — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.malagra.astralConverter": {
     label: "Реактор в сердце черпает силу из крохотной звезды, заключённой техниками Тёмной Эры Технологий.",
-    source: "Astral Converter / Астральный Конвертер", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-f5c8 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Astral Converter / Астральный Конвертер", reader: "rules/character/final-pools.mjs (база Катушки ≥10 ← malagra-talents.mjs::astralConverterBase), combat/malagra.mjs::processMalagraTurnStart (+1 заряд)"
   },
   "trait.elitnyeArhetipy.malagra.digitalGhost": {
     label: "Ноосферные протоколы способны проскользнуть мимо внимания самого бдительного наблюдателя, не оставляя следов.",
-    source: "Digital Ghost / Цифровой Призрак", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-8fc7 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Digital Ghost / Цифровой Призрак", reader: "combat/malagra.mjs::useDigitalGhost (Stealth(P)+0 — combat/mech1-rolls.mjs)"
   },
   "trait.elitnyeArhetipy.malagra.malagraCortex": {
     label: "Кортикальные импланты экранированы гексаграмматическими кодами и защищают разум от вторжения чужой воли.",
@@ -6715,7 +6715,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.malagra.paragonCoil": {
     label: "Комплекс электромагнитных имплантов окутывает его мантией магнитного поля и нимбом сияния. Оснащён Люминен Конденсаторами, Маглев Спиралями,",
-    source: "Paragon Coil / Совершенная Катушка", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-f5c8 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Paragon Coil / Совершенная Катушка", reader: "packs-src Paragon Coil: 4 equipment Best.Q; combat/malagra.mjs::useParagonCoil → rules/malagra-talents.mjs::paragonIntBonus в sheets/tabs/tech.mjs::activateTechMiracle"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Мастер_Казней — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.masterKazney.execution": {
@@ -6795,11 +6795,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Монарх — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.monarh.brainHarvesting": {
     label: "Не может изучать новые психосилы или повышать PR своих вассалов — только достать новый контейнер с мозгом псайкера с нужными знаниями.",
-    source: "Brain Harvesting / Извлечение Мозга", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Brain Harvesting / Извлечение Мозга", reader: "combat/monarch.mjs::useBrainContainerPrep (20 Успехов) / useBrainExtract (Medicae−30, 4+ Провала)"
   },
   "trait.elitnyeArhetipy.monarh.coronaPolentia": {
     label: "Позволяет подсоединять к своему мозгу контейнеры с мозгами живых псайкеров, чтобы использовать их силы.",
-    source: "Corona Polentia / Корона Полентия", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Corona Polentia / Корона Полентия", reader: "packs-src Corona Polentia: resourcePool vassalAp; combat/monarch.mjs::processMonarchTurnStart / useVassalAp / useVassalSwap"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Моритат — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.moritat.chainShot": {

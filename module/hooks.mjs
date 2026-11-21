@@ -85,6 +85,7 @@ import { pyromaniacCoverPenalty, torrentPlacementProblem } from "./rules/flamer-
 import { coverApForToken } from "./combat/cover.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processRechargeTurnStart } from "./combat/recharge.mjs";
+import { processMech1TurnStart, registerMech1Hooks } from "./combat/mech1-hooks.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
 import { processLastActorCombatStart } from "./combat/last-actor.mjs";
@@ -296,6 +297,8 @@ function requireControlledActor(warnMsg) {
 }
 
 export function registerHooks() {
+  // Архимагос, Лакрималлус, Малагра, Монарх (combat/mech1-hooks.mjs).
+  registerMech1Hooks();
 
   // ── Вариации существ бестиария ───────────────────────────────────────────
   // Диалог выбора версии при создании актора В МИРЕ (см. apps/actor-setup.mjs).
@@ -5709,6 +5712,8 @@ function _attachFateContextMenu(message, html) {
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.
       await clearExpiredGearMalfunction(nextCombatant.actor);
+      // Астральный Конвертер, Совершенная Катушка, Вэнефактор, вассалы Короны (combat/mech1-hooks.mjs).
+      await processMech1TurnStart(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });

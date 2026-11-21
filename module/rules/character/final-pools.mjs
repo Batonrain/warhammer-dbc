@@ -18,6 +18,7 @@
 import { psyRatingFromTalents, minionHasPsykerTrait } from "../psyker.mjs";
 import { hasRuleFlag, ruleFlagLabels } from "../flags.mjs";
 import { hasAbility } from "../ability-by-key.mjs";
+import { astralConverterBase } from "../malagra-talents.mjs";
 import { initiativeCharKey, fastestHandBonus, initiativeHint,
          INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
 import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } from "../legacy-weapon.mjs";
@@ -97,7 +98,9 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
     // Катушки Электрожреца: +W.b к максимуму заряда (rules/electropriest.mjs).
     const coilsMax = coilsEnergyMaxBonus(actor);
     system.energy.bonusMax = implantEnergyMax + powerCacheBonus + coilsMax;
-    system.energy.maxTotal = Math.max(0, (system.energy.max || 0) + implantEnergyMax + powerCacheBonus + coilsMax);
+    // Астральный Конвертер (Малагра): «Катушка Потенции с 10 зарядами» — база не ниже 10.
+    const energyBase = Math.max(system.energy.max || 0, astralConverterBase(actor));
+    system.energy.maxTotal = Math.max(0, energyBase + implantEnergyMax + powerCacheBonus + coilsMax);
     if ((system.energy.value || 0) > system.energy.maxTotal)
       system.energy.value = system.energy.maxTotal;
     // Катушка Апокрифа (technomystic.core.apocryphaCoil, пачка J, решения
