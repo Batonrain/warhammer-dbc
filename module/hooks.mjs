@@ -4003,14 +4003,14 @@ export function registerHooks() {
       });
     });
 
-    // Избавление Аркхана: +1 Усталость, бионика держится в поле Haywire 7+.
+    // Избавление Аркхана: +1 Усталость или −1 заряд Актуаторных Банков, бионика держится в поле Haywire 7+.
     html.querySelectorAll(".wh-arkhan-btn").forEach(btn => {
       if (cardOnceUsed(message, "arkhanUsed")) btn.disabled = true;
       btn.addEventListener("click", async ev => {
         ev.preventDefault();
         const el = ev.currentTarget;
         const { useDeliveranceOfArkhan } = await import("./combat/skitarii-modules.mjs");
-        if (await useDeliveranceOfArkhan(message, el.dataset)) el.disabled = true;
+        if (await useDeliveranceOfArkhan(message, el.dataset)) html.querySelectorAll(".wh-arkhan-btn").forEach(b => { b.disabled = true; });
       });
     });
 

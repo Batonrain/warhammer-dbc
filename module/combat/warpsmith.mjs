@@ -7,7 +7,8 @@ import {
   hasIronCage, hasWarpforgedPlate, hasSigilOfDominion, hasCellOfShame, hasEmpyreanWhip, hasForgeOfOne, hasRunDown,
   cageThreshold, cellThreshold, whipThreshold, resistThreshold, daemonLoreTotal, techUseTotal, cageRange, whipRange,
   brokenOf, isCaged, isBrokenBySmith, flagSmithIs, cageFlag, cageMatured, brokenFlagMatured, cellFlag, cellBrokenFree,
-  sigilItemData, findBrokenDominionTarget, regenIntervalSeconds, regenPlan, runDownChanges, runDownMarkOf, isCellDevice
+  sigilItemData, findBrokenDominionTarget, regenIntervalSeconds, regenPlan, runDownChanges, runDownMarkOf, isCellDevice,
+  isDaemonEngine
 } from "../rules/warpsmith.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -291,7 +292,7 @@ export function whipCandidates(actor) {
   const token = tokenOfActor(actor);
   if (!token) return [];
   return tokensWithinRadius(token, whipRange(actor)).map(t => t.actor)
-    .filter(a => a && isBrokenBySmith(a, actor, uuidsOf));
+    .filter(a => a && isDaemonEngine(a) && isBrokenBySmith(a, actor, uuidsOf));
 }
 
 export async function useEmpyreanWhip(actor) {
@@ -405,8 +406,8 @@ export async function useRunDown(actor, target = targetedActor()) {
     ui.notifications?.warn("Загнать — приём боя.");
     return false;
   }
-  if (!target || !isBrokenBySmith(target, actor, uuidsOf)) {
-    ui.notifications?.warn("Наведите таргет (T) на Сломленную вами демоническую машину.");
+  if (!target || !isDaemonEngine(target) || !isBrokenBySmith(target, actor, uuidsOf)) {
+    ui.notifications?.warn("Наведите таргет (T) на Сломленную вами демоническую машину (техника или Трейт Machine).");
     return false;
   }
   if (runDownMarkOf(target)) {
@@ -552,4 +553,26 @@ export function warpsmithStatus(actor) {
     runDownReady: isThrottleReady(actor, RUN_DOWN_THROTTLE, "round"),
     techUse: techUseTotal(actor)
   };
+}
+
+/**
+ * Ячейка Позора: Критический Провал устройства с демоном вызывает Феномен
+ * (вместо Клина/Перегрева у стрелкового) — бросок d100 по таблице Психических
+ * Феноменов, 75+ — Варп-Прорыв (rules/warpsmith.mjs::cellPhenomenonOn решает, когда).
+ */
+export async function rollCellPhenomenon(actor, item, { instead = "" } = {}) {
+  const { getPhenomenon, getPeril } = await import("../constants/psyker-tables.mjs");
+  const roll = await new Roll("1d100").evaluate();
+  const phen = getPhenomenon(roll.total);
+  let peril = "";
+  if (phen.peril) {
+    const pr = await new Roll("1d100").evaluate();
+    const p = getPeril(pr.total);
+    peril = ` Варп-Прорыв: d100 = <b>${pr.total}</b> — <b>${esc(p.label)}</b>. ${esc(p.text)}`;
+  }
+  const cell = item?.getFlag?.(NS, CELL_FLAG);
+  return postTestCard(actor, {
+    icon: ICON(), title: `Ячейка Позора — ${esc(item?.name ?? "устройство")}`,
+    lines: [`<div class="roll-threshold">Демон${cell?.demonName ? ` «${esc(cell.demonName)}»` : ""} в ячейке рвётся наружу${instead ? ` — ${esc(instead)}` : ""}. Феномен: d100 = <b>${roll.total}</b> — <b>${esc(phen.label)}</b>. ${esc(phen.text)}${peril}</div>`]
+  }, { sound: false });
 }

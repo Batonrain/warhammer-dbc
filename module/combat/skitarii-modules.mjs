@@ -10,7 +10,7 @@ import { esc } from "../helpers/utils.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { hasItemNamed } from "../rules/req-atom.mjs";
 import { isSkitariiModule, skitariiModuleTalents, skitariiModuleSummary,
-         mantleSwapAllowed, mantleSwapMark, MANTLE_SWAP_FLAG } from "../rules/skitarii-modules.mjs";
+         mantleSwapAllowed, mantleSwapMark, MANTLE_SWAP_FLAG, arkhanCanPayCharge } from "../rules/skitarii-modules.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -63,31 +63,48 @@ export async function toggleSkitariiModule(actor, item) {
 // ── Избавление Аркхана ──────────────────────────────────────────────────────
 // «Когда он попадает в поле Haywire интенсивностью 7+ Скитарий может получить
 // 1 Усталости или потратить 1 заряд Актуаторных Банков, чтобы его бионические
-// конечности не отключались… всё ещё Оглушён, но не Беспомощен». Заряда
-// Актуаторных Банков как пула в системе нет — путь через Усталость.
+// конечности не отключались… всё ещё Оглушён, но не Беспомощен». Актуаторные
+// Банки Лат — +1 к общей Катушке (constants/implant-mechanics.mjs), заряд
+// списывается оттуда (rules/skitarii-modules.mjs::arkhanCanPayCharge).
 
 export const ARKHAN_MIN_INTENSITY = 7;
 
-/** Кнопка под строкой ЭМИ на карточке урона (пусто — не тот случай). */
+/** Кнопки под строкой ЭМИ на карточке урона (пусто — не тот случай). */
 export function arkhanHaywireNote(actor, intensity) {
   if (!actor || Number(intensity) < ARKHAN_MIN_INTENSITY) return "";
   if (!hasItemNamed(actor, "Deliverance of Arkhan", ["talent"])) return "";
-  return `<div class="dmg-tb-note">⚙ Избавление Аркхана: ${esc(actor.name)} может принять 1 Усталость — бионические конечности не отключаются (Оглушён, но не Беспомощен).
-    <button type="button" class="wh-arkhan-btn" data-actor-uuid="${esc(actor.uuid)}">⚙ +1 Усталость: бионика работает</button></div>`;
+  const uuid = esc(actor.uuid);
+  const charge = arkhanCanPayCharge(actor)
+    ? ` <button type="button" class="wh-arkhan-btn" data-actor-uuid="${uuid}" data-pay="charge">⚡ −1 заряд Актуаторных Банков</button>` : "";
+  return `<div class="dmg-tb-note">⚙ Избавление Аркхана: ${esc(actor.name)} может принять 1 Усталость${charge ? " или потратить 1 заряд Актуаторных Банков" : ""} — бионические конечности не отключаются (Оглушён, но не Беспомощен).
+    <button type="button" class="wh-arkhan-btn" data-actor-uuid="${uuid}" data-pay="fatigue">⚙ +1 Усталость: бионика работает</button>${charge}</div>`;
 }
 
-/** Нажатие кнопки: +1 Усталости и строка в чат. */
-export async function useDeliveranceOfArkhan(message, { actorUuid } = {}) {
+/** Нажатие кнопки: +1 Усталости либо −1 заряд Катушки, и строка в чат. */
+export async function useDeliveranceOfArkhan(message, { actorUuid, pay = "fatigue" } = {}) {
   const actor = actorUuid ? await fromUuid(actorUuid) : null;
   if (!actor) return false;
   if (!actor.isOwner) { ui.notifications.warn("⚠️ Решает владелец персонажа."); return false; }
+  const byCharge = pay === "charge";
+  if (byCharge && !arkhanCanPayCharge(actor)) {
+    ui.notifications.warn("⚠️ В Актуаторных Банках нет заряда — остаётся Усталость.");
+    return false;
+  }
   const { runCardOnce } = await import("./card-once.mjs");
   return runCardOnce(message, "arkhanUsed", async () => {
-    const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
-    await addFatigue(actor, 1);
+    let paid;
+    if (byCharge) {
+      const before = Number(actor.system.energy?.value) || 0;
+      await actor.update({ "system.energy.value": before - 1 });
+      paid = `−1 заряд Актуаторных Банков (Катушка ${before} → ${before - 1})`;
+    } else {
+      const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
+      await addFatigue(actor, 1);
+      paid = "+1 Усталость";
+    }
     await postTestCard(actor, {
       icon: "⚙", title: `Избавление Аркхана — ${esc(actor.name)}`,
-      lines: [`<div class="roll-threshold">+1 Усталость: аварийные цепи Лат держат бионику в мёртвой зоне ЭМИ — ноги не подкашиваются, руки не выпускают оружие. ${esc(actor.name)} Оглушён, но не Беспомощен.</div>`]
+      lines: [`<div class="roll-threshold">${paid}: аварийные цепи Лат держат бионику в мёртвой зоне ЭМИ — ноги не подкашиваются, руки не выпускают оружие. ${esc(actor.name)} Оглушён, но не Беспомощен.</div>`]
     }, { sound: false });
   }, "Избавление Аркхана с этой карточки уже применено.");
 }

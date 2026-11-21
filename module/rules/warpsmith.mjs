@@ -1,6 +1,7 @@
 
 import { itemHasName } from "./predicates.mjs";
 import { itemHasKey } from "./item-marker.mjs";
+import { isMachineTrait } from "./flesh-is-weak.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { esc } from "../helpers/utils.mjs";
 
@@ -184,6 +185,37 @@ export function sigilItemData(smith, target) {
 export const CELL_DEVICE_TYPES = ["weapon", "gear", "forcefield", "tool", "armor"];
 
 export const isCellDevice = item => !!(item?.getFlag?.("warhammer-dbc", CELL_FLAG) ?? item?.flags?.["warhammer-dbc"]?.[CELL_FLAG]);
+
+/**
+ * Ячейка Позора: «Устройство… иммунно к Haywire, но Критические Провалы на его
+ * использование вызывают Феномены (вместо клина или перегрева для стрельбы)».
+ * Стрелковое — вместо Клина/Перегрева (combat/attack.mjs, ветка Заклинивания);
+ * рукопашное и прочее — на Критическом Провале.
+ */
+export function cellPhenomenonOn({ device, isMelee = false, jammed = false, critFailure = false } = {}) {
+  if (!isCellDevice(device)) return false;
+  return isMelee ? !!critFailure : !!jammed;
+}
+
+/** Мощность поля ЭМИ, с которой таблица уже что-то делает (стр. 168: 1–2 — без эффекта). */
+export const HAYWIRE_EFFECT_MIN = 3;
+
+/** Устройства актора на Ячейке Позора, которым поле ЭМИ этой мощности нипочём (строка карточки). */
+export function haywireImmuneDevices(actor, intensity) {
+  if ((Number(intensity) || 0) < HAYWIRE_EFFECT_MIN) return [];
+  return [...(actor?.items ?? [])].filter(isCellDevice);
+}
+
+/**
+ * «Сломленные Демонические Машины» (Загнать, Эмпирейная Плеть): техника
+ * (демонические машины пака — vehicle) либо существо с Трейтом Machine.
+ * Демон из плоти, даже Сломленный, машиной не считается.
+ */
+export function isDaemonEngine(actor) {
+  if (!actor) return false;
+  if (actor.type === "vehicle") return true;
+  return [...(actor.items ?? [])].some(isMachineTrait);
+}
 
 export function cellFlag(smith, target, deviceName = "") {
   return { demonUuid: target?.uuid ?? "", demonName: target?.name ?? "", smithUuid: smith?.uuid ?? "", deviceName: String(deviceName ?? "") };

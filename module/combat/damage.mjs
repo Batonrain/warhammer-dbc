@@ -27,6 +27,7 @@ import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { arkhanHaywireNote } from "./skitarii-modules.mjs";
+import { haywireImmuneDevices } from "../rules/warpsmith.mjs";
 import { ablativeDamage, mountRangedApBonus, unrulyRiders } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
@@ -337,7 +338,12 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   const armourNote = killed.length
     ? `<div class="dmg-tb-note">🔌 Силовая броня отключена ЭМИ (${killed.map(i => esc(i.name)).join(", ")}): бонусы брони погасли, действуют штрафы выключенной брони. Включить — тумблером на листе, когда поле рассеется.</div>`
     : "";
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}${arkhanNote}${armourNote}`;
+  // Ячейка Позора (Варп-кузнец): устройство с демоном иммунно к Haywire.
+  const immune = haywireImmuneDevices(actor, total);
+  const cellNote = immune.length
+    ? `<div class="dmg-tb-note">⛓ Ячейка Позора: ${immune.map(i => esc(i.name)).join(", ")} — иммунно к ЭМИ, работает как обычно.</div>`
+    : "";
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}${arkhanNote}${armourNote}${cellNote}`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────

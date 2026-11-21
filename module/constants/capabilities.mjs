@@ -1557,7 +1557,7 @@ export const CAPABILITIES = {
   },
   "skitarii.core.deliveranceOfArkhan": {
     label: "Попав в поле Haywire интенсивностью 7+, Скитарий может получить 1 Усталости или потратить 1 заряд Актуаторных Банков,",
-    source: "Deliverance of Arkhan / Избавление Аркхана", reader: "module/combat/skitarii-modules.mjs::arkhanHaywireNote (карточка ЭМИ 7+, combat/damage.mjs::_applyHaywire) + useDeliveranceOfArkhan (кнопка .wh-arkhan-btn, module/hooks.mjs)"
+    source: "Deliverance of Arkhan / Избавление Аркхана", reader: "module/combat/skitarii-modules.mjs::arkhanHaywireNote (карточка ЭМИ 7+, combat/damage.mjs::_applyHaywire) + useDeliveranceOfArkhan (кнопки .wh-arkhan-btn, module/hooks.mjs): +1 Усталость или −1 заряд Актуаторных Банков (Латы +1 к Катушке — constants/implant-mechanics.mjs, packs-src energyMax; rules/skitarii-modules.mjs::arkhanCanPayCharge)"
   },
   "skitarii.core.shiftingMantle": {
     label: "Раз в Ход за ментальное свободное действие Скитарий может отключить один Модуль и/или включить другой.",
@@ -5808,8 +5808,8 @@ export const CAPABILITIES = {
     source: "Master of Machines / Повелитель Машин", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
   },
   "trait.myOwnMaster": {
-    label: "Коды командования для Боевых Лат Скитария не работают. ПОДТВЕРЖДЕНО ЧЕСТНОЙ ЗАГЛУШКОЙ: кодов командования (Катехизисы Командования Лат, Binary Dominion) как механики в системе нет — читать нечему (сверка Архетипов 28.09.2026).",
-    source: "My Own Master / Сам Себе Хозяин", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    label: "Коды командования для Боевых Лат Скитария не работают.",
+    source: "My Own Master / Сам Себе Хозяин", reader: "module/rules/binary-dominion.mjs::hasMyOwnMaster — Скитарий с Чертой не цель Бинарного Владычества (isBinaryCommandTarget: нет подмены Command → Tech-Use, binaryDominionRisk не поднимает Риск до 3). «Обязан выполнять команды Механикус» Лат — повествование, ведёт ГМ (Sahara 530-my-own-master, 21.11.2026)"
   },
   "trait.masterOfMindsOfMonKeigh": {
     label: "Если Люди под его командованием не знают его природы (или признают лидером) — за Очко Судьбы даёт им Fearless (с инстинктом самосохранения)…",
@@ -7028,7 +7028,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Электрожрец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": {
     label: "Сеть накопителей и эмиттеров расходится через тело от блока священных машин на спине;",
-    source: "Electropriest Coils / Катушки Электрожреца", reader: "ЧАСТИЧНО (21.11.2026): rules/electropriest.mjs — максимум заряда (character/final-pools.mjs), SPD (character/movement.mjs), Инициатива, Уклонение/Внимательность (источник eliteMech2), Компенсатор и Люминен (sheets/tabs/tech.mjs); кнопки combat/electropriest.mjs. Одежда без AP и Brutal Charge — ГМ"
+    source: "Electropriest Coils / Катушки Электрожреца", reader: "ЧАСТИЧНО (21.11.2026): rules/electropriest.mjs — максимум заряда (character/final-pools.mjs), SPD (character/movement.mjs), Инициатива, Уклонение/Внимательность (источник eliteMech2), Компенсатор и Люминен (sheets/tabs/tech.mjs), Brutal Charge (½W.b) рукопашному E(El) (combat/attack.mjs::coilsBrutalCharge); кнопки combat/electropriest.mjs. Одежда без AP — ГМ"
   },
   "trait.elitnyeArhetipy.elektrozhrets.motiveStimulation": {
     label: "Считает S, T и A дружественными Характеристиками независимо от Покровительства, за счёт постоянной электростимуляции мышц, придающей тонус,",
@@ -8802,14 +8802,14 @@ export const CAPABILITIES = {
     reader: "module/combat/warpsmith.mjs::forgeSigil; module/rules/warpsmith.mjs::holdsSigilFor, ::isBrokenFor — Sahara 1-54b9"
   },
   "ability.cellOfShame": {
-    label: "Ячейка Позора: 5 Ходов и For.Lore (Daemons)−20 — Сломленный демон заключён в устройство и навсегда теряет 10 W и 15 Inf; устройство не требует перезарядки, а при его уничтожении демон на свободе (Сломлен, но с волей до Владычества). Не автоматизировано: иммунитет устройства к Haywire, Феномены вместо клина и перегрева",
+    label: "Ячейка Позора: 5 Ходов и For.Lore (Daemons)−20 — Сломленный демон заключён в устройство и навсегда теряет 10 W и 15 Inf; устройство не требует перезарядки, а при его уничтожении демон на свободе (Сломлен, но с волей до Владычества); устройство иммунно к Haywire, Критический Провал вызывает Феномен вместо клина и перегрева",
     source: "Cell of Shame / Ячейка Позора (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/warpsmith.mjs::useCellOfShame, ::releaseCellDemon (module/hooks.mjs, deleteItem); module/rules/ammo-free.mjs::ammoIsFree (isCellDevice) — Sahara 1-54b9"
+    reader: "module/combat/warpsmith.mjs::useCellOfShame, ::releaseCellDemon (module/hooks.mjs, deleteItem); module/rules/ammo-free.mjs::ammoIsFree (isCellDevice) — Sahara 1-54b9; Haywire — rules/armour-penalty.mjs::powerArmourKilledByHaywire (силовая броня на Ячейке не гаснет) и строка карточки ЭМИ (rules/warpsmith.mjs::haywireImmuneDevices в combat/damage.mjs::_applyHaywire); Феномены — rules/warpsmith.mjs::cellPhenomenonOn в combat/attack.mjs (вместо Клина/Перегрева, рукопашное — на Крит. Провале) → combat/warpsmith.mjs::rollCellPhenomenon (Sahara haywire, 21.11.2026)"
   },
   "ability.empyreanWhip": {
     label: "Эмпирейная Плеть: полное действие, комбинированный тест For.Lore (Daemons)−20 и Command(I)−10 — Сломленные демонические машины в радиусе I м до конца боя управляются напрямую, как Миньоны",
     source: "Empyrean Whip / Эмпирейная Плеть (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/warpsmith.mjs::useEmpyreanWhip, ::clearWhipOnCombatEnd (module/hooks.mjs, deleteCombat), ::performWarpsmithWrite (запись warpsmith, whip) — Sahara 1-54b9"
+    reader: "module/combat/warpsmith.mjs::useEmpyreanWhip (машина — rules/warpsmith.mjs::isDaemonEngine: техника или Трейт Machine), ::clearWhipOnCombatEnd (module/hooks.mjs, deleteCombat), ::performWarpsmithWrite (запись warpsmith, whip) — Sahara 1-54b9"
   },
   "ability.forgeOfOne": {
     label: "Кузница Одного: Очко Бесчестия — собрать известный паттерн техники или оболочку демонической машины (R3 и ниже) из обломков за сутки; запись сборки и карточка. Ремонт в поле без кузницы — без кнопки",
@@ -8819,7 +8819,7 @@ export const CAPABILITIES = {
   "ability.runDown": {
     label: "Загнать: свободное действие раз в Ход, Очко Бесчестия — Сломленной машине +30 ко всем Характеристикам и 1 временное Очко Бесчестия до начала следующего Хода Кузнеца; в начале его Хода машина теряет 3d10 Структуры, Беспомощна 1d5 Раундов, демон теряет 1d5 W навсегда",
     source: "Run Down / Загнать (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/warpsmith.mjs::useRunDown, ::runDownTurnStart (module/hooks.mjs), ::performWarpsmithWrite (записи runDown, runDownPay) — Sahara 1-54b9"
+    reader: "module/combat/warpsmith.mjs::useRunDown (машина — rules/warpsmith.mjs::isDaemonEngine), ::runDownTurnStart (module/hooks.mjs), ::performWarpsmithWrite (записи runDown, runDownPay) — Sahara 1-54b9"
   },
   "warpforged.regeneration": {
     label: "Регенерация 1 Раны каждые 20−T.b минут (по часам Календаря, пока ранен)",

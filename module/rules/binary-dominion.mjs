@@ -68,8 +68,20 @@ export function isSkitariiActor(actor) {
   return wearsSkitariiPlate(actor);
 }
 
-/** Цель, на которую действует Бинарное Владычество: сервитор, робот или Скитарий. */
-export const isBinaryCommandTarget = actor => isServitorOrRobot(actor) || isSkitariiActor(actor);
+/**
+ * Сам Себе Хозяин (Черта Архетипа Скитарий): «Коды командования для Боевых Лат
+ * Скитария не работают». Владычество над Скитариями держится на этих кодах
+ * (Катехизисы Командования Лат: «считается сервитором/роботом для Binary
+ * Dominion»), поэтому такой Скитарий ему не подвластен (Sahara 530-my-own-master).
+ */
+export const hasMyOwnMaster = actor => items(actor).some(i => i?.type === "trait"
+  && (itemHasName(i, "My Own Master") || itemHasName(i, "Сам Себе Хозяин")));
+
+/** Скитарий, на которого действуют коды командования Лат. */
+const commandableSkitarius = actor => isSkitariiActor(actor) && !hasMyOwnMaster(actor);
+
+/** Цель, на которую действует Бинарное Владычество: сервитор, робот или Скитарий (без Сам Себе Хозяин). */
+export const isBinaryCommandTarget = actor => isServitorOrRobot(actor) || commandableSkitarius(actor);
 
 /**
  * Подмена Command на Tech-Use: насколько Tech-Use больше Command. «Может
@@ -98,7 +110,7 @@ export function binaryDominionRisk(actor, level, commanded = []) {
   const list = [...commanded].filter(Boolean);
   if (!list.length) return base;
   if (list.every(isServitorOrRobot)) return 3;
-  if (list.every(a => isServitorOrRobot(a) || isSkitariiActor(a))) return Math.max(base, 3);
+  if (list.every(isBinaryCommandTarget)) return Math.max(base, 3);
   return base;
 }
 

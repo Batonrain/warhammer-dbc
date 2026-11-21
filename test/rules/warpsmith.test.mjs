@@ -1,6 +1,8 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
+import { isDaemonEngine, cellPhenomenonOn, haywireImmuneDevices } from "../../module/rules/warpsmith.mjs";
+import { powerArmourKilledByHaywire } from "../../module/rules/armour-penalty.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
 import {
   hasIronCage, hasWarpforgedPlate, hasSigilOfDominion, hasCellOfShame, hasEmpyreanWhip, hasForgeOfOne, hasRunDown,
@@ -252,5 +254,40 @@ describe("Загнать", () => {
     expect(clampRoll(-1, 5)).toBeNull();
     expect(clampRoll("x", 5)).toBeNull();
     expect(clampRoll(2.5, 5)).toBe(2);
+  });
+});
+
+// Хвост Варп-кузнеца (Sahara haywire, 21.11.2026).
+
+describe("Ячейка Позора: ЭМИ и Феномены", () => {
+  const cellItem = (type, extra = {}) => ({ type, name: "Устройство", flags: { "warhammer-dbc": { [CELL_FLAG]: { demonName: "Х" } } }, system: extra });
+  const plain = (type, extra = {}) => ({ type, name: "Обычное", flags: {}, system: extra });
+  it("силовая броня на Ячейке ЭМИ не выключается", () => {
+    const pa = { equipped: true, armorType: "power", active: true };
+    const actor = { items: [cellItem("armor", pa), plain("armor", pa)] };
+    const killed = powerArmourKilledByHaywire(actor, 9);
+    expect(killed).toHaveLength(1);
+    expect(killed[0].name).toBe("Обычное");
+  });
+  it("иммунные устройства перечисляются при поле с эффектом (3+)", () => {
+    const actor = { items: [cellItem("weapon"), plain("weapon")] };
+    expect(haywireImmuneDevices(actor, 5).map(i => i.type)).toEqual(["weapon"]);
+    expect(haywireImmuneDevices(actor, 2)).toEqual([]);
+  });
+  it("Феномен вместо клина у стрелкового, на Крит. Провале у рукопашного", () => {
+    const dev = cellItem("weapon");
+    expect(cellPhenomenonOn({ device: dev, isMelee: false, jammed: true })).toBe(true);
+    expect(cellPhenomenonOn({ device: dev, isMelee: false, jammed: false, critFailure: true })).toBe(false);
+    expect(cellPhenomenonOn({ device: dev, isMelee: true, critFailure: true })).toBe(true);
+    expect(cellPhenomenonOn({ device: plain("weapon"), isMelee: false, jammed: true })).toBe(false);
+  });
+});
+
+describe("демоническая машина для Загнать и Плети", () => {
+  it("техника или носитель Трейта Machine; демон из плоти — нет", () => {
+    expect(isDaemonEngine({ type: "vehicle", items: [] })).toBe(true);
+    expect(isDaemonEngine({ type: "npc", items: [{ type: "trait", name: "Machine / Машина (X)" }] })).toBe(true);
+    expect(isDaemonEngine({ type: "npc", items: [{ type: "trait", name: "Daemonic / Демонический (X)" }] })).toBe(false);
+    expect(isDaemonEngine(null)).toBe(false);
   });
 });

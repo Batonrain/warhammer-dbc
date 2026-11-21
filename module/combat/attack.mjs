@@ -131,6 +131,8 @@ import { PIERCING_SHOT_FLAG, hasTimedExplosion, runicArtilleryActive, runicFligh
 import { bronenosetsWeaponBonus } from "../rules/bronenosets-talents.mjs";
 import { possessionWeaponGiftDamage } from "../rules/possession-weapon-gifts.mjs";
 import { livingArsenalWeapon } from "../rules/obliterator-talents.mjs";
+import { coilsBrutalCharge } from "../rules/electropriest.mjs";
+import { cellPhenomenonOn } from "../rules/warpsmith.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -1049,6 +1051,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     return;
   }
 
+  // Ячейка Позора (Варп-кузнец, rules/warpsmith.mjs::cellPhenomenonOn):
+  // Критический Провал рукопашным устройством с демоном — Феномен сверх промаха.
+  // Гейт opts.skipAmmo — как у поломки рукояти Огрина ниже: переигровка той же
+  // атаки (переброс за Судьбу, сдвиг места) второй Феномен не катает.
+  if (isMelee && !opts.skipAmmo && cellPhenomenonOn({ device: item, isMelee, critFailure: critOutcome?.failure })) {
+    const { rollCellPhenomenon } = await import("./warpsmith.mjs");
+    await rollCellPhenomenon(actor, item, { instead: "Критический Провал" });
+  }
+
   // Кистень/Кнут, Критический Промах (core.json, «Типы Рукопашного Оружия»):
   // «При Критическом Промахе наносит попадание по себе в случайную часть
   // тела» — тот же приём короткого замыкания, что у гранаты выше. Кнут
@@ -1072,6 +1083,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const jammed   = !isMelee && !wp.spray && sys.weaponClass !== "thrown" && jamAt !== null && rv >= jamAt;
   // Перегрев (core, «Особые Свойства»): «вместо Клина наносит урон по самому
   // стрелку, в руку, что держит его» — оружие не клинит, патроны не портятся.
+  // Ячейка Позора: «Феномены (вместо клина или перегрева для стрельбы)» —
+  // оружие не клинит, патроны не портятся, выстрел пропал.
+  if (cellPhenomenonOn({ device: item, isMelee, jammed })) {
+    const { rollCellPhenomenon } = await import("./warpsmith.mjs");
+    await rollCellPhenomenon(actor, item, { instead: "вместо Клина и Перегрева: оружие цело, выстрел пропал" });
+    return;
+  }
   if (jammed && hasOverheats(wProps)) {
     await resolveOverheat(actor, item, { damage: effDamage, penetration: effPen0, wp, rv });
     return;
@@ -1586,8 +1604,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (текст Черты: «при совершении Натиска или Верховой Атаки»). rofMode у
   // рукопашной всегда "melee" (база живёт в opts.baseKey из диалога) —
   // прежний гейт rofMode==="charge" не срабатывал никогда.
+  // Катушки Электрожреца без одежды: Brutal Charge (½W.b) рукопашному E(El) (rules/electropriest.mjs).
   const chargeBonus = (isMelee && (baseIsCharge(opts.baseKey) || baseIsMountedAttack(opts.baseKey)))
-    ? brutalChargeDamageBonus(actor) : 0;
+    ? brutalChargeDamageBonus(actor) + coilsBrutalCharge(actor, { isMelee, damageSubtype: ammoDmgSubtype || effDmgSubtype }) : 0;
   // Кровавое Пламя (wdbc-1rno): +2 Dmg за каждого убитого этим оружием с
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.

@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
 import {
   electropriestActive, coilsBare, coilsEnergyMaxBonus, coilsSpeedBonus, coilsInitiativeBonus, coilsTechBonus,
-  electropriestRules, coilsDamageRefund, voltagheistBlastProfile, bubbleProtects, shieldAblative, shieldAblativeChange,
+  electropriestRules, coilsDamageRefund, coilsBrutalCharge, voltagheistBlastProfile, bubbleProtects, shieldAblative, shieldAblativeChange,
   BUBBLE_FLAG, SHIELD_ABLATIVE_FLAG
 } from "../../module/rules/electropriest.mjs";
 
@@ -40,6 +40,13 @@ describe("Катушки Электрожреца", () => {
     const lum = coilsTechBonus(p, { type: "techPower", system: { subtype: "Люминен" } });
     expect(lum.dmg).toBe(3);
     expect(lum.pen).toBe(3);
+  });
+  it("Brutal Charge (½W.b, окр.▲) только рукопашному E(El) и без брони", () => {
+    expect(coilsBrutalCharge(priest(), { isMelee: true, damageSubtype: "electrical" })).toBe(3);
+    expect(coilsBrutalCharge(priest(), { isMelee: true, damageSubtype: "flame" })).toBe(0);
+    expect(coilsBrutalCharge(priest(), { isMelee: false, damageSubtype: "electrical" })).toBe(0);
+    expect(coilsBrutalCharge(priest({ items: [armour({ head: 2 })] }), { isMelee: true, damageSubtype: "electrical" })).toBe(0);
+    expect(coilsBrutalCharge({ items: [], system: { characteristics: { wp: { bonus: 5 } } } }, { isMelee: true, damageSubtype: "electrical" })).toBe(0);
   });
   it("снижение урона: −W.b, но не ниже 1", () => {
     expect(coilsDamageRefund(priest(), 10)).toBe(5);
