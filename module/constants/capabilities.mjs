@@ -6379,7 +6379,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vampir.theThirst": {
     label: "Пробив укусом броню цели, имеющей душу, может выпить её кровь (или аналог, вплоть до машинного масла или реакторной жидкости мутанта-механои…",
-    source: "The Thirst / Жажда", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "The Thirst / Жажда", reader: "ЧАСТИЧНО: пул Жажды — запись kind:resourcePool (module/rules/resource-pools.mjs, PR #583); урон варп-оружия в Жажду (пункт за 5 Ран, расход вверх) и тест T+10 на Оглушение — module/combat/thirst-warp.mjs из module/combat/damage.mjs (Sahara 583-5-t-10). Видимость для Warp Sight — ведёт ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Варп_Кузнец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.varpKuznets.ironCage": {
