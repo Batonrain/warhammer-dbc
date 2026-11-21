@@ -4035,7 +4035,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.realityRipple": {
     label: "Проявление или смена любого числа Даров за свободное действие, получая 1 Порчи.",
-    source: "Reality Ripple / Рябь Реальности", reader: ""
+    source: "Reality Ripple / Рябь Реальности", reader: "module/sheets/tabs/possession.mjs::toggleManifest — в бою Проявление за полудействие, с Талантом выбор «свободно за 1 Порчу»"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.risingTogether": {
     label: "Демон становится Возвышенным (вариации выбирает игрок).",

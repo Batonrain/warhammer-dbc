@@ -10,8 +10,12 @@
 
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../../constants/possession.mjs";
-import { giftNamesOf } from "../../rules/predicates.mjs";
+import { giftNamesOf, itemHasName } from "../../rules/predicates.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { hasActionEconomy, isEncounterActive, canSpendActionPoints, spendActionPoints } from "../../combat/action-economy.mjs";
+
+/** Талант «Reality Ripple / Рябь Реальности» (корбук стр. 114). */
+const hasRealityRipple = actor => [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Reality Ripple"));
 
 // Группировка каталога Даров Одержимого по группам (для вкладки «Одержимость»).
 // activeSet — имена Даров, реально надетых на актора (подсветка «активен»).
@@ -77,6 +81,10 @@ export function possessionContext(actor) {
  * Проявление демона и обратное заключение (полудействие). Вход в Проявление —
  * тест Cor+20; при Провале Порча растёт на единицу, но форма всё равно
  * включается: демон уже наружу.
+ *
+ * Цена (Sahara 584-4d33): в бою и вход, и выход — полудействие (1 ОД); вне боя
+ * экономики действий нет. Рябь Реальности даёт вход свободным действием за
+ * 1 Порчу — игрок выбирает в окне («может»); выход Талант не удешевляет.
  */
 export async function toggleManifest(actor) {
   const sys  = actor.system;
@@ -84,6 +92,25 @@ export async function toggleManifest(actor) {
   const now  = !p.manifested;
   const meta = twinSpiritMeta(p.demon || "katart");
   const updates = { "system.possession.manifested": now };
+
+  const inCombat = isEncounterActive() && hasActionEconomy(actor);
+  let rippleCor = 0;
+  if (inCombat) {
+    const useRipple = now && hasRealityRipple(actor) && !!(await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Рябь Реальности" },
+      content: "<p>Провести Проявление свободным действием, получив 1 Порчи?</p><p>«Нет» — обычное Проявление за полудействие.</p>",
+      rejectClose: false
+    }));
+    if (useRipple) rippleCor = 1;
+    else {
+      const what = now ? "Проявление" : "Заключить демона";
+      if (!canSpendActionPoints(actor, 1, { physical: false })) {
+        ui.notifications?.warn(`⚠️ ${actor.name}: ${what} — нужно полудействие (1 ОД).`);
+        return;
+      }
+      if (!await spendActionPoints(actor, 1, { physical: false })) return;
+    }
+  }
 
   if (now) {
     const cor    = sys.corruption?.value ?? 0;
@@ -95,7 +122,8 @@ export async function toggleManifest(actor) {
     const target = Math.min(100, cor + 20) + ruleMods.total;
     const roll   = await (new Roll("1d100")).evaluate();
     const success = roll.total <= target;
-    if (!success) updates["system.corruption.value"] = Math.min(100, cor + 1);
+    const corGain = (success ? 0 : 1) + rippleCor;
+    if (corGain) updates["system.corruption.value"] = Math.min(100, cor + corGain);
     // Дар «Гигант»: «+10 к максимуму И ТЕКУЩЕМУ количеству Ран». Максимум
     // добавляет сам пересчёт листа (rules/character.mjs), текущие Раны — здесь,
     // один раз при входе в Проявление; при выходе их срезает ветка выхода ниже.
@@ -109,6 +137,7 @@ export async function toggleManifest(actor) {
         <div class="wh-poss-card-h">⛧ ПРОЯВЛЕНИЕ — ${meta.label} (${meta.godLabel})</div>
         <div class="wh-poss-card-r">Тест Cor+20${ruleMods.parts.map(p => ` ${p}`).join("")}: <b>${roll.total}</b> против <b>${target}</b> —
           <span class="${success ? "ok" : "bad"}">${success ? "Успех" : "Провал: +1 Порчи"}</span></div>
+        ${rippleCor ? `<div class="wh-poss-card-r">Рябь Реальности: Проявление свободным действием, +1 Порчи.</div>` : ""}
         <div class="wh-poss-card-n">Демон перестраивает тело в боевую форму. Броня/одежда сплавляются с формой.</div>
       </div>`;
     await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: body });
