@@ -7650,9 +7650,9 @@ export const CAPABILITIES = {
     reader: "module/rules/blessed-fits.mjs (константы/чистая логика возврата); module/hooks.mjs::btnReroll (триггер Оглушения); module/combat/condition-ticks.mjs::processConditionTurnStart (возврат Очка на естественном декременте)"
   },
   "mutation.bloodReplacement": {
-    label: "Иммунитет к смерти от Кровотечения/Обескровливания; 11 субмутаций определяют тип крови и эффект при ранении (I/R/X урон), не автоматизированы",
+    label: "Иммунитет к смерти от Кровотечения (бросок Кровотечения не убивает); Ранение на непоглощённом I/R/X — карточка с текстом субмутации и задетыми в 2 м, у Дыма кнопка зоны Дыма 4 м; Дым — свой дым не мешает зрению/атакам; Магма — без теста Жары/Холода. Броски задетых и пассивы Алкоголя/Света/Памяти/Личинок/Магмы (½ E(Fl))/Варпа (+1 Успех)/Кислоты — за столом (wdbc-1rno.15)",
     source: "Мутация: Blood Replacement (Общие мутации)",
-    reader: ""
+    reader: "module/rules/blood-replacement.mjs (bloodWoundFor/bloodSmokeSight/bloodReplacementItem) ← combat/blood-replacement.mjs::maybePostBloodWound (combat/damage.mjs), combat/condition-ticks.mjs (смерть от Кровотечения), rules/vision-penalty-immunity.mjs + rules/perception.mjs (Дым), combat/temperature-hazard.mjs (Магма)"
   },
   "mutation.bloodReplacement.mercuryReaction": {
     label: "Субмутация «Ртуть»: непоглощённый I/R/X урон отмечает раненую часть тела — иммунна к E(Ls), но проводит ток (noEnergy) до конца боя",

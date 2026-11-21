@@ -76,6 +76,7 @@ import { secondaryCritHtml } from "./secondary-crit.mjs";
 // Хода, чтобы его затянуть.
 import { bleedingDieFormula, canSelfStaunch } from "../rules/new-men.mjs";
 import { bleedingRollCount, bestBleedingRoll } from "../rules/resilience-talents.mjs";
+import { bloodReplacementItem } from "../rules/blood-replacement.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -769,9 +770,12 @@ export async function processConditionTurnEnd(actor) {
     }
     const level = Number(conds.haemorrhagingLevel) || 0;
     const eff = roll.total - level;
-    if (eff <= 0 && hasRuleFlag(actor, "brutePhysiology.bleedingNoDeath")) {
+    const noBleedDeath = hasRuleFlag(actor, "brutePhysiology.bleedingNoDeath") ? "Физиология Громилы"
+      // Замена Крови (wdbc-1rno.15): «иммунитет к смерти от Кровотечения и Обескровливания».
+      : bloodReplacementItem(actor) ? "Замена Крови" : null;
+    if (eff <= 0 && noBleedDeath) {
       // Физиология Громилы (Огрин): «не может умереть от Кровотечения».
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>Физиология Громилы</b>: от Кровотечения не умирает</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>${noBleedDeath}</b>: от Кровотечения не умирает</div>`);
     } else if (eff <= 0) {
       // Пусть Льётся (Геносемя): вместо смерти — 1 Усталости (killByCondition
       // начисляет её сама), карточка не должна кричать «СМЕРТЬ» над живым.

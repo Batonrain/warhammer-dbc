@@ -40,6 +40,7 @@ import { hasBlackEyesDarknessImmunity } from "./black-eyes.mjs";
 import { hornSightActive, visionAidBlocked } from "./vision-aids.mjs";
 import { itemIs } from "./item-marker.mjs";
 import { manyEyedSightAngle } from "./possession-talents.mjs";
+import { bloodSmokeSight } from "./blood-replacement.mjs";
 import { headlessSightAngle } from "./headless.mjs";
 
 /** Ступени освещённости книги (Нимб Тьмы). */
@@ -138,7 +139,7 @@ export function sensesOf(actor) {
   const barrier = liveRating(actor, ratedItem(actor, BARRIER_NAMES));
   const c = actor?.system?.conditions ?? {};
   return {
-    darkSight, thermal, smokeSight: blackEyes, sonar, unnatural, barrier,
+    darkSight, thermal, smokeSight: blackEyes || bloodSmokeSight(actor), sonar, unnatural, barrier,
     hornSight: hornSightActive(actor),
     blind: isBlindedActor(actor),
     deaf: !!c.deafened

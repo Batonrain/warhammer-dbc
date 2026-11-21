@@ -22,6 +22,7 @@
 import { itemIs } from "./item-marker.mjs";
 import { sightGrants, SIGHT_EFFECT } from "./sight-effects.mjs";
 import { visionAidBlocked } from "./vision-aids.mjs";
+import { bloodSmokeSight } from "./blood-replacement.mjs";
 
 const aimed = aiming => !!aiming && aiming !== "none";
 const shortName = item => String(item?.name ?? "").split("/").pop().trim();
@@ -42,6 +43,8 @@ export function lightPenaltyImmunityReason(actor, installedMods = [], { aiming =
 
 /** Почему не действует штраф Дыма/тумана, либо null. */
 export function smokePenaltyImmunityReason(actor, installedMods = [], { aiming = "" } = {}) {
+  // Замена Крови «Дым» (wdbc-1rno.15): «Дым не мешает его зрению и атакам».
+  if (bloodSmokeSight(actor)) return "Замена Крови (Дым)";
   if (!aimed(aiming)) return null;
   const scope = sightGrants(installedMods, SIGHT_EFFECT.smoke);
   return scope ? `${shortName(scope)} (Прицеливание)` : null;
