@@ -31,3 +31,19 @@ describe("смягчение штрафа демонического прису�
     expect(out.effects[0].system.changes[0].value).toBe(-5);
   });
 });
+
+import { ringWeaveBonus, isCircleRitual } from "../../module/rules/runic-weave.mjs";
+
+describe("Длань Кольценосца / Владыки Колец — ритуалы с кругами", () => {
+  it("круг — по движковому типу или по книжному типу предмета", () => {
+    expect(isCircleRitual({ type: "circle" }, null)).toBe(true);
+    expect(isCircleRitual({ type: "other" }, { system: { ritualType: "circle" } })).toBe(true);
+    expect(isCircleRitual({ type: "summon" }, { system: { ritualType: "summon" } })).toBe(false);
+  });
+  it("+5 Кольценосца, +10 Владыки, вместе — большая", () => {
+    const R = { type: "circle" };
+    expect(ringWeaveBonus(has("runicWeave.handOfTheRingbearer"), R)).toMatchObject({ bonus: 5 });
+    expect(ringWeaveBonus(has("runicWeave.handOfTheLordOfRings", "runicWeave.handOfTheRingbearer"), R)).toMatchObject({ bonus: 10 });
+    expect(ringWeaveBonus(has("runicWeave.handOfTheRingbearer"), { type: "summon" })).toBeNull();
+  });
+});

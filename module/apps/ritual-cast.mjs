@@ -25,6 +25,7 @@ import { WARP_GODS, WARP_GODS_MAP } from "../constants/veil.mjs";
 import { godRelationCat } from "../constants/patronage.mjs";
 import { MARK_LABELS } from "../constants/talent-requirements.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { ringWeaveBonus } from "../rules/runic-weave.mjs";
 import { ritualVeilGate, ritualVeilMessage } from "../rules/veil-steps.mjs";
 import { veilShift } from "../constants/scene-nexus.mjs";
 import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
@@ -202,8 +203,11 @@ export function ritualThreshold(R, actor, item) {
   // −Inf призываемого демона (напр. Призыв Демонического Владыки) — узнаётся
   // только если ритуалист вписал Inf (демона называет ГМ, см. demonInf выше).
   const demonMod = isSummonLike ? -(Number(R.demonInf) || 0) : 0;
+  // Длань Кольценосца / Владыки Колец (rules/runic-weave.mjs): +5/+10 на ритуалы с кругами.
+  const ring = actor ? ringWeaveBonus(k => hasRuleFlag(actor, k), R, item) : null;
+  const ringMod = ring?.bonus ?? 0;
 
-  const threshold = baseVal + (R.gmMod || 0) + assistTotal + summonTotal + autoTotal + famVal + sympTotal + prBonus + numMod + extraTotal + demonMod;
+  const threshold = baseVal + (R.gmMod || 0) + assistTotal + summonTotal + autoTotal + famVal + sympTotal + prBonus + numMod + extraTotal + demonMod + ringMod;
 
   const rows = [
     { label: skillOpt ? `${skillOpt.label} (${charAbbr(testChar)})` : "— навык —", val: baseVal, primary: true },
@@ -220,6 +224,7 @@ export function ritualThreshold(R, actor, item) {
     ...(prBonus ? [{ label: "Псайкер (+2×PR)", val: prBonus }] : []),
     ...(numMod ? [{ label: "Нумерология", val: numMod }] : []),
     ...(extraTotal ? [{ label: "Модификаторы ритуала", val: extraTotal }] : []),
+    ...(ringMod ? [{ label: `Руническая Вязь «${ring.label}»`, val: ringMod }] : []),
     ...(demonMod ? [{ label: `−Inf демона${R.demonName ? ` (${R.demonName})` : ""}`, val: demonMod }] : [])
   ].map(r => ({ ...r, signed: sgn(r.val) }));
 

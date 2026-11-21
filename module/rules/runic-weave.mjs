@@ -33,3 +33,28 @@ export function siblingRunicWeaves(actorItems, item) {
   return (actorItems ?? []).filter(i =>
     i.type === "runicWeave" && i.system?.installedOn === installedOn);
 }
+
+// ── Длань Кольценосца / Длань Владыки Колец (стр. 433–434, Sahara runic-weaves-29) ──
+// «+5 (+10) на ритуалы с кругами». Читается ритуалами движкового или книжного
+// типа «Ритуальный круг» (constants/rituals.mjs, apps/ritual-cast.mjs::ritualThreshold).
+// Две вязи на одном носителе не складываются — берётся большая (обе описывают
+// одно умение замыкать круг, вторая лучше первой). Действие «замкнуть круг
+// полудействием / свободным» не моделируется: отдельного действия у Круга нет.
+export const RING_WEAVES = [
+  { key: "runicWeave.handOfTheLordOfRings", label: "Длань Владыки Колец", bonus: 10 },
+  { key: "runicWeave.handOfTheRingbearer", label: "Длань Кольценосца", bonus: 5 }
+];
+
+/** Ритуал — с кругом (движковый тип или книжный тип предмета). */
+export function isCircleRitual(R, item) {
+  return R?.type === "circle" || item?.system?.ritualType === "circle";
+}
+
+/**
+ * Бонус вязи к ритуалу с кругом: { label, bonus } или null.
+ * @param {(key:string)=>boolean} has  есть ли у ритуалиста ключ Возможности
+ */
+export function ringWeaveBonus(has, R, item) {
+  if (!isCircleRitual(R, item)) return null;
+  return RING_WEAVES.find(w => has(w.key)) ?? null;
+}
