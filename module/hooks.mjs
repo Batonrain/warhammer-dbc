@@ -5431,6 +5431,10 @@ function _attachFateContextMenu(message, html) {
   });
   Hooks.on("updateWorldTime", async (worldTime, dt) => {
     if (!game.user.isGM) return;
+    // Срочные активации «на N минут» (Боевая форма Вампира: Cor.b×10 минут,
+    // rules/item-activation.mjs::activationExpired) — срок вышел, форма снята.
+    // Свой обход: несвязанные токены сцен тоже (worldAndTokenActors).
+    await (await import("./apps/item-activation.mjs")).clearExpiredActivations(game.time.worldTime);
     for (const actor of game.actors ?? []) {
       // Контроль чужого токена (wdbc-ux8a) — "worldTime"-длительность, тот
       // же такт, что temp-grant/Око Вызова выше.
