@@ -14,6 +14,7 @@
 import { ITEM_TYPES } from "./items.mjs";
 import { fullyArmedWeight } from "../combat/fully-armed.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { lightningFingersIgnoresRig } from "../rules/moritat-talents.mjs";
 
 // Что можно разместить на разгрузке (броня носится, не стоуится; моды — часть оружия/брони).
 export const STOWABLE_TYPES = ["weapon", "ammo", "gear", "tool", "drug", "forcefield"];
@@ -154,6 +155,8 @@ export const TAKE_EVERYTHING_FLAG = "trait.takeEverything";
 export function inAwkwardRigLocation(actor, item) {
   const loc = (actor?.getFlag?.(NS, FLAG) || {})[item?.id];
   if (!loc || hasRuleFlag(actor, TAKE_EVERYTHING_FLAG)) return false;
+  // Молниеносные Пальцы (Моритат, rules/moritat-talents.mjs): пистолеты — без штрафа неудобной разгрузки.
+  if (lightningFingersIgnoresRig(actor, item)) return false;
   const isBackpack = loc.startsWith("bp:");
   const rig = actor.items?.get?.(isBackpack ? loc.slice(3) : loc.split(":")[0]);
   if (!rig) return false;

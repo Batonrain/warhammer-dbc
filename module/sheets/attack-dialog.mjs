@@ -45,6 +45,7 @@ import { sightEffectsOf }                     from "../rules/sight-effects.mjs";
 import { unstablePlatformPenalty, plasmaMasteryBlastChoice } from "../rules/damage-talents.mjs";
 import { MAXIMAL_RNG_BONUS }                  from "../rules/maximal-mode.mjs";
 import { RIPOSTE_EVASION_PENALTY, stockGripActive } from "../rules/melee-talents.mjs";
+import { potenceGripActive } from "../rules/bronenosets-talents.mjs";
 import { weaponIsBound } from "../combat/blade-binding.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
@@ -105,6 +106,16 @@ import { fullFireOptions, FULL_FIRE_PENALTY } from "../rules/full-fire.mjs";
 import { hasPowerSetting, powerModeOf, POWER_MODES } from "../rules/power-setting.mjs";
 import { batpackAvailable, batpackRangePenalty } from "../rules/batpack-dump.mjs";
 import { sabotageAimEntries } from "../rules/rogue-talents.mjs";
+import { empathAttackPreset } from "../rules/medusa-talents.mjs";
+import { hasRetiarius } from "../rules/gladiator-arena.mjs";
+import { livingArsenalOneHand } from "../rules/obliterator-talents.mjs";
+
+/** Префиксы id правил элитных архетипов, чей auto-бонус идёт в Порог атаки (см. ruleAutoMods). */
+export const ELITE_ATTACK_AUTO_MODS = [
+  "vitkis.warSeer.hit", "vitkis.bookOfBattle", "gladiator.bestiarius",
+  "kenetai.sharedConsciousness", "secutor.sustainedAssault", "secutor.gunzerker",
+  "archmagos.concordax", "astartes.boon."
+];
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -195,7 +206,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // теста уже после того, как окно посчитало порог, и бросок расходился бы с
   // окном — там же разобрано, чем именно.
   const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
-  const charKey = isMelee ? "ws" : "bs";
+  // Ретиарий (Гладиатор): метательное на цепи — WS вместо BS (rules/gladiator-arena.mjs).
+  const charKey = (isMelee || (sys.weaponClass === "thrown" && hasRetiarius(actor))) ? "ws" : "bs";
   // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием атаковать нельзя (combat/blade-binding.mjs).
   if (weaponIsBound(actor, item.id))
     return ui.notifications.warn(`⚠️ «${item.name}» сцеплено клинком противника (Сцепление Клинков) — атаковать им нельзя до начала Хода цепляющего или пока не разойдутся.`);
@@ -298,8 +310,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // винтовку и длинную винтовку (обе в классе basic, стр. 171) можно держать
   // одной рукой. Тот же список собирает rules/hands.mjs::availableRangedGrips —
   // иначе окно атаки разрешило бы хват, которого бюджет рук не знает.
-  const oneHandRifleGrip = (!isMelee && sys.weaponClass === "basic"
-                         && hasRuleFlag(actor, "weapon.oneHandedRifle")) ? "1р" : null;
+  const oneHandRifleGrip = ((!isMelee && sys.weaponClass === "basic"
+                         && hasRuleFlag(actor, "weapon.oneHandedRifle"))
+                         // Живой Арсенал (Облитератор): ассимилированные винтовки и тяжёлое (rules/hands.mjs — то же).
+                         || (!isMelee && livingArsenalOneHand(actor, item))) ? "1р" : null;
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60): книга
   // разрешает одну руку и отдельно оговаривает, что дальность при этом НЕ
   // режется — в отличие от модификации Pistol Grip. Список оружия именной, а
@@ -308,8 +322,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                         && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) ? "1р" : null;
   // Прикладный Хват (Sahara 3-8dc5): штык одной рукой — «1р» выдаёт Талант, WS −10 (selection.mjs).
   const stockGripGrip = (isMelee && stockGripActive(actor, item)) ? "1р" : null;
+  // Могущество (Броненосец): двуручное рукопашное — одной рукой.
+  const potenceGrip = (isMelee && potenceGripActive(actor, item)) ? "1р" : null;
   const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []),
                       ...(stockGripGrip ? [stockGripGrip] : []),
+                      ...(potenceGrip ? [potenceGrip] : []),
                       ...(doubleGripGrip ? [doubleGripGrip] : []),
                       ...(oneHandRifleGrip ? [oneHandRifleGrip] : []),
                       ...(pathOneHandGrip ? [pathOneHandGrip] : [])];
@@ -488,7 +505,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Пассажир верхом: «−10 на все физические действия» — атака тоже (rules/mount.mjs::passengerTestMod)
       || m.ruleId === "situational.passenger"
       // Скакун под меткой Драконьего Рыцаря: +3×Успехи на все Атаки (rules/dragon-knight.mjs)
-      || m.ruleId === "situational.dragonKnight")
+      || m.ruleId === "situational.dragonKnight"
+      // Элитные архетипы (#586): бонусы, у которых своего пути в Порог атаки нет —
+      // Провидец Войны и Книга Битвы (Виткис), Бестиарий, Общее Сознание,
+      // Непрерывный Натиск и Берсерк-Стрелок, Конкордакс, дары Герольда.
+      || ELITE_ATTACK_AUTO_MODS.some(id => String(m.ruleId ?? "").startsWith(id)))
   });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -1663,6 +1684,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     badgesHtml,
     bandHtml,
     charKey,
+    // Эмпат (Медуза): атаки медузы — тестом W, урон +бPR (rules/medusa-talents.mjs).
+    ...empathAttackPreset(actor, item),
     charSwapWhy,
     charVal,
     commonMods,
@@ -1987,9 +2010,10 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // даёт атаке: «+10 к любому удару» с Черты просто не доезжал (wdbc-t8dt,
   // найдено живой проверкой — синтетическое правило area:attack не попадало
   // ни в сумму, ни в карточку).
-  const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
-  const fatigue  = bodyMods.total;
+  // Цель — в контекст: правила «по цели» (Провидец Войны, Книга Битвы, Бестиарий) без неё молчат.
   const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws", targetActor });
+  const fatigue  = bodyMods.total;
   // Повалена/Оглушена цель — +20, тем же кодом, что окно атаки
   // (wdbc-x1nz.2.97 п.6); Ослеплённый бьёт с −30 WS, как строка «Ослеплён»
   // окна (wdbc-x1nz.2.89) — здесь галочек нет, поэтому сразу в Порог.

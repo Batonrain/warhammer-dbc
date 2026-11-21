@@ -5,7 +5,7 @@
   "folder": "1RE9TPcXDKeDRuLE",
   "system": {
     "description": "",
-    "notes": "Создание еды/одежды/инструментов из ресурса роя паразитов — крафт-подобная механика без теста/числа в этой записи. Правило стола, механики нет (dbc-114, 14.11.2026, решение владельца): кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026): кнопка считает, на сколько человек хватает даров (Cor.b × 100), и пишет карточку. Сами вещи — описательные, механики у них нет.",
     "benefit": "Избран вести свой народ и обеспечивать всем необходимым. Расширяя рой паразитов, может создавать еду, питьё, одежду и примитивные инструменты из кожи, хитина, роговины и кости, достаточно для коммуны из Cor.b×100 людей (не поклоняющиеся Нурглу находят эти дары отвратительными и непригодными).",
     "source": "Элитный архетип: Король Червей",
     "hasRating": false,
@@ -37,11 +37,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "ybAjllVN9Zxq9UVm",
+          "id": "PTC0lzD5KAkc1wcl",
           "operator": "AND",
           "entries": [
             {
-              "id": "TUrS6z1hsWAFyvl0",
+              "id": "E6F6YuS0zxVJhiaw",
               "kind": "script",
               "group": null,
               "corruptionValue": "1",
@@ -128,14 +128,29 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механики нет): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Рука Изобилия",
+              "code": "return await useHandOfPlenty(actor);",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "resPoolKey": "",
+              "resPoolLabel": "",
+              "resPoolMax": "",
+              "resPoolRefill": "",
+              "resPoolRoundCap": "",
+              "resPoolGainLabel": "",
+              "resPoolGainAmount": "",
+              "resPoolAsInfamy": false,
+              "resPoolAsInfamyCap": "",
+              "resPoolAsInfamyCor": "",
+              "resPoolAsInfamyNote": "",
+              "resPoolBoostChars": "",
+              "resPoolFailChars": "",
+              "modAuto": false,
+              "powerName": ""
             }
           ]
         }

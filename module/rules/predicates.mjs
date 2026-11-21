@@ -457,6 +457,9 @@ export function hatredTargetsOf(actor) {
   if (actor?.system?.inRage && (hasNamed(actor, "Butcher's Nails") || holdsCapabilityKey(actor, "ability.butchersNails"))) {
     out.push({ kind: "all", ref: "", value: "", name: "Все!", img: "" });
   }
+  // Метка Поработителя (Инзорцист): «Демоны … получают Талант Hatred против него» —
+  // любой демон ненавидит носителя Метки (признак subjugator, rules/talent-targets.mjs).
+  if (isDaemonActor(actor)) out.push({ kind: "feature", ref: "", value: "subjugator", name: "Поработитель (Метка)", img: "" });
   return out;
 }
 

@@ -29,7 +29,7 @@ describe("automation-coverage", () => {
   });
 
   it("Черта только с кнопкой-памяткой — «памятка»", () => {
-    const it = find(/^Empath \/ Эмпат$/);
+    const it = find(/^The Old Days \/ Старые Деньки$/);
     expect(it?.bucket).toBe("memo");
   });
 

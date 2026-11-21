@@ -525,7 +525,7 @@ export function buildPropertyChatBlock(props, { jamAt } = {}) {
  * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
  * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "", poisoner = false, pyromaniac = false, pyromaniacAttackerUuid = "", igniter = "", fireDance = false } = {}) {
+export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "", poisoner = false, poisonBestOfTwo = false, trueRot = false, pyromaniac = false, pyromaniacAttackerUuid = "", igniter = "", fireDance = false } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -586,6 +586,10 @@ export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor
         // ядом — цель перебрасывает успешные тесты против яда, урон яда бросается
         // дважды (лучший). Флаг ставит attack.mjs; касается только яда.
         `data-wp-poisoner="${poisoner && te.condition === "poisoned" ? 1 : 0}"`,
+        // Гнилостное Просвещение / Истинная Гниль (Чумной Монах, rules/plague-monk-talents.mjs):
+        // урон трупного яда дважды (лучший); 2d10 вместо 1d10 и мимо иммунитета демонов/машин.
+        `data-wp-best-of-two="${poisonBestOfTwo && te.condition === "poisoned" ? 1 : 0}"`,
+        `data-wp-true-rot="${trueRot && te.condition === "poisoned" ? 1 : 0}"`,
         // Пироман (Талант Огнемётчика, rules/flamer-talents.mjs): цель перебрасывает УСПЕШНЫЙ тест против
         // загорания от Spray+Flame, а в укрытии ещё и получает −20 (hooks.mjs::_applyWeaponPropEffect).
         `data-wp-pyromaniac="${pyromaniac && te.condition === "burning" ? 1 : 0}"`,

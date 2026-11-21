@@ -5,7 +5,7 @@
   "folder": "BHFD9WvxCcrQdrNS",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "Частично (21.11.2026): Талант выдаёт атаку «Материальное Крушение» — Волна Эмпатии без Warp Weapon, урон 2d10 (+бPR сам в окне атаки, тестом W). Вручную: Pen = Y×3 (очки Боли), Полное действие и 1 Усталость медузе — по карточке оружия.",
     "benefit": "Получает изменённую версию Волны Эмпатии, теряющую Warp Weapon и наносящую урон вражеской технике. Эта волна получает +1d10 и меняет свой Pen на Y×3. Требует Полное действие и даёт Медузе 1 усталость от переутомления.",
     "tier": 2,
     "requirement": "Emotional Explosion",
@@ -35,7 +35,29 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "tb4aeRqSDTaKdz6P",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "W90bAwjpOOuU8nPd",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.RZhpnvtG8b7RJqlO",
+              "equipSourceName": "Material Wreck / Материальное Крушение",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+              "when": {
+                "negate": false,
+                "conditions": []
+              },
+              "label": "Атака медузы: Материальное Крушение"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

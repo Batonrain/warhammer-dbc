@@ -18,10 +18,12 @@
 import { psyRatingFromTalents, minionHasPsykerTrait } from "../psyker.mjs";
 import { hasRuleFlag, ruleFlagLabels } from "../flags.mjs";
 import { hasAbility } from "../ability-by-key.mjs";
+import { astralConverterBase } from "../malagra-talents.mjs";
 import { initiativeCharKey, fastestHandBonus, initiativeHint,
          INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
 import { legacyInstinctiveInitiativeBonus, legacyForewarnedInitiativeBonus } from "../legacy-weapon.mjs";
 import { apocryphaMax, hasApocryphaCoil } from "../technomystic-resources.mjs";
+import { coilsEnergyMaxBonus, coilsInitiativeBonus } from "../electropriest.mjs";
 
 /**
  * @param {object} actor            актор — для возможностей (hasRuleFlag) и предметов
@@ -67,6 +69,8 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
                         + legacyForewarnedInitiativeBonus(actor, chars.inf?.bonus);
   system.initiative = initBonus + fastestHandBonus(actor, chars) + legacyInitBonus
                     + (traitInitMod || 0) + (Number(system.initiative) || 0);
+  // Катушки Электрожреца без одежды: +W.b к Инициативе (rules/electropriest.mjs).
+  system.initiative += coilsInitiativeBonus(actor);
 
   // ── Когниция (Техножрец) ───────────────────────────────────────────────
   // Пул Когниции = Int.bonus; в начале Хода восстанавливается ½ Int.b.
@@ -91,8 +95,12 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
   if (system.energy) {
     const powerCacheBonus = hasRuleFlag(actor, "technomystic.core.powerCache")
       ? Math.ceil((chars.int?.bonus ?? 0) / 2) : 0;
-    system.energy.bonusMax = implantEnergyMax + powerCacheBonus;
-    system.energy.maxTotal = Math.max(0, (system.energy.max || 0) + implantEnergyMax + powerCacheBonus);
+    // Катушки Электрожреца: +W.b к максимуму заряда (rules/electropriest.mjs).
+    const coilsMax = coilsEnergyMaxBonus(actor);
+    system.energy.bonusMax = implantEnergyMax + powerCacheBonus + coilsMax;
+    // Астральный Конвертер (Малагра): «Катушка Потенции с 10 зарядами» — база не ниже 10.
+    const energyBase = Math.max(system.energy.max || 0, astralConverterBase(actor));
+    system.energy.maxTotal = Math.max(0, energyBase + implantEnergyMax + powerCacheBonus + coilsMax);
     if ((system.energy.value || 0) > system.energy.maxTotal)
       system.energy.value = system.energy.maxTotal;
     // Катушка Апокрифа (technomystic.core.apocryphaCoil, пачка J, решения

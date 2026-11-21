@@ -134,6 +134,7 @@ import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { onWoundRelevantItemChange, onWoundRelevantActorChange } from "./module/combat/wound-in-reality.mjs";
+import { onPsyPowerPreUpdate } from "./module/combat/wild-psyker.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { GravitonZoneBehaviorType, GRAVITON_ZONE_TYPE } from "./module/regions/graviton-zone.mjs";
@@ -1841,6 +1842,9 @@ Hooks.once("ready", async () => {
 Hooks.on("updateItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("createItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("deleteItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
+// Остаточное Поглощение (Дикий Псайкер): снимается поддержание — эPR силы в Щит Цепей рядом.
+// preUpdate, а не update: снятие стирает sustainedEpr тем же патчем.
+Hooks.on("preUpdateItem", (item, changes) => { onPsyPowerPreUpdate(item, changes); });
 // Рана в Реальности (пачка I2): удалили поддерживаемую силу — радиус ауры пересчитать.
 Hooks.on("deleteItem", async (item, options, userId) => {
   if (game.user.id === userId) await onWoundRelevantItemChange(item, null);

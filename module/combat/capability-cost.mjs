@@ -32,6 +32,8 @@ import { esc } from "../helpers/utils.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
 import { actorInfamyMax } from "../apps/infamy-points.mjs";
+import { KNOWN_RESOURCE_POOLS, RESOURCE_COST_PREFIX, resourceKeyOfCost, resourceAmountLabel } from "../rules/resource-pools.mjs";
+import { resourceCostGate, spendResource } from "../apps/resource-pools.mjs";
 
 /** label — пункт выпадающего списка в Конструкторе; genitive — для «N Очков <genitive>» на листе. */
 export const CAPABILITY_COST_POOLS = {
@@ -44,6 +46,13 @@ export const CAPABILITY_COST_POOLS = {
   action: { label: "Очки Действия (ОД)", genitive: "Действия", short: "ОД",
             storage: "system.actionPoints.value" }
 };
+// ПЯТЫЙ ВИД — пулы ресурсов элитных архетипов (rules/resource-pools.mjs):
+// «res:<ключ>» — у каждого своё хранилище system.resourcePools.<ключ>, свой
+// максимум от Стадий Пакта и свой лимит траты за Раунд. В списке Конструктора —
+// пулы книги; запись с другим ключом тоже работает, если у актора есть такой пул.
+for (const [key, meta] of Object.entries(KNOWN_RESOURCE_POOLS)) {
+  CAPABILITY_COST_POOLS[`${RESOURCE_COST_PREFIX}${key}`] = { label: `${meta.label} (пул архетипа)`, genitive: meta.genitive, resource: key };
+}
 
 /** Цена берётся из экономики действий, а не из общего поля Судьбы/Бесчестия. */
 const isActionPool = cost => cost?.pool === "action";
@@ -63,6 +72,8 @@ export function capabilityCostLabel(cost) {
   if (!cost?.pool) return "";
   const amount = Math.max(1, Number(cost.amount) || 1);
   if (isActionPool(cost)) return `${amount} ${CAPABILITY_COST_POOLS.action.short}`;
+  const resKey = resourceKeyOfCost(cost.pool);
+  if (resKey) return resourceAmountLabel(resKey, amount);
   const genitive = CAPABILITY_COST_POOLS[cost.pool]?.genitive || cost.pool;
   return `${amount} ${amountWord(amount)} ${genitive}`;
 }
@@ -88,6 +99,8 @@ export function capabilityPoolMax(actor) {
 export function capabilityCostGate(actor, cost) {
   if (!cost?.pool) return { disabled: false, title: "" };
   const amount = Math.max(1, Number(cost.amount) || 1);
+  const resKey = resourceKeyOfCost(cost.pool);
+  if (resKey) return resourceCostGate(actor, resKey, amount);
   if (isActionPool(cost)) {
     // Спрашиваем экономику действий, а не своё представление о ней: там же
     // живёт правило «вне Encounter не проверяем» и учёт Калечащего.
@@ -115,6 +128,8 @@ export async function spendCapabilityCost(actor, cost, label) {
     return false;
   }
   const amount = Math.max(1, Number(cost.amount) || 1);
+  const resKey = resourceKeyOfCost(cost.pool);
+  if (resKey) return !!(await spendResource(actor, resKey, amount, { label: label || "Возможность" }));
   if (isActionPool(cost)) {
     // Списывает сама экономика действий — она же ведёт учёт физических
     // действий и Калечащего, дублировать её вычитанием поля нельзя.

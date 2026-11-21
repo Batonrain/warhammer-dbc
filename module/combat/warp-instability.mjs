@@ -6,6 +6,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { insorcistAnchorsDemon, insorcistOnBanished } from "./insorcist-warp.mjs";
 import {
   WARP_INSTABILITY_CAP, WARP_INSTAB_HURT_FLAG, WARP_INSTAB_DEALT_FLAG, WARP_BANISHED_FLAG,
   instabilityTestNeeded, instabilityDamageFormula, shouldBanish
@@ -39,6 +40,7 @@ export async function banishToWarp(actor, loss) {
     icon: rollIcon("skull", "#c070ff"), title: `Изгнан в Варп — ${esc(actor.name)}`,
     outcome: `<span class="roll-failure">Раны ниже 0: ${esc(actor.name)} изгнан в Варп вместо Отрицательных Ран.</span>`
   });
+  await insorcistOnBanished(actor);
 }
 
 /** Конец Хода демона: тест W+0, провал — Energy-урон без поглощения; затем сброс отметок. */
@@ -49,6 +51,16 @@ export async function warpInstabilityTurnEnd(actor) {
   const reset = { [`flags.${NS}.-=${WARP_INSTAB_HURT_FLAG}`]: null, [`flags.${NS}.-=${WARP_INSTAB_DEALT_FLAG}`]: null };
   if (!instabilityTestNeeded({ hurt, dealt })) {
     if (hurt || dealt) await updateOrRelay(actor, reset);
+    return;
+  }
+  // Инзорцизм: рядом с Инзорцистом (не дальше W м) призванный проходит тест сам.
+  const anchor = insorcistAnchorsDemon(actor);
+  if (anchor) {
+    await postTestCard(actor, {
+      icon: rollIcon("skull", "#c070ff"), title: `Варп-Нестабильность — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Пройдена автоматически — якорь-душа Инзорциста ${esc(anchor.name)} рядом (Инзорцизм).</span>`
+    });
+    await updateOrRelay(actor, reset);
     return;
   }
   const wp = Number(actor.system?.characteristics?.wp?.total) || 0;

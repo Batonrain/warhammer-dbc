@@ -33,6 +33,9 @@ import { _showContestDialog } from "./techniques.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { itemHasName, sizeOf } from "../rules/predicates.mjs";
+import { devourerGrappleSize } from "../rules/terminator-talents.mjs";
+/** Размер в расчёте Борьбы: Поглотитель (Чемпион Терминатор) считается на 1 больше. */
+const grappleSize = a => sizeOf(a) + devourerGrappleSize(a);
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
@@ -163,7 +166,7 @@ export function grappleFreeHands(actor) {
  */
 export function grappleSizePenalty(actor, partner) {
   if (!partner) return 0;
-  const diff = sizeOf(actor) - sizeOf(partner);
+  const diff = grappleSize(actor) - grappleSize(partner);
   return diff < 0 ? diff * 10 : 0;
 }
 
@@ -215,7 +218,7 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
   // Жокей (Талант Пугилиста, стр. 62, combat/jockey.mjs): против цели КРУПНЕЕ
   // Захват идёт через Acrobatics(A) без штрафа Размера, потолок — на 2 Размера
   // крупнее; победа — «взобрался» на цель вместо обычного Захвата.
-  const sizeDiff = sizeOf(target) - sizeOf(actor);
+  const sizeDiff = grappleSize(target) - grappleSize(actor);
   const jockey = hasPugilistTalent(actor, "jockey");
   if (jockeySizeBlocked(sizeDiff, jockey)) {
     await postTestCard(actor, {
@@ -1493,7 +1496,7 @@ export function grappleCoverPartner({ attackerToken, targetToken, targetActor, a
 export function grappleMoveAllowed(actor) {
   if (!isGrappleAttacker(actor)) return false;
   const partner = grapplePartner(actor);
-  return !!partner && sizeOf(actor) > sizeOf(partner);
+  return !!partner && grappleSize(actor) > grappleSize(partner);
 }
 
 /**
@@ -1509,7 +1512,7 @@ export function grappleDodgeBlockReason(actor) {
   if (!partner) return "";
   const carry = Number(actor.system?.encumbrance?.carry) || 0;
   const heavier = carry > totalWeightOf(partner);
-  const notSmaller = sizeOf(actor) >= sizeOf(partner);
+  const notSmaller = grappleSize(actor) >= grappleSize(partner);
   if (heavier && notSmaller) return "";
   return `Держащий в Борьбе Уклоняется, только если его Вес Ношения выше веса цели и Размер не ниже (${!heavier ? `Ношение ${carry} кг ≤ ${totalWeightOf(partner)} кг` : "цель крупнее"}, стр. 12).`;
 }

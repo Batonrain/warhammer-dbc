@@ -41,6 +41,7 @@ import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { sharedConsciousnessRules } from "./kenetai-talents.mjs";
 import { possessionWeaponGiftRules } from "./possession-weapon-gifts.mjs";
 import { rageRules } from "./rage.mjs";
 import { socialTalentRules } from "./social-talents.mjs";
@@ -60,6 +61,10 @@ import { noiseMarineRules } from "./noise-marine.mjs";
 import { tipOfSpearRules } from "./tip-of-spear.mjs";
 import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
 import { darkApostleRules } from "./dark-apostle.mjs";
+import { mech2Rules } from "./mech2-sources.mjs";
+import { vitkisRules } from "./vitkis-talents.mjs";
+import { gladiatorRules } from "./gladiator-arena.mjs";
+import { astartesEliteRules } from "./astartes-elite-rules.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -200,6 +205,9 @@ registerRuleSource("targetSocialTalents", () => TARGET_SOCIAL_TALENT_RULES);
 // переброс встречного социального теста против цели, которую персонаж
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Общее Сознание (Кенетаи): +2/+5 к тестам WS за каждого связанного союзника в радиусе — rules/kenetai-talents.mjs.
+registerRuleSource("sharedConsciousness", a => sharedConsciousnessRules(a));
 
 // Дары Одержимого для оружия (Разобрать m9zer): атака слитым оружием в Проявлении
 // получает Reinforced и свойства Даров-усилителей — rules/possession-weapon-gifts.mjs.
@@ -408,6 +416,11 @@ registerRuleSource("khorneBerserker", a => [...khorneBerserkerRules(a), ...tempe
 // (rules/dark-apostle.mjs). Остальные литании читают метку на подчинённом (атака, Трудный Ландшафт).
 registerRuleSource("darkApostle", a => darkApostleRules(a));
 
+// Виткис (Провидец Войны, Книга Битвы) и Гладиатор (Бестиарий): бонусы против
+// конкретной цели броска (ctx.targetActor) — rules/vitkis-talents.mjs, rules/gladiator-arena.mjs.
+registerRuleSource("vitkis", (a, ctx) => vitkisRules(a, ctx, globalThis.game?.combat?.started ? globalThis.game.combat.id : ""));
+registerRuleSource("gladiatorArena", (a, ctx) => gladiatorRules(a, ctx));
+
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];
   return [{
@@ -429,3 +442,9 @@ registerRuleSource("prophetOfGallerpox", a => {
                 label: "Техновирус Гэллерпокса" }]
   }];
 });
+
+// Элитные архетипы пачки mech2 (Тех Ассасин, Секутор, Электрожрец, Лорд Дискордант) — rules/mech2-sources.mjs.
+registerRuleSource("eliteMech2", (a, ctx) => mech2Rules(a, ctx));
+// Элитные архетипы пачки «astartes» (Герольд и др.): дары соратникам «до конца
+// боя/сцены» и знамя Ни Шагу Назад — rules/astartes-elite-rules.mjs.
+registerRuleSource("astartesElite", a => astartesEliteRules(a));

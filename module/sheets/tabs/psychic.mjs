@@ -75,6 +75,10 @@ import { warpLockBlocksManifest } from "../../rules/warp-lock.mjs";
 import { hasPsychicLocus, locusUsable } from "../../rules/psychic-locus.mjs";
 import { locusHere, spendPsychicLocus } from "../../combat/psychic-locus.mjs";
 import { warpLockButtonsHtml, applyWarpLock, resetWarpLockHour, clearWarpLockMark } from "../../combat/warp-lock.mjs";
+// Элитные архетипы-псайкеры (Архимаг, Дикий Псайкер, Чернокнижник, Кенетаи…): точки окна манифестации.
+import { eliteManifestGate, eliteManifestEpr, eliteManifestRoll, eliteExtraPeril, eliteManifestAfter, eliteShotShape } from "../../combat/psyker-elite-hooks.mjs";
+import { innerEyeActiveNow, innerEyePsyniscience } from "../../combat/archmagus.mjs";
+import { highRitualistKey } from "../../rules/warlock-talents.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -82,7 +86,8 @@ import { warpLockButtonsHtml, applyWarpLock, resetWarpLockHour, clearWarpLockMar
  * Иначе — характеристика (WP/Int/Per/Fel).
  */
 export function resolvePsyCastAttr(actor, sys) {
-  let key = sys.testChar || "wp";
+  // Высший Ритуалист (Чернокнижник): I вместо W или P, если I выше.
+  let key = highRitualistKey(actor, sys.testChar || "wp");
   if (sys.discipline === "divination" && (key === "per" || !sys.testChar)) key = "psyniscience";
   if (key === "psyniscience") {
     return { key, val: actor.system.skills?.psyniscience?.total ?? -20, abbr: "Псинаука" };
@@ -801,7 +806,8 @@ export async function executePsychotest(actor, item, opts) {
   // Цена действия силы в бою (пачка I3): ОД по полю действия самой силы (со сдвигом Пути Силы), пул Быстрого Плетения только
   // уменьшает списание. Проверка — ДО любых трат (Очко Возрождения и т.п.): отказ ничего не стоит.
   // Переброс психотеста (Ключевые Силы) действие заново не оплачивает — оно уже оплачено первой попыткой.
-  const actionPlan = opts.reroll ? null
+  // opts.freeAction — свободное действие по Черте (Оккультный Клинок): ОД не списываются.
+  const actionPlan = (opts.reroll || opts.freeAction) ? null
     : manifestActionPlan(actor, item, { fastWeaving: !!opts.fastWeaving, path: opts.path, subPaths: opts.sigilliteSubs });
   if (actionPlan && !actionPlan.ok) {
     ui.notifications.warn(`⚠️ ${actor.name}: «${item.name}» — ${actionPlan.reason}`);
@@ -819,6 +825,8 @@ export async function executePsychotest(actor, item, opts) {
   // Манифест. PR с учётом модификатора (таланты/ситуации: PR±N), мин. 0.
   const prMod = opts.prMod || 0;
   const mPR   = Math.max(0, (opts.mPR || 0) + prMod);
+  const eliteGate = eliteManifestGate(actor, item, opts, { mPR });
+  if (eliteGate) { ui.notifications.warn(`⚠️ ${actor.name}: «${item.name}» — ${eliteGate}`); return; }
   // Психическое Возрождение (rules/psyker-talents.mjs): mPR выше потолка тPR —
   // только за Очко Бесчестия, метка живёт до начала следующего Хода. Нет Очка —
   // манифестации нет (spendCapabilityCost уже сказал об этом игроку).
@@ -922,6 +930,8 @@ export async function executePsychotest(actor, item, opts) {
   } else if (opts.spite && hasPsychicSpite(actor)) {
     talentLines.push(`<div class="roll-threshold" style="font-size:0.85em;color:#a33;">Психическая Злоба не применена: цель не из Ненавистных.</div>`);
   }
+  // Элитные архетипы: Пламя Сердца / Мощь Переполняет (эPR), Чародейский Посох (Порог).
+  ePR = await eliteManifestEpr(actor, item, opts, ePR, talentLines);
   const eprTest = ePR + (spiteChoice === "test" ? PSYCHIC_SPITE_BONUS : 0);
   const conduitRolls = [];
   if (opts.conduit && hasWarpConduit(actor)) {
@@ -1088,6 +1098,8 @@ export async function executePsychotest(actor, item, opts) {
     success = true;
     deg = Math.max(1, mPR);
   }
+  // Варп-Танцор (Чернокнижник): второй бросок A, берётся худший.
+  ({ success, deg } = await eliteManifestRoll(actor, item, opts, { success, deg, rv, threshold, charVal }, talentLines, allRolls));
 
   // ── Будет ли Феномен — решается СРАЗУ после психотеста ────────────────────
   // Раньше определялось ниже, прямо перед броском Феномена. Вынесено сюда
@@ -1298,7 +1310,9 @@ export async function executePsychotest(actor, item, opts) {
     // Психический Шторм · Стрельба», то есть powerType у них «Атака».
     const shootType = sys.shootSubtype || "";
     const shots = psychicHitCount(shootType, deg);
-    const hits  = shots.count;
+    // Оккультный Клинок (Кенетаи): одно попадание по цели атаки, Фокусированный Шторм — Pen/Dmg вместо лишних.
+    const shape = eliteShotShape(actor, item, opts, { shootType, hits: shots.count, blast: wp.blastRating, damagePR });
+    const hits  = shape.hits;
     const hitsNote = shots.label
       ? `${shots.label}: <b>${hits}</b> попад. (${shootType === "storm"
           ? `по 1 за каждый из ${deg} Успехов`
@@ -1306,11 +1320,11 @@ export async function executePsychotest(actor, item, opts) {
       : "";
     try {
       const dtLabel = DAMAGE_TYPES[atk.damageType] || atk.damageType;
-      const pen     = atkPen;
+      const pen     = atkPen + shape.pen;
       const hitLines = [];
       let firstHitTotal = null;
       for (let h = 0; h < hits; h++) {
-        const dmgRoll = await new Roll(dmgFormula).evaluate();
+        const dmgRoll = await new Roll(shape.dmg ? `${dmgFormula}+${shape.dmg}` : dmgFormula).evaluate();
         allRolls.push(dmgRoll);
         if (h === 0) firstHitTotal = dmgRoll.total;
         // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия.
@@ -1357,7 +1371,7 @@ export async function executePsychotest(actor, item, opts) {
         </button>` : "";
       // Шаблон Взрывной психосилы — та же кнопка, что у оружия (hooks.mjs .wh-place-template-btn):
       // накрытые становятся целями, а псайкер с Эгидой Воли сразу снимает до ½PR из них.
-      const blastBtn = wp.blastRating > 0 ? `
+      const blastBtn = wp.blastRating > 0 && !shape.noTemplate ? `
         <button class="wh-place-template-btn" type="button" data-shape="circle" data-meters="${wp.blastRating}"
           data-weapon-name="${esc(item.name)}" data-attacker-uuid="${actor.uuid}" data-item-uuid="${esc(item.uuid)}">
           🎯 Разместить шаблон Blast(${wp.blastRating} м) и отметить цели
@@ -1365,7 +1379,7 @@ export async function executePsychotest(actor, item, opts) {
       damageSection = `
           <div class="roll-damage-section">
             ${hitsNote ? `<div class="roll-threshold" style="font-size:0.82em;">${hitsNote}${profile ? ` Профиль «${atk.label}».` : ""} Вторичные цели (в 2м) — попадания в Торс.</div>` : (profile ? `<div class="roll-threshold" style="font-size:0.82em;">Профиль «${atk.label}».</div>` : "")}
-            ${hitLines.join("")}
+            ${shape.line}${hitLines.join("")}
             ${arcBtn}
             ${blastBtn}
           </div>`;
@@ -1491,6 +1505,10 @@ export async function executePsychotest(actor, item, opts) {
         </div>`;
     phenSection += warpLockButtonsHtml(actor);
   }
+  // Мощь Переполняет (Дикий Псайкер): Варп-Прорыв сверх обычных Феноменов/Прорывов.
+  const eliteExtra = await eliteExtraPeril(actor, opts, allRolls);
+  if (eliteExtra) { phenSection += eliteExtra + warpLockButtonsHtml(actor); perilTriggered = true; forcedPeril = true; }
+  talentLines.push(...await eliteManifestAfter(actor, item, opts, { success, deg, ePR, phenomena, perilTriggered }));
 
   // ── Варп-Шок: не-Хаоситы получают Порчу при Феномене (1d5 при Прорыве) ──────
   let warpShockSection = "";
@@ -1693,6 +1711,8 @@ function fruitLeftSustainRange(casterActor, bearerActor, power) {
 }
 
 export function rollPsyniscience(actor, rollSkill) {
+  // Внутренний Глаз (Архимаг): до конца боя/сцены — автоуспех вместо броска.
+  if (innerEyeActiveNow(actor)) return innerEyePsyniscience(actor);
   const def = SKILLS_DEF.psyniscience;
   const sk  = actor.system.skills?.psyniscience;
   // cannotUntrained (книга, стр. 57, сноска ²): тест вообще недоступен без

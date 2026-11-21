@@ -19,6 +19,7 @@ import { disabledArmourOverloadTier, disabledArmourWeight } from "../../combat/a
 import { hasRuleFlag } from "../flags.mjs";
 import { SURE_TREAD, sureTreadMovementCap } from "../squat-traits.mjs";
 import { flightSpeedOf } from "../flight-speed.mjs";
+import { alacrityFlightSpd } from "../wild-psyker-talents.mjs";
 import { hasSpeedTalent, speedTalentDistances } from "../speed-talents.mjs";
 import { speedMultiplierTraitsOf, speedMultipliersFor } from "../speed-multipliers.mjs";
 import { mechRollData } from "../mech-formula.mjs";
@@ -26,6 +27,8 @@ import { VAST_SIZE_FLAG, vastSizeBonus } from "../strange-invulnerability.mjs";
 import { wearsActivePowerArmour, manifestedGift } from "../predicates.mjs";
 import { quadrupedMultiplier } from "../quadruped.mjs";
 import { amorphousSpd, AMORPHOUS_SPD_CAP, AMORPHOUS_SIZE_CAP, amorphousSizeShiftOf } from "../amorphous.mjs";
+import { frameSizeShift } from "../tech-assassin.mjs";
+import { coilsSpeedBonus } from "../electropriest.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -78,6 +81,8 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
     !!system.conditions?.grappling);
   // Аморфный: смена Размера раз в Ход (apps/amorphous-size.mjs) — только в итог, SPD не трогает.
   if (hasRuleFlag(actor, AMORPHOUS_SIZE_CAP)) system.sizeTotal += amorphousSizeShiftOf(actor);
+  // Тех Ассасин: жало Скорпиона −1, одна голова (Модульная Автономия) −2 — только в итог, SPD не трогает.
+  system.sizeTotal += frameSizeShift(actor);
   const stance  = system.meleeStance || "standard";
 
   let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
@@ -93,7 +98,7 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // открывает ему полёт тем же гейтом). Из двух скоростей полёта берётся бóльшая.
   const wingsSpd = manifestedGift(actor, "Крылья") ? agBonus * 2 : null;
   const traitFlightSpd = IN_FLIGHT.has(system.movement?.altitude)
-    ? flightSpeedOf(actor?.items ?? [], mechRollData(actor)) : null;
+    ? alacrityFlightSpd(actor, flightSpeedOf(actor?.items ?? [], mechRollData(actor))) : null;
   const flightSpd = !IN_FLIGHT.has(system.movement?.altitude) ? null
     : (wingsSpd !== null && (traitFlightSpd === null || wingsSpd > traitFlightSpd)) ? wingsSpd : traitFlightSpd;
   if (flightSpd !== null) {
@@ -109,7 +114,8 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // цель "SPD"), ставится ActiveEffect'ом в фазе "initial" (см. mechanics.mjs),
   // т.е. уже на месте к этому моменту расчёта.
   const spdBonus = flightSpd !== null ? 0 : (Number(system.movement.spdBonus) || 0);
-  const traitSpeedMod = flightSpd !== null ? 0 : walkSpeedMod;
+  // Катушки Электрожреца без одежды: +заряд к SPD пешком (rules/electropriest.mjs).
+  const traitSpeedMod = flightSpd !== null ? 0 : walkSpeedMod + coilsSpeedBonus(actor);
   // Перевес выключенной силовой брони (стр. 233) — SPD −1 с тира 1 и выше;
   // остальные последствия каскада (штраф теста, только Полное действие на
   // движение, Беспомощность) — не расчёт, а игровое событие, выведены

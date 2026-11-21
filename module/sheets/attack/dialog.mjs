@@ -68,6 +68,7 @@ import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
 import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
 import { stunForcedAim } from "../../rules/takedown.mjs";
 import { reverseStrikeSecondProfileIdx, freeMeleeFlags, freeAttackLockProblem } from "../../rules/melee-talents.mjs";
+import { phoenicianMainProfile } from "../../rules/terminator-talents.mjs";
 import { haymakerBlocksSecondHand } from "../../rules/pugilist-talents.mjs";
 import { baseIsCharge } from "../../rules/melee-base.mjs";
 
@@ -798,7 +799,9 @@ export function openAttackDialog(ctx) {
           // ОД уже списаны первой; Concussive(0) вторая получает в combat/attack.mjs (opts.reverseStrikeSecond).
           if (isMelee && sel.maneuverKey === "reverseStrike") {
             // -1 — Посох без профилей: вторая атака базовым профилем оружия (решение владельца 26.10.2026).
-            const staffIdx = reverseStrikeSecondProfileIdx(item, atkProfilesOf(item));
+            // Фениксиец (Чемпион Терминатор, rules/terminator-talents.mjs): древковым — вторая атака основным профилем.
+            const phoenician = phoenicianMainProfile(actor, item);
+            const staffIdx = phoenician ? -1 : reverseStrikeSecondProfileIdx(item, atkProfilesOf(item));
             if (staffIdx != null) {
               await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
                 actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
@@ -810,7 +813,9 @@ export function openAttackDialog(ctx) {
                   profile: staffIdx >= 0 ? atkProfilesOf(item)[staffIdx] : null, profileIdx: staffIdx,
                   reverseStrikeSecond: true,
                   dualPairId: undefined, dualHand: undefined,   // вторая атака посохом — не рука пары Тирантикоса
-                  attackNote: `Обратный Удар: вторая атака профилем посоха — те же модификаторы, отдельный бросок; ОД уже списаны первой карточкой (Concussive 0)`,
+                  attackNote: phoenician
+                    ? "Обратный Удар (Фениксиец): вторая атака основным профилем оружия — те же модификаторы, отдельный бросок; ОД уже списаны первой карточкой (Concussive 0)"
+                    : `Обратный Удар: вторая атака профилем посоха — те же модификаторы, отдельный бросок; ОД уже списаны первой карточкой (Concussive 0)`,
                   aimingLabel: ""
                 }
               ));

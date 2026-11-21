@@ -18,6 +18,25 @@ import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mj
 // Взаимный импорт с horde-damage.mjs (тот берёт отсюда lockIfCrossedHalf):
 // обе стороны зовут функции только во время выполнения, не при загрузке.
 import { addRoundDamage } from "./horde-damage.mjs";
+import { hasMasterOfMasses, masterOfMassesPsychDamage } from "../rules/hierophant-talents.mjs";
+
+/**
+ * Храбрость над Ордой от командующего с Владыкой Масс. command-state.mjs —
+ * динамически: он тяжёлый источник правил, а этот файл грузят карточки.
+ */
+async function masterOfMassesBravery(horde) {
+  if (typeof game === "undefined" || !game.actors?.some?.(a => hasMasterOfMasses(a))) return false;
+  try {
+    const { commandNodesFor, commandBraveryOn } = await import("./command-state.mjs");
+    if (!commandBraveryOn(horde)) return false;
+    return commandNodesFor(horde).some(n => {
+      const src = n?.sourceUuid ? globalThis.fromUuidSync?.(n.sourceUuid) : null;
+      return src && src.type !== "squad" && hasMasterOfMasses(src);
+    });
+  } catch {
+    return false;
+  }
+}
 
 /** Флаг: до какого worldTime Ослабленная Орда не лечит психологический урон. */
 export const PSYCH_LOCK_FLAG = "hordePsychLockUntil";
@@ -196,8 +215,11 @@ export async function rollHordeFlameTest(horde, { testChar = "ag", testMod = 0, 
 export async function applyPsychDamage(horde, amount) {
   const sys = horde.system ?? {};
   if (sys.immuneFear) return 0;
-  const damage = Math.max(0, Number(amount) || 0);
+  let damage = Math.max(0, Number(amount) || 0);
   if (!damage) return 0;
+  // Владыка Масс (Иерофант): Орда под его детальной командой Храбрость
+  // получает психологический урон вдвое меньше (окр.▲).
+  if (await masterOfMassesBravery(horde)) damage = masterOfMassesPsychDamage(damage);
 
   const value = Math.max(0, Number(sys.magnitude?.value) || 0);
   const after = Math.max(0, value - damage);

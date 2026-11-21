@@ -28,6 +28,7 @@ import { baseIsCharge, baseIsFullAttack, baseFitsList } from "../../rules/melee-
 import { stunUnrestricted } from "../../rules/takedown.mjs";
 import { BAYONET_CHARGE, hasBayonetCharge } from "../../rules/run-and-gun.mjs";
 import { grindFullSb, holdsInGrapple, hasMeleeTalent, reverseStrikeSecondProfileIdx, stockGripActive, STOCK_GRIP_SECONDARY_WS } from "../../rules/melee-talents.mjs";
+import { potenceGripActive } from "../../rules/bronenosets-talents.mjs";
 import { actorIdentityUuids } from "../../combat/command-state.mjs";
 
 /**
@@ -310,7 +311,9 @@ export function buildSelection(v) {
     const gDefRaw = isMelee
       ? (GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip,
           // Прикладный Хват: штык в «1р» — WS −10 вместо −5
-          (gKey === "1р" && stockGripActive(actor, item)) ? { secWs: STOCK_GRIP_SECONDARY_WS } : {}) : null)
+          (gKey === "1р" && stockGripActive(actor, item)) ? { secWs: STOCK_GRIP_SECONDARY_WS }
+            // Могущество: двуручное одной рукой без штрафа WS вторичного хвата.
+            : (gKey === "1р" && potenceGripActive(actor, item)) ? { secWs: 0 } : {}) : null)
       : (RANGED_GRIPS[gKey] ? rangedGripEffects(gKey) : null);
 
     // Запрещённый Приём (Cheap Shot, стр. 166): тратит Реакцию вместо

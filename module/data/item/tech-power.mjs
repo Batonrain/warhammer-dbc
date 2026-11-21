@@ -47,6 +47,8 @@ export class TechPowerData extends foundry.abstract.TypeDataModel {
       // Подвид из скобок книги (wdbc-9zpt) — см. psychic-power.mjs.
       damageSubtype: new StringField({ initial: "", label: "Подвид урона" }),
       penetration:   num(0, "Пробитие"),
+      // Пробитие формулой поверх числа («Pen ½I.b» книги) — rules/tech-power-pen.mjs.
+      penetrationFormula: new StringField({ initial: "", label: "Пробитие (формула)" }),
       // Свойства атаки Техночуда (тот же реестр, что у оружия и психосил, стр.
       // 166-170): раньше их негде было завести, и Экстремальный урон, Рвущее
       // и подобное для техночудес не считались вовсе — только текстом в «Эффекте».

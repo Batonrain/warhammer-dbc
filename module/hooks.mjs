@@ -37,9 +37,9 @@ import { isSocialSkill } from "./rules/resolve-test.mjs";
 import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.mjs";
 import { rollShockDeath, rollBleedingTest } from "./combat/shock-death.mjs";
 import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
-import { spendFromInfamyPool, spendPatronAbility } from "./apps/infamy-points.mjs";
+import { spendFromInfamyPool, spendPatronAbility, infamyResourceAvailable } from "./apps/infamy-points.mjs";
 import { dimIgnoredEffects } from "./combat/sweet-suffering.mjs";
-import { spendInfamyForFailSuccess }     from "./apps/infamy-fail-success.mjs";
+import { spendInfamyForFailSuccess, spendResourceForFailSuccess } from "./apps/infamy-fail-success.mjs";
 import { knowledgeOfAgesButtonHtml, rollKnowledgeOfAges } from "./apps/knowledge-of-ages.mjs";
 import { onAdroitTraitCreated }          from "./apps/adroit.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
@@ -51,6 +51,8 @@ import { attackBoostFor, wrathRerollOpts } from "./rules/focused-wrath.mjs";
 import { focusedWrathOnAttack }            from "./combat/focused-wrath.mjs";
 import { twinFateApplies }                 from "./rules/twin-fate.mjs";
 import { successTarget, spendSuccessOnCard } from "./apps/infamy-success.mjs";
+import { refillResourcePoolsOnCombatStart, spendResource } from "./apps/resource-pools.mjs";
+import { resourceBoostOptions, resourcePoolValue } from "./rules/resource-pools.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit, unrulySaddleKey } from "./combat/damage.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./combat/facing.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
@@ -83,6 +85,7 @@ import { pyromaniacCoverPenalty, torrentPlacementProblem } from "./rules/flamer-
 import { coverApForToken } from "./combat/cover.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processRechargeTurnStart } from "./combat/recharge.mjs";
+import { processMech1TurnStart, registerMech1Hooks } from "./combat/mech1-hooks.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
 import { processLastActorCombatStart } from "./combat/last-actor.mjs";
@@ -104,6 +107,9 @@ import { VAMPIRE_CARD_FLAG, handleVampireClick } from "./combat/psychic-vampire.
 import { WARP_LOCK_CARD_FLAG, handleWarpLockClick } from "./combat/warp-lock.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { mindImmunityBlocksPower } from "./rules/mind-immunity.mjs";
+import { trueRotBypassesImmunity, trueRotDamage } from "./rules/plague-monk-talents.mjs";
+import { lifeVirusOf, lifeVirusLossPatch } from "./rules/maester-talents.mjs";
+import { pactProtectionNote } from "./rules/pact-traits.mjs";
 import { tryDivineProtection, tryShieldOfContempt, postWarpOffers, runWarpOffer } from "./combat/warp-guard.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -173,6 +179,12 @@ import { sweepTimedEffects, onTimedEffectExpired, clearDreadWailFear } from "./c
 import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollConditionCharTest } from "./combat/condition-ticks.mjs";
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
+import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
+import { processWarlockTurnStart } from "./combat/warlock.mjs";
+import { processInsorcistTurnStart } from "./combat/insorcist.mjs";
+import { injectOccultBladeButtons, kenetaiSoulBurnGate } from "./combat/kenetai.mjs";
+import { processMedusaTurnStart } from "./combat/medusa.mjs";
+import { hasAlienConsciousness } from "./rules/medusa-talents.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -250,6 +262,7 @@ import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn, actorIdentityUuids } from "./combat/command-state.mjs";
+import { duelistsTurnStart, duelistsTurnEnd, duelistsCombatEnd } from "./combat/duelists-hooks.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { sparksSwap, igniterFollowUp } from "./rules/gunsmith-talents.mjs";
 import { applyDamageOverrides, recordDamageOverride, DMG_OVERRIDES_FLAG } from "./combat/damage-override.mjs";
@@ -294,6 +307,8 @@ function requireControlledActor(warnMsg) {
 }
 
 export function registerHooks() {
+  // Архимагос, Лакрималлус, Малагра, Монарх (combat/mech1-hooks.mjs).
+  registerMech1Hooks();
 
   // ── Вариации существ бестиария ───────────────────────────────────────────
   // Диалог выбора версии при создании актора В МИРЕ (см. apps/actor-setup.mjs).
@@ -409,6 +424,8 @@ export function registerHooks() {
     // Огонь Души (module/combat/soulfire.mjs) — кнопка силы рядом с каждой
     // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
     injectSoulfireButtons(html);
+    // Оккультный Клинок (Кенетаи, combat/kenetai.mjs) — кнопка на рукопашном попадании Психосиловым оружием.
+    injectOccultBladeButtons(html);
 
     // Состояние, наложенное Ритуалом (module/apps/ritual-cast.mjs) — пилюля
     // в карточке успешного проведения; ГМ тащит её на лист актора, которому
@@ -481,9 +498,22 @@ export function registerHooks() {
             { sound: false });
           return;
         }
+        // Чуждое Сознание (Медуза): психосилы Телепатии на неё не действуют вовсе.
+        if (hasAlienConsciousness(targetActor) && String(d.discipline || "").toLowerCase() === "telepathy") {
+          await postTestCard(targetActor, `<div class="wh-roll-result">
+            <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Чуждое Сознание — ${esc(targetActor.name)}</div>
+            <div class="roll-threshold">Медуза игнорирует психосилы Телепатии: эффект и урон не действуют, тест Сопротивления не нужен.</div>
+            </div>`, { sound: false });
+          return;
+        }
+        // Защита Пакта (Вампир/Когитор/Ревенант/Мейстер): телепатия «читает» ложь демона.
+        const pactNote = pactProtectionNote(targetActor, d.discipline);
+        if (pactNote) await postTestCard(targetActor, `<div class="wh-roll-result"><div class="roll-header">${rollIcon("shield", "#c98bff")}Защита Пакта — ${esc(targetActor.name)}</div><div class="roll-threshold">${esc(pactNote)}</div></div>`, { sound: false });
+        // Чуждые Силы (Медуза-заклинатель): «Извне» противника не учитывается.
+        const alienCaster = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
         // Не От Мира Сего (From Beyond): иммунитет к силам на разум (Телепатия:
         // Мезмеризм/Иллюзионизм), «если сам не пожелает» — спрашиваем, пустить ли.
-        if (mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
+        if (!hasAlienConsciousness(alienCaster) && mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
           const allow = await foundry.applications.api.DialogV2.confirm({
             window: { title: `Не От Мира Сего — ${targetActor.name}` },
             content: `<p>${esc(d.label || "Психосила")} влияет на разум. Иммунитет гасит её. Пожелает ли ${esc(targetActor.name)}, чтобы сила подействовала?</p>`,
@@ -730,6 +760,22 @@ export function registerHooks() {
         if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
         if (!actor.isOwner) { ui.notifications?.warn("Тратить Очко Бесчестия может только владелец персонажа."); return; }
         const done = await spendInfamyForFailSuccess(actor, el.dataset.capability || "",
+          { testLabel: el.dataset.testLabel || "", message });
+        if (done) el.disabled = true;
+      });
+    });
+
+    // То же за 1 очко пула ресурса архетипа (Очки Вдохновения Когитора,
+    // apps/infamy-fail-success.mjs::spendResourceForFailSuccess). Замок карточки общий.
+    html.querySelectorAll(".wh-resource-fail-success-btn").forEach(btn => {
+      if (cardOnceUsed(message, "infamyFailSuccessUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Персонаж не найден."); return; }
+        if (!actor.isOwner) { ui.notifications?.warn("Тратить очки пула может только владелец персонажа."); return; }
+        const done = await spendResourceForFailSuccess(actor, el.dataset.pool || "",
           { testLabel: el.dataset.testLabel || "", message });
         if (done) el.disabled = true;
       });
@@ -4047,9 +4093,11 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   // Поджигатель (Избирательный выстрел в голову, data-wp-igniter="head") мог пройти мимо визора, но не мимо
   // настоящего иммунитета (мутация «зеркальная кровь» и т.п.).
   const visorImmune = propKey === "blinding" && ds.wpIgniter !== "head" && hasWeaponPropertyImmunity(actor, "blindingVisor");
-  if (visorImmune
+  // Истинная Гниль (Чумной Монах): трупный яд бьёт демонов, машины и Существ из Кошмаров как плоть.
+  const trueRotPierce = ds.wpTrueRot === "1" && ds.wpCondition === "poisoned" && trueRotBypassesImmunity(actor);
+  if (!trueRotPierce && (visorImmune
     || (propKey && hasWeaponPropertyImmunity(actor, propKey))
-    || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias))) {
+    || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias)))) {
     // Не карточка теста (wdbc-kuun): иммунитет отменяет эффект ДО броска —
     // ни кубов, ни Порога, только уведомление.
     return ChatMessage.create({
@@ -4098,7 +4146,9 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   const perDoP    = ds.wpLevelPerDop === "1";
   const useRounds = ds.wpRounds === "1";
   const fixedRnd  = parseInt(ds.wpFixedRounds || "0");
-  const dmgFormula   = ds.wpDamage  || "";
+  // Истинная Гниль: цели, обычно не иммунные к яду, получают 2d10 вместо 1d10.
+  const dmgFormula   = (ds.wpTrueRot === "1" && ds.wpCondition === "poisoned" && !trueRotBypassesImmunity(actor))
+    ? trueRotDamage(ds.wpDamage || "") : (ds.wpDamage || "");
   const rating       = parseInt(ds.wpRating || "0");
   const isProvaly    = ds.wpProvaly === "1";
   const provalyMult  = parseInt(ds.wpProvalyMult || "1");
@@ -4181,7 +4231,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   // не травит вовсе — ни теста, ни Отравления, ни доп. урона. Одного
   // иммунитета к Состоянию (kind:"condition") мало: урон ниже катится и без
   // наложенного Отравления.
-  if (condition === "poisoned") {
+  if (condition === "poisoned" && !trueRotPierce) {
     const poisonImmune = poisonImmunitySource(actor);
     if (poisonImmune) {
       return ChatMessage.create({
@@ -4293,9 +4343,12 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       const levelField = conditionLevelField(cond);
       const lvl = levelField ? (perDoP ? deg : (fixedRnd || 1)) : null;
       const cur = levelField ? (actor.system.conditions?.[levelField] ?? 0) : 0;
+      // Истинная Гниль: трупный яд травит и тех, у кого иммунитет к Отравлению
+      // (Daemonic/Machine/Stuff of Nightmares) — проверку иммунитета пропускаем.
+      const immunityActor = (trueRotPierce && cond === "poisoned") ? null : actor;
       const fields = levelField
-        ? conditionApplyFields(cond, Math.max(cur, lvl), actor)
-        : conditionApplyFields(cond, null, actor);
+        ? conditionApplyFields(cond, Math.max(cur, lvl), immunityActor)
+        : conditionApplyFields(cond, null, immunityActor);
       if (!Object.keys(fields).length) {
         immune.push(CONDITIONS_DEF[cond]?.label || label);
         continue;
@@ -4379,10 +4432,10 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     allRolls.push(dmgRoll);
     // Отравитель: урон яда бросается дважды, берётся лучший.
     let poisonerNote = "";
-    if (ds.wpPoisoner === "1" && condition === "poisoned") {
+    if ((ds.wpPoisoner === "1" || ds.wpBestOfTwo === "1") && condition === "poisoned") {
       const second = await new Roll(dmgFormula).evaluate();
       allRolls.push(second);
-      poisonerNote = ` (Отравитель: ${dmgRoll.total} и ${second.total}, лучший)`;
+      poisonerNote = ` (${ds.wpPoisoner === "1" ? "Отравитель" : "Гнилостное Просвещение"}: ${dmgRoll.total} и ${second.total}, лучший)`;
       if (second.total > dmgRoll.total) dmgRoll = second;
     }
     // Пожиратель Змей (Талант Стойкости): «получаемый урон от ядов вдвое меньше (окр.▲)».
@@ -4468,6 +4521,9 @@ export async function _executeSoulBurn(attacker, target) {
   if (hasFleshmetalFlag(target, "soulBurnImmunity")) {
     return ui.notifications.warn(`${target.name}: Выжигание Души бесполезно — душа спрятана в Варпе (Странная Неуязвимость).`);
   }
+  // Оккультный Клинок (Кенетаи): не в один Раунд с Выжиганием Души.
+  const kenetaiBlock = await kenetaiSoulBurnGate(attacker);
+  if (kenetaiBlock) return ui.notifications.warn(`⚠️ ${kenetaiBlock}`);
   // Божественная Защита цели (wdbc-nzzgn): на 10 по d10 эффект игнорируется.
   if (await tryDivineProtection(target, "Выжигание Души")) return;
   const allRolls = [];
@@ -4598,7 +4654,9 @@ function _attachFateContextMenu(message, html) {
     // Очки судьбы (название зависит от персонажа: Судьба/Бесчестье/Боль)
     const fate     = actor?.system?.fate;
     const fateVal  = fate?.value ?? 0;
-    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0);
+    // Пул ресурса «как Очки Бесчестия» (Жажда, Очки Мести — rules/resource-pools.mjs):
+    // чем платить, спросит сама трата (apps/infamy-points.mjs::spendFromInfamyPool).
+    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0 || infamyResourceAvailable(actor));
     const ft       = fateTerm(actor?.system);
 
     // Строим меню
@@ -4729,6 +4787,16 @@ function _attachFateContextMenu(message, html) {
           masteryHasPoint(actor), !masteryHasPoint(actor) ? "Нет Очков Бесчестия" : "")
       : null;
     if (btnMastery) menu.appendChild(btnMastery);
+
+    // +10 за очко пула ресурса архетипа (Очки Вдохновения Когитора: «+10 на любой
+    // тест I или W, складывается») — тест Характеристики из флага карточки.
+    const boostPools = (actor && skillTest?.char) ? resourceBoostOptions(actor, skillTest.char) : [];
+    const poolBonusBtns = boostPools.map(d => {
+      const b = _makeFateMenuItem(`+10 за очко: ${d.label} (${resourcePoolValue(actor, d.key, d)})`, resourcePoolValue(actor, d.key, d) > 0,
+        resourcePoolValue(actor, d.key, d) > 0 ? "" : `Нет: ${d.label}`);
+      menu.appendChild(b);
+      return { b, d };
+    });
 
     document.body.appendChild(menu);
 
@@ -4974,22 +5042,29 @@ function _attachFateContextMenu(message, html) {
     // ── +10 к броску ──────────────────────────────────────────────────────
     // champion — Чемпион с Вдохновляющим Присутствием, чьё Очко тратится вместо
     // своего (null — обычное +10 за своё).
-    const doBonus = async (ev2, champion = null) => {
+    const doBonus = async (ev2, champion = null, resDef = null) => {
       ev2.stopPropagation();
       menu.remove();
       document.removeEventListener("click", closeMenu);
 
-      if (!champion && (!canSpend || boostBan)) return;
+      if (!champion && !resDef && (!canSpend || boostBan)) return;
 
       // Списание одного Очка: чужое — у Чемпиона (combat/inspiring-presence.mjs),
-      // своё — с временным запасом первым (wdbc-e728).
+      // своё — с временным запасом первым (wdbc-e728); resDef — очко пула ресурса.
       const spendBonusPoint = async () => {
         if (champion) return spendInspiringInfamy(champion, actor);
+        if (resDef) {
+          const r = await spendResource(actor, resDef.key, 1, { silent: true });
+          return r ? { poolValue: r.after } : null;
+        }
         const r = await spendFromInfamyPool(actor, 1, "system.fate.value");
         if (r) await actor.update({ "system.fate.value": r.poolValue });
         return r;
       };
-      const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)` : "";
+      const payerNote = champion ? ` (Очко Чемпиона ${champion.name} — Вдохновляющее Присутствие)`
+        : resDef ? ` (${resDef.label})` : "";
+      // Подпись траты: Очко Бесчестия/Судьбы или очко пула ресурса архетипа.
+      const ftb = resDef ? { one: `очко «${resDef.label}»`, word: resDef.label } : ft;
 
       const roll = rolls[0];
       if (!roll) return;
@@ -5013,7 +5088,7 @@ function _attachFateContextMenu(message, html) {
             atkB.rofMode, atkB.aimTarget,
             { ...(atkB.opts || {}), forcedRoll: rv, skipAmmo: true });
           ui.notifications.info(
-            `➕ ${actor.name} тратит ${ft.one}${payerNote}: +${boost} к атаке${boost > FATE_BONUS ? " (Сфокусированный Гнев)" : ""}! Осталось: ${bonus1.poolValue}`);
+            `➕ ${actor.name} тратит ${ftb.one}${payerNote}: +${boost} к атаке${boost > FATE_BONUS ? " (Сфокусированный Гнев)" : ""}! Осталось: ${bonus1.poolValue}`);
           return;
         }
       }
@@ -5050,10 +5125,10 @@ function _attachFateContextMenu(message, html) {
       // («было → стало»), и бросок подписан «тот же, куб не перебрасывается» —
       // обе идут своими строками, чтобы вид не поменялся.
       await postTestCard(actor, {
-        title: `+10 за ${ft.one}`,
+        title: `+10 за ${ftb.one}`,
         lines: [
           `<div class="roll-damage-meta">
-            ${ft.word} потрачена${esc(payerNote)} (осталось: ${bonus1.poolValue})
+            ${ftb.word} потрачена${esc(payerNote)} (осталось: ${bonus1.poolValue})
           </div>`,
           `<div class="roll-threshold">
             Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
@@ -5067,10 +5142,11 @@ function _attachFateContextMenu(message, html) {
       }, { rolls: [roll], sound: false, speaker: message.speaker });
 
       ui.notifications.info(
-        `✨ ${actor.name} тратит ${ft.one}${payerNote} на +10! Осталось: ${bonus1.poolValue}`
+        `✨ ${actor.name} тратит ${ftb.one}${payerNote} на +10! Осталось: ${bonus1.poolValue}`
       );
     };
     btnBonus.addEventListener("click", ev2 => doBonus(ev2));
+    for (const { b, d } of poolBonusBtns) b.addEventListener("click", ev2 => doBonus(ev2, null, d));
     btnSuccess?.addEventListener("click", async ev2 => {
       ev2.stopPropagation();
       menu.remove();
@@ -5137,6 +5213,8 @@ function _attachFateContextMenu(message, html) {
     await clearBloodGodKills(combat);
     await clearMomentum(combat);
     await clearBloodOfHeroes(combat);
+    // Пачка «дуэлянты»: бонусные Очки боя, Провидец Войны (combat/duelists-hooks.mjs).
+    await duelistsCombatEnd(combat);
     _lastTurnCombatant.delete(combat.id);
     // «На поле боя X ходов стрелка» вне боя не имеет смысла — считать больше не от чего.
     await clearAllLingerZones();
@@ -5300,6 +5378,13 @@ function _attachFateContextMenu(message, html) {
       // живым Раундом того же боя, тот же такт, что temp-grant выше.
       if (combatant.actor) await sweepExpiredControl(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
+  });
+  // Культивация (Мейстер): пациент теряет Аблативные Раны Вируса Жизни — +1 Культивации, вклад сжимается.
+  Hooks.on("preUpdateActor", (actor, changes, options) => {
+    const next = changes?.system?.wounds?.ablative ?? changes?.["system.wounds.ablative"];
+    if (next === undefined || options?.lifeVirusSwap) return;
+    const patch = lifeVirusLossPatch(actor.system, lifeVirusOf(actor), next, game.time?.worldTime);
+    if (patch) foundry.utils.mergeObject(changes, foundry.utils.expandObject(patch));
   });
   Hooks.on("updateActor", async (actor, changes) => {
     if (!game.users.activeGM?.isSelf) return;
@@ -5484,6 +5569,9 @@ function _attachFateContextMenu(message, html) {
     // только ГМ, как и соседи по этому хуку. У актора без Черты «Магия
     // Сигиллитов» функция молча выходит.
     if (game.user.isGM) await processSigilliteRunesCombatStart(combat);
+    // Пулы ресурсов архетипов (Очки Мести Ревенанта — «восстанавливаются в начале
+    // каждого боя или сцены», rules/resource-pools.mjs): до максимума у бойцов.
+    if (game.user.isGM) await refillResourcePoolsOnCombatStart(combat);
     // Заготовленная Руна (wdbc-p2it): «в начале боя персонаж может выбрать
     // одну руну» — диалог выбора, тем же тактом и тем же GM-гейтом, что и
     // соседи по этому хуку (Колдовское Лезвие/Руны Сигиллитов выше).
@@ -5576,6 +5664,8 @@ function _attachFateContextMenu(message, html) {
         // Последний Рывок (Талант Стойкости): отложенные Критические Эффекты — напоминанием
         // в конце Хода носителя.
         await finalPushTurnEnd(prevActor);
+        // Пачка «дуэлянты»: Кровавое Представление (combat/duelists-hooks.mjs).
+        await duelistsTurnEnd(prevActor, combat);
       }
     }
     if (nextCombatant?.actor) {
@@ -5602,6 +5692,8 @@ function _attachFateContextMenu(message, html) {
       // Перезарядка (wdbc-ai0o): «нельзя стрелять в следующий Ход» — тот же
       // такт начала Хода носителя, что и заряд Призмы выше.
       await processRechargeTurnStart(nextCombatant.actor);
+      // Пачка «дуэлянты»: Клинки Судьбы, срок Провидца Войны (combat/duelists-hooks.mjs).
+      await duelistsTurnStart(nextCombatant.actor);
       // Грозный Вопль (wdbc-sk8s): усилитель звукового оружия живёт «до
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
@@ -5668,14 +5760,26 @@ function _attachFateContextMenu(message, html) {
       await processVacuumTurnStart(nextCombatant.actor, nextCombatant.token);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Вирус Жизни (Мейстер): Сверхукрепление без Прожектора спадает на 3.
+      if (lifeVirusOf(nextCombatant.actor)) await (await import("./combat/maester.mjs")).lifeVirusTurnStart(nextCombatant.actor, combat);
       // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает
       // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
       // тактом, что и регенерация Аблативных Ран выше.
       await processSigilliteRunesTurnStart(nextCombatant.actor);
+      // Щит Цепей (Дикий Псайкер): регенерация тPR/бPR и метки Талантов «до следующего Хода».
+      await processWildPsykerTurnStart(nextCombatant.actor);
+      // Тёмные Искусства (Чернокнижник): счётчик «как обычный псайкер» Мага-Каннибала / Последнего Эха.
+      await processWarlockTurnStart(nextCombatant.actor);
+      // Инзорцист: ритуал Запечатывания и Мимолётная Одержимость — счёт Ходов.
+      await processInsorcistTurnStart(nextCombatant.actor);
+      // Медуза: ОД от Эмоционального Взрыва и Экстремальных Ощущений.
+      await processMedusaTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.
       await clearExpiredGearMalfunction(nextCombatant.actor);
+      // Астральный Конвертер, Совершенная Катушка, Вэнефактор, вассалы Короны (combat/mech1-hooks.mjs).
+      await processMech1TurnStart(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });

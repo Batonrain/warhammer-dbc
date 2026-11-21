@@ -152,13 +152,20 @@ describe("источники по умолчанию", () => {
     // только бо́льшая подмена; "skill:command" убран из leadershipTalents и
     // occultistTalents.
     expect([...getRuleSources().map(([key]) => key)].sort())
-      .toEqual(["addiction", "adjutant", "awarenessTalents", "balefulDirge", "beastmanShaman", "commandSubstitution",
+      .toEqual(["addiction", "adjutant",
+                // astartesElite (21.11.2026) — дары соратникам Герольда и др., знамя Ни Шагу Назад.
+                "astartesElite", "awarenessTalents", "balefulDirge", "beastmanShaman", "commandSubstitution",
                 "conditions", "core",
                 "daemonInevitability",
                 // darkApostle (Тёмный Апостол, Sahara 1-54b9) — Литания Слаанеш: +30 на Командование Апостола.
                 "darkApostle", "devourerOfKnowledge", "dreadnought",
                 // drugWithdrawal (wdbc-gyqf2, 25.10.2026) — штраф зависимого наркотика, пока доза просрочена.
-                "drugWithdrawal", "hatred", "homeworld", "items",
+                "drugWithdrawal",
+                // eliteMech2 (21.11.2026) — пачка элитных архетипов mech2 (rules/mech2-sources.mjs).
+                "eliteMech2",
+                // gladiatorArena (Гладиатор, 21.11.2026) — Бестиарий: второй бонус Момента против естественного оружия.
+                "gladiatorArena",
+                "hatred", "homeworld", "items",
                 // khorneBerserker (Берсерк Кхорна, Sahara 1-54b9) — Гвозди Мясника вне Ярости и Закалённое в Крови.
                 "khorneBerserker",
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
@@ -171,9 +178,13 @@ describe("источники по умолчанию", () => {
                 // possessionWeaponGifts (Разобрать m9zer, 20.11.2026) — Дары-усилители на слитом оружии.
                 "possessionWeaponGifts", "prophetOfGallerpox",
                 // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».
-                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "skitarii", "socialTalents", "synesthesia", "targetSocialTalents",
+                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook",
+                // sharedConsciousness (Кенетаи, 21.11.2026) — Общее Сознание: +2/+5 к тестам WS за связанного в радиусе.
+                "sharedConsciousness", "situational", "situationalSocialTalents", "skitarii", "socialTalents", "synesthesia", "targetSocialTalents",
                 // tipOfSpear (Острие Копья, 20.11.2026) — бесплатный переброс атаки по знаку Глашатая.
                 "tipOfSpear",
+                // vitkis (Виткис, 21.11.2026) — Провидец Войны и Книга Битвы.
+                "vitkis",
                 // woundAura (Рана в Реальности, Sahara 3-28, пачка I2, 26.10.2026) — −5 Пси-чутьё и +10 Варп-Нестабильность в ауре.
                 "warpTouchedHealMistrust", "woundAura", "yigori"]);
   });

@@ -46,6 +46,7 @@ import { isItemActive } from "../apps/effects.mjs";
 import { resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { applyDamageDiceMods, resolveWeaponPropsList, buildTargetEffectButtons } from "./weapon-properties.mjs";
 import { DAMAGE_TYPES } from "../constants/items.mjs";
+import { hedgehogCrippling } from "../rules/bronenosets-talents.mjs";
 
 /**
  * Активные записи kind:"counterAttack" у актора — предмет активен
@@ -142,6 +143,8 @@ export async function counterAttackSectionHtml(defenderActor, attackerActor, tri
       dmgTotal = Number(formula) || 0;
     }
     const dtLabel = DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType || "Ударный";
+    // Дикобраз (Броненосец): шипы лат обламываются в ране — Калечащее (½Cor.b).
+    const crippling = hedgehogCrippling(defenderActor);
     const label = entry.ccLabel || item.name;
 
     // Shocking (ccShocking, wdbc-z5mn) — та же запись WEAPON_PROPERTIES.shocking,
@@ -164,12 +167,12 @@ export async function counterAttackSectionHtml(defenderActor, attackerActor, tri
 
     sections.push(`
       <div class="roll-damage-section roll-counter-attack">
-        <div class="roll-damage-label">${esc(label)} — встречная атака (${dtLabel}, Проб. ${entry.ccPen || 0}${entry.ccTearing ? ", Рвущее" : ""}): <b>${dmgTotal}</b></div>
+        <div class="roll-damage-label">${esc(label)} — встречная атака (${dtLabel}, Проб. ${entry.ccPen || 0}${entry.ccTearing ? ", Рвущее" : ""}${crippling ? `, Калечащее (${crippling})` : ""}): <b>${dmgTotal}</b></div>
         <button class="wh-apply-dmg-btn" type="button"
           data-force-target="${attackerActor?.uuid ?? ""}"
           data-damage="${dmgTotal}" data-penetration="${entry.ccPen || 0}"
           data-damage-type="${entry.ccDamageType || "impact"}" data-damage-subtype="${entry.ccDamageSubtype || ""}"
-          data-hit-location="Торс"
+          data-hit-location="Торс" data-crippling="${crippling}"
           data-weapon-name="${esc(label)}" data-attacker="${esc(defenderActor.name)}" data-attacker-uuid="${defenderActor.uuid ?? ""}">
           Применить урон: ${dmgTotal} → ${esc(attackerActor?.name ?? "атакующему")}
         </button>
