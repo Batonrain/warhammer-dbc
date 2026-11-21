@@ -5332,7 +5332,7 @@ export const CAPABILITIES = {
     source: "High Ritualist / Высший Ритуалист", reader: "module/rules/warlock-talents.mjs::highRitualistKey → sheets/tabs/psychic.mjs::resolvePsyCastAttr"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.interpreter": {
-    label: "Способен освоить даже экзотические психосилы. Может обучаться редким дисциплинам у псайкеров и при обучении у псайкеров получает Преимущество на все тесты Транскрипции. НЕ реализовано: тестов «Транскрипции» в системе нет вовсе (grep по всему module/ — ни одного вызова, только текст здесь и в elite-archetypes.mjs) — Преимущество нечему давать, пока эта механика (вероятно, копирование психосил) не построена отдельно. См. bd «Разобрать».",
+    label: "Способен освоить даже экзотические психосилы. Может обучаться редким дисциплинам у псайкеров и при обучении у псайкеров получает Преимущество на все тесты Транскрипции.",
     source: "Interpreter / Интерпретатор", reader: "module/combat/warlock.mjs::useTranscription (Преимущество); запрета на редкие дисциплины в системе нет"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.listener": {

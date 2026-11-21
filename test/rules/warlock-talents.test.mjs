@@ -1,7 +1,7 @@
 // Чернокнижник: гейт Тёмных Искусств, Варп-Танцор, Высший Ритуалист (21.11.2026).
 import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
-import { darkArtsGate, warpDanceOutcome, highRitualistKey, silentStudentNeed } from "../../module/rules/warlock-talents.mjs";
+import { darkArtsGate, warpDanceOutcome, highRitualistKey, silentStudentNeed, hasInterpreter, hasTranscription } from "../../module/rules/warlock-talents.mjs";
 
 const NS = "warhammer-dbc";
 const DA = { type: "trait", name: "Dark Arts / Тёмные Искусства" };
@@ -41,5 +41,15 @@ describe("Тёмные Искусства", () => {
   it("Тихий Ученик: цена ÷50 вверх", () => {
     expect(silentStudentNeed(300)).toBe(6);
     expect(silentStudentNeed(120)).toBe(3);
+  });
+});
+
+describe("Транскрипция и Интерпретатор (Sahara interpreter-klaivex-16-10)", () => {
+  it("Черта Транскрипция и Талант Интерпретатор опознаются по имени — Преимущество в combat/warlock.mjs::useTranscription", () => {
+    const a = warlock([{ type: "trait", name: "Transcription / Транскрипция" }, { type: "talent", name: "Interpreter / Интерпретатор" }]);
+    expect(hasTranscription(a)).toBe(true);
+    expect(hasInterpreter(a)).toBe(true);
+    expect(hasInterpreter(warlock())).toBe(false);
+    expect(hasInterpreter(warlock([{ type: "trait", name: "Interpreter / Интерпретатор" }]))).toBe(false);
   });
 });
