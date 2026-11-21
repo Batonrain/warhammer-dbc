@@ -1,6 +1,7 @@
 // module/combat/damage.mjs
 
 import { chainShieldIntercept } from "./wild-psyker.mjs";
+import { AURA_OF_CHAOS_FLAG, auraOfChaosPhenomenon } from "../rules/twin-spirit.mjs";
 import { anointedShieldBonus, ANOINTED_SHIELD_FLAG } from "../rules/terminator-talents.mjs";
 import { momentumOnDamage } from "./momentum.mjs";
 import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
@@ -618,6 +619,23 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   let overloadRolls = [];
   let overloadExtraHtml = "";
   if (overloaded) ({ overloadRolls, overloadExtraHtml } = await _applyShieldOverload(shieldItem, actor, s, { attackerUuid, isRetaliation }));
+
+  // Аура Хаоса (Дар Одержимого, apps/twin-spirit.mjs): «на любом дубле при
+  // успешном броске на щит он вызывает Феномен» — бросок по таблице сразу.
+  if (shieldItem.getFlag?.("warhammer-dbc", AURA_OF_CHAOS_FLAG) && auraOfChaosPhenomenon(rv, blocked)) {
+    const { getPhenomenon, getPeril } = await import("../constants/psyker-tables.mjs");
+    const pr = await new Roll("1d100").evaluate();
+    const phen = getPhenomenon(pr.total);
+    overloadRolls.push(pr);
+    let peril = "";
+    if (phen.peril) {
+      const pp = await new Roll("1d100").evaluate();
+      overloadRolls.push(pp);
+      const p = getPeril(pp.total);
+      peril = ` Варп-Прорыв: d100 = <b>${pp.total}</b> — <b>${esc(p.label)}</b>. ${esc(p.text)}`;
+    }
+    overloadExtraHtml += `<div class="roll-threshold" style="color:#a050c0;">Аура Хаоса: дубль ${rv} — Психический Феномен. d100 = <b>${pr.total}</b> — <b>${esc(phen.label)}</b>. ${esc(phen.text)}${peril}</div>`;
+  }
 
   // ── Тип щита для отображения ──────────────────────────────────────────────
   const typeLabels = { dome: "Купол", deflector: "Дефлект.", penetrating: "Сквозной" };

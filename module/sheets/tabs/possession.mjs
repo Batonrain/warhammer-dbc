@@ -12,6 +12,8 @@ import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../../constants/possession.mjs";
 import { giftNamesOf, itemHasName } from "../../rules/predicates.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { twinDemonOf, twinDemonStats, controlTime, introspectionBonus, introspectionExtraGift } from "../../rules/twin-spirit.mjs";
+import { requestTwinDemonSheet, openTwinDemonSheet, rollIntrospection, chooseMentor, castSharedSorcery, ascendTwinDemon } from "../../apps/twin-spirit.mjs";
 import { hasActionEconomy, isEncounterActive, canSpendActionPoints, spendActionPoints } from "../../combat/action-economy.mjs";
 
 /** Талант «Reality Ripple / Рябь Реальности» (корбук стр. 114). */
@@ -45,10 +47,13 @@ export function possessionContext(actor) {
   // Максимум времени контроля демона (книга, Twin Spirit): «10 − W.b ХОСТА
   // часов (минимум 1)». Симбиоз даёт хосту +5 к W за пункт именно «в расчёте
   // попыток демона перехватить контроль и макс. времени контроля». Раны демона
-  // на срок не влияют. «Неограниченно, если W демона выше» не считается —
-  // у демона в системе нет своей Характеристики W (только пул Ран).
+  // на срок не влияют. «Неограниченно, если W демона выше» — по листу демона
+  // (rules/twin-spirit.mjs), пока листа нет — только часы.
   const hostW  = (system.characteristics?.wp?.total ?? 0) + sym * 5;
-  const wbHost = Math.floor(hostW / 10);
+  const demon  = twinDemonStats(twinDemonOf(actor));
+  const ctrl   = controlTime(hostW, demon?.wp ?? null);
+  const hasT = n => [...(actor.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, n));
+  const mv = system.movement ?? {};
   // Активные Дары на акторе (предметы-таланты «… / Дар: X») и лимит по профилю.
   const activeGiftSet = giftNamesOf(actor);
   return {
@@ -58,10 +63,22 @@ export function possessionContext(actor) {
     symPips: [1,2,3,4,5].map(n => ({ on: n <= sym, over: n > symLimit })),
     socialBonus: sym * 10,
     hostWBonus:  sym * 5,
-    controlHours: Math.max(1, 10 - wbHost),
+    controlHours: ctrl.hours,
+    controlUnlimited: ctrl.unlimited,
+    // Лист демона Двойного Духа (apps/twin-spirit.mjs): числа и кнопки Талантов, которым он нужен.
+    demon,
+    introspection: hasT("Introspection") ? { bonus: introspectionBonus(actor) } : null,
+    mentor: activeGiftSet.has("Ментор"),
+    sharedSorcery: hasT("Shared Sorcery"),
+    sharedSlaughter: hasT("Shared Slaughter"),
+    risingTogether: hasT("Rising Together"),
+    greaterTalent: hasT("Greater Possessed"),
+    spider: activeGiftSet.has("Паук")
+      ? { half: Math.floor((Number(mv.halfMove) || 0) / 2), move: Math.floor((Number(mv.move) || 0) / 2),
+          fullHalf: Number(mv.halfMove) || 0, fullMove: Number(mv.move) || 0 } : null,
     naturalArmour: corB,
     regen: Math.ceil(corB / 2),
-    demonWShield: `1-${p.demonWounds?.max ?? 0}`,
+    demonWShield: demon ? `1-${demon.wp}` : "",
     giftGroups: _groupGifts(activeGiftSet),
     // Таланты архетипа: только Неделимого + бога вселённого демона.
     talents: POSSESSION_TALENTS.filter(t => t.god === "Неделимый" || t.god === meta.godLabel),
@@ -70,8 +87,8 @@ export function possessionContext(actor) {
     manifested: !!p.manifested,
     applied: (system.possessionActive?.applied) || [],
     activeGiftCount: activeGiftSet.size,
-    giftLimit: prof.gifts,
-    giftsOver: activeGiftSet.size > prof.gifts,
+    giftLimit: prof.gifts + introspectionExtraGift(actor),
+    giftsOver: activeGiftSet.size > prof.gifts + introspectionExtraGift(actor),
     // Руны True Tongue (генерируются в шаблоне; сюда — сид анимации по богу)
     runeSeed: (p.demon || "katart").length * 7 % 12
   };
@@ -168,4 +185,12 @@ export function activatePossessionListeners(html, actor) {
     ev.preventDefault();
     await toggleManifest(actor);
   });
+  const on = (sel, fn) => html.find(sel).on("click", async ev => { ev.preventDefault(); await fn(); });
+  on(".poss-demon-create", () => requestTwinDemonSheet(actor));
+  on(".poss-demon-open", () => openTwinDemonSheet(actor));
+  on(".poss-introspection", () => rollIntrospection(actor));
+  on(".poss-mentor", () => chooseMentor(actor));
+  on(".poss-shared-sorcery", () => castSharedSorcery(actor));
+  on(".poss-rising", () => ascendTwinDemon(actor, "rising"));
+  on(".poss-greater", () => ascendTwinDemon(actor, "greater"));
 }

@@ -244,6 +244,8 @@ import { OVERPOWER_CARD_FLAG, startOverpower } from "./combat/overpower.mjs";
 import { FURIOUS_ASSAULT_CARD_FLAG } from "./combat/furious-assault.mjs";
 import { ONE_WILL_GO_DOWN_CARD_FLAG } from "./combat/one-will-go-down.mjs";
 import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./combat/pugilist-strikes.mjs";
+import { twinDemonOf, sharedSlaughterOffered, sharedSlaughterThreshold, SHARED_SLAUGHTER_TURN_FLAG } from "./rules/twin-spirit.mjs";
+import { isCapabilityAvailable as isTurnCapAvailable, markCapabilityUsed as markTurnCapUsed } from "./rules/cooldown.mjs";
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
@@ -4859,6 +4861,17 @@ function _attachFateContextMenu(message, html) {
     })) ? _makeFateMenuItem("Переброс — Мастер Клинка (раз в Раунд, без траты Очка)", true) : null;
     if (btnBlademaster) menu.appendChild(btnBlademaster);
 
+    // Общая Бойня (Одержимый, rules/twin-spirit.mjs): раз в Ход промах в Проявлении
+    // перебрасывается без Очка, но по меньшему WS/BS из хоста и демона (лист демона).
+    const slaughterDemon = atkCtxItem ? twinDemonOf(atkCtxActor) : null;
+    const slaughter = (atkCtxItem && sharedSlaughterOffered(atkCtxActor, {
+      charKey: atkCtx.charKey, rv: atkCtx.rv, threshold: atkCtx.threshold, rerolled: atkRerolled,
+      turnAvailable: isTurnCapAvailable(atkCtxActor, SHARED_SLAUGHTER_TURN_FLAG, "turn"), demon: slaughterDemon
+    })) ? sharedSlaughterThreshold(atkCtx.threshold, atkCtx.charKey, atkCtxActor, slaughterDemon) : null;
+    const btnSlaughter = slaughter
+      ? _makeFateMenuItem(`Переброс — Общая Бойня (раз в Ход, ${atkCtx.charKey.toUpperCase()} ${slaughter.lower}, Предел ${slaughter.threshold})`, true) : null;
+    if (btnSlaughter) menu.appendChild(btnSlaughter);
+
     // Хирургия Легиона (Апотекарий): проваленный тест Medicae / For.Lore
     // (Astartes Implants), брошенный с листа, — за Очко засчитать с 1 Успехом.
     // Раз на карточку (wdbc-6rjtc.3).
@@ -5123,6 +5136,24 @@ function _attachFateContextMenu(message, html) {
         return true;
       }, "Эта атака уже переброшена.");
       if (done) ui.notifications.info(`🗡️ ${atkCtxActor.name}: Мастер Клинка — переброс проваленной атаки без траты Очка.`);
+    });
+
+    // ── Общая Бойня: переброс промаха меньшим WS/BS, раз в Ход ───────────
+    btnSlaughter?.addEventListener("click", async (ev2) => {
+      ev2.stopPropagation();
+      menu.remove();
+      document.removeEventListener("click", closeMenu);
+      if (!isTurnCapAvailable(atkCtxActor, SHARED_SLAUGHTER_TURN_FLAG, "turn")) {
+        ui.notifications.warn("Общая Бойня уже использована в этом Ходу.");
+        return;
+      }
+      const done = await runCardOnce(message, "attackRerolled", async () => {
+        await markTurnCapUsed(atkCtxActor, SHARED_SLAUGHTER_TURN_FLAG, "turn");
+        await _executeAttackRoll(atkCtxActor, atkCtxItem, atkCtx.charKey, slaughter.threshold,
+          atkCtx.rofMode, atkCtx.aimTarget, { ...(atkCtx.opts || {}), skipAmmo: true });
+        return true;
+      }, "Эта атака уже переброшена.");
+      if (done) ui.notifications.info(`⛧ ${atkCtxActor.name}: Общая Бойня — переброс промаха по меньшему ${atkCtx.charKey.toUpperCase()} (${slaughter.lower}).`);
     });
 
     // ── Хирургия Легиона: провал → Успех с 1 Успехом ─────────────────────

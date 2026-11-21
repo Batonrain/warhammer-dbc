@@ -3941,11 +3941,11 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryDvizhenie.fluidForm": {
     label: "Amorphous + Crawler: просачивается через узкие проходы, облепляет врага.",
-    source: "Fluid Form / Дар: Текучий", reader: ""
+    source: "Fluid Form / Дар: Текучий", reader: "module/apps/twin-spirit.mjs::syncManifestTraits — Черты Amorphous и Crawler на время Проявления (rules/twin-spirit.mjs::manifestTraitPlan)"
   },
   "elite.talantyOderzhimyh.daryDvizhenie.spiderClimb": {
     label: "Ходьба по стенам/потолку: ½ SPD ногами, полная на четвереньках.",
-    source: "Spider Climb / Дар: Паук", reader: ""
+    source: "Spider Climb / Дар: Паук", reader: "ЧАСТИЧНО: module/sheets/tabs/possession.mjs — скорость по стенам (½ ногами, полная на четвереньках) на вкладке. Вертикаль на карте — вручную"
   },
   "elite.talantyOderzhimyh.daryDvizhenie.wings": {
     label: "Flyer (A.b×2). Несовместим с «Руки на Спине».",
@@ -3958,15 +3958,15 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryEdinenie.locusOfTheSymbiote": {
     label: "Излучает Локус демона (можно менять); действует на всех дружественных Одержимых в Проявлении. Только для Высших Одержимых.",
-    source: "Locus of the Symbiote / Дар: Локус Симбиоза", reader: ""
+    source: "Locus of the Symbiote / Дар: Локус Симбиоза", reader: "module/apps/twin-spirit.mjs::syncSymbioteLocus — аура (regions/auras.mjs, requireManifested) с Локусами листа демона, радиус ½W демона"
   },
   "elite.talantyOderzhimyh.daryEdinenie.mentor": {
     label: "Хост получает до 3 Навыков/Талантов уровня демона (если демон позволяет); набор меняется при активации.",
-    source: "Mentor / Дар: Ментор", reader: ""
+    source: "Mentor / Дар: Ментор", reader: "module/apps/twin-spirit.mjs::chooseMentor — до 3 Талантов/Навыков с листа демона до конца Проявления (clearMentor). Групповые Навыки — вручную"
   },
   "elite.talantyOderzhimyh.daryEdinenie.stacking": {
     label: "Daemonic Presence (10/10) + способности по демону (зависит от Двойного Духа — см. блок Наслоения).",
-    source: "Stacking / Дар: Наслоение", reader: ""
+    source: "Stacking / Дар: Наслоение", reader: "ЧАСТИЧНО: module/apps/twin-spirit.mjs::syncManifestTraits — Daemonic Presence (10/10) и Черты Наслоения демона (rules/twin-spirit.mjs::STACKING_TRAITS). Свойства оружия Катарта/Чумоноса — вручную"
   },
   "elite.talantyOderzhimyh.daryEdinenie.twoFaced": {
     label: "Доп. глаза/рот второй души: 2 броска Awareness; неконтролирующая душа получает полудействие только на общение/Команду/Запугивание/Baleful Di…",
@@ -3979,7 +3979,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Защита — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryZaschita.auraOfChaos": {
     label: "Мерцает между реальностью и Варпом: не перегружающийся сквозной силовой щит 1-W демона; на любом дубле при успехе — Феномен.",
-    source: "Aura of Chaos / Дар: Аура Хаоса", reader: ""
+    source: "Aura of Chaos / Дар: Аура Хаоса", reader: "module/apps/twin-spirit.mjs::syncAuraOfChaos (сквозной чародейский щит 1-W демона) + module/combat/damage.mjs — Феномен на дубле (rules/twin-spirit.mjs::auraOfChaosPhenomenon)"
   },
   "elite.talantyOderzhimyh.daryZaschita.carapace": {
     label: "Natural Armour (Cor.b), не складывается с носимой бронёй.",
@@ -4043,11 +4043,11 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Таланты_архетипа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.talantyArhetipa.greaterPossessed": {
     label: "Демон возвышается в Герольда с Inf = ½ Inf Одержимого; Фавор 75xp/Inf, ОБ герольда из Inf.b. Локусы не действуют изнутри.",
-    source: "Greater Possessed / Высший Одержимый", reader: ""
+    source: "Greater Possessed / Высший Одержимый", reader: "module/apps/twin-spirit.mjs::ascendTwinDemon(\"greater\") — ранг Герольда и Inf = ½ Inf хоста на листе демона"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.introspection": {
     label: "+бонус FL (Daemons) на общение с демоном; раз в Ход Charm/Logic vs W демона — уговорить проявить +1 Дар.",
-    source: "Introspection / Интроспекция", reader: ""
+    source: "Introspection / Интроспекция", reader: "module/apps/twin-spirit.mjs::rollIntrospection — встречный Charm/Logic vs W демона, +1 Дар (rules/twin-spirit.mjs::introspectionExtraGift)"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.realityRipple": {
     label: "Проявление или смена любого числа Даров за свободное действие, получая 1 Порчи.",
@@ -4055,7 +4055,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.risingTogether": {
     label: "Демон становится Возвышенным (вариации выбирает игрок).",
-    source: "Rising Together / Восходя Вместе", reader: ""
+    source: "Rising Together / Восходя Вместе", reader: "module/apps/twin-spirit.mjs::ascendTwinDemon(\"rising\") — ранг Возвышенного на листе демона"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedDefense": {
     label: "Доп. Реакция, тратит её только неконтролирующая тело душа (свои Хар-ки/Навыки без Проявления и Даров).",
@@ -4071,11 +4071,11 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSlaughter": {
     label: "В Проявлении считается двумя персонажами для численного превосходства; раз в Ход переброс промаха меньшим WS/BS.",
-    source: "Shared Slaughter / Общая Бойня", reader: "module/rules/possession-talents.mjs::outnumberWeight (за двоих в Проявлении) → module/combat/tactical-map.mjs::meleeContactCount"
+    source: "Shared Slaughter / Общая Бойня", reader: "module/rules/possession-talents.mjs::outnumberWeight (за двоих в Проявлении) → module/combat/tactical-map.mjs::meleeContactCount; переброс промаха — module/hooks.mjs (меню Очков, rules/twin-spirit.mjs::sharedSlaughterThreshold)"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedSorcery": {
     label: "Неконтролирующая душа раз в Раунд манифестирует психосилу (своб./полу-/полное действие; штраф-простой после полу-/полного).",
-    source: "Shared Sorcery / Общее Колдовство", reader: ""
+    source: "Shared Sorcery / Общее Колдовство", reader: "module/apps/twin-spirit.mjs::castSharedSorcery — психосила с листа демона, раз в Раунд и простой (rules/twin-spirit.mjs::sharedSorceryAvailable)"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.switch": {
     label: "Хост или демон раз в Ход за свободное действие передаёт контроль над телом другому.",

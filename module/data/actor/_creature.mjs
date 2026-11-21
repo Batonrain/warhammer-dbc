@@ -598,6 +598,8 @@ export function creatureSchema({ granted = false } = {}) {
     possession: new SchemaField({
       demon:            str("katart", "Демон"),
       demonName:        str("", "Имя демона"),
+      // Лист демона Двойного Духа — uuid Актора «daemon» (rules/twin-spirit.mjs).
+      demonUuid:        str("", "Лист демона"),
       symbiosis:        num(0, "Симбиоз"),
       manifested:       bool(false, "Проявлен"),
       greaterPossessed: bool(false, "Великая одержимость"),
