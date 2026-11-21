@@ -121,6 +121,28 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "eyeStalksNoRetDs",
+              "kind": "capability",
+              "capabilityKey": "mutation.noRetinalDisplay",
+              "capabilityMode": "flag",
+              "label": "Глаза-Стебельки: ретинальный дисплей пользы не даёт (прицелы «только с дисплеем» не работают)",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "eyeStalksNoVisAi",
+              "kind": "capability",
+              "capabilityKey": "mutation.majesticHorns.noVisionAids",
+              "capabilityMode": "flag",
+              "label": "Глаза-Стебельки: авточувства и визоры не действуют",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

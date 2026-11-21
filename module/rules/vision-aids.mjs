@@ -44,15 +44,24 @@ export function isVisionAid(item) {
   return halves(item.name).some(h => VISION_AID_NAMES.has(h));
 }
 
-/** На акторе есть не подавленная мутация, запрещающая авточувства и визоры (субмутация совпадает). */
-export function visionAidsBlocked(actor) {
+/**
+ * Глаза Хаоса (субмутация 1, «Пламенные Глазницы») и Глаза-Стебельки
+ * (Sahara task-b65d): «не получает преимуществ … ретинального дисплея».
+ * Возможность мутации; читает гейт прицелов «бесполезен без ретинального
+ * дисплея» (combat/weapon-mods.mjs::modWornRequirementMet) — и отдельный
+ * Ретинальный Дисплей, и встроенный в шлем/броню.
+ */
+export const RETINAL_DISPLAY_BLOCKED_CAP = "mutation.noRetinalDisplay";
+
+/** На акторе есть не подавленная мутация с этой возможностью (субмутация совпадает). */
+function mutationCapActive(actor, key) {
   for (const it of actor?.items ?? []) {
     if (it?.type !== "mutation" || it.getFlag?.(NS, "suppressed")) continue;
     const groups = it.getFlag?.(NS, "mechanics") ?? it.flags?.[NS]?.mechanics ?? [];
     const label = it.system?.submutation?.label || "";
     for (const g of groups) {
       for (const e of g?.entries ?? []) {
-        if (e?.kind !== "capability" || e.capabilityKey !== VISION_AIDS_BLOCKED_CAP) continue;
+        if (e?.kind !== "capability" || e.capabilityKey !== key) continue;
         const subs = e.when?.submutations ?? [];
         if (!subs.length || subs.includes(label)) return true;
       }
@@ -60,6 +69,12 @@ export function visionAidsBlocked(actor) {
   }
   return false;
 }
+
+/** На акторе есть не подавленная мутация, запрещающая авточувства и визоры (субмутация совпадает). */
+export const visionAidsBlocked = actor => mutationCapActive(actor, VISION_AIDS_BLOCKED_CAP);
+
+/** Ретинальный дисплей (отдельный или встроенный) пользы не даёт. */
+export const retinalDisplayBlocked = actor => mutationCapActive(actor, RETINAL_DISPLAY_BLOCKED_CAP);
 
 /** Предмет актора, который запрет сейчас гасит. */
 export function visionAidBlocked(item) {

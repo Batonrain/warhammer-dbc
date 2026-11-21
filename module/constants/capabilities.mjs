@@ -7555,9 +7555,14 @@ export const CAPABILITIES = {
     source: "Мутация: Majestic Horns (Общие мутации)",
     reader: "packs-src item mutation.majesticHorns: majestichorns-1-shield (equipment → forcefield «Рог-Дефлектор Однорогого» 1-50, flags.shieldHitLocations [Голова] → combat/damage.mjs::_shieldCoversLocation, 1), majestichorns-23-ap-head (kind:\"absorption\" vsSubtypeAt:head:crushing, Cor.b → combat/damage.mjs, 2-3), majestichorns-23-headbutt (профили «Укреплённые Рога» Удара головой, mutation.majesticHorns.reinforced, 2-3), majestichorns-45-natweapons/-45-deadly (4-5), majestichorns-6-social/-6-command (6, patronGod:slaanesh), majestichorns-7-horn/-7-breakoff (integralAttack «Рог Чумоноса» 1d10+X Toxic 4 и «Обломить Рог» с Проникающим; integralRating floor(cor/2); рог в ране → правило core.lodgedHorn, autoFail basedon:t степень 3, rules/lodged-horn.mjs; отрастание 3 ч блокирует sheets/attack-dialog.mjs, 7), majestichorns-8-natweapons/-8-deadly + majestichorns-8-concussive + majestichorns-8-flame (kind:\"attackProp\" name:Рога → rules/item-rules.mjs, предикат targetIsPsyker, 8), majestichorns-9-eye-ap (kind:\"armour\" armourLocation:eye → absorption.eyeBonus → combat/armor-properties.mjs, 9), majestichorns-9-no-vision-aids (запрет авточувств и визоров — rules/vision-aids.mjs → apps/effects.mjs::isItemActive, 9), majestichorns-10-crown (integralAttack «Корона Рогов», 10)"
   },
+  "mutation.noRetinalDisplay": {
+    label: "Ретинальный дисплей (отдельный или встроенный) пользы не даёт: прицелы «бесполезен без ретинального дисплея» не работают",
+    source: "Eyes of Chaos / Глаза Хаоса (субмутация 1, Пламенные Глазницы); Eye Stalks / Глаза-Стебельки",
+    reader: "module/rules/vision-aids.mjs::retinalDisplayBlocked — module/combat/weapon-mods.mjs::modWornRequirementMet (Sahara task-b65d)"
+  },
   "mutation.majesticHorns.noVisionAids": {
     label: "Не может пользоваться авточувствами и визорами: Авточувства, Y-Визор, Фото-Визор, Охотничий Визор, Сонарный Визор, Визоры Рейнджера не действуют",
-    source: "Majestic Horns / Зрящие Рога (Общие мутации, d100 65…67, субмутация 9)",
+    source: "Majestic Horns / Зрящие Рога (Общие мутации, d100 65…67, субмутация 9); Eyes of Chaos / Глаза Хаоса (субмутация 1); Eye Stalks / Глаза-Стебельки",
     reader: "module/rules/vision-aids.mjs::visionAidsBlocked — module/apps/effects.mjs::isItemActive (вещь из перечня не активна, пока мутация на акторе)"
   },
   "mutation.majesticHorns.reinforced": {

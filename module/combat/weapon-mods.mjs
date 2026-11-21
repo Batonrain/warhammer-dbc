@@ -10,6 +10,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { brotherhoodBuffsFor } from "../rules/kenetai-talents.mjs";
 import { itemHasKey } from "../rules/item-marker.mjs";
 import { isItemActive } from "../apps/effects.mjs";
+import { retinalDisplayBlocked } from "../rules/vision-aids.mjs";
 import { powerSettingEffects } from "../rules/power-setting.mjs";
 import { sightEffectsOf, sightGrants, SIGHT_EFFECT } from "../rules/sight-effects.mjs";
 
@@ -48,8 +49,12 @@ export function modWornRequirementMet(actor, mod) {
   const need = (mod?.system?.requiresWorn ?? []).filter(n => typeof n === "string" && n.trim());
   if (!need.length) return true;
   const wantsDisplay = need.some(n => itemHasName(RETINAL_DISPLAY_NAME, n));
+  // Глаза Хаоса / Глаза-Стебельки: дисплей есть, а пользы от него нет (Sahara task-b65d).
+  const displayUseless = wantsDisplay && retinalDisplayBlocked(actor);
+  const other = need.filter(n => !itemHasName(RETINAL_DISPLAY_NAME, n));
   return [...(actor?.items ?? [])].some(i =>
-    (need.some(n => itemHasName(i, n)) || (wantsDisplay && itemHasKey(i, RETINAL_DISPLAY_CAPABILITY)))
+    ((displayUseless ? other : need).some(n => itemHasName(i, n))
+      || (wantsDisplay && !displayUseless && itemHasKey(i, RETINAL_DISPLAY_CAPABILITY)))
     && isItemActive(i));
 }
 
