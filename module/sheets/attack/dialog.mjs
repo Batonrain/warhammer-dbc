@@ -71,6 +71,7 @@ import { reverseStrikeSecondProfileIdx, freeMeleeFlags, freeAttackLockProblem } 
 import { phoenicianMainProfile } from "../../rules/terminator-talents.mjs";
 import { haymakerBlocksSecondHand } from "../../rules/pugilist-talents.mjs";
 import { baseIsCharge } from "../../rules/melee-base.mjs";
+import { psalmSecondHandAim, canSpendCognition, spendCognition } from "../../rules/psalm-of-guidance.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -434,7 +435,21 @@ export function openAttackDialog(ctx) {
           // руке по построению (thresholdParts включает aimingBonus), вторая
           // рука иначе наследовала бы его бесплатно из той же суммы. Гасим
           // его там, куда игрок НЕ выбрал положить бонус.
-          const aimAdjust = (dualOff && currentAiming !== "none" && !wp.noAim) ? aimingBonus : 0;
+          // Псалом Наставления (wdbc-1rno.32): «Обеим» — вторая рука (тоже Cognis) получает
+          // то же Прицеливание за Когницию; гасить бонус ни у одной руки не нужно.
+          const psalmBothCost = (dualOff && f.aimHand === "both" && !wp.noAim)
+            ? psalmSecondHandAim(actor, item, dualOff, currentAiming) : null;
+          if (dualOff && f.aimHand === "both" && !wp.noAim) {
+            if (psalmBothCost == null) {
+              ui.notifications.warn("⚠️ Прицеливание обеим рукам: Псалом Наставления действует, только если оба оружия — Cognis.");
+              return false;
+            }
+            if (!canSpendCognition(actor, psalmBothCost)) {
+              ui.notifications.warn(`⚠️ Прицеливание обеим рукам: не хватает Когниции (нужно ${psalmBothCost}).`);
+              return false;
+            }
+          }
+          const aimAdjust = (dualOff && currentAiming !== "none" && !wp.noAim && psalmBothCost == null) ? aimingBonus : 0;
           // Вторая рука бьёт Стандартной Атакой / одиночным выстрелом, то есть
           // Полудействием: приём, база и режим огня из окна относятся к
           // основному оружию и на неё не переносятся.
@@ -529,6 +544,8 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn("⚠️ Не хватает Реакций (Полный Огонь).");
             return false;
           }
+          // Псалом Наставления: Прицеливание второй руки — Когниция, когда ОД уже списаны.
+          if (psalmBothCost != null) await spendCognition(actor, psalmBothCost);
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
           if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);
@@ -903,7 +920,7 @@ export function openAttackDialog(ctx) {
                 dualPairId, dualHand: DUAL_HAND_OFF,
                 bringItDownDice,
                 // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
-                aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand === "off")
+                aimingLabel: (currentAiming !== "none" && !wp.noAim && (f.aimHand === "off" || psalmBothCost != null))
                   ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                   : ""
               }

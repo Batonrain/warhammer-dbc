@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import {
   actorHasEquippedCognisWeapon, psalmCognitionCost,
-  canSpendCognition, spendCognition
+  canSpendCognition, spendCognition, psalmSecondHandAim
 } from "../../module/rules/psalm-of-guidance.mjs";
 
 const psalmItem = () => ({ type: "techPower", name: "Psalm of the Guidance / Псалом Наставления", flags: {} });
@@ -69,5 +69,18 @@ describe("canSpendCognition/spendCognition", () => {
     expect(canSpendCognition(actor, 2)).toBe(false);
     expect(await spendCognition(actor, 2)).toBe(false);
     expect(actor.system.cognition.value).toBe(1);
+  });
+});
+
+describe("psalmSecondHandAim — Прицеливание второй руки посреди атаки (wdbc-1rno.32)", () => {
+  const actor = { items: [psalmItem(), cognisWeapon(), cognisWeapon()] };
+  it("оба Cognis и Прицеливание объявлено — цена Полу 1, Полного 2", () => {
+    expect(psalmSecondHandAim(actor, cognisWeapon(), cognisWeapon(), "half")).toBe(1);
+    expect(psalmSecondHandAim(actor, cognisWeapon(), cognisWeapon(), "full")).toBe(2);
+  });
+  it("вторая рука не Cognis, нет Прицеливания или нет Техночуда — нельзя", () => {
+    expect(psalmSecondHandAim(actor, cognisWeapon(), plainWeapon(), "half")).toBeNull();
+    expect(psalmSecondHandAim(actor, cognisWeapon(), cognisWeapon(), "none")).toBeNull();
+    expect(psalmSecondHandAim({ items: [cognisWeapon()] }, cognisWeapon(), cognisWeapon(), "half")).toBeNull();
   });
 });
