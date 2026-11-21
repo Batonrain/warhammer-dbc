@@ -21,7 +21,7 @@
 //  Конструктора (rules/item-marker.mjs), как в rules/khorne-berserker.mjs.
 // ════════════════════════════════════════════════════════════════════════
 
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, manifestedGift } from "./predicates.mjs";
 import { itemHasKey } from "./item-marker.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
 
@@ -171,13 +171,25 @@ export function armourWithoutAblative(armourData) {
 
 /** Рейтинг Трейта Regeneration (X) на акторе; 0 — трейта нет. Нет числа в поле — берётся из имени «… (5)». */
 export function regenerationRating(actor) {
+  return regenerationSource(actor).rating;
+}
+
+/**
+ * Откуда Регенерация и чем её проверять: Черта Regeneration (X) — тест T+0; Дар Одержимого
+ * «Регенерация» в Проявлении — Regeneration (½Cor.b, окр.▲) с тестом Cor+0 (Разобрать 6plo6).
+ * Если есть оба — берётся больший рейтинг.
+ * @returns {{rating:number, test:"t"|"cor"}}
+ */
+export function regenerationSource(actor) {
   let best = 0;
   for (const i of actor?.items ?? []) {
     if (i?.type !== "trait" || !itemHasName(i, "Regeneration")) continue;
     const fromName = Number(/\((\d+)\)\s*$/.exec(String(i.name ?? ""))?.[1]) || 0;
     best = Math.max(best, Number(i.system?.rating) || fromName);
   }
-  return best;
+  const gift = manifestedGift(actor, "Регенерация")
+    ? Math.ceil((Number(actor?.system?.corruptionBonus) || 0) / 2) : 0;
+  return gift > best ? { rating: gift, test: "cor" } : { rating: best, test: "t" };
 }
 
 /** Итог Forbidden Lore (Warp); без записи Навыка — null (тест невозможен). */

@@ -12,6 +12,7 @@
 // их импортируют отсюда три с лишним десятка файлов.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
+import { monodevotantRules } from "./monodevotant.mjs";
 import { OGRYN_RULES, OGRYN_TRAIT_RULES } from "./library/ogryn.mjs";
 import { REPLICANT_RULES } from "./library/replicant.mjs";
 import { serumHookRules } from "./replicant.mjs";
@@ -33,10 +34,12 @@ import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
 import { withdrawalRulesOf } from "./drug-withdrawal.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
+import { TARGET_SOCIAL_TALENT_RULES } from "./library/target-social-talents.mjs";
 import { situationalRules } from "./situational.mjs";
 import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { hatredRules } from "./hatred.mjs";
+import { possessionWeaponGiftRules } from "./possession-weapon-gifts.mjs";
 import { rageRules } from "./rage.mjs";
 import { socialTalentRules } from "./social-talents.mjs";
 import { awarenessTalentRules } from "./awareness-talents.mjs";
@@ -52,6 +55,7 @@ import { gallerpoxPoisonPenaltyActive } from "./prophet-of-gallerpox.mjs";
 import { healMistrustRules } from "./warp-touched.mjs";
 import { woundAuraRules } from "./wound-in-reality.mjs";
 import { noiseMarineRules } from "./noise-marine.mjs";
+import { tipOfSpearRules } from "./tip-of-spear.mjs";
 import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
 import { darkApostleRules } from "./dark-apostle.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
@@ -180,12 +184,18 @@ registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
 // цель ТЕКУЩЕГО теста (targetHasTrait, теперь живой и на обычных тестах
 // Навыка, не только атаках), не источник-владелец Мутации.
 registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
+// Мимик и Непримечательный (Разобрать b73dj) — штраф чужому тесту против носителя, тем же приёмом.
+registerRuleSource("targetSocialTalents", () => TARGET_SOCIAL_TALENT_RULES);
 
 // Hatred/Ненависть (wdbc-1rno, 12.09.2026) — первый реальный потребитель
 // инфраструктуры целей Таланта (talent-targets.mjs): +10 рукопашная атака и
 // переброс встречного социального теста против цели, которую персонаж
 // выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
 registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Дары Одержимого для оружия (Разобрать m9zer): атака слитым оружием в Проявлении
+// получает Reinforced и свойства Даров-усилителей — rules/possession-weapon-gifts.mjs.
+registerRuleSource("possessionWeaponGifts", (a, ctx) => possessionWeaponGiftRules(a, ctx));
 
 // Ярость / Frenzy (Берсерк, Sahara 3-861e): −20 на тесты BS, I и F, пока
 // system.inRage. Читает СОСТОЯНИЕ, а не Талант — Ярость приходит и от
@@ -259,6 +269,10 @@ registerRuleSource("legacyExcess", a => legacyExcessRules(a));
 // rules/legacy-weapon.mjs::legacyGuardianRules.
 registerRuleSource("legacyGuardian", () => legacyGuardianRules());
 
+// Острие Копья (Талант Герольда, Разобрать stnbt): переброс атаки/Парирования, выданный
+// Герольдом соратникам по рукопашной до начала его следующего Хода. См. rules/tip-of-spear.mjs.
+registerRuleSource("tipOfSpear", a => tipOfSpearRules(a));
+
 // Наследие Крови, Оружие Наследия (wdbc-1rno.35, стр. 427): +10 на встречный
 // тест против психической угрозы (психосилы/выжигание души — 2 из 4
 // категорий). См. заголовок rules/legacy-weapon.mjs::legacyBloodPsychicRules.
@@ -302,6 +316,12 @@ registerRuleSource("addiction", a => addictionPenaltyRules(a));
 // константы календаря), поэтому круга через sources.mjs не замыкает.
 registerRuleSource("drugWithdrawal", a =>
   withdrawalRulesOf(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
+
+// Монозависимый (Черта Миньона): ломка без субстанции — −10 ко всем тестам,
+// когда вышел срок 1d10+W.b дней, и ещё −5 за каждый следующий день
+// (rules/monodevotant.mjs). Та же схема «правило от времени мира».
+registerRuleSource("monodevotant", a =>
+  monodevotantRules(a, (typeof game !== "undefined" ? game.time?.worldTime : null) ?? 0));
 
 // Затронутый Варпом, субмутация 10 «Недоверие к Лечению» (wdbc-1rno.26):
 // −10 на все тесты, кроме T, час после чужого лечения — та же схема «правило

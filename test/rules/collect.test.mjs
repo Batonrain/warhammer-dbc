@@ -164,10 +164,16 @@ describe("источники по умолчанию", () => {
                 "leadershipTalents", "legacyBloodPsychic", "legacyDistractingCharSwap", "legacyExcess", "legacyGuardian",
                 "legacyInstinctiveDisarm", "legacyQuietAwareness", "legacyWrath",
                 // noiseMarine (Шумовой Десантник, Sahara 1-54b9) — Пьянящий Рёв (+2 за участника боя) и Боль Это Наслаждение (+10 за уровень).
+                // monodevotant (Монозависимый, 20.11.2026) — ломка без субстанции, правило от времени мира.
+                "monodevotant",
                 "noiseMarine", "nullZones",
-                "occultistTalents", "opposedTarget", "paths", "patron", "prophetOfGallerpox",
+                "occultistTalents", "opposedTarget", "paths", "patron",
+                // possessionWeaponGifts (Разобрать m9zer, 20.11.2026) — Дары-усилители на слитом оружии.
+                "possessionWeaponGifts", "prophetOfGallerpox",
                 // requisitionTalents (Sahara peer-ancient-warrior-…, 25.10.2026) — галочки и +20 теста «Достать снаряжение».
-                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia",
+                "psychicSustainTarget", "race", "rage", "requisitionTalents", "resilienceTalents", "serumHook", "situational", "situationalSocialTalents", "socialTalents", "synesthesia", "targetSocialTalents",
+                // tipOfSpear (Острие Копья, 20.11.2026) — бесплатный переброс атаки по знаку Глашатая.
+                "tipOfSpear",
                 // woundAura (Рана в Реальности, Sahara 3-28, пачка I2, 26.10.2026) — −5 Пси-чутьё и +10 Варп-Нестабильность в ауре.
                 "warpTouchedHealMistrust", "woundAura", "yigori"]);
   });

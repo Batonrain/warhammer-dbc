@@ -25,7 +25,9 @@ import { spendActionPoints, apCostForActionType, spendReaction, canSpendReaction
 import { movementApCost } from "../../combat/psychic-sprint.mjs";
 import { fullFireOptionByValue, fullFireSecondThreshold, fullFireSecondBlockReason, secondRofBonus } from "../../rules/full-fire.mjs";
 import { weaponTrainingPenalty } from "../../rules/weapon-training.mjs";
-import { isMechadendriteWeapon } from "../../rules/mechadendrites.mjs";
+import { isMechadendriteWeapon, dendriteAttackBlock, DENDRITE_FOCUS_FLAG, DENDRITE_REACTION_FLAG } from "../../rules/mechadendrites.mjs";
+import { attackedThisTurn } from "../../rules/turn-flags.mjs";
+import { isDendriteShield } from "../../rules/testudo.mjs";
 import { BATPACK_ROF } from "../../rules/batpack-dump.mjs";
 import { POWER_MODE_FLAG } from "../../rules/power-setting.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
@@ -320,7 +322,22 @@ export function openAttackDialog(ctx) {
           // Рисовка (свободная атака «не считается атакой») — то же; Жнец — продолжение Натиска, Яростный Штурм —
           // «еще одна атака за свободное действие»: ни ОД, ни лимита; Разрубить — то же (rules/melee-talents.mjs::freeMeleeFlags).
           const freeMelee = freeMeleeFlags(techniqueOpts);
-          const uncountedAttack = freeMelee.uncounted;
+          // Мехадендриты в бою (rules/mechadendrites.mjs, Разобрать 2qtgp): атака одним дендритом за
+          // Реакцию идёт сверх обычных — ни ОД, ни Лимита Атак; сосредоточение даёт Multiple Arms (X).
+          const dendriteMode = (!sabreSecond && !techniqueOpts?.freeShot) ? (f.dendriteMode || "") : "";
+          const dendriteBlock = (sabreSecond || techniqueOpts?.freeShot) ? ""
+            : dendriteAttackBlock(actor, item, dendriteMode, attackedThisTurn(actor));
+          if (dendriteBlock) { ui.notifications.warn(`⚠️ Мехадендриты: ${dendriteBlock}.`); return false; }
+          if (isDendriteShield(item)) { ui.notifications.warn("⚠️ Тестудо: щитом на мехадендрите нельзя атаковать."); return false; }
+          const dendriteReaction = dendriteMode === "reaction";
+          if (dendriteReaction && !canSpendReaction(actor, { physical: true })) {
+            ui.notifications.warn("⚠️ Не хватает Реакций (атака мехадендритом).");
+            return false;
+          }
+          // Сосредоточение объявляется до проверки Лимита: Multiple Arms (X) уже действует на эту атаку.
+          if (dendriteMode === "focus" && !actor.getFlag?.("warhammer-dbc", DENDRITE_FOCUS_FLAG))
+            await actor.setFlag("warhammer-dbc", DENDRITE_FOCUS_FLAG, true);
+          const uncountedAttack = freeMelee.uncounted || dendriteReaction;
           // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
           const sabrePendingHussar = !!actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG)?.hussar;
           if (sabreSecond) {
@@ -455,7 +472,14 @@ export function openAttackDialog(ctx) {
               return false;
             }
           }
-          if (sabreSecond || freeShot || freeMelee.noAp) {
+          if (dendriteReaction) {
+            if (!await spendReaction(actor, { physical: true })) {
+              ui.notifications.warn("⚠️ Не хватает Реакций (атака мехадендритом).");
+              return false;
+            }
+            const usedDendrites = actor.getFlag?.("warhammer-dbc", DENDRITE_REACTION_FLAG) ?? [];
+            await actor.setFlag("warhammer-dbc", DENDRITE_REACTION_FLAG, [...usedDendrites, item.id]);
+          } else if (sabreSecond || freeShot || freeMelee.noAp) {
             // ничего не списывается — см. выше (Сабля) и combat/free-shot.mjs (бесплатные выстрелы)
           } else if (isMelee && sel.cheapShotActive) {
             // strange: Запрещённый Приём (хвост, Cheap Shot) — «странная» атака Странной Техники.

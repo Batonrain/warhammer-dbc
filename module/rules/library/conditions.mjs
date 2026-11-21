@@ -218,8 +218,8 @@ export const CONDITION_RULES = [
     // та вытесняет это же правило сама (rules/item-rules.mjs,
     // CAPABILITY_OVERRIDES).
     id: "conditions.blinded.altSenses",
-    label: "Альтернативные чувства (Sonar Sense / Unnatural Senses)",
-    when: { anyOf: [...ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })), { blindsightActive: true }] },
+    label: "Альтернативные чувства (Sonar Sense / Unnatural Senses / Дар Варп-Зрение)",
+    when: { anyOf: [...ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })), { blindsightActive: true }, { manifestedGift: "Варп-Зрение" }] },
     effects: [],
     overrides: ["conditions.blinded", "conditions.blinded.blindFighting"]
   },

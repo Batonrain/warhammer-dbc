@@ -27,6 +27,7 @@
 import { resolveTest } from "./resolve-test.mjs";
 import { selfRerollsOffered } from "./roll-mods.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { itemHasName } from "./predicates.mjs";
 
 /** Флаг карточки защиты: всё, чтобы повторить тот же тест (combat/defence-reroll.mjs). */
 export const DEFENCE_TEST_FLAG = "defenceTest";
@@ -46,8 +47,27 @@ export function defenceRerollWindowOpen(test, combat) {
 
 export const DEFENCE_KINDS = {
   dodge: { skill: "dodge", char: "ag", label: "Уклонение" },
-  parry: { skill: "parry", char: "ws", label: "Парирование" }
+  parry: { skill: "parry", char: "ws", label: "Парирование" },
+  // Разобрать f6bti: защита шагохода (бросает пилот), Вираж техники (водитель) и Уклонение верхом.
+  // Перебросы берутся у того, кто бросает (rerollActorUuid флага карточки), область — та же «evasion».
+  walkerDodge: { skill: "dodge", char: "ag", label: "Уклонение" },
+  walkerParry: { skill: "parry", char: "ws", label: "Парирование" },
+  mountDodge:  { skill: "dodge", char: "ag", label: "Уклонение" },
+  swerve:      { skill: "operate", char: "ag", label: "Вираж" }
 };
+
+/**
+ * Флаги карточки защиты: что повторять при перебросе. `actor` — чья карточка
+ * (машина для шагохода и Виража), `rerollActor` — кто бросал и чьи перебросы
+ * предлагать (пилот, водитель); по умолчанию тот же.
+ */
+export function defenceTestFlagsFor(actor, kind, opts, carry, { passed, rerolled, rerollActor = null } = {}) {
+  return { "warhammer-dbc": { [DEFENCE_TEST_FLAG]: {
+    kind, actorUuid: actor?.uuid ?? "", opts, carry, passed: !!passed, rerolled: !!rerolled,
+    ...(rerollActor && rerollActor !== actor ? { rerollActorUuid: rerollActor.uuid ?? "" } : {}),
+    round: globalThis.game?.combat?.round ?? null, combatId: globalThis.game?.combat?.id ?? null
+  } } };
+}
 
 /** Контекст теста для конвейера правил — тот же, что у окна броска Навыка с листа. */
 export function defenceTestContext(kind, { attackerActor = null, isMelee = true } = {}) {
@@ -86,4 +106,16 @@ export function defenceRerollSectionHtml(rerolls, kind) {
       ${r.mode === "reverse" ? "Обратить" : "Перебросить"} ${esc(what)}: ${esc(r.label)}
     </button>`).join("");
   return `<div class="roll-defense-note wh-defence-rerolls">${buttons}</div>`;
+}
+
+/**
+ * Jink / Манёвр Уклонения (Талант Пилота): «Тратя Очко Бесчестия на переброс
+ * Виража или Уклонения шагохода, персонаж делает второй бросок без штрафов за
+ * Размер машины и отрицательную Манёвренность». Манёвренность в Пороги Виража
+ * и Уклонения шагохода система не подмешивает, снимать остаётся Размер.
+ * `reroll.point` ставит переброс за Очко из меню карточки (combat/defence-reroll.mjs).
+ */
+export function jinkApplies(roller, reroll) {
+  if (!reroll?.point || !roller) return false;
+  return [...(roller.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Jink"));
 }

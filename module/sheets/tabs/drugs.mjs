@@ -859,6 +859,16 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
     if (item) item.sheet.render(true);
   });
 
+  // Имплант без операции (wdbc-pqrh1): ГМ отмечает его установленным —
+  // тот же флаг, что ставит Хирургеон.
+  html.find(".implant-mark-installed").click(async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (!game.user.isGM) return;
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) await item.setFlag("warhammer-dbc", "installed", true);
+  });
+
   html.find(".effect-deactivate-btn").click(async ev => {
     ev.preventDefault();
     const item = actor.items.get(ev.currentTarget.dataset.itemId);

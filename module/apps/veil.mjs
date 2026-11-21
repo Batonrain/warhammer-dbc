@@ -42,7 +42,8 @@ import { routeKnowledgeMod } from "../rules/warp-route.mjs";
 import { resolveRouteRows, routeKnowledgeLevelFor, effectiveIlluminationFor, allWarpRoutes }
   from "./warp-route.mjs";
 import { GUIDE_KINDS, guideKindFor, guideNavPenalty, guideExitPenalty, guideEncounterBonus,
-         guideRollsEncounterTwice, guideDecadeUpkeep, guideNeedsLoyaltyCheck } from "../rules/warp-guide.mjs";
+         guideRollsEncounterTwice, guideDecadeUpkeep, guideNeedsLoyaltyCheck,
+         guideLoyaltyDefaultMode, resolveGuideLoyalty } from "../rules/warp-guide.mjs";
 import { plottingThresholdFor, routePointsFromTest, astromancyOutcome, chartingModifier,
          chartingBlocked, chartingOutcome, knowledgeFromCharting, upgradeKnowledge,
          passIncrement, PASSES_TO_LEARNED } from "../rules/warp-route-charting.mjs";
@@ -1363,13 +1364,46 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     await this._jPost(`${veilIcon("warning")} 10 дней навигации — ${esc(a.name)}`, "thin",
       `<div class="roll-threshold">${GUIDE_KINDS[kind]?.label || kind}: +${upkeep.corruption} Порча${upkeep.fatigue ? `, +${upkeep.fatigue} Усталость` : ""}.</div>`);
   }
-  /** Напоминание о встречном тесте лояльности демона — МИ ведёт его сам
-   *  вручную (какой именно тест зависит от того, сломлен демон или Миньон),
-   *  здесь только подсказка с точным текстом правила. */
+  /** Встречный тест лояльности демона-Проводника (wdbc-dq0r4): ГМ выбирает
+   *  вариант книги (Inf/Inf, W/W для сломленного, Лояльность Миньона) и
+   *  персонажа-сторону, система бросает обе стороны и пишет исход. */
   async _daemonLoyaltyReminder() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
-    await this._jPost(`${veilIcon("demon")} Лояльность демона-Проводника — ${esc(a.name)}`, "torn",
-      `<div class="roll-threshold">Встречный тест на усмотрение МИ: наибольшая <b>Inf</b> персонажей vs <b>Inf</b> демона; <b>W vs W</b>, если демон сломлен и принуждён служить; <b>Лояльность</b>, если демон — Миньон. Победа демона — саботаж варп-перехода на усмотрение МИ.</div>`);
+    const pcs = (game.actors ?? []).filter(x => x.type === "character" && x.hasPlayerOwner && x.id !== a.id);
+    const charOf = (x, k) => Number(x?.system?.characteristics?.[k]?.total) || 0;
+    const best = [...pcs].sort((x, y) => charOf(y, "inf") - charOf(x, "inf"))[0];
+    const mode0 = guideLoyaltyDefaultMode(a);
+    const modes = [["inf", "Inf персонажей против Inf демона"], ["wp", "W против W (демон сломлен и принуждён)"],
+      ["loyalty", "Лояльность (демон — Миньон)"]];
+    const content = `<div class="form-group"><label>Тест</label><select name="mode">${modes.map(([v, l]) =>
+        `<option value="${v}" ${v === mode0 ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
+      <div class="form-group"><label>Сторона персонажей</label><select name="pc">${pcs.map(x =>
+        `<option value="${x.id}" ${x.id === best?.id ? "selected" : ""}>${esc(x.name)} (Inf ${charOf(x, "inf")}, W ${charOf(x, "wp")})</option>`).join("")}</select></div>`;
+    const pick = await foundry.applications.api.DialogV2.prompt({
+      window: { title: `Лояльность демона-Проводника — ${a.name}` }, content,
+      ok: { label: "Бросить", callback: (_e, btn) => ({ mode: btn.form.elements.mode.value, pc: btn.form.elements.pc?.value }) },
+      rejectClose: false
+    }).catch(() => null);
+    if (!pick) return;
+    const mode = pick.mode;
+    const pc = pcs.find(x => x.id === pick.pc) ?? best;
+    if (mode !== "loyalty" && !pc) { ui.notifications?.warn("Нет персонажа игрока для встречной стороны."); return; }
+    const key = mode === "wp" ? "wp" : "inf";
+    const guideValue = mode === "loyalty" ? Number(a.system?.loyalty?.value) || 0 : charOf(a, key);
+    const gRoll = await new Roll("1d100").evaluate();
+    const pRoll = mode === "loyalty" ? null : await new Roll("1d100").evaluate();
+    const res = resolveGuideLoyalty(mode, { value: charOf(pc, key), rv: pRoll?.total ?? 0 }, { value: guideValue, rv: gRoll.total });
+    const degTxt = d => `${d > 0 ? "Успех" : "Провал"} ${Math.abs(d)}`;
+    const label = mode === "loyalty" ? "Лояльность" : (mode === "wp" ? "W" : "Inf");
+    const lines = [
+      mode === "loyalty" ? "" : `<div class="roll-threshold">${esc(pc.name)}: ${label} ${charOf(pc, key)}, бросок ${pRoll.total} — ${degTxt(res.partyDeg)}</div>`,
+      `<div class="roll-threshold">${esc(a.name)}: ${label} ${guideValue}, бросок ${gRoll.total} — ${degTxt(res.guideDeg)}</div>`,
+      `<div class="roll-outcome"><span class="${res.loyal ? "roll-success" : "roll-failure"}">${res.loyal
+        ? "Демон служит честно."
+        : "Демон победил: саботаж варп-перехода на усмотрение МИ."}</span></div>`
+    ].join("");
+    await this._jPost(`${veilIcon("demon")} Лояльность демона-Проводника — ${esc(a.name)}`, res.loyal ? "stable" : "torn",
+      lines, [gRoll, pRoll].filter(Boolean));
   }
   /**
    * Обработка данных (Scholastic Lore (Astromancy), wdbc-r0w9.1) — один тест

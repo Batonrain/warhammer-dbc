@@ -18,9 +18,11 @@
 //    Intimidate  — «встречные тесты против Intimidate являются тестами
 //                Морали» (тест Морали — W+0, combat/intimidate.mjs).
 //
-//  Остальные Навыки книга встречными с другой стороной не связывает
-//  (Торговля — «I, P, W или F в зависимости от аргументов», выбор ГМа),
-//  и для них соперник по-прежнему бросает тот же Навык.
+//  Торговля (Commerce) — «I, P, W или F в зависимости от аргументов»: какой
+//  именно Характеристикой отвечает соперник, выбирает ГМ в окне броска
+//  (селект рядом с авто-встречным, 20.11.2026, wdbc-5abej); без выбора —
+//  Интеллект. Остальные Навыки книга встречными с другой стороной не
+//  связывает, и для них соперник по-прежнему бросает тот же Навык.
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF } from "../constants/skills.mjs";
@@ -36,14 +38,23 @@ export const OPPOSED_PAIRS = {
   intimidate:  { char: "wp" }
 };
 
+/** Торговля: Характеристики, которыми может ответить соперник (выбор ГМа). */
+export const COMMERCE_COUNTER_CHARS = ["int", "per", "wp", "fel"];
+const CHAR_LABELS = { int: "Интеллект", per: "Восприятие", wp: "Сила Воли", fel: "Товарищество" };
+
 /**
  * Сторона соперника во встречном тесте.
  *
  * @param {string|null} skillKey Навык инициатора (null — тест Характеристики)
  * @param {string} charKey       Характеристика, с которой бросал инициатор
+ * @param {{counterChar?:string|null}} [opts] Торговля: Характеристика ответа, выбранная ГМом
  * @returns {{testKind:"skill"|"characteristic", skillKey:string|null, charKey:string, label:string, paired:boolean}}
  */
-export function opposedSide(skillKey, charKey) {
+export function opposedSide(skillKey, charKey, { counterChar = null } = {}) {
+  if (skillKey === "commerce") {
+    const c = COMMERCE_COUNTER_CHARS.includes(counterChar) ? counterChar : "int";
+    return { testKind: "characteristic", skillKey: null, charKey: c, label: CHAR_LABELS[c], paired: true };
+  }
   const pair = skillKey ? OPPOSED_PAIRS[skillKey] : null;
   if (!pair) {
     return {

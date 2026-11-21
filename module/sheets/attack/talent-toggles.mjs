@@ -22,6 +22,8 @@ import { hasGunsmithTalent, weaponTechAvailable, WEAPON_TECH_SPENT_FLAG, lensTun
 import { grenadeCookingOffered } from "../../rules/throwing-talents.mjs";
 import { torrentOffered, torrentWorkedShifts, torrentBlastRadius, torrentMaxDistance } from "../../rules/flamer-talents.mjs";
 
+import { hasRunicShot, runicBulletsLeft } from "../../rules/runic-shot.mjs";
+
 const NS = "warhammer-dbc";
 
 const check = (key, text, title, { checked = false, disabled = false } = {}) => `
@@ -68,6 +70,15 @@ export function talentTogglesHtml(actor, item, { isMelee, wProps = [], sys = {} 
   }
   const has = key => wProps.some(p => (p?.key ?? p) === key);
   const out = [];
+
+  // Рунный Выстрел (Черта Питати, rules/runic-shot.mjs): одиночный выстрел рунной пулей.
+  if (hasRunicShot(actor)) {
+    const left = runicBulletsLeft(actor);
+    out.push(check("runicShot",
+      `Рунная пуля (в запасе ${left}): одиночный выстрел +тPR Dmg, +½тPR Pen`,
+      "Рунный Выстрел: только одиночный выстрел; пуля тратится. Новые пули вырезает Черта Рунная Пуля (кнопка ▶ на листе, 5 минут).",
+      { disabled: left < 1 }));
+  }
 
   // Выдержка Гранаты (rules/throwing-talents.mjs): тест Logic(I)+0 перед броском гранаты.
   if (grenadeCookingOffered(actor, { sys: { ...item?.system, ...sys }, isMelee })) {

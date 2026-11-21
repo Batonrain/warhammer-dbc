@@ -14,7 +14,7 @@ import {
   minionCapacity, groupTally, talentRequirements,
   charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft, skillRankFor,
-  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, speechNote,
+  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, speechNote, minionMutationCount,
   minionInfamyWaiverFlag, waivesMinionInfamy
 } from "../../module/rules/minion-build.mjs";
 
@@ -417,5 +417,13 @@ describe("требования Таланта: Черта снимает тре�
     expect(waivesMinionInfamy(owner("Beast Master / Мастер Зверей"), "beast")).toBe(true);
     expect(waivesMinionInfamy(owner("Beast Master / Мастер Зверей"), "machine")).toBe(false);
     expect(waivesMinionInfamy(owner("Beast Master / Мастер Зверей"), "")).toBe(false);
+  });
+});
+
+describe("Мутант (X): сколько мутаций бросить (wdbc-q5zrm)", () => {
+  it("рейтинг Трейта, без рейтинга — 1, без Мутанта — 0", () => {
+    expect(minionMutationCount([{ name: "Mutant / Мутант", rating: 2 }])).toBe(2);
+    expect(minionMutationCount([{ name: "Mutant / Мутант" }])).toBe(1);
+    expect(minionMutationCount([{ name: "Bite / Укус", rating: 2 }])).toBe(0);
   });
 });

@@ -11,9 +11,10 @@
 //  в module/rules/minion-loyalty.mjs. Здесь то, что требует Foundry:
 //  диалог, кубики, списание Реакции, Очко Бесчестия Хозяину и карточка.
 //
-//  Перехват контроля при провале в бою книга отдаёт ГМу; система пишет это
-//  строкой карточки и не отбирает у игрока права на токен — это решение
-//  стола, и молча забирать владение было бы хуже напоминания.
+//  Перехват контроля при провале в бою (20.11.2026, wdbc-8x31x): бросил ГМ —
+//  права игроков на Миньона сразу опускаются до «Наблюдателя» до конца боя
+//  (combat/minion-gm-control.mjs), бросил игрок — на карточке кнопка для ГМа.
+//  Права возвращаются сами, когда бой удалён.
 // ════════════════════════════════════════════════════════════════════════════
 
 import {
@@ -23,6 +24,7 @@ import {
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { seizeMinion } from "./minion-gm-control.mjs";
 
 /** Хозяин Миньона (документ) или null. */
 export async function minionMaster(minion) {
@@ -98,11 +100,12 @@ async function d100() {
  * @param {Function} [o.rollFn]  () => Promise<{roll, total}>
  * @param {Function} [o.spendReactionFn]  (actor) => Promise<boolean>
  * @param {Function} [o.restoreInfamyFn]  (actor, delta) => Promise<{changed:boolean, before:number, after:number, max:number}>
+ * @param {Function} [o.seizeFn]  (actor) => Promise<boolean> — перехват ГМом (true — права изменены)
  * @returns {Promise<?{success:boolean, deg:number, rv:number, threshold:number, rerolled:boolean, gmControl:boolean, infamyRestored:number}>}
  */
 export async function rollLoyaltyTest(minion, {
   master = null, reason = "risk", mod = 0, inCombat = false,
-  rollFn = d100, spendReactionFn = null, restoreInfamyFn = null
+  rollFn = d100, spendReactionFn = null, restoreInfamyFn = null, seizeFn = seizeMinion
 } = {}) {
   if (!minion) return null;
   const key = LOYALTY_REASONS[reason] ? reason : "other";
@@ -152,7 +155,13 @@ export async function rollLoyaltyTest(minion, {
         : `уже на максимуме (${r?.max ?? "?"}) — восстанавливать нечего`}.</div>`);
     }
   }
-  if (cons.gmControl) sections.push(`<div class="roll-threshold"><b>${LOYALTY_COMBAT_FAIL_TEXT}</b></div>`);
+  if (cons.gmControl) {
+    sections.push(`<div class="roll-threshold"><b>${LOYALTY_COMBAT_FAIL_TEXT}</b></div>`);
+    const seized = await seizeFn(minion);
+    sections.push(seized
+      ? `<div class="roll-threshold">⛓ ${esc(minion.name)} под контролем ГМа: игроки до конца боя только наблюдают, права вернутся сами.</div>`
+      : `<button type="button" class="wh-loyalty-seize-btn" data-actor-uuid="${esc(minion.uuid)}">⛓ ГМ: забрать ${esc(minion.name)} до конца боя</button>`);
+  }
 
   const rerollNote = res.rerolled
     ? `<div class="roll-reroll-note">Монозависимый: провал на ${res.first} переброшен</div>`

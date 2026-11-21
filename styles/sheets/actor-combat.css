@@ -1752,7 +1752,8 @@
 }
 .warhammer-dbc .shield-ctl-spacer { flex: 1 1 auto; }
 .warhammer-dbc .shield-hand-btn,
-.warhammer-dbc .shield-raise-btn {
+.warhammer-dbc .shield-raise-btn,
+.warhammer-dbc .shield-dendrite-btn {
   flex: 0 0 auto; width: auto;
   padding: 1px 8px; font-size: 11px; line-height: 1.5;
   color: #9fd8bb; background: transparent;
@@ -1761,9 +1762,11 @@
 }
 .warhammer-dbc .shield-hand-btn { min-width: 24px; text-align: center; }
 .warhammer-dbc .shield-hand-btn:hover,
-.warhammer-dbc .shield-raise-btn:hover { border-color: var(--wh-accent, #4dffa6); color: #d8ffe9; }
+.warhammer-dbc .shield-raise-btn:hover,
+.warhammer-dbc .shield-dendrite-btn:hover { border-color: var(--wh-accent, #4dffa6); color: #d8ffe9; }
 .warhammer-dbc .shield-hand-btn.is-on,
-.warhammer-dbc .shield-raise-btn.is-on {
+.warhammer-dbc .shield-raise-btn.is-on,
+.warhammer-dbc .shield-dendrite-btn.is-on {
   color: #0b1a12; background: var(--wh-accent, #4dffa6);
   border-color: var(--wh-accent, #4dffa6); font-weight: 700;
 }

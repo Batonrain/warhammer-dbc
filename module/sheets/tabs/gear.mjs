@@ -5,6 +5,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { syncItemEffectsDisabled, syncOrphanedModEffects } from "../../apps/effects.mjs";
+import { isDendriteShield, testudoMountBlock, DENDRITE_SHIELD_FLAG } from "../../rules/testudo.mjs";
 import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
 import { on, esc } from "../../helpers/utils.mjs";
@@ -144,6 +145,18 @@ export async function toggleShieldRaised(item) {
     : `${item.name}: щит опущен.`);
 }
 
+/** Тестудо (rules/testudo.mjs): поставить щит на мехадендрит или снять обратно в руку. */
+export async function toggleDendriteShield(actor, item) {
+  if (!item) return;
+  const on = !isDendriteShield(item);
+  const block = on ? testudoMountBlock(actor, item) : "";
+  if (block) { ui.notifications.warn(`⚠️ ${item.name}: ${block}.`); return; }
+  await item.setFlag("warhammer-dbc", DENDRITE_SHIELD_FLAG, on);
+  ui.notifications.info(on
+    ? `${item.name}: щит на мехадендрите — прикрывает, руку не занимает, атаковать и Парировать им нельзя.`
+    : `${item.name}: щит снова в руке.`);
+}
+
 export async function setWeaponLoadedAmmo(item, ammoId) {
   if (!item) return;
   await item.update({ "system.loadedAmmoId": ammoId });
@@ -252,6 +265,10 @@ export function activateGearListeners(root, actor, {
   on(root, ".shield-raise-btn", "click", async ev => {
     ev.preventDefault();
     await toggleShieldRaised(actor.items.get(ev.currentTarget.dataset.itemId));
+  });
+  on(root, ".shield-dendrite-btn", "click", async ev => {
+    ev.preventDefault();
+    await toggleDendriteShield(actor, actor.items.get(ev.currentTarget.dataset.itemId));
   });
 
   on(root, ".weapon-reload-btn", "click", async ev => {

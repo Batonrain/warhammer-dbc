@@ -55,6 +55,7 @@ import { buildCountenanceFearFlag } from "../rules/countenance-of-gods.mjs";
 import { devouredSkillRank, nextDevourerStreak, pruneDevourerStreaks } from "../rules/devourer-of-knowledge.mjs";
 import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
 import { activateItemUntil, deactivateItem } from "./item-activation.mjs";
+import { giveMonodevotantSubstance } from "../combat/monodevotant.mjs";
 import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
 import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
@@ -73,6 +74,13 @@ import { linkPsyberToMaster } from "./psyber-link.mjs";
 import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
 import { shiftAmorphousSize } from "./amorphous-size.mjs";
 import { rollTraitTest } from "../combat/trait-test.mjs";
+import { useLivingBanner } from "../combat/living-banner.mjs";
+import { useWormMaster } from "../combat/worm-master.mjs";
+import { fusePossessionWeapon } from "../combat/possession-fusion.mjs";
+import { usePedalToMetal } from "../combat/pedal-to-metal.mjs";
+import { usePutThatOut } from "../combat/put-that-out.mjs";
+import { studyPsychicLocus } from "../combat/psychic-locus.mjs";
+import { useWarpGifted } from "../combat/warp-gifted.mjs";
 import { chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL } from "./unnatural-choice.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
@@ -164,6 +172,8 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    применение к конкретному тесту Страха остаётся отметкой вручную.
  *  - `activateItemUntil`/`deactivateItem` (apps/item-activation.mjs) — включить
  *    предмет «до конца боя или сцены» (записи с условием when.requireActivated)
+ *  - `giveMonodevotantSubstance` (combat/monodevotant.mjs) — Монозависимый
+ *    получил субстанцию: отметка дозы и бросок срока до ломки 1d10+W.b дней
  *  - `purityOfBattleWave` (combat/purity-of-battle.mjs) — Чистота Битвы
  *    (Дар Кхорна, wdbc-1rno): реально снимает боевые наркотики и психосилы
  *    (свои и чужие, нацеленные на жертву) со всех токенов сцены в радиусе.
@@ -253,7 +263,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
     "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
-    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem",
+    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem", "giveMonodevotantSubstance", "useLivingBanner", "useWormMaster", "fusePossessionWeapon", "usePedalToMetal", "usePutThatOut", "studyPsychicLocus", "useWarpGifted",
     ...extraNames,
     code
   );
@@ -274,7 +284,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
     grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
-    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem,
+    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, studyPsychicLocus, useWarpGifted,
     ...extraNames.map(k => extra[k])
   );
 }

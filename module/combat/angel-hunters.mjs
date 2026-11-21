@@ -17,6 +17,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { registerRerollLimiter } from "../rules/roll-mods.mjs";
+import { TIP_OF_SPEAR_LIMIT, spendTipOfSpear } from "../rules/tip-of-spear.mjs";
 import { PREDICATES } from "../rules/predicates.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { isTokenInSight } from "../rules/vision-target.mjs";
@@ -90,6 +91,8 @@ async function spend(lender, borrower) {
  * Ничего не делает для перебросов без ограничителя Охотников.
  */
 export async function commitRerollUse(actor, dataset = {}) {
+  // Острие Копья (rules/tip-of-spear.mjs): свой переброс, выданный Герольдом, — раз в Раунд.
+  if (dataset?.limit === TIP_OF_SPEAR_LIMIT) return spendTipOfSpear(actor);
   if (dataset?.limit !== ANGEL_HUNTERS_LIMIT) return;
   const src = dataset.sourceUuid ? await fromUuid(dataset.sourceUuid).catch(() => null) : null;
   await spend(src?.actor ?? src ?? actor, actor);

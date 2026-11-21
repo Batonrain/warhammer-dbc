@@ -29,6 +29,7 @@ import { isEncounterActive, hasActionEconomy } from "./action-economy.mjs";
 import { determinationToFightExtraAttack } from "../rules/determination-to-fight.mjs";
 import { flyingKickAttackBonus } from "../rules/pugilist-talents.mjs";
 import { multipleArmsAttackBonus } from "../rules/hands.mjs";
+import { dendriteFocusAttackBonus } from "../rules/mechadendrites.mjs";
 
 const FLAG_SCOPE = "warhammer-dbc";
 const FLAG_KEY = "attackActionsThisTurn";
@@ -43,7 +44,8 @@ export function attackActionLimit(actor) {
   return 1 + (determinationToFightExtraAttack(actor) ? 1 : 0)
     + (Number(actor?.system?.attackLimitBonus) || 0)
     + flyingKickAttackBonus(actor)
-    + multipleArmsAttackBonus(actor);
+    // Сосредоточение на мехадендритах — «считается имеющим Multiple Arms (X)»: заменяет, а не складывается.
+    + Math.max(multipleArmsAttackBonus(actor), dendriteFocusAttackBonus(actor));
 }
 
 /** Хватит ли лимита ещё на одну Атаку в этом Ходу — вне боя лимит не считается вовсе. */

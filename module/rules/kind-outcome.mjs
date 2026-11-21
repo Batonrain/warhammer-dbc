@@ -14,7 +14,7 @@
 import { testOutcome, criticalOutcome } from "./roll-outcome.mjs";
 import { resolveTest } from "./resolve-test.mjs";
 import { combinedThreshold, resolveOpposed } from "./test-kind.mjs";
-import { extendedTestKey, applyGain } from "./extended-test.mjs";
+import { extendedTestKey, applyGain, EXTENDED_CRIT_LOSS } from "./extended-test.mjs";
 import { unnaturalRating, unnaturalDegreeBonus, hasUnnaturalCharacteristic } from "./unnatural-characteristic.mjs";
 import { critLineHtml } from "./test-kind-widget.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
@@ -153,7 +153,7 @@ export async function applyAssistedMasteryCrit(actor, outcome, skillCtx, deg) {
 }
 
 export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, extended, opposed,
-    opposedSelected = false, opposedSafeSelected = false, autoSuccess = false }) {
+    opposedSelected = false, opposedSafeSelected = false, autoSuccess = false, successMul = 1 }) {
   // opposedSelected/opposedSafeSelected — сама галочка «Встречный», отдельно
   // от opposed (данные соперника): полтеста без Порога/Броска соперника
   // (сравнивается вручную позже) — всё равно Встречный тест по RAW, шапка
@@ -288,7 +288,15 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const uncappedDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  // Множитель Успехов (successMul, 20.11.2026 — Кортекс Малагры «утраивает
+  // Успехи на встречных тестах…»): только на Успехе, по всем Успехам теста
+  // (с надбавками выше) и ДО сравнения встречного теста ниже — иначе
+  // умножение ничего не решало бы. Ассистентов лист прибавляет позже.
+  const mul = success ? Math.max(1, Math.floor(Number(successMul) || 1)) : 1;
+  const preMulDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : 0;
+  const uncappedDeg = success ? preMulDeg * mul : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const successMulLine = mul > 1
+    ? `<div class="roll-threshold">✖ Успехи ×${mul}: ${preMulDeg} → <b>${uncappedDeg}</b></div>` : "";
   // Потолок Успехов (successDegMax, BONE-Head Огрина — тесты I): только на
   // Успехе, после надбавки Сверхъестественной Характеристики. Ассистентов
   // лист прибавляет позже и режет тем же degCap (sheets/actor-sheet.mjs).
@@ -334,7 +342,10 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     const key = extendedTestKey(extended.label);
     const flagPath = `extendedTests.${key}`;
     const prev = actor.getFlag("warhammer-dbc", flagPath) || { accumulated: 0 };
-    const gain = success ? baseDeg : 0;
+    // Критический Провал отнимает 5–15 Успехов «по решению ГМа» (стр. 25; Разобрать h4nbw): по умолчанию
+    // EXTENDED_CRIT_LOSS снимается сам, ГМ правит ±-полем панели «Расширенные тесты».
+    const critLoss = !success && crit?.failure ? EXTENDED_CRIT_LOSS : 0;
+    const gain = success ? baseDeg : -critLoss;
     const { accumulated, done } = applyGain(prev.accumulated, gain, extended.goal);
     // testKey (wdbc-nysl: панель «Расширенные тесты» на листе) — чем именно
     // бросали, чтобы «Переоткрыть» знал, какой Навык/Характеристику
@@ -343,7 +354,8 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     // характеристика тогда читается из ctx.char.
     const testKey = ctx?.skill ? `skill:${ctx.skill}` : (ctx?.char ? `char:${ctx.char}` : prev.testKey ?? null);
     await actor.setFlag("warhammer-dbc", flagPath, { accumulated, target: extended.goal, label: extended.label, testKey });
-    extendedLine = `<div class="roll-threshold">📈 Расширенный «${esc(extended.label)}»: +${gain} → Банк <b>${accumulated}</b>/${extended.goal}${done ? " — <b>ГОТОВО</b>" : ""}</div>`;
+    extendedLine = `<div class="roll-threshold">📈 Расширенный «${esc(extended.label)}»: ${gain >= 0 ? "+" : "−"}${Math.abs(gain)} → Банк <b>${accumulated}</b>/${extended.goal}${done ? " — <b>ГОТОВО</b>" : ""}${
+      critLoss ? ` · Критический Провал: −${critLoss} из Банка (ГМ может поправить до 5–15 полем «±» на панели)` : ""}</div>`;
   }
 
   let opposedLine = "";
@@ -389,6 +401,6 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, scriptTriggers: resolved.scriptTriggers ?? [],
            critLine, kindLabel, combinedLine, combinedAssistCount,
            failUndo: Object.keys(failUndo).length ? failUndo : null,
-           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
+           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + successMulLine + degCapLine,
            degCap, degCapLine };
 }

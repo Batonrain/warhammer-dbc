@@ -80,6 +80,11 @@ import { suppressionTestMod }                         from "./suppression.mjs";
 import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair, firstHandHitNow, tyranthikosDiceNow }
                                                       from "../rules/dual-wield-talents.mjs";
 import { attackedThisTurn }                           from "../rules/turn-flags.mjs";
+import { tipOfSpearOffered } from "../rules/tip-of-spear.mjs";
+import { juryRigBreaks } from "../rules/jury-rigging.mjs";
+import { danceOfPainOffered, danceOfPainButtonHtml } from "../rules/dance-of-pain.mjs";
+import { runicShotBonus, runicBulletsLeft, RUNIC_BULLETS_FLAG } from "../rules/runic-shot.mjs";
+import { tipOfSpearButtonHtml } from "./tip-of-spear.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { attackEntropyRating } from "./touch-of-entropy.mjs";
 import { touchOfPainActive } from "./touch-of-pain.mjs";
@@ -109,6 +114,7 @@ import { terrorSniperEligible }                       from "../rules/terror-snip
 import { misfireCandidates, hasTargetSelection }      from "../rules/target-selection.mjs";
 import { laserDotOffered }                            from "../rules/laser-sight.mjs";
 import { hasFlamerTalent, pyromaniacActive, torrentActive, torrentBlastRadius, torrentMaxDistance } from "../rules/flamer-talents.mjs";
+import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
 import { bayonetShotButtonsHtml, independentShotOfferHtml } from "./free-shot.mjs";
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
@@ -954,6 +960,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Критического Успеха/Провала для Spray не печатается вовсе.
   const critOutcome = autoHitKind === "spray" ? null : criticalOutcome(rv, opts.crit);
   const critLine = critOutcome ? critLineHtml(critOutcome) : "";
+  // На Честном Слове (rules/jury-rigging.mjs): Критический Провал наспех починенным оружием снова его ломает.
+  const juryRigBroke = !opts.skipAmmo && opts.forcedRoll == null && juryRigBreaks(item, critOutcome);
+  if (juryRigBroke) await item.update?.({ "system.destroyed": true });
   // Критический Успех на попадание (стр. 34, wdbc-x1nz.2.47): «накладывает
   // штраф −30 на Избегания от этого попадания» — считается один раз здесь и
   // прибавляется к dodgeMod/dodgeModRecoil/parryMod ниже, которые уже
@@ -1446,6 +1455,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     }
   }
   const eyeBonus = eyeOfVengeanceBonus(actor, { item, isMelee, activeWeaponId: eyeActiveId });
+  // Рунный Выстрел (rules/runic-shot.mjs): одиночный выстрел рунной пулей — +тPR Dmg, +½тPR Pen; пуля тратится (не на переигровке).
+  const runic = runicShotBonus(actor, { toggles, isMelee, rofMode });
+  if (runic.used && !opts.skipAmmo && opts.forcedRoll == null)
+    await actor.setFlag?.("warhammer-dbc", RUNIC_BULLETS_FLAG, runicBulletsLeft(actor) - 1);
   // Тех-Оружейник (rules/gunsmith-talents.mjs): +I.b к Dmg и Pen, раз на оружие до новой настройки (метка на оружии).
   const weaponTech = weaponTechShot(actor, { item, isMelee, toggles, replay: !!opts.talentPaid?.weaponTech,
     spent: item.getFlag?.("warhammer-dbc", WEAPON_TECH_SPENT_FLAG) });
@@ -1458,7 +1471,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Охотник на Танки (rules/tank-hunter.mjs): +2×I.b к Pen против опознанной в этом бою модели техники.
   const tankHunter = tankHunterForAttack(actor, { isMelee, targetActor: defenderActor });
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + bileSpit.pen + deadlyNaturalCorBAdd + invocationAdd.pen + eyeBonus + weaponTechBonus + tankHunter.penBonus + hammerBlow.pen + runic.pen,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus: forceBonus + plasmaMastery.pen + reliable.pen
   });
 
@@ -1631,7 +1644,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const coupDeGrace = hit && coupDeGraceActive({
     actor, weapon: item, gripKey: opts.gripKey, aimValue: aimTarget?.value, targetActor: defenderActor, isMelee });
   const skullBonus = skullOfferingBonus(actor, { isMelee, combatId: combatIdOf(actor) });
-  const flatBonus = razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
+  const flatBonus = runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
   // Сварщик (rules/gunsmith-talents.mjs): признак на кнопки «Применить урон» — доп.
@@ -1693,6 +1706,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     (!isMelee && wp.spray && hasFlamerTalent(actor, "friendlyFire")) ? "🔥 Дружественный Огонь: тест отмены Распыления у всех, кто не враг стрелка по токенам, получает +30 (кнопка теста считает сама)." : "",
     torrentOn ? `🌊 Поток: расход боеприпасов удвоен (${ammoSpent}); вместо конуса — шаблон Blast(${torrentBlastRadius(Number(sys.range) || 0)} м) в пределах ${torrentMaxDistance(Number(sys.range) || 0)} м и прямой видимости, попадание по правилам Spray (тест на отмену у каждой цели).` : "",
     (hit && pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame })) ? "🔥 Пироман: цели перебрасывают успешный тест против загорания, а в укрытии — ещё −20 (кнопка «Горение» считает сама). Укрытия под шаблоном (кнопка «Разместить шаблон») загорятся на 1d5+1 Раундов, стоящий в них в конце Хода — тоже." : "",
+    runic.used ? `ᚱ Рунная пуля: +${runic.dmg} Dmg, +${runic.pen} Pen (тPR, уже учтено); в запасе осталось ${runicBulletsLeft(actor)}.` : "",
     (hit && eyeBonus) ? `👁️ Око Мщения: +${eyeBonus} к Dmg и Pen (Inf.b, уже учтено) до конца Хода.` : "",
     (irradiate && hit) ? (irradiate === "felling" ? `☢️ Облучить: рейтинг Felling удвоен (${wp.fellingRating}).` : "☢️ Облучить: пробитие брони для Rad считается без удвоения AP цели.") : "",
     wp.negWoundsBonus ? `🎯 ${isMelee ? "Калечащий Удар" : "Пробивной Удар"}: если попадание уведёт Раны цели в минус — +${wp.negWoundsBonus} к урону (прибавится при применении).` : "",
@@ -2291,7 +2305,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         stunManeuver: isMelee && techOpts.technique === "stun",
         primitive: (isMelee && techOpts.technique === "stun") ? false : wp.primitive
       },
-      threshold, rv, hit, deg, hitsCount, hits, rerollDropped, critLine,
+      threshold, rv, hit, deg, hitsCount, hits, rerollDropped,
+      critLine: critLine + (juryRigBroke ? `<div class="roll-threshold">🔧 «${esc(item.name)}» было починено на честном слове — Критический Провал снова его сломал.</div>` : ""),
       // На Лезвии Бритвы (rules/rogue-talents.mjs): более медленная цель должна перебить ВСЕ Успехи
       // одиночного удара ножа — кнопкам Избегания идёт «столько попаданий, сколько Успехов» (null — обычно).
       evasionHits: hit ? razorsEdgeEvasionHits(actor, item, defenderActor, { hitsCount, deg }) : null,
@@ -2325,6 +2340,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       })
         ? tenacityButtonHtml({ attackerUuid: actor.uuid || "", weaponUuid: item.uuid || "", baseKey: opts.baseKey || "", technique: opts.techniqueOpts?.technique || "", hit: !!hit })
         : "",
+      // Острие Копья (Талант Герольда, rules/tip-of-spear.mjs): рукопашное попадание — Charm+0 раздать перебросы соратникам.
+      tipOfSpearHtml: tipOfSpearOffered(actor, { isMelee, hit }) ? tipOfSpearButtonHtml(actor.uuid || "") : "",
+      // Танец Боли (Черта Воина Ноты, rules/dance-of-pain.mjs): рукопашное/метательное попадание — кнопка 1d10+A.b урона в A цели.
+      danceOfPainHtml: danceOfPainOffered(actor, { isMelee: isMelee || sys.weaponClass === "thrown", hit })
+        ? danceOfPainButtonHtml(actor, defenderActor?.uuid ?? "") : "",
       // Казнь (Черта Мастера Казней, combat/execution.mjs): двуручное оружие в двуручном хвате — кнопка «ещё атака, если цель жива».
       executionHtml: executionOfferHtml(actor, {
         isMelee, weapon: item, gripKey: opts.gripKey, defender: defenderActor,
@@ -2498,7 +2518,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
           damageType: effDmgType, hitLocation: hits[0]?.loc || "",
           poisoner: !!aimTarget?.value && hasTalentCapability(actor, POISONER_CAP),
           pyromaniac: pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame }),
-          pyromaniacAttackerUuid: actor.uuid ?? "", igniter })
+          pyromaniacAttackerUuid: actor.uuid ?? "", igniter,
+          fireDance: fireDanceActive(actor, { spray: wp.spray, flame: wp.flame }) })
           // Хирургическая Точность (Медик): кнопка только у Избирательной атаки.
           + surgicalPrecisionButtonHtml(actor, { selective: !!aimTarget?.value, hit, attackerUuid: actor.uuid }),
         // Пинок с Разворота (Талант Пугилиста, combat/roundhouse.mjs): кнопка

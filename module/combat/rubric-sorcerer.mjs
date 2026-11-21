@@ -28,7 +28,7 @@ import {
   hasRubricOfAhriman, hasGolemMaster, hasShieldOfRubric, hasInfernalShells, hasPsychicEcho, hasSekhmet,
   hasRebornInDust, pickMilderPeril, choiceThreshold, isGolem, golemMasterUuid, golemsOf, soulsFree, fallenGolems,
   nexusFreeGolems, nexusSlotsLeft, golemSlot, sekhmetStats, armourAblative, armourWithoutAblative,
-  regenerationRating, regenerationHeal, isWounded, possessionThreshold, warpLoreTotal, isOrdinaryBolt,
+  regenerationRating, regenerationSource, regenerationHeal, isWounded, possessionThreshold, warpLoreTotal, isOrdinaryBolt,
   shellsBatch, golemDestroyed
 } from "../rules/rubric-sorcerer.mjs";
 import { getPeril } from "../constants/psyker-tables.mjs";
@@ -476,13 +476,15 @@ export async function regenerationTurnStart(actor) {
   }
   await postTestCard(actor, {
     icon: ICON(), title: `Регенерация (${rating}) — ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">В начале Хода: тест T+0 — восстановить ${rating} Ран; либо пропустить все действия этого Хода и пройти тест автоматически.</div>`],
+    lines: [`<div class="roll-threshold">В начале Хода: тест ${regenTestLabel(actor)} — восстановить ${rating} Ран; либо пропустить все действия этого Хода и пройти тест автоматически.</div>`],
     sections: [`<div class="roll-defense-btns">
-      <button type="button" class="wh-regen-btn" data-actor-uuid="${esc(actor.uuid)}" data-auto="0">Тест T+0</button>
+      <button type="button" class="wh-regen-btn" data-actor-uuid="${esc(actor.uuid)}" data-auto="0">Тест ${regenTestLabel(actor)}</button>
       <button type="button" class="wh-regen-btn" data-actor-uuid="${esc(actor.uuid)}" data-auto="1">Пропустить действия — автоматически</button></div>`]
   }, { sound: false });
   return { echo: false };
 }
+
+const regenTestLabel = actor => (regenerationSource(actor).test === "cor" ? "Cor+0" : "T+0");
 
 /** Кнопка карточки Регенерации: тест T+0 или автоуспех ценой всех действий Хода. */
 export async function rollRegeneration(actor, { auto = false } = {}) {
@@ -501,15 +503,17 @@ export async function rollRegeneration(actor, { auto = false } = {}) {
     }, { sound: false });
     return true;
   }
-  const t = Number(actor.system?.characteristics?.t?.total) || 0;
-  const mods = collectTestMods(actor, { kind: "skill", char: "t" });
+  // Дар Одержимого «Регенерация»: тест Cor+0 (значение Порчи) вместо T+0 (rules/rubric-sorcerer.mjs::regenerationSource).
+  const byCor = regenerationSource(actor).test === "cor";
+  const t = byCor ? (Number(actor.system?.corruption?.value) || 0) : (Number(actor.system?.characteristics?.t?.total) || 0);
+  const mods = byCor ? { total: 0, parts: [] } : collectTestMods(actor, { kind: "skill", char: "t" });
   const threshold = t + mods.total;
   const { rv, rolls } = await rollD100WithReroll(null);
   const { success, deg } = testOutcome(rv, threshold);
   const applied = success ? await healByRegeneration(actor, regenerationHeal(rating)) : 0;
   await postTestCard(actor, {
     icon: ICON(), title: `Регенерация — ${esc(actor.name)}`,
-    threshold: rollStatLine({ label: "T+0", base: t, parts: mods.parts.map(esc), threshold, rv }),
+    threshold: rollStatLine({ label: byCor ? "Cor+0" : "T+0", base: t, parts: mods.parts.map(esc), threshold, rv }),
     outcome: outcomeHtml(success, success ? `Успех (${deg}) — восстановлено ${applied} Ран` : "Провал — Раны не восстановились")
   }, { rolls });
   return success;

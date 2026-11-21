@@ -117,3 +117,24 @@ describe("данные пака", () => {
     expect(CAPABILITIES[GRACEFUL_GIANT_KEY]?.reader).toMatch(/terminator-armour\.mjs/);
   });
 });
+
+describe("Acrobatics в Терминаторской броне (rules/library/core.mjs)", () => {
+  const wearer = (...items) => ({
+    system: { race: "human", characteristics: {}, conditions: {} },
+    items, setFlag: async () => {}, getFlag: () => undefined
+  });
+  const acro = a => ({ actor: a, kind: "skill", skill: "acrobatics", char: "ag" });
+
+  it("в надетой — тест Acrobatics провален без броска; другие тесты Ag — нет", async () => {
+    const { resolveTest } = await import("../../module/rules/resolve-test.mjs");
+    const a = wearer(terminator());
+    expect(resolveTest(acro(a)).autoFail).toEqual([expect.objectContaining({ ruleId: "core.terminatorNoAcrobatics" })]);
+    expect(resolveTest({ ...acro(a), skill: "dodge" }).autoFail).toEqual([]);
+  });
+
+  it("снятая броня и обычная силовая — запрета нет", async () => {
+    const { resolveTest } = await import("../../module/rules/resolve-test.mjs");
+    expect(resolveTest(acro(wearer(terminator(25, false)))).autoFail).toEqual([]);
+    expect(resolveTest(acro(wearer(plate()))).autoFail).toEqual([]);
+  });
+});

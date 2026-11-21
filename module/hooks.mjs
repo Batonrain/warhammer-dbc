@@ -70,6 +70,7 @@ import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt, applySuppressionProne } from "./combat/suppression.mjs";
 import { clearFeintAtTurnEnd } from "./combat/feint-press.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
+import { resolvePaybackClick } from "./combat/payback.mjs";
 import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick } from "./combat/overwatch.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { resolveTankHunterClick, clearTankHunterMemory } from "./combat/tank-hunter.mjs";
@@ -224,7 +225,11 @@ import { HAYMAKER_CARD_FLAG, GOADING_CARD_FLAG, KNEE_STRIKE_CARD_FLAG } from "./
 import { blademasterRerollOffered, BLADEMASTER_ROUND_FLAG, RIPOSTE_ROUND_FLAG, RIPOSTE_EVASION_PENALTY, HAMSTRING_ROUND_FLAG, tenacityAvailable, MELEE_DAMAGE_DEALT_FLAG, MELEE_DAMAGE_APPLIED_FLAG } from "./rules/melee-talents.mjs";
 import { activateFirePoint } from "./combat/fire-point.mjs";
 import { cardOnceUsed, markCardOnce, runCardOnce } from "./combat/card-once.mjs";
+import { FIRE_DANCE_CARD_KEY, FIRE_DANCE_PANIC_FLAG, hasFireMaze } from "./rules/fire-dance.mjs";
+import { pickFireMazeRounds } from "./combat/fire-maze.mjs";
+import { offerAegisExclusion } from "./combat/aegis-of-will.mjs";
 import { onDefenceRerollClick, rerollDefenceCard, defenceTestOf } from "./combat/defence-reroll.mjs";
+import { resolveTipOfSpearClick } from "./combat/tip-of-spear.mjs";
 import { DEFENCE_REROLLED_FLAG } from "./rules/defence-reroll.mjs";
 import { processRageTurnStart, stampRageCombatEnd, rerollRageExit, clearRageStatePatch, rideTheBeast } from "./combat/rage-behavior.mjs";
 import { markFrenzyExited } from "./combat/frenzy.mjs";
@@ -252,6 +257,7 @@ import { ogrynRegenCombatRound } from "./combat/ogryn-regen.mjs";
 import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } from "./combat/bone-head.mjs";
 import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
 import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
+import { minionPatronUpdate } from "./rules/minion-patron.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -751,6 +757,23 @@ export function registerHooks() {
     // Знания Веков (wdbc-1rno.23, apps/knowledge-of-ages.mjs): 1d10 после
     // траты Очка на «Усиление»/«Успех»/«Переброс» добытого Навыка. Актор — по
     // uuid карточки (чьё Очко потрачено). Раз на карточку.
+    // Перехват Миньона ГМом при провале Лояльности в бою (combat/minion-gm-control.mjs):
+    // кнопка на карточке, если бросал игрок, — права меняет только ГМ.
+    html.querySelectorAll(".wh-loyalty-seize-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        if (!game.user.isGM) { ui.notifications?.warn("Забрать Миньона под контроль может только ГМ."); return; }
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Миньон не найден."); return; }
+        const { seizeMinion } = await import("./combat/minion-gm-control.mjs");
+        if (await seizeMinion(actor)) {
+          el.disabled = true;
+          ui.notifications?.info(`${actor.name}: под контролем ГМа до конца боя.`);
+        }
+      });
+    });
+
     html.querySelectorAll(".wh-knowledge-of-ages-btn").forEach(btn => {
       if (cardOnceUsed(message, "knowledgeOfAgesRolled")) btn.disabled = true;
       btn.addEventListener("click", async ev => {
@@ -1034,6 +1057,19 @@ export function registerHooks() {
     // Упорство (Талант «Рукопашных», combat/tenacity.mjs): повтор единственной одиночной рукопашной атаки Хода,
     // не нанёсшей урона — тем же оружием, с той же Базой и Приёмом, по той же цели (цели не сбрасываются).
     // Свободное действие: tenacityRepeat снимает ОД и Лимит Атак в окне, и не порождает нового повтора.
+    // Острие Копья (Талант Герольда, combat/tip-of-spear.mjs): Charm+0 раз на карточку — перебросы соратникам.
+    html.querySelectorAll(".wh-tip-of-spear-btn").forEach(btn => {
+      if (cardOnceUsed(message, "tipOfSpearUsed")) btn.disabled = true;
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        await runCardOnce(message, "tipOfSpearUsed", () => resolveTipOfSpearClick(el.dataset.attackerUuid || ""),
+          "Острие Копья по этой атаке уже применено.");
+        el.disabled = cardOnceUsed(message, "tipOfSpearUsed");
+      });
+    });
+
     html.querySelectorAll(".wh-tenacity-btn").forEach(btn => {
       if (cardOnceUsed(message, TENACITY_CARD_FLAG)) btn.disabled = true;
       btn.addEventListener("click", async ev => {
@@ -2601,14 +2637,20 @@ export function registerHooks() {
         // один раз, здесь, и виден в чате — игроку не нужно помнить, сколько выпало.
         const lingerSpec = String(ds.linger || "").trim();
         const lingerOn = isDiceRating(lingerSpec) || (parseInt(lingerSpec) || 0) > 0;
+        // Лабиринт Пламени (rules/fire-dance.mjs): стрелок с Талантом бросает дважды и выбирает.
+        const lingerShooter = ds.attackerUuid ? await fromUuid(ds.attackerUuid).catch(() => null) : null;
+        const fireMaze = hasFireMaze(lingerShooter?.actor ?? lingerShooter);
         const rollLingerDice = async formula => {
           const lingerRoll = new Roll(formula);
           await lingerRoll.evaluate();
+          const second = fireMaze ? await new Roll(formula).evaluate() : null;
           await lingerRoll.toMessage({
             speaker: ChatMessage.getSpeaker?.() ?? {},
             flavor: `☁️ Остаётся (${formula}) — сколько раундов держится зона «${ds.weaponName || "оружия"}»`
+              + (second ? `<br>🔥 Лабиринт Пламени: второй бросок — <b>${second.total}</b>, стрелок выбирает` : "")
           });
-          return lingerRoll.total;
+          if (!second || second.total === lingerRoll.total) return lingerRoll.total;
+          return pickFireMazeRounds(lingerRoll.total, second.total);
         };
         const rounds = (lingerOn && game.combat) ? await resolveLingerRounds(lingerSpec, rollLingerDice) : 0;
         if (lingerOn) {
@@ -2691,6 +2733,8 @@ export function registerHooks() {
         // Пироман (Spray + Flame): укрытия под шаблоном загораются — раньше, чем
         // «никого нет» заканчивает обработку: пустое поле с бочками тоже горит.
         if (ds.pyromaniac === "1") await igniteCoversUnderTemplate(result.region, { attackerName: ds.attacker || "" });
+        // Эгида Воли (rules/aegis-of-will.mjs): псайкер снимает до ½PR накрытых с площадной психосилы.
+        if (result.tokens.length) result.tokens = await offerAegisExclusion(ds.attackerUuid, ds.itemUuid, result.tokens);
         if (!result.tokens.length) {
           ui.notifications.info("В зоне шаблона никого нет.");
           return;
@@ -2847,6 +2891,8 @@ export function registerHooks() {
         ev.preventDefault();
         const el = ev.currentTarget;
         const ds = { ...el.dataset };
+        // Танец Боли (rules/dance-of-pain.mjs): кнопка внутри его блока — «раз в Ход» у атакующего.
+        const danceAttackerUuid = el.closest(".wh-dance-of-pain")?.dataset.actorUuid || "";
         const doc = ds.actorUuid ? await fromUuid(ds.actorUuid).catch(() => null) : null;
         const actor = ds.actorUuid ? (doc?.actor ?? doc) : requireControlledActor("⚠️ Выберите токен цели на сцене!");
         if (!actor) return;
@@ -2856,6 +2902,11 @@ export function registerHooks() {
           keys: String(ds.keys || "").split(",").filter(Boolean), formula: ds.formula || "",
           amount: ds.amount === "" ? null : Number(ds.amount), permanent: ds.permanent === "1", source: ds.source || ""
         });
+        if (danceAttackerUuid) {
+          const atk = await fromUuid(danceAttackerUuid).catch(() => null);
+          const atkActor = atk?.actor ?? atk;
+          if (atkActor?.isOwner) await atkActor.setFlag("warhammer-dbc", "danceOfPainThisTurn", true);
+        }
       });
     });
 
@@ -3535,6 +3586,17 @@ export function registerHooks() {
       });
     });
 
+    // Расплата (Талант Дредноутов, combat/payback.mjs) — ответная атака по Ненавистному за Реакцию.
+    html.querySelectorAll(".wh-payback-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const ok = await resolvePaybackClick(el.dataset.pilotUuid, el.dataset.attackerUuid);
+        if (!ok) el.disabled = false;
+      });
+    });
+
     // Встречный тест приёма (wdbc-x1nz.2.73): противник бросает сам по
     // кнопке в карточке инициатора — combat/opposed-contest.mjs.
     html.querySelectorAll(".wh-contest-pirouette-btn").forEach(btn => {
@@ -3948,6 +4010,16 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       });
     }
   }
+  // Танец Пламени (rules/fire-dance.mjs): «одну цель» — кнопка срабатывает раз
+  // на карточку; выбор сделан нажатием, независимо от исхода теста.
+  const fireDance = ds.wpFireDance === "1";
+  if (fireDance) {
+    const fdMsg = game.messages?.get?.(messageId) ?? null;
+    if (fdMsg && cardOnceUsed(fdMsg, FIRE_DANCE_CARD_KEY)) {
+      return ui.notifications.warn("⚠️ Танец Пламени: цель с этой карточки уже выбрана.");
+    }
+    if (fdMsg) await markCardOnce(fdMsg, FIRE_DANCE_CARD_KEY);
+  }
   const condition = ds.wpCondition || "";
   const testChar  = ds.wpTestChar  || "";
   const testMod   = parseInt(ds.wpTestMod || "0");
@@ -4163,6 +4235,8 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       if (resist.resisted) { resistedNotes.push(resist.note); resistedConds.push(cond); continue; }
       Object.assign(update, fields);
       if (cond === "burning") ignitedNow = true;
+      // Танец Пламени: первый тест Паники от Горения у этой цели — с −40.
+      if (cond === "burning" && fireDance) update[`flags.warhammer-dbc.${FIRE_DANCE_PANIC_FLAG}`] = true;
       // Подпись — у накладываемого Состояния (Оглушение), а не у свойства оружия (Шоковое).
       const condLabel = CONDITIONS_DEF[cond]?.label || label;
       applied.push(levelField
@@ -4442,6 +4516,12 @@ function _attachFateContextMenu(message, html) {
     if (!actor) {
       actor = canvas.tokens?.controlled?.[0]?.actor;
     }
+    // Защита машины (шагоход, Вираж — combat/defence-reroll.mjs): бросал пилот/водитель, его Очко и платит.
+    const machineRoller = defenceTestOf(message)?.rerollActorUuid;
+    if (machineRoller) {
+      const rollerDoc = fromUuidSync?.(machineRoller);
+      actor = rollerDoc?.actor ?? rollerDoc ?? actor;
+    }
 
     // Очки судьбы (название зависит от персонажа: Судьба/Бесчестье/Боль)
     const fate     = actor?.system?.fate;
@@ -4617,7 +4697,7 @@ function _attachFateContextMenu(message, html) {
       // переброшено, тот же Раунд) — отказ Очко не тратит.
       if (defenceTestOf(message)) {
         let paid = null;
-        if (await rerollDefenceCard(message, `${ft.one}${payerNote}`, async () => (paid = await spend()))) {
+        if (await rerollDefenceCard(message, `${ft.one}${payerNote}`, async () => (paid = await spend()), { point: true })) {
           if (paid) ui.notifications.info(`✨ ${actor.name} тратит ${ft.one} на переброс защиты${payerNote}! Осталось: ${paid.poolValue}`);
           return;
         }
@@ -4988,6 +5068,12 @@ function _attachFateContextMenu(message, html) {
     await clearAllBurningCovers(combat);
     await clearAllGravitonZones();
     await clearAllVortexZones();
+    // Миньоны, перехваченные ГМом при провале Лояльности, — права обратно.
+    const { releaseSeizedMinions } = await import("./combat/minion-gm-control.mjs");
+    await releaseSeizedMinions(combat);
+    // Гниль Внутри: оружие, испорченное «до конца сцены», возвращается (combat/putrescence.mjs).
+    const { restorePutrescentWeapons } = await import("./combat/putrescence.mjs");
+    await restorePutrescentWeapons([...(combat.combatants ?? [])].map(c => c.actor).filter(Boolean));
   });
 
   // Бой кончился — снять транс «Дух героя» у всех, кто в него впадал, и
@@ -5255,6 +5341,14 @@ function _attachFateContextMenu(message, html) {
     if (!game.user.isGM) return;
     if (changed?.round === undefined && changed?.turn === undefined) return;
     if (combat.combatant) await processShooterTurnStart(combat.combatant);
+  });
+
+  // Педаль в Пол (combat/pedal-to-metal.mjs): истёкшая метка снимается в начале Хода, чтобы SPD машины пересчитался.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    const { expirePedalMarks } = await import("./combat/pedal-to-metal.mjs");
+    await expirePedalMarks(combat);
   });
 
   // Гравитонные зоны (module/regions/graviton-zone.mjs, wdbc-wlwf) — тот же
@@ -5580,6 +5674,13 @@ function _attachFateContextMenu(message, html) {
   // Искусный (Adroit, Ренегат): выбор Характеристики при получении Черты —
   // только у того, кто Черту положил (module/apps/adroit.mjs).
   Hooks.on("createItem", (item, options, userId) => onAdroitTraitCreated(item, userId));
+  // Посвящение: божественный Трейт демонов ставит Миньону Покровителя, если тот
+  // ещё не выбран (rules/minion-patron.mjs). Только у того, кто Трейт положил.
+  Hooks.on("createItem", async (item, options, userId) => {
+    if (userId !== game.user?.id) return;
+    const patch = minionPatronUpdate(item.actor, item);
+    if (patch) await item.actor.update(patch);
+  });
   // Стадия Пакта куплена — нижний предел Тяжести расстройства Пакта растёт на 1
   // за Стадию (Когитор, Мейстер, Ревенант; rules/pact-disorder.mjs). Только у
   // того, кто Талант положил.

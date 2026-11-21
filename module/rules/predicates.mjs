@@ -535,6 +535,21 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
 /** Гравитация ниже этого значения (G) считается невесомостью/микро-гравитацией: ниже самой малой строки таблицы книги (0,2 G). */
 export const WEIGHTLESS_BELOW_G = 0.2;
 
+// Своя копия чтения Mechadendrite Use (rules/mechadendrites.mjs::mechadendriteTraining
+// импортирует этот файл — обратный импорт замкнул бы круг).
+function mechTrainingOf(actor) {
+  const out = new Set();
+  for (const i of actor?.items ?? []) {
+    if (i?.type !== "talent" || !/mechadendrite use|использование мехадендритов/i.test(String(i.name ?? ""))) continue;
+    const text = `${i.system?.specialization ?? ""},${/\(([^)]*)\)\s*$/.exec(String(i.name ?? ""))?.[1] ?? ""}`;
+    for (const s of text.split(",").map(x => x.trim().toLowerCase())) {
+      if (/^(weapon|оруж|боев)/.test(s)) out.add("weapon");
+      if (/^(utility|утилит|служеб)/.test(s)) out.add("utility");
+    }
+  }
+  return out;
+}
+
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
   subrace: (actor, ctx, value) => list(value).includes(actor?.system?.subrace),
@@ -566,6 +581,10 @@ export const PREDICATES = {
   // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
   // Ярости (wdbc-wyr3).
   inRage: (actor) => !!actor?.system?.inRage,
+
+  // Обучен мехадендритам типа value ("utility"/"weapon") — Mechadendrite Use
+  // (X). Бонусы утилитарных дендритов (wdbc-qbyvc) без обучения не действуют.
+  mechadendriteTraining: (actor, ctx, value) => list(value).every(t => mechTrainingOf(actor).has(String(t))),
 
   // Носит ли надетую броню со свойством «Sealed / Закрытая» — шестой гейт
   // Механики (when.requireSealedArmour/negateSealedArmour, mech-when.mjs,
@@ -735,6 +754,10 @@ export const PREDICATES = {
   // Слепое Зрение без шлема — альтернативные чувства (Talent Blindsight):
   // входит в anyOf правила conditions.blinded.altSenses.
   blindsightActive: (actor, ctx, value) => blindsightActive(actor) === (value !== false),
+
+  // Дар Одержимого в Проявлении (manifestedGift ниже): `{ manifestedGift: "Варп-Зрение" }`.
+  // Входит в anyOf conditions.blinded.altSenses — Варп-Зрение снимает штрафы Ослепления (живая проверка pr-584-ws-30).
+  manifestedGift: (actor, ctx, value) => manifestedGift(actor, String(value ?? "")),
 
   // «Рядовой» (корбук стр. 4, system.rankAndFile): `true` — Рядовой, `false` —
   // чемпион. Гейт записей, которых у Рядовых по книге нет (Черты Человека).
@@ -948,4 +971,19 @@ export function giftNamesOf(actor) {
 export function manifestedGift(actor, giftName) {
   if (!canManifestPossession(actor) || !actor?.system?.possession?.manifested) return false;
   return giftNamesOf(actor).has(giftName);
+}
+
+/** Предмет — Дар Одержимого (имя «… / Дар: X»): действует только в Проявлении. */
+export function isPossessionGiftItem(item) {
+  return item?.type === "talent" && String(item?.name ?? "").includes(GIFT_NAME_PREFIX);
+}
+
+/**
+ * Варп-Зрение сейчас (Разобрать 6plo6): Черта или Талант Warp Sight; Дар «Варп-Зрение» —
+ * только пока демон проявлен (раньше код видел одни Черты, а Дар считал всегда).
+ */
+export function hasWarpSightNow(actor) {
+  const named = [...(actor?.items ?? [])].some(i => (i?.type === "trait" || i?.type === "talent")
+    && !isPossessionGiftItem(i) && (itemHasName(i, "Warp Sight") || itemHasName(i, "Варп-Зрение")));
+  return named || manifestedGift(actor, "Варп-Зрение");
 }

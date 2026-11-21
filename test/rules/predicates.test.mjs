@@ -558,7 +558,11 @@ describe("общее требование к предикатам", () => {
     // База рукопашной атаки, держащаяся на акторе (system.meleeBase).
     meleeBaseIs: ["charge"],
     // Чувство, выбранное в окне теста Внимательности (ctx.sense).
-    testSense: ["hearing"]
+    testSense: ["hearing"],
+    // Обучение мехадендритам (Mechadendrite Use), утилитарные дендриты — wdbc-qbyvc.
+    mechadendriteTraining: "utility",
+    // Дар Одержимого в Проявлении (Варп-Зрение вытесняет Ослепление, живая проверка pr-584).
+    manifestedGift: "Варп-Зрение"
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

@@ -1,6 +1,8 @@
 // module/sheets/sheet-helpers.mjs
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
+import { isDendriteShield, hasTestudo } from "../rules/testudo.mjs";
+import { hasJuryRigging, juryRiggedOriginal } from "../rules/jury-rigging.mjs";
 import { severityTestMod, severityNote } from "../rules/disorder-severity.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
@@ -672,6 +674,9 @@ function buildGetDataUncached(actor) {
       // подсветка по ним не видела новых назначений (wdbc-x1nz.2.100).
       shieldHand:      getHeldHand(i) || "left",
       shieldRaised:    !!i.getFlag?.("warhammer-dbc", "shieldRaised"),
+      // Тестудо (rules/testudo.mjs): щит на мехадендрите; кнопка видна при Таланте или уже поставленном щите.
+      shieldDendrite:  isDendriteShield(i),
+      canDendriteShield: s.shieldAP != null && (isDendriteShield(i) || hasTestudo(actor)),
       shieldCoverage:  s.shieldAP != null ? shieldCoverageLabel(i) : "",
       // В какой руке оружие (module/apps/hud.mjs, карточки правая/левая) — без
       // дефолта, в отличие от shieldHand: одиночное оружие руку не форсирует.
@@ -698,6 +703,9 @@ function buildGetDataUncached(actor) {
       // починено»): тот же гейт кнопки «Атака», книга не делает исключения
       // по классу оружия, в отличие от jammed (только дальнобойное).
       destroyed:    !!s.destroyed,
+      // На Честном Слове (rules/jury-rigging.mjs): кнопки быстрой починки и полного ремонта.
+      canJuryRig:   !!s.destroyed && hasJuryRigging(actor),
+      juryRigged:   juryRiggedOriginal(i) != null,
       // Закрепление (стр. 35, wdbc-x1nz.2.56) — только тяжёлое; canBrace не
       // проверяет isBraced (кнопка «Закрепить» доступна и повторно —
       // перезакрепление на новом развороте/позиции разрешено книгой без
@@ -958,8 +966,13 @@ function buildGetDataUncached(actor) {
     category:  IMPL_CAT[i.system.category] ?? i.system.category ?? "",
     quality:   QUAL[i.system.quality] ?? i.system.quality ?? "",
     installed: i.system.installed || "",
-    effect:    i.system.effect || ""
+    effect:    i.system.effect || "",
+    // Лежит на листе без операции Хирургеона (wdbc-pqrh1): такой имплант не
+    // даёт эффектов, не стоит на фигуре и не занимает порты — подсветка и
+    // кнопка ГМа «Установлен» (персонажи, собранные до Хирургеона).
+    notInstalled: !i.getFlag?.("warhammer-dbc", "installed")
   }));
+  context.canMarkImplants = !!globalThis.game?.user?.isGM;
 
   // ── ТЕЛО (медицинский когитатор) ────────────────────────────────────────────
   {

@@ -82,6 +82,18 @@ export const CORE_RULES = [
     effects: [{ kind: "rollBonus", target: "skill:survival", value: 40 }]
   },
   {
+    // Терминаторская броня (корбук, стр. 235): «Не позволяет Прыгать,
+    // Уклоняться и совершать любые тесты Acrobatics». Уклонение запрещено в
+    // combat/defense.mjs (rules/terminator-armour.mjs, Изящный Гигант его
+    // разрешает); здесь — тесты Acrobatics: провал без броска. Изящный Гигант
+    // про Acrobatics не говорит, поэтому запрет на него не снимается. Не в
+    // библиотеке Астартес: правило идёт от брони, а не от расы носителя.
+    id: "core.terminatorNoAcrobatics",
+    label: "Терминаторская броня",
+    when: { wearsTerminatorArmour: true },
+    effects: [{ kind: "autoFail", target: "skill:acrobatics", label: "🛡 Терминаторская броня — тесты Acrobatics запрещены" }]
+  },
+  {
     // Рог Чумоноса (Majestic Horns, 7, wdbc-1rno.10): «пока рог остаётся в
     // ране, цель автоматически проваливает все тесты T с 3 Провалами». Правило
     // на самом пострадавшем: метку ставит попадание «Обломить Рог»

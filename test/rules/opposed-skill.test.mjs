@@ -22,4 +22,11 @@ describe("opposedSide", () => {
     expect(opposedSide("athletics", "s")).toMatchObject({ testKind: "skill", skillKey: "athletics", charKey: "s", paired: false });
     expect(opposedSide(null, "ag")).toMatchObject({ testKind: "characteristic", skillKey: null, charKey: "ag", paired: false });
   });
+  it("Торговля — Характеристика по выбору ГМа (I, P, W или F), по умолчанию I (wdbc-5abej)", () => {
+    expect(opposedSide("commerce", "int")).toMatchObject({ testKind: "characteristic", skillKey: null, charKey: "int", paired: true });
+    for (const c of ["per", "wp", "fel"]) {
+      expect(opposedSide("commerce", "int", { counterChar: c })).toMatchObject({ testKind: "characteristic", charKey: c, paired: true });
+    }
+    expect(opposedSide("commerce", "int", { counterChar: "s" }).charKey).toBe("int");
+  });
 });

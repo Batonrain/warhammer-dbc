@@ -5,6 +5,7 @@
 //  и предоставляет помощники для диалога атаки, броска, урона и защиты.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { FIRE_DANCE_BURN_MOD } from "../rules/fire-dance.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
@@ -524,7 +525,7 @@ export function buildPropertyChatBlock(props, { jamAt } = {}) {
  * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
  * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "", poisoner = false, pyromaniac = false, pyromaniacAttackerUuid = "", igniter = "" } = {}) {
+export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "", poisoner = false, pyromaniac = false, pyromaniacAttackerUuid = "", igniter = "", fireDance = false } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -619,6 +620,19 @@ export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor
           ${label}${testStr}
         </button>`
       );
+      // Танец Пламени (rules/fire-dance.mjs): одна выбранная цель — тест против
+      // загорания с −20, а первый тест Паники от Горения с −40. Вторая кнопка
+      // Горения, нажимается один раз на карточку (hooks.mjs::_applyWeaponPropEffect).
+      if (fireDance && te.condition === "burning" && te.testChar) {
+        const fdMod = testMod + FIRE_DANCE_BURN_MOD;
+        const fdData = data.replace(`data-wp-test-mod="${testMod}"`, `data-wp-test-mod="${fdMod}"`)
+          + ` data-wp-fire-dance="1"`;
+        btns.push(
+          `<button class="wh-wprop-apply-btn" type="button" ${fdData}>
+          🔥 Танец Пламени: ${label} (тест ${te.testChar.toUpperCase()}${fdMod >= 0 ? "+" : ""}${fdMod}, одна цель)
+        </button>`
+        );
+      }
     }
   }
 

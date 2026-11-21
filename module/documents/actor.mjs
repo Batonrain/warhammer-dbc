@@ -2,6 +2,7 @@ import { disabledActorTypes, featureForActorType, isFeatureEnabled,
          featureForRace, isRaceDisabled } from "../constants/features.mjs";
 import { prepareShipDerived } from "../rules/ship.mjs";
 import { prepareVehicleDerived } from "../rules/vehicle.mjs";
+import { pedalSpdBonus } from "../rules/pedal-to-metal.mjs";
 import { prepareHordeDerived } from "../rules/horde.mjs";
 import { prepareFormationDerived } from "../rules/formation.mjs";
 import { prepareSquadDerived } from "../rules/squad.mjs";
@@ -169,7 +170,7 @@ export class WarhammerActor extends Actor {
    * состояние (полуразрушена при Структуре ≤ 0). Чистая агрегация — rules/vehicle.mjs.
    */
   _prepareVehicleData(system) {
-    prepareVehicleDerived(this.items, system);
+    prepareVehicleDerived(this.items, system, { spdBonus: pedalSpdBonus(this) });
   }
 
   prepareDerivedData() {

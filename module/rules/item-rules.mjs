@@ -350,8 +350,12 @@ function ruleFromEntry(item, entry, groupId = null) {
     // autoSuccess (19.11.2026): «автоматически проходит тест … в условии» —
     // галочка диалога, как halvePenalty: условие (родной биом Зверя) знает
     // только стол, молча тест не засчитывается.
+    // successMul (20.11.2026): «утраивает/удваивает Успехи на тестах …» —
+    // тоже галочка: против какой именно силы этот встречный тест, знает стол.
     const effect = entry.modValueMode === "autoSuccess"
       ? { kind: "autoSuccess", target }
+      : entry.modValueMode === "successMul"
+      ? { kind: "successMul", target, value: Math.max(1, Number(entry.value) || 2) }
       : entry.modValueMode === "halvePenalty"
       ? { kind: "penaltyMul", target, factor: 0.5 }
       : (fixedEpr != null)

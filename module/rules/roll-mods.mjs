@@ -95,6 +95,17 @@ export function autoSuccessChecked(mods = [], checkedRuleIds = []) {
   return mods.some(m => m?.autoSuccess && checked.has(m.ruleId));
 }
 
+/**
+ * Множитель Успехов по отмеченным галочкам (эффект successMul, 20.11.2026).
+ * Несколько отмеченных множителей не перемножаются — берётся наибольший:
+ * книга даёт «утраивает» и «удваивает» на разные случаи, а не стопкой.
+ * @returns {number} 1 — ничего не отмечено
+ */
+export function successMulChecked(mods = [], checkedRuleIds = []) {
+  const checked = new Set(checkedRuleIds);
+  return mods.reduce((m, x) => (x?.successMul && checked.has(x.ruleId)) ? Math.max(m, x.successMul) : m, 1);
+}
+
 export function ruleRollModsHtml(actor, context, resolved = null) {
   // resolved — уже посчитанный resolveTest: избавляет вызывающего от
   // повторного обхода правил актора (attack-dialog зовёт трижды за диалог).
@@ -113,7 +124,7 @@ export function ruleRollModsHtml(actor, context, resolved = null) {
              data-rule-id="${esc(m.ruleId || "")}"
              ${m.setChar ? `data-set-char="${esc(m.setChar)}"` : ""}
              ${m.halvePenalty ? 'data-halve="1"' : ""}${m.preChecked ? " checked" : ""}/>
-      <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}${m.autoSuccess ? " <b>(автоуспех)</b>" : ""}</span></label>`;
+      <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}${m.autoSuccess ? " <b>(автоуспех)</b>" : ""}${m.successMul ? ` <b>(Успехи ×${m.successMul})</b>` : ""}</span></label>`;
   }).join("");
   return {
     mods,

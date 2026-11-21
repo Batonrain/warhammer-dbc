@@ -1620,11 +1620,11 @@ export const CAPABILITIES = {
   // ── Огнемётчик
   "flamer.core.fireDance": {
     label: "Накрывая цели шаблоном огнемёта, после тестов А на избегание от огня, но до настоящих Избеганий,",
-    source: "Fire Dance / Танец Пламени", reader: ""
+    source: "Fire Dance / Танец Пламени", reader: "module/rules/fire-dance.mjs (fireDanceActive, fireDancePanicMod), module/combat/weapon-properties.mjs (вторая кнопка Горения −20, data-wp-fire-dance), module/hooks.mjs::_applyWeaponPropEffect (раз на карточку, метка fireDancePanic), module/combat/condition-ticks.mjs::rollBurningPanicTest (−40 к первому тесту Паники)"
   },
   "flamer.core.fireMaze": {
     label: "Стреляя из огнемёта, персонаж бросает на свойство Linger 2 раза и выбирает один результат по своему усмотрению.",
-    source: "Fire Maze / Лабиринт Пламени", reader: ""
+    source: "Fire Maze / Лабиринт Пламени", reader: "module/rules/fire-dance.mjs (hasFireMaze), module/hooks.mjs (кнопка «Разместить шаблон»: Linger кубиком бросается дважды), module/combat/fire-maze.mjs (выбор результата)"
   },
   "flamer.core.friendlyFire": {
     label: "Стреляя из оружия со свойством Spray, персонаж может дать всем целям в пределах дистанции по своему выбору +30 на тест А для избегания от по…",
@@ -1796,7 +1796,8 @@ export const CAPABILITIES = {
   },
   "craft.core.hecatoncheires": {
     label: "Персонаж уменьшает время смены для Крафта/ремонта/обслуживания со стандартных 8 часов на 30 минут за каждый утилитарный мехадендрит или допо…",
-    source: "Hecatoncheires / Гекатонхейр", reader: ""
+    source: "Hecatoncheires / Гекатонхейр",
+    reader: "module/rules/mechadendrites.mjs::craftShiftHours — длина смены 8 ч −0,5 за утилитарный дендрит/лишнюю руку (≥2 ч) строкой на карточке смены Мастерской Крафта (apps/craft-workshop.mjs)"
   },
   "craft.core.journeyman": {
     label: "Преимущество крафтеру от ассистента-Подмастерья — ИСПРАВЛЕНО (wdbc-1rno): раньше был честный флаг без проверки, теперь Мастерская Крафта несёт assistantId (реальная ссылка на актора) — hasJourneyman(assistantActor) читает его настоящий инвентарь Талантов.",
@@ -1805,7 +1806,8 @@ export const CAPABILITIES = {
   },
   "craft.core.juryRigging": {
     label: "Персонаж может починить поломку, обычно требующую до ½ смены, за одно полное действие, но уменьшает Качество предмета/машины на 1.",
-    source: "Jury Rigging / На Честном Слове", reader: ""
+    source: "Jury Rigging / На Честном Слове",
+    reader: "module/rules/jury-rigging.mjs + module/combat/weapon-repair.mjs::juryRigWeapon/fullRepairJuryRigged — кнопки на вкладке БОЙ (sheets/tabs/combat.mjs); поломка на Крит. Провале — combat/attack.mjs"
   },
   "craft.core.locum": {
     label: "Занимаясь Крафтом/ремонтом в мастерской, где проработал хотя бы месяц, персонаж за одну смену делает двойную работу (два теста,",
@@ -2108,11 +2110,12 @@ export const CAPABILITIES = {
   },
   "pilot.core.jink": {
     label: "Тратя Очко Бесчестия на переброс Виража или Уклонения шагохода, персонаж делает второй бросок без штрафов за Размер машины и отрицательную М…",
-    source: "Jink / Манёвр Уклонения", reader: ""
+    source: "Jink / Манёвр Уклонения",
+    reader: "module/rules/defence-reroll.mjs::jinkApplies — переброс за Очко из меню карточки Виража (combat/vehicle.mjs::_performSwerve) и Уклонения шагохода (combat/walker.mjs::performWalkerDodge) без штрафа за Размер; Очко платит пилот/водитель (hooks.mjs, rerollActorUuid карточки)"
   },
   "pilot.core.pedalToMetal": {
     label: "Водитель может увеличить SPD машины на свой P.b, но в этот Ход машина не может поворачивать и до начала следующего Хода водителя не может со…",
-    source: "Pedal to Metal / Педаль в Пол", reader: ""
+    source: "Pedal to Metal / Педаль в Пол", reader: "module/rules/pedal-to-metal.mjs — кнопка Таланта, +P.b к SPD машины, Вираж закрыт до следующего Хода водителя"
   },
   "pilot.core.pushTheLimit": {
     label: "Раз в Раунд персонаж может добавить +10 к тесту Operate на маневры. При Провале техника получает 1 непоглощаемого урона в Шасси за каждый Пр…",
@@ -2120,7 +2123,7 @@ export const CAPABILITIES = {
   },
   "pilot.core.putThatOut": {
     label: "За полное действие персонаж может потушить Пожар в машине, получив 1 Усталости и 1d10 E(Fl) Dmg, игнорирующего броню.",
-    source: "Put That Out! / Гаси Это!", reader: ""
+    source: "Put That Out! / Гаси Это!", reader: "module/combat/put-that-out.mjs — кнопка Таланта: полное действие, 1 Усталость, 1d10 E(Fl) без брони"
   },
   "pilot.core.rollWithIt": {
     label: "Персонаж может Уклоняться от эффектов аварий, действующих на экипаж, как от обычных атак. Успешно уклонившись от взрыва боекомплекта,",
@@ -2423,7 +2426,7 @@ export const CAPABILITIES = {
   "mechanicum.core.mechadendriteUse": {
     label: "Персонаж получил обучение, посвящение и гипнонаставление по использованию конкретного типа мехадендритов.",
     source: "Mechadendrite Use / Использование Мехадендритов",
-    reader: "module/rules/mechadendrites.mjs::mechadendriteTraining — специализация Weapon/Utility; атака мехадендритом без (Weapon) −20 (weapon-training.mjs::weaponTrainingPenalty mechadendrite:true — attack-dialog.mjs, attack-threshold.mjs); необученный тип дендрита подсвечен на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView)"
+    reader: "module/rules/mechadendrites.mjs::mechadendriteTraining — специализация Weapon/Utility; атака мехадендритом без (Weapon) −20 (weapon-training.mjs::weaponTrainingPenalty mechadendrite:true — attack-dialog.mjs, attack-threshold.mjs); необученный тип дендрита подсвечен на вкладке ТЕЛО (sheet-helpers.mjs::mechPortsView); с (Weapon) окно атаки дендритом даёт режимы «сосредоточение» (Multiple Arms по числу дендритов, combat/attack-limit.mjs) и «за Реакцию» (rules/mechadendrites.mjs::dendriteAttackBlock, sheets/attack/dialog.mjs)"
   },
   "mechanicum.core.steelRatio": {
     label: "Персонаж увеличивает максимальное количество изучения Таланта Sound Constitution на I.b.",
@@ -2432,7 +2435,8 @@ export const CAPABILITIES = {
   },
   "mechanicum.core.testudo": {
     label: "За смену работы (без теста) персонаж может модифицировать щит для установки на мехадендрите (Manipulator, Technical, Plasma Cutter,",
-    source: "Testudo / Тестудо", reader: ""
+    source: "Testudo / Тестудо",
+    reader: "module/rules/testudo.mjs — кнопка «На мехадендрит» у щита на вкладке БОЙ (sheets/tabs/gear.mjs::toggleDendriteShield, предел ½WS.b▲); такой щит руку не занимает (rules/hands.mjs::weaponHandsRequired), не парирует (combat/equipped-melee.mjs) и не атакует (sheets/attack/dialog.mjs), AP даёт как обычно. Смена сектора при Смене Стойки — не моделируется (щиты без секторов)"
   },
   // ── Пугилист
   "pugilist.core.chokehold": {
@@ -2652,7 +2656,7 @@ export const CAPABILITIES = {
   },
   "social.core.mimic": {
     label: "Изучив тембр голоса цели как минимум час, персонаж может сойти за неё через встречный Deceive+0 vs Scrutiny−10 (или Scrutiny+0,",
-    source: "Mimic / Мимик", reader: ""
+    source: "Mimic / Мимик", reader: "module/rules/library/target-social-talents.mjs (галочка Scrutiny −10 у слушателя, цель — носитель; источник targetSocialTalents в rules/sources.mjs)"
   },
   "social.core.peer": {
     label: "Персонаж получает +10 ко всем социальным взаимодействиям с выбранной группой.",
@@ -2670,7 +2674,7 @@ export const CAPABILITIES = {
   },
   "social.core.unremarkable": {
     label: "Попытки идентифицировать персонажа среди других людей, описать его приметы или вспомнить черты лица выполняются со штрафом −20.",
-    source: "Unremarkable / Непримечательный", reader: ""
+    source: "Unremarkable / Непримечательный", reader: "module/rules/library/target-social-talents.mjs (галочка −20 на Awareness/Scrutiny/Inquiry против носителя; источник targetSocialTalents в rules/sources.mjs)"
   },
   "social.core.ventriloquist": {
     label: "Персонаж может говорить, не открывая рта, и даже проецировать свой голос, чтобы казалось, что он исходит из точки в пределах 2 м.",
@@ -3190,7 +3194,7 @@ export const CAPABILITIES = {
   // ── Псайкана
   "psyker.core.aegisOfWill": {
     label: "При психосилах, действующих на площадь (аура, психический взрыв, дыхание), псайкер может исключить до ½PR (окр.▲) целей из воздействия.",
-    source: "Aegis of Will / Эгида Воли", reader: ""
+    source: "Aegis of Will / Эгида Воли", reader: "module/rules/aegis-of-will.mjs (aegisApplies, aegisLimit), module/combat/aegis-of-will.mjs::offerAegisExclusion (окно исключения после шаблона), module/hooks.mjs (.wh-place-template-btn), module/sheets/tabs/psychic.mjs (кнопка шаблона Blast у психосилы)"
   },
   "psyker.core.alpha": {
     label: "Персонаж может продвигать свой бPR до 15 независимо от W.b и Cor.b. Существует в основном для персонажей не-Хаоситов.",
@@ -3254,7 +3258,7 @@ export const CAPABILITIES = {
   },
   "psyker.core.psychicLocus": {
     label: "Изучая потоки Варпа 8 часов, персонаж проходит Psyniscience+0 и при Успехе запоминает местность (запишите Успехи). Не дальше P.",
-    source: "Psychic Locus / Психический Локус", reader: ""
+    source: "Psychic Locus / Психический Локус", reader: "module/rules/psychic-locus.mjs — кнопка изучения места и галочка в окне манифестации (Феномен −Успехи×5)"
   },
   "psyker.core.psychicPrecision": {
     label: "При манифестации стрелковых психосил псайкер может уменьшить эPR силы на 2, чтобы выбрать часть тела попадания,",
@@ -3692,7 +3696,7 @@ export const CAPABILITIES = {
   },
   "elite.drednouty.payback": {
     label: "Когда ненавистный противник наносит Дредноуту или пилоту непоглощённый урон, пилот может потратить Реакцию и немедленно атаковать этого прот…",
-    source: "Payback / Расплата", reader: ""
+    source: "Payback / Расплата", reader: "module/combat/payback.mjs — кнопка ответной атаки на карточке урона (Ненавистный, непоглощённый урон, Здравомыслие выше 20)"
   },
   "elite.drednouty.superiority": {
     label: "Победив потенциально опасного противника (способного серьёзно навредить) с помощью нечестного преимущества, Смоделирована только трата/бросок (та же кнопка панели, что у Cruelty) — условие книга не проверяет автоматически, самоотчёт игрока.",
@@ -3934,7 +3938,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Единение — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryEdinenie.brotherhood": {
     label: "Доп. пара рук (Multiple Arms +2) на WS/BS/S/A демона; демон призывает Daemonic Armament (Демонетка — клинки/клешни,",
-    source: "Brotherhood / Дар: Братство", reader: ""
+    source: "Brotherhood / Дар: Братство", reader: "ЧАСТИЧНО: module/rules/hands.mjs::brotherhoodArms — +2 руки и Multiple Arms в Проявлении. Daemonic Armament — вручную"
   },
   "elite.talantyOderzhimyh.daryEdinenie.locusOfTheSymbiote": {
     label: "Излучает Локус демона (можно менять); действует на всех дружественных Одержимых в Проявлении. Только для Высших Одержимых.",
@@ -3954,7 +3958,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryEdinenie.warpSight": {
     label: "Warp Sight и Unnatural Senses (W.b демона).",
-    source: "Warp Sight / Дар: Варп-Зрение", reader: ""
+    source: "Warp Sight / Дар: Варп-Зрение", reader: "module/rules/predicates.mjs::hasWarpSightNow (Незримые атаки, Притупление) и rules/blindness.mjs — только в Проявлении"
   },
   // ── Таланты_одержимых\Дары___Защита — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryZaschita.auraOfChaos": {
@@ -3971,7 +3975,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryZaschita.regeneration": {
     label: "Regeneration (½Cor.b, окр.▲); активация на Cor+0 вместо Т+0. Не лечит урон от Sanctified.",
-    source: "Regeneration / Дар: Регенерация", reader: ""
+    source: "Regeneration / Дар: Регенерация", reader: "module/rules/rubric-sorcerer.mjs::regenerationSource — ½Cor.b, тест Cor+0, только в Проявлении"
   },
   "elite.talantyOderzhimyh.daryZaschita.veilOfDarkness": {
     label: "Облако тьмы: все зрячие атаки по нему −20.",
@@ -3980,7 +3984,7 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Оружие — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryOruzhie.fusion": {
     label: "Рукопашное оружие сливается с рукой: Reinforced, нельзя менять хват, двуручное — одной рукой, получает Дары-усилители.",
-    source: "Fusion / Дар: Слияние", reader: ""
+    source: "Fusion / Дар: Слияние", reader: "module/rules/possession-weapon-gifts.mjs — кнопка выбора оружия (combat/possession-fusion.mjs), Reinforced в Проявлении"
   },
   "elite.talantyOderzhimyh.daryOruzhie.gunArm": {
     label: "Пистолет/винтовка втягивается в предплечье: одной рукой без штрафов, не тратит боеприпасы; Reinforced, Wrist, Дары-усилители.",
@@ -4006,19 +4010,19 @@ export const CAPABILITIES = {
   // ── Таланты_одержимых\Дары___Усилители — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.daryUsiliteli.bladesOfTheSoul": {
     label: "Оружие получает Warp Weapon, но урон уменьшается до поглощения вдвое (окр.▲).",
-    source: "Blades of the Soul / Дар: Лезвия Душ", reader: ""
+    source: "Blades of the Soul / Дар: Лезвия Душ", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Warp Weapon слитому оружию в Проявлении; половина урона вручную"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.daemonicVenom": {
     label: "Оружие получает Felling (½Cor.b, окр.▲) и Toxic (½Cor.b, окр.▲).",
-    source: "Daemonic Venom / Дар: Демонический Яд", reader: ""
+    source: "Daemonic Venom / Дар: Демонический Яд", reader: "module/rules/possession-weapon-gifts.mjs — Felling и Toxic (½Cor.b) слитому оружию в Проявлении"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.lightningField": {
     label: "Оружие: +2 Dmg и Pen, наносит E, получает Power Field.",
-    source: "Lightning Field / Дар: Молниевое Поле", reader: ""
+    source: "Lightning Field / Дар: Молниевое Поле", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Power Field слитому оружию в Проявлении; +2 Dmg/Pen и тип E вручную"
   },
   "elite.talantyOderzhimyh.daryUsiliteli.warpflame": {
     label: "Оружие наносит E(Fl) и получает Flame.",
-    source: "Warpflame / Дар: Варп-Пламя", reader: ""
+    source: "Warpflame / Дар: Варп-Пламя", reader: "ЧАСТИЧНО: module/rules/possession-weapon-gifts.mjs — Flame слитому оружию в Проявлении; тип E(Fl) вручную"
   },
   // ── Таланты_одержимых\Таланты_архетипа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.talantyOderzhimyh.talantyArhetipa.greaterPossessed": {
@@ -4043,7 +4047,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedPain": {
     label: "В Проявлении: потратить ОБ, уменьшить непоглощённый урон до 1; проигнорированный урон переносится на дух демона.",
-    source: "Shared Pain / Общая Боль", reader: ""
+    source: "Shared Pain / Общая Боль", reader: "module/combat/shared-pain.mjs (sharedPainOffer: окно перед применением Ран), module/combat/damage.mjs (после Гнили Внутри)"
   },
   "elite.talantyOderzhimyh.talantyArhetipa.sharedPath": {
     label: "−1 к максимуму Очков Бесчестия, но демон получает 3 своих ОБ (может тратить даже когда телом правит хост).",
@@ -4401,7 +4405,8 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gerold.tipOfTheSpear": {
     label: "На острие атаки вдохновляет боевых братьев личным примером. Попав по противнику хотя бы одной атакой ближнего боя,",
-    source: "Tip Of The Spear / Острие Копья", reader: ""
+    source: "Tip Of The Spear / Острие Копья",
+    reader: "module/rules/tip-of-spear.mjs (источник правил «tipOfSpear» в rules/sources.mjs, ограничитель раз в Раунд) + module/combat/tip-of-spear.mjs — кнопка Charm+0 на карточке рукопашного попадания (attack.mjs → attack-card.mjs, hooks.mjs .wh-tip-of-spear-btn), флаг соратникам в той же рукопашной; переброс атаки — радиокнопкой в окне атаки, Парирования — кнопкой на карточке проваленной защиты"
   },
   "elite.elitnyeArhetipy.gerold.villainousHonour": {
     label: "Может выжать из побед наибольшее влияние на соратников. Убив вражеского чемпиона, знаменосца или лорда (убив,",
@@ -5468,7 +5473,7 @@ export const CAPABILITIES = {
   },
   "trait.adaptiveXenos": {
     label: "В людском облике (шлем/капюшон + не-эльдарская броня/плащ >70%) и на Низком Готике — нет штрафов на общение с людьми.",
-    source: "Adaptive Xenos / Адаптивный Ксенос", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Adaptive Xenos / Адаптивный Ксенос", reader: "module/rules/warp-gifted.mjs (warpGiftedRating, warpGiftedPowers, warpGiftedCastOpts), module/combat/warp-gifted.mjs::useWarpGifted (кнопка Черты), module/sheets/tabs/psychic.mjs::executePsychotest (opts.warpGifted: без Феноменов и без потолка тPR)"
   },
   "trait.adroit": {
     label: "Выбирает одну Характеристику (кроме Inf и Cor): все успешные тесты на неё (в т.ч. навыки через неё) получают +1 Успех. Реализовано: выбор — диалогом при получении Черты (флаг adroitChar на ней), +1 Успех — тесты Навыков/Характеристик с листа, Страх, верховые, атака WS/BS, Уклонение (A), Парирование (WS). Не покрыто: прочие частные броски со своим подсчётом степени (Захват, приёмы, тесты техники и т.п.) — там бонус считает игрок.",
@@ -5823,7 +5828,7 @@ export const CAPABILITIES = {
   },
   "trait.mutant": {
     label: "Имеет X мутаций.",
-    source: "Mutant / Мутант", reader: "module/rules/minion-build.mjs::minionCorruption (Порча Миньона не ниже X×20) — apps/minion-creator.mjs"
+    source: "Mutant / Мутант", reader: "module/rules/minion-build.mjs::minionCorruption (Порча Миньона не ниже X×20) и minionMutationCount (X бросков по таблице мутаций) — apps/minion-creator.mjs::createMinionActor"
   },
   "trait.naturalWeapons": {
     label: "Естественное оружие: профили Кулаки/Когти/Косы/Щупальца/Рога/Укус/Копыта с X рейтинга — выбор галочками при получении.",
@@ -6422,7 +6427,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Воин_Ноты — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.voinNoty.adoringCrowds": {
     label: "Фанаты стягиваются к нему из-за славы мечника и его выступлений. Может использовать A вместо F и Trade(Dancer) вместо Command для своих Минь…",
-    source: "Adoring Crowds / Обожание Толпы", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::adoringCrowdsEligible → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (повод «Обожание Толпы»: Реакция Миньона-Человека, Успех — +1 Очко Бесчестия Хозяину). A вместо F, Trade(Dancer) вместо Command, бесплатные Sycophant и Trade(Musician) — памятка kind:script в чат"
+    source: "Adoring Crowds / Обожание Толпы", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::adoringCrowdsEligible → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (повод «Обожание Толпы»: Реакция Миньона-Человека, Успех — +1 Очко Бесчестия Хозяину). A вместо F, Trade(Dancer) вместо Command, бесплатные Sycophant и Trade(Musician) — apps/minion-creator.mjs::createMinionActor (rules/minion-build.mjs::adoringCrowdsFreebies); A вместо F для Миньонов-Людей — rules/minion-build.mjs::masterGroupChar (Лояльность, максимум, требование Таланта)"
   },
   "trait.elitnyeArhetipy.voinNoty.danceOfPain": {
     label: "Элегантными выверенными ударами изматывает противника, обрывая его жизнь только когда вдоволь наиграется. Раз в Ход,",
@@ -6466,7 +6471,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.gerold.livingBanner": {
     label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 или Charm(F)+10 и восстановить одно ранее потраче…",
-    source: "Living Banner / Живой Стяг", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Living Banner / Живой Стяг", reader: "module/combat/living-banner.mjs::useLivingBanner — кнопка Черты: Очко Бесчестия, Command/Charm (F)+10, +1 Очко видящим соратникам (ГМ-реле livingBannerBoon). Слух и геральдика — вручную"
   },
   "trait.elitnyeArhetipy.gerold.noblesseOblige": {
     label: "Высокое доверие налагает большую ответственность — его провалы навлекают позор на всю банду.",
@@ -6653,7 +6658,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.korolChervey.wormMaster": {
     label: "В бою может мистически размножать рои паразитов, формируя аморфные боевые конструкты.",
-    source: "Worm Master / Повелитель Червей", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-4bfd (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Worm Master / Повелитель Червей", reader: "module/combat/worm-master.mjs::useWormMaster — кнопка Черты: предел Cor.b, полное действие, W−10, Рой из Бестиария с +10 Ран за Успех сверх первого. Поддержание каждый Ход — вручную"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Кузнец_Крови — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kuznetsKrovi.ringOfBlood": {
@@ -6706,7 +6711,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.malagra.malagraCortex": {
     label: "Кортикальные импланты экранированы гексаграмматическими кодами и защищают разум от вторжения чужой воли.",
-    source: "Malagra Cortex / Кортекс Малагры", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-8fc7 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Malagra Cortex / Кортекс Малагры", reader: "packs-src Malagra Cortex: testMod modValueMode:\"successMul\" (области all ×3 — галочка «против Ноотеургии/Аниматеургии», psychicMind ×2) → rules/item-rules.mjs → resolve-test.mjs → roll-mods.mjs::successMulChecked → rules/kind-outcome.mjs (Успехи ×N до сравнения встречного)"
   },
   "trait.elitnyeArhetipy.malagra.paragonCoil": {
     label: "Комплекс электромагнитных имплантов окутывает его мантией магнитного поля и нимбом сияния. Оснащён Люминен Конденсаторами, Маглев Спиралями,",

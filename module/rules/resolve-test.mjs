@@ -505,6 +505,14 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
         mods.push({ ruleId: rule.id, label, value: 0, halvePenalty: false, autoSuccess: true });
         continue;
       }
+      // Множитель Успехов (20.11.2026, Кортекс Малагры): тоже галочка без
+      // числа к Порогу; отмеченные множители лист передаёт исходу теста
+      // (rules/kind-outcome.mjs, successMul) — тот умножает Успехи до
+      // сравнения встречного теста.
+      if (effect.kind === "successMul") {
+        mods.push({ ruleId: rule.id, label, value: 0, halvePenalty: false, successMul: Math.max(1, Number(effect.value) || 1) });
+        continue;
+      }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.
       // Правило с иным factor не применяем молча, а жалуемся: тихо потерянный
       // множитель ищется днями.

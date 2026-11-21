@@ -82,7 +82,7 @@ import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRIC
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { gearQualityRollMod } from "../constants/quality.mjs";
-import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal, autoSuccessChecked } from "../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal, autoSuccessChecked, successMulChecked } from "../rules/roll-mods.mjs";
 import { socialFactionPickerShown, socialFactionOptions, withSocialFaction } from "../rules/social-faction.mjs";
 import { sensePickerShown, senseSelectHtml, withSense } from "../rules/awareness-talents.mjs";
 import { WITCHFINDER_CAP, witchfinderTestKind } from "../rules/defiance-talents.mjs";
@@ -114,7 +114,7 @@ import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
          personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses, personalAdaptationKey }
   from "../rules/personal-adaptation.mjs";
 import { skillTotal } from "../combat/movement-actions.mjs";
-import { opposedSide } from "../rules/opposed-skill.mjs";
+import { opposedSide, COMMERCE_COUNTER_CHARS } from "../rules/opposed-skill.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -2692,7 +2692,9 @@ export class WarhammerCharacterSheet
             // рассчитан на текстовые поля/select, не на checked.
             const opposedAutoChecked = !!form.querySelector("#opposed-auto")?.checked;
             const opposedAuto = (opposedAutoChecked && isOpposed && targetActor)
-              ? { targetActorUuid: targetActor.uuid } : null;
+              ? { targetActorUuid: targetActor.uuid,
+                  // Торговля: чем отвечает соперник — выбор ГМа (rules/opposed-skill.mjs).
+                  counterChar: form.querySelector("#opposed-counter-char")?.value || null } : null;
             // Сверхъестественная Характеристика соперника (стр. 26, wdbc-y9i8)
             // — при РУЧНОМ вводе Порога/Броска соперника его документ неизвестен
             // системе вовсе, тай-брейк неоткуда взять автоматически, поэтому
@@ -2855,6 +2857,15 @@ export class WarhammerCharacterSheet
               ? `📨 Запросить бросок у «${owner.name}» (${targetActor.name})`
               : `🎲 Бросить за «${targetActor.name}» автоматически`;
             autoRow.hidden = false;
+            // Торговля (wdbc-5abej): соперник отвечает I, P, W или F «в
+            // зависимости от аргументов» — выбирает ГМ, тут же в окне.
+            if (rollContext?.skill === "commerce") {
+              const opts = COMMERCE_COUNTER_CHARS.map(c =>
+                `<option value="${c}">${esc(CHARACTERISTICS[c]?.label ?? c)}</option>`).join("");
+              autoRow.insertAdjacentHTML("afterend", `<div class="roll-dlg-row roll-dlg-subrow">
+                <label>Соперник отвечает (выбор ГМа):</label>
+                <select id="opposed-counter-char">${opts}</select></div>`);
+            }
           }
         }
         // Галочка с data-set-char (Аналитический Взгляд: I вместо P) переключает
@@ -3136,7 +3147,7 @@ export class WarhammerCharacterSheet
       return { opposed: { threshold: 0, roll: 1, brokenAutoFail: true }, opponentActor: null };
     // Соперник отвечает тем, что велит книга (Скрытность — Внимательностью,
     // Очарование — Силой Воли…, rules/opposed-skill.mjs), а не тем же Навыком.
-    const side = opposedSide(skillKey, charKey);
+    const side = opposedSide(skillKey, charKey, { counterChar: opposedAuto.counterChar });
     // Правоверный Тёмного Апостола: +30 на сопротивление убеждению (rules/dark-apostle.mjs).
     const threshold = (side.skillKey ? skillTotal(opponentActor, side.skillKey) : (opponentActor.system.characteristics?.[side.charKey]?.total ?? 0))
       + faithfulResistBonus(opponentActor, { social: isSocialSkill(skillKey) });
@@ -3349,7 +3360,7 @@ export class WarhammerCharacterSheet
       finalOpposed = auto.opposed;
       opposedOpponent = auto.opponentActor;
     }
-    const opponentSide = opposedSide(skillKey, charKey);
+    const opponentSide = opposedSide(skillKey, charKey, { counterChar: opposedAuto?.counterChar });
     const opponentVsNote = (opposedAuto && opponentSide.paired)
       ? `<div class="roll-dlg-note">Соперник отвечает: ${esc(opponentSide.label)}</div>` : "";
     const pendingOpponentNote = (opposedOpponent
@@ -3376,9 +3387,11 @@ export class WarhammerCharacterSheet
     // Галочка «автоуспех» (эффект autoSuccess — Зверь: Survival в родном
     // биоме, 19.11.2026): условие подтвердил игрок, бросок засчитан успешным.
     const autoSuccess = autoSuccessChecked(autoResolved.mods, checkedRuleIds);
+    // Галочка «Успехи ×N» (эффект successMul — Кортекс Малагры, 20.11.2026).
+    const successMul = successMulChecked(autoResolved.mods, checkedRuleIds);
     const outcome = await resolveKindOutcome(effectActor, {
       baseEff, rv, combined: combinedForOutcome, extended, opposed: finalOpposed,
-      opposedSelected: opposedKind, opposedSafeSelected, autoSuccess,
+      opposedSelected: opposedKind, opposedSafeSelected, autoSuccess, successMul,
       // group/specialty (wdbc-1rno.22): групповой Навык приходит без skill
       // (onSkillRoll) — без них исход теста принимал бросок Навигации/Ремесла
       // за тест Характеристики (Инфернальная Воля: «любой тест Навыка»).

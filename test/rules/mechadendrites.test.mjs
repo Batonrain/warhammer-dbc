@@ -8,7 +8,8 @@
 import { describe, it, expect } from "vitest";
 import {
   mechadendritePorts, mechadendriteInstallWarning, mechadendriteTraining, implantPorts,
-  mechadendriteType, isMechadendriteWeapon, mechadendriteAttackPenalty, mechPortsView
+  mechadendriteType, isMechadendriteWeapon, mechadendriteAttackPenalty, mechPortsView,
+  cyberleashPorts, servoSkullCount
 } from "../../module/rules/mechadendrites.mjs";
 import { weaponTrainingPenalty } from "../../module/rules/weapon-training.mjs";
 
@@ -167,5 +168,24 @@ describe("mechPortsView (строка на вкладке ТЕЛО)", () => {
     const v = mechPortsView(mechadendritePorts(actor([mantle(), dendrite("Dendrite Blade / Дендрит Лезвие", "Оружие")])));
     expect(v.warn).toBe(true);
     expect(v.title).toMatch(/атака дендритом −20/);
+  });
+});
+
+describe("Киберпривязь: слот за каждый подключённый сервочереп (wdbc-c88dd)", () => {
+  const leash = (quality = "common") => implant("Cyberleash / Киберпривязь", { category: "mechOther", quality });
+  it("по слоту на череп, не больше предела Качества; у Best.Q один без слота", () => {
+    expect(cyberleashPorts(leash(), 0)).toBe(0);
+    expect(cyberleashPorts(leash(), 1)).toBe(1);
+    expect(cyberleashPorts(leash(), 5)).toBe(2);
+    expect(cyberleashPorts(leash("poor"), 3)).toBe(1);
+    expect(cyberleashPorts(leash("best"), 4)).toBe(3);
+  });
+  it("черепа — Миньоны персонажа с Трейтом Сервочереп; порты учитываются в сводке", () => {
+    const owner = { uuid: "Actor.o" };
+    const skull = { system: { masterUuid: "Actor.o" }, items: [{ type: "trait", name: "Servoskull / Сервочереп" }] };
+    const dog = { system: { masterUuid: "Actor.o" }, items: [] };
+    expect(servoSkullCount(owner, [skull, skull, dog])).toBe(2);
+    const p = mechadendritePorts(actor([mantle(), leash()]), { skulls: 2 });
+    expect(p.used).toBe(2);
   });
 });
