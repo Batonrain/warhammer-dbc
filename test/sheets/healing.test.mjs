@@ -585,6 +585,17 @@ describe("applyHealing: stopBleeding (Остановить Кровотечен�
     expect(captured.rolls).toHaveLength(0);
   });
 
+  it("autoPass (Фронтовой Медик с Нартецием/Аптечкой Good.Q) — без броска, Кровотечение снято", async () => {
+    const medic = person({ medicae: 5 });
+    const patient = person();
+    patient.system.conditions = { bleeding: true };
+    const res = await applyHealing(medic, patient, { mode: "stopBleeding", mod: 0, apCost: 0, autoPass: "Нартеций" });
+    expect(res).toEqual({ success: true, auto: true });
+    expect(patient.system.conditions.bleeding).toBe(false);
+    expect(captured.rolls).toHaveLength(0);
+    expect(captured.chat[0].content).toContain("без теста (Нартеций)");
+  });
+
   it("«активно действовал в прошлый Ход» — по меткам прошлого Хода пациента", async () => {
     const p = person();
     expect(patientActedLastTurn(p)).toBe(false);

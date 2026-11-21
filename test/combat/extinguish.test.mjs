@@ -164,3 +164,15 @@ describe("extinguishBurning: Падай и Перекатывайся", () => {
     expect(res.auto).toBeFalsy();
   });
 });
+
+describe("extinguishBurning: составное действие (Фронтовой Медик)", () => {
+  it("mod +20 и apCost 0 — порог Ag+20, ОД не трогаются", async () => {
+    const helper = makeActor("Медик");
+    const victim = makeActor("Горящий", { conditions: { burning: true } });
+    captured.nextRoll = 55; // ≤ 60
+    const res = await extinguishBurning(helper, victim, { mod: 20, apCost: 0 });
+    expect(res.eff).toBe(60);
+    expect(res.success).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("в составе действия");
+  });
+});

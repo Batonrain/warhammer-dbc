@@ -80,6 +80,7 @@ import { useWormMaster } from "../combat/worm-master.mjs";
 import { fusePossessionWeapon } from "../combat/possession-fusion.mjs";
 import { usePedalToMetal } from "../combat/pedal-to-metal.mjs";
 import { usePutThatOut } from "../combat/put-that-out.mjs";
+import { useFrontlineMedic } from "../combat/frontline-medic.mjs";
 import { studyPsychicLocus } from "../combat/psychic-locus.mjs";
 import { useWarpGifted } from "../combat/warp-gifted.mjs";
 import { prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc } from "../combat/ritual-talents.mjs";
@@ -287,7 +288,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
     "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "toggleDaemonicArmament", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
-    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem", "giveMonodevotantSubstance", "useLivingBanner", "useWormMaster", "fusePossessionWeapon", "usePedalToMetal", "usePutThatOut", "studyPsychicLocus", "useMortido", "useAria", "useOverture", "useBalefulDirge", "useBoonOfOmnissiah", "useTankCommander", "useFanOut", "chooseDreamingPower", "cookMixes", "giveCookMix", "makeAntivenom", "giveAntivenom", "makeDeepDetox", "giveDeepDetox", "usePlacebo", "prepareScapegoat", "useDivineMask", "useBrainwashing", "useTzaangorDisc", "useWarpGifted",
+    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem", "giveMonodevotantSubstance", "useLivingBanner", "useWormMaster", "fusePossessionWeapon", "usePedalToMetal", "usePutThatOut", "useFrontlineMedic", "studyPsychicLocus", "useMortido", "useAria", "useOverture", "useBalefulDirge", "useBoonOfOmnissiah", "useTankCommander", "useFanOut", "chooseDreamingPower", "cookMixes", "giveCookMix", "makeAntivenom", "giveAntivenom", "makeDeepDetox", "giveDeepDetox", "usePlacebo", "prepareScapegoat", "useDivineMask", "useBrainwashing", "useTzaangorDisc", "useWarpGifted",
     "inspiredRest", "gainResource", "spendResource", "resourcePoolDef",
     ...extraNames,
     code
@@ -309,7 +310,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
     grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, toggleDaemonicArmament, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
-    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, studyPsychicLocus, useMortido, useAria, useOverture, useBalefulDirge, useBoonOfOmnissiah, useTankCommander, useFanOut, chooseDreamingPower, cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo, prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc, useWarpGifted,
+    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, useFrontlineMedic, studyPsychicLocus, useMortido, useAria, useOverture, useBalefulDirge, useBoonOfOmnissiah, useTankCommander, useFanOut, chooseDreamingPower, cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo, prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc, useWarpGifted,
     inspiredRest, gainResource, spendResource, resourcePoolDef,
     ...extraNames.map(k => allExtra[k])
   );

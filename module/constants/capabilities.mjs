@@ -2809,7 +2809,7 @@ export const CAPABILITIES = {
   },
   "medic.core.frontlineMedic": {
     label: "За полное действие персонаж может подвигаться на до дистанции Натиска (считается Натиском) к союзнику и сделать одно из: остановить Кровотеч…",
-    source: "Frontline Medic / Фронтовой Медик", reader: ""
+    source: "Frontline Medic / Фронтовой Медик", reader: "запись kind:script на Таланте → module/combat/frontline-medic.mjs::useFrontlineMedic (2 ОД, бюджет пути Натиска; Кровотечение — healing.mjs stopBleeding apCost:0/autoPass, тушение A+20 — extinguish.mjs, Химия — drugs.mjs::applyDrug, Быстрые Стежки — Первая Помощь, Калечение — Medicae+0 с Нартецием). Не смоделировано: переноска на плече (карточка), Piercing (нет Состояния)"
   },
   "medic.core.hookUp": {
     label: "Персонаж может дать −30 на свой тест крафта наркотиков, чтобы уменьшить вдвое (окр.▼) их минимальное опасное количество применений в неделю…",

@@ -75,7 +75,7 @@ async function inContactWith(actor, patient) {
  * Перекатывайся (и без `dropAndRoll:false`) — автоуспех без теста, ложится потушенный.
  * @returns {Promise<null|{success:boolean, critFail:boolean, eff:?number, rv:?number, auto?:boolean}>}
  */
-export async function extinguishBurning(actor, patient = actor, { mod = 0, dropAndRoll } = {}) {
+export async function extinguishBurning(actor, patient = actor, { mod = 0, dropAndRoll, apCost = 1 } = {}) {
   if (!actor || !patient) return null;
   if (!patient.system?.conditions?.burning) {
     ui.notifications.warn(`${patient.name}: не горит.`);
@@ -86,7 +86,8 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0, dropA
     ui.notifications.warn(`${actor.name} не в контакте с ${patient.name} — дотянуться нечем.`);
     return null;
   }
-  if (!await spendActionPoints(actor, 1, { physical: true })) {
+  // apCost: 0 — ОД уже оплачены составным действием (Фронтовой Медик, combat/frontline-medic.mjs).
+  if (apCost > 0 && !await spendActionPoints(actor, apCost, { physical: true })) {
     ui.notifications.warn("⚠️ Не хватает ОД (полудействие).");
     return null;
   }
@@ -142,8 +143,8 @@ export async function extinguishBurning(actor, patient = actor, { mod = 0, dropA
       : rollStatLine({ label: self ? "Ag−20" : "Ag+0", base: t.base, parts, threshold: t.eff, rv: t.rv }),
     lines,
     outcome: outcomeHtml(success, success
-      ? `Пламя сбито — ${esc(patient.name)} больше не горит (полудействие).`
-      : `Не удалось — ${esc(patient.name)} всё ещё горит (полудействие потрачено).`)
+      ? `Пламя сбито — ${esc(patient.name)} больше не горит (${apCost > 0 ? "полудействие" : "в составе действия"}).`
+      : `Не удалось — ${esc(patient.name)} всё ещё горит (${apCost > 0 ? "полудействие потрачено" : "действие потрачено"}).`)
   }, { rolls: auto ? [] : [t.roll], sound: !auto });
   return { success, critFail, eff: t.eff, rv: t.rv, auto };
 }

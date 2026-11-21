@@ -747,13 +747,15 @@ export function stopBleedingMod({ selfTreat = false, patientActive = false, tour
  * полудействие, Medicae−10/−30; жгут — полное действие, +40. Успех снимает
  * Кровотечение (Обескровливание остаётся — оно сходит по часу).
  */
-async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActive }) {
+async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActive, apCost = null, autoPass = "" }) {
   if (!patient.system.conditions?.bleeding) {
     ui.notifications.warn(`${patient.name}: Кровотечения нет.`);
     return;
   }
-  const cost = tourniquet ? 2 : 1;
-  if (!await spendActionPoints(medic, cost, { physical: true })) {
+  // apCost — ОД уже оплачены составным действием (Фронтовой Медик, combat/frontline-medic.mjs);
+  // autoPass — причина остановки без теста («Нартеций» / «Аптечка Good.Q»).
+  const cost = apCost ?? (tourniquet ? 2 : 1);
+  if (cost > 0 && !await spendActionPoints(medic, cost, { physical: true })) {
     ui.notifications.warn(`Не хватает ОД: нужно ${cost} (${tourniquet ? "полное действие" : "полудействие"}).`);
     return;
   }
@@ -761,6 +763,17 @@ async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActiv
   const bookMod = stopBleedingMod({ selfTreat, patientActive, tourniquet });
   const pMod = patientHealingMod(patient);
   const eff = medicaeEff(medic, patient, mod + bookMod);
+  if (autoPass) {
+    try {
+      await patient.update(conditionRemoveFields("bleeding"));
+      await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Остановить Кровотечение",
+        [...pMod.lines, `${rollIcon("blood","#ff6b6b")}<b>Остановить Кровотечение</b> без теста (${esc(autoPass)}).`, "Кровотечение остановлено."], []);
+    } catch {
+      await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Остановить Кровотечение",
+        [`${rollIcon("warn","#ffb84d")}Без теста (${esc(autoPass)}), но нет прав на изменение листа цели — снимите Кровотечение вручную.`], []);
+    }
+    return { success: true, auto: true };
+  }
   const roll = await new Roll("1d100").evaluate();
   const rolled = roll.total <= eff;
   const ls = await legionSurgeryPass(medic, rolled, "Остановить Кровотечение");
@@ -786,6 +799,7 @@ async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActiv
     lines.push("Кровь не остановлена — можно попробовать снова.");
   }
   await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Остановить Кровотечение", lines, [roll]);
+  return { success, auto: false };
 }
 
 /** Кисть/стопа «теряется полностью» — вместе со всей рукой/ногой. */
