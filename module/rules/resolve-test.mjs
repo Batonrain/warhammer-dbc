@@ -736,6 +736,27 @@ export function autoFailFromRules(rules, ctx = {}) {
 }
 
 /**
+ * «Только Критический Успех» (эффект critSuccessOnly, 21.11.2026 — Скрытые
+ * Узоры Ворона: «тесты на засекание работы Стоек Обмана пси-чутьём … что-то
+ * обнаруживают только Критическим Успехом»). Обычный Успех такого теста
+ * засчитывается Провалом; применяет rules/kind-outcome.mjs тем же путём, что
+ * автопровал (строка «⛔» на карточке), после того как известен Крит.
+ *
+ * @returns {{ruleId:string, label:string, degrees:number}[]} пустой — ограничения нет
+ */
+export function critSuccessOnlyFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "critSuccessOnly") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, degrees: 1 });
+    }
+  }
+  return out;
+}
+
+/**
  * Потолок степени УСПЕХА (BONE-Head Огрина: «Любой тест I … при Успехе дает
  * не больше 1 Успеха») — эффект `successDegMax`. Несколько источников —
  * берётся самый строгий (наименьший). Применяет rules/kind-outcome.mjs

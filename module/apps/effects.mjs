@@ -65,6 +65,9 @@ function isItemActiveBase(item) {
   // Черта или Талант, а они в switch попадают в default «активен всегда» —
   // выключатель там бы утонул.
   if (toggleParentId(item)) return isToggleOn(item);
+  // Талант/Черта погашенного Архетипа (Сила Из Плоти, Соглашение Доблести —
+  // rules/archetype-suppression.mjs, флаг ставит apps/mechanics.mjs::syncArchetypeSuppression).
+  if ((item.type === "talent" || item.type === "trait") && item.flags?.["warhammer-dbc"]?.archetypeSuppressed) return false;
   switch (item.type) {
     case "weapon": case "armor": return !!sys.equipped;
     // Снаряжение (wdbc-9h7g): носимое — по своему тумблеру «надето», прочее —
@@ -276,7 +279,10 @@ export async function syncWhenGatedEffects(actor) {
 }
 
 export async function syncItemEffectsDisabled(item, activeOverride) {
-  const active = activeOverride !== undefined ? activeOverride : isItemActive(item);
+  // Бонусы к Характеристикам предмета Архетипа гаснут отдельно от выданных им
+  // Черт (иначе syncGrantedAbilities удалил бы сами Черты): флаг archetypeCharsOff.
+  const active = activeOverride !== undefined ? activeOverride
+    : (isItemActive(item) && !item.flags?.["warhammer-dbc"]?.archetypeCharsOff);
   // item.effects.contents ?? item.effects ?? [] (wdbc-s9dj): настоящая
   // Foundry-коллекция и часть тестовых фикстур дают .contents, другая часть
   // (module/apps/mechanics.mjs::syncMechanicsEffects и его тесты) читает

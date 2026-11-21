@@ -33,6 +33,7 @@ export function duelistEvasionMod(defender, attacker, { kind = "dodge", isMelee 
 export function duelistEvasionNotes(defender, { kind = "dodge", passed = false, deg = 0, isMelee = false, attackerWeapon = null } = {}) {
   const out = [...ravenEvasionNotes(defender, { passed, deg, isMelee })];
   if (kind === "parry" && secutoriusPinOffered(defender, { passed, deg, attackerWeapon }))
-    out.push("🛡️ Секуторий: можно потратить 3 Успеха и прижать оружие щитом — щит занят, противник не может пользоваться этим оружием, пока Гладиатор не отпустит.");
+    out.push(`🛡️ Секуторий: можно потратить 3 Успеха и прижать оружие щитом — щит занят, противник не может пользоваться этим оружием, пока Гладиатор не отпустит.${attackerWeapon?.uuid
+      ? ` <button type="button" class="wh-secutor-pin-btn" data-actor-uuid="${defender?.uuid ?? ""}" data-weapon-uuid="${attackerWeapon.uuid}">🛡️ Прижать «${String(attackerWeapon.name ?? "оружие").replace(/[<>&"]/g, "")}» щитом</button>` : ""}`);
   return out;
 }

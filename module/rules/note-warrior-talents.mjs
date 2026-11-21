@@ -31,11 +31,14 @@ export function dancerAgValue(actor) {
 
 export const WALTZ_NOTE = "Вальс: Trade(Dancer)(A)+0 vs Awareness(P)+0. Успех — Воин проскальзывает мимо помех на пути: цели не смещаются, не сбиваются с ног и не получают урона.";
 
+/** Ключ варианта Вальса в окне приёма (combat/techniques.mjs подменяет по нему исход успеха). */
+export const WALTZ_KEY = "noteWarrior:waltz";
+
 /** Вариант окна Напролома у Воина с Вальсом. */
 export function waltzContestOptions(actor, techDef) {
   if (!hasWaltz(actor) || techDef?.label !== "Напролом") return [];
   return [{
-    key: "noteWarrior:waltz", label: "Trade(Dancer)(A) — Вальс", value: dancerAgValue(actor),
+    key: WALTZ_KEY, label: "Trade(Dancer)(A) — Вальс", value: dancerAgValue(actor),
     skillKey: "trade", charKey: "ag", resist: [{ skill: "awareness" }], techNote: WALTZ_NOTE
   }];
 }

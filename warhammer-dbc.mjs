@@ -52,7 +52,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment, onItemQualityChanged,
-         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
+         syncNullZoneSuppression, syncArchetypeSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
          getItemMechanics, findMechEntryById } from "./module/apps/mechanics.mjs";
 import { entryWhenOk } from "./module/rules/mech-when.mjs";
 import { isItemActive, syncOrphanedModEffects, syncWhenGatedEffects } from "./module/apps/effects.mjs";
@@ -123,6 +123,9 @@ import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { initMovementActionsHud, initMovedFlagTracking } from "./module/combat/movement-actions.mjs";
 import { initRigStealHud } from "./module/combat/rig-steal.mjs";
 import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
+import { registerDevourerMovementAction } from "./module/combat/devourer.mjs";
+import { valourOnEquip } from "./module/combat/valourous-accord.mjs";
+import { suppressibleArchetypeOf } from "./module/rules/archetype-suppression.mjs";
 import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { initPathLimitHooks } from "./module/combat/path-limit.mjs";
@@ -1724,6 +1727,7 @@ Hooks.once("init", () => initDifficultTerrainHud());
 Hooks.once("init", () => initMovementActionsHud());
 Hooks.once("init", () => initRigStealHud());
 Hooks.once("init", () => initForceMoveHud());
+Hooks.once("init", () => registerDevourerMovementAction());
 Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
@@ -1772,6 +1776,9 @@ Hooks.on("updateWorldTime", (worldTime, dt) => {
   // правил Состояний (combat/condition-clock.mjs, CONDITION_CLOCK_HANDLERS).
   // dt — сколько секунд прошло этим сдвигом (Foundry: helpers/time.mjs).
   sweepAllConditionClocks(worldTime, dt);
+  // Соглашение Доблести: истёкший срок покаяния возвращает Архетип (у ГМа).
+  import("./module/combat/valourous-accord.mjs").then(m => m.sweepValourExpiry())
+    .catch(e => console.error("Warhammer DBC | Соглашение Доблести:", e));
 });
 
 // ── Нексус Сцен: держать открытое окно в актуальном состоянии ─────────────────
@@ -3132,6 +3139,28 @@ Hooks.on("preUpdateItem", (item, changed) => {
   if (!_integralProtected(item)) return true;
   ui.notifications?.warn(`«${item.name}» — интегральная атака: снять её нельзя.`);
   return false;
+});
+
+// ── Подавление Элитного Архетипа (rules/archetype-suppression.mjs) ────────────
+// Сила Из Плоти: Черта Machine, Талант Fleshmetal, мутация Механоид, чужой Фрейм
+// и сами Таланты/Черты Архетипа — появление или снятие любого из них пересчитывает,
+// погашен ли Электрожрец. Соглашение Доблести: надетая чужая броня — нарушение.
+const ARCH_SUPPRESS_TRIGGERS = /^(machine|fleshmetal|mechanoid|механоид|assassin frame|paladin frame|masterpiece frame|power from flesh)\b/i;
+function _archSuppressRelevant(item) {
+  if (item?.type === "eliteArchetype") return true;
+  if (!["trait", "talent", "mutation"].includes(item?.type)) return false;
+  return ARCH_SUPPRESS_TRIGGERS.test(String(item.name || "").trim()) || !!suppressibleArchetypeOf(item);
+}
+for (const hook of ["createItem", "deleteItem"]) {
+  Hooks.on(hook, item => {
+    if (game.users.activeGM !== game.user) return;
+    if (!(item?.parent instanceof Actor) || !_archSuppressRelevant(item)) return;
+    syncArchetypeSuppression(item.parent).catch(e => console.error("Warhammer DBC | подавление Архетипа:", e));
+  });
+}
+Hooks.on("updateItem", (item, changes, _o, userId) => {
+  if (userId !== game.user.id || !(item?.parent instanceof Actor)) return;
+  valourOnEquip(item, changes).catch(e => console.error("Warhammer DBC | Соглашение Доблести:", e));
 });
 
 // ── Пустота Парии / поле Дискорданта (rules/null-zones.mjs) ───────────────────

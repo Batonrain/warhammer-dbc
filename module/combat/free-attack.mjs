@@ -326,6 +326,11 @@ export function initFreeAttackHooks() {
     // Только клиент, вызвавший перемещение, считает разрыв контакта — иначе
     // карточка в чат ушла бы с каждого подключённого клиента разом.
     if (userId !== game.user.id) return;
+    // Поглотитель: «Таран» Напролома — на один свой сдвиг.
+    if (movesPosition(changes) && !(pre?.forced || isForcedMove(options))) {
+      const { endDevourerRam } = await import("./devourer.mjs");
+      await endDevourerRam(tokenDoc);
+    }
     if (!before || before.size === 0) return;
     if (!game.combat?.started || !movesPosition(changes)) return;
     await processTokenMove(tokenDoc, before, { forced: !!pre?.forced || isForcedMove(options) });

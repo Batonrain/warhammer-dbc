@@ -11,6 +11,7 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 import { mergeReroll } from "../../rules/test-kind-widget.mjs";
+import { SEEKER_SIZE_RULES } from "../../rules/runic-shot.mjs";
 
 
 /** Возможность «раз в Раунд авто-попадание рукопашной» (Локус Неизбежности). */
@@ -64,6 +65,19 @@ export function readAttackForm(form, ammoConds) {
   }
 
   const allOut = on("#atk-allout");
+
+  // Галочки Талантов главы 3 (sheets/attack/talent-toggles.mjs): ключ → bool | значение select.
+  const talentToggles = Object.fromEntries(all(".atk-talent-toggle").map(e =>
+    [e.dataset.key, e.type === "checkbox" ? !!e.checked : (e.value || "")]));
+  // Рунная Артиллерия (Питати): одиночный выстрел рунной пулей — строки дальности не в Порог.
+  const runicArtilleryWaived = !!talentToggles.runicShot && el(ROF)?.value === "single";
+  // Пуля Искатель (rules/runic-shot.mjs::seekerThresholdOffset): что из отмеченного она гасит.
+  const sumChecked = sel => all(sel).reduce((n, cb) => n + (parseInt(cb.dataset.value) || 0), 0);
+  const seekerMelee = sumChecked(".atk-mod-cb[data-seeker='melee']:checked");
+  const seekerLos   = sumChecked(".atk-mod-cb[data-seeker='los']:checked");
+  const sizePenalty = Math.min(0, all(".rule-mod:checked")
+    .filter(cb => SEEKER_SIZE_RULES.includes(cb.dataset.ruleId))
+    .reduce((n, cb) => n + (parseInt(cb.dataset.value) || 0), 0));
 
   // Выбранный переброс: −1 значит «без переброса». Именной (от правила)
   // важнее общего Кубика (Преимущество/Помеха) — тот же приём, что у диалога
@@ -122,9 +136,11 @@ export function readAttackForm(form, ammoConds) {
     doubleTap:  el("#atk-double-tap")?.checked || false,
     // По Этим Координатам (Талант Стрелка): запрет Избирательной и Прицеливания.
     onThisMark: el("#atk-on-this-mark")?.checked || false,
-    // Галочки Талантов главы 3 (sheets/attack/talent-toggles.mjs): ключ → bool | значение select.
-    talentToggles: Object.fromEntries(all(".atk-talent-toggle").map(e =>
-      [e.dataset.key, e.type === "checkbox" ? !!e.checked : (e.value || "")])),
+    talentToggles,
+    runicArtilleryWaived,
+    // Одиночный выстрел рунной пулей (Рунная Артиллерия, Пуля Искатель).
+    runicSingle: runicArtilleryWaived,
+    seekerMelee, seekerLos, sizePenalty,
     // Тесное помещение (стр. 36, wdbc-x1nz.2.63) — ГМ решает на глаз, галочка
     // видна только у Взрывного (attack-dialog.mjs::confinedSpaceHtml).
     confinedSpace: el("#atk-confined-space")?.checked || false,
@@ -167,6 +183,7 @@ export function readAttackForm(form, ammoConds) {
     // data-value уже 0 у автоуспеха (см. makeMods выше), поэтому отдельно
     // исключать его из суммы не нужно — селектор тот же, что и раньше.
     sitMods:    all(".atk-mod-cb:not([data-autofail]):checked")
+      .filter(cb => !(runicArtilleryWaived && cb.dataset.runicArtillery === "1"))
       .reduce((n, cb) => n + (parseInt(cb.dataset.value) || 0), 0),
     ammoSel,
     ammoMods:   ammoSel.reduce((n, c) => n + (c.atk || 0), 0),

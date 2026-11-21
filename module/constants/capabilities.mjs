@@ -4355,7 +4355,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voinNoty.waltz": {
     label: "Лёгкими танцующими движениями обходит телохранителей и свиту, добираясь напрямую к цели.",
-    source: "Waltz / Вальс", reader: "module/rules/note-warrior-talents.mjs::waltzContestOptions → combat/techniques.mjs (Напролом)"
+    source: "Waltz / Вальс", reader: "module/rules/note-warrior-talents.mjs::waltzContestOptions → combat/techniques.mjs (Напролом) → combat/bulldoze.mjs::resolveWaltzSuccess"
   },
   // ── Элитные_архетипы\Ворон — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.voron.acupuncture": {
@@ -4368,7 +4368,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.voron.hiddenPatterns": {
     label: "Совершенствует сокрытие рунических узоров, дарующих ему силу, скрывая их даже от чувств Одарённых.",
-    source: "Hidden Patterns / Скрытые Узоры", reader: "module/combat/raven.mjs::chooseRavenStance (строка карточки Стойки)"
+    source: "Hidden Patterns / Скрытые Узоры", reader: "module/rules/raven-talents.mjs::hiddenPatternsRules (источник ravenHiddenPatterns, вид critSuccessOnly) → rules/kind-outcome.mjs"
   },
   "elite.elitnyeArhetipy.voron.leverage": {
     label: "Техники Ворона позволяют полагаться на навык в приёмах, что требуют грубой силы. Может использовать WS вместо S и Deceive вместо Athletics в…",
@@ -4419,7 +4419,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gladiator.dimacherus": {
     label: "Сражается в агрессивном стиле, используя оружие в каждой руке. Если вооружён хотя бы двумя рукопашными оружиями,",
-    source: "Dimacherus / Димахер", reader: "module/rules/gladiator-talents.mjs::dimacherusBonus → combat/attack.mjs flatBonus"
+    source: "Dimacherus / Димахер", reader: "module/rules/gladiator-talents.mjs::dimacherusBonus → combat/attack.mjs flatBonus; rules/dual-wield-talents.mjs::dimacherusSolo (Таланты Два Оружия с одним оружием) → combat/defense.mjs"
   },
   "elite.elitnyeArhetipy.gladiator.malearius": {
     label: "Сражается метеоритным молотом, танцуя на его реактивных струях как артист. Вооружённый метеоритным молотом и не нося броню прочнее AP4 ни на…",
@@ -4435,7 +4435,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.gladiator.secutorius": {
     label: "Полагается на свой щит, чтобы сблизиться с противником. Вооружённый щитом и рукопашным оружием с Rng не более 3,",
-    source: "Secutorius / Секуторий", reader: "module/rules/gladiator-arena.mjs::secutoriusParryExtra/secutoriusPinOffered → rules/duelist-evasion.mjs → combat/defense.mjs"
+    source: "Secutorius / Секуторий", reader: "module/rules/gladiator-arena.mjs::secutoriusParryExtra/secutoriusPinOffered/secutorPinOf → rules/duelist-evasion.mjs → combat/defense.mjs; combat/gladiator.mjs::pinWithShield/secutorPinRefusal/useSecutorius"
   },
   // ── Элитные_архетипы\Дикий_Псайкер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.dikiyPsayker.chainsOfAlacrity": {
@@ -4642,7 +4642,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Кенетаи — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kenetai.bladesOfBrotherhood": {
     label: "Мистическая сила клинков перетекает в клинки братьев по оружию. Манифестируя Психический Клинок на своё оружие,",
-    source: "Blades of Brotherhood / Клинки Братства", reader: "module/combat/psyker-elite-hooks.mjs::eliteManifestAfter (Психический Клинок → союзники Общего Сознания, rules/kenetai-talents.mjs::brotherhoodEpr)"
+    source: "Blades of Brotherhood / Клинки Братства", reader: "module/combat/psyker-elite-hooks.mjs::eliteManifestAfter (метка союзников) → rules/kenetai-talents.mjs::brotherhoodBuffsFor → combat/weapon-mods.mjs; brotherhoodSustainCost → rules/character.mjs"
   },
   "elite.elitnyeArhetipy.kenetai.focusedStorm": {
     label: "Заклинания с лезвия Оккультного Клинка фокусируют мощь в точку. При использовании Оккультного Клинка для манифестации Психического Шторма ил…",
@@ -4650,7 +4650,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kenetai.soulThrust": {
     label: "Клинок пробивает не только плоть, но и психическую защиту. Если попадает приёмом Выпад и использует Оккультный Клинок для манифестации психо…",
-    source: "Soul Thrust / Выпад Души", reader: "module/combat/kenetai.mjs::useOccultBlade (ввод Успехов) → combat/psyker-elite-hooks.mjs::eliteManifestRoll"
+    source: "Soul Thrust / Выпад Души", reader: "module/combat/kenetai.mjs::thrustDegFromMessage/useOccultBlade (Успехи с карточки атаки) → combat/psyker-elite-hooks.mjs::eliteManifestRoll"
   },
   "elite.elitnyeArhetipy.kenetai.spellBreaker": {
     label: "Клинок разрубает нити заклинаний, опутывающих цель. При использовании Оккультного Клинка может вместо манифестации пройти психотест W+0 vs W…",
@@ -5057,15 +5057,15 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.pitati.runicArtillery": {
     label: "Способен стрелять с невероятной дальностью. Совершая рунный выстрел после Полного Прицеливания при поддержании психосилы Preternatural Aware…",
-    source: "Runic Artillery / Рунная Артиллерия", reader: "module/rules/runic-shot.mjs::runicArtilleryActive → rules/range-penalty-immunity.mjs"
+    source: "Runic Artillery / Рунная Артиллерия", reader: "module/rules/range-penalty-immunity.mjs::runicArtilleryMarks → sheets/attack/mods.mjs, sheets/attack/form.mjs (только одиночный рунный выстрел); rules/runic-shot.mjs::runicFlightLine → combat/attack.mjs"
   },
   "elite.elitnyeArhetipy.pitati.seekerBullet": {
     label: "Пуля способна огибать препятствия и разворачиваться к цели. Вплетая в Рунный Выстрел Mind Over Matter (W+0),",
-    source: "Seeker Bullet / Пуля Искатель", reader: "module/combat/pitati.mjs::weaveRunicPower (эффект выстрела Mind Over Matter)"
+    source: "Seeker Bullet / Пуля Искатель", reader: "module/combat/pitati.mjs::weaveRunicPower/armSeekerBullet/seekerReturnHit → rules/runic-shot.mjs::seekerReady/seekerThresholdOffset → sheets/attack-dialog.mjs, combat/attack.mjs"
   },
   "elite.elitnyeArhetipy.pitati.timedExplosion": {
     label: "Умело заряжает пули психическими взрывами, чтобы они взорвались на расстоянии цели. Вплетая любой психический взрыв в Рунный Выстрел,",
-    source: "Timed Explosion / Выдержанный Взрыв", reader: "module/rules/runic-shot.mjs::isPsychicBlast → combat/pitati.mjs, combat/attack.mjs (строка промаха)"
+    source: "Timed Explosion / Выдержанный Взрыв", reader: "module/combat/pitati.mjs::useTimedExplosion/injectPitatiButtons/takeTimedExplosionPoint → hooks.mjs (кнопка шаблона силы)"
   },
   // ── Элитные_архетипы\Ревенант — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.revenant.revenantPactStage1": {
@@ -5107,7 +5107,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.sekutor.ordinator": {
     label: "Мощные внутренние гироскопы всегда удерживают его на ногах. Не может быть сбит с ног,",
-    source: "Ordinator / Ординатор", reader: "module/rules/secutor-talents.mjs::ordinatorStands → rules/condition-guards.mjs (иммунитет к «Сбит с ног») и combat/status-resist.mjs (исключение — рукопашный приём того, кто больше)"
+    source: "Ordinator / Ординатор", reader: "module/rules/secutor-talents.mjs::ordinatorStands → rules/condition-guards.mjs, combat/status-resist.mjs; ordinatorGunRefusal → sheets/attack-dialog.mjs; ordinatorVehicleGun → sheets/attack/mods.mjs; ordinatorLoader → combat/reload.mjs"
   },
   "elite.elitnyeArhetipy.sekutor.sustainedAssault": {
     label: "С каждой атакой вносит правки в боевые алгоритмы, подстраиваясь под цель. Если атакует одну и ту же цель несколько раз подряд без переключен…",
@@ -5300,7 +5300,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chempionTerminator.devourer": {
     label: "Совершая Напролом, может проноситься сквозь укреплённые стены и игнорирует Трудный Ландшафт.",
-    source: "Devourer / Поглотитель", reader: "module/combat/grapple.mjs::grappleSize → rules/terminator-talents.mjs::devourerGrappleSize"
+    source: "Devourer / Поглотитель", reader: "module/combat/grapple.mjs::grappleSize → rules/terminator-talents.mjs::devourerGrappleSize; combat/devourer.mjs (действие движения «Таран», devourerDamageSection) → combat/bulldoze.mjs, combat/knockdown.mjs, combat/movement-terrain.mjs"
   },
   "elite.elitnyeArhetipy.chempionTerminator.justaerin": {
     label: "Уменьшает штраф за атаки с двух рук на 10, если вооружён винтовкой и рукопашным оружием (считается сам). Вручную: считается двумя персонажами в численном перевесе; винтовки как пистолеты и тяжёлое как винтовки для стрельбы в рукопашной.",
@@ -5333,7 +5333,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chernoknizhnik.interpreter": {
     label: "Способен освоить даже экзотические психосилы. Может обучаться редким дисциплинам у псайкеров и при обучении у псайкеров получает Преимущество на все тесты Транскрипции. НЕ реализовано: тестов «Транскрипции» в системе нет вовсе (grep по всему module/ — ни одного вызова, только текст здесь и в elite-archetypes.mjs) — Преимущество нечему давать, пока эта механика (вероятно, копирование психосил) не построена отдельно. См. bd «Разобрать».",
-    source: "Interpreter / Интерпретатор", reader: "module/combat/warlock.mjs::useTranscription (Преимущество)"
+    source: "Interpreter / Интерпретатор", reader: "module/combat/warlock.mjs::useTranscription (Преимущество); запрета на редкие дисциплины в системе нет"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.listener": {
     label: "Частично трансмутирует свою душу, открывая её течениям Варпа. Может использовать Пси-Чутьё как псайкер.",
@@ -6667,7 +6667,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kuznetsKrovi.valourousAccord": {
     label: "Связан жёстким кодексом чести — полагаться только на собственные силы. Если использует психосилы, психосиловое оружие,",
-    source: "Valourous Accord / Соглашение Доблести", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Valourous Accord / Соглашение Доблести", reader: "module/combat/valourous-accord.mjs::checkValourViolation (psyker-elite-hooks, ritual-cast, attack, updateItem) → rules/archetype-suppression.mjs → apps/mechanics.mjs::syncArchetypeSuppression; кнопка useValourousAccord"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Лакрималлус — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.lakrimallus.cyberembrace": {
@@ -7035,7 +7035,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.elektrozhrets.powerFromFlesh": {
     label: "Все эффекты Архетипа (включая бонусы к Характеристикам) действуют только с фреймом Хоминис и теряются при установке другого Фрейма.",
-    source: "Power From Flesh / Сила Из Плоти", reader: "ЧАСТИЧНО (21.11.2026): rules/electropriest.mjs::electropriestActive — Трейт Machine гасит Катушки и Таланты Электрожреца; фрейм Хоминис и бонусы к Характеристикам — ГМ"
+    source: "Power From Flesh / Сила Из Плоти", reader: "module/rules/electropriest.mjs::electropriestActive/otherFrameInstalled → rules/archetype-suppression.mjs → apps/mechanics.mjs::syncArchetypeSuppression (флаги на Талантах/Чертах и бонусах Архетипа)"
   },
   // ── Дары Богов Хаоса (wdbc-1rno) — активные/условные способности без
   // подходящего поля Конструктора, заглушка данными, reader пуст сознательно ──

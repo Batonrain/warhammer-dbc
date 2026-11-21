@@ -29,7 +29,7 @@ import { hasMagusSupreme } from "../rules/archmagus-talents.mjs";
 import { darkArtsGate, warpDanceOutcome } from "../rules/warlock-talents.mjs";
 import { warlockAfterManifest } from "./warlock.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
-import { occultShotShape, hasFocusedStorm, hasBladesOfBrotherhood, brotherhoodEpr, SHARED_MIND_FLAG, sharedMindRange } from "../rules/kenetai-talents.mjs";
+import { occultShotShape, hasFocusedStorm, hasBladesOfBrotherhood, brotherhoodEpr, SHARED_MIND_FLAG, sharedMindRange, BROTHERHOOD_FLAG } from "../rules/kenetai-talents.mjs";
 import { markOccultBladeUse } from "./kenetai-state.mjs";
 import { parseRangeMeters } from "../rules/psy-range.mjs";
 import { actorsDistance } from "./psyker-elite-common.mjs";
@@ -141,7 +141,19 @@ export async function eliteManifestAfter(actor, item, opts, { success = false, e
   if (phenomena && hasMagusSupreme(actor)) {
     out.push(small("Высший Магус: этот Феномен (не Прорыв) <b>не действует на самого Архимага</b>, на остальных — как обычно. Исключить союзников (1 Очко Бесчестия) или перенести Прорыв (3 Очка) — кнопкой Черты.", "#5a4a30"));
   }
-  // Оккультный Клинок: отметка «раз в Раунд» (свободное действие уже не списало ОД).
+  // Соглашение Доблести (Кузнец Крови): проявление психосилы нарушает обет.
+  if (!opts.reroll) {
+    const { checkValourViolation } = await import("./valourous-accord.mjs");
+    const ln = await checkValourViolation(actor, "psychic", item);
+    if (ln) out.push(small(ln, "#8a1c1c"));
+  }
+  // Пуля Искатель (Питати): Mind Over Matter вплетён ради эффекта пули — эффект ждёт рунного выстрела.
+  if (success && opts.seekerBullet != null && !opts.reroll) {
+    const { armSeekerBullet } = await import("./pitati.mjs");
+    const ln = await armSeekerBullet(actor, opts.seekerBullet);
+    if (ln) out.push(small(ln, "#335"));
+  }
+    // Оккультный Клинок: отметка «раз в Раунд» (свободное действие уже не списало ОД).
   if (opts.occultBlade && !opts.reroll) await markOccultBladeUse(actor, opts.occultBlade.weaponUuid);
   // Клинки Братства: Психический Клинок — и на оружие связанных Общим Сознанием в радиусе, эPR вдвое меньше.
   if (success && item?.system?.powerType === "psychicBlade" && hasBladesOfBrotherhood(actor)) {
@@ -149,7 +161,11 @@ export async function eliteManifestAfter(actor, item, opts, { success = false, e
       .map(u => { try { return fromUuidSync(u); } catch { return null; } }).filter(Boolean);
     const range = sharedMindRange(actor);
     const near = members.filter(m => { const d = actorsDistance(actor, m); return d == null || d <= range; });
-    if (near.length) out.push(small(`Клинки Братства: «${esc(item.name)}» и на рукопашном оружии ${near.map(m => esc(m.name)).join(", ")} с эPR <b>${brotherhoodEpr(ePR)}</b> (½, окр.▲). Поддержание на союзниках — ещё одна отдельная сила для тPR.`, "#335"));
+    if (!opts.reroll && typeof item.setFlag === "function") {
+      if (near.length) await item.setFlag("warhammer-dbc", BROTHERHOOD_FLAG, near.map(m => m.uuid));
+      else if (item.getFlag?.("warhammer-dbc", BROTHERHOOD_FLAG)) await item.unsetFlag("warhammer-dbc", BROTHERHOOD_FLAG);
+    }
+    if (near.length) out.push(small(`Клинки Братства: «${esc(item.name)}» и на рукопашном оружии ${near.map(m => esc(m.name)).join(", ")} с эPR <b>${brotherhoodEpr(ePR)}</b> (½, окр.▲) — усиление клинка ложится на их оружие само, вдвое слабее. Пока сила поддерживается, она стоит тPR ещё раз (как отдельная сила) — уже в шапке.`, "#335"));
   }
   const ow = Number(opts?.eliteBoost?.overwhelming) || 0;
   if (ow && success && item?.system?.sustainable) {

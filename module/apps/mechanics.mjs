@@ -468,6 +468,7 @@ import { AVAILABILITY, DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
+import { suppressedArchetypes, suppressibleArchetypeOf, itemShouldBeSuppressed, ITEM_FLAG as ARCH_ITEM_FLAG, CHARS_FLAG as ARCH_CHARS_FLAG } from "../rules/archetype-suppression.mjs";
 import { expectedPhase, AP_LOCATIONS, EYE_ARMOUR_KEY } from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
@@ -3254,6 +3255,36 @@ export async function syncRankAndFileGrants(actor) {
  * runMechScriptEntry, чтобы дать script-контексту kind:"script" (wdbc-1rno,
  * Pure Form/Чистая Форма).
  */
+/**
+ * Элитный Архетип целиком гаснет и возвращается (rules/archetype-suppression.mjs):
+ * Сила Из Плоти — живое условие (Machine, чужой Фрейм), Соглашение Доблести —
+ * срок в мировом времени. Флаг на каждом Таланте/Черте Архетипа (их читают
+ * isItemActive и itemsNamed) и archetypeCharsOff на предмете Архетипа (бонусы
+ * к Характеристикам) — та же цепочка пересинхронизации, что у Пустоты Парии.
+ * @returns {Promise<string[]>} имена предметов, сменивших состояние
+ */
+export async function syncArchetypeSuppression(actor, now = Number(game?.time?.worldTime) || 0) {
+  const names = [];
+  if (!actor?.items) return names;
+  const set = suppressedArchetypes(actor, now);
+  for (const item of [...actor.items]) {
+    const isArch = item.type === "eliteArchetype";
+    if (!isArch && !suppressibleArchetypeOf(item)) continue;
+    const want = itemShouldBeSuppressed(actor, item, now, set);
+    const key = isArch ? ARCH_CHARS_FLAG : ARCH_ITEM_FLAG;
+    if (!!item.getFlag(FLAG, key) === want) continue;
+    await item.setFlag(FLAG, key, want);
+    await syncItemEffectsDisabled(item);
+    if (!isArch) {
+      await syncWeaponPropItemEffects(item);
+      await syncGrantedAbilities(item);
+      await syncGrantedEquipment(item);
+    }
+    names.push(item.name);
+  }
+  return names;
+}
+
 /**
  * Пустота Парии / поле Дискорданта (rules/null-zones.mjs): гасит на акторе
  * сверхъестественные мутации/Дары (в Пустоте) и электронные импланты (в поле)

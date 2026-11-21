@@ -43,11 +43,21 @@ const wpBonus = actor => Math.max(0, Number(actor?.system?.characteristics?.wp?.
 const energyOf = actor => Math.max(0, Number(actor?.system?.energy?.value) || 0);
 
 /**
+ * Фреймы Механикус, отличные от Хоминис (человеческого тела по умолчанию):
+ * Черты-тела архетипов Тех-Ассасин, Секутор, Архимагос. «Все эффекты
+ * Архетипа действуют только с фреймом Хоминис и теряются при установке
+ * другого Фрейма».
+ */
+export const OTHER_FRAMES = ["Assassin Frame", "Paladin Frame", "Masterpiece Frame"];
+export const otherFrameInstalled = actor => OTHER_FRAMES.some(n => hasItemNamed(actor, n, ["trait"]));
+
+/**
  * Сила Из Плоти: с Чертой Machine эффекты Архетипа не действуют, если нет
  * мутации Механоид или Таланта Fleshmetal. Без самой Черты — не гасит.
  */
 export function electropriestActive(actor) {
   if (!hasPowerFromFlesh(actor)) return true;
+  if (otherFrameInstalled(actor)) return false;
   if (!hasItemNamed(actor, "Machine", ["trait"])) return true;
   return hasItemNamed(actor, "Fleshmetal", ["talent"]) || hasItemNamed(actor, "Mechanoid", ["mutation", "trait"])
     || hasItemNamed(actor, "Механоид", ["mutation", "trait"]);

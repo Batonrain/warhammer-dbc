@@ -40,6 +40,11 @@ export async function reconcileBloodShieldToFit(actor) {
 /** Нажатие кнопки «Насытился убийством». */
 export async function useBloodShieldKill(actor, item) {
   if (!isBloodShieldItem(item) || !actor) return;
+  // Соглашение Доблести нарушено — Таланты Архетипа погашены (rules/archetype-suppression.mjs).
+  if (item.flags?.[FLAG]?.archetypeSuppressed) {
+    ui.notifications?.warn("Кровавый Щит погашен: Соглашение Доблести нарушено.");
+    return;
+  }
   const weapon = equippedSubduedDaemonWeapon(actor);
   if (!weapon) {
     ui.notifications?.warn("Нет снаряжённого демон-оружия с порабощённым демоном.");

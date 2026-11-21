@@ -124,7 +124,9 @@ import { resolveExpiredImperatives }     from "./rules/imperative.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
 import { syncInventoryOverloadTimer } from "./combat/encumbrance.mjs";
 import { STOWABLE_TYPES } from "./constants/rig.mjs";
-import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
+import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter, tokensInCircle } from "./combat/templates.mjs";
+import { takeTimedExplosionPoint, injectPitatiButtons } from "./combat/pitati.mjs";
+import { bindSecutorPinButtons } from "./combat/gladiator.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { processDelayedBlastsTurnStart } from "./combat/delayed-blast.mjs";
@@ -425,7 +427,11 @@ export function registerHooks() {
     // кнопкой урона E(Fl), если атакующий — свой псайкер с этой силой.
     injectSoulfireButtons(html);
     // Оккультный Клинок (Кенетаи, combat/kenetai.mjs) — кнопка на рукопашном попадании Психосиловым оружием.
-    injectOccultBladeButtons(html);
+    injectOccultBladeButtons(html, message);
+    // Питати: Пуля Искатель (разворот после Избегания) и Выдержанный Взрыв — кнопки карточки рунного выстрела.
+    injectPitatiButtons(html, message);
+    // Секуторий (Гладиатор): «Прижать щитом» на карточке Парирования.
+    bindSecutorPinButtons(html);
 
     // Состояние, наложенное Ритуалом (module/apps/ritual-cast.mjs) — пилюля
     // в карточке успешного проведения; ГМ тащит её на лист актора, которому
@@ -2816,6 +2822,16 @@ export function registerHooks() {
             tokens: result.tokens, region: result.region
           });
           return;
+        }
+
+        // Выдержанный Взрыв (Питати, combat/pitati.mjs): точка разряда уже вычислена — «в 1 м позади цели»,
+        // зона ставится туда сама, без мыши.
+        const timedAt = isCone ? null : await takeTimedExplosionPoint(ds.attackerUuid);
+        if (timedAt) {
+          const tokens = tokensInCircle(timedAt, shape.radius);
+          if (!tokens.length) return ui.notifications.info("Выдержанный Взрыв: в зоне позади цели никого нет.");
+          targetTokens(tokens);
+          return ui.notifications.info(`Выдержанный Взрыв: отмечено целей ${tokens.length}. Дальше — «Применить урон» → «Всем».`);
         }
 
         // Взрывное (не Спрей) — сфера-приближение: вертикальный охват = тот же

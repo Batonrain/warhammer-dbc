@@ -168,3 +168,21 @@ export function ravenEvasionNotes(actor, { passed = false, deg = 0, isMelee = fa
   if (inRavenStance(actor, "thief")) out.push("🪶 Стойка Вора: Избегание на 5+ Успехов — немедленно Обезоруживание против атакующего (Приём «Обезоружить»).");
   return out;
 }
+
+/**
+ * Скрытые Узоры: «Тесты на засекание работы Трейта Stances of Deceit
+ * пси-чутьём и другими методами, засекающими энергии Варпа, что-то
+ * обнаруживают только Критическим Успехом». Тест Пси-Чутья, наведённый на
+ * Ворона с Узорами и включённой Стойкой, засчитывается только Критическим
+ * Успехом (эффект critSuccessOnly, rules/kind-outcome.mjs). Источник правил
+ * «ravenHiddenPatterns» в rules/sources.mjs.
+ */
+export function hiddenPatternsRules(actor, ctx = {}) {
+  const raven = ctx?.targetActor;
+  if (!raven || raven === actor || !hasHiddenPatterns(raven) || !ravenStancesOf(raven).length) return [];
+  return [{
+    id: "raven.hiddenPatterns", label: "Скрытые Узоры", when: {},
+    effects: [{ kind: "critSuccessOnly", target: ["skill:psyniscience"],
+      label: `🪶 Скрытые Узоры (${raven.name ?? "Ворон"}): Стойку засекает только Критический Успех` }]
+  }];
+}

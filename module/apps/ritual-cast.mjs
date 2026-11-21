@@ -449,6 +449,11 @@ export async function castRitual(R, actor, {
     const proceed = await confirmUnmet(actor, d.reqFailed);
     if (!proceed) return null;
   }
+  // Соглашение Доблести (Кузнец Крови): любой ритуал, кроме Призыва, нарушает обет.
+  {
+    const { checkValourViolation } = await import("../combat/valourous-accord.mjs");
+    await checkValourViolation(actor, "ritual", item ?? { name: R.type, system: { ritualType: R.type } });
+  }
   // wdbc-1rno: Инфернальный Оруженосец/Рыцарь Бога — «простым N-минутным
   // ритуалом, НЕ требующим тестов». Требования к ритуалисту уже проверены/
   // подтверждены выше (ritualThreshold/confirmUnmet) — noTest снимает только

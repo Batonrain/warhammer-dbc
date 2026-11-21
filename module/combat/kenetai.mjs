@@ -53,9 +53,22 @@ export async function kenetaiSoulBurnGate(actor) {
   return "";
 }
 
+/**
+ * Успехи попадания Выпадом с карточки атаки: приём «Выпад» (thrust) и Успехи
+ * лежат во флаге сообщения (combat/attack.mjs). null — карточки нет или это не
+ * Выпад/промах; тогда Выпад Души, как и раньше, спрашивает число.
+ */
+export function thrustDegFromMessage(message) {
+  const atk = message?.flags?.[NS]?.attack;
+  if (!atk) return null;
+  if (atk.opts?.techniqueOpts?.technique !== "thrust" || !atk.hit) return 0;
+  return Math.max(0, Math.trunc(Number(atk.deg) || 0));
+}
+
 /** Кнопка «Оккультный Клинок» на карточке рукопашного попадания Психосиловым оружием. */
-export function injectOccultBladeButtons(html) {
+export function injectOccultBladeButtons(html, message = null) {
   if (!html?.querySelectorAll || html.querySelector(`.${BTN_CLASS}`)) return;
+  const thrust = thrustDegFromMessage(message);
   for (const applyBtn of html.querySelectorAll(".wh-apply-dmg-btn[data-weapon-uuid]")) {
     if (applyBtn.dataset.psychic === "1") continue;
     let actor = null, weapon = null;
@@ -71,7 +84,7 @@ export function injectOccultBladeButtons(html) {
     btn.title = "Свободное действие: психосила полудействия по цели атаки, без Путей Силы, одно попадание без Избегания.";
     btn.addEventListener("click", ev => {
       ev.preventDefault();
-      useOccultBlade(actor, { weaponUuid: weapon.uuid });
+      useOccultBlade(actor, { weaponUuid: weapon.uuid, thrust });
     });
     (applyBtn.closest(".roll-dmg-hit-group") ?? applyBtn).after(btn);
     return;
@@ -79,7 +92,7 @@ export function injectOccultBladeButtons(html) {
 }
 
 /** Оккультный Клинок: сила с кромки клинка (или Разрушитель Чар). */
-export async function useOccultBlade(actor, { weaponUuid = "" } = {}) {
+export async function useOccultBlade(actor, { weaponUuid = "", thrust: thrustKnown = null } = {}) {
   if (!hasOccultBlade(actor)) return ui.notifications.warn("⚠️ Нет Черты Оккультный Клинок.");
   if (!weaponUuid) {
     const blades = [...actor.items].filter(i => isForceMelee(i) && i.system?.equipped);
@@ -110,7 +123,10 @@ export async function useOccultBlade(actor, { weaponUuid = "" } = {}) {
     { hint: "Свободным действием, без Путей Силы; только по цели атаки, одно попадание, от которого нельзя Избегать." });
   if (!pid) return;
   let thrust = 0;
-  if (hasSoulThrust(actor)) {
+  // Выпад Души: Успехи попадания Выпадом берутся с карточки атаки сами; вопрос — только с кнопки Черты.
+  if (hasSoulThrust(actor) && thrustKnown != null) {
+    thrust = Math.max(0, Math.trunc(Number(thrustKnown) || 0));
+  } else if (hasSoulThrust(actor)) {
     thrust = await askNumber("Выпад Души", "Успехи попадания приёмом Выпад (0 — не Выпад)", 0, { min: 0, max: 20,
       hint: "Для психосил со встречным тестом цели: Успехи попадания прибавятся к Успехам манифестации." });
     if (thrust == null) return;

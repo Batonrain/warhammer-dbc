@@ -22,6 +22,7 @@ import { IN_FLIGHT_ALTITUDES } from "./movement-actions.mjs";
 import { SURE_TREAD, sureTreadTerrainBase, sureTreadIgnoresTerrain } from "../rules/squat-traits.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { litanyAutoPassesTerrain } from "../rules/dark-apostle.mjs";
+import { devourerRamming } from "../rules/terminator-talents.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -60,14 +61,16 @@ function ignoredTerrainKeysForActor(actor) {
 function effectiveTerrainInfo(tokenDoc, actor) {
   const raw = getTerrainInfoForToken(tokenDoc);
   const flying = IN_FLIGHT_ALTITUDES.includes(actor?.system?.movement?.altitude);
+  // Поглотитель идёт Напролом — Трудный Ландшафт игнорирует.
+  const ramming = devourerRamming(actor);
   const ignored = ignoredTerrainKeysForActor(actor);
-  const groundProps = flying ? [] : raw.props;
+  const groundProps = (flying || ramming) ? [] : raw.props;
   const active = groundProps.filter(p => !ignored.has(p.key));
-  const skipped = flying ? raw.props : raw.props.filter(p => ignored.has(p.key));
+  const skipped = (flying || ramming) ? raw.props : raw.props.filter(p => ignored.has(p.key));
   // Sonar Sense / Unnatural Senses снимают и этот штраф Ослепления
   // (wdbc-x1nz.2.89, «все штрафы Ослепления игнорируются»).
   const blinded = suffersBlindness(actor);
-  const realTerrain = !flying && raw.inTerrain;
+  const realTerrain = !flying && !ramming && raw.inTerrain;
   const blindedPenalty = (blinded && realTerrain) ? -20 : 0;
   return {
     inTerrain: realTerrain || blinded,
@@ -79,9 +82,10 @@ function effectiveTerrainInfo(tokenDoc, actor) {
     // SPD «уже уменьшена зоной», когда зоны физически нет.
     realTerrain,
     blinded,
-    mod: active.reduce((s, p) => s + p.mod, 0) + (flying ? 0 : raw.extraMod) + blindedPenalty,
+    mod: active.reduce((s, p) => s + p.mod, 0) + ((flying || ramming) ? 0 : raw.extraMod) + blindedPenalty,
     labels: [...active.map(p => p.label), ...(blindedPenalty ? ["Ослеплён (−20)"] : blinded ? ["Ослеплён"] : [])],
-    ignoredLabels: [...skipped.map(p => p.label), ...(flying && raw.inTerrain ? ["Полёт — не касается земли"] : [])]
+    ignoredLabels: [...skipped.map(p => p.label), ...(flying && raw.inTerrain ? ["Полёт — не касается земли"] : []),
+      ...(ramming && !flying && raw.inTerrain ? ["Поглотитель: Напролом"] : [])]
   };
 }
 

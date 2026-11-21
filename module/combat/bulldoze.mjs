@@ -27,6 +27,7 @@ import { writeToTarget } from "./gm-relay.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
 import { hasPugilistTalent } from "../rules/pugilist-talents.mjs";
 import { hasTalent, isBike, roadkillDamage } from "../rules/mount.mjs";
+import { startDevourerRam, devourerDamageSection } from "./devourer.mjs";
 
 /** Разница в Размере (мовер − цель); >0 — цель МЕНЬШЕ. */
 export function bulldozeSizeDiff(actor, target) {
@@ -80,6 +81,9 @@ export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
   const sections = [
     `<div class="roll-threshold">Персонаж проходит мимо ${esc(target.name)}, не получая от неё Свободной Атаки.</div>`
   ];
+  // Поглотитель: этот проход — сквозь укреплённые стены и без Трудного Ландшафта.
+  const ramLine = await startDevourerRam(actor);
+  if (ramLine) sections.push(`<div class="roll-threshold">${esc(ramLine)}</div>`);
   // Громовой Натиск (стр. 62, 3-eddb): проигравшие во встречном тесте «всегда
   // сбиваются с ног и получают урон, как если бы проиграли на 5+ Провалов» —
   // у носителя ветка 5+ Успехов срабатывает при ЛЮБОЙ победе. Урон Пинка —
@@ -91,6 +95,7 @@ export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
   const mount = (mountUuid && hasTalent(actor, "Roadkill", "Переехать"))
     ? await fromUuid(mountUuid).catch(() => null) : null;
   const roadkill = !!mount && isBike(mount);
+  let devourerHit = "";
   if (deg >= 5 || thunder || roadkill) {
     // Стена (Талант Стойкости): сбиваемый носитель вправе пройти S+0 и устоять.
     const { fields, resisted, note } = await statusApplyFields(target, "prone", null,
@@ -103,6 +108,9 @@ export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
     if (roadkill) {
       sections.push(`<div class="roll-threshold">${lead}: ${resisted ? esc(note) : `${esc(target.name)} сбит(а) с ног`} — вместо урона Пинка байк давит цель.</div>`);
       sections.push(await roadkillDamageSection(actor, target, mount));
+    } else if (!resisted && (devourerHit = await devourerDamageSection(actor, target, "Напролом"))) {
+      sections.push(`<div class="roll-threshold">${lead}: ${esc(target.name)} сбит(а) с ног — вместо Пинка бьёт оружие Поглотителя.</div>`);
+      sections.push(devourerHit);
     } else {
       sections.push(resisted
         ? `<div class="roll-threshold">${lead}: ${esc(note)} Попадание Пинком или оружием на ноге — по-прежнему на усмотрение стола (стр. 40).</div>`
@@ -116,3 +124,22 @@ export async function resolveBulldozeSuccess(actor, { deg, target } = {}) {
     sections
   }, { sound: false });
 }
+
+/**
+ * Вальс (Воин Ноты): успешный Напролом через Trade(Dancer)(A) «не смещает, не
+ * сбивает с ног и не наносит урон целям — воин просто проскальзывает мимо
+ * помех». От обычного успеха остаётся только проход без Свободной Атаки той же
+ * разовой меткой «Выхода из Боя»; Ничком, Пинок, Громовой Натиск и Переехать
+ * сюда не доходят.
+ */
+export async function resolveWaltzSuccess(actor, { target } = {}) {
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  await postTestCard(actor, {
+    icon: rollIcon("sword", "#c08ad8"),
+    title: `Вальс: ${esc(target?.name ?? "Напролом")}`,
+    outcome: outcomeHtml(true, "Проскользнул"),
+    sections: [`<div class="roll-threshold">Воин проскальзывает мимо ${target ? esc(target.name) : "помех на пути"}: `
+      + "никто не смещён, не сбит с ног и не ранен, Свободной Атаки за этот проход нет.</div>"]
+  }, { sound: false });
+}
+

@@ -58,8 +58,10 @@ export function itemsNamed(actor, wanted, types = null) {
   const halves = String(wanted ?? "").split("/").map(s => s.trim()).filter(Boolean);
   if (!halves.length) return [];
   const items = actor?.items ?? [];
+  // Таланты/Черты погашенного Архетипа (Сила Из Плоти, Соглашение Доблести —
+  // rules/archetype-suppression.mjs) не «есть» у актора, пока флаг стоит.
   return [...items].filter(i => (!types || types.includes(i.type))
-    && halves.some(w => itemHasName(i, w)));
+    && halves.some(w => itemHasName(i, w)) && !i.flags?.["warhammer-dbc"]?.archetypeSuppressed);
 }
 
 /** Есть ли у актора хотя бы один такой предмет. */

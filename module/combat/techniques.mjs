@@ -20,7 +20,8 @@ import { extraSuccessDegrees } from "./extra-successes.mjs";
 import { escapeArtistRelief, hasDodgeTalent } from "../rules/dodge-talents.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { ravenContestOptions } from "../rules/raven-talents.mjs";
-import { waltzContestOptions } from "../rules/note-warrior-talents.mjs";
+import { waltzContestOptions, WALTZ_KEY } from "../rules/note-warrior-talents.mjs";
+import { resolveWaltzSuccess } from "./bulldoze.mjs";
 
 const SLIP_AWAY_FLAG = "dodge.core.slipAway";
 
@@ -218,7 +219,7 @@ export async function _showContestDialog(actor, techDef) {
           const side = danceOpt ? { skill: danceOpt.skillKey, ...(danceOpt.charKey ? { char: danceOpt.charKey } : {}) } : sideFor(charKey);
           // Вариант со своим сопротивлением/эффектом (Ложный Клинок, Рычаг, Вальс).
           const regDef = danceOpt?.resist
-            ? { ...techDef, resist: danceOpt.resist, ...(danceOpt.techNote ? { note: danceOpt.techNote, onSuccess: undefined } : {}) }
+            ? { ...techDef, resist: danceOpt.resist, ...(danceOpt.techNote ? { note: danceOpt.techNote, onSuccess: danceOpt.key === WALTZ_KEY ? resolveWaltzSuccess : undefined } : {}) }
             : techDef;
           const ruleMods = collectTestMods(actor, danceOpt
             ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey, targetActor: target, contest: true }

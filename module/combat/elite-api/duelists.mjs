@@ -7,7 +7,7 @@
 
 import { forceEnemyMeleeReroll, chooseRavenStance, usePassBy, useRedirectBlow } from "../raven.mjs";
 import { useWarSeer, useWitchslayer, useAllKnowing, useBloodFatherFeat } from "../vitkis.mjs";
-import { useBloodyPerformance, useRetiariusReturn, useMilitarius } from "../gladiator.mjs";
+import { useBloodyPerformance, useRetiariusReturn, useMilitarius, useSecutorius } from "../gladiator.mjs";
 import { useFinale, useLeitmotif } from "../note-warrior.mjs";
 import { weaveRunicPower, usePiercingShot } from "../pitati.mjs";
 
@@ -17,7 +17,7 @@ export const API = {
   // Виткис
   useWarSeer, useWitchslayer, useAllKnowing, useBloodFatherFeat,
   // Гладиатор
-  useBloodyPerformance, useRetiariusReturn, useMilitarius,
+  useBloodyPerformance, useRetiariusReturn, useMilitarius, useSecutorius,
   // Воин Ноты
   useFinale, useLeitmotif,
   // Питати

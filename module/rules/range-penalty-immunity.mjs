@@ -20,6 +20,17 @@ import { hasColdEyes } from "./cold-eyes.mjs";
 import { sightGrants, SIGHT_EFFECT } from "./sight-effects.mjs";
 import { runicArtilleryActive } from "./runic-shot.mjs";
 
+/**
+ * Рунная Артиллерия (Питати): «Совершая рунный выстрел после Полного
+ * Прицеливания при поддержании Preternatural Awareness, игнорирует штрафы за
+ * дальнюю и экстремальную дистанцию». Окно атаки помечает строки дальности
+ * (data-runic-artillery), и форма не берёт их в Порог, пока отмечена «Рунная
+ * пуля» на одиночном выстреле (sheets/attack/form.mjs::runicArtilleryWaived).
+ */
+export function runicArtilleryMarks(actor, { aiming = "" } = {}) {
+  return runicArtilleryActive(actor, { aiming });
+}
+
 export const MARKSMAN_CAPABILITY = "rangedCore.core.marksman";
 
 /**
@@ -33,8 +44,9 @@ export function longRangeImmunityReason(actor, installedMods = [], { aiming = ""
   const items = [...(actor?.items ?? [])];
   if (items.some(i => itemIs(i, "talent", MARKSMAN_CAPABILITY, "Marksman"))) return "Снайпер";
   if (hasColdEyes(actor)) return "Холодные Глаза";
-  // Рунная Артиллерия (Питати): рунный выстрел после Полного Прицеливания под Сверхъестественной Внимательностью.
-  if (runicArtilleryActive(actor, { aiming })) return "Рунная Артиллерия (рунный выстрел)";
+  // Рунная Артиллерия (Питати) сюда не входит: она гасит штраф только РУННОМУ
+  // выстрелу, а это видно лишь по галочке «Рунная пуля» в самом окне —
+  // runicArtilleryRow ниже и sheets/attack/form.mjs.
   if (aiming && aiming !== "none") {
     // Оптический, Джинн и Омни-Прицел (rules/sight-effects.mjs).
     const scope = sightGrants(installedMods, SIGHT_EFFECT.longRange);

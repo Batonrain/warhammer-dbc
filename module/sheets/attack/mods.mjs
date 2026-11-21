@@ -29,7 +29,7 @@ import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../
 import { sysWithMeleeProfileReach } from "../../combat/weapon-profiles.mjs";
 import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
-import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
+import { longRangeImmunityReason, runicArtilleryMarks } from "../../rules/range-penalty-immunity.mjs";
 import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
 import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
 import { hasDodgeTalent } from "../../rules/dodge-talents.mjs";
@@ -45,7 +45,7 @@ import { sightEffectsOf } from "../../rules/sight-effects.mjs";
 import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
 import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
 import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
-import { meleeShotClass } from "../../rules/secutor-talents.mjs";
+import { meleeShotClass, ordinatorVehicleGun } from "../../rules/secutor-talents.mjs";
 
 /** Подписи диспозиции токена — для примечания «Связан в Рукопашной». */
 const DISPOSITION_LABELS = { "-2": "Тайный", "-1": "Враждебный", 0: "Нейтральный", 1: "Дружественный" };
@@ -554,7 +554,7 @@ export function situationalMods(v) {
     // Штыковая Атака (pointBlankForced): выстрел «как если бы это был выстрел в упор… невзирая на то что персонаж
     // связан в ближнем бою» — штрафа за стрельбу в рукопашной нет (Sahara pyromaniac-20 п.3); бонус Уклонения
     // цели (meleeShotDodgeBonus, attack.mjs) не тронут.
-    { id: "atk-melee-shot", label: "Стрельба в рукопашную",
+    { id: "atk-melee-shot", label: "Стрельба в рукопашную", seeker: "melee",
       value: (meleeShot.cls === "pistol" || pointBlankForced) ? 0 : -20,
       note: meleeShot.cls === "pistol" ? (meleeShot.myrmidon ? "Мирмидон: винтовка как пистолет — без штрафов в рукопашную" : "Пистолет: без штрафов в рукопашную")
         : pointBlankForced ? "Штыковая Атака: выстрел как в упор, без штрафа за стрельбу в рукопашной" : undefined },
@@ -580,7 +580,7 @@ export function situationalMods(v) {
     // союзников») не сделана: рикошет промаха (attack.mjs, misfireHits) не
     // умеет исключать союзников. «Стрельба в рукопашную» выше (стрелок САМ в
     // этой рукопашной) Талантом не тронута — ручная галочка, см. отчёт сессии.
-    { label: "Цель связана в рукопашной (с другим персонажем)", value: targetSelection ? 0 : -20,
+    { label: "Цель связана в рукопашной (с другим персонажем)", value: targetSelection ? 0 : -20, seeker: "melee",
       immune: targetSelection, autoCheck: !targetSelection && targetLocked,
       note: targetSelection ? "снято: Target Selection/Выбор Целей"
           : targetLocked ? "стр. 30 — штраф без исключений, даже Пистолету" : undefined },
@@ -664,8 +664,13 @@ export function situationalMods(v) {
       note: bulgingBicepsActive ? "снято: Bulging Biceps/Бугрящиеся Мышцы"
           : wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
           : (weapon?.system?.weaponClass === "heavy" && isBraced(actor, weapon) ? "Закреплено" : undefined) },
-    { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
-      note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
+    // Ординатор с оружием техники в руках «игнорирует эффекты, что нивелируют
+    // штрафы за стрельбу из тяжёлого на ходу» — Гиро-стаб. этот штраф не снимает.
+    ordinatorVehicleGun(actor, weapon)
+      ? { label: "Тяжёлое оружие: стрельба на ходу", value: -10,
+          note: wp.gyroStabilized ? "Ординатор: оружие техники — Гиро-стаб. штраф не снимает" : "Ординатор: оружие техники" }
+      : { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
+          note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
   // Размашистый Танец у ЦЕЛИ (глава 3): атакующий, которого он закружил, бьёт со
@@ -735,6 +740,15 @@ export function situationalMods(v) {
           m.value = 0;
           m.immune = true;
           m.note = `${why}: нет штрафа дальней/экстремальной дистанции`;
+        }
+      }
+    }
+    // Рунная Артиллерия: штраф снимается только рунной пулей — строка остаётся, форма гасит её по галочке.
+    else if (runicArtilleryMarks(actor, { aiming: actor?.system?.aiming })) {
+      for (const m of specificMods) {
+        if ((m.label === "Дальняя дистанция" || m.label === "Экстремальная дистанция") && !m.immune) {
+          m.runicArtillery = true;
+          m.note = "Рунная Артиллерия: не действует на одиночный выстрел рунной пулей";
         }
       }
     }
