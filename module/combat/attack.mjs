@@ -1393,7 +1393,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const isRangedSingle  = !isMelee && rofMode === "single";
   const agBonus = Number(actor.system?.characteristics?.ag?.bonus) || 0;
   const hasLocShiftTalent = hasHitLocationShift(actor.items);
-  const canShiftLoc = hit && hitsCount === 1 && (isRangedSingle || isMeleeStandard)
+  // Граната/ракета без режима огня (RoF «–») — одиночный бросок: сдвиг места
+  // работает как у одиночного выстрела (решение владельца 13.11.2026, Sahara 4-cdc6).
+  const isRangedNoRof = !isMelee && !["single", "semi", "full", "suppression"].includes(rofMode);
+  // Счёт попаданий у такого броска 0 (режима огня нет, взрыв идёт шаблоном) —
+  // но объект один, и место у него одно.
+  const canShiftLoc = hit && (hitsCount === 1 && (isRangedSingle || isMeleeStandard) || (isRangedNoRof && hitsCount <= 1))
     && (!aimTarget?.value || aimTarget.value === "underfoot") && agBonus > 0 && hasLocShiftTalent;
 
   // Тратим патроны

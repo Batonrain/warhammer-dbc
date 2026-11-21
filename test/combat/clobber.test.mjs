@@ -223,3 +223,27 @@ describe("«Метнуть» обычным предметом (improvised-item.
     expect(card()).not.toContain("wh-clobber-btn");
   });
 });
+
+describe("граната без режима огня (RoF «–»): подпись режима и сдвиг места (Sahara task-8925, 4-cdc6)", () => {
+  beforeEach(() => { resetCaptured(); });
+  const SHIFTER = { id: "sh", name: "Военная зона", type: "trait", system: {},
+    getFlag: (s, k) => s === "warhammer-dbc" && k === "hitLocationShift" ? true : undefined };
+  const grenade = weaponFor({ weaponClass: "thrown", damage: "2d10", rof_single: 0, rof_semi: 0, rof_full: 0, weight: 0.5 }, { name: "Фраг-граната" });
+
+  it("в поле «Режим» — «Бросок», не «Рукопашная»", async () => {
+    const a = thrower([grenade]);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([target(victim())]) };
+    captured.dice = [10, 5, 5, 5];
+    await _executeAttackRoll(a, grenade, "bs", 60, undefined, null, {});
+    expect(card()).toContain("Бросок");
+    expect(card()).not.toContain("Рукопашная");
+  });
+
+  it("с Талантом сдвига и A.b > 0 — кнопки сдвига места есть", async () => {
+    const a = thrower([SHIFTER, grenade]);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([target(victim())]) };
+    captured.dice = [10, 5, 5, 5];
+    await _executeAttackRoll(a, grenade, "bs", 60, undefined, null, {});
+    expect(card()).toContain("wh-locshift-btn");
+  });
+});

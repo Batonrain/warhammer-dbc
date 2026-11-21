@@ -79,7 +79,8 @@ const AIM_LOCATIONS = {
  * @returns {{count: number, label: string}}
  */
 export function hitCount({ hit, isMelee, rofMode, deg, wp, sys = {}, isSwift = false, isLightning = false, wsBonus = 0 }) {
-  const label = isMelee ? "Рукопашная" : (ROF_LABELS[rofMode] ?? "Рукопашная");
+  // Без режима огня (граната с RoF «–», Sahara task-8925) — это бросок, а не рукопашная.
+  const label = isMelee ? "Рукопашная" : (ROF_LABELS[rofMode] ?? "Бросок");
   if (!hit) return { count: 0, label };
 
   if (isMelee) {
