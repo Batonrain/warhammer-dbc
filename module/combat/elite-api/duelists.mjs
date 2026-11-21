@@ -5,4 +5,21 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { forceEnemyMeleeReroll, chooseRavenStance, usePassBy, useRedirectBlow } from "../raven.mjs";
+import { useWarSeer, useWitchslayer, useAllKnowing, useBloodFatherFeat } from "../vitkis.mjs";
+import { useBloodyPerformance, useRetiariusReturn, useMilitarius } from "../gladiator.mjs";
+import { useFinale, useLeitmotif } from "../note-warrior.mjs";
+import { weaveRunicPower, usePiercingShot } from "../pitati.mjs";
+
+export const API = {
+  // Ворон
+  forceEnemyMeleeReroll, chooseRavenStance, usePassBy, useRedirectBlow,
+  // Виткис
+  useWarSeer, useWitchslayer, useAllKnowing, useBloodFatherFeat,
+  // Гладиатор
+  useBloodyPerformance, useRetiariusReturn, useMilitarius,
+  // Воин Ноты
+  useFinale, useLeitmotif,
+  // Питати
+  weaveRunicPower, usePiercingShot
+};

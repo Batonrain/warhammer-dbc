@@ -252,6 +252,7 @@ import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
 import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn, actorIdentityUuids } from "./combat/command-state.mjs";
+import { duelistsTurnStart, duelistsTurnEnd, duelistsCombatEnd } from "./combat/duelists-hooks.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { sparksSwap, igniterFollowUp } from "./rules/gunsmith-talents.mjs";
 import { applyDamageOverrides, recordDamageOverride, DMG_OVERRIDES_FLAG } from "./combat/damage-override.mjs";
@@ -5175,6 +5176,8 @@ function _attachFateContextMenu(message, html) {
     await clearBloodGodKills(combat);
     await clearMomentum(combat);
     await clearBloodOfHeroes(combat);
+    // Пачка «дуэлянты»: бонусные Очки боя, Провидец Войны (combat/duelists-hooks.mjs).
+    await duelistsCombatEnd(combat);
     _lastTurnCombatant.delete(combat.id);
     // «На поле боя X ходов стрелка» вне боя не имеет смысла — считать больше не от чего.
     await clearAllLingerZones();
@@ -5609,6 +5612,8 @@ function _attachFateContextMenu(message, html) {
         // Последний Рывок (Талант Стойкости): отложенные Критические Эффекты — напоминанием
         // в конце Хода носителя.
         await finalPushTurnEnd(prevActor);
+        // Пачка «дуэлянты»: Кровавое Представление (combat/duelists-hooks.mjs).
+        await duelistsTurnEnd(prevActor, combat);
       }
     }
     if (nextCombatant?.actor) {
@@ -5635,6 +5640,8 @@ function _attachFateContextMenu(message, html) {
       // Перезарядка (wdbc-ai0o): «нельзя стрелять в следующий Ход» — тот же
       // такт начала Хода носителя, что и заряд Призмы выше.
       await processRechargeTurnStart(nextCombatant.actor);
+      // Пачка «дуэлянты»: Клинки Судьбы, срок Провидца Войны (combat/duelists-hooks.mjs).
+      await duelistsTurnStart(nextCombatant.actor);
       // Грозный Вопль (wdbc-sk8s): усилитель звукового оружия живёт «до
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.

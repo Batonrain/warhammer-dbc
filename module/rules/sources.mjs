@@ -60,6 +60,8 @@ import { noiseMarineRules } from "./noise-marine.mjs";
 import { tipOfSpearRules } from "./tip-of-spear.mjs";
 import { khorneBerserkerRules, temperedRules } from "./khorne-berserker.mjs";
 import { darkApostleRules } from "./dark-apostle.mjs";
+import { vitkisRules } from "./vitkis-talents.mjs";
+import { gladiatorRules } from "./gladiator-arena.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -407,6 +409,11 @@ registerRuleSource("khorneBerserker", a => [...khorneBerserkerRules(a), ...tempe
 // Тёмный Апостол (Sahara 1-54b9): литания Слаанеш — +30 на тесты Командования Апостола, пока она действует
 // (rules/dark-apostle.mjs). Остальные литании читают метку на подчинённом (атака, Трудный Ландшафт).
 registerRuleSource("darkApostle", a => darkApostleRules(a));
+
+// Виткис (Провидец Войны, Книга Битвы) и Гладиатор (Бестиарий): бонусы против
+// конкретной цели броска (ctx.targetActor) — rules/vitkis-talents.mjs, rules/gladiator-arena.mjs.
+registerRuleSource("vitkis", (a, ctx) => vitkisRules(a, ctx, globalThis.game?.combat?.started ? globalThis.game.combat.id : ""));
+registerRuleSource("gladiatorArena", (a, ctx) => gladiatorRules(a, ctx));
 
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];

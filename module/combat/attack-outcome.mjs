@@ -155,9 +155,11 @@ export function hitLocation({ rv, hit, shift = 0, aimTarget = null }) {
  * названную часть, остальные в Корпус; у существа множественные (третье и
  * дальше) сходятся в Торс.
  */
-export function locationForHit(index, { label, hitsCount, targetIsVehicle = false, vehiclePart = null }) {
-  if (targetIsVehicle) return index < 2 ? vehiclePart : "Корпус";
-  return (hitsCount > 1 && index >= 2) ? "Торс" : label;
+export function locationForHit(index, { label, hitsCount, targetIsVehicle = false, vehiclePart = null, aimedCount = 2 }) {
+  // aimedCount — сколько первых попаданий идут в выбранное место (2; Крещендо — ½A.b▲).
+  const n = Math.max(2, Number(aimedCount) || 2);
+  if (targetIsVehicle) return index < n ? vehiclePart : "Корпус";
+  return (hitsCount > 1 && index >= n) ? "Торс" : label;
 }
 
 /**

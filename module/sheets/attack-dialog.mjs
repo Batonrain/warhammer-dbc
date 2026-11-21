@@ -105,6 +105,7 @@ import { fullFireOptions, FULL_FIRE_PENALTY } from "../rules/full-fire.mjs";
 import { hasPowerSetting, powerModeOf, POWER_MODES } from "../rules/power-setting.mjs";
 import { batpackAvailable, batpackRangePenalty } from "../rules/batpack-dump.mjs";
 import { sabotageAimEntries } from "../rules/rogue-talents.mjs";
+import { hasRetiarius } from "../rules/gladiator-arena.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -195,7 +196,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // теста уже после того, как окно посчитало порог, и бросок расходился бы с
   // окном — там же разобрано, чем именно.
   const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
-  const charKey = isMelee ? "ws" : "bs";
+  // Ретиарий (Гладиатор): метательное на цепи — WS вместо BS (rules/gladiator-arena.mjs).
+  const charKey = (isMelee || (sys.weaponClass === "thrown" && hasRetiarius(actor))) ? "ws" : "bs";
   // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием атаковать нельзя (combat/blade-binding.mjs).
   if (weaponIsBound(actor, item.id))
     return ui.notifications.warn(`⚠️ «${item.name}» сцеплено клинком противника (Сцепление Клинков) — атаковать им нельзя до начала Хода цепляющего или пока не разойдутся.`);
