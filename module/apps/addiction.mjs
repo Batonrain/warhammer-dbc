@@ -13,6 +13,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { changeActorInfamy } from "./infamy-points.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { inVoidMark } from "../rules/void-split.mjs";
 
 export { isAddictionItem };
 
@@ -71,7 +72,10 @@ export async function useSatisfyAddiction(item) {
     }).catch(() => false) === true;
   }
 
-  if (roll === "12" && actor) {
+  // Пустота Парии (task-f568): Камень Душ Бесчестия не возвращает (утоление — да).
+  if (roll === "12" && actor && inVoidMark(actor)) {
+    lines.push("Камень Душ: в Пустоте Парии Очки Бесчестия не возвращаются.");
+  } else if (roll === "12" && actor) {
     const r = await new Roll("1d5").evaluate();
     const { before, after } = await changeActorInfamy(actor, r.total);
     lines.push(`Камень Душ: 1d5 = ${r.total}, Очки Бесчестия ${before} → <b>${after}</b>.`);

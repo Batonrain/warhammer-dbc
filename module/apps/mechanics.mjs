@@ -483,6 +483,7 @@ import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
 import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInput }
   from "../rules/condition-duration.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
+import { hasVoidGatedEntries } from "../rules/void-split.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { grantedTraitFlags } from "../rules/trait-grant.mjs";
@@ -3310,7 +3311,18 @@ export async function syncNullZoneSuppression(actor) {
     if (item.type === "mutation") want = voidSuppressesMutation(actor, item);
     else if (item.type === "implant") want = fieldDisablesImplant(actor, item);
     else continue;
-    if (!!item.getFlag(FLAG, "nullSuppressed") === want) continue;
+    if (!!item.getFlag(FLAG, "nullSuppressed") === want) {
+      // Спорная мутация гаснет не целиком, а записями с when.predicates
+      // { inPariahVoid: false } (rules/void-split.mjs, task-f568): живые
+      // правила следят сами, а эффекты, выданные Черты/Таланты и интегральные
+      // атаки пересобираются здесь же, при входе/выходе из Пустоты.
+      if (item.type === "mutation" && !want && hasVoidGatedEntries(getItemMechanics(item))) {
+        await syncMechanicsEffects(item);
+        await syncGrantedAbilities(item);
+        await syncGrantedEquipment(item);
+      }
+      continue;
+    }
     await item.setFlag(FLAG, "nullSuppressed", want);
     await syncItemEffectsDisabled(item);
     await syncWeaponPropItemEffects(item);
