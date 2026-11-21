@@ -5,7 +5,7 @@
   "folder": "5KL7j88ys3Dly6AK",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Пустота Парии (task-f568, docs/pariah-mutations-table.md, утверждено 21.11.2026): Unnatural I гаснет.",
     "benefit": "Влияние Великого Заговорщика расширяет способности разума чемпиона. Он получает Трейт Unnatural I (+Cor.b) и удваивает все Успехи на тестах Logic и Навыков группы Lore. Персонаж может использовать одновременно Усиление и Переброс для тестов Logic и Навыков группы Lore, тратя только одно Очко Бесчестия.",
     "source": "Дары Тзинч, d100 26…29",
     "roll": "26…29",
@@ -119,7 +119,10 @@
               "code": "",
               "when": {
                 "negate": false,
-                "conditions": []
+                "conditions": [],
+                "predicates": {
+                  "inPariahVoid": false
+                }
               }
             }
           ]

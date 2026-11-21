@@ -37,6 +37,7 @@
 
 import { isHandOfDeathItem } from "../rules/hand-of-death.mjs";
 import { getItemMechanics, blankMechEntry, syncMechanicsEffects } from "./mechanics.mjs";
+import { withVoidGate } from "../rules/void-split.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
@@ -95,6 +96,7 @@ async function setApEntry(mutationItem, hand) {
         e.armourLocation = hand;
         e.armourValue = 10;
         e.op = "add";
+        e.when = withVoidGate(e.when);
         found = true;
       }
     }
@@ -105,6 +107,8 @@ async function setApEntry(mutationItem, hand) {
     entry.armourLocation = hand;
     entry.armourValue = 10;
     entry.op = "add";
+    // Пустота Парии (task-f568): «укреплённое Порчей» +10 AP гаснет.
+    entry.when = withVoidGate(entry.when);
     groups.push({ id: foundry.utils.randomID(), operator: "AND", entries: [entry] });
   }
   await mutationItem.setFlag(FLAG, "mechanics", groups);

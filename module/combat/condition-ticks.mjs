@@ -77,6 +77,7 @@ import { secondaryCritHtml } from "./secondary-crit.mjs";
 import { bleedingDieFormula, canSelfStaunch } from "../rules/new-men.mjs";
 import { bleedingRollCount, bestBleedingRoll } from "../rules/resilience-talents.mjs";
 import { bloodReplacementItem } from "../rules/blood-replacement.mjs";
+import { inVoidMark } from "../rules/void-split.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -772,7 +773,8 @@ export async function processConditionTurnEnd(actor) {
     const eff = roll.total - level;
     const noBleedDeath = hasRuleFlag(actor, "brutePhysiology.bleedingNoDeath") ? "Физиология Громилы"
       // Замена Крови (wdbc-1rno.15): «иммунитет к смерти от Кровотечения и Обескровливания».
-      : bloodReplacementItem(actor) ? "Замена Крови" : null;
+      // В Пустоте Парии «чудесное восполнение» гаснет (task-f568, таблица утверждена 21.11.2026).
+      : (bloodReplacementItem(actor) && !inVoidMark(actor)) ? "Замена Крови" : null;
     if (eff <= 0 && noBleedDeath) {
       // Физиология Громилы (Огрин): «не может умереть от Кровотечения».
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>${noBleedDeath}</b>: от Кровотечения не умирает</div>`);

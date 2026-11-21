@@ -8,6 +8,7 @@
 
 import { isFlayedItem, flayedGrant, flayedVisualNote, flayedShrinkToFit, FLAYED_FLAG } from "../rules/flayed.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { pariahVoidBlocks } from "../rules/void-split.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 
@@ -35,6 +36,8 @@ export async function reconcileFlayedToFit(actor) {
 /** Нажатие кнопки на листе Мутации: содрать кожу с текущей цели. */
 export async function useFlayed(actor, item) {
   if (!isFlayedItem(item) || !actor) return;
+  // Пустота Парии (task-f568): чужая кожа «растекается» силой Варпа — не прирастает.
+  if (pariahVoidBlocks(actor, "Освежеванный")) return;
   const donor = [...(game.user.targets ?? [])][0]?.actor || null;
   if (!donor) {
     ui.notifications?.warn("Нет цели — наведите инструмент «Target» на существо, с которого сдирается кожа.");

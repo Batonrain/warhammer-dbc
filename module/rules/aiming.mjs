@@ -22,6 +22,7 @@
 // «действием») и combat/damage.mjs (applyDamageToActor).
 
 import { isBlackEyesItem } from "./black-eyes.mjs";
+import { inVoidMark } from "./void-split.mjs";
 import { hasColdEyes } from "./cold-eyes.mjs";
 import { blessingOfMagnusFreeHalfAim } from "./blessing-of-magnus.mjs";
 
@@ -38,6 +39,8 @@ export function blackEyesFreeHalfAim(actor, { seesTarget = false } = {}) {
   if (!seesTarget) return false;
   const cor = Number(actor?.system?.corruption?.value) || 0;
   if (cor < 80) return false;
+  // Пустота Парии (task-f568): свободное Полу-Прицеливание Cor 80+ гаснет.
+  if (inVoidMark(actor)) return false;
   return !!actor?.items?.some(i => isBlackEyesItem(i));
 }
 

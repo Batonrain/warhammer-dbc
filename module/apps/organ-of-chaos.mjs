@@ -26,6 +26,7 @@
 
 import { itemIs } from "../rules/item-marker.mjs";
 import { getItemMechanics, blankMechEntry, syncMechanicsEffects } from "./mechanics.mjs";
+import { withVoidGate } from "../rules/void-split.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -56,6 +57,7 @@ async function setUnnaturalEntry(item, charKey) {
       if (e.id === ENTRY_ID) {
         e.charKey = charKey; e.field = "bonus"; e.op = "add"; e.value = 1;
         e.label = `Unnatural ${abbr} (+1) — Орган Хаоса`;
+        e.when = withVoidGate(e.when);
         found = true;
       }
     }
@@ -65,6 +67,8 @@ async function setUnnaturalEntry(item, charKey) {
     entry.id = ENTRY_ID;
     entry.charKey = charKey; entry.field = "bonus"; entry.op = "add"; entry.value = 1;
     entry.label = `Unnatural ${abbr} (+1) — Орган Хаоса`;
+    // Пустота Парии (task-f568): орган демона в Пустоте — просто плоть, Unnatural гаснет.
+    entry.when = withVoidGate(entry.when);
     groups.push({ id: foundry.utils.randomID(), operator: "AND", entries: [entry] });
   }
   await item.setFlag("warhammer-dbc", "mechanics", groups);
