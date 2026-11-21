@@ -10,6 +10,7 @@ import { useVeilRender, useRift, useSpeedOfThought, useWarpTrail } from "../warp
 import { useBeltFeed, useFlyBy } from "../moritat-talents.mjs";
 import { useAnointed, useAtramentar, useDeathShroud } from "../terminator-talents.mjs";
 import { useLivingArsenal, useBulletEater, useMutilator, useSelfForging, useShredder, useToTheTeeth } from "../obliterator-talents.mjs";
+import { useRingOfBlood, useDaemonPlate, useUnforge } from "../blood-smith-talents.mjs";
 import { useChaosGreatbow, useDivineShield, dedicateChaosSteed, useSinEater } from "../bronenosets-talents.mjs";
 
 export const API = {
@@ -24,5 +25,7 @@ export const API = {
   // Чемпион Терминатор
   useAnointed, useAtramentar, useDeathShroud,
   // Облитератор
-  useLivingArsenal, useBulletEater, useMutilator, useSelfForging, useShredder, useToTheTeeth
+  useLivingArsenal, useBulletEater, useMutilator, useSelfForging, useShredder, useToTheTeeth,
+  // Кузнец Крови
+  useRingOfBlood, useDaemonPlate, useUnforge
 };

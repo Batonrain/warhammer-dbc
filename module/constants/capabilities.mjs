@@ -4777,11 +4777,11 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.boundByBlood": {
     label: "Узы порабощённого демона с Кузнецом пробивают Завесу, позволяя протащить демона обратно в реальность через существующую трещину.",
-    source: "Bound by Blood / Связанный Кровью", reader: ""
+    source: "Bound by Blood / Связанный Кровью", reader: "module/apps/ritual-cast.mjs (строка жертвы) → rules/blood-smith-talents.mjs::boundByBloodSacrifice"
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.daemonPlate": {
     label: "Может вселить порабощённого демона в любой полный доспех. Такой демонический доспех даёт владельцу Трейты Daemonic,",
-    source: "Daemon Plate / Демонические Латы", reader: ""
+    source: "Daemon Plate / Демонические Латы", reader: "module/combat/blood-smith-talents.mjs::useDaemonPlate (Механика на доспехе)"
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.fealty": {
     label: "Поработив демона в схватке, может потребовать его Истинное Имя, и тот обязан его раскрыть.",
@@ -4789,7 +4789,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kuznetsKrovi.unforge": {
     label: "Одного слова достаточно, чтобы разрушить своё демоническое оружие. Раз в Ход за свободное действие может уничтожить одно демоническое оружие…",
-    source: "Unforge / Расковать", reader: ""
+    source: "Unforge / Расковать", reader: "module/combat/blood-smith-talents.mjs::useUnforge, rules/blood-smith-talents.mjs::unforgeFormula"
   },
   // ── Элитные_архетипы\Лакрималлус — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.lakrimallus.assemblyLine": {
@@ -6663,7 +6663,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Кузнец_Крови — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kuznetsKrovi.ringOfBlood": {
     label: "Победив демона в ритуальном поединке, может поработить его. Перед призывом демона может заключить себя и его в ритуальный круг,",
-    source: "Ring of Blood / Кольцо Крови", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Ring of Blood / Кольцо Крови", reader: "module/combat/blood-smith-talents.mjs::useRingOfBlood, rules/blood-smith-talents.mjs::ringOfBloodWeaponUpdate/enslavedList"
   },
   "trait.elitnyeArhetipy.kuznetsKrovi.valourousAccord": {
     label: "Связан жёстким кодексом чести — полагаться только на собственные силы. Если использует психосилы, психосиловое оружие,",
