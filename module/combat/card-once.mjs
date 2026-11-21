@@ -22,6 +22,8 @@ export const CARD_ONCE_FLAGS = [
   // Бастион против Тарана, Ас Оператор, Избавление Аркхана (остаток Талантов, 20.11.2026).
   "ramBastionUsed", "aceOperatorUsed", "arkhanUsed",
   "tipOfSpearUsed", "mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
+  // Повелитель Червей: поддержание Роя за Ход решено (combat/worm-master.mjs, Sahara 584-1d5-r).
+  "wormUpkeepDone",
   // Трата Очка «Успех» из меню карточки теста (apps/infamy-success.mjs): +Успех дописан в эту карточку.
   "infamySuccessAdded",
   // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).

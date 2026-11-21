@@ -6659,7 +6659,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.korolChervey.wormMaster": {
     label: "В бою может мистически размножать рои паразитов, формируя аморфные боевые конструкты.",
-    source: "Worm Master / Повелитель Червей", reader: "module/combat/worm-master.mjs::useWormMaster — кнопка Черты: предел Cor.b, полное действие, W−10, Рой из Бестиария с +10 Ран за Успех сверх первого. Поддержание каждый Ход — вручную"
+    source: "Worm Master / Повелитель Червей", reader: "module/combat/worm-master.mjs::useWormMaster — кнопка Черты: предел Cor.b, полное действие, W−10, Рой из Бестиария с +10 Ран за Успех сверх первого; wormUpkeepTurnStart/wormUpkeep — карточка начала Хода «полудействие / 1d5 R / рассеять» (hooks.mjs updateCombat, .wh-worm-upkeep-btn), dismissWormSwarms"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Кузнец_Крови — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kuznetsKrovi.ringOfBlood": {
