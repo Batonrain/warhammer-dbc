@@ -30,19 +30,25 @@ export async function toggleSkitariiModule(actor, item) {
   if (!mantleSwapAllowed(actor, combat, dir)) {
     return ui.notifications.warn(`⚠️ В этом Ходу Мантия уже ${turnOn ? "включала" : "отключала"} Модуль.`);
   }
-  if (turnOn) {
-    const sum = skitariiModuleSummary(actor);
-    if (sum && sum.active >= sum.activeMax) {
-      return ui.notifications.warn(`⚠️ Уже действует ${sum.active} из ${sum.activeMax} Модулей — сначала отключите другой.`);
-    }
-  }
-  if (turnOn) await item.unsetFlag(NS, "disabled");
-  else await item.setFlag(NS, "disabled", true);
   const { syncItemEffectsDisabled } = await import("../apps/effects.mjs");
   const { syncGrantedEquipment, syncLiveGrants } = await import("../apps/mechanics.mjs");
-  await syncItemEffectsDisabled(item, turnOn);
-  await syncGrantedEquipment(item);
-  await syncLiveGrants(item);
+  const apply = async on => {
+    if (on) await item.unsetFlag(NS, "disabled");
+    else await item.setFlag(NS, "disabled", true);
+    await syncItemEffectsDisabled(item, on);
+    await syncGrantedEquipment(item);
+    await syncLiveGrants(item);
+  };
+  await apply(turnOn);
+  // Лимит проверяется ПОСЛЕ включения: Модуль, сам поднимающий T, при
+  // отключении уронил T.b, а с ним и лимит — проверка «до» не дала бы его вернуть.
+  if (turnOn) {
+    const after = skitariiModuleSummary(actor);
+    if (after && after.active > after.activeMax) {
+      await apply(false);
+      return ui.notifications.warn(`⚠️ С этим Модулем действовало бы ${after.active} из ${after.activeMax} — сначала отключите другой.`);
+    }
+  }
   const mark = mantleSwapMark(actor, combat, dir);
   if (mark) await actor.setFlag(NS, MANTLE_SWAP_FLAG, mark);
   const sum = skitariiModuleSummary(actor);

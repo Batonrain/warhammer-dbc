@@ -16,7 +16,7 @@ import { sideValue } from "./opposed-contest.mjs";
 import {
   MEDIC_STOCK_FLAG, PLACEBO_FLAG, ANTIVENOM_FLAG, PLACEBO_SCENE_FLAG, ANTIVENOM_SECONDS, SECONDS_PER_ROUND,
   hasCook, hasAntivenom, hasDeepDetox, hasPlacebo, medicStock, stockAdd, stockKey, cookBatch,
-  deepDetoxStunMinutes, groupSkillValue, CHYMISTRY_RE, placeboFlag
+  deepDetoxStunMinutes, groupSkillValue, CHYMISTRY_RE, placeboFlag, stockUpdateData, isChemSupply
 } from "../rules/medic-chemistry.mjs";
 
 const NS = "warhammer-dbc";
@@ -36,7 +36,7 @@ async function pick(title, label, options) {
   }).catch(() => null);
 }
 
-const findItem = (actor, re) => [...(actor?.items ?? [])].find(i => re.test(i.name));
+const findItem = (actor, re) => [...(actor?.items ?? [])].find(i => isChemSupply(i, re));
 const DETOX_RE = /detox|детокс/i;
 const STIMM_RE = /stimm|стимм/i;
 
@@ -53,7 +53,8 @@ async function spendDoses(actor, needs) {
 }
 
 async function saveStock(actor, kind, name, n) {
-  await actor.setFlag(NS, MEDIC_STOCK_FLAG, stockAdd(medicStock(actor), kind, name, n));
+  const prev = medicStock(actor);
+  await actor.update(stockUpdateData(prev, stockAdd(prev, kind, name, n), NS));
 }
 
 /** Наркотики, от которых можно готовить: препараты с Зависимостью на листе и зависимости актора/цели. */
@@ -173,6 +174,7 @@ export async function giveDeepDetox(actor) {
   const d5 = await new Roll("1d5").evaluate();
   const stun = deepDetoxStunMinutes(d5.total, deg);
   await saveStock(actor, "deepDetox", drug, -1);
+  if (!medicStock(actor).deepDetox[drug]) await actor.update({ [`flags.${NS}.deepDetoxDeg.-=${drug}`]: null });
   await writeToTarget(target, { kind: "medicChem", action: "deepDetox", drug, stun: Math.min(6, stun) }, actor);
   await postTestCard(actor, {
     icon: "💉", title: `Глубокая Детоксикация → ${esc(target.name)}`,

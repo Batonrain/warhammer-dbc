@@ -4,7 +4,7 @@
 
 import { esc } from "../helpers/utils.mjs";
 import { stationOf } from "../rules/vehicle.mjs";
-import { PEDAL_FLAG, hasPedalToMetal } from "../rules/pedal-to-metal.mjs";
+import { PEDAL_FLAG, hasPedalToMetal, pedalOf, pedalExpired } from "../rules/pedal-to-metal.mjs";
 
 const DRIVER_ROLES = ["driver", "pilot"];
 
@@ -24,4 +24,22 @@ export async function usePedalToMetal(driver) {
     content: `<div class="wh-roll-result"><div class="roll-header">Педаль в Пол — ${esc(vehicle.name)}</div>
       <div class="roll-threshold">SPD +${bonus} (P.b водителя). В этот Ход машина не поворачивает; до начала следующего Хода ${esc(driver.name)} — без Виражей.</div></div>` });
   return bonus;
+}
+
+/**
+ * Начало Хода в бою: снять истёкшие метки «Педали в Пол». Без снятия effSpd
+ * машины держал прибавку, пока лист не пересчитают (живая проверка pr-584-pedal-spd-stale);
+ * unsetFlag сам вызывает пересчёт производных. Пишет один активный ГМ (hooks.mjs).
+ */
+export async function expirePedalMarks(combat) {
+  const seen = new Set();
+  const vehicles = [
+    ...[...(game.actors ?? [])].filter(a => a.type === "vehicle"),
+    ...[...(combat?.combatants ?? [])].map(c => c.actor).filter(a => a?.type === "vehicle")
+  ];
+  for (const v of vehicles) {
+    if (!v || seen.has(v.uuid)) continue;
+    seen.add(v.uuid);
+    if (pedalExpired(pedalOf(v), combat)) await v.unsetFlag("warhammer-dbc", PEDAL_FLAG);
+  }
 }

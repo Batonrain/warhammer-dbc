@@ -60,6 +60,24 @@ export function stockAdd(stock, kind, name, n) {
   return next;
 }
 
+/**
+ * Данные actor.update() для записи запаса. setFlag сливает объекты, и ключ,
+ * удалённый из запаса (последняя доза), оставался бы во флаге — поэтому
+ * исчезнувшие ключи снимаются явно оператором «-=».
+ */
+export function stockUpdateData(prev, next, ns = "warhammer-dbc") {
+  const base = `flags.${ns}.${MEDIC_STOCK_FLAG}`;
+  const data = {};
+  for (const kind of ["cook", "antivenom", "deepDetox"]) {
+    for (const [k, v] of Object.entries(next?.[kind] ?? {})) data[`${base}.${kind}.${k}`] = v;
+    for (const k of Object.keys(prev?.[kind] ?? {})) if (!(k in (next?.[kind] ?? {}))) data[`${base}.${kind}.-=${k}`] = null;
+  }
+  return data;
+}
+
+/** Расходник для химии: только препарат (тип drug), не Талант с тем же словом в имени. */
+export const isChemSupply = (item, re) => item?.type === "drug" && re.test(String(item.name ?? ""));
+
 /** Смесей за раз: I.b (минимум 1). */
 export const cookBatch = actor => Math.max(1, Number(actor?.system?.characteristics?.int?.bonus) || 0);
 

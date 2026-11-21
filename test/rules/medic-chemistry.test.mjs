@@ -1,7 +1,8 @@
 // Таланты Медика поверх химии (остаток Талантов, 20.11.2026).
 import { describe, it, expect } from "vitest";
 import { stockAdd, medicStock, cookBatch, deepDetoxStunMinutes, antivenomImmune, placeboActive, placeboFlag,
-         triageCap, groupSkillValue, CHYMISTRY_RE } from "../../module/rules/medic-chemistry.mjs";
+         triageCap, groupSkillValue, CHYMISTRY_RE,
+         stockUpdateData, isChemSupply } from "../../module/rules/medic-chemistry.mjs";
 import { checkTargetWrite } from "../../module/combat/gm-relay.mjs";
 
 const T = name => ({ type: "talent", name });
@@ -75,5 +76,20 @@ describe("запись через ГМа", () => {
     expect(checkTargetWrite({ kind: "medicChem", action: "antivenom", poison: "X" }, { initiatorOwned: true, initiator: medic }).ok).toBe(false);
     expect(checkTargetWrite({ kind: "medicChem", action: "placebo", rounds: 99 }, { initiatorOwned: true, initiator: medic }).ok).toBe(false);
     expect(checkTargetWrite({ kind: "medicChem", action: "cook", drug: "Обскура", extra: 1 }, { initiatorOwned: true, initiator: medic }).ok).toBe(false);
+  });
+});
+
+describe("живая проверка #585: запас и поиск расходников", () => {
+  it("последняя доза снимается с флага оператором -=", () => {
+    const prev = { cook: { Обскура: 1 }, antivenom: {}, deepDetox: { Слот: 2 } };
+    const next = stockAdd(prev, "cook", "Обскура", -1);
+    const d = stockUpdateData(prev, next);
+    expect(d["flags.warhammer-dbc.medicStock.cook.-=Обскура"]).toBeNull();
+    expect(d["flags.warhammer-dbc.medicStock.deepDetox.Слот"]).toBe(2);
+  });
+  it("Талант «Глубокая Детоксикация» не принимается за препарат Детокс", () => {
+    const re = /detox|детокс/i;
+    expect(isChemSupply({ type: "talent", name: "Deep Detox / Глубокая Детоксикация" }, re)).toBe(false);
+    expect(isChemSupply({ type: "drug", name: "Detox / Детокс" }, re)).toBe(true);
   });
 });

@@ -4359,9 +4359,12 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       const levelField = conditionLevelField(cond);
       const lvl = levelField ? (perDoP ? deg : (fixedRnd || 1)) : null;
       const cur = levelField ? (actor.system.conditions?.[levelField] ?? 0) : 0;
+      // Истинная Гниль: трупный яд травит и тех, у кого иммунитет к Отравлению
+      // (Daemonic/Machine/Stuff of Nightmares) — проверку иммунитета пропускаем.
+      const immunityActor = (trueRotPierce && cond === "poisoned") ? null : actor;
       const fields = levelField
-        ? conditionApplyFields(cond, Math.max(cur, lvl), actor)
-        : conditionApplyFields(cond, null, actor);
+        ? conditionApplyFields(cond, Math.max(cur, lvl), immunityActor)
+        : conditionApplyFields(cond, null, immunityActor);
       if (!Object.keys(fields).length) {
         immune.push(CONDITIONS_DEF[cond]?.label || label);
         continue;
@@ -5514,6 +5517,14 @@ function _attachFateContextMenu(message, html) {
     if (!game.user.isGM) return;
     if (changed?.round === undefined && changed?.turn === undefined) return;
     if (combat.combatant) await processShooterTurnStart(combat.combatant);
+  });
+
+  // Педаль в Пол (combat/pedal-to-metal.mjs): истёкшая метка снимается в начале Хода, чтобы SPD машины пересчитался.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.users.activeGM?.isSelf) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    const { expirePedalMarks } = await import("./combat/pedal-to-metal.mjs");
+    await expirePedalMarks(combat);
   });
 
   // Гравитонные зоны (module/regions/graviton-zone.mjs, wdbc-wlwf) — тот же
