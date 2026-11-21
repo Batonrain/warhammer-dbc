@@ -232,3 +232,14 @@ describe("Соглашение Доблести", () => {
     expect(itemShouldBeSuppressed(b, ring, 1500)).toBe(false);
   });
 });
+
+describe("Фрейм Хоминис: пересчёт подавления (живая проверка PR #588)", () => {
+  it("снятие/выдача Черты Хоминис и загрузка мира запускают syncArchetypeSuppression", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync("warhammer-dbc.mjs", "utf8");
+    const m = src.match(/const ARCH_SUPPRESS_TRIGGERS = (\/.*\/i);/);
+    const re = new Function(`return ${m[1]}`)();
+    expect(re.test("Hominis Frame / Фрейм Хоминис")).toBe(true);
+    expect(src).toMatch(/Hooks\.once\("ready"[\s\S]{0,600}syncArchetypeSuppression\(actor\)/);
+  });
+});
