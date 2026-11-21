@@ -119,6 +119,7 @@ import { twinFateWorse } from "../rules/twin-fate.mjs";
 import { hasItemNamed } from "../rules/req-atom.mjs";
 import { dimacherusBonus } from "../rules/gladiator-talents.mjs";
 import { bloodOfMartyrsNote } from "../rules/hierophant-talents.mjs";
+import { corpsePoisonAttack, hasPutridClarity, hasTrueRot } from "../rules/plague-monk-talents.mjs";
 import { ashMantleActive, ashMantleNote, fistfulActive, fistfulNote, fistfulBlocks, FISTFUL_FLAG } from "./dreadnought-talents.mjs";
 import { fireDanceActive } from "../rules/fire-dance.mjs";
 import { freeShotLocksAim, hasBayonetCharge, BAYONET_SHOT_PENDING_FLAG } from "../rules/run-and-gun.mjs";
@@ -1676,6 +1677,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const skullBonus = skullOfferingBonus(actor, { isMelee, combatId: combatIdOf(actor) });
   // Димахер (Гладиатор): с двумя рукопашными — +очки Момента к урону каждого попадания.
   const dimacherus = dimacherusBonus(actor, { isMelee, momentum: momentumOf(actor) });
+  // Трупный Яд Чумного Монаха в этой атаке (безоружная/интегральная) — для Гнилостного Просвещения и Истинной Гнили.
+  const corpsePoisonOn = corpsePoisonAttack(actor, !item || isIntegralAttack(item));
   const flatBonus = dimacherus + runic.dmg + razorBonus + crushingBlow + mightyShot.bonus + plasmaMastery.dmg + eyeBonus + weaponTechBonus + (isMelee ? sbEff : 0) + thrownSbBonus + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + invocationAdd.dmg + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodOffering.dmg + skullBonus + bloodFlameBonus + bloodGodBonus + structuralBonus + reliable.dmg + haymakerBonus + preciseLegacyBonus + wrathLegacyBonus + betrayalBonus + bloodLegacyBonus + changeLegacyBonus + dishonorableBonus + earlyDeathBonus + adaptiveBonus + soulboundLegacyBonus + clawsHandBonus;
   // Строки карточки: игрок должен видеть, ОТКУДА взялась прибавка, а не искать
   // лишние очки в формуле (цель проекта — видимая причина).
@@ -2559,6 +2562,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         targetEffects: buildTargetEffectButtons(cardProps, { hit, ammoName: loadedAmmo?.name || "",
           damageType: effDmgType, hitLocation: hits[0]?.loc || "",
           poisoner: !!aimTarget?.value && hasTalentCapability(actor, POISONER_CAP),
+          poisonBestOfTwo: corpsePoisonOn && hasPutridClarity(actor), trueRot: corpsePoisonOn && hasTrueRot(actor),
           pyromaniac: pyromaniacActive(actor, { spray: wp.spray, flame: wp.flame }),
           pyromaniacAttackerUuid: actor.uuid ?? "", igniter,
           fireDance: fireDanceActive(actor, { spray: wp.spray, flame: wp.flame }) })

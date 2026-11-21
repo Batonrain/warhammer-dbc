@@ -5375,11 +5375,11 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чумной_Монах — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chumnoyMonah.feverStance": {
     label: "Доведя техники боя до совершенства, монах вплетает удары кулаками в свои атаки, больше не полагаясь на живительную силу паразитов.",
-    source: "Fever Stance / Стойка Горячки", reader: ""
+    source: "Fever Stance / Стойка Горячки", reader: "module/combat/plague-monk.mjs useFeverStance (кнопка Таланта, раз в Ход)"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.gluttony": {
     label: "Ритуальным жертвоприношением и усиленной медитацией достигает нового уровня взаимопонимания с паразитами внутри.",
-    source: "Gluttony / Чревоугодие", reader: ""
+    source: "Gluttony / Чревоугодие", reader: "module/rules/plague-monk-talents.mjs feverState/feverRestorePlan (excessCap = 2 × копий)"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.longHandOfCorrosion": {
     label: "Порченная плоть монаха служит лучшим проводником силы паразитов, позволяя им защищать его даже от атак издали,",
@@ -5387,15 +5387,15 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chumnoyMonah.putridClarity": {
     label: "Медитируя над природой жизни и смерти, монах глубже проникает в тайны ядов и полнее раскрывает смертоносный потенциал своих паразитов.",
-    source: "Putrid Clarity / Гнилостное Просвещение", reader: ""
+    source: "Putrid Clarity / Гнилостное Просвещение", reader: "module/combat/attack.mjs (poisonBestOfTwo) → combat/weapon-properties.mjs data-wp-best-of-two → hooks.mjs _applyWeaponPropEffect"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.trueRot": {
     label: "Глубокое понимание природы болезни и разложения раскрывает полный потенциал трупных ядов.",
-    source: "True Rot / Истинная Гниль", reader: ""
+    source: "True Rot / Истинная Гниль", reader: "module/combat/attack.mjs (trueRot) → combat/weapon-properties.mjs data-wp-true-rot → hooks.mjs _applyWeaponPropEffect; combat/plague-monk.mjs useTrueRotRad"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.wormListener": {
     label: "Прислушиваясь к шёпоту паразитов внутри, монах способен избрать лучшие части жертвы и отложить их на будущее. Потратив 7 минут над трупом,",
-    source: "Worm Listener / Слушающий Червей", reader: ""
+    source: "Worm Listener / Слушающий Червей", reader: "module/combat/plague-monk.mjs cutWormPouch/eatWormPouch"
   },
   // ── Элитные_архетипы\Шумовой_Десантник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.shumovoyDesantnik.dirgeOfDespair": {
@@ -6997,7 +6997,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Чумной_Монах — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chumnoyMonah.carrionEater": {
     label: "За 7 минут может сожрать труп разумного существа на расстоянии рукопашной атаки, восстанавливая 1d5 + T.b Ран, т.к.",
-    source: "Carrion Eater / Пожиратель Мертвечины", reader: "кнопка kind:script на Черте (цель T): healActor(1d5 + T.b трупа) — module/combat/heal-target.mjs. Не смоделировано: 7 минут, давность трупа, рост Unnatural T"
+    source: "Carrion Eater / Пожиратель Мертвечины", reader: "module/combat/plague-monk.mjs devourCorpse (лечение 1d5+T.b, +1d5 рейтинга Unnatural T за благословенный труп)"
   },
   "trait.elitnyeArhetipy.chumnoyMonah.corpsePoison": {
     label: "Безоружные атаки Монаха получают свойства Toxic (2) и Corrosive (2). Может за полное действие измазать одно своё оружие ближнего боя в трупн…",
@@ -7005,7 +7005,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.chumnoyMonah.feveredSpeed": {
     label: "Энергия жизни, расходящаяся от вздутого паразитами живота, придаёт ему неестественную дёрганую скорость.",
-    source: "Fevered Speed / Горячечная Скорость", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Fevered Speed / Горячечная Скорость", reader: "module/combat/plague-monk.mjs useFeveredSpeed; рейтинг — rules/plague-monk-talents.mjs feverState, ActiveEffect t.bonusFx"
   },
   "trait.elitnyeArhetipy.chumnoyMonah.forsakeTheFlame": {
     label: "Благословения монаха отрицают оружие, что сжигает плоть, изгоняя её из цикла жизни и смерти. Не может использовать оружие,",

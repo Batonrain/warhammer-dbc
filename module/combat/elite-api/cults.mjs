@@ -5,9 +5,12 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
+import { useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet } from "../plague-monk.mjs";
 import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
 
 export const API = {
   // Иерофант
-  useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses
+  useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses,
+  // Чумной Монах
+  useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet
 };
