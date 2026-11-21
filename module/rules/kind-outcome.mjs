@@ -16,6 +16,7 @@ import { resolveTest } from "./resolve-test.mjs";
 import { combinedThreshold, resolveOpposed } from "./test-kind.mjs";
 import { extendedTestKey, applyGain, EXTENDED_CRIT_LOSS } from "./extended-test.mjs";
 import { unnaturalRating, unnaturalDegreeBonus, hasUnnaturalCharacteristic } from "./unnatural-characteristic.mjs";
+import { sorcerersPlateDeg } from "./bronenosets-talents.mjs";
 import { critLineHtml } from "./test-kind-widget.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
@@ -280,11 +281,14 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // Искусный (Adroit, Ренегат — rules/adroit.mjs): +1 Успех к успешному
   // тесту на выбранную Характеристику (usedCharKey — ей реально бросали).
   const adroitBonus = adroitDegreeBonus(ctx?.actor ?? actor, usedCharKey, success);
+  // Латы Чародея (Броненосец): +½ AP торса к Успехам встречного W против психосилы.
+  const sorcPlateDeg = sorcerersPlateDeg(ctx?.actor ?? actor, { success, ctx, charKey: usedCharKey });
   const unnaturalLine = (unnaturalBonus > 0
     ? `<div class="roll-threshold">🧬 Сверхъестественная Характеристика (${unnaturalRatingHere}): +${unnaturalBonus} ${_degWord(unnaturalBonus)}</div>`
     : "") + (singleCombatDeg ? SINGLE_COMBAT_LINE : "") + (adroitBonus > 0
     ? `<div class="roll-threshold">🎯 Искусный (${esc(CHARACTERISTICS[usedCharKey]?.abbr ?? usedCharKey)}): +${adroitBonus} ${_degWord(adroitBonus)}</div>`
-    : "");
+    : "") + (sorcPlateDeg > 0
+    ? `<div class="roll-threshold">🛡️ Латы Чародея: +${sorcPlateDeg} ${_degWord(sorcPlateDeg)} (½ AP торса)</div>` : "");
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
@@ -293,7 +297,7 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // (с надбавками выше) и ДО сравнения встречного теста ниже — иначе
   // умножение ничего не решало бы. Ассистентов лист прибавляет позже.
   const mul = success ? Math.max(1, Math.floor(Number(successMul) || 1)) : 1;
-  const preMulDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : 0;
+  const preMulDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus + sorcPlateDeg : 0;
   const uncappedDeg = success ? preMulDeg * mul : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
   const successMulLine = mul > 1
     ? `<div class="roll-threshold">✖ Успехи ×${mul}: ${preMulDeg} → <b>${uncappedDeg}</b></div>` : "";

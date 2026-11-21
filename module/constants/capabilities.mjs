@@ -4164,15 +4164,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Броненосец — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.bronenosets.chaosGreatbow": {
     label: "Луки обычных смертных неспособны выдержать силу Броненосца. Получив в руки огромный металлический лук,",
-    source: "Chaos Greatbow / Великий Лук Хаоса", reader: ""
+    source: "Chaos Greatbow / Великий Лук Хаоса", reader: "module/rules/bronenosets-talents.mjs::bronenosetsWeaponBonus → combat/attack.mjs (кнопка useChaosGreatbow)"
   },
   "elite.elitnyeArhetipy.bronenosets.chosenFlame": {
     label: "Мощь Богов вливается в оружие Броненосца, манифестируясь на кромках лезвий как призрачное пламя.",
-    source: "Chosen Flame / Избранное Пламя", reader: ""
+    source: "Chosen Flame / Избранное Пламя", reader: "module/rules/bronenosets-talents.mjs::chosenFlameOn/bronenosetsWeaponBonus → combat/attack.mjs (активация до конца боя/сцены)"
   },
   "elite.elitnyeArhetipy.bronenosets.divineShield": {
     label: "Сила Богов, струящаяся сквозь доспех, вливается в его щит. Экипировав щит, может концентрироваться на нём минуту и трансформировать его: щит…",
-    source: "Divine Shield / Божественный Щит", reader: ""
+    source: "Divine Shield / Божественный Щит", reader: "module/combat/bronenosets-talents.mjs::useDivineShield (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.bronenosets.exaltedPlate": {
     label: "Порча в душе Броненосца проникает в его латы и укрепляет их. Может потратить Очко Бесчестия, чтобы до конца боя или сцены получить +½Cor.",
@@ -4180,23 +4180,23 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.bronenosets.hedgehog": {
     label: "Узкие ломкие шипы вырастают из лат. Броня получает модификацию «Шипы», но наносимый шипами урон получает свойство Crippling (½Cor.b, окр.▲),",
-    source: "Hedgehog / Дикобраз", reader: ""
+    source: "Hedgehog / Дикобраз", reader: "module/combat/counter-attack.mjs (kind:counterAttack на Таланте) + rules/bronenosets-talents.mjs::hedgehogCrippling"
   },
   "elite.elitnyeArhetipy.bronenosets.potence": {
     label: "Мощь божественных лат позволяет использовать двуручное оружие одной рукой. Может использовать двуручное рукопашное оружие или одноручное рук…",
-    source: "Potence / Могущество", reader: ""
+    source: "Potence / Могущество", reader: "module/rules/bronenosets-talents.mjs::potenceGripActive/potenceBalance → sheets/attack-dialog.mjs, apps/hud.mjs, sheets/attack/selection.mjs, combat/defense.mjs"
   },
   "elite.elitnyeArhetipy.bronenosets.riderOfChaos": {
     label: "Сила, дарованная Богами, вливается в его боевого зверя. Может потратить 8 часов, чтобы ритуально посвятить скакуна себе на службу — тот мути…",
-    source: "Rider of Chaos / Всадник Хаоса", reader: ""
+    source: "Rider of Chaos / Всадник Хаоса", reader: "module/combat/bronenosets-talents.mjs::dedicateChaosSteed (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.bronenosets.sinEater": {
     label: "Могучие владыки Броненосцев черпают силу из душ тех, кого сразили на пути к славе. Когда Броненосец убивает другого чемпиона Хаоса,",
-    source: "Sin Eater / Пожиратель Греха", reader: ""
+    source: "Sin Eater / Пожиратель Греха", reader: "module/combat/bronenosets-talents.mjs::useSinEater (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.bronenosets.sorcererSPlate": {
     label: "Латы Броненосцев, искушённых в колдовских практиках, отражаются в эмпиреях, защищая сами их души.",
-    source: "Sorcerer's Plate / Латы Чародея", reader: ""
+    source: "Sorcerer's Plate / Латы Чародея", reader: "module/rules/bronenosets-talents.mjs::sorcerersPlateDeg → rules/kind-outcome.mjs; armor.apVsWarpFull на Таланте → combat/damage.mjs"
   },
   // ── Элитные_архетипы\Вампир — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.vampir.pactStage1": {

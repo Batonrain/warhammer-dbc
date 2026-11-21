@@ -3403,6 +3403,8 @@ export class WarhammerCharacterSheet
       ctx: withSense({ actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
              group: rollContext?.group || undefined, specialty: rollContext?.specialty || undefined,
              morale: isMoraleOpposedSkill(skillKey),
+             // Латы Чародея (rules/bronenosets-talents.mjs): исходу нужен тег «против психосилы».
+             ...(rollContext?.psychicThreat ? { psychicThreat: true } : {}),
              ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }, result.sense)
     });
     if (isMoraleOpposedSkill(skillKey)) {

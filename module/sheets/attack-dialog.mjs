@@ -45,6 +45,7 @@ import { sightEffectsOf }                     from "../rules/sight-effects.mjs";
 import { unstablePlatformPenalty, plasmaMasteryBlastChoice } from "../rules/damage-talents.mjs";
 import { MAXIMAL_RNG_BONUS }                  from "../rules/maximal-mode.mjs";
 import { RIPOSTE_EVASION_PENALTY, stockGripActive } from "../rules/melee-talents.mjs";
+import { potenceGripActive } from "../rules/bronenosets-talents.mjs";
 import { weaponIsBound } from "../combat/blade-binding.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
@@ -308,8 +309,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                         && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) ? "1р" : null;
   // Прикладный Хват (Sahara 3-8dc5): штык одной рукой — «1р» выдаёт Талант, WS −10 (selection.mjs).
   const stockGripGrip = (isMelee && stockGripActive(actor, item)) ? "1р" : null;
+  // Могущество (Броненосец): двуручное рукопашное — одной рукой.
+  const potenceGrip = (isMelee && potenceGripActive(actor, item)) ? "1р" : null;
   const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []),
                       ...(stockGripGrip ? [stockGripGrip] : []),
+                      ...(potenceGrip ? [potenceGrip] : []),
                       ...(doubleGripGrip ? [doubleGripGrip] : []),
                       ...(oneHandRifleGrip ? [oneHandRifleGrip] : []),
                       ...(pathOneHandGrip ? [pathOneHandGrip] : [])];

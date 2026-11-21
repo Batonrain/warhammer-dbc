@@ -17,6 +17,7 @@ import { tokenRelationship } from "../regions/auras.mjs";
 import { uselessCount }   from "../rules/useless-limbs.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { riposteWeapon, RIPOSTE_ROUND_FLAG } from "../rules/melee-talents.mjs";
+import { potenceBalance } from "../rules/bronenosets-talents.mjs";
 import { overpowerOffered } from "../rules/berserker-talents.mjs";
 import { overpowerButtonHtml } from "./overpower.mjs";
 import { bladeBindingOffered } from "../rules/blade-binding.mjs";
@@ -583,7 +584,9 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
   // Безоружный Мастер (стр. 62): кулаки с Балансом ниже 0 получают +1.
   const baseBalance = parseInt(meleeWeapon?.system.balance ?? 0) + (gripFx?.balMod || 0)
     + fistBalanceBonus(actor, meleeWeapon);
-  const balance    = (gripFx?.balSet ?? baseBalance) + (modFx.balanceMod || 0);
+  // Могущество (Броненосец): двуручное в одной руке — Баланс −2.
+  const potenceBal = meleeWeapon ? potenceBalance(actor, meleeWeapon, gripKeyNow) : null;
+  const balance    = (gripFx?.balSet ?? potenceBal ?? baseBalance) + (modFx.balanceMod || 0);
   const balanceMod = BALANCE_PARRY_MOD[String(balance)];
 
   const stance    = actor.system.meleeStance || "standard";
