@@ -38,7 +38,8 @@ export const BLOOD_SMITH = "Кузнец Крови";
 
 /** Архетипы, которые умеют гаснуть целиком, и их Черты-источники (не гаснут). */
 export const SUPPRESSIBLE = {
-  [ELECTROPRIEST]: ["Power From Flesh"],
+  // Фрейм Хоминис — признак тела, по нему Архетип и включается: гасить его нельзя.
+  [ELECTROPRIEST]: ["Power From Flesh", "Hominis Frame"],
   [BLOOD_SMITH]: ["Valourous Accord"]
 };
 

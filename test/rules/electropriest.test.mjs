@@ -9,7 +9,8 @@ import {
 
 const priest = ({ items = [], energy = 3, wb = 5, flags = {}, wounds = {} } = {}) => ({
   items: [{ type: "trait", name: "Electropriest Coils / Катушки Электрожреца" },
-          { type: "trait", name: "Power From Flesh / Сила Из Плоти" }, ...items],
+          { type: "trait", name: "Power From Flesh / Сила Из Плоти" },
+          { type: "trait", name: "Hominis Frame / Фрейм Хоминис" }, ...items],
   system: { energy: { value: energy }, characteristics: { wp: { bonus: wb } }, wounds },
   flags: { "warhammer-dbc": flags }
 });

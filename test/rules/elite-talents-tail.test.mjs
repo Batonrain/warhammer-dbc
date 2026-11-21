@@ -169,14 +169,20 @@ describe("Поглотитель", () => {
 describe("Сила Из Плоти: подавление Электрожреца", () => {
   const pff = T("Power From Flesh / Сила Из Плоти", "trait");
   const coils = T("Electropriest Coils / Катушки Электрожреца", "trait");
+  const hominis = T("Hominis Frame / Фрейм Хоминис", "trait");
   it("гаснет от Machine и от чужого Фрейма", () => {
-    expect(electropriestActive(actor([pff, coils]))).toBe(true);
-    expect(electropriestActive(actor([pff, T("Machine (2)", "trait")]))).toBe(false);
-    expect(electropriestActive(actor([pff, T("Machine (2)", "trait"), T("Fleshmetal")]))).toBe(true);
-    const framed = actor([pff, T("Paladin Frame / Фрейм Паладина", "trait")]);
+    expect(electropriestActive(actor([pff, hominis, coils]))).toBe(true);
+    expect(electropriestActive(actor([pff, hominis, T("Machine (2)", "trait")]))).toBe(false);
+    expect(electropriestActive(actor([pff, hominis, T("Machine (2)", "trait"), T("Fleshmetal")]))).toBe(true);
+    const framed = actor([pff, hominis, T("Paladin Frame / Фрейм Паладина", "trait")]);
     expect(otherFrameInstalled(framed)).toBe(true);
     expect(electropriestActive(framed)).toBe(false);
     expect(suppressedArchetypes(framed).has(ELECTROPRIEST)).toBe(true);
+  });
+  it("работает только с Фреймом Хоминис (решение 21.11.2026), сам Фрейм не гаснет", () => {
+    expect(electropriestActive(actor([pff, coils]))).toBe(false);
+    expect(suppressedArchetypes(actor([pff, coils])).has(ELECTROPRIEST)).toBe(true);
+    expect(suppressibleArchetypeOf(hominis)).toBeNull();
   });
   it("гасит Таланты и Черты Архетипа и его бонусы, но не саму Силу Из Плоти", () => {
     const a = actor([pff, coils, T("Machine", "trait")]);
