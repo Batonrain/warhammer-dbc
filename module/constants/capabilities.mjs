@@ -4844,11 +4844,11 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Лорд_Дискордант — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.lordDiskordant.discordantDuo": {
     label: "Опытный Лорд-Дискордант умеет делиться дарами своей судьбы со скакуном. Верхом на Адском Сталкере может тратить свои Очки Бесчестия на эффек…",
-    source: "Discordant Duo / Дискордантный Дуэт", reader: ""
+    source: "Discordant Duo / Дискордантный Дуэт", reader: "module/combat/lord-discordant.mjs::useDiscordantDuo (кнопка верхом, 1 Очко Бесчестия)"
   },
   "elite.elitnyeArhetipy.lordDiskordant.hellbound": {
     label: "Сделки с Кузницей Душ дают доступ к продвинутым ритуалам связывания демона с машиной. Может за смену работы отметить машину доп.",
-    source: "Hellbound / Адосвязанный", reader: ""
+    source: "Hellbound / Адосвязанный", reader: "module/combat/lord-discordant.mjs::useHellbound (список машин с рунами, предел ½W.b — rules/lord-discordant.mjs::hellboundMark)"
   },
   "elite.elitnyeArhetipy.lordDiskordant.stalkersmith": {
     label: "Даже лишённый скакуна легко его заменит за счёт рутин создания оболочки и ритуала вселения. Делает тесты Крафта оболочки Адского Сталкера,",
@@ -4856,7 +4856,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.lordDiskordant.torturedSpirit": {
     label: "Вырывает духи машин вместе с когитаторами из избранных повреждённых им машин и встраивает их в оболочку Адского Сталкера.",
-    source: "Tortured Spirit / Истерзанный Дух", reader: ""
+    source: "Tortured Spirit / Истерзанный Дух", reader: "module/combat/lord-discordant.mjs::useTorturedSpirit (раз в Раунд: эффект Вора Духов на 1 дух)"
   },
   // ── Элитные_архетипы\Малагра — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.malagra.fellDischarge": {
@@ -6690,15 +6690,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Лорд_Дискордант — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.lordDiskordant.corruptedNoosphere": {
     label: "Подключив импланты к эфирным излучателям Сталкера, наполняет Ноосферу вокруг порченым кодом. В ауре радиусом I.",
-    source: "Corrupted Noosphere / Порченная Ноосфера", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-8fc7 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Corrupted Noosphere / Порченная Ноосфера", reader: "module/combat/lord-discordant.mjs::corruptedNoosphereLord/corruptedNoosphereDrain → sheets/tabs/tech.mjs (цена активации ×2, Процессы +2 ⚙, Когниция Лорду при 0)"
   },
   "trait.elitnyeArhetipy.lordDiskordant.daemonicUplink": {
     label: "Тесная связь души и разума с демоническими машинами позволяет оптимизировать их рутины. Когда в пределах I.",
-    source: "Daemonic Uplink / Демоническое Подключение", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Daemonic Uplink / Демоническое Подключение", reader: "module/combat/lord-discordant.mjs::useDaemonicUplink (кнопка: 2 Когниции, Характеристика Лорда для теста машины-цели в радиусе I.b)"
   },
   "trait.elitnyeArhetipy.lordDiskordant.machineSpiritThief": {
     label: "Техно-арканные накопители в скакуне поглощают психические эхо разрушенных духов машин.",
-    source: "Machine Spirit Thief / Вор Духов Машины", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Machine Spirit Thief / Вор Духов Машины", reader: "module/combat/lord-discordant.mjs::useMachineSpiritThief (кнопка верхом: духи = max(Размер, I.b/3) цели, выбор эффектов, луч 2d5 с кнопкой урона)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Малагра — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.malagra.astralConverter": {

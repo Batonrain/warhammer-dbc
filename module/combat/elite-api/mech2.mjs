@@ -7,6 +7,7 @@
 
 import { useDestructor, useGunzerker } from "../secutor.mjs";
 import { useCoilsSelfCharge, useCoilsShield, useCoilsDamageReduction, useVoltagheistBlast, useVoltagheistBubble, useVoltaicAbsorption } from "../electropriest.mjs";
+import { useMachineSpiritThief, useTorturedSpirit, useDaemonicUplink, useDiscordantDuo, useHellbound } from "../lord-discordant.mjs";
 import { useBisection, useDisjoint, useModularAutonomy, useScorpio, useChrysalis, useParadoxVeil } from "../tech-assassin.mjs";
 
 export const API = {
@@ -15,5 +16,7 @@ export const API = {
   // Секутор
   useDestructor, useGunzerker,
   // Электрожрец
-  useCoilsSelfCharge, useCoilsShield, useCoilsDamageReduction, useVoltagheistBlast, useVoltagheistBubble, useVoltaicAbsorption
+  useCoilsSelfCharge, useCoilsShield, useCoilsDamageReduction, useVoltagheistBlast, useVoltagheistBubble, useVoltaicAbsorption,
+  // Лорд Дискордант
+  useMachineSpiritThief, useTorturedSpirit, useDaemonicUplink, useDiscordantDuo, useHellbound
 };

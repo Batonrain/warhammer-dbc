@@ -44,6 +44,7 @@ import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist, planCoilTransf
   from "../../rules/technomystic-resources.mjs";
 import { coilsTechBonus } from "../../rules/electropriest.mjs";
 import { voltaicConfluenceReroll } from "../../combat/electropriest.mjs";
+import { corruptedNoosphereLord, corruptedNoosphereDrain, CORRUPTED_NOOSPHERE_PROCESS } from "../../combat/lord-discordant.mjs";
 
 /** Карточка-уведомление Техножреца (компиляция, Разгон, Процессы, Декомпиляция) — ни броска, ни Порога. */
 async function techNote(actor, title, line) {
@@ -113,10 +114,12 @@ export async function activateTechMiracle(actor, item) {
   // Цели — Foundry-таргет, тот же источник, что у Императива ниже.
   const hatredTargets = [...(game.user?.targets ?? [])].map(t => t.actor ?? null);
   const { cost: baseCogCost, discount: hatredDiscount } = techActivationCost(actor, item, hatredTargets);
+  // Порченная Ноосфера (Лорд Дискордант): во вражеской ауре цена активации ×2 (combat/lord-discordant.mjs).
+  const noosphereLord = corruptedNoosphereLord(actor);
   // Катушки Электрожреца без одежды: Компенсатор и Люминен (rules/electropriest.mjs).
   const coilsTech = coilsTechBonus(actor, item);
   // Омнимнезис добавляет к цене ⚙ переброса (ниже) — поэтому let.
-  let   cogCost  = baseCogCost;
+  let   cogCost  = baseCogCost * (noosphereLord ? 2 : 1);
   let   enCost   = sys.energyCost || 0;
   const cog      = actor.system.cognition || { value: 0, max: 0 };
   const en       = actor.system.energy || { value: 0, max: 0 };
@@ -307,6 +310,8 @@ export async function activateTechMiracle(actor, item) {
   }
 
   if (Object.keys(resUpd).length) await actor.update(resUpd);
+  // Порченная Ноосфера: опустил Когницию до 0 во вражеской ауре — Лорд получает 1 Когницию.
+  if (noosphereLord && cogCost > 0) await corruptedNoosphereDrain(actor, noosphereLord, cog.value || 0, resUpd["system.cognition.value"]);
 
   // Славословие: при успехе компиляция расходуется (одноразово)
   if (isSlavo && success) await item.update({ "system.compiled": false });
@@ -454,6 +459,7 @@ export async function activateTechMiracle(actor, item) {
       omnimnesisLine ? `<div class="roll-threshold" style="font-size:0.85em;">${omnimnesisLine}</div>` : "",
       confluenceLine ? `<div class="roll-threshold" style="font-size:0.85em;">${confluenceLine}</div>` : "",
       coilsTech.note ? `<div class="roll-threshold" style="font-size:0.85em;">⚡ ${coilsTech.note}</div>` : "",
+      noosphereLord ? `<div class="roll-threshold" style="font-size:0.85em;">☠️ Порченная Ноосфера (${esc(noosphereLord.name)}): цена активации ×2.</div>` : "",
       costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],
@@ -865,12 +871,16 @@ export async function overclock(actor) {
 async function cognitionRest(actor) {
   const cog = actor.system.cognition || { value: 0, max: 0, regen: 0 };
   const pc = processCostTotal(actor);
+  // Порченная Ноосфера (Лорд Дискордант): во вражеской ауре суммарная цена Процессов +2 ⚙.
+  const noosphereLord = pc.base > 0 ? corruptedNoosphereLord(actor) : null;
+  if (noosphereLord) pc.total += CORRUPTED_NOOSPHERE_PROCESS;
   const inCombat = isEncounterActive();
   const alreadyPaid = inCombat && !!actor.getFlag?.("warhammer-dbc", PROCESS_PAID_FLAG);
   // Повторное «↻» в том же Ходу ничего не восстанавливает: начало Хода уже было (ревью 25.10.2026).
   const nv  = alreadyPaid ? (cog.value || 0) : Math.min(cog.max || 0, (cog.value || 0) + (cog.regen || 0));
   const settle = alreadyPaid ? { pay: 0, after: nv, shortfall: 0 } : settleProcessCost(nv, pc.total);
   await actor.update({ "system.cognition.value": settle.after });
+  if (noosphereLord && !alreadyPaid) await corruptedNoosphereDrain(actor, noosphereLord, nv, settle.after);
   // Метка «↻ уже был в этом Ходу» — и без Процессов: иначе «↻» восстанавливал бы Когницию сколько угодно раз за Ход.
   if (!alreadyPaid && inCombat) await actor.setFlag("warhammer-dbc", PROCESS_PAID_FLAG, true);
   if (alreadyPaid && !(pc.base > 0 || pc.revelation || pc.piety)) {
@@ -880,6 +890,7 @@ async function cognitionRest(actor) {
     const parts = [`Цена Процессов в этот Ход: ${techIcon("cognition")} <b>${pc.total}</b>`];
     if (pc.revelation) parts.push(`Цифровое Откровение −${pc.revelation}`);
     if (pc.piety) parts.push(`Ноосферная Набожность −${pc.piety}`);
+    if (noosphereLord) parts.push(`Порченная Ноосфера (${esc(noosphereLord.name)}) +${CORRUPTED_NOOSPHERE_PROCESS}`);
     const tail = alreadyPaid
       ? `Цена в этом Ходу уже списана ранее — Когниция сейчас ${settle.after}.`
       : `Списано: ${techIcon("cognition")} <b>${settle.pay}</b> (было ${nv}, стало ${settle.after}).`
