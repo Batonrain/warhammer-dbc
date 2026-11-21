@@ -35,6 +35,16 @@ export function hunterHindranceApplies(actor, skill) {
   return hasSingleMindedHunter(actor) && HUNTER_HINDRANCE_SKILLS.includes(String(skill ?? ""));
 }
 
+/**
+ * Помеха Охотника как переброс для rollD100WithReroll (rules/test-kind-widget.mjs) — для тестов, идущих мимо
+ * окна теста Навыка: Сплотить, Вдохновить Гнев (Sahara task-fef6). null — Помехи нет.
+ */
+export function hunterHindranceReroll(actor, skill) {
+  return hunterHindranceApplies(actor, skill)
+    ? { mode: "keepWorst", rolls: 2, label: "Помеха (Целеустремлённый Охотник)" }
+    : null;
+}
+
 /** Название расстройства и его нижний предел Тяжести (книга: «не может опуститься ниже 0»). */
 export const HUNTER_DISORDER = Object.freeze({ name: "Психопатия", severityMin: 0 });
 

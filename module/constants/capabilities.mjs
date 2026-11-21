@@ -8416,7 +8416,7 @@ export const CAPABILITIES = {
   "ability.singleMindedHunter": {
     label: "Целеустремлённый Охотник: Психопатия на Тяжести 0 (не ниже 0) при получении Черты, Помеха на тесты Command, Charm, Deceive и Inquiry",
     source: "Single-Minded Hunter / Целеустремлённый Охотник (packs-src/traits/Элитные_архетипы)",
-    reader: "module/sheets/tabs/disorders.mjs::grantStartingDisorder (name, скрипт «При выдаче» записи Черты), module/rules/master-of-executions.mjs::hunterHindranceApplies (module/sheets/actor-sheet.mjs::_showSkillRollDialog, module/sheets/squad-sheet.mjs::_commandRoll — Помеха выбрана заранее) — Sahara 1-54b9"
+    reader: "module/sheets/tabs/disorders.mjs::grantStartingDisorder (name, скрипт «При выдаче» записи Черты), module/rules/master-of-executions.mjs::hunterHindranceApplies (module/sheets/actor-sheet.mjs::_showSkillRollDialog, module/sheets/squad-sheet.mjs::_commandRoll и ::_briefingRoll — Помеха выбрана заранее; ::hunterHindranceReroll — Сплотить (module/sheets/squad-sheet.mjs::_rallyAttempt) и Вдохновить Гнев (module/combat/inspire-wrath.mjs::startInspireWrath) бросают с Помехой сами) — Sahara 1-54b9, task-fef6"
   },
   "ability.hunterSight": {
     label: "Взор Охотника: души в зоне Unnatural Senses и их грубая сила по Inf (шёпот владельцу и ГМу)",
