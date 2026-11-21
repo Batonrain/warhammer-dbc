@@ -192,3 +192,25 @@ describe("Интеграция через _showContestDialog: клик по Фи
     expect(target.getFlag("warhammer-dbc", "feintNoEvade")).toBeUndefined();
   });
 });
+
+describe("Провидец Войны «не обмануть» (Виткис, Sahara 586-961c): Финт по нему не удаётся", () => {
+  beforeEach(() => _resetPendingContests());
+
+  it("цель — Виткис с эффектом «Не обмануть» против Финтующего: Финт проигран без броска", async () => {
+    const actor  = actorWithFlags({}); actor.uuid = "Actor.attacker"; actor.name = "Атакующий";
+    const target = actorWithFlags({}); target.uuid = "Actor.target"; target.name = "Виткис";
+    await target.setFlag("warhammer-dbc", "warSeer", { combatId: "", entries: [{ targetUuid: "Actor.attacker", effect: "deceive", deg: 1 }] });
+    await feintThenResist(actor, target, { mine: 10, theirs: 99 }); // без Провидца Финт бы удался
+
+    expect(target.getFlag("warhammer-dbc", "feintNoEvade")).toBeUndefined();
+    expect(captured.chat.at(-1).content).toContain("Провидец Войны");
+  });
+
+  it("«Не обмануть» против другого — Финт идёт как обычно", async () => {
+    const actor  = actorWithFlags({}); actor.uuid = "Actor.attacker";
+    const target = actorWithFlags({}); target.uuid = "Actor.target";
+    await target.setFlag("warhammer-dbc", "warSeer", { combatId: "", entries: [{ targetUuid: "Actor.other", effect: "deceive", deg: 1 }] });
+    await feintThenResist(actor, target, { mine: 10, theirs: 99 });
+    expect(target.getFlag("warhammer-dbc", "feintNoEvade")?.byUuid).toBe("Actor.attacker");
+  });
+});

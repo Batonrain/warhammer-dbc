@@ -990,7 +990,7 @@ export async function _performParry(actor, {
   }
 
   if (!reroll
-      && !(await spendReaction(actor, { forDefense: true, attackId }))
+      && !(await spendReaction(actor, { forDefense: true, attackId, parryAgainst: attackerActor }))
       && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Парирование");
   if (reroll) modParts.push(`Переброс: ${esc(reroll.label || "")}`);
 

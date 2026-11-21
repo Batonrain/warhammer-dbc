@@ -4310,7 +4310,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.vitkis.bookOfBattle": {
     label: "Может читать движения врага как раскрытую книгу. Когда использует War Seer для усиления урона или попадания своих рукопашных атак,",
-    source: "Book of Battle / Книга Битвы", reader: "module/rules/vitkis-talents.mjs::vitkisRules (−3×Успехи цели на атаки по Виткису) + combat/vitkis.mjs::useWarSeer (+1 Реакция на Парирование)"
+    source: "Book of Battle / Книга Битвы", reader: "module/rules/vitkis-talents.mjs::vitkisRules (−3×Успехи цели на атаки по Виткису) + combat/vitkis.mjs::useWarSeer (+1 Реакция только на Парирование атак цели — метка module/combat/action-economy.mjs::PARRY_ONLY_REACTION_FLAG, тратит module/combat/defense.mjs::_performParry; Sahara 586-961c)"
   },
   "elite.elitnyeArhetipy.vitkis.brothersAtArms": {
     label: "Когда Виткис берёт на себя основную ответственность в битве, Бог Крови вознаграждает его смелость дополнительным прозрением.",
@@ -6423,7 +6423,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vitkis.warSeer": {
     label: "Раз в Ход за свободное действие может сконцентрировать своё боевое всеведение на одном персонаже в том же бою и пройти тест Common Lore(War)…",
-    source: "War Seer / Провидец Войны", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "War Seer / Провидец Войны", reader: "module/combat/vitkis.mjs::useWarSeer (тест и распределение Успехов) → module/rules/vitkis-talents.mjs (эффекты); «Не обмануть»: Финт против Виткиса проигран без броска (module/combat/opposed-contest.mjs::resolveResistClick, module/rules/vitkis-talents.mjs::warSeerUndeceivable; Sahara 586-961c), прочие тесты обмана (Deceive) — за столом"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Воин_Ноты — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.voinNoty.adoringCrowds": {

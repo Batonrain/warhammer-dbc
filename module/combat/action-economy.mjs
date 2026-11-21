@@ -486,7 +486,24 @@ async function markReactedToAttack(actor, attackId) {
  * hasReactedToAttack выше. physical — как у ОД (actionBlockReason): Реакции
  * по умолчанию телесные (Уклонение/Парирование, Повалить...).
  */
-export function canSpendReaction(actor, { forDefense = false, attackId = "", physical, strange = false } = {}) {
+/**
+ * Реакция «только на Парирование атак цели» (Книга Битвы Виткиса, rules/vitkis-talents.mjs::bookParryReactionFlag;
+ * Sahara 586-961c): флаг актора { value, targets: [{ targetUuid, targetId }] }, до начала следующего своего Хода
+ * (rules/turn-flags.mjs). Годится, только когда вызывающий назвал атакующего (parryAgainst) — его зовёт
+ * Парирование (combat/defense.mjs::_performParry), не Уклонение.
+ */
+export const PARRY_ONLY_REACTION_FLAG = "parryOnlyReaction";
+
+function parryOnlyPool(actor, parryAgainst) {
+  if (!parryAgainst) return 0;
+  const f = actor?.getFlag?.("warhammer-dbc", PARRY_ONLY_REACTION_FLAG);
+  const n = Number(f?.value) || 0;
+  if (n <= 0) return 0;
+  const hit = (f.targets ?? []).some(t => t.targetUuid === parryAgainst.uuid || (!!t.targetId && t.targetId === parryAgainst.id));
+  return hit ? n : 0;
+}
+
+export function canSpendReaction(actor, { forDefense = false, attackId = "", physical, strange = false, parryAgainst = null } = {}) {
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
   // Оглушение/Ступор/Без сознания/Беспомощный (wdbc-x1nz.2.87/.88): запрет по
   // самому Состоянию в любой момент Раунда, а не только с начала своего Хода.
@@ -503,12 +520,12 @@ export function canSpendReaction(actor, { forDefense = false, attackId = "", phy
   const defense    = forDefense ? (Number(actor.system.reactions?.defenseValue) || 0) : 0;
   // «Странная» Реакция (Странная Техника) годится только на странную атаку, не на Избегание.
   const strangePool = strange ? (Number(actor.system.reactions?.strangeValue) || 0) : 0;
-  return (universal + defense + strangePool) > 0;
+  return (universal + defense + strangePool + parryOnlyPool(actor, parryAgainst)) > 0;
 }
 
 /** Списать Реакцию: сперва ограниченный пул на Избегание (если applicable), потом универсальный. */
-export async function spendReaction(actor, { forDefense = false, attackId = "", physical, strange = false } = {}) {
-  if (!canSpendReaction(actor, { forDefense, attackId, physical, strange })) {
+export async function spendReaction(actor, { forDefense = false, attackId = "", physical, strange = false, parryAgainst = null } = {}) {
+  if (!canSpendReaction(actor, { forDefense, attackId, physical, strange, parryAgainst })) {
     const reason = isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
     if (reason) warnBlocked(actor, reason, "Реакция");
     return false;
@@ -519,6 +536,10 @@ export async function spendReaction(actor, { forDefense = false, attackId = "", 
   const strangeValue  = Number(actor.system.reactions?.strangeValue) || 0;
   if (strange && strangeValue > 0) {
     await actor.update({ "system.reactions.strangeValue": strangeValue - 1 });
+  } else if (parryOnlyPool(actor, parryAgainst) > 0) {
+    // Самый узкий пул — первым (как defenseValue раньше универсального).
+    const f = actor.getFlag("warhammer-dbc", PARRY_ONLY_REACTION_FLAG);
+    await actor.setFlag("warhammer-dbc", PARRY_ONLY_REACTION_FLAG, { ...f, value: (Number(f.value) || 0) - 1 });
   } else if (forDefense && defenseValue > 0) {
     await actor.update({ "system.reactions.defenseValue": defenseValue - 1 });
   } else {

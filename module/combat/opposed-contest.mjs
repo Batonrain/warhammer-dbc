@@ -35,6 +35,7 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { ravenResistOptions } from "../rules/raven-talents.mjs";
+import { warSeerUndeceivable } from "../rules/vitkis-talents.mjs";
 
 const SOCKET = "system.warhammer-dbc";
 
@@ -183,6 +184,15 @@ export async function resolveResistClick(ds) {
   if (!opponent || !actor) return ui.notifications.warn("⚠️ Участник встречного теста не найден.");
   if (!game.user.isGM && !opponent.isOwner) return ui.notifications.warn(`⚠️ Сопротивляться за ${opponent.name} может только его владелец или ГМ.`);
 
+  // Провидец Войны «Не обмануть» (Виткис, rules/vitkis-talents.mjs): Финт против него проигран без броска.
+  if (ds.label === "Финт" && warSeerUndeceivable(opponent, actor, game.combat?.started ? game.combat.id : "")) {
+    await postTestCard(opponent, {
+      icon: rollIcon("shield"), title: `Сопротивление: ${esc(ds.label)} — ${esc(opponent.name)}`, actorUuid: opponent.uuid,
+      outcome: outcomeHtml(true, `Провидец Войны: ${esc(opponent.name)} не обмануть — «${esc(ds.label)}» ${esc(actor.name)} не удаётся.`)
+    });
+    await _deliver(ds, { initiatorWins: false, margin: 0 });
+    return { initiatorWins: false, margin: 0 };
+  }
   let opts = [];
   try { opts = JSON.parse(ds.resist || "[]"); } catch { opts = []; }
   let extra = [];
