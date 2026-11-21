@@ -4553,27 +4553,27 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Иерофант — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.ierofant.bloodOfMartyrs": {
     label: "Верные последователи готовы отдать за него жизнь. Когда находится в Орде, созданной Трейтом Великий Агитатор,",
-    source: "Blood of Martyrs / Кровь Мучеников", reader: ""
+    source: "Blood of Martyrs / Кровь Мучеников", reader: "module/rules/hierophant-talents.mjs bloodOfMartyrsNote — строка карточки атаки (combat/attack.mjs)"
   },
   "elite.elitnyeArhetipy.ierofant.hail": {
     label: "Даже обычные булыжники становятся смертельным оружием, когда их метает толпа. Орды под Командным Присутствием могут отказываться от части ст…",
-    source: "Hail / Град", reader: ""
+    source: "Hail / Град", reader: "module/combat/hierophant.mjs useHail (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.ierofant.livingTide": {
     label: "Фанатичные орды сметают стены и укрепления и порой переворачивают танки. Может использовать доп. детальную команду (2 Успеха),",
-    source: "Living Tide / Живая Волна", reader: ""
+    source: "Living Tide / Живая Волна", reader: "module/combat/hierophant.mjs useLivingTide (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.ierofant.mobJustice": {
     label: "Ненависть, взращённая в душах, даёт плоды, когда они проливают кровь угнетателей. Когда Орда под его командованием имеет Талант Hatred и уби…",
-    source: "Mob Justice / Правосудие Толпы", reader: ""
+    source: "Mob Justice / Правосудие Толпы", reader: "module/combat/hierophant.mjs useMobJustice (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.ierofant.profaneCardinal": {
     label: "По мере совращения паствы его власть над их душами крепнет. Получает бонус к тестам командования и взаимодействия с паствой Хаосопоклонников…",
-    source: "Profane Cardinal / Нечестивый Кардинал", reader: ""
+    source: "Profane Cardinal / Нечестивый Кардинал", reader: "packs-src Profane Cardinal: testMod formula ceil(infv/2) → rules/item-rules.mjs"
   },
   "elite.elitnyeArhetipy.ierofant.zealousMasses": {
     label: "Заведённые проповедями орды бросаются на врагов, невзирая на опасность. Может потратить Очко Бесчестия,",
-    source: "Zealous Masses / Фанатичные Толпы", reader: ""
+    source: "Zealous Masses / Фанатичные Толпы", reader: "module/combat/hierophant.mjs useZealousMasses (кнопка Таланта)"
   },
   // ── Элитные_архетипы\Избиратель_Плоти — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.izbiratelPloti.anyHandsAnyKind": {
@@ -4688,15 +4688,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Когнитэ — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kognite.corruptedCall": {
     label: "Позволяет программировать пленных Астропатов для подмены имперских сообщений. При Гипно-Программировании Астропата может потратить 3 Успеха,",
-    source: "Corrupted Call / Искаженный Зов", reader: ""
+    source: "Corrupted Call / Искаженный Зов", reader: "module/combat/cognitae.mjs useHypnoProgramming (галочка Астропат, 3 Успеха)"
   },
   "elite.elitnyeArhetipy.kognite.perfectMask": {
     label: "Комбинацией технологии и колдовства создаёт сложную обвязку, проецирующую ложный образ носителя в реальность.",
-    source: "Perfect Mask / Совершенная Маска", reader: ""
+    source: "Perfect Mask / Совершенная Маска", reader: "module/combat/cognitae.mjs usePerfectMask / calibratePerfectMask"
   },
   "elite.elitnyeArhetipy.kognite.proxyVeil": {
     label: "Глубоким гипнозом сооружает подставную личность в сознании союзника. Потратив Очко Бесчестия и 4 часа работы,",
-    source: "Proxy Veil / Замещающая Вуаль", reader: ""
+    source: "Proxy Veil / Замещающая Вуаль", reader: "module/combat/cognitae.mjs useProxyVeil"
   },
   "elite.elitnyeArhetipy.kognite.teacher": {
     label: "Талант в обучении, натаскивающий компетентных агентов за считанные дни. Проводит сеанс обучения за 1 час вместо 1 смены, удваивая максимум своих Успехов в обучении, и может одновременно обучать до 10×I.b учеников вместо I.b. Не получает Усталости и штрафов за монотонную работу за последовательные сессии. NPC могут проходить до 2×I.b курсов обучения у него в месяц (на игровых персонажей и Миньонов бонус не распространяется). Реализовано всё, КРОМЕ «сеанс за 1 час вместо смены» — тот же класс допущения на слово стола, что у Медленной Смены Крафта: игровое время в Мастерской нигде не тикает.",
@@ -4705,7 +4705,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kognite.thousandPapercuts": {
     label: "Способны поставить на службу имперскую бюрократию. Успешно внедрившись в местный Администратум (может занять целую миссию),",
-    source: "Thousand Papercuts / Тысяча Бумажных Порезов", reader: ""
+    source: "Thousand Papercuts / Тысяча Бумажных Порезов", reader: "module/combat/cognitae.mjs useThousandPapercuts"
   },
   // ── Элитные_архетипы\Коготь_Варпа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kogotVarpa.rift": {
@@ -4752,7 +4752,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Король_Червей — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.korolChervey.freeRoamer": {
     label: "Может отпустить один из конструктов из-под прямого контроля, убрав его из лимита Cor.b.",
-    source: "Free Roamer / Свободный Скиталец", reader: ""
+    source: "Free Roamer / Свободный Скиталец", reader: "module/combat/worm-king.mjs releaseSwarm; combat/worm-master.mjs activeSwarmsOf не считает отпущенных"
   },
   "elite.elitnyeArhetipy.korolChervey.kingSPlate": {
     label: "Один из Роёв обволакивает его и становится живым доспехом из хитина и мышц. За полудействие поглощает один Рой в базовом контакте: рой уничт…",
@@ -4760,15 +4760,15 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.korolChervey.maggotMark": {
     label: "Может создать крохотного опарыша и одарить им слугу или союзника. Опарыш зарывается в плоть и отмечает носителя как союзника для конструктов…",
-    source: "Maggot Mark / Метка Опарыша", reader: ""
+    source: "Maggot Mark / Метка Опарыша", reader: "module/combat/worm-king.mjs markWithMaggot (метка maggotMarkOf)"
   },
   "elite.elitnyeArhetipy.korolChervey.shellGuard": {
     label: "За три полных действия один из Роёв под прямым контролем поглощает от 200 кг плоти и окукливается (куколка беспомощна, теряет Трейт Swarm).",
-    source: "Shell Guard / Стражи Панциря", reader: ""
+    source: "Shell Guard / Стражи Панциря", reader: "module/combat/worm-king.mjs pupateShellGuard (шаблоны, срок куколки)"
   },
   "elite.elitnyeArhetipy.korolChervey.wormwalker": {
     label: "За полное действие один из Роёв растекается и набрасывается на трупы в радиусе 7м, забираясь внутрь и замещая мышцы и органы чувств.",
-    source: "Wormwalker / Червеход", reader: ""
+    source: "Wormwalker / Червеход", reader: "module/combat/worm-king.mjs useWormwalker (трупы в 7 м, −5 Ран Роя за труп)"
   },
   // ── Элитные_архетипы\Кузнец_Крови — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kuznetsKrovi.bloodShield": {
@@ -4932,23 +4932,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Мейстер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.meyster.maesterPactStage1": {
     label: "Получает видение диковинного аппарата, который может за смену работы собрать из медицинских инструментов и подручных материалов.",
-    source: "Maester Pact Stage 1 / Стадия Пакта 1 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 1 / Стадия Пакта 1 (Мейстер)", reader: "module/combat/maester.mjs useProjector; lifeVirusTurnStart (спад Сверхукрепления); пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage2": {
     label: "Может вкалывать инъекции Вируса Жизни в любое существо, а не только в пациента, под которого они приготовлены,",
-    source: "Maester Pact Stage 2 / Стадия Пакта 2 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 2 / Стадия Пакта 2 (Мейстер)", reader: "module/combat/maester.mjs maesterRevive; useProjector полудействие; injectLifeVirus чужая доза; пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage3": {
     label: "Вместо восстановления 3 Аблативных Ран Прожектором (бесплатным или за полудействие) может выбрать: цель немедленно пытается вылечиться Трейт…",
-    source: "Maester Pact Stage 3 / Стадия Пакта 3 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 3 / Стадия Пакта 3 (Мейстер)", reader: "module/combat/maester.mjs useProjector меню Стадии 3; maesterRevive за 1 Культивацию; пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage4": {
     label: "Отныне считается демоном в Хосте собственного тела и получает Трейт Daemonic (3). При смерти или изгнании может быть призван как низший демо…",
-    source: "Maester Pact Stage 4 / Стадия Пакта 4 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 4 / Стадия Пакта 4 (Мейстер)", reader: "module/combat/maester.mjs запись trait Daemonic (3); useProjector меню Культивации; пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage5": {
     label: "Когда тратит полудействие на дополнительное использование Прожектора в Ход, может применять эти срабатывания на другие цели,",
-    source: "Maester Pact Stage 5 / Стадия Пакта 5 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 5 / Стадия Пакта 5 (Мейстер)", reader: "module/combat/maester.mjs maesterAura; useProjector полудействие Стадии 5; пулы doses/cultivation (resourcePool)"
   },
   // ── Элитные_архетипы\Монарх — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.monarh.awakening": {
@@ -5162,19 +5162,19 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Скульптор_Плоти — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.skulptorPloti.appolyon": {
     label: "Может изменять одного подопытного месяцами до полной неузнаваемости. Может потратить Очко Бесчестия,",
-    source: "Appolyon / Аполион", reader: ""
+    source: "Appolyon / Аполион", reader: "module/combat/flesh-sculptor.mjs useFleshmolding (галочка Аполион)"
   },
   "elite.elitnyeArhetipy.skulptorPloti.eidolon": {
     label: "Позволяет превратить живого человека в податливую сжатую плоть, обвивающую его словно змея. Потратив три полных действия и тест Medicae+0,",
-    source: "Eidolon / Эйдолон", reader: ""
+    source: "Eidolon / Эйдолон", reader: "module/combat/flesh-sculptor.mjs eidolonAbsorb / eidolonHeal; пул flesh (resourcePool)"
   },
   "elite.elitnyeArhetipy.skulptorPloti.narcissus": {
     label: "Мастерство позволяет проводить операции на себе. Может проводить ритуал Лепки Плоти на себе,",
-    source: "Narcissus / Нарцисс", reader: ""
+    source: "Narcissus / Нарцисс", reader: "module/combat/flesh-sculptor.mjs useFleshmolding (ритуал на себе) / malleableRedistribute"
   },
   "elite.elitnyeArhetipy.skulptorPloti.sculpturite": {
     label: "Живые жертвенные палитры Скульптуриты создаются из Миньонов-людей. Проводит изменённый ритуал Лепки Плоти,",
-    source: "Sculpturite / Скульптурит", reader: ""
+    source: "Sculpturite / Скульптурит", reader: "module/combat/flesh-sculptor.mjs makeSculpturite / redistributeSculpturite; rules/flesh-sculptor-talents.mjs sculpturiteMedicaeBonus"
   },
   // ── Элитные_архетипы\Суккуб — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.sukkub.bloodDancer": {
@@ -5375,11 +5375,11 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чумной_Монах — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chumnoyMonah.feverStance": {
     label: "Доведя техники боя до совершенства, монах вплетает удары кулаками в свои атаки, больше не полагаясь на живительную силу паразитов.",
-    source: "Fever Stance / Стойка Горячки", reader: ""
+    source: "Fever Stance / Стойка Горячки", reader: "module/combat/plague-monk.mjs useFeverStance (кнопка Таланта, раз в Ход)"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.gluttony": {
     label: "Ритуальным жертвоприношением и усиленной медитацией достигает нового уровня взаимопонимания с паразитами внутри.",
-    source: "Gluttony / Чревоугодие", reader: ""
+    source: "Gluttony / Чревоугодие", reader: "module/rules/plague-monk-talents.mjs feverState/feverRestorePlan (excessCap = 2 × копий)"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.longHandOfCorrosion": {
     label: "Порченная плоть монаха служит лучшим проводником силы паразитов, позволяя им защищать его даже от атак издали,",
@@ -5387,15 +5387,15 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chumnoyMonah.putridClarity": {
     label: "Медитируя над природой жизни и смерти, монах глубже проникает в тайны ядов и полнее раскрывает смертоносный потенциал своих паразитов.",
-    source: "Putrid Clarity / Гнилостное Просвещение", reader: ""
+    source: "Putrid Clarity / Гнилостное Просвещение", reader: "module/combat/attack.mjs (poisonBestOfTwo) → combat/weapon-properties.mjs data-wp-best-of-two → hooks.mjs _applyWeaponPropEffect"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.trueRot": {
     label: "Глубокое понимание природы болезни и разложения раскрывает полный потенциал трупных ядов.",
-    source: "True Rot / Истинная Гниль", reader: ""
+    source: "True Rot / Истинная Гниль", reader: "module/combat/attack.mjs (trueRot) → combat/weapon-properties.mjs data-wp-true-rot → hooks.mjs _applyWeaponPropEffect; combat/plague-monk.mjs useTrueRotRad"
   },
   "elite.elitnyeArhetipy.chumnoyMonah.wormListener": {
     label: "Прислушиваясь к шёпоту паразитов внутри, монах способен избрать лучшие части жертвы и отложить их на будущее. Потратив 7 минут над трупом,",
-    source: "Worm Listener / Слушающий Червей", reader: ""
+    source: "Worm Listener / Слушающий Червей", reader: "module/combat/plague-monk.mjs cutWormPouch/eatWormPouch"
   },
   // ── Элитные_архетипы\Шумовой_Десантник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.shumovoyDesantnik.dirgeOfDespair": {
@@ -5950,7 +5950,7 @@ export const CAPABILITIES = {
   },
   "trait.ritualOfEightSpokes": {
     label: "Каждую неделю получает видение с требованием определённого жертвоприношения («отец 5 детей», «предавший лучшего друга» и т.п.).",
-    source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: "module/combat/cognitae.mjs eightSpokesVision / eightSpokesSacrifice; rules/cognitae-talents.mjs eightSpokesPenalty — штраф в тестах кнопок Когнитэ"
   },
   "trait.runt": {
     label: "−4 к максимуму Ран; винтовки — как длинные; двуручное стрелковое — только двумя руками; Compact снимает штрафы.",
@@ -6366,11 +6366,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Вампир — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.vampir.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   "trait.elitnyeArhetipy.vampir.soulDrinker": {
     label: "Когда укус опускает W жертвы до 0, та умирает, а Вампир получает дополнительно ½W.b (окр.",
-    source: "Soul Drinker / Испивающий Души", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Soul Drinker / Испивающий Души", reader: "module/combat/pact-traits.mjs useSoulDrinker (пул thirst, healActor, fatigueChangeFields)"
   },
   "trait.elitnyeArhetipy.vampir.supremeAvarice": {
     label: "Получает неизлечимое ментальное расстройство «Перфекционизм» на Тяжести −2, и его Тяжесть не может опуститься ниже −2.",
@@ -6541,11 +6541,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Иерофант — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.ierofant.grandAgitator": {
     label: "Речи зажигают пламя праведной ярости и рвения к битве. Выступая перед толпой, может пройти комбинированный тест Charm+0 и Scholastic Lore(Im…",
-    source: "Grand Agitator / Великий Агитатор", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Grand Agitator / Великий Агитатор", reader: "module/combat/hierophant.mjs useGrandAgitator (кнопка Черты); метка agitatorHorde — rules/hierophant-talents.mjs"
   },
   "trait.elitnyeArhetipy.ierofant.masterOfMasses": {
     label: "Глубокое понимание души толпы позволяет управлять ордами умело и точно, как опытный офицер дисциплинированными солдатами.",
-    source: "Master of Masses / Владыка Масс", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-c2d9 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Master of Masses / Владыка Масс", reader: "module/rules/command-substitution.mjs (Charm вместо Command для Орды), module/combat/horde-psych.mjs (Храбрость — психоурон вдвое)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Избиратель_Плоти — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.izbiratelPloti.daemonic2": {
@@ -6598,7 +6598,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kogitor.heartOfStone": {
     label: "При заключении Пакта сердце Когитора трансмутирует из плоти в техномагический конструкт, в который заключается его душа,",
-    source: "Heart of Stone / Каменное Сердце", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Heart of Stone / Каменное Сердце", reader: "ЧАСТИЧНО: damageImmunity.warpWeapon (combat/damage.mjs warpSoak); module/combat/pact-traits.mjs heartOfStoneInsight. Сердце, Выжигание Души, Одержимость, криты головы — вручную"
   },
   "trait.elitnyeArhetipy.kogitor.infernalInspiration": {
     label: "Разум освобождён от многих ограничений смертного тела и способен на сверхъестественную концентрацию.",
@@ -6606,12 +6606,12 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kogitor.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта (Когитор)", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта (Когитор)", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Когнитэ — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kognite.hypnoProgramming": {
     label: "Владеют невероятно эффективными техниками гипноза. Получают уникальный Навык Гипно-Программирование(W)+0 и могут развивать его как обычный Н…",
-    source: "Hypno-Programming / Гипно-Программирование", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Hypno-Programming / Гипно-Программирование", reader: "module/combat/cognitae.mjs useHypnoProgramming (встречный тест, Каталептический Узел −30, копилка 10×W.b) / setHypnoAdvance"
   },
   "trait.elitnyeArhetipy.kognite.veilOfLies": {
     label: "Гипноиндоктринация превращает разум в многослойный лабиринт из сконструированных личностей, в сердце которого скрыто ядро настоящих мыслей.",
@@ -6650,7 +6650,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Король_Червей — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.korolChervey.handOfPlenty": {
     label: "Избран вести свой народ и обеспечивать всем необходимым. Расширяя рой паразитов, может создавать еду, питьё,",
-    source: "Hand of Plenty / Рука Изобилия", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Hand of Plenty / Рука Изобилия", reader: "module/combat/worm-king.mjs useHandOfPlenty (Cor.b×100)"
   },
   "trait.elitnyeArhetipy.korolChervey.verminousConduit": {
     label: "Благословенные Нурглом черви в плоти служат проводником мистической силы. Получает +1 к эPR психосил Нургла и Биомантии.",
@@ -6774,7 +6774,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Мейстер — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meyster.cultivation": {
     label: "Вирус Жизни в теле пациента собирает его страдания и боль, накапливая их для сбора Мейстером. Каждый раз,",
-    source: "Cultivation / Культивация", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Cultivation / Культивация", reader: "module/combat/maester.mjs harvestFrom; hooks.mjs preUpdateActor lifeVirusLossPatch; пул cultivation (failChars int,t)"
   },
   "trait.elitnyeArhetipy.meyster.deathlessOath": {
     label: "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0);",
@@ -6782,11 +6782,11 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meyster.lifeVirus": {
     label: "Потратив 5 минут работы, может синтезировать дозу персонализированного вируса, укрепляющего организм цели.",
-    source: "Life Virus / Вирус Жизни", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Life Virus / Вирус Жизни", reader: "module/combat/maester.mjs synthLifeVirus / injectLifeVirus / lifeVirusRounds; пул doses; rules/maester-talents.mjs"
   },
   "trait.elitnyeArhetipy.meyster.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта (Мейстер)", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта (Мейстер)", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   "trait.elitnyeArhetipy.meyster.savantOfLifeAndDeath": {
     label: "Имеет доступ к безграничным медицинским знаниям своего покровителя. Автоматически преуспевает во всех тестах медицинской диагностики и автом…",
@@ -6836,11 +6836,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Ревенант — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.revenant.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
-    source: "Pact Protection / Защита Пакта (Ревенант)", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Pact Protection / Защита Пакта (Ревенант)", reader: "module/hooks.mjs гейт Теста Сопротивления → rules/pact-traits.mjs pactProtectionNote (карточка для Телепатии по носителю)"
   },
   "trait.elitnyeArhetipy.revenant.shadowOfVengeance": {
     label: "Считает Навыки Inquiry, Interrogate, Security и Stealth дружественными, а Acrobatics и Dodge — нейтральными, независимо от покровительства.",
-    source: "Shadow of Vengeance / Тень Отмщения", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — aptOverride: Inquiry, Interrogate, Security, Stealth дружественные; остальное пишет в чат кнопка-памятка, считает ГМ"
+    source: "Shadow of Vengeance / Тень Отмщения", reader: "module/rules/item-rules.mjs aptOverride (ally/neutral) → rules/aptitude-overrides.mjs resolveAptitudeOverride → rules/advance-category.mjs"
   },
   "trait.elitnyeArhetipy.revenant.vengeanceWeapon": {
     label: "Выбирает одно оружие Редкостью 1 или ниже (Космодесантники считают по Редкости аналогов для людей). Может сделать это оружие Best.",
@@ -6888,11 +6888,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Скульптор_Плоти — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.skulptorPloti.insanelyMalleable": {
     label: "Власть над собственной плотью позволяет изменять её за секунды. За полудействие может потратить Очко Бесчестия и пройти тест Medicae−10,",
-    source: "Insanely Malleable / Безумно Податливый", reader: "ПРАВИЛО СТОЛА до задачи Sahara 11-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Insanely Malleable / Безумно Податливый", reader: "module/combat/flesh-sculptor.mjs useInsanelyMalleable / malleableHour / malleableRedistribute"
   },
   "trait.elitnyeArhetipy.skulptorPloti.riteOfFleshmolding": {
     label: "Имея доступ к операционной, освящённой как храм Слаанеш, к одному подопытному и хотя бы одному донору (разумные существа),",
-    source: "Rite of Fleshmolding / Ритуал Лепки Плоти", reader: "ПРАВИЛО СТОЛА, механики нет (решение владельца 14.11.2026): кнопка-памятка kind:script на Черте пишет её текст в чат; применяет и считает ГМ"
+    source: "Rite of Fleshmolding / Ритуал Лепки Плоти", reader: "module/combat/flesh-sculptor.mjs useFleshmolding (тест, Успехи, выдача Трейтов из компендиума, крит Провала)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Суккуб — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.sukkub.brideOfDeath": {
@@ -6997,7 +6997,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Чумной_Монах — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chumnoyMonah.carrionEater": {
     label: "За 7 минут может сожрать труп разумного существа на расстоянии рукопашной атаки, восстанавливая 1d5 + T.b Ран, т.к.",
-    source: "Carrion Eater / Пожиратель Мертвечины", reader: "кнопка kind:script на Черте (цель T): healActor(1d5 + T.b трупа) — module/combat/heal-target.mjs. Не смоделировано: 7 минут, давность трупа, рост Unnatural T"
+    source: "Carrion Eater / Пожиратель Мертвечины", reader: "module/combat/plague-monk.mjs devourCorpse (лечение 1d5+T.b, +1d5 рейтинга Unnatural T за благословенный труп)"
   },
   "trait.elitnyeArhetipy.chumnoyMonah.corpsePoison": {
     label: "Безоружные атаки Монаха получают свойства Toxic (2) и Corrosive (2). Может за полное действие измазать одно своё оружие ближнего боя в трупн…",
@@ -7005,7 +7005,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.chumnoyMonah.feveredSpeed": {
     label: "Энергия жизни, расходящаяся от вздутого паразитами живота, придаёт ему неестественную дёрганую скорость.",
-    source: "Fevered Speed / Горячечная Скорость", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Fevered Speed / Горячечная Скорость", reader: "module/combat/plague-monk.mjs useFeveredSpeed; рейтинг — rules/plague-monk-talents.mjs feverState, ActiveEffect t.bonusFx"
   },
   "trait.elitnyeArhetipy.chumnoyMonah.forsakeTheFlame": {
     label: "Благословения монаха отрицают оружие, что сжигает плоть, изгоняя её из цикла жизни и смерти. Не может использовать оружие,",

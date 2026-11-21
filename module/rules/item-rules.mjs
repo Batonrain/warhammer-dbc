@@ -479,7 +479,7 @@ function ruleFromEntry(item, entry, groupId = null) {
         console.error(`Warhammer DBC | запись «Возможность» (${id}): override склонности не заполнен (scope/match)`);
         return null;
       }
-      const align = entry.capabilityAptAlign === "enemy" ? "enemy" : "ally";
+      const align = ["enemy", "neutral"].includes(entry.capabilityAptAlign) ? entry.capabilityAptAlign : "ally";
       return { id, label: entry.label || item.name, when: {},
                effects: [{ kind: "grantAptitudeOverride", scope: aptScope, match, align }] };
     }

@@ -107,6 +107,9 @@ import { VAMPIRE_CARD_FLAG, handleVampireClick } from "./combat/psychic-vampire.
 import { WARP_LOCK_CARD_FLAG, handleWarpLockClick } from "./combat/warp-lock.mjs";
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { mindImmunityBlocksPower } from "./rules/mind-immunity.mjs";
+import { trueRotBypassesImmunity, trueRotDamage } from "./rules/plague-monk-talents.mjs";
+import { lifeVirusOf, lifeVirusLossPatch } from "./rules/maester-talents.mjs";
+import { pactProtectionNote } from "./rules/pact-traits.mjs";
 import { tryDivineProtection, tryShieldOfContempt, postWarpOffers, runWarpOffer } from "./combat/warp-guard.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -486,6 +489,9 @@ export function registerHooks() {
             { sound: false });
           return;
         }
+        // Защита Пакта (Вампир/Когитор/Ревенант/Мейстер): телепатия «читает» ложь демона.
+        const pactNote = pactProtectionNote(targetActor, d.discipline);
+        if (pactNote) await postTestCard(targetActor, `<div class="wh-roll-result"><div class="roll-header">${rollIcon("shield", "#c98bff")}Защита Пакта — ${esc(targetActor.name)}</div><div class="roll-threshold">${esc(pactNote)}</div></div>`, { sound: false });
         // Не От Мира Сего (From Beyond): иммунитет к силам на разум (Телепатия:
         // Мезмеризм/Иллюзионизм), «если сам не пожелает» — спрашиваем, пустить ли.
         if (mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
@@ -4068,9 +4074,11 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   // Поджигатель (Избирательный выстрел в голову, data-wp-igniter="head") мог пройти мимо визора, но не мимо
   // настоящего иммунитета (мутация «зеркальная кровь» и т.п.).
   const visorImmune = propKey === "blinding" && ds.wpIgniter !== "head" && hasWeaponPropertyImmunity(actor, "blindingVisor");
-  if (visorImmune
+  // Истинная Гниль (Чумной Монах): трупный яд бьёт демонов, машины и Существ из Кошмаров как плоть.
+  const trueRotPierce = ds.wpTrueRot === "1" && ds.wpCondition === "poisoned" && trueRotBypassesImmunity(actor);
+  if (!trueRotPierce && (visorImmune
     || (propKey && hasWeaponPropertyImmunity(actor, propKey))
-    || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias))) {
+    || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias)))) {
     // Не карточка теста (wdbc-kuun): иммунитет отменяет эффект ДО броска —
     // ни кубов, ни Порога, только уведомление.
     return ChatMessage.create({
@@ -4119,7 +4127,9 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   const perDoP    = ds.wpLevelPerDop === "1";
   const useRounds = ds.wpRounds === "1";
   const fixedRnd  = parseInt(ds.wpFixedRounds || "0");
-  const dmgFormula   = ds.wpDamage  || "";
+  // Истинная Гниль: цели, обычно не иммунные к яду, получают 2d10 вместо 1d10.
+  const dmgFormula   = (ds.wpTrueRot === "1" && ds.wpCondition === "poisoned" && !trueRotBypassesImmunity(actor))
+    ? trueRotDamage(ds.wpDamage || "") : (ds.wpDamage || "");
   const rating       = parseInt(ds.wpRating || "0");
   const isProvaly    = ds.wpProvaly === "1";
   const provalyMult  = parseInt(ds.wpProvalyMult || "1");
@@ -4202,7 +4212,7 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
   // не травит вовсе — ни теста, ни Отравления, ни доп. урона. Одного
   // иммунитета к Состоянию (kind:"condition") мало: урон ниже катится и без
   // наложенного Отравления.
-  if (condition === "poisoned") {
+  if (condition === "poisoned" && !trueRotPierce) {
     const poisonImmune = poisonImmunitySource(actor);
     if (poisonImmune) {
       return ChatMessage.create({
@@ -4400,10 +4410,10 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
     allRolls.push(dmgRoll);
     // Отравитель: урон яда бросается дважды, берётся лучший.
     let poisonerNote = "";
-    if (ds.wpPoisoner === "1" && condition === "poisoned") {
+    if ((ds.wpPoisoner === "1" || ds.wpBestOfTwo === "1") && condition === "poisoned") {
       const second = await new Roll(dmgFormula).evaluate();
       allRolls.push(second);
-      poisonerNote = ` (Отравитель: ${dmgRoll.total} и ${second.total}, лучший)`;
+      poisonerNote = ` (${ds.wpPoisoner === "1" ? "Отравитель" : "Гнилостное Просвещение"}: ${dmgRoll.total} и ${second.total}, лучший)`;
       if (second.total > dmgRoll.total) dmgRoll = second;
     }
     // Пожиратель Змей (Талант Стойкости): «получаемый урон от ядов вдвое меньше (окр.▲)».
@@ -5342,6 +5352,13 @@ function _attachFateContextMenu(message, html) {
       if (combatant.actor) await sweepExpiredControl(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
   });
+  // Культивация (Мейстер): пациент теряет Аблативные Раны Вируса Жизни — +1 Культивации, вклад сжимается.
+  Hooks.on("preUpdateActor", (actor, changes, options) => {
+    const next = changes?.system?.wounds?.ablative ?? changes?.["system.wounds.ablative"];
+    if (next === undefined || options?.lifeVirusSwap) return;
+    const patch = lifeVirusLossPatch(actor.system, lifeVirusOf(actor), next, game.time?.worldTime);
+    if (patch) foundry.utils.mergeObject(changes, foundry.utils.expandObject(patch));
+  });
   Hooks.on("updateActor", async (actor, changes) => {
     if (!game.users.activeGM?.isSelf) return;
     if (!changes?.flags?.["warhammer-dbc"]?.wastelandRequest) return;
@@ -5704,6 +5721,8 @@ function _attachFateContextMenu(message, html) {
       await processVacuumTurnStart(nextCombatant.actor, nextCombatant.token);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Вирус Жизни (Мейстер): Сверхукрепление без Прожектора спадает на 3.
+      if (lifeVirusOf(nextCombatant.actor)) await (await import("./combat/maester.mjs")).lifeVirusTurnStart(nextCombatant.actor, combat);
       // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает
       // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
       // тактом, что и регенерация Аблативных Ран выше.

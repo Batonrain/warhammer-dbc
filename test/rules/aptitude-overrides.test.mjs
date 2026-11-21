@@ -45,6 +45,14 @@ describe("resolveAptitudeOverride", () => {
     expect(resolveAptitudeOverride(actor(), "characteristic", "wsx")).toBeNull();
   });
 
+  it("нейтральный override (Тень Отмщения, 21.11.2026): ниже ally и enemy", () => {
+    withRule([{ kind: "grantAptitudeOverride", scope: "skill", match: "Уклонение", align: "neutral" }]);
+    expect(resolveAptitudeOverride(actor(), "skill", "Уклонение")).toBe("neutral");
+    withRule([{ kind: "grantAptitudeOverride", scope: "skill", match: "Уклонение", align: "neutral" },
+      { kind: "grantAptitudeOverride", scope: "skill", match: "Уклонение", align: "enemy" }]);
+    expect(resolveAptitudeOverride(actor(), "skill", "Уклонение")).toBe("enemy");
+  });
+
   it("scope должен совпадать — skill-override не отвечает на запрос talent", () => {
     withRule([{ kind: "grantAptitudeOverride", scope: "skill", match: "Deceive", align: "ally" }]);
     expect(resolveAptitudeOverride(actor(), "talent", "Deceive")).toBeNull();

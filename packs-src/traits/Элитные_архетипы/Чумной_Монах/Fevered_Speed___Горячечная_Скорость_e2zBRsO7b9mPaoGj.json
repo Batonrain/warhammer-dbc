@@ -5,7 +5,7 @@
   "folder": "mp80UDDbesh2I1kr",
   "system": {
     "description": "",
-    "notes": "Обмен рейтинга ОДНОЙ Черты (Unnatural T) на бонус к движению — модификация чужого гранта ценой другого, нет такого канала между двумя записями Механики. Механика ждёт задачу Sahara 12-dbc-114-0075 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026): кнопка «Рывок» показывает текущий рейтинг Unnatural T и списывает его за выбранный рывок: 1 — Unnatural A (+2) до следующего Хода (эффект в листе), 1 — +1 Реакция сразу, 2 — безоружная атака свободным действием (не больше ½ A.b в Ход), 2 — полудвижение, 2 — яд на оружие. Потраченное снижает Бонус Стойкости (эффект «Горячечная Скорость» на листе); вернуть — только пожиранием трупа (Пожиратель Мертвечины, Слушающий Червей). Вручную: сам яд на оружии (Toxic/Corrosive на Cor.b Раундов) и полудвижение.",
     "benefit": "Энергия жизни, расходящаяся от вздутого паразитами живота, придаёт ему неестественную дёрганую скорость. Может уменьшать рейтинг Трейта Unnatural T, чтобы получать преимущества (в т.ч. несколько раз за Раунд): 1Un.T — Трейт Unnatural A (+2) на 1 Раунд; 1Un.T — +1 Реакция на 1 Раунд (в т.ч. вне своего Хода); 2Un.T — безоружная атака за свободное действие, но не более ½ A.b (окр.▼) раз в Ход; 2Un.T — полудвижение за свободное действие; 2Un.T — покрыть оружие ядом за свободное действие. Потраченные рейтинги Unnatural T восстанавливаются только пожиранием трупов.",
     "source": "Элитный архетип: Чумной Монах",
     "hasRating": false,
@@ -37,11 +37,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "P5NngBYlaMSwuA74",
+          "id": "5stLHihVUfbWNE9H",
           "operator": "AND",
           "entries": [
             {
-              "id": "p4HS0sOPZfE4wj7F",
+              "id": "2rGYdNOynExK3Qxn",
               "kind": "script",
               "group": null,
               "corruptionValue": "1",
@@ -128,14 +128,29 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механика ждёт задачу): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Рывок: потратить рейтинг Unnatural T",
+              "code": "return await useFeveredSpeed(actor);",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "resPoolKey": "",
+              "resPoolLabel": "",
+              "resPoolMax": "",
+              "resPoolRefill": "",
+              "resPoolRoundCap": "",
+              "resPoolGainLabel": "",
+              "resPoolGainAmount": "",
+              "resPoolAsInfamy": false,
+              "resPoolAsInfamyCap": "",
+              "resPoolAsInfamyCor": "",
+              "resPoolAsInfamyNote": "",
+              "resPoolBoostChars": "",
+              "resPoolFailChars": "",
+              "modAuto": false,
+              "powerName": ""
             }
           ]
         }

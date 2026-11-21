@@ -5,4 +5,27 @@
 // пачку, чтобы параллельные правки не сталкивались в длинных списках
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
-export const API = {};
+import { useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet } from "../plague-monk.mjs";
+import { releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty } from "../worm-king.mjs";
+import { useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite } from "../flesh-sculptor.mjs";
+import { useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts } from "../cognitae.mjs";
+import { synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura } from "../maester.mjs";
+import { useSoulDrinker, heartOfStoneInsight } from "../pact-traits.mjs";
+import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
+
+export const API = {
+  // Иерофант
+  useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses,
+  // Чумной Монах
+  useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet,
+  // Король Червей
+  releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty,
+  // Скульптор Плоти
+  useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite,
+  // Когнитэ
+  useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts,
+  // Мейстер
+  synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura,
+  // Вампир, Когитор (Черты Пакта)
+  useSoulDrinker, heartOfStoneInsight
+};
