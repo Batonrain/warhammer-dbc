@@ -6,11 +6,14 @@
 // item-script.mjs. Имена ключей не должны повторять имена из item-script.mjs.
 
 import { useDestructor, useGunzerker } from "../secutor.mjs";
+import { useCoilsSelfCharge, useCoilsShield, useCoilsDamageReduction, useVoltagheistBlast, useVoltagheistBubble, useVoltaicAbsorption } from "../electropriest.mjs";
 import { useBisection, useDisjoint, useModularAutonomy, useScorpio, useChrysalis, useParadoxVeil } from "../tech-assassin.mjs";
 
 export const API = {
   // Тех Ассасин
   useBisection, useDisjoint, useModularAutonomy, useScorpio, useChrysalis, useParadoxVeil,
   // Секутор
-  useDestructor, useGunzerker
+  useDestructor, useGunzerker,
+  // Электрожрец
+  useCoilsSelfCharge, useCoilsShield, useCoilsDamageReduction, useVoltagheistBlast, useVoltagheistBubble, useVoltaicAbsorption
 };

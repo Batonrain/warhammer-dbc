@@ -27,6 +27,7 @@ import { wearsActivePowerArmour, manifestedGift } from "../predicates.mjs";
 import { quadrupedMultiplier } from "../quadruped.mjs";
 import { amorphousSpd, AMORPHOUS_SPD_CAP, AMORPHOUS_SIZE_CAP, amorphousSizeShiftOf } from "../amorphous.mjs";
 import { frameSizeShift } from "../tech-assassin.mjs";
+import { coilsSpeedBonus } from "../electropriest.mjs";
 
 // Высоты «в воздухе» — те же, что combat/movement-actions.mjs::IN_FLIGHT_ALTITUDES
 // (отсюда тот модуль не импортируется: он тянет интерфейс и Foundry).
@@ -112,7 +113,8 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   // цель "SPD"), ставится ActiveEffect'ом в фазе "initial" (см. mechanics.mjs),
   // т.е. уже на месте к этому моменту расчёта.
   const spdBonus = flightSpd !== null ? 0 : (Number(system.movement.spdBonus) || 0);
-  const traitSpeedMod = flightSpd !== null ? 0 : walkSpeedMod;
+  // Катушки Электрожреца без одежды: +заряд к SPD пешком (rules/electropriest.mjs).
+  const traitSpeedMod = flightSpd !== null ? 0 : walkSpeedMod + coilsSpeedBonus(actor);
   // Перевес выключенной силовой брони (стр. 233) — SPD −1 с тира 1 и выше;
   // остальные последствия каскада (штраф теста, только Полное действие на
   // движение, Беспомощность) — не расчёт, а игровое событие, выведены

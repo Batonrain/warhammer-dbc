@@ -42,6 +42,8 @@ import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist, planCoilTransf
          planMotiveEucharist, cloudCognitionCap, receivedNow, CLOUD_COGNITION_MAX, MOTIVE_EUCHARIST_MAX,
          CLOUD_COGNITION_TURN_FLAG, MOTIVE_EUCHARIST_TURN_FLAG, CLOUD_COGNITION_RECEIVED_FLAG }
   from "../../rules/technomystic-resources.mjs";
+import { coilsTechBonus } from "../../rules/electropriest.mjs";
+import { voltaicConfluenceReroll } from "../../combat/electropriest.mjs";
 
 /** Карточка-уведомление Техножреца (компиляция, Разгон, Процессы, Декомпиляция) — ни броска, ни Порога. */
 async function techNote(actor, title, line) {
@@ -111,6 +113,8 @@ export async function activateTechMiracle(actor, item) {
   // Цели — Foundry-таргет, тот же источник, что у Императива ниже.
   const hatredTargets = [...(game.user?.targets ?? [])].map(t => t.actor ?? null);
   const { cost: baseCogCost, discount: hatredDiscount } = techActivationCost(actor, item, hatredTargets);
+  // Катушки Электрожреца без одежды: Компенсатор и Люминен (rules/electropriest.mjs).
+  const coilsTech = coilsTechBonus(actor, item);
   // Омнимнезис добавляет к цене ⚙ переброса (ниже) — поэтому let.
   let   cogCost  = baseCogCost;
   let   enCost   = sys.energyCost || 0;
@@ -207,7 +211,7 @@ export async function activateTechMiracle(actor, item) {
   const compExtra = (sys.extraTypes || []).find(e => e.type === "compensator");
   if (compExtra) compX = Math.max(compX, compExtra.x || 0);
   if (compX > 0 && enCost > 0) {
-    const compBonus = actor.system.techCompBonus || 0;
+    const compBonus = (actor.system.techCompBonus || 0) + coilsTech.test;
     const tTot   = actor.system.characteristics?.t?.total ?? 0;
     const compTh = tTot - 10 * compX + compBonus;
     // Electrovigour (wdbc-u0by): «Преимущество на тесты Т на Техночудеса с
@@ -272,6 +276,16 @@ export async function activateTechMiracle(actor, item) {
       deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
     }
   }
+  // Вольтаическое Слияние (Электрожрец): переброс активации Люминен за 1 аблативную Рану щита.
+  let confluenceLine = "";
+  if (!success && !fieldFail && await voltaicConfluenceReroll(actor, item, `Активация «${item.name}» провалена (бросок ${rv} при Пороге ${eff}).`)) {
+    const roll3 = await new Roll("1d100").evaluate();
+    allRolls.push(roll3);
+    confluenceLine = `Вольтаическое Слияние: −1 аблативная Рана, переброс ${rv} → ${roll3.total}`;
+    rv = roll3.total;
+    success = rv <= eff;
+    deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
+  }
 
   // Трата ресурсов: Когниция ⚙ — всегда (до теста), Энергия ⚡ — только при Успехе.
   const resUpd = {};
@@ -313,17 +327,22 @@ export async function activateTechMiracle(actor, item) {
       chars.int.bonus = (chars.int.bonus || 0) + ironIbDelta;
     }
     const f = applyDamageDiceMods(
-      resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0),
+      resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0) + (coilsTech.dmg ? ` + ${coilsTech.dmg}` : ""),
       wp
     );
     try {
-      const dmgRoll = await new Roll(f).evaluate();
+      let dmgRoll = await new Roll(f).evaluate();
       allRolls.push(dmgRoll);
+      // Вольтаическое Слияние: переброс урона Люминен за 1 аблативную Рану щита.
+      if (await voltaicConfluenceReroll(actor, item, `Урон «${item.name}»: ${dmgRoll.total}.`)) {
+        dmgRoll = await new Roll(f).evaluate();
+        allRolls.push(dmgRoll);
+      }
       // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия/психосил.
       const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType, hitLocation: "Торс", attacker: actor });
       if (ext.exRoll) allRolls.push(ext.exRoll);
       const dt  = DAMAGE_TYPES[sys.damageType] || sys.damageType;
-      const pen = sys.penetration || 0;
+      const pen = (sys.penetration || 0) + coilsTech.pen;
       const extStr = ext.hasExtreme ? `
           <div class="roll-extreme-block">
             <b>Экстремальный урон</b> · d5: ${ext.extremeLevel}
@@ -433,6 +452,8 @@ export async function activateTechMiracle(actor, item) {
       ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : "",
       compLine,
       omnimnesisLine ? `<div class="roll-threshold" style="font-size:0.85em;">${omnimnesisLine}</div>` : "",
+      confluenceLine ? `<div class="roll-threshold" style="font-size:0.85em;">${confluenceLine}</div>` : "",
+      coilsTech.note ? `<div class="roll-threshold" style="font-size:0.85em;">⚡ ${coilsTech.note}</div>` : "",
       costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],

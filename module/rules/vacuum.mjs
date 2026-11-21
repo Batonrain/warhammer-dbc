@@ -29,6 +29,7 @@ import { wraithboneRegenIgnoresBreach } from "./void-air.mjs";
 import { hasStuffOfNightmares } from "./stuff-of-nightmares.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { bubbleProtects } from "./electropriest.mjs";
 
 /** «Штраф –30 на этот тест» при задержке дыхания. */
 export const VACUUM_BREATH_PENALTY = -30;
@@ -63,7 +64,9 @@ export function voidArmourOf(actor) {
 
 /** Накрыт ли актор Взрывной Декомпрессией: существо без пустотной брони. */
 export function isDecompressionVictim(actor) {
-  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor) && !hasStuffOfNightmares(actor);
+  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor) && !hasStuffOfNightmares(actor)
+    // Вольтагейст Пузырь (Электрожрец): воздух в пузыре на 15 минут.
+    && !bubbleProtects(actor, globalThis.game?.time?.worldTime ?? 0);
 }
 
 /**
@@ -71,7 +74,9 @@ export function isDecompressionVictim(actor) {
  * корабли — нет). Трейт Stuff of Nightmares даёт иммунитет к вакууму.
  */
 export function vacuumApplies(actor) {
-  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor) && !hasStuffOfNightmares(actor);
+  return !!actor && VACUUM_ACTOR_TYPES.has(actor.type) && !voidArmourOf(actor) && !hasStuffOfNightmares(actor)
+    // Вольтагейст Пузырь (Электрожрец): воздух в пузыре на 15 минут.
+    && !bubbleProtects(actor, globalThis.game?.time?.worldTime ?? 0);
 }
 
 /**

@@ -5437,19 +5437,19 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.elektrozhrets.voltagheistBlast": {
     label: "Щит накапливает статическое электричество при движении и разряжается всплеском. Совершая Натиск с Voltagheist Shield в Процессах,",
-    source: "Voltagheist Blast / Вольтагейст Взрыв", reader: ""
+    source: "Voltagheist Blast / Вольтагейст Взрыв", reader: "module/combat/electropriest.mjs::useVoltagheistBlast (кнопка: 3 заряда, 1d10+W.b E(El) токенам в радиусе ½W.b); Отскок — Банк Уклонения"
   },
   "elite.elitnyeArhetipy.elektrozhrets.voltagheistBubble": {
     label: "Щит генерирует сферический кокон, задерживающий воздух. Имея в Процессах Voltagheist Shield,",
-    source: "Voltagheist Bubble / Вольтагейст Пузырь", reader: ""
+    source: "Voltagheist Bubble / Вольтагейст Пузырь", reader: "module/combat/electropriest.mjs::useVoltagheistBubble (метка) → rules/electropriest.mjs::bubbleProtects → rules/vacuum.mjs::vacuumApplies"
   },
   "elite.elitnyeArhetipy.elektrozhrets.voltaicAbsorption": {
     label: "Чувствуя биение мотивирующей силы врагов, может втягивать часть покидающей их тела энергии.",
-    source: "Voltaic Absorption / Вольтаическое Поглощение", reader: ""
+    source: "Voltaic Absorption / Вольтаическое Поглощение", reader: "module/combat/electropriest.mjs::useVoltaicAbsorption (кнопки: заряд → W.b аблативных Ран щиту; +1 за Оглушение/убийство Люминен)"
   },
   "elite.elitnyeArhetipy.elektrozhrets.voltaicConfluence": {
     label: "Свивая электрические поля щита в направляющие потоки, лучше контролирует молнии и дуги. Когда имеет Аблативные Раны на Вольтагейст Щите,",
-    source: "Voltaic Confluence / Вольтаическое Слияние", reader: ""
+    source: "Voltaic Confluence / Вольтаическое Слияние", reader: "module/combat/electropriest.mjs::voltaicConfluenceReroll → sheets/tabs/tech.mjs (переброс активации и урона Люминен за 1 аблативную Рану щита)"
   },
   // ── Черты: packs-src/traits — Фаза 2, capability-документация ──
   "trait.possession": {
@@ -7027,7 +7027,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Электрожрец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": {
     label: "Сеть накопителей и эмиттеров расходится через тело от блока священных машин на спине;",
-    source: "Electropriest Coils / Катушки Электрожреца", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-f5c8 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Electropriest Coils / Катушки Электрожреца", reader: "ЧАСТИЧНО (21.11.2026): rules/electropriest.mjs — максимум заряда (character/final-pools.mjs), SPD (character/movement.mjs), Инициатива, Уклонение/Внимательность (источник eliteMech2), Компенсатор и Люминен (sheets/tabs/tech.mjs); кнопки combat/electropriest.mjs. Одежда без AP и Brutal Charge — ГМ"
   },
   "trait.elitnyeArhetipy.elektrozhrets.motiveStimulation": {
     label: "Считает S, T и A дружественными Характеристиками независимо от Покровительства, за счёт постоянной электростимуляции мышц, придающей тонус,",
@@ -7035,7 +7035,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.elektrozhrets.powerFromFlesh": {
     label: "Все эффекты Архетипа (включая бонусы к Характеристикам) действуют только с фреймом Хоминис и теряются при установке другого Фрейма.",
-    source: "Power From Flesh / Сила Из Плоти", reader: "ЖДЁТ ПОДСИСТЕМУ: отдельная задача Sahara task-66c1 (Doom Crusade); Черта пока ведётся ГМ вручную"
+    source: "Power From Flesh / Сила Из Плоти", reader: "ЧАСТИЧНО (21.11.2026): rules/electropriest.mjs::electropriestActive — Трейт Machine гасит Катушки и Таланты Электрожреца; фрейм Хоминис и бонусы к Характеристикам — ГМ"
   },
   // ── Дары Богов Хаоса (wdbc-1rno) — активные/условные способности без
   // подходящего поля Конструктора, заглушка данными, reader пуст сознательно ──
