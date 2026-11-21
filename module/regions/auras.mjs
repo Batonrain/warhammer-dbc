@@ -126,8 +126,8 @@ export function targetIsAuraImmune(targetActor, immuneTraitNames) {
  */
 export function dreadReductionFor(targetActor) {
   // Вязи-щиты (Отвращения/Безмятежности/Неизбежности) — ключом Возможности установленной вязи.
-  return dreadReductionTotal(key => key === INFERNAL_FAMILIARITY_CAP
-    ? hasTalentCapability(targetActor, key) : hasRuleFlag(targetActor, key));
+  const familiarity = hasTalentCapability(targetActor, INFERNAL_FAMILIARITY_CAP);
+  return dreadReductionTotal(key => key === INFERNAL_FAMILIARITY_CAP ? familiarity : hasRuleFlag(targetActor, key));
 }
 
 /** Плоская (2D) дистанция центров токенов-документов, в метрах сцены. */
