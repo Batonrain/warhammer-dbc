@@ -208,10 +208,38 @@ describe("Эликсиры: иммунитет к психосилам / вст�
     } });
     const a = actor({ items: [item, bonus] });
     a.system.wounds = { value: 1, max: 10, critical: 0 };
-    captured.nextRoll = 30;
+    captured.nextRoll = 99;   // спасбросок против яда провален — эффект проходит
 
     await applyDrug(a, item);
 
+    expect(a.system.wounds.value).toBe(6);
+  });
+});
+
+describe("Яды: прошедший спасбросок отменяет эффект (Sahara wdbc-x1nz-4-56cd)", () => {
+  beforeEach(() => resetCaptured());
+  const poison = () => drug({ system: {
+    quantity: 2, drugCategory: "poison", poisonTestChar: "t", poisonTestMod: 0,
+    specialEffects: { removesWounds: 5 }, activeEffect: {}
+  } });
+
+  it("успех — эффекта нет, доза потрачена, в чате «Яд не подействовал»", async () => {
+    const item = poison();
+    const a = actor({ items: [item] });
+    a.system.wounds = { value: 1, max: 10, critical: 0 };
+    captured.nextRoll = 5;
+    await applyDrug(a, item);
+    expect(a.system.wounds.value).toBe(1);
+    expect(item.system.quantity).toBe(1);
+    expect(captured.chat.map(m => m.content).join("\n")).toContain("Яд не подействовал");
+  });
+
+  it("провал — эффект применяется", async () => {
+    const item = poison();
+    const a = actor({ items: [item] });
+    a.system.wounds = { value: 1, max: 10, critical: 0 };
+    captured.nextRoll = 99;
+    await applyDrug(a, item);
     expect(a.system.wounds.value).toBe(6);
   });
 });

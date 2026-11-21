@@ -240,6 +240,22 @@ export async function applyDrug(owner, item, recipient = null) {
     return;
   }
 
+  // Спасбросок цели против яда (книга «Яды»: «пройти тест … или получить …»;
+  // Sahara wdbc-x1nz-4-56cd): бросается ДО эффекта, и прошедший тест эффект
+  // отменяет — доза потрачена, яд не подействовал. Провал — эффект как раньше.
+  if (sys.drugCategory === "poison") {
+    const resist = await rollPoisonResistTest(actor, item);
+    if (resist?.success) {
+      await item.update({ "system.quantity": qty });
+      await postTestCard(owner, {
+        icon: rollIcon("shield", "#4dffa6"), title: `${esc(item.name)} → ${esc(actor.name)}`,
+        threshold: `<div class="roll-threshold">${esc(actor.name)} выдержал яд (спасбросок выше).</div>`,
+        rv: "—", outcome: `<span class="roll-success">Яд не подействовал (доза потрачена, осталось: ${qty}).</span>`
+      }, { sound: false });
+      return;
+    }
+  }
+
   // Эликсиры не действуют на цель, иммунную к психосилам целиком, или имеющую
   // суммарный встречный бонус ≥ +20 против психосил (книга «Эликсиры»), кроме
   // как от самого Таланта Bastion of Iron Will — его носитель обходит ОБА
@@ -529,10 +545,6 @@ export async function applyDrug(owner, item, recipient = null) {
   // говорящего, режим броска и звук (wdbc-kuun).
   const allRolls = [...(durationRoll ? [durationRoll] : []), ...extras.rolls];
   await postTestCard(owner, chatContent, { rolls: allRolls });
-  // Яд (книга «Яды», wdbc-x1nz.4): отдельная карточка спасброска ЦЕЛИ против
-  // самого яда — характеристика/мод с предмета + Качество яда. Только после
-  // того, как иммунитет к ядам выше его не отсёк.
-  if (sys.drugCategory === "poison") await rollPoisonResistTest(actor, item);
   // Алкоголь: счётчик Провалов опьянения (3-edc4 п.8, Декаданс удваивает пороги).
   if (isAlcoholItem(item)) await applyAlcoholDrink(actor, item);
   await weeklyDoseCheck(actor, item);
@@ -546,11 +558,9 @@ export async function applyDrug(owner, item, recipient = null) {
  * своя таблица, НЕ общая Качества снаряжения: та модифицирует тест владельца
  * «с этим снаряжением», здесь — тест цели против эффекта яда).
  *
- * Чисто информационная карточка: книга (в части, процитированной в задаче)
- * не говорит, что именно меняют успех/провал В САМОМ эффекте яда — применение
- * эффекта (statMods/specialEffects выше) идёт независимо от исхода этого
- * броска. Решение задачи — не изобретать гейтинг эффекта яда по этому броску
- * без книжного текста; найдено заведена задача Sahara (см. отчёт).
+ * Бросается ДО эффекта (applyDrug): каждый яд книги написан как «пройти тест
+ * … или получить …», поэтому успех отменяет эффект, провал — эффект как есть
+ * (Sahara wdbc-x1nz-4-56cd).
  * @returns {Promise<{success:boolean, deg:number}>}
  */
 export async function rollPoisonResistTest(actor, item) {
