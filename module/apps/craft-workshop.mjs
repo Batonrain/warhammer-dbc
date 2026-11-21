@@ -35,7 +35,7 @@ import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { mechatendrilCraftBonus, craftShiftHours, CRAFT_SHIFT_HOURS } from "../rules/mechadendrites.mjs";
 import { maxHands } from "../rules/hands.mjs";
-import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
+import { hasSlowShiftTalent, cyberpreacherApplies, cogitorResearchShift, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
          monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, masterEngineseerAutoEligible,
          masterEngineseerAutoSuccesses, masterEngineseerNoParts, hasMasterEngineseer, destroyedWeaponsOf,
          craftShiftTitle, hasPrototyping, prototypingEffects, craftCritLoss, craftCritLossBase,
@@ -650,9 +650,13 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // Мехатендрил (wdbc-qbyvc): +5 к Крафту за каждый установленный, нужен Mechadendrite Use (Utility).
     const tendrilBonus = mechatendrilCraftBonus(crafter, proj.mode);
     // Гекатонхейр (Разобрать tfgq9): смена короче 8 ч на 30 мин за утилитарный дендрит/лишнюю руку, не меньше 2 ч.
-    const shiftHours = proj.mode === "research" ? CRAFT_SHIFT_HOURS
+    // Инфернальное Вдохновение Когитора (Sahara 583-29da): смена Исследования вдвое короче, Успехи ×2.
+    const cogitor = cogitorResearchShift(crafter, proj.mode, CRAFT_SHIFT_HOURS);
+    const shiftHours = proj.mode === "research" ? cogitor.hours
       : craftShiftHours(crafter, { extraArms: Math.max(0, maxHands(crafter) - 2) }) + (slowBonus ? 4 : 0);
-    const shiftHoursNote = shiftHours !== CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)
+    const shiftHoursNote = cogitor.source
+      ? `${cogitor.source}: смена Исследования длится ${String(shiftHours).replace(".", ",")} ч вместо ${CRAFT_SHIFT_HOURS}, Успехи смены удваиваются`
+      : shiftHours !== CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)
       ? `Гекатонхейр: смена длится ${String(shiftHours).replace(".", ",")} ч вместо ${CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)}` : "";
     // Фрейм Шедевра: выбор на проект спрашивается один раз (rules/mechanicus-craft.mjs).
     if (masterpieceEligible(crafter, proj) && proj.masterpieceFrame == null) {
@@ -709,7 +713,8 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const critLine = critLineHtml(crit);
     const poly = polymathCrit(crafter, crit.success, chain);
 
-    const gain = Math.max(0, dos) + assist;
+    // Удвоение — своих Успехов смены (Когитор), не Успехов ассистентов.
+    const gain = Math.max(0, dos) * cogitor.successMult + assist;
     const wasDone = R.bank != null && proj.project.accumulated >= R.bank;
     // Критический Провал отнимает Успехи из банка (5–15 по решению ГМа — поле
     // проекта critLoss); Техника Безопасности крафтера/ассистента — исключение.

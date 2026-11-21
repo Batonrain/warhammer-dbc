@@ -9,7 +9,7 @@ import {
   hasCyberpreacher, hasSlowShiftTalent, cyberpreacherApplies,
   effectiveDiceMode, slowShiftBonus, hasPolymath, polymathBonus,
   hasJourneyman, hasDarkMuse, darkMuseAssistBonus, haemonculusLabBonus, researchBonus,
-  hasWorkaholic, monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, polymathCrit
+  hasWorkaholic, monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, polymathCrit, cogitorResearchShift
 } from "../../module/rules/craft-advantage.mjs";
 import { POLYMATH_CHAIN_MAX } from "../../module/constants/craft.mjs";
 
@@ -296,5 +296,22 @@ describe("polymathCrit (крит Полимата)", () => {
   it("последняя смена цепочки — срабатывает, но дальше нельзя (capped)", () => {
     expect(polymathCrit(poly, true, POLYMATH_CHAIN_MAX)).toEqual({ triggered: true, capped: true });
     expect(polymathCrit(poly, true, POLYMATH_CHAIN_MAX - 1).capped).toBe(false);
+  });
+});
+
+// Когитор, Черта «Инфернальное Вдохновение» (Sahara 583-29da): «Уменьшает время
+// смены для любых исследований вдвое (обычно до 4 ч) и удваивает Успехи на
+// исследования». Только Исследование — Крафт, Биолаборатория и Обучение как были.
+describe("cogitorResearchShift — Инфернальное Вдохновение", () => {
+  const cogitor = { items: [{ type: "trait", name: "Infernal Inspiration / Инфернальное Вдохновение" }] };
+  it("Исследование: смена 4 ч из 8, Успехи ×2", () => {
+    expect(cogitorResearchShift(cogitor, "research", 8)).toEqual({ hours: 4, successMult: 2, source: "Инфернальное Вдохновение" });
+  });
+  it("Крафт и без Черты — без изменений", () => {
+    expect(cogitorResearchShift(cogitor, "craft", 8)).toEqual({ hours: 8, successMult: 1, source: "" });
+    expect(cogitorResearchShift(actorWith("Polymath / Полимат"), "research", 8)).toEqual({ hours: 8, successMult: 1, source: "" });
+  });
+  it("Талант-тёзка не считается — только Черта", () => {
+    expect(cogitorResearchShift({ items: [{ type: "talent", name: "Infernal Inspiration" }] }, "research", 8).successMult).toBe(1);
   });
 });
