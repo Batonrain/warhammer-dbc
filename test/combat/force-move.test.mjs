@@ -89,5 +89,8 @@ describe("useForceMove", () => {
     const a = actor({ athletics: 40, ap: 2 });
     await useForceMove(a, { mode: "lift", sizeDiff: 1, throughForce: true });
     expect(captured.rolls.length).toBe(2); // два d100 в очереди Roll — Помеха бросила дважды
+    // Помеха берёт ХУДШИЙ бросок: 50 против Athletics 40 — провал, не сдвинуто
+    // (раньше mode "disadvantage" pickReroll не знал и брал лучший — 5).
+    expect(captured.chat.at(-1)?.content ?? "").not.toContain("сдвинуто на");
   });
 });

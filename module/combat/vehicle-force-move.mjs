@@ -92,7 +92,7 @@ export async function useVehiclePushContest(actor, pilot, { mode = "push", sizeD
   const atk = forceMoveThreshold(actor, { sizeDiff });
   const disadvantage = atk.massive;
   const atkRoll = await rollD100WithReroll(
-    disadvantage ? { rolls: 2, mode: "disadvantage", label: "Помеха (Массивная техника)" } : null
+    disadvantage ? { rolls: 2, mode: "keepWorst", label: "Помеха (Массивная техника)" } : null
   );
   const atkOutcome = testOutcome(atkRoll.rv, atk.threshold);
   const atkDeg = atkOutcome.success ? atkOutcome.deg : 0;

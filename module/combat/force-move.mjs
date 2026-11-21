@@ -78,7 +78,7 @@ export async function useForceMove(actor, { mode = "lift", sizeDiff = 0, through
   const disadvantage = throughForce && massive;
 
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(
-    disadvantage ? { rolls: 2, mode: "disadvantage", label: "Помеха (Массивный предмет + Через Силу)" } : null
+    disadvantage ? { rolls: 2, mode: "keepWorst", label: "Помеха (Массивный предмет + Через Силу)" } : null
   );
   const { success, deg } = testOutcome(rv, threshold);
   const successes = success ? deg : 0;
