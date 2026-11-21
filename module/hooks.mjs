@@ -107,6 +107,7 @@ import { WARP_LOCK_CARD_FLAG, handleWarpLockClick } from "./combat/warp-lock.mjs
 import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
 import { mindImmunityBlocksPower } from "./rules/mind-immunity.mjs";
 import { trueRotBypassesImmunity, trueRotDamage } from "./rules/plague-monk-talents.mjs";
+import { lifeVirusOf, lifeVirusLossPatch } from "./rules/maester-talents.mjs";
 import { tryDivineProtection, tryShieldOfContempt, postWarpOffers, runWarpOffer } from "./combat/warp-guard.mjs";
 import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc, resolveCharFormula } from "./helpers/utils.mjs";
@@ -5344,6 +5345,13 @@ function _attachFateContextMenu(message, html) {
       if (combatant.actor) await sweepExpiredControl(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
   });
+  // Культивация (Мейстер): пациент теряет Аблативные Раны Вируса Жизни — +1 Культивации, вклад сжимается.
+  Hooks.on("preUpdateActor", (actor, changes, options) => {
+    const next = changes?.system?.wounds?.ablative ?? changes?.["system.wounds.ablative"];
+    if (next === undefined || options?.lifeVirusSwap) return;
+    const patch = lifeVirusLossPatch(actor.system, lifeVirusOf(actor), next, game.time?.worldTime);
+    if (patch) foundry.utils.mergeObject(changes, foundry.utils.expandObject(patch));
+  });
   Hooks.on("updateActor", async (actor, changes) => {
     if (!game.users.activeGM?.isSelf) return;
     if (!changes?.flags?.["warhammer-dbc"]?.wastelandRequest) return;
@@ -5706,6 +5714,8 @@ function _attachFateContextMenu(message, html) {
       await processVacuumTurnStart(nextCombatant.actor, nextCombatant.token);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Вирус Жизни (Мейстер): Сверхукрепление без Прожектора спадает на 3.
+      if (lifeVirusOf(nextCombatant.actor)) await (await import("./combat/maester.mjs")).lifeVirusTurnStart(nextCombatant.actor, combat);
       // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает
       // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
       // тактом, что и регенерация Аблативных Ран выше.

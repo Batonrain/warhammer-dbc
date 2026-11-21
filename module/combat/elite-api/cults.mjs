@@ -9,6 +9,7 @@ import { useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPo
 import { releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty } from "../worm-king.mjs";
 import { useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite } from "../flesh-sculptor.mjs";
 import { useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts } from "../cognitae.mjs";
+import { synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura } from "../maester.mjs";
 import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
 
 export const API = {
@@ -21,5 +22,7 @@ export const API = {
   // Скульптор Плоти
   useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite,
   // Когнитэ
-  useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts
+  useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts,
+  // Мейстер
+  synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura
 };

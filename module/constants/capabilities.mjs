@@ -4932,23 +4932,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Мейстер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.meyster.maesterPactStage1": {
     label: "Получает видение диковинного аппарата, который может за смену работы собрать из медицинских инструментов и подручных материалов.",
-    source: "Maester Pact Stage 1 / Стадия Пакта 1 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 1 / Стадия Пакта 1 (Мейстер)", reader: "module/combat/maester.mjs useProjector; lifeVirusTurnStart (спад Сверхукрепления); пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage2": {
     label: "Может вкалывать инъекции Вируса Жизни в любое существо, а не только в пациента, под которого они приготовлены,",
-    source: "Maester Pact Stage 2 / Стадия Пакта 2 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 2 / Стадия Пакта 2 (Мейстер)", reader: "module/combat/maester.mjs maesterRevive; useProjector полудействие; injectLifeVirus чужая доза; пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage3": {
     label: "Вместо восстановления 3 Аблативных Ран Прожектором (бесплатным или за полудействие) может выбрать: цель немедленно пытается вылечиться Трейт…",
-    source: "Maester Pact Stage 3 / Стадия Пакта 3 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 3 / Стадия Пакта 3 (Мейстер)", reader: "module/combat/maester.mjs useProjector меню Стадии 3; maesterRevive за 1 Культивацию; пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage4": {
     label: "Отныне считается демоном в Хосте собственного тела и получает Трейт Daemonic (3). При смерти или изгнании может быть призван как низший демо…",
-    source: "Maester Pact Stage 4 / Стадия Пакта 4 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 4 / Стадия Пакта 4 (Мейстер)", reader: "module/combat/maester.mjs запись trait Daemonic (3); useProjector меню Культивации; пулы doses/cultivation (resourcePool)"
   },
   "elite.elitnyeArhetipy.meyster.maesterPactStage5": {
     label: "Когда тратит полудействие на дополнительное использование Прожектора в Ход, может применять эти срабатывания на другие цели,",
-    source: "Maester Pact Stage 5 / Стадия Пакта 5 (Мейстер)", reader: ""
+    source: "Maester Pact Stage 5 / Стадия Пакта 5 (Мейстер)", reader: "module/combat/maester.mjs maesterAura; useProjector полудействие Стадии 5; пулы doses/cultivation (resourcePool)"
   },
   // ── Элитные_архетипы\Монарх — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.monarh.awakening": {
@@ -6774,7 +6774,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Мейстер — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meyster.cultivation": {
     label: "Вирус Жизни в теле пациента собирает его страдания и боль, накапливая их для сбора Мейстером. Каждый раз,",
-    source: "Cultivation / Культивация", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Cultivation / Культивация", reader: "module/combat/maester.mjs harvestFrom; hooks.mjs preUpdateActor lifeVirusLossPatch; пул cultivation (failChars int,t)"
   },
   "trait.elitnyeArhetipy.meyster.deathlessOath": {
     label: "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0);",
@@ -6782,7 +6782,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meyster.lifeVirus": {
     label: "Потратив 5 минут работы, может синтезировать дозу персонализированного вируса, укрепляющего организм цели.",
-    source: "Life Virus / Вирус Жизни", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Life Virus / Вирус Жизни", reader: "module/combat/maester.mjs synthLifeVirus / injectLifeVirus / lifeVirusRounds; пул doses; rules/maester-talents.mjs"
   },
   "trait.elitnyeArhetipy.meyster.pactProtection": {
     label: "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человечес…",
