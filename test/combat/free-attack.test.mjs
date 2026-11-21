@@ -467,3 +467,60 @@ describe("Привратник (Gatekeeper): до WS.b Свободных ата
     expect(captured.chat.at(-1).content).toContain("До 4 раз в Раунд (Привратник)");
   });
 });
+
+// Sahara task-bc09 (живая проверка 21.11.2026): обычное перетаскивание мышью в
+// Foundry v14 — анимированное перемещение, в updateToken документ ещё стоит на
+// старом месте; новые координаты есть только в changes. Раньше разрыв контакта
+// не находился, и Свободную атаку (в т.ч. Привратника) не предлагали.
+describe("анимированное перемещение: документ в updateToken ещё на старом месте", () => {
+  let handlers;
+  beforeEach(() => {
+    handlers = {};
+    globalThis.Hooks.on = (name, fn) => { (handlers[name] ??= []).push(fn); };
+    globalThis.game.user = { id: "u1" };
+    initFreeAttackHooks();
+  });
+  const fire = (name, ...args) => Promise.all((handlers[name] || []).map(fn => fn(...args)));
+
+  it("разрыв контакта считается по changes — Свободная атака предложена", async () => {
+    globalThis.game.combat = { started: true, round: 1 };
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, name: "Культист", actor: fakeActor({
+      type: "character", uuid: "Actor.enemy", name: "Культист", reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } }) });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }), name: "Герой" });
+    canvas.tokens.placeables = [mover, enemy];
+
+    fire("preUpdateToken", mover.document, { x: 20, y: 20 });
+    // Документ НЕ сдвинут — анимация ещё идёт.
+    await fire("updateToken", mover.document, { x: 20, y: 20 }, {}, "u1");
+
+    expect(captured.chat.length).toBe(1);
+    expect(captured.chat[0].content).toContain("Свободная атака");
+  });
+
+  it("Привратник: уход перетаскиванием — предложение «до WS.b раз в Раунд»", async () => {
+    globalThis.game.combat = { started: true, round: 1 };
+    const keeper = fakeActor({ type: "character", uuid: "Actor.keeper", name: "Страж",
+      characteristics: { ws: { total: 45, bonus: 2 } }, reactions: { value: 5, max: 5, defenseValue: 0, defenseMax: 0 } });
+    keeper.items = [{ id: "g", name: "Gatekeeper / Привратник", type: "talent", system: {} }];
+    const enemy = token({ id: "k", x: 2, y: 0, disposition: HOSTILE, name: "Страж", actor: keeper });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }), name: "Герой" });
+    canvas.tokens.placeables = [mover, enemy];
+
+    fire("preUpdateToken", mover.document, { x: 20, y: 20 });
+    await fire("updateToken", mover.document, { x: 20, y: 20 }, {}, "u1");
+    expect(captured.chat.length).toBe(1);
+    expect(captured.chat[0].content).toContain("Привратник");
+  });
+
+  it("контакт сохранён по changes (сдвиг вдоль врага) — предложения нет", async () => {
+    globalThis.game.combat = { started: true, round: 1 };
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({
+      type: "character", reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } }) });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
+    canvas.tokens.placeables = [mover, enemy];
+
+    fire("preUpdateToken", mover.document, { y: 1 });
+    await fire("updateToken", mover.document, { y: 1 }, {}, "u1");
+    expect(captured.chat.length).toBe(0);
+  });
+});

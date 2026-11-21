@@ -86,9 +86,34 @@ function isPersonalScale(tokenDoc) {
   return isBaseTrackedActor(actorOf(tokenDoc));
 }
 
-/** Враждебные токены сцены личного масштаба в Базовом/Глубоком контакте с данным документом. */
-export function enemyContactTokenDocs(tokenDoc) {
-  const rect = tokenRect(tokenDoc);
+/**
+ * Где токен стоит ПОСЛЕ апдейта. Обычное перетаскивание мышью в Foundry v14 —
+ * анимированное перемещение: в хуке updateToken документ ещё показывает
+ * старые x/y (живая проверка 21.11.2026, Sahara task-bc09), и разрыв контакта
+ * не находился — Свободную атаку не предлагали. Новые координаты приходят в
+ * самих changes, поэтому они важнее документа; без них — документ как есть.
+ * @returns {object} плоская копия с id/x/y/width/height/disposition
+ */
+export function tokenDocAfterUpdate(tokenDoc, changes = {}) {
+  if (!tokenDoc) return tokenDoc;
+  const pick = key => {
+    const v = changes?.[key];
+    return v === undefined || v === null || !Number.isFinite(Number(v)) ? tokenDoc[key] : Number(v);
+  };
+  return {
+    id: tokenDoc.id, uuid: tokenDoc.uuid, name: tokenDoc.name, actor: tokenDoc.actor,
+    disposition: changes?.disposition ?? tokenDoc.disposition,
+    x: pick("x"), y: pick("y"), width: pick("width"), height: pick("height")
+  };
+}
+
+/**
+ * Враждебные токены сцены личного масштаба в Базовом/Глубоком контакте с данным документом.
+ * @param {TokenDocument} tokenDoc
+ * @param {object} [at]  где считать токен (tokenDocAfterUpdate) — по умолчанию сам документ
+ */
+export function enemyContactTokenDocs(tokenDoc, at = null) {
+  const rect = tokenRect(at ?? tokenDoc);
   if (!rect) return [];
   const out = [];
   for (const other of canvas?.tokens?.placeables ?? []) {
@@ -272,12 +297,14 @@ export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc, reasonHtml
  * не поднимая настоящие Foundry-хуки (см. test/combat/free-attack.test.mjs).
  * @param {TokenDocument} tokenDoc
  * @param {Set<string>} beforeContactIds  id вражеских токенов в контакте ДО перемещения
- * @param {{forced?:boolean}} [o]  forced — принудительный сдвиг (толчок, перевозка; options.whDBC.forcedMove,
+ * @param {{forced?:boolean, at?:object}} [o]  forced — принудительный сдвиг (толчок, перевозка; options.whDBC.forcedMove,
  *   rules/movement-path.mjs): токен не уходил по своей воле — Свободную Атаку не провоцирует, а разовый флаг
  *   «Выход из Боя» не тратится; Подавление при новом контакте снимается как обычно (Sahara task-bbe1)
+ * @param {object} [o.at]  где токен оказался (tokenDocAfterUpdate по changes апдейта): при
+ *   анимированном перемещении документ в updateToken ещё стоит на старом месте
  * @returns {Promise<TokenDocument[]>} враги, чей контакт с tokenDoc пропал
  */
-export async function processTokenMove(tokenDoc, beforeContactIds, { forced = false } = {}) {
+export async function processTokenMove(tokenDoc, beforeContactIds, { forced = false, at = null } = {}) {
   const moverActor = actorOf(tokenDoc);
   if (!forced) {
     if (moverActor?.getFlag("warhammer-dbc", "disengageActive")) {
@@ -287,7 +314,7 @@ export async function processTokenMove(tokenDoc, beforeContactIds, { forced = fa
     if (moverActor?.getFlag("warhammer-dbc", "deepContactCarry")) return [];
   }
 
-  const afterDocs = enemyContactTokenDocs(tokenDoc);
+  const afterDocs = enemyContactTokenDocs(tokenDoc, at);
   const after = new Set(afterDocs.map(d => d.id));
   const broken = [];
   for (const enemyId of beforeContactIds) {
@@ -333,7 +360,9 @@ export function initFreeAttackHooks() {
     }
     if (!before || before.size === 0) return;
     if (!game.combat?.started || !movesPosition(changes)) return;
-    await processTokenMove(tokenDoc, before, { forced: !!pre?.forced || isForcedMove(options) });
+    await processTokenMove(tokenDoc, before, {
+      forced: !!pre?.forced || isForcedMove(options), at: tokenDocAfterUpdate(tokenDoc, changes)
+    });
   });
 
   // Токен удалён до того, как пришёл updateToken (отменённый/незавершённый
