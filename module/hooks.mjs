@@ -1006,7 +1006,7 @@ export function registerHooks() {
         if (!target) return ui.notifications.warn("⚠️ Цель Страха не найдена.");
         if (!target.isOwner) return ui.notifications.warn("⚠️ Тест Страха бросает владелец цели (или ГМ).");
         el.disabled = true;
-        await rollAbominableFear(target);
+        await rollAbominableFear(target, el.dataset.fearRating);
       });
     });
 
