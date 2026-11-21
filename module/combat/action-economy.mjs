@@ -327,10 +327,38 @@ export function effectiveApCost(actor, cost, { physical, sustained = false } = {
   return mentalApCost(cost, { physical, disrupted: implantDisrupted(actor) });
 }
 
-export function canSpendActionPoints(actor, cost, { physical, sustained = false } = {}) {
+/**
+ * Полное Движение (core, «Действия Движения»; Sahara task-5003): «перемещается
+ * до SPD×2, после чего может совершить любое полудействие, не являющееся
+ * атакой». Полное Движение списывает оба ОД (это Полное действие), а это
+ * полудействие — отдельная метка, не +1 ОД: обычное ОД ушло бы и на атаку.
+ * Ставит её combat/movement-actions.mjs::declareFullMove, гасит первая трата
+ * ровно в 1 ОД без attack:true, когда своих ОД уже нет; живёт до начала
+ * следующего своего Хода (rules/turn-flags.mjs).
+ */
+export const FULL_MOVE_HALF_FLAG = "fullMoveHalfAction";
+
+function fullMoveHalfCovers(actor, paid, attack) {
+  return !attack && paid === 1 && !!actor?.getFlag?.("warhammer-dbc", FULL_MOVE_HALF_FLAG);
+}
+
+/**
+ * Помеха тестам полудействия после Полного Движения (та же книга): метка
+ * fullMoveDisadvantage стоит, и идёт СВОЙ Ход — тест в чужой Ход (Избегание,
+ * встречный тест) к этому полудействию не относится. Окно теста Навыка/
+ * Характеристики (sheets/actor-sheet.mjs::_showSkillRollDialog) ставит по ней
+ * Помеху заранее; Карабканье/Прыжок/Плавание берут её сами (movement-actions.mjs::_d100).
+ */
+export function fullMoveHindranceActive(actor) {
+  if (!actor?.getFlag?.("warhammer-dbc", "fullMoveDisadvantage")) return false;
+  return isEncounterActive() && isOwnTurn(actor);
+}
+
+export function canSpendActionPoints(actor, cost, { physical, sustained = false, attack = false } = {}) {
   if (!cost || !isEncounterActive() || !hasActionEconomy(actor)) return true;
   if (actionBlockReason(actor, { physical })) return false;
-  return (Number(actor.system.actionPoints?.value) || 0) >= effectiveApCost(actor, cost, { physical, sustained });
+  const paid = effectiveApCost(actor, cost, { physical, sustained });
+  return (Number(actor.system.actionPoints?.value) || 0) >= paid || fullMoveHalfCovers(actor, paid, attack);
 }
 
 /**
@@ -403,8 +431,8 @@ async function _maybeClearAiming(actor) {
  * см. actionBlockReason. Отказ по Состоянию сам пишет уведомление с причиной
  * (wdbc-x1nz.2.87/.88) — «не хватает ОД» вызывающей стороны тогда лишь вторит.
  */
-export async function spendActionPoints(actor, cost, { physical, sustained = false } = {}) {
-  if (!canSpendActionPoints(actor, cost, { physical, sustained })) {
+export async function spendActionPoints(actor, cost, { physical, sustained = false, attack = false } = {}) {
+  if (!canSpendActionPoints(actor, cost, { physical, sustained, attack })) {
     const reason = cost && isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
     if (reason) warnBlocked(actor, reason, "Действие");
     else if (cost && effectiveApCost(actor, cost, { physical, sustained }) > effectiveActionPointsMax(actor))
@@ -417,7 +445,12 @@ export async function spendActionPoints(actor, cost, { physical, sustained = fal
     const paid = effectiveApCost(actor, cost, { physical, sustained });
     if (paid !== cost) globalThis.ui?.notifications?.info?.(`${actor.name}: BONE-Head, имплант сбоит — ментальное действие вдвое дольше (${paid} ОД вместо ${cost}).`);
     cost = paid;
-    await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
+    if (value < paid) {
+      // Своих ОД нет — платит полудействие Полного Движения (проверено в canSpendActionPoints).
+      await actor.unsetFlag("warhammer-dbc", FULL_MOVE_HALF_FLAG);
+    } else {
+      await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
+    }
     if (physical === true) await _maybeTriggerCrippling(actor, cost);
     await _maybeClearAiming(actor);
   }
@@ -453,7 +486,24 @@ async function markReactedToAttack(actor, attackId) {
  * hasReactedToAttack выше. physical — как у ОД (actionBlockReason): Реакции
  * по умолчанию телесные (Уклонение/Парирование, Повалить...).
  */
-export function canSpendReaction(actor, { forDefense = false, attackId = "", physical, strange = false } = {}) {
+/**
+ * Реакция «только на Парирование атак цели» (Книга Битвы Виткиса, rules/vitkis-talents.mjs::bookParryReactionFlag;
+ * Sahara 586-961c): флаг актора { value, targets: [{ targetUuid, targetId }] }, до начала следующего своего Хода
+ * (rules/turn-flags.mjs). Годится, только когда вызывающий назвал атакующего (parryAgainst) — его зовёт
+ * Парирование (combat/defense.mjs::_performParry), не Уклонение.
+ */
+export const PARRY_ONLY_REACTION_FLAG = "parryOnlyReaction";
+
+function parryOnlyPool(actor, parryAgainst) {
+  if (!parryAgainst) return 0;
+  const f = actor?.getFlag?.("warhammer-dbc", PARRY_ONLY_REACTION_FLAG);
+  const n = Number(f?.value) || 0;
+  if (n <= 0) return 0;
+  const hit = (f.targets ?? []).some(t => t.targetUuid === parryAgainst.uuid || (!!t.targetId && t.targetId === parryAgainst.id));
+  return hit ? n : 0;
+}
+
+export function canSpendReaction(actor, { forDefense = false, attackId = "", physical, strange = false, parryAgainst = null } = {}) {
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
   // Оглушение/Ступор/Без сознания/Беспомощный (wdbc-x1nz.2.87/.88): запрет по
   // самому Состоянию в любой момент Раунда, а не только с начала своего Хода.
@@ -470,12 +520,12 @@ export function canSpendReaction(actor, { forDefense = false, attackId = "", phy
   const defense    = forDefense ? (Number(actor.system.reactions?.defenseValue) || 0) : 0;
   // «Странная» Реакция (Странная Техника) годится только на странную атаку, не на Избегание.
   const strangePool = strange ? (Number(actor.system.reactions?.strangeValue) || 0) : 0;
-  return (universal + defense + strangePool) > 0;
+  return (universal + defense + strangePool + parryOnlyPool(actor, parryAgainst)) > 0;
 }
 
 /** Списать Реакцию: сперва ограниченный пул на Избегание (если applicable), потом универсальный. */
-export async function spendReaction(actor, { forDefense = false, attackId = "", physical, strange = false } = {}) {
-  if (!canSpendReaction(actor, { forDefense, attackId, physical, strange })) {
+export async function spendReaction(actor, { forDefense = false, attackId = "", physical, strange = false, parryAgainst = null } = {}) {
+  if (!canSpendReaction(actor, { forDefense, attackId, physical, strange, parryAgainst })) {
     const reason = isEncounterActive() && hasActionEconomy(actor) ? actionBlockReason(actor, { physical }) : "";
     if (reason) warnBlocked(actor, reason, "Реакция");
     return false;
@@ -486,6 +536,10 @@ export async function spendReaction(actor, { forDefense = false, attackId = "", 
   const strangeValue  = Number(actor.system.reactions?.strangeValue) || 0;
   if (strange && strangeValue > 0) {
     await actor.update({ "system.reactions.strangeValue": strangeValue - 1 });
+  } else if (parryOnlyPool(actor, parryAgainst) > 0) {
+    // Самый узкий пул — первым (как defenseValue раньше универсального).
+    const f = actor.getFlag("warhammer-dbc", PARRY_ONLY_REACTION_FLAG);
+    await actor.setFlag("warhammer-dbc", PARRY_ONLY_REACTION_FLAG, { ...f, value: (Number(f.value) || 0) - 1 });
   } else if (forDefense && defenseValue > 0) {
     await actor.update({ "system.reactions.defenseValue": defenseValue - 1 });
   } else {
@@ -507,8 +561,8 @@ export async function spendReaction(actor, { forDefense = false, attackId = "", 
  * раньше; cost 0 (напр. Натиск, ОД которого списываются позже, на броске
  * атаки) тоже всегда проходит.
  */
-export function apSpendGate(actor, cost, { physical } = {}) {
-  const ok = canSpendActionPoints(actor, cost, { physical });
+export function apSpendGate(actor, cost, { physical, attack = false } = {}) {
+  const ok = canSpendActionPoints(actor, cost, { physical, attack });
   if (ok) return { disabled: false, title: "" };
   // Запрет по Состоянию (wdbc-x1nz.2.87/.88) — называем его, а не «не хватает».
   const reason = actionBlockReason(actor, { physical });

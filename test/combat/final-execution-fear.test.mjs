@@ -48,20 +48,23 @@ afterEach(() => { globalThis.fromUuid = prevFromUuid; game.combat = prevCombat; 
 
 describe("данные: Трейт «Страх (2)» из пака на 1 Раунд", () => {
   it("копия настоящего Трейта Fear: рейтинг 2, эффект system.fearRating = 2, без _id, метка срока «раунд»", () => {
-    const data = finalExecutionFearItemData(FEAR(), { id: "cb", round: 4 });
+    const data = finalExecutionFearItemData(FEAR(), { id: "cb", round: 4, turn: 1 });
     expect(data._id).toBeUndefined();
     expect(data.type).toBe("trait");
     expect(data.system.rating).toBe(2);
     expect(data.name).toContain("2");
     expect(data.effects[0].system.changes[0]).toMatchObject({ key: "system.fearRating", value: 2 });
     const tg = data.flags["warhammer-dbc"].tempGrant;
-    expect(tg).toMatchObject({ unit: "round", combatId: "cb", expiresAtRound: 5 });   // 1 Раунд: round + 1, как у прочих «N Раундов»
+    // 1 Раунд (книга: «Fear (2) на 1 Раунд», Sahara 2-3d54): ровно Раунд от убийства — до того же Хода следующего Раунда.
+    expect(tg).toMatchObject({ unit: "round", combatId: "cb", expiresAtRound: 5, expiresAtTurn: 1 });
     expect(data.flags["warhammer-dbc"][FINAL_EXECUTION_FEAR_FLAG]).toBe(true);
     expect(tg.label).toContain("Окончательная Казнь");
   });
-  it("метка срока работает с настоящим temp-grant: жива в Раунде 4–5, истекла в 6 и в другом бою", () => {
-    const tg = finalExecutionFearItemData(FEAR(), { id: "cb", round: 4 }).flags["warhammer-dbc"].tempGrant;
-    expect(isTempGrantExpired(tg, { combat: { id: "cb", round: 5 } })).toBe(false);
+  it("метка срока работает с настоящим temp-grant: жива до Хода убийцы в следующем Раунде, потом истекла; в другом бою — сразу", () => {
+    const tg = finalExecutionFearItemData(FEAR(), { id: "cb", round: 4, turn: 1 }).flags["warhammer-dbc"].tempGrant;
+    expect(isTempGrantExpired(tg, { combat: { id: "cb", round: 4, turn: 3 } })).toBe(false);
+    expect(isTempGrantExpired(tg, { combat: { id: "cb", round: 5, turn: 0 } })).toBe(false);
+    expect(isTempGrantExpired(tg, { combat: { id: "cb", round: 5, turn: 1 } })).toBe(true);
     expect(isTempGrantExpired(tg, { combat: { id: "cb", round: 6 } })).toBe(true);
     expect(isTempGrantExpired(tg, { combat: { id: "other", round: 4 } })).toBe(true);
   });

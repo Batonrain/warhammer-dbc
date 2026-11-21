@@ -36,7 +36,7 @@ import { unarmedLosesPrimitive, grappleUnparryable, wrestlerDodgeReroll, haymake
 import { goadingStrikeButtonHtml } from "./pugilist-strikes.mjs";
 import { whackStrike, recordWhackSeen } from "./whack.mjs";
 import { roundhouseButtonHtml, isKickWeapon } from "./roundhouse.mjs";
-import { grappleCoverPartner } from "./grapple.mjs";
+import { grappleCoverPartner, blessedWithPusDefenceReroll } from "./grapple.mjs";
 import { fanaticInterceptCandidates, backToBackFreeUseAvailable, fanaticPayer } from "./fanatic-redirect.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
@@ -59,7 +59,7 @@ import { feintBlocksEvasion } from "./feint-press.mjs";
 import { resolveGrenadeMeleeFumble, resolveFlailMeleeFumble } from "./draw-action.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit, isBiteWeapon }             from "./grapple.mjs";
-import { bodyguardsFor }                               from "./bodyguard.mjs";
+import { bodyguardsFor, anointedFor }                  from "./bodyguard.mjs";
 import { hasDodgeTalent }                              from "../rules/dodge-talents.mjs";
 import { coveringDefendersOf, offerFreeAttack }        from "./free-attack.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
@@ -2555,7 +2555,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
         // Борец (стр. 62): против его Захвата успешное Уклонение перебрасывается.
-        forcedDefenceReroll: opts.forcedDefenceReroll || (isMelee ? wrestlerDodgeReroll(actor, techOpts.technique) : ""),
+        // Благословенный Гноем: Захват начал носитель — Уклонение цели с Помехой (combat/grapple.mjs, Sahara task-234f).
+        forcedDefenceReroll: opts.forcedDefenceReroll || (isMelee ? (wrestlerDodgeReroll(actor, techOpts.technique)
+          || blessedWithPusDefenceReroll(defenderActor, actor, { isMelee, technique: techOpts.technique })) : ""),
         // Шагоход (wdbc-6wzt, п.5): у него, в отличие от прочей техники, есть
         // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
         // на карточке, потому что считает их ПИЛОТ, а не машина.
@@ -2566,6 +2568,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         chomper: isMelee && hasDodgeTalent(defenderActor, "chomper")
           && [...(defenderActor?.items ?? [])].some(i => isBiteWeapon(i)),
         bodyguards: bodyguardsFor({ attackerToken, targetToken }),
+        // Помазанник (Чемпион Терминатор): парирование за союзника в 1 м без Реакции, раз в Раунд.
+        anointed: anointedFor({ attackerToken, targetToken }),
         allyName: defenderActor?.name ?? "",
         // Бой Вслепую (wdbc-1rno.2): −20 выше уже применён — здесь только
         // подпись, откуда он взялся, чтобы не выглядеть немотивированным штрафом.

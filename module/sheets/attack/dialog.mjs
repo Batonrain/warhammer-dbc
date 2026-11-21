@@ -32,10 +32,10 @@ import { BATPACK_ROF } from "../../rules/batpack-dump.mjs";
 import { POWER_MODE_FLAG } from "../../rules/power-setting.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
 import { isGrappled } from "../../rules/predicates.mjs";
-import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
+import { grappleAttackBlockReason, blessedWithPusAttackReroll } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
-import { finalExecutionGate, finalExecutionProps, commitFinalExecution } from "../../combat/final-execution.mjs";
+import { finalExecutionGate, finalExecutionProps, commitFinalExecution, finalExecutionAutoArm } from "../../combat/final-execution.mjs";
 import { executionPayProblem, commitExecutionStep } from "../../combat/execution.mjs";
 import { isExecutionWeapon } from "../../rules/execution.mjs";
 import { markedPreyAdvantage } from "../../combat/marked-prey.mjs";
@@ -140,6 +140,16 @@ async function payTalentAttack(actor, pay) {
   return runCardOnce(message, pay.cardKey, spend, `⚠️ ${pay.label}: с этой карточки уже использовано.`);
 }
 
+/**
+ * Помеха Благословенного Гноем поверх выбранного игроком Кубика (Sahara task-234f): Преимущество гасит её — тогда
+ * переброса нет вовсе (false — цепочка `||` идёт дальше); своя Помеха/переброс «худший» — остаётся он.
+ */
+function pusAttackReroll(chosen, pus) {
+  if (!pus) return chosen;
+  if (chosen?.mode === "keepBest") return false;
+  return chosen?.mode === "keepWorst" ? chosen : pus;
+}
+
 export function openAttackDialog(ctx) {
   const {
     actor,
@@ -197,7 +207,8 @@ export function openAttackDialog(ctx) {
   let deathDancePending = null; // { cost, agBonus } — выставлено кликом, читается в колбэке "roll"
   // Окончательная Казнь (Мастер Казней, combat/final-execution.mjs): тот же приём — кнопка вооружает, Очко Трофеев
   // списывается только при подтверждении атаки. { n, cost } — номер атаки серии и цена.
-  let finalExecutionPending = null;
+  // Продолжение Казни в оплаченной серии — взведено сразу (finalExecutionAutoArm, Sahara 2-3d54).
+  let finalExecutionPending = finalExecutionAutoArm(actor, techniqueOpts);
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
     classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
@@ -508,7 +519,7 @@ export function openAttackDialog(ctx) {
               ? dualWieldActionType(ownActionType, offActionType(dualOff))
               : ownActionType);
             const apCost = (isMelee && baseIsCharge(sel.baseKey)) ? movementApCost(actor, baseApCost) : baseApCost;
-            if (!await spendActionPoints(actor, apCost, { physical: true })) {
+            if (!await spendActionPoints(actor, apCost, { physical: true, attack: true })) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
             }
@@ -691,7 +702,8 @@ export function openAttackDialog(ctx) {
               // «внешнее навязывание важнее своего», что у защиты —
               // combat/defense.mjs::_performDodge, forcedReroll.
               reroll: (resolvedAttack.rerolls || []).find(r => r.who === "opponent" || r.who === "forced")
-                      || f.reroll
+                      // Благословенный Гноем у цели: Захват по нему — с Помехой; выбранное Преимущество её гасит.
+                      || pusAttackReroll(f.reroll, blessedWithPusAttackReroll(actor, targetActor, { isMelee, technique: sel.maneuverKey }))
                       || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined)
                       // Отмеченная Добыча (combat/marked-prey.mjs): Преимущество на атаки Казни по отмеченной цели.
                       || (isMelee ? markedPreyAdvantage(actor, targetActor, item, sel.gKey) : undefined),

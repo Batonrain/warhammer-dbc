@@ -157,3 +157,14 @@ export function valourPenalty(actor, now = 0) {
   const cur = timedSuppressions(actor, now)[BLOOD_SMITH];
   return { until: now + VALOUR_SECONDS, repeat: !!cur };
 }
+
+/**
+ * «8 дней или дольше по решению ГМа» (Sahara 587-fd8b): текущий срок покаяния,
+ * продлённый на `days` дней (дробные — как есть, полдня = 12 ч). null — нечего
+ * продлевать или число не положительное.
+ */
+export function valourExtension(cur, days) {
+  const d = Number(days);
+  if (!cur || !Number.isFinite(d) || d <= 0) return null;
+  return { ...cur, until: (Number(cur.until) || 0) + Math.round(d * 86400) };
+}

@@ -54,9 +54,15 @@ const NS = "warhammer-dbc";
  * `genitive` — «2 Очка <genitive>», `word` — «потратил 1 <word>».
  */
 export const KNOWN_RESOURCE_POOLS = {
-  thirst:      { label: "Жажда",            genitive: "Жажды",      unit: "Жажды" },
+  // warpWoundsPerPoint — урон варп-оружия идёт в этот пул, пункт за N Ран
+  // (Черта Жажда: «каждый пункт как 5 Ран», Sahara 583-5-t-10). Число книги
+  // о самом ресурсе, а не о Стадии, — поэтому здесь, а не полем записи:
+  // снимки Черты на акторах живых миров его не несут и миграция не нужна.
+  thirst:      { label: "Жажда",            genitive: "Жажды",      unit: "Жажды", warpWoundsPerPoint: 5 },
   inspiration: { label: "Очки Вдохновения", genitive: "Вдохновения" },
-  vengeance:   { label: "Очки Мести",       genitive: "Мести" }
+  // asInfamyAttackOnly — «как трата Очка Бесчестия на атаку» (Мстительный Дух,
+  // Sahara 583-d28a): из карточки не-атакующего теста пул не предлагается.
+  vengeance:   { label: "Очки Мести",       genitive: "Мести", asInfamyAttackOnly: true }
 };
 
 export const RESOURCE_REFILL_UNITS = {
@@ -149,7 +155,9 @@ export function resourcePoolDefs(actor, { rollData = null } = {}) {
         key, label: "", genitive: known.genitive ?? "", unit: known.unit ?? "",
         max: 0, unbounded: false, refill: "", roundCap: 0, gainLabel: "", gainAmount: 0,
         asInfamy: false, asInfamyCap: 0, asInfamyCor: null, asInfamyNote: "",
-        boostChars: new Set(), failChars: new Set(), sources: []
+        boostChars: new Set(), failChars: new Set(), sources: [],
+        warpWoundsPerPoint: Number(known.warpWoundsPerPoint) || 0,
+        asInfamyAttackOnly: !!known.asInfamyAttackOnly
       };
       if (!d.label && e.resPoolLabel) d.label = String(e.resPoolLabel);
       if (isUnboundedPoolMax(e.resPoolMax)) d.unbounded = true;
@@ -278,11 +286,35 @@ export function resourceRefillUpdates(actor, event) {
   return { update, filled };
 }
 
+/**
+ * Урон варп-оружия в пул (Жажда): каждый пункт гасит `perPoint` Ран, расход
+ * округляется вверх; не хватило пула — остаток идёт дальше, в Раны.
+ * @returns {{spent:number, absorbed:number, remaining:number}}
+ */
+export function warpPoolAbsorb(have, damage, perPoint) {
+  const h = Math.max(0, Math.floor(Number(have) || 0));
+  const dmg = Math.max(0, Number(damage) || 0);
+  const per = Math.max(0, Number(perPoint) || 0);
+  if (!h || !dmg || !per) return { spent: 0, absorbed: 0, remaining: dmg };
+  const need = Math.ceil(dmg / per);
+  if (need <= h) return { spent: need, absorbed: dmg, remaining: 0 };
+  return { spent: h, absorbed: h * per, remaining: dmg - h * per };
+}
+
+/** Пул, в который идёт урон варп-оружия (Жажда), или null. */
+export function warpSoakPoolDef(actor) {
+  for (const d of resourcePoolDefs(actor).values()) if (d.warpWoundsPerPoint > 0) return d;
+  return null;
+}
+
 /** Пулы, которыми можно заплатить вместо Очка Бесчестия прямо сейчас. */
-export function infamyResourceOptions(actor, { roundKey = "", corThreshold = 0 } = {}) {
+export function infamyResourceOptions(actor, { roundKey = "", corThreshold = 0, test = null } = {}) {
   const out = [];
   for (const d of resourcePoolDefs(actor).values()) {
     if (!d.asInfamy) continue;
+    // Пул «только на атаку» (Месть): тест карточки известен и он не атака — мимо.
+    // Без теста (трата с полосы: активация Killing Strike и т.п.) — разрешено.
+    if (d.asInfamyAttackOnly && test && !test.attack) continue;
     // «Считает при этом свою Cor 0-19»: способность с порогом Порчи выше —
     // этим пулом не оплачивается.
     if (d.asInfamyCor != null && Number(corThreshold) > d.asInfamyCor) continue;

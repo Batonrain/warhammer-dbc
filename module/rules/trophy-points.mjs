@@ -102,3 +102,43 @@ export function trophyUpdate(actor, delta) {
   const next = Math.max(0, Math.min(trophyMax(actor), cur + num(delta)));
   return next === cur ? null : { "system.trophyPoints.value": next };
 }
+
+// ── Очки Трофеев как Очки Бесчестия (Собиратель Трофеев, Sahara task-0b3a) ──
+// «Может тратить их как Очки Бесчестия, но только в тестах на выслеживание,
+// преследование, или бой с вражескими офицерами, чемпионами, или чудовищами».
+// Вид теста система знает по флагу карточки, а «офицер ли цель» — нет: это
+// решение игрока и ГМа, подпись в окне «Чем заплатить?» (как у Мести
+// Ревенанта — asInfamyNote, rules/resource-pools.mjs).
+//   выслеживание  — Survival (книга: «тесты Survival … чтобы выслеживать
+//                   цель»), Awareness (след, нюх);
+//   преследование — Athletics, Acrobatics (погоня пешком), Stealth (книга:
+//                   «преследовать цель в толпе»), Operate (погоня на машине);
+//   бой           — атака (флаг attack карточки), Dodge, Parry.
+const TROPHY_INFAMY_SKILLS = new Set(["survival", "awareness", "athletics", "acrobatics", "stealth", "dodge", "parry"]);
+const TROPHY_INFAMY_GROUPS = new Set(["operate"]);
+
+/** Подходит ли тест под трату Очка Трофеев как Очка Бесчестия. */
+export function trophyInfamyTestEligible(test) {
+  if (!test) return false;
+  if (test.attack) return true;
+  return TROPHY_INFAMY_SKILLS.has(String(test.skill || "")) || TROPHY_INFAMY_GROUPS.has(String(test.group || ""));
+}
+
+/** Тест карточки чата для трат «как Бесчестие»: { skill, group, attack } или null. */
+export function infamyTestContext(message) {
+  const f = message?.flags?.["warhammer-dbc"] ?? {};
+  if (f.skillTest) return { skill: String(f.skillTest.skill || ""), group: String(f.skillTest.group || ""), attack: false };
+  if (f.attack) return { skill: "", group: "", attack: true };
+  return null;
+}
+
+export const TROPHY_INFAMY_NOTE = "только выслеживание, преследование или бой с вражеским офицером, чемпионом или чудовищем — решают игрок и ГМ";
+
+/**
+ * Вариант оплаты Очком Трофеев для окна «Чем заплатить?» — в форме записи пула
+ * ресурса (key/label/asInfamyCor/asInfamyCap/asInfamyNote), или null.
+ */
+export function trophyInfamyOption(actor, test) {
+  if (!trophyInfamyTestEligible(test) || !hasTrophyPoints(actor) || trophyValue(actor) < 1) return null;
+  return { key: "trophy", label: "Очки Трофеев", asInfamy: true, asInfamyCap: 0, asInfamyCor: null, asInfamyNote: TROPHY_INFAMY_NOTE };
+}

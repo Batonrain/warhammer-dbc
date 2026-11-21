@@ -4310,7 +4310,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.vitkis.bookOfBattle": {
     label: "Может читать движения врага как раскрытую книгу. Когда использует War Seer для усиления урона или попадания своих рукопашных атак,",
-    source: "Book of Battle / Книга Битвы", reader: "module/rules/vitkis-talents.mjs::vitkisRules (−3×Успехи цели на атаки по Виткису) + combat/vitkis.mjs::useWarSeer (+1 Реакция на Парирование)"
+    source: "Book of Battle / Книга Битвы", reader: "module/rules/vitkis-talents.mjs::vitkisRules (−3×Успехи цели на атаки по Виткису) + combat/vitkis.mjs::useWarSeer (+1 Реакция только на Парирование атак цели — метка module/combat/action-economy.mjs::PARRY_ONLY_REACTION_FLAG, тратит module/combat/defense.mjs::_performParry; Sahara 586-961c)"
   },
   "elite.elitnyeArhetipy.vitkis.brothersAtArms": {
     label: "Когда Виткис берёт на себя основную ответственность в битве, Бог Крови вознаграждает его смелость дополнительным прозрением.",
@@ -4722,7 +4722,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpFlash": {
     label: "Раны в реальности, открываемые Когтями Варпа, выпускают наружу противоестественный не-свет, пожирающий обычное освещение.",
-    source: "Warp Flash / Варп Вспышка", reader: "module/combat/warp-talon-talents.mjs::warpFlash (из useVeilRender на входе и выходе)"
+    source: "Warp Flash / Варп Вспышка", reader: "module/combat/warp-talon-talents.mjs::warpFlash (из useVeilRender на входе и выходе); Ослепление до конца следующего Хода цели — module/rules/until-turn-end.mjs (снимает module/combat/condition-ticks.mjs::processConditionTurnEnd; Sahara 586-8aaf)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpTrail": {
     label: "Может преследовать жертв по следу, что оставляют их души. Может пройти тест Awareness−30,",
@@ -4886,7 +4886,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Мастер_Казней — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.masterKazney.finalExecution": {
     label: "Обрушивает удары нарастающей мощи. Совершая атаку Казнью, может потратить Очко Трофеев,",
-    source: "Final Execution / Окончательная Казнь", reader: "РЕАЛИЗОВАНО (27.10.2026, Sahara task-bbe1; Fear(2) — 30.10.2026, Sahara fear-2): кнопка «Окончательная Казнь» в окне рукопашной атаки — свойства Extreme(9)/Proven(5) первой атаки серии (Раунд), следующие атаки серии: Extreme на 1 ниже, Proven на 1 выше; Очко Трофеев (пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа)) списывается при подтверждении атаки, один раз на серию, отказ без Очка — module/combat/final-execution.mjs::commitFinalExecution (окно — module/sheets/attack/dialog.mjs, строка — module/sheets/attack/markup.mjs). Fear(2) за убийство: бросок несёт opts.finalExecution → карточка атаки (data-final-execution) → module/combat/damage.mjs метит жертву (module/combat/final-execution.mjs::markLastFinalExecutionHit) → констатация смерти в том же Раунде (module/sheets/tabs/body.mjs::setDeceased → module/combat/final-execution.mjs::offerFinalExecutionFearAfterKill) выдаёт убийце копию Трейта Fear из пака на 1 Раунд (module/rules/temp-grant.mjs, expiresAtRound = Раунд + 1); не владеющему убийцей не-ГМу — карточка с кнопкой (hooks.mjs, .wh-fe-fear-btn). Допатаки Казни — отдельная Черта «Казнь» (module/combat/execution.mjs). «Убивает» = смерть констатирована; «1 Раунд» = до конца следующего Раунда боя (как прочие «N Раундов» системы)"
+    source: "Final Execution / Окончательная Казнь", reader: "РЕАЛИЗОВАНО (27.10.2026, Sahara task-bbe1; Fear(2) — 30.10.2026, Sahara fear-2): кнопка «Окончательная Казнь» в окне рукопашной атаки — свойства Extreme(9)/Proven(5) первой атаки серии (Раунд), следующие атаки серии: Extreme на 1 ниже, Proven на 1 выше; Очко Трофеев (пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа)) списывается при подтверждении атаки, один раз на серию, отказ без Очка — module/combat/final-execution.mjs::commitFinalExecution (окно — module/sheets/attack/dialog.mjs, строка — module/sheets/attack/markup.mjs). Fear(2) за убийство: бросок несёт opts.finalExecution → карточка атаки (data-final-execution) → module/combat/damage.mjs метит жертву (module/combat/final-execution.mjs::markLastFinalExecutionHit) → констатация смерти в том же Раунде (module/sheets/tabs/body.mjs::setDeceased → module/combat/final-execution.mjs::offerFinalExecutionFearAfterKill) выдаёт убийце копию Трейта Fear из пака на 1 Раунд (module/rules/temp-grant.mjs, expiresAtRound = Раунд + 1); не владеющему убийцей не-ГМу — карточка с кнопкой (hooks.mjs, .wh-fe-fear-btn). Допатаки Казни — отдельная Черта «Казнь» (module/combat/execution.mjs). «Убивает» = смерть констатирована; «1 Раунд» = ровно Раунд от убийства, до того же Хода следующего Раунда (module/rules/temp-grant.mjs::expiresAtTurn, Sahara 2-3d54). Окно продолжения Казни в оплаченной серии взводит Талант само (module/combat/final-execution.mjs::finalExecutionAutoArm, Sahara 2-3d54)"
   },
   "elite.elitnyeArhetipy.masterKazney.markedPrey": {
     label: "За свободное действие может потратить очко Трофеев, чтобы отметить достойную трофея цель в прямой видимости или Трейта Unnatural Senses,",
@@ -5288,7 +5288,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чемпион_Терминатор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chempionTerminator.anointed": {
     label: "Раз в Раунд может без траты Реакции парировать атаку по дружественному персонажу в 1м от него, или получить попадание вместо него.",
-    source: "Anointed / Помазанник", reader: "module/combat/terminator-talents.mjs::useAnointed → метка anointedShield, combat/damage.mjs::_rollActiveShield (+35)"
+    source: "Anointed / Помазанник", reader: "module/combat/terminator-talents.mjs::useAnointed → метка anointedShield, combat/damage.mjs::_rollActiveShield (+35); парирование за союзника в 1 м без Реакции, раз в Раунд — кнопка «Помазанник» на карточке атаки (module/combat/bodyguard.mjs::anointedFor, module/rules/terminator-talents.mjs::anointedParryTokens → module/combat/defense.mjs::_performParry freeReaction; Sahara 586-8aaf)"
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",
@@ -6379,7 +6379,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vampir.theThirst": {
     label: "Пробив укусом броню цели, имеющей душу, может выпить её кровь (или аналог, вплоть до машинного масла или реакторной жидкости мутанта-механои…",
-    source: "The Thirst / Жажда", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "The Thirst / Жажда", reader: "ЧАСТИЧНО: пул Жажды — запись kind:resourcePool (module/rules/resource-pools.mjs, PR #583); урон варп-оружия в Жажду (пункт за 5 Ран, расход вверх) и тест T+10 на Оглушение — module/combat/thirst-warp.mjs из module/combat/damage.mjs (Sahara 583-5-t-10). Видимость для Warp Sight — ведёт ГМ"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Варп_Кузнец — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.varpKuznets.ironCage": {
@@ -6423,7 +6423,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.vitkis.warSeer": {
     label: "Раз в Ход за свободное действие может сконцентрировать своё боевое всеведение на одном персонаже в том же бою и пройти тест Common Lore(War)…",
-    source: "War Seer / Провидец Войны", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "War Seer / Провидец Войны", reader: "module/combat/vitkis.mjs::useWarSeer (тест и распределение Успехов) → module/rules/vitkis-talents.mjs (эффекты); «Не обмануть»: Финт против Виткиса проигран без броска (module/combat/opposed-contest.mjs::resolveResistClick, module/rules/vitkis-talents.mjs::warSeerUndeceivable; Sahara 586-961c), прочие тесты обмана (Deceive) — за столом"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Воин_Ноты — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.voinNoty.adoringCrowds": {
@@ -6737,7 +6737,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.masterKazney.trophyTaker": {
     label: "Убив вражеского офицера, чемпиона или чудовище (по усмотрению ГМа), получает 1 очко Трофеев (макс. P.b).",
-    source: "Trophy Taker / Собиратель Трофеев", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): +1 Очко Трофеев за убитого офицера/чемпиона/чудовище — карточка с кнопкой «Трофей» после констатации смерти (module/sheets/tabs/body.mjs::setDeceased → module/combat/trophy-kill.mjs::offerTrophyAfterKill), решение ГМа; пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа). Траты как Очков Бесчестия на выслеживание/бой с офицерами — вручную"
+    source: "Trophy Taker / Собиратель Трофеев", reader: "РЕАЛИЗОВАНО ЧАСТИЧНО (27.10.2026, Sahara task-bbe1): +1 Очко Трофеев за убитого офицера/чемпиона/чудовище — карточка с кнопкой «Трофей» после констатации смерти (module/sheets/tabs/body.mjs::setDeceased → module/combat/trophy-kill.mjs::offerTrophyAfterKill), решение ГМа; пул system.trophyPoints (module/rules/trophy-points.mjs, максимум P.b, ячейка «Трофеи» в шапке листа). Траты как Очков Бесчестия (Sahara task-0b3a): окно «Чем заплатить?» при Перебросе/+10/Успехе из меню карточки теста выслеживания/преследования/боя — module/rules/trophy-points.mjs::trophyInfamyOption, module/apps/infamy-points.mjs::spendFromInfamyPool(test); офицер/чемпион/чудовище ли цель — решение стола"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Медуза — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.meduza.deadlyNaturalWeapon2Tentacles7Bite": {
@@ -7684,7 +7684,7 @@ export const CAPABILITIES = {
     reader: "module/combat/fear.mjs — _executeFearRoll → module/rules/fear-ignore.mjs::fearIgnore (базовый эффект: все воспринимаемые рейтинги Страха на 1 меньше, игнорируются на 0 или пределе Бесчестия; не действует против Страха, который нельзя игнорировать — Затронутый Варпом 1)"
   },
   "mutation.infernalWill": {
-    label: "Реализовано (wdbc-1rno.22): иммунитет к Страху — отдельной записью на этом же предмете (fear.immune, wdbc-m7we). Эта Возможность — остаток: тест Навыка (обычного или группового, не Характеристики) провален на 4+ Провала, кроме Крит. Провала, — бросок по таблице Шока 1d100 + 10×(Провалы−1) сам, строка применяется сама; Неделимый (и без Покровителя) снижает итог на ½Cor (окр.▲), Покровитель-Бог — на полный Cor, если Навык дружественный (Навык его Бога или Common Lore/Trade), иначе без снижения; итог ≤0 — Шока нет; Infamy не вычитается (решения владельца 02.10.2026). НЕ сделано: тесты Навыков, идущие не через общий исход теста (свои окна атаки, Техночудес, Крафта и т.п.), бросок Шока не вызывают; переброс теста за Очко с карточки (hooks.mjs, «Переброс за Очко») идёт мимо общего исхода: удался — прежний Шок снимается, провалился снова — прежний остаётся, а новый на 4+ Провала не бросается; провал, засчитанный успехом после карточки (Очко Бесчестия → Успех у Змеиного Языка и подобных, «+10» за Очко, Хирургия Легиона, Мастерство), Шок снимает (откат лежит во флаге карточки теста с листа и верховой карточки, rules/fail-undo.mjs, task-e30b); тесты Демона, Командования Отряда и Расстройств флага отката не пишут — там Шок останется; делегированный тест, брошенный чужим игроком, Шок не накладывает (нет прав на актора, ошибка только в консоли)",
+    label: "Реализовано (wdbc-1rno.22): иммунитет к Страху — отдельной записью на этом же предмете (fear.immune, wdbc-m7we). Эта Возможность — остаток: тест Навыка (обычного или группового, не Характеристики) провален на 4+ Провала, кроме Крит. Провала, — бросок по таблице Шока 1d100 + 10×(Провалы−1) сам, строка применяется сама; Неделимый (и без Покровителя) снижает итог на ½Cor (окр.▲), Покровитель-Бог — на полный Cor, если Навык дружественный (Навык его Бога или Common Lore/Trade), иначе без снижения; итог ≤0 — Шока нет; Infamy не вычитается (решения владельца 02.10.2026). НЕ сделано: тесты Навыков, идущие не через общий исход теста (свои окна атаки, Техночудес, Крафта и т.п.), бросок Шока не вызывают; переброс теста за Очко с карточки (hooks.mjs, «Переброс за Очко»): у теста с листа последствия считаются по новому броску (rules/kind-outcome.mjs::rerollFailConsequences, Sahara failundo) — прежний Шок снимается, новый на 4+ Провала бросается заново; у карточки без флага теста (не с листа) — по-старому: провалился снова — прежний Шок остаётся, новый не бросается; доп. Провалы правил (failDegMod) переброс не учитывает; провал, засчитанный успехом после карточки (Очко Бесчестия → Успех у Змеиного Языка и подобных, «+10» за Очко, Хирургия Легиона, Мастерство), Шок снимает (откат лежит во флаге карточки теста с листа и верховой карточки, rules/fail-undo.mjs, task-e30b); тесты Демона, Командования Отряда и Расстройств флага отката не пишут — там Шок останется; делегированный тест, брошенный чужим игроком, Шок не накладывает (нет прав на актора, ошибка только в консоли)",
     source: "Мутация: Infernal Will (Общие мутации)",
     reader: "module/rules/fail-degree-triggers.mjs (общий триггер «N+ Провала», FAIL_DEGREE_TRIGGERS); module/rules/kind-outcome.mjs::resolveKindOutcome; module/combat/fear.mjs::rollInfernalWillShock; module/rules/infernal-will.mjs::infernalWillReduction"
   },
@@ -8416,7 +8416,7 @@ export const CAPABILITIES = {
   "ability.singleMindedHunter": {
     label: "Целеустремлённый Охотник: Психопатия на Тяжести 0 (не ниже 0) при получении Черты, Помеха на тесты Command, Charm, Deceive и Inquiry",
     source: "Single-Minded Hunter / Целеустремлённый Охотник (packs-src/traits/Элитные_архетипы)",
-    reader: "module/sheets/tabs/disorders.mjs::grantStartingDisorder (name, скрипт «При выдаче» записи Черты), module/rules/master-of-executions.mjs::hunterHindranceApplies (module/sheets/actor-sheet.mjs::_showSkillRollDialog, module/sheets/squad-sheet.mjs::_commandRoll — Помеха выбрана заранее) — Sahara 1-54b9"
+    reader: "module/sheets/tabs/disorders.mjs::grantStartingDisorder (name, скрипт «При выдаче» записи Черты), module/rules/master-of-executions.mjs::hunterHindranceApplies (module/sheets/actor-sheet.mjs::_showSkillRollDialog, module/sheets/squad-sheet.mjs::_commandRoll и ::_briefingRoll — Помеха выбрана заранее; ::hunterHindranceReroll — Сплотить (module/sheets/squad-sheet.mjs::_rallyAttempt) и Вдохновить Гнев (module/combat/inspire-wrath.mjs::startInspireWrath) бросают с Помехой сами) — Sahara 1-54b9, task-fef6"
   },
   "ability.hunterSight": {
     label: "Взор Охотника: души в зоне Unnatural Senses и их грубая сила по Inf (шёпот владельцу и ГМу)",
@@ -8539,7 +8539,7 @@ export const CAPABILITIES = {
     reader: "module/combat/plague-marine.mjs::gloriousRustClock, module/rules/plague-marine.mjs hasGloriousRust()"
   },
   "ability.blessedWithPus": {
-    label: "Благословенный Гноем: касание голой кожи — 1d10 C Toxic(0) и заражение в конце боя; иммунитет к Горению и Corrosive (записи Черты); Помеха на тесты окна «Борьба» против носителя (module/combat/grapple.mjs::blessedWithPusDisadvantage)",
+    label: "Благословенный Гноем: касание голой кожи — 1d10 C Toxic(0) и заражение в конце боя; иммунитет к Горению и Corrosive (записи Черты); Помеха на тесты окна «Борьба» против носителя (module/combat/grapple.mjs::blessedWithPusDisadvantage), на атаку приёмом «Захват» по нему (::blessedWithPusAttackReroll), на Уклонение от его атаки «Захват» (::blessedWithPusDefenceReroll) и на сопротивление его приёмам Борьбы (grappleTechDef.resistHindrance → module/combat/opposed-contest.mjs::resolveResistClick) — Sahara task-234f",
     source: "Blessed with Pus / Благословенный Гноем (packs-src/talents/Элитные_архетипы)",
     reader: "module/combat/plague-marine.mjs::blessedTouch, module/rules/plague-marine.mjs hasBlessedWithPus()"
   },

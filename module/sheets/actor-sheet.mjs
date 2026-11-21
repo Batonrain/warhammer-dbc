@@ -102,6 +102,7 @@ import { faithfulResistBonus } from "../rules/dark-apostle.mjs";
 import { brokenAutoFail } from "../rules/warpsmith.mjs";
 import { actorIdentityUuids } from "../combat/command-state.mjs";
 import { hunterHindranceApplies } from "../rules/master-of-executions.mjs";
+import { fullMoveHindranceActive } from "../combat/action-economy.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readTestKind, readDiceChoice, mergeReroll,
@@ -2479,6 +2480,8 @@ export class WarhammerCharacterSheet
     // Целеустремлённый Охотник (Мастер Казней, Sahara 1-54b9): Помеха на Command, Charm, Deceive и Inquiry —
     // в окне стоит заранее (rules/master-of-executions.mjs).
     const hunterHindrance = hunterHindranceApplies(this.actor, rollCtx.skill);
+    // Полудействие после Полного Движения (Sahara task-5003): его тесты — с Помехой.
+    const fullMoveHindrance = fullMoveHindranceActive(this.actor);
     // Фракция собеседника без токена-цели (Sahara task-240a): Связи, Хорошая
     // Репутация, Враг и переброс Ненависти работают от rollCtx.socialFaction.
     // Выбор меняет ctx на лету — строки «Состояние» и переброс пересобираются.
@@ -2658,7 +2661,8 @@ export class WarhammerCharacterSheet
             </div>
             <div id="rule-rerolls-slot">${rr.html}</div>
             ${hunterHindrance ? `<div class="roll-dlg-note">Целеустремлённый Охотник: на тесты Command, Charm, Deceive и Inquiry — Помеха (выбрана ниже).</div>` : ""}
-            ${diceModeHtml({ preset: hunterHindrance ? "disadvantage" : "normal" })}
+            ${fullMoveHindrance ? `<div class="roll-dlg-note">Полное Движение: полудействие после него — тесты с Помехой (выбрана ниже).</div>` : ""}
+            ${diceModeHtml({ preset: hunterHindrance || fullMoveHindrance ? "disadvantage" : "normal" })}
             <div class="roll-dlg-row roll-dlg-subrow">
               <label><input type="checkbox" id="confirm-pick"/> Спросить, если Преимущество/Помеха/Переброс дадут выбор (стр. 26)</label>
             </div>
@@ -2681,6 +2685,8 @@ export class WarhammerCharacterSheet
                   label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
               : null;
             if (namedReroll) commitRerollUse(this.actor, rerollEl.dataset);
+            // Помеха Полного Движения — на один тест полудействия, как и у Карабканья (movement-actions.mjs::_d100).
+            if (fullMoveHindrance) this.actor.unsetFlag("warhammer-dbc", "fullMoveDisadvantage");
             const reroll = mergeReroll(namedReroll, readDiceChoice(val));
             // Виды теста — независимые галочки (стр. 25-26, wdbc-y9i8): любое
             // подмножение Расширенный/Комбинированный/Встречный(+vss) может

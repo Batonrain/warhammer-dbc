@@ -23,6 +23,7 @@ import { focusedWrathBarNote } from "../rules/focused-wrath.mjs";
 import { knowledgeOfAgesButtonHtml } from "./knowledge-of-ages.mjs";
 import { resourcePoolDefs, infamyResourceOptions } from "../rules/resource-pools.mjs";
 import { actorRoundKey, chooseInfamyPayment, spendResource } from "./resource-pools.mjs";
+import { trophyInfamyOption, trophyUpdate, trophyValue, trophyMax } from "../rules/trophy-points.mjs";
 
 /**
  * Текущие Очки Бесчестия актора — тот же путь, что и лист (actor-sheet.mjs
@@ -149,7 +150,7 @@ export async function changeInfamy(actor, ipFullPath, ipMax, delta) {
  * @returns {{tempSpent:number, poolSpent:number, poolValue:number, tempSource:string, tempRestriction:string}}
  *   poolValue — новое значение обычного пула после вычета poolSpent.
  */
-export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced = false, corThreshold = 0 } = {}) {
+export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced = false, corThreshold = 0, test = null } = {}) {
   // Пустота Парии (rules/null-zones.mjs): «не могут использовать Очки
   // Бесчестия или Очки Судьбы». null — трата не состоялась, вызывающий
   // прерывает действие. forced — принудительная потеря (штраф), не трата.
@@ -165,12 +166,26 @@ export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced 
   // Ревенанта — rules/resource-pools.mjs): после временного запаса игрок
   // выбирает, чем платить. Выбор — ДО любого списания: отказ ничего не тратит.
   const rest = amount - tempSpent;
-  if (!forced && rest > 0 && infamyResourcePossible(actor)) {
-    const options = infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold })
-      .filter(d => rest <= 1 || d.asInfamyCap <= 0 || d.asInfamyCap >= rest);
+  // test — тест карточки, за который платят (rules/trophy-points.mjs::infamyTestContext):
+  // Очки Трофеев Мастера Казней идут «как Бесчестие» только в тестах выслеживания,
+  // преследования и боя (Sahara task-0b3a); трата с полосы теста не несёт.
+  const trophyOpt = !forced && rest > 0 && trophyValue(actor) >= rest ? trophyInfamyOption(actor, test) : null;
+  if (!forced && rest > 0 && (infamyResourcePossible(actor) || trophyOpt)) {
+    const options = [...infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold, test })
+      .filter(d => rest <= 1 || d.asInfamyCap <= 0 || d.asInfamyCap >= rest), ...(trophyOpt ? [trophyOpt] : [])];
     if (options.length) {
       const choice = await chooseInfamyPayment(actor, options, { regularAvailable: cur >= rest });
       if (!choice) return null;
+      if (choice === "trophy") {
+        const patch = trophyUpdate(actor, -rest);
+        if (!patch) return null;
+        await actor.update(patch);
+        const tempInfo = tempSpent > 0 ? tempInfamyInfo(actor) : null;
+        if (tempSpent > 0) await spendTempInfamy(actor, tempSpent);
+        return { tempSpent, poolSpent: 0, poolValue: cur,
+          tempSource: tempInfo?.source ?? "", tempRestriction: tempInfo?.restriction ?? "",
+          resourceSpent: { key: "trophy", amount: rest, label: trophyOpt.label, after: trophyValue(actor), max: trophyMax(actor), corCap: null } };
+      }
       if (choice !== "infamy") {
         const res = await spendResource(actor, choice, rest, { asInfamy: true, silent: true });
         if (!res) return null;
@@ -226,10 +241,14 @@ export function infamyResourcePossible(actor) {
   return false;
 }
 
-/** Можно ли сейчас заплатить 1 очком пула ресурса вместо Очка Бесчестия. */
-export function infamyResourceAvailable(actor, { corThreshold = 0 } = {}) {
+/**
+ * Можно ли сейчас заплатить 1 очком пула ресурса вместо Очка Бесчестия.
+ * `test` — тест карточки (Очки Трофеев — только за подходящий тест).
+ */
+export function infamyResourceAvailable(actor, { corThreshold = 0, test = null } = {}) {
+  if (trophyInfamyOption(actor, test)) return true;
   if (!infamyResourcePossible(actor)) return false;
-  return infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold }).length > 0;
+  return infamyResourceOptions(actor, { roundKey: actorRoundKey(actor), corThreshold, test }).length > 0;
 }
 
 /** Есть ли чем платить за способность: обычный пул, временный запас или пул ресурса «как Бесчестие». */
@@ -248,12 +267,12 @@ export function actorHasInfamyPoint(actor) {
  * @param {object} [out] приёмник результата (out.successBonus для «Успеха»)
  * @returns {Promise<boolean>} true — Очко потрачено
  */
-export async function spendInfamyAbility(actor, key, out = null) {
+export async function spendInfamyAbility(actor, key, out = null, { test = null } = {}) {
   const godKey = actor?.system?.patronGod || "undivided";
   const p = chaosPatronMeta(godKey);
   return (await spendInfamy(actor, key, {
     godKey, ipFullPath: actorInfamyPath(actor), ipMax: actorInfamyMax(actor),
-    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true, out
+    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true, out, test
   })) === true;
 }
 
@@ -286,7 +305,7 @@ export async function spendFreeInfamyAbility(actor, key, out = null) {
 // для теста СВОЕЙ манифестации, пачка I1): всё остальное — пороги Порчи, запрет Покровительства — как обычно.
 // out — необязательный приёмник результата: out.successBonus — сколько Успехов дала трата «Успех»
 // (1, либо бросок «Вспышки Гения» Тзинча), нужно меню карточки теста (apps/infamy-success.mjs).
-export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta, contextual = false, free = false, out = null }) {
+export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta, contextual = false, free = false, out = null, test = null }) {
   // Атака Ненависти и Сладкое Страдание срабатывают в своём моменте: до броска
   // атаки (окно атаки) и на карточке Критического Эффекта. Кнопка на полосе
   // тратила бы Очко впустую — вместо этого подсказываем, где способность живёт.
@@ -299,7 +318,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
   const patron = DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided;
   const ip = Math.max(0, Math.min(ipMax, Number(foundry.utils.getProperty(actor, ipFullPath)) || 0));
   if (free && inPariahVoid(actor)) return ui.notifications.warn("В Пустоте Парии нельзя тратить Очки Бесчестия/Судьбы.");
-  if (!free && ip < 1 && tempInfamyAmount(actor) < 1 && !infamyResourceAvailable(actor))
+  if (!free && ip < 1 && tempInfamyAmount(actor) < 1 && !infamyResourceAvailable(actor, { test }))
     return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
 
   let ability = DP_INFAMY_ABILITIES.find(a => a.key === key);
@@ -311,7 +330,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
 
   const spend = free
     ? { tempSpent: 0, poolSpent: 0, poolValue: ip, tempSource: "", tempRestriction: "" }
-    : await spendFromInfamyPool(actor, 1, ipFullPath, { corThreshold: threshold });
+    : await spendFromInfamyPool(actor, 1, ipFullPath, { corThreshold: threshold, test });
   if (!spend) return;
   const upd = free ? {} : { [ipFullPath]: spend.poolValue };
   const lines = [];

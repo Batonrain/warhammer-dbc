@@ -199,6 +199,21 @@ export function researchBonus(crafter, mode) {
   return mode === "research" && hasRuleFlag(crafter, RESEARCH_BONUS_CAPABILITY) ? 10 : 0;
 }
 
+/**
+ * Когитор, Черта «Инфернальное Вдохновение» (Sahara 583-29da): «Уменьшает время
+ * смены для любых исследований вдвое (обычно до 4 ч) и удваивает Успехи на
+ * исследования». Только режим Исследования; узнаётся по имени Черты, а не
+ * записью Конструктора — снимки Черты на акторах живых миров её не несут.
+ * @returns {{hours:number, successMult:number, source:string}}
+ */
+export function cogitorResearchShift(crafter, mode, baseHours) {
+  const on = mode === "research" && (crafter?.items ?? []).some(i => i?.type === "trait"
+    && (itemHasName(i, "Infernal Inspiration") || itemHasName(i, "Инфернальное Вдохновение")));
+  return on
+    ? { hours: baseHours / 2, successMult: 2, source: "Инфернальное Вдохновение" }
+    : { hours: baseHours, successMult: 1, source: "" };
+}
+
 /** Киберпроповедник применяется к ЭТОМУ проекту (категория «Бионика и Мехадендриты»)? */
 export function cyberpreacherApplies(crafter, categoryKey) {
   return categoryKey === "bionics" && hasCyberpreacher(crafter);

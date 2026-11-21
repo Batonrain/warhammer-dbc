@@ -569,7 +569,7 @@ function reactionKnockdownSection(reason, { actorUuid }) {
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null,
-                          grapple = false, chomper = false, bodyguards = [], allyName = "" }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
+                          grapple = false, chomper = false, bodyguards = [], anointed = [], allyName = "" }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
                           swarm = null, unseen = false, unseenDetected = false, unseenPenalty = 0,
                           sixthSenseBypassAvailable = false, musicOfBattleBypassAvailable = false,
                           isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "", razorEdge = false }) {
@@ -697,6 +697,12 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? (bodyguards ?? []).map(b => `<button class="wh-parry-btn wh-bodyguard-btn" type="button" data-bodyguard-uuid="${b.uuid}" data-for-ally="${esc(allyName)}" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
                title="Телохранитель: ${esc(b.name)} парирует эту атаку за союзника (его Реакция, его оружие)">
                Телохранитель: ${esc(b.name)}
+             </button>`).join("")
+          : ""}
+        ${!cannotParry && !unseenLocked
+          ? (anointed ?? []).map(b => `<button class="wh-parry-btn wh-bodyguard-btn" type="button" data-anointed="1" data-bodyguard-uuid="${b.uuid}" data-for-ally="${esc(allyName)}" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
+               title="Помазанник: ${esc(b.name)} парирует эту атаку за союзника в 1 м — без траты Реакции, раз в Раунд (его оружие)">
+               Помазанник: ${esc(b.name)} (без Реакции)
              </button>`).join("")
           : ""}
         ${targetIsVehicle

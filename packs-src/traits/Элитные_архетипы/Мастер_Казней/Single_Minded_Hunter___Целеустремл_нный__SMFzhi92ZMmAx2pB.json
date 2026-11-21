@@ -5,7 +5,7 @@
   "folder": "VJkmfzAqWtxtuscp",
   "system": {
     "description": "",
-    "notes": "Реализовано (Sahara 1-54b9). «Психопатия» выдаётся при получении Черты скриптом «При выдаче» (sheets/tabs/disorders.mjs::grantStartingDisorder, name): Тяжесть 0, нижний предел 0 (system.severityMin), неизлечимо; уже лежащая Психопатия получает тот же предел. Помеха на Command, Charm, Deceive и Inquiry стоит заранее в окне теста Навыка (sheets/actor-sheet.mjs) и в окне Команды Отряда (sheets/squad-sheet.mjs, по выбранному отдающему) — радиокнопка «Помеха» (rules/master-of-executions.mjs::hunterHindranceApplies). Игрок может переключить её руками: так в системе устроена любая Помеха/Преимущество.",
+    "notes": "Реализовано (Sahara 1-54b9). «Психопатия» выдаётся при получении Черты скриптом «При выдаче» (sheets/tabs/disorders.mjs::grantStartingDisorder, name): Тяжесть 0, нижний предел 0 (system.severityMin), неизлечимо; уже лежащая Психопатия получает тот же предел. Помеха на Command, Charm, Deceive и Inquiry стоит заранее в окне теста Навыка (sheets/actor-sheet.mjs) и в окне Команды Отряда и Брифинга (sheets/squad-sheet.mjs, по выбранному отдающему) — радиокнопка «Помеха»; Сплотить и Вдохновить Гнев бросают с Помехой сами (rules/master-of-executions.mjs::hunterHindranceApplies). Игрок может переключить её руками: так в системе устроена любая Помеха/Преимущество.",
     "benefit": "Ритуалы перманентно изменяют разум. Получает ментальное расстройство «Психопатия» на Тяжести 0, и его Тяжесть не может опуститься ниже 0. Получает Помеху на все тесты Command, Charm, Deceive и Inquiry.",
     "source": "Элитный архетип: Мастер Казней",
     "hasRating": false,

@@ -53,10 +53,14 @@ export function failUndoOf(message) {
  *  • переброс удался (hit === true) — revert: снять последствия;
  *  • переброс провален снова (hit === false) — carry: откат переезжает на новую карточку (старую пометить);
  *  • порога нет (hit === null) — ничего.
+ *  • rederive — тест известен (флаг skillTest карточки), и последствия провала переброса считаются заново
+ *    (kind-outcome.mjs::rerollFailConsequences, Sahara failundo п.1): старые снимаются и при новом провале —
+ *    переброс заменяет бросок, и прежний Шок за 4+ Провала не должен пережить переброс на 1 Провал.
  * @returns {{revert:boolean, carry:boolean}}
  */
-export function rerollFailUndoPlan({ prevFailUndo, hit, settled = false } = {}) {
+export function rerollFailUndoPlan({ prevFailUndo, hit, settled = false, rederive = false } = {}) {
   if (!prevFailUndo || settled) return { revert: false, carry: false };
+  if (rederive && hit === false) return { revert: true, carry: false };
   return { revert: hit === true, carry: hit === false };
 }
 

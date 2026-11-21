@@ -17,12 +17,14 @@
 //  срока продлевает его на 8 дней от этого момента и освобождает всех демонов
 //  Кольца Крови. Повтором считается нарушение не раньше чем через час после
 //  начала срока — одна схватка с чужим клинком это одно нарушение, а не серия.
+//  «Или дольше по решению ГМа»: в окне Черты ГМ продлевает текущий срок на
+//  любое число дней или снимает его досрочно (Sahara 587-fd8b).
 // ════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import {
-  valourViolation, valourPenalty, timedSuppressions, hasValourousAccord,
+  valourViolation, valourPenalty, valourExtension, timedSuppressions, hasValourousAccord,
   TIMED_FLAG, BLOOD_SMITH, VALOUR_DAYS, VALOUR_OWN_FLAG, isValourOwn
 } from "../rules/archetype-suppression.mjs";
 import { enslavedList, ENSLAVED_FLAG } from "../rules/blood-smith-talents.mjs";
@@ -110,12 +112,14 @@ export async function useValourousAccord(actor) {
   const content = `<p>${cur ? `<b>Обет нарушен</b> (${esc(cur.reason || "")}): Архетип погашен ещё ~${days} дн.` : "Обет соблюдён."}</p>
     <p>Отметьте снаряжение, созданное лично или взятое с побеждённого в честном бою:</p>
     <div style="max-height:300px;overflow:auto">${rows || "<i>Оружия и брони нет.</i>"}</div>
-    ${cur && game.user?.isGM ? `<label style="display:block;margin-top:6px"><input type="checkbox" name="lift"> Снять срок досрочно (решение ГМа)</label>` : ""}`;
+    ${cur && game.user?.isGM ? `<label style="display:block;margin-top:6px"><input type="checkbox" name="lift"> Снять срок досрочно (решение ГМа)</label>
+    <label style="display:block;margin-top:4px">Продлить на <input type="number" name="extend" min="0" step="0.5" value="0" style="width:4em"> дн. («или дольше по решению ГМа»)</label>` : ""}`;
   const res = await foundry.applications.api.DialogV2.prompt({
     window: { title: "Соглашение Доблести" }, content,
     ok: { label: "Сохранить", callback: (_e, btn) => {
       const f = btn.form;
-      return { own: [...f.querySelectorAll('input[name="own"]:checked')].map(x => x.value), lift: !!f.querySelector('input[name="lift"]')?.checked };
+      return { own: [...f.querySelectorAll('input[name="own"]:checked')].map(x => x.value), lift: !!f.querySelector('input[name="lift"]')?.checked,
+        extend: Number(f.querySelector('input[name="extend"]')?.value) || 0 };
     } }
   }).catch(() => null);
   if (!res) return;
@@ -129,6 +133,14 @@ export async function useValourousAccord(actor) {
     if (Object.keys(all).length) await actor.setFlag(NS, TIMED_FLAG, all);
     else await actor.unsetFlag(NS, TIMED_FLAG);
     await resync(actor);
+  } else if (res.extend > 0 && game.user?.isGM) {
+    // Произвольное удлинение ГМом: тот же флаг срока, только until дальше.
+    const next = valourExtension(cur, res.extend);
+    if (next) {
+      await actor.setFlag(NS, TIMED_FLAG, { ...(actor.getFlag(NS, TIMED_FLAG) ?? {}), [BLOOD_SMITH]: next });
+      await postTestCard(actor, { icon: "⚖", title: `Соглашение Доблести: ${esc(actor.name)}`,
+        lines: [`<div class="roll-threshold">ГМ продлил срок покаяния на ${res.extend} дн.: Архетип погашен ещё ~${Math.ceil((next.until - worldNow()) / 86400)} дн.</div>`] }, { sound: false });
+    }
   }
   ui.notifications.info(`Соглашение Доблести: своё снаряжение — ${own.size} шт.`);
 }

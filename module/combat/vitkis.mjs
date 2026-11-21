@@ -10,10 +10,11 @@ import { gainResource } from "../apps/resource-pools.mjs";
 import { actorHasInfamyPoint, actorInfamyPath, spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import {
   WAR_SEER_FLAG, WITCHSLAYER_FLAG, WAR_SEER_BONUS, WAR_SEER_EFFECTS,
-  hasWarSeer, hasAllKnowing, hasBloodFather, hasBookOfBattle, hasBrothersAtArms, hasWitchslayer,
+  hasWarSeer, hasAllKnowing, bookParryReactionFlag, hasBloodFather, hasBookOfBattle, hasBrothersAtArms, hasWitchslayer,
   warSeerMaxSplits, harderTheyFallDeg, bloodFeudPersistent, mergeWarSeer, warSeerEntries, warSeerAtTurnStart
 } from "../rules/vitkis-talents.mjs";
 import { targetActors, firstTargetActor, groupSpecValue, rollTestCard } from "./duelist-tests.mjs";
+import { PARRY_ONLY_REACTION_FLAG } from "./action-economy.mjs";
 
 const NS = "warhammer-dbc";
 const combatIdNow = () => (game.combat?.started ? game.combat.id : "");
@@ -98,16 +99,15 @@ export async function useWarSeer(actor) {
   const cid = combatIdNow();
   const prev = warSeerEntries(actor, cid);
   await actor.setFlag(NS, WAR_SEER_FLAG, { combatId: cid, entries: mergeWarSeer(prev, entries) });
-  const book = entries.some(e => e.book);
-  if (book) {
-    const dv = Number(actor.system?.reactions?.defenseValue) || 0;
-    await actor.update({ "system.reactions.defenseValue": dv + 1 });
-  }
+  // Книга Битвы: +1 Реакция только на Парирование атак цели (не в общий пул Избеганий; Sahara 586-961c).
+  const bookFlag = bookParryReactionFlag(entries);
+  const book = !!bookFlag;
+  if (bookFlag) await actor.setFlag(NS, PARRY_ONLY_REACTION_FLAG, bookFlag);
   await line(actor, "👁️", "Провидец Войны: эффект", [
     ...entries.map(e => `<b>${esc(e.targetName)}</b> — ${esc(WAR_SEER_EFFECTS[e.effect].text).replace("Успехи", `Успехи (${e.deg})`)}${e.persistent ? " — Кровная Вражда: до конца боя" : " — до начала следующего Хода"}.`),
     entries.some(e => e.deg !== picks.find(p => p.target.uuid === e.targetUuid && p.effect === e.effect)?.deg) ? "Тем Больнее Им Падать: Успехи умножены на Размер цели." : "",
-    book ? "Книга Битвы: цель получает −3×Успехи на атаки по Виткису (ставится само); +1 Реакция только на Парирование её атак до начала следующего Хода." : "",
-    "Атака, урон, встречные тесты и Избегания цели считаются сами; Приказы — галочка в окне Командования; «не обмануть» — за столом."
+    book ? "Книга Битвы: цель получает −3×Успехи на атаки по Виткису (ставится само); +1 Реакция только на Парирование её атак до начала следующего Хода (тратится сама, раньше общей)." : "",
+    "Атака, урон, встречные тесты и Избегания цели считаются сами; Приказы — галочка в окне Командования; «не обмануть»: Финт цели проигрывается сам, прочие тесты обмана — за столом."
   ]);
 }
 

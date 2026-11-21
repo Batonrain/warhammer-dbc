@@ -14,7 +14,8 @@ import { resolveCardRadiantPresence } from "./combat/radiant-presence.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { attackWeapon }                from "./combat/attack-snapshot.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery, postShockRecoveryPrompt, revertFearFailure, fearCardActor, rollHeartAttack, revertCardFailure, failUndoLineHtml } from "./combat/fear.mjs";
-import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG } from "./rules/fail-undo.mjs";
+import { failUndoOf, rerollFailUndoPlan, FAIL_UNDO_SETTLED_FLAG, cardFailUndo } from "./rules/fail-undo.mjs";
+import { rerollFailConsequences } from "./rules/kind-outcome.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
@@ -38,6 +39,7 @@ import { applyCritTalentState, collectCritEffects } from "./combat/crit-talents.
 import { rollShockDeath, rollBleedingTest } from "./combat/shock-death.mjs";
 import { resetEyeOfTheGodsWindow } from "./combat/eye-of-the-gods.mjs";
 import { spendFromInfamyPool, spendPatronAbility, infamyResourceAvailable } from "./apps/infamy-points.mjs";
+import { infamyTestContext } from "./rules/trophy-points.mjs";
 import { dimIgnoredEffects } from "./combat/sweet-suffering.mjs";
 import { spendInfamyForFailSuccess, spendResourceForFailSuccess } from "./apps/infamy-fail-success.mjs";
 import { knowledgeOfAgesButtonHtml, rollKnowledgeOfAges } from "./apps/knowledge-of-ages.mjs";
@@ -137,7 +139,9 @@ import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { parseArcHitIds, chainArcCount } from "./rules/arc-extra.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction, isOwnTurn, isEncounterActive } from "./combat/action-economy.mjs";
+import { UNTIL_TURN_END_FLAG, untilTurnEndAdd } from "./rules/until-turn-end.mjs";
+import { ANOINTED_PARRY_CAPABILITY } from "./rules/terminator-talents.mjs";
 import { MELEE_CONTESTS } from "./constants/combat.mjs";
 import { _showContestDialog } from "./combat/techniques.mjs";
 import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "./combat/knockdown.mjs";
@@ -1486,7 +1490,14 @@ export function registerHooks() {
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         if (!await confirmHordeHitEvasion(actor, ds.hordeHit === "1", "Парирование")) return;
-        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "", evadeCost: parseInt(ds.evadeCost || "1"),
+        // Помазанник (rules/terminator-talents.mjs): без Реакции, раз в Раунд — отметка до броска (попытка засчитана).
+        const anointed = ds.anointed === "1";
+        if (anointed) {
+          if (!isRoundCapabilityAvailable(actor, ANOINTED_PARRY_CAPABILITY))
+            return ui.notifications.warn(`⚠️ ${actor.name}: Помазанник — раз в Раунд, уже было.`);
+          await markRoundCapabilityUsed(actor, ANOINTED_PARRY_CAPABILITY);
+        }
+        await _performParry(actor, { freeReaction: anointed ? "Помазанник" : "", extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "", evadeCost: parseInt(ds.evadeCost || "1"),
           chomper: ds.chomper === "1", forAlly: ds.bodyguardUuid ? (ds.forAlly || "") : "",
           // База атаки с этой карточки — для Пересилить (Берсерк): действует только против Полной Атаки.
           attackBaseKey: message.flags?.["warhammer-dbc"]?.attack?.opts?.baseKey || "" });
@@ -4407,8 +4418,16 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
         ? `${condLabel} (${useRounds ? "раундов" : "ур."}: ${lvl})`
         : (cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : condLabel));
     }
+    // «До конца своего следующего Хода» (data-wp-until-own-turn-end, Варп Вспышка): срок ведёт метка на цели,
+    // снимает конец её Хода (rules/until-turn-end.mjs; Sahara 586-8aaf).
+    if (ds.wpUntilOwnTurnEnd === "1" && Object.keys(update).length) {
+      let flag = actor.getFlag?.("warhammer-dbc", UNTIL_TURN_END_FLAG) ?? null;
+      for (const cond of conditionsToApply.filter(c => !resistedConds.includes(c)))
+        flag = untilTurnEndAdd(flag, cond, { ownTurn: isEncounterActive() && isOwnTurn(actor) });
+      if (flag) update[`flags.warhammer-dbc.${UNTIL_TURN_END_FLAG}`] = flag;
+    }
     if (Object.keys(update).length) await actor.update(update);
-    if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b>${ds.wpUntilOwnTurnEnd === "1" ? " — до конца своего следующего Хода" : ""}</div>`;
     // Связывающее: связанная цель выбирается тестом в свой Ход, союзник режет путы (combat/snare.mjs).
     if (propKey === "snare" && applied.length && actor.system?.conditions?.helpless) {
       appliedNote += snareEscapeButtonsHtml(actor.uuid, rating);
@@ -4695,7 +4714,10 @@ function _attachFateContextMenu(message, html) {
     const fateVal  = fate?.value ?? 0;
     // Пул ресурса «как Очки Бесчестия» (Жажда, Очки Мести — rules/resource-pools.mjs):
     // чем платить, спросит сама трата (apps/infamy-points.mjs::spendFromInfamyPool).
-    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0 || infamyResourceAvailable(actor));
+    // Тест карточки — для трат «как Бесчестие» с условием на вид теста (Очки
+    // Трофеев: выслеживание/преследование/бой, rules/trophy-points.mjs).
+    const infamyTest = infamyTestContext(message);
+    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0 || infamyResourceAvailable(actor, { test: infamyTest }));
     const ft       = fateTerm(actor?.system);
 
     // Строим меню
@@ -4864,7 +4886,7 @@ function _attachFateContextMenu(message, html) {
       const spend = async () => {
         const r = champion
           ? await spendInspiringInfamy(champion, actor)
-          : await spendFromInfamyPool(actor, 1, "system.fate.value");
+          : await spendFromInfamyPool(actor, 1, "system.fate.value", { test: infamyTest });
         if (r && !champion) await actor.update({ "system.fate.value": r.poolValue });
         return r;
       };
@@ -4959,17 +4981,26 @@ function _attachFateContextMenu(message, html) {
         : "";
 
       // Последствия провала исходной карточки (Шок Инфернальной Воли, Ступор Гипно-Шрамов; task-e30b): переброс
-      // стал успехом — снимаются; провалился снова — остаются, а откат переезжает на новую карточку (исходную
-      // помечаем, чтобы не откатить дважды). Переброс идёт мимо общего исхода, поэтому НОВЫЙ Шок за 4+ Провала
-      // здесь не бросается — это записано в label mutation.infernalWill (constants/capabilities.mjs).
+      // стал успехом — снимаются. Тест известен (skillTest с листа) — переброс заменяет бросок целиком: старые
+      // последствия снимаются и при новом провале, а новые считаются по НОВОМУ броску (rerollFailConsequences,
+      // Sahara failundo п.1). Тест не известен — по-старому: провал снова — откат переезжает на новую карточку
+      // (исходную помечаем, чтобы не откатить дважды).
+      const rederive = !!(skillTest && threshold !== null);
       const prevFailUndo = failUndoOf(message);
       let failUndoLine = "";
       let carriedFailUndo = null;
-      const failPlan = rerollFailUndoPlan({ prevFailUndo, hit, settled: cardOnceUsed(message, FAIL_UNDO_SETTLED_FLAG) });
+      const failPlan = rerollFailUndoPlan({ prevFailUndo, hit, settled: cardOnceUsed(message, FAIL_UNDO_SETTLED_FLAG), rederive });
       if (failPlan.revert) failUndoLine = failUndoLineHtml(await revertCardFailure(message));
       else if (failPlan.carry) {
         carriedFailUndo = prevFailUndo;
         await revertCardFailure(message, { keep: true });
+      }
+      if (rederive) {
+        const fresh = await rerollFailConsequences(actor, { rv, threshold, ctx: {
+          actor, kind: "skill", skill: skillTest.skill || undefined, group: skillTest.group || undefined,
+          specialty: skillTest.specialty || undefined, char: skillTest.char } });
+        failUndoLine += fresh.html;
+        if (fresh.failUndo) carriedFailUndo = cardFailUndo(actor, fresh.failUndo);
       }
 
       // Blessed Fits/Благословенные Припадки (Общие Мутации, wdbc-1rno):
@@ -5096,7 +5127,7 @@ function _attachFateContextMenu(message, html) {
           const r = await spendResource(actor, resDef.key, 1, { silent: true });
           return r ? { poolValue: r.after } : null;
         }
-        const r = await spendFromInfamyPool(actor, 1, "system.fate.value");
+        const r = await spendFromInfamyPool(actor, 1, "system.fate.value", { test: infamyTest });
         if (r) await actor.update({ "system.fate.value": r.poolValue });
         return r;
       };
@@ -5399,7 +5430,15 @@ function _attachFateContextMenu(message, html) {
   // temp-grant вне боя (истечение по worldTime у актора не в бою) отловит
   // updateWorldTime-хук ниже отдельно.
   Hooks.on("updateCombat", async (combat, changed) => {
-    if (!game.user.isGM || changed?.round === undefined) return;
+    if (!game.user.isGM) return;
+    // Смена Хода без смены Раунда: только temp-grant со сроком до Хода (expiresAtTurn — Страх Окончательной
+    // Казни, Sahara 2-3d54); прочие проходы ниже меряют Раунды и на каждый Ход не нужны.
+    if (changed?.round === undefined) {
+      if (changed?.turn === undefined) return;
+      for (const combatant of combat.combatants ?? [])
+        if (combatant.actor) await clearExpiredTempGrants(combatant.actor, { worldTime: game.time.worldTime, combat });
+      return;
+    }
     for (const combatant of combat.combatants ?? []) {
       if (combatant.actor) await clearExpiredTempGrants(combatant.actor, { worldTime: game.time.worldTime, combat });
       // Око Вызова (wdbc-1rno): в бою срок меряется РАУНДАМИ — боевой Раунд
@@ -5432,6 +5471,10 @@ function _attachFateContextMenu(message, html) {
   });
   Hooks.on("updateWorldTime", async (worldTime, dt) => {
     if (!game.user.isGM) return;
+    // Срочные активации «на N минут» (Боевая форма Вампира: Cor.b×10 минут,
+    // rules/item-activation.mjs::activationExpired) — срок вышел, форма снята.
+    // Свой обход: несвязанные токены сцен тоже (worldAndTokenActors).
+    await (await import("./apps/item-activation.mjs")).clearExpiredActivations(game.time.worldTime);
     for (const actor of game.actors ?? []) {
       // Контроль чужого токена (wdbc-ux8a) — "worldTime"-длительность, тот
       // же такт, что temp-grant/Око Вызова выше.

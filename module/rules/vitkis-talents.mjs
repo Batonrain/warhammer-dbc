@@ -57,6 +57,15 @@ export const hasHarderTheyFall = a => hasNamed(a, "talent", "Harder They Fall");
 export const hasSplitVision    = a => hasNamed(a, "talent", "Split Vision");
 export const hasWitchslayer    = a => hasNamed(a, "talent", "Witchslayer");
 
+/**
+ * Книга Битвы: «+1 Реакция только на Парирование атак цели» — метка для combat/action-economy.mjs::
+ * PARRY_ONLY_REACTION_FLAG по записям Провидца Войны с book. null — Книга не сработала.
+ */
+export function bookParryReactionFlag(entries) {
+  const targets = (entries ?? []).filter(e => e?.book).map(e => ({ targetUuid: e.targetUuid, targetId: e.targetId ?? "" }));
+  return targets.length ? { value: 1, targets } : null;
+}
+
 /** Сколько целей/эффектов можно взять: 1, с Разделённым Видением — P.b. */
 export function warSeerMaxSplits(actor) {
   if (!hasSplitVision(actor)) return 1;
@@ -76,6 +85,14 @@ export function bloodFeudPersistent(actor, target) {
 }
 
 const sameActor = (entry, a) => !!a && (entry.targetUuid === a.uuid || (!!entry.targetId && entry.targetId === a.id));
+
+/**
+ * Провидец Войны «Не обмануть»: «побеждает во всех тестах цели обмануть его (в т.ч. Финтом)» — у защищающегося
+ * Виткиса живая запись deceive против этого инициатора (Sahara 586-961c).
+ */
+export function warSeerUndeceivable(defender, initiator, combatId = "") {
+  return !!initiator && warSeerEntries(defender, combatId).some(e => e.effect === "deceive" && sameActor(e, initiator));
+}
 
 /** Живые записи флага (того же боя; вне боя — флаг вне боя). */
 export function warSeerEntries(actor, combatId = "") {

@@ -12,7 +12,7 @@ import path from "node:path";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { packDocById } from "../support/pack-doc.mjs";
-import { resolveKindOutcome } from "../../module/rules/kind-outcome.mjs";
+import { resolveKindOutcome, rerollFailConsequences } from "../../module/rules/kind-outcome.mjs";
 import { revertCardFailure } from "../../module/combat/fear.mjs";
 import { cardFailUndo, failUndoLabels, rerollFailUndoPlan } from "../../module/rules/fail-undo.mjs";
 import { CARD_ONCE_FLAGS } from "../../module/combat/card-once.mjs";
@@ -164,6 +164,49 @@ describe("план отката при «Переброс за Очко»", () =
     expect(rerollFailUndoPlan({ prevFailUndo: null, hit: true })).toEqual({ revert: false, carry: false });
     expect(rerollFailUndoPlan({ prevFailUndo: undo, hit: false, settled: true })).toEqual({ revert: false, carry: false });
     expect(rerollFailUndoPlan({ prevFailUndo: undo, hit: true, settled: true })).toEqual({ revert: false, carry: false });
+  });
+});
+
+describe("Переброс за Очко: последствия по новому броску (Sahara failundo п.1)", () => {
+  const undo = { actorUuid: "Actor.x", infernalWillShock: { conditions: ["shocked"] } };
+  const ctxOf = a => ({ actor: a, kind: "skill", skill: "charm", char: "fel" });
+
+  it("тест известен (rederive): старые последствия снимаются и при новом провале", () => {
+    expect(rerollFailUndoPlan({ prevFailUndo: undo, hit: false, rederive: true })).toEqual({ revert: true, carry: false });
+    expect(rerollFailUndoPlan({ prevFailUndo: undo, hit: true, rederive: true })).toEqual({ revert: true, carry: false });
+    expect(rerollFailUndoPlan({ prevFailUndo: undo, hit: false, settled: true, rederive: true })).toEqual({ revert: false, carry: false });
+  });
+
+  it("переброс провален на 4+ Провала — Шок Инфернальной Воли бросается заново, откат — на новую карточку", async () => {
+    const a = makeActor();
+    captured.nextRoll = 50;   // бросок Шока
+    const r = await rerollFailConsequences(a, { rv: 60, threshold: 20, ctx: ctxOf(a) });
+    expect(r.success).toBe(false);
+    expect(a.system.conditions.shocked).toBe(true);
+    expect(r.failUndo?.infernalWillShock?.conditions).toContain("shocked");
+    expect(r.html).not.toBe("");
+  });
+
+  it("переброс провален на 1–3 Провала или удался — новых последствий нет", async () => {
+    const a = makeActor();
+    const r1 = await rerollFailConsequences(a, { rv: 45, threshold: 20, ctx: ctxOf(a) });
+    expect(r1.failUndo).toBeNull();
+    const r2 = await rerollFailConsequences(a, { rv: 10, threshold: 20, ctx: ctxOf(a) });
+    expect(r2.success).toBe(true);
+    expect(r2.failUndo).toBeNull();
+    expect(a.system.conditions.shocked).toBe(false);
+  });
+
+  it("тест Характеристики (без Навыка) Шок Инфернальной Воли не вызывает", async () => {
+    const a = makeActor();
+    const r = await rerollFailConsequences(a, { rv: 90, threshold: 20, ctx: { actor: a, kind: "skill", char: "fel" } });
+    expect(r.failUndo).toBeNull();
+  });
+
+  it("hooks.mjs: переброс теста с листа считает последствия заново", () => {
+    const hooks = fs.readFileSync(path.join(ROOT, "module/hooks.mjs"), "utf8");
+    const body = hooks.slice(hooks.indexOf("const doReroll"), hooks.indexOf("const doBonus"));
+    expect(body).toMatch(/rederive[\s\S]{0,400}rerollFailConsequences\(actor/);
   });
 });
 

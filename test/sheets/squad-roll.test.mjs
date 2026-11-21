@@ -168,3 +168,40 @@ describe("Целеустремлённый Охотник (Мастер Казн
     await pending2;
   });
 });
+
+describe("Целеустремлённый Охотник: Помеха в Брифинге и Сплотить (Sahara task-fef6)", () => {
+  const HUNTER = packDocById("packs-src/traits/Элитные_архетипы/Мастер_Казней", "SMFzhi92ZMmAx2pB");
+  const withHunter = () => ({
+    ...pers("Охотник"), uuid: "Actor.h",
+    items: [{ id: "h1", name: HUNTER.name, type: "trait", system: HUNTER.system, flags: HUNTER.flags, getFlag: (s, k) => HUNTER.flags?.[s]?.[k] }]
+  });
+
+  it("Брифинг проводит Охотник — «Помеха» отмечена заранее; другой — Обычный кубик", async () => {
+    resolveAs({ "Actor.h": withHunter(), "Actor.o": pers("Обычный") });
+    const pending = sheetLike(squadActor({ posts: { commander: { uuid: "Actor.h" } } }))._briefingRoll();
+    expect(captured.dialog.content).toMatch(/value="disadvantage" checked/);
+    expect(captured.dialog.content).toContain("Целеустремлённый Охотник");
+    captured.dismiss();
+    await pending;
+
+    resetCaptured();
+    const pending2 = sheetLike(squadActor({ posts: { commander: { uuid: "Actor.o" } } }))._briefingRoll();
+    expect(captured.dialog.content).toMatch(/value="normal" checked/);
+    captured.dismiss();
+    await pending2;
+  });
+
+  it("Сплотить: Лидер-Охотник бросает Command с Помехой — худший из двух", async () => {
+    const leader = withHunter();
+    captured.dice = [10, 90];   // Порог 40: без Помехи — успех, с Помехой — 90, провал
+    const ok = await WarhammerSquadSheet.prototype._rallyAttempt.call(sheetLike(squadActor()), leader, -5, "");
+    expect(ok).toBe(false);
+    expect(captured.chat.at(-1).content).toContain("Помеха (Целеустремлённый Охотник)");
+  });
+
+  it("Сплотить: обычный Лидер — один кубик", async () => {
+    captured.dice = [10, 90];
+    const ok = await WarhammerSquadSheet.prototype._rallyAttempt.call(sheetLike(squadActor()), pers("Обычный"), -5, "");
+    expect(ok).toBe(true);
+  });
+});

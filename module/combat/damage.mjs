@@ -47,6 +47,7 @@ import { hasPugilistTalent, rollingWithPunchesBonus } from "../rules/pugilist-ta
 import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN_FLAG } from "../rules/resilience-talents.mjs";
 import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
+import { thirstWarpIntercept } from "./thirst-warp.mjs";
 import { painIsPleasureOnDamage } from "./noise-marine.mjs";
 import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
@@ -1404,6 +1405,15 @@ export async function applyDamageToActor(actor, damageData) {
   }
   // Флаш накопленных выше правок актора — один запрос вместо до трёх.
   if (Object.keys(actorUpdate).length) await actor.update(actorUpdate);
+  // Жажда Вампира (combat/thirst-warp.mjs, Sahara 583-5-t-10): урон
+  // варп-оружия уходит в Жажду, пункт за 5 Ран, и тест T+10 на Оглушение.
+  // После Саркофага и флаша (своё update), до Аблативного бронирования.
+  let thirstWarpNote = "";
+  if (warpSoak && rawNet > 0) {
+    const tw = await thirstWarpIntercept(actor, rawNet);
+    rawNet = tw.net;
+    thirstWarpNote = tw.note;
+  }
 
   let netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
@@ -1774,7 +1784,7 @@ export async function applyDamageToActor(actor, damageData) {
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
   if (headGuard.note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(headGuard.note)}</div>`);
-  for (const note of [...hardeningNotes, hellishNote, putrescenceNote, mortalShieldNote, eye.note, ...statusNotes]) {
+  for (const note of [...hardeningNotes, thirstWarpNote, hellishNote, putrescenceNote, mortalShieldNote, eye.note, ...statusNotes]) {
     if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);

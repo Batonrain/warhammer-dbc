@@ -42,7 +42,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { rollStatLine } from "../helpers/test-card.mjs";
-import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
+import { spendActionPoints, isEncounterActive, FULL_MOVE_HALF_FLAG } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { fallDamageSectionHtml } from "./fall-damage.mjs";
 import { digitigradeGroupingBonus } from "../rules/digitigrade.mjs";
@@ -435,6 +435,10 @@ export async function declareFullMove(actor, { hipShooting = false } = {}) {
   // Флаг гасится первым же использованием _d100 с actor, а на случай, если
   // не потратится вовсе, есть и turn-scoped safety-net (TURN_SCOPED_FLAGS).
   await actor.setFlag("warhammer-dbc", "fullMoveDisadvantage", true);
+  // Полудействие после перемещения (Sahara task-5003) — оплачивает его метка, а не ОД:
+  // атаке она не годится (combat/action-economy.mjs::FULL_MOVE_HALF_FLAG). У Стрельбы от
+  // Бедра выстрел уже входит в то же Полное действие — второго полудействия она не даёт.
+  if (!hipShooting && isEncounterActive()) await actor.setFlag("warhammer-dbc", FULL_MOVE_HALF_FLAG, true);
   // Стрельба от Бедра (rules/gunner-talents.mjs, Sahara 3-5fbf): то же Полное Движение за 2 ОД, но одиночный
   // выстрел этого Хода входит в то же действие — без ОД; метка взводит кнопку выстрела (combat/free-shot.mjs).
   if (hipShooting) await actor.setFlag("warhammer-dbc", HIP_SHOOTING_FLAG, true);
@@ -444,7 +448,7 @@ export async function declareFullMove(actor, { hipShooting = false } = {}) {
     <div class="roll-threshold">Стрельба от Бедра: один Одиночный Выстрел (не Избирательный, без Прицеливания, не длинная винтовка и не тяжёлое) в этом Ходу — без дополнительных ОД.</div>
     <button class="wh-free-shot-btn" type="button" data-kind="hipShooting" data-actor-uuid="${actor.uuid}">🎯 Выстрел от бедра</button>` : ""}
     <div class="roll-threshold">Полное действие (${fullMoveAp} ОД). Перемещение до ${hasSpeedTalent(actor, "sprint") ? "SPD×3 (Спринт — на дистанцию Натиска)" : "SPD×2"}.</div>${movementApNote(actor)}
-    <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32). Для следующего Карабканья/Прыжка/Плавания в этом Ходу — уже автоматически.</div>
+    <div class="roll-threshold" style="font-size:0.85em;">${hipShooting ? "" : "Осталось полудействие (не атака) — оплатится само, без ОД. "}Тесты этого Хода получают Помеху (стр. 32): Карабканье/Прыжок/Плавание — сами, окно теста Навыка/Характеристики — выбрана заранее.</div>
     ${falseAdvanceHtml(actor)}
   </div>`);
 }
