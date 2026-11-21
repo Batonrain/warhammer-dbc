@@ -58,6 +58,7 @@ import { spendRecoil, recoilRemaining, spdMeters } from "./recoil-pool.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { NO_RUN_CAP } from "../rules/rubricae.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { isGrappled, manifestedGift } from "../rules/predicates.mjs";
@@ -666,6 +667,8 @@ export async function declareRun(actor) {
     return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   // Частокол (стр. 15, wdbc-x1nz.2.66.9): «нельзя Натиск и Бег» — noRun несёт
   // только эта Стойка (Защитная запрещает лишь Натиск, см. noCharge выше).
+  // Рубрикант (rules/rubricae.mjs): «не может совершать Бег».
+  if (hasRuleFlag(actor, NO_RUN_CAP)) return ui.notifications.warn("⚠️ Не может совершать Бег.");
   const runStanceKey = actor.system?.meleeStance || "standard";
   if (MELEE_STANCES[runStanceKey]?.noRun) {
     return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);

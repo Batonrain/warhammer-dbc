@@ -328,6 +328,22 @@ export const CAPABILITIES = {
     source: "Черта Pariah / Пария",
     reader: "module/rules/null-zones.mjs::corruptionInVoid (preUpdateActor в warhammer-dbc.mjs)"
   },
+  // ── Рубрикант (Голем Рубрики, Sahara 12-dbc-114-0075) ─────────────────────
+  "corruption.immune": {
+    label: "Не получает Порчу: любой прирост Cor отменяется (снижение проходит)",
+    source: "Черта Rubricae / Рубрикант",
+    reader: "module/rules/rubricae.mjs::corruptionWithImmunity (preUpdateActor в warhammer-dbc.mjs)"
+  },
+  "movement.noRun": {
+    label: "Не может совершать Бег",
+    source: "Черта Rubricae / Рубрикант",
+    reader: "module/combat/movement-actions.mjs::declareRun"
+  },
+  "death.crumbleBelowZero": {
+    label: "Раны ниже 0 — рассыпается (метка «погиб») вместо Критических Эффектов",
+    source: "Черта Rubricae / Рубрикант",
+    reader: "module/combat/damage.mjs (ветка Роя/Рубриканта после applyWoundLoss), module/rules/rubricae.mjs::crumblesOnWoundLoss"
+  },
   "discordant.field": {
     label: "В Поле Дискорданта: электрическое стрелковое не стреляет, рукопашное — выключено, электронные импланты отключены, техночудеса по цели в поле — Критический Провал",
     source: "Черта-метка «В Поле Дискорданта» (выдаёт аура Дискорданта)",
@@ -6646,7 +6662,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.koldunRubriki.rubricae": {
     label: "Голем Рубрики не может говорить, совершать Бег и не получает Порчу; при Ранах ниже 0 рассыпается грудой пустых доспехов.",
-    source: "Rubricae / Рубрикант", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114-0075 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Rubricae / Рубрикант", reader: "ЧАСТИЧНО (21.11.2026, Sahara 12-dbc-114-0075): возможности corruption.immune, movement.noRun, death.crumbleBelowZero (module/rules/rubricae.mjs; читатели — warhammer-dbc.mjs preUpdateActor, combat/movement-actions.mjs::declareRun, combat/damage.mjs). «Не может говорить» — механики речи нет, текст Черты"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Король_Червей — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.korolChervey.handOfPlenty": {
