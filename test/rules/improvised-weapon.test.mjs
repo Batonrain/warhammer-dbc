@@ -133,3 +133,18 @@ describe("itemWeightOf / canWieldItemAsCudgel (wdbc-x1nz.2, обычный пр�
     expect(canWieldItemAsCudgel(wielder, item(1))).toBe(false);
   });
 });
+
+describe("оценка веса тела по Размеру (Sahara 67-npc-bio-weight-npc)", async () => {
+  const { sizeWeightEstimate, bodyWeightOrEstimate } = await import("../../module/rules/improvised-weapon.mjs");
+  const a = (size, weight = 0) => ({ system: { size, bio: { weight } } });
+  it("человек — 80 кг, крупнее — тяжелее, мельче — легче", () => {
+    expect(sizeWeightEstimate(a(0))).toBe(80);
+    expect(sizeWeightEstimate(a(1))).toBeGreaterThan(80);
+    expect(sizeWeightEstimate(a(-1))).toBeLessThan(80);
+    expect(sizeWeightEstimate(a(9))).toBe(25000);
+  });
+  it("заполненный вес важнее оценки", () => {
+    expect(bodyWeightOrEstimate(a(2, 120))).toEqual({ kg: 120, estimated: false });
+    expect(bodyWeightOrEstimate(a(2))).toEqual({ kg: 800, estimated: true });
+  });
+});
