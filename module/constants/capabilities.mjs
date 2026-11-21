@@ -1557,7 +1557,7 @@ export const CAPABILITIES = {
   },
   "skitarii.core.deliveranceOfArkhan": {
     label: "Попав в поле Haywire интенсивностью 7+, Скитарий может получить 1 Усталости или потратить 1 заряд Актуаторных Банков,",
-    source: "Deliverance of Arkhan / Избавление Аркхана", reader: "module/combat/skitarii-modules.mjs::arkhanHaywireNote (карточка ЭМИ 7+, combat/damage.mjs::_applyHaywire) + useDeliveranceOfArkhan (кнопка .wh-arkhan-btn, module/hooks.mjs)"
+    source: "Deliverance of Arkhan / Избавление Аркхана", reader: "module/combat/skitarii-modules.mjs::arkhanHaywireNote (карточка ЭМИ 7+, combat/damage.mjs::_applyHaywire) + useDeliveranceOfArkhan (кнопки .wh-arkhan-btn, module/hooks.mjs): +1 Усталость или −1 заряд Актуаторных Банков (Латы +1 к Катушке — constants/implant-mechanics.mjs, packs-src energyMax; rules/skitarii-modules.mjs::arkhanCanPayCharge)"
   },
   "skitarii.core.shiftingMantle": {
     label: "Раз в Ход за ментальное свободное действие Скитарий может отключить один Модуль и/или включить другой.",

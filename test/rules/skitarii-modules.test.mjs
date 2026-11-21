@@ -5,6 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { moduleLimits, moduleCounts, modulesOverLimit, isSkitariiModule, skitariiModuleSummary,
          mantleSwapAllowed, mantleSwapMark, MECHANICUM_WEAPONS, boonWeaponOk } from "../../module/rules/skitarii-modules.mjs";
+import { arkhanCanPayCharge } from "../../module/rules/skitarii-modules.mjs";
+import { implantMech } from "../../module/constants/implant-mechanics.mjs";
 import { PREDICATES } from "../../module/rules/predicates.mjs";
 import { SKITARII_RULES } from "../../module/rules/library/skitarii.mjs";
 
@@ -91,5 +93,20 @@ describe("Дар Омниссии", () => {
     expect(boonWeaponOk(w("Autogun / Автомат", "solid"))).toBe(true);
     expect(boonWeaponOk(w("Lasgun / Лазган", "laser"))).toBe(false);
     expect(boonWeaponOk(w("Autogun / Автомат", "solid", 0))).toBe(false);
+  });
+});
+
+// Избавление Аркхана (Sahara 585-deliverance-of-arkhan): Актуаторные Банки Лат —
+// «работают как Потенциа-Коил на 1⚡», заряд берётся из общей Катушки.
+
+describe("Актуаторные Банки и Избавление Аркхана", () => {
+  const plate = { type: "implant", name: "Skitarii War Plate / Боевые Латы Скитарии" };
+  it("Латы дают +1 к максимуму Катушки (таблица механик имплантов)", () => {
+    expect(implantMech(plate.name)?.energyMax).toBe(1);
+  });
+  it("заряд можно потратить только с Латами и при заряде ≥ 1", () => {
+    expect(arkhanCanPayCharge({ items: [plate], system: { energy: { value: 1 } } })).toBe(true);
+    expect(arkhanCanPayCharge({ items: [plate], system: { energy: { value: 0 } } })).toBe(false);
+    expect(arkhanCanPayCharge({ items: [], system: { energy: { value: 3 } } })).toBe(false);
   });
 });

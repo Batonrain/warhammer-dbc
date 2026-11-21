@@ -19,6 +19,17 @@ const NS = "warhammer-dbc";
 /** Сами Латы — основа, не Модуль. */
 const WAR_PLATE_RE = /skitarii war plate|боевые латы скитарии/i;
 
+/**
+ * Избавление Аркхана: «потратить 1 заряд Актуаторных Банков». Банки — часть Лат
+ * («работают как Потенциа-Коил на 1⚡», constants/implant-mechanics.mjs даёт
+ * +1 к максимуму общей Катушки system.energy), поэтому заряд берётся оттуда —
+ * только при Латах и не пустой Катушке.
+ */
+export function arkhanCanPayCharge(actor) {
+  const plate = [...(actor?.items ?? [])].some(i => i?.type === "implant" && WAR_PLATE_RE.test(String(i.name ?? "")));
+  return plate && (Number(actor?.system?.energy?.value) || 0) >= 1;
+}
+
 /** Кибернетика Механикум, которую Кибердьякон ставит Модулем (Энергосистемы — mechEnergy — нет). */
 export const CYBERDEACON_CATEGORIES = ["mechOther", "mechFocus"];
 
