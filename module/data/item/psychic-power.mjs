@@ -57,6 +57,11 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // требование из трёх частей, и две из них были не видны нигде, кроме
       // книги. Разбирается тем же checkRequirement, что и у Талантов.
       requirement:   new StringField({ initial: "", label: "Требование" }),
+      // «Может быть манифестирована только при Истончении Реальности N или выше»
+      // (toad-psykers, Демонический Слуга; Sahara 0-toad-psykers). null — условия
+      // нет; 0 — настоящий порог, поэтому поле обнуляемое, а не «0 = нет», как
+      // veilMin у ритуала. Читает rules/veil-steps.mjs::powerVeilGate.
+      veilMin:       new NumberField({ initial: null, nullable: true, integer: true, label: "Истончение Завесы не ниже" }),
       testChar:      new StringField({ initial: "wp", label: "Характеристика проверки" }),
       testMod:       num(0, "Модификатор проверки"),
       action:        new StringField({ initial: "half", label: "Действие" }),

@@ -515,6 +515,8 @@ const TYPES = {
       // Дисциплин оно из трёх частей («Метка Слаанеш, PR 4+, T 40+»), а
       // prRequired несёт только PR.
       requirement: "",
+      // «Только при Истончении Реальности N или выше» (Sahara 0-toad-psykers) — null, условия нет.
+      veilMin: null,
       testChar: "wp", testMod: 0, action: "half", range: "",
       // wdbc-efyl: (П)-дальность поддержания — своя, отдельная от range,
       // не производная от неё (Concentration/Концентрация: PR×1м/PR×5м).

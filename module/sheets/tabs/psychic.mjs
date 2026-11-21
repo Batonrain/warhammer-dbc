@@ -76,6 +76,7 @@ import { hasPsychicLocus, locusUsable } from "../../rules/psychic-locus.mjs";
 import { locusHere, spendPsychicLocus } from "../../combat/psychic-locus.mjs";
 import { warpLockButtonsHtml, applyWarpLock, resetWarpLockHour, clearWarpLockMark } from "../../combat/warp-lock.mjs";
 // Элитные архетипы-псайкеры (Архимаг, Дикий Псайкер, Чернокнижник, Кенетаи…): точки окна манифестации.
+import { powerVeilGate, powerVeilMessage } from "../../rules/veil-steps.mjs";
 import { eliteManifestGate, eliteManifestEpr, eliteManifestRoll, eliteExtraPeril, eliteManifestAfter, eliteShotShape } from "../../combat/psyker-elite-hooks.mjs";
 import { innerEyeActiveNow, innerEyePsyniscience } from "../../combat/archmagus.mjs";
 import { highRitualistKey } from "../../rules/warlock-talents.mjs";
@@ -827,6 +828,10 @@ export async function executePsychotest(actor, item, opts) {
   const mPR   = Math.max(0, (opts.mPR || 0) + prMod);
   const eliteGate = eliteManifestGate(actor, item, opts, { mPR });
   if (eliteGate) { ui.notifications.warn(`⚠️ ${actor.name}: «${item.name}» — ${eliteGate}`); return; }
+  // «Только при Истончении Реальности N или выше» (rules/veil-steps.mjs::powerVeilGate,
+  // Sahara 0-toad-psykers): отказ до бросков и трат. Сменить Завесу может ГМ в окне «Завеса и Мистика».
+  const veilGate = powerVeilGate(item, actor);
+  if (!veilGate.ok) { ui.notifications.warn(`⚠️ ${actor.name}: ${powerVeilMessage(veilGate, item.name)}`); return; }
   // Психическое Возрождение (rules/psyker-talents.mjs): mPR выше потолка тPR —
   // только за Очко Бесчестия, метка живёт до начала следующего Хода. Нет Очка —
   // манифестации нет (spendCapabilityCost уже сказал об этом игроку).
