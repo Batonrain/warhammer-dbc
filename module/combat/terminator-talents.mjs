@@ -17,7 +17,8 @@ import {
   chooseOne, confirmBox, infoCard, payActions, payReaction, rollSkillCard, tokensAround, sameSide, setTargets, applyDamageButton,
   actorToken
 } from "./astartes-elite-ui.mjs";
-import { tokensThatCanSee } from "../rules/vision-target.mjs";
+import { perceives } from "../rules/perception.mjs";
+import { liveCtx } from "./perception-scene.mjs";
 
 const NS = "warhammer-dbc";
 const ATRAMENTAR_FEAR = 3;
@@ -36,16 +37,28 @@ export async function useAnointed(actor) {
 }
 
 /**
- * Враги, видящие актора сейчас (другая сторона, токен в поле зрения) — свидетели
- * убийства для Атраментара.
+ * Враги, видящие актора сейчас — свидетели убийства для Атраментара (588-26aa):
+ * другая сторона, и rules/perception.mjs отвечает «воспринимает» — дальность,
+ * сектор обзора, стены, свет у Терминатора, дым между ними, Сонар/Сверхъестественные
+ * Чувства/Взор сквозь Преграды свидетеля. Плюс враги, выцеленные (T) нажимающим, —
+ * так ГМ добавляет свидетеля, которого сцена не видит (без токена на линии, особый
+ * случай), не открывая его лист.
  */
+export function atramentarWitnessDocs(token, candidates, perceiveFn, targetedIds = new Set()) {
+  const side = token.disposition;
+  const foes = candidates.filter(d => d.actor && d.id !== token.id && d.disposition !== side);
+  return foes.filter(d => targetedIds.has(d.id) || perceiveFn(d));
+}
+
 function enemiesInSight(actor) {
   const token = actorToken(actor);
   if (!token || !canvas?.ready) return [];
-  const side = token.document?.disposition ?? token.disposition;
-  const candidates = canvas.tokens.placeables.filter(t => t.actor && t.actor !== actor
-    && (t.document?.disposition ?? t.disposition) !== side);
-  const seen = tokensThatCanSee(token.document ?? token, candidates.map(t => t.document ?? t), canvas.grid);
+  const doc = token.document ?? token;
+  const ctx = liveCtx();
+  const grid = canvas.scene?.grid ?? canvas.grid;
+  const targeted = new Set([...(game.user?.targets ?? [])].map(t => (t.document ?? t).id));
+  const docs = canvas.tokens.placeables.map(t => t.document ?? t);
+  const seen = atramentarWitnessDocs(doc, docs, d => perceives(d, doc, grid, ctx).seen, targeted);
   return [...new Map(seen.map(t => [t.actor.uuid, t.actor])).values()];
 }
 
@@ -70,7 +83,7 @@ export async function useAtramentar(actor, item) {
   await infoCard(actor, "💀", "Атраментар: свидетели убийства", [
     witnesses.length
       ? `Тест Страха (${ATRAMENTAR_FEAR}) проходят только враги, видевшие убийство (${witnesses.length}). Его бросает владелец свидетеля или ГМ.`
-      : "В поле зрения Терминатора нет врагов — Страх некому проходить. Если кто-то видел убийство, ГМ даёт ему тест Страха (3) из листа."
+      : "Терминатора не видит ни один враг (стены, тьма, дым, сектор обзора) — Страх некому проходить. Если кто-то всё же видел убийство, ГМ даёт ему тест Страха (3) из листа (в следующий раз такого свидетеля можно выцелить (T) до нажатия кнопки — он попадёт в список сам)."
   ], { sections: witnesses.map(w =>
     `<button class="wh-pm-fear-btn" type="button" data-target-uuid="${esc(w.uuid)}" data-fear-rating="${ATRAMENTAR_FEAR}" data-source-name="${esc(actor.name)}">Тест Страха (${ATRAMENTAR_FEAR}): ${esc(w.name)}</button>`) });
   return undefined;

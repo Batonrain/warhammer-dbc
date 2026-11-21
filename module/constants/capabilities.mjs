@@ -3641,9 +3641,9 @@ export const CAPABILITIES = {
     reader: "module/rules/tracking-aim.mjs (hasTrackingAim), module/combat/aiming-action.mjs (declareAim/rollTrackingAimTest/toggleTrackingAimPending/trackingAimToggleState), module/sheets/attack-dialog.mjs (trackingAimIgnoresRunning — гасит runningMod), module/sheets/attack/dialog.mjs (сброс trackingAimActive первым дальнобойным выстрелом), module/combat/action-economy.mjs + module/combat/damage.mjs (тратится впустую любым иным действием, та же точка, что system.aiming)"
   },
   "techPower.cybertheurgy.psalmOfGuidance": {
-    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (16.09.2026, wdbc-1rno.5, находка 8/12): Техножрец с этим Техночудом, носящий экипированное оружие со свойством Cognis, платит Когницией (1/2) вместо ОД за Полу-/Полное Прицеливание — тихий фоллбэк на обычный ОД, если Когниции не хватает («может тратить», не обязан). «Можно совершать такие прицеливания посреди атаки с нескольких рук» честно НЕ реализовано — требует per-оружие состояния Прицеливания и объявления действия посреди уже идущего резолва атаки, которых в системе нет вообще (одно поле actor.system.aiming на всего актора, диалог парной атаки резолвится одним броском) — архитектурный пробел, тикет wdbc-1rno.32.",
+    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (16.09.2026, wdbc-1rno.5, находка 8/12): Техножрец с этим Техночудом, носящий экипированное оружие со свойством Cognis, платит Когницией (1/2) вместо ОД за Полу-/Полное Прицеливание — тихий фоллбэк на обычный ОД, если Когниции не хватает («может тратить», не обязан). «Посреди атаки с нескольких рук» (wdbc-1rno.32): в окне парной атаки выбор «Прицеливание — какой руке» получает «Обеим» — вторая Cognis-рука получает то же Прицеливание, что объявлено в HUD, за его цену в Когниции при броске (нет Когниции/не Cognis — отказ до броска). Объявить Прицеливание впервые прямо в окне нельзя — сначала HUD.",
     source: "Psalm of the Guidance / Псалом Наставления",
-    reader: "module/rules/psalm-of-guidance.mjs (hasPsalmOfGuidance/actorHasEquippedCognisWeapon/psalmCognitionCost/canSpendCognition/spendCognition), module/combat/aiming-action.mjs (declareAim/aimCostLabel)"
+    reader: "module/rules/psalm-of-guidance.mjs (hasPsalmOfGuidance/actorHasEquippedCognisWeapon/psalmCognitionCost/canSpendCognition/spendCognition/psalmSecondHandAim), module/combat/aiming-action.mjs (declareAim/aimCostLabel), module/sheets/attack-dialog.mjs (радио «Обеим»), module/sheets/attack/dialog.mjs (psalmBothCost)"
   },
   "psychicPower.tzeentch.blessingOfMagnus": {
     label: "РЕАЛИЗОВАНО (wdbc-1rno.5, wdbc-1rno.34): пока сила поддерживается (item.system.isSustained) И актор тяжело/критически ранен (woundTier heavy/dying) И носит экипированное психосиловое оружие (weaponProp key:\"force\") — Полу-Прицеливание свободным действием. Только Полу- (книга Полное не упоминает). «+5×PR на тесты W» — НЕ здесь, а отдельной записью «Модификатор теста» (область W, +5×PR, когда тяжело/критически ранен) рядом: вторую вручную не добавлять. «Пси-Капюшон без капюшона» кода не требует: кнопка .psy-hood-btn капюшона не проверяет.",
@@ -5308,7 +5308,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атраментар", reader: "module/combat/terminator-talents.mjs::useAtramentar (активация до конца сцены → Fear 3 записью «Когда включено»)"
+    source: "Atramentar / Атраментар", reader: "module/combat/terminator-talents.mjs::useAtramentar (активация до конца сцены → Fear 3 записью «Когда включено»); свидетели — atramentarWitnessDocs: враги, что воспринимают Терминатора по rules/perception.mjs (стены, свет, дым, сектор, особые чувства), плюс выцеленные (T) нажимающим"
   },
   "elite.elitnyeArhetipy.chempionTerminator.deathShroud": {
     label: "Если вооружён древковым оружием в двуручном хвате, может за полное действие совершить Стандартную Базовую атаку по всем противникам в радиус…",
@@ -6006,7 +6006,7 @@ export const CAPABILITIES = {
   "trait.sonarSense": {
     label: "Сонар (круговой обзор) на 30 м.",
     source: "Sonar Sense / Сонарное Чувство",
-    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). Читается только «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); дальность/круговой обзор — на столе"
+    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); круговое восприятие 30 м сквозь стены и тьму — module/rules/perception.mjs::perceives (свидетели Атраментара, Живой Стяг). Запертая комната — решает ГМ"
   },
   "trait.sophisticatedCombat": {
     label: "+1 успех на WS/A при числ. превосходстве врага; переброс WS/A в бою 1-на-1. Если WS противника ниже — Unnatural WS (+1).",
@@ -6133,7 +6133,7 @@ export const CAPABILITIES = {
   "trait.unnaturalSenses": {
     label: "Чувства на дистанции X м, круговой обзор.",
     source: "Unnatural Senses / Сверхъестественные Чувства (X)",
-    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). Читается только «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); дальность/круговой обзор — на столе"
+    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); круговое восприятие на X м (стены держат) — module/rules/perception.mjs::perceives (свидетели Атраментара, Живой Стяг)"
   },
   "trait.unruly": {
     label: "Непоглощённый урон скакуну — тест Акробатики или выпадение из седла.",
@@ -6214,7 +6214,7 @@ export const CAPABILITIES = {
     source: "Godless / Безбожник", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
   },
   "trait.treytyRas.hulking": {
-    label: "Оружие Легиона как Космодесантник и −10 с оружием не под Легион — Черта выдаёт возможность weapons.legion (этот ключ сам не выдаётся). НЕ сделано: доводка брони Легиона «как от мутации» — подгонки брони под мутации в системе нет.",
+    label: "Оружие Легиона как Космодесантник и −10 с оружием не под Легион — Черта выдаёт возможность weapons.legion (этот ключ сам не выдаётся). Доводка брони Легиона «как от мутации» — Мастерская, проект Крафта брони с галочкой «Доводка под мутанта» (+10, свой Банк; constants/craft.mjs::mutantFitBaseBank, wdbc-x1nz.4); сама Черта её не запускает.",
     source: "Hulking / Громила (Легион)",
     reader: "через weapons.legion — module/rules/legion-fit.mjs"
   },
@@ -6488,7 +6488,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.gerold.livingBanner": {
     label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 или Charm(F)+10 и восстановить одно ранее потраче…",
-    source: "Living Banner / Живой Стяг", reader: "module/combat/living-banner.mjs::useLivingBanner — кнопка Черты: Очко Бесчестия, Command/Charm (F)+10, +1 Очко видящим соратникам (ГМ-реле livingBannerBoon). Слух и геральдика — вручную"
+    source: "Living Banner / Живой Стяг", reader: "module/combat/living-banner.mjs::useLivingBanner — кнопка Черты: Очко Бесчестия, Command/Charm (F)+10, +1 Очко соратникам, что видят или слышат Герольда (rules/perception.mjs: зрение со стенами/светом/дымом, голос 30 м сквозь стены, не глушащие звук; ГМ-реле livingBannerBoon). Геральдика — вручную"
   },
   "trait.elitnyeArhetipy.gerold.noblesseOblige": {
     label: "Высокое доверие налагает большую ответственность — его провалы навлекают позор на всю банду.",
@@ -7583,6 +7583,11 @@ export const CAPABILITIES = {
     source: "Majestic Horns / Зрящие Рога (Общие мутации, d100 65…67, субмутация 9); Eyes of Chaos / Глаза Хаоса (субмутация 1); Eye Stalks / Глаза-Стебельки",
     reader: "module/rules/vision-aids.mjs::visionAidsBlocked — module/apps/effects.mjs::isItemActive (вещь из перечня не активна, пока мутация на акторе)"
   },
+  "mutation.majesticHorns.hornSight": {
+    label: "Видит рогами как перископами: круговой обзор (обзор назад) — атака со спины по нему не Незримая, враги позади считаются видимыми (свидетели, Живой Стяг). Выглянуть рогами за угол/над окопом — описывает игрок, ГМ решает",
+    source: "Majestic Horns / Зрящие Рога (Общие мутации, d100 65…67, субмутация 9)",
+    reader: "module/rules/vision-aids.mjs::hornSightActive — module/rules/perception.mjs::effectiveSightAngle ← combat/facing.mjs::isOutsideDefenderView, rules/perception.mjs::perceives (wdbc-1rno.10)"
+  },
   "mutation.majesticHorns.reinforced": {
     label: "Удар головой меняет профиль: +3 Dmg и кубик урона d10 (если он не лучше)",
     source: "Majestic Horns / Укреплённые Рога (Общие мутации, d100 65…67, субмутация 2-3)",
@@ -7647,9 +7652,9 @@ export const CAPABILITIES = {
     reader: "module/rules/blessed-fits.mjs (константы/чистая логика возврата); module/hooks.mjs::btnReroll (триггер Оглушения); module/combat/condition-ticks.mjs::processConditionTurnStart (возврат Очка на естественном декременте)"
   },
   "mutation.bloodReplacement": {
-    label: "Иммунитет к смерти от Кровотечения/Обескровливания; 11 субмутаций определяют тип крови и эффект при ранении (I/R/X урон), не автоматизированы",
+    label: "Иммунитет к смерти от Кровотечения (бросок Кровотечения не убивает); Ранение на непоглощённом I/R/X — карточка с текстом субмутации и задетыми в 2 м, у Дыма кнопка зоны Дыма 4 м; Дым — свой дым не мешает зрению/атакам; Магма — без теста Жары/Холода. Броски задетых и пассивы Алкоголя/Света/Памяти/Личинок/Магмы (½ E(Fl))/Варпа (+1 Успех)/Кислоты — за столом (wdbc-1rno.15)",
     source: "Мутация: Blood Replacement (Общие мутации)",
-    reader: ""
+    reader: "module/rules/blood-replacement.mjs (bloodWoundFor/bloodSmokeSight/bloodReplacementItem) ← combat/blood-replacement.mjs::maybePostBloodWound (combat/damage.mjs), combat/condition-ticks.mjs (смерть от Кровотечения), rules/vision-penalty-immunity.mjs + rules/perception.mjs (Дым), combat/temperature-hazard.mjs (Магма)"
   },
   "mutation.bloodReplacement.mercuryReaction": {
     label: "Субмутация «Ртуть»: непоглощённый I/R/X урон отмечает раненую часть тела — иммунна к E(Ls), но проводит ток (noEnergy) до конца боя",

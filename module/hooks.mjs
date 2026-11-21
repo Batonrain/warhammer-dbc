@@ -1012,6 +1012,17 @@ export function registerHooks() {
     // Окончательная Казнь (combat/final-execution.mjs): убийство добычи дарит убийце Страх (2) на 1 Раунд. Обычно Трейт
     // выдаётся сам при констатации смерти; эта кнопка — когда констатировал тот, кто убийцей не владеет (не ГМ):
     // выдаёт ГМ или владелец убийцы, раз на карточку.
+    // Замена Крови «Дым» (combat/blood-replacement.mjs): зона Дыма на носителе — раз на карточку.
+    html.querySelectorAll(".wh-blood-smoke-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.disabled = true;
+        const { placeBloodSmoke } = await import("./combat/blood-replacement.mjs");
+        if (!(await placeBloodSmoke(el.dataset.tokenUuid || ""))) el.disabled = false;
+      });
+    });
+
     html.querySelectorAll(".wh-pm-fear-btn").forEach(btn => {
       btn.addEventListener("click", async ev => {
         ev.preventDefault();

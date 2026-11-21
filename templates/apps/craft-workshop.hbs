@@ -101,6 +101,7 @@
           </div>
           <div class="wh-craft-toggles">
             <label class="wh-craft-check"><input type="checkbox" name="improve" {{#if p.improve}}checked{{/if}}/> Улучшение (−20, Банк /2)</label>
+            {{#if p.mutantFitAvail}}<label class="wh-craft-check" title="Книга, «Броня и Мутации»: доводка обычной брони под тело мутанта — тест как на её крафт, но +10, а Банк Успехов свой: R1 и меньше 5, R2 10, R3 25, R4 90, R5 250 (Качество множит как обычно). Улучшение с доводкой не складывается."><input type="checkbox" name="mutantfit" {{#if p.mutantFit}}checked{{/if}}/> Доводка под мутанта (+10, свой Банк)</label>{{/if}}
             <label class="wh-craft-check"><input type="checkbox" name="monotony" {{#if p.monotony}}checked{{/if}}/> Монотонность (−30)</label>
             {{#if p.isRepairable}}
             <label class="wh-craft-check" title="Ремонт, а не создание: тот же расширенный тест Tech-Use. Банк Успехов книга для ремонта не называет — впишите его в «Базовый Банк», пока поле пусто, цель ремонта не определена. Мастер-Технопровидец, Фабрикатор и прочие бонусы Крафта действуют и на ремонт.">
@@ -180,7 +181,7 @@
             </tbody>
           </table>
           <div class="wh-craft-limitrow">Итоговый Предел теста: <b class="wh-craft-{{p.limitCls}}">{{p.limit}}</b>
-            <span class="wh-craft-modline">(инструменты {{#if (gte p.toolModVal 0)}}+{{/if}}{{p.toolModVal}}{{#if p.gmModVal}} · ГМ {{#if (gte p.gmModVal 0)}}+{{/if}}{{p.gmModVal}}{{/if}}{{#if p.improveMod}} · улучшение {{p.improveMod}}{{/if}}). Редкость и Качество влияют только на Банк.</span>
+            <span class="wh-craft-modline">(инструменты {{#if (gte p.toolModVal 0)}}+{{/if}}{{p.toolModVal}}{{#if p.gmModVal}} · ГМ {{#if (gte p.gmModVal 0)}}+{{/if}}{{p.gmModVal}}{{/if}}{{#if p.improveMod}} · улучшение {{p.improveMod}}{{/if}}{{#if p.mutantFitModVal}} · доводка под мутанта +{{p.mutantFitModVal}}{{/if}}). Редкость и Качество влияют только на Банк.</span>
           </div>
         </div>
 

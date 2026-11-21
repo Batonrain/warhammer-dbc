@@ -18,6 +18,7 @@ import { isWorldTimeCooldownReady, worldTimeRemaining } from "../rules/cooldown.
 import { tempEffect } from "../constants/environment.mjs";
 import { readEnvForScene, currentScene } from "../constants/scene-nexus.mjs";
 import { tempHazardIntervalSeconds, BREEZE_CAPABILITY, BURNING_BODY_CAPABILITY } from "../rules/temperature-hazard.mjs";
+import { bloodReplacementSub } from "../rules/blood-replacement.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -51,6 +52,11 @@ export async function rollTempHazardTest(actor) {
   // isItemActive — иммунитет тогда сам пропадает из hasRuleFlag.
   if (hasRuleFlag(actor, BURNING_BODY_CAPABILITY)) {
     return ui.notifications?.info(`${actor.name}: Пылающее Тело — иммунитет к экстремальным температурам, тест не нужен.`);
+  }
+
+  // Замена Крови «Магма» (wdbc-1rno.15): «иммунен к эффектам экстремального холода или жары».
+  if (bloodReplacementSub(actor) === 8) {
+    return ui.notifications?.info(`${actor.name}: Замена Крови (Магма) — иммунитет к экстремальным температурам, тест не нужен.`);
   }
 
   const env = readEnvForScene(currentScene());

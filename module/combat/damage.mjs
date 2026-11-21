@@ -84,6 +84,7 @@ import { scourgeOfChampionsCap, recordScourgeOfChampions, applyPredestined } fro
 import { khorngorRageTest, mournerOffer, mournerTb } from "./beastman-subrace.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { isMercuryElectrified, maybeMarkMercuryLocation } from "./mercury-reaction.mjs";
+import { maybePostBloodWound } from "./blood-replacement.mjs";
 import { ADAPTATION_CAPABILITY, maybeGrantAdaptationBonus, adaptationBonusFor } from "./adaptation.mjs";
 import { entropyArmourLoss } from "./touch-of-entropy.mjs";
 import { processNurglingInfestation } from "./nurgling-infestation.mjs";
@@ -1793,6 +1794,10 @@ export async function applyDamageToActor(actor, damageData) {
       actor, hasRuleFlag(actor, "mutation.bloodReplacement.mercuryReaction"), damageType, armorKey
     );
   }
+
+  // Замена Крови (wdbc-1rno.15): Ранение остальных субмутаций — карточка с задетыми в 2 м
+  // (combat/blood-replacement.mjs); Ртуть отмечена выше своим модулем.
+  if (netDamage > 0) await maybePostBloodWound(actor, { netDamage, damageType });
 
   // Адаптация (wdbc-q0q8, Панцирь): непоглощённый урон — тот же триггер, что
   // Ртуть выше (см. adaptation.mjs про то, почему не буквальное «до

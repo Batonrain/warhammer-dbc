@@ -114,6 +114,7 @@ import { livingArsenalOneHand } from "../rules/obliterator-talents.mjs";
 import { seekerReady, seekerThresholdOffset, SEEKER_EFFECTS } from "../rules/runic-shot.mjs";
 import { secutorPinRefusal } from "../combat/gladiator.mjs";
 import { ordinatorGunRefusal } from "../rules/secutor-talents.mjs";
+import { hasPsalmOfGuidance, isCognisWeapon } from "../rules/psalm-of-guidance.mjs";
 
 /** Префиксы id правил элитных архетипов, чей auto-бонус идёт в Порог атаки (см. ruleAutoMods). */
 export const ELITE_ATTACK_AUTO_MODS = [
@@ -1627,6 +1628,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <span class="av-sec-lbl">Прицеливание — какой руке</span>
       <label class="attack-mod-check"><input type="radio" name="atk-aim-hand" value="main" checked/> Основной</label>
       <label class="attack-mod-check"><input type="radio" name="atk-aim-hand" value="off"/> Второй</label>
+      ${hasPsalmOfGuidance(actor) && isCognisWeapon(item) ? `<label class="attack-mod-check" title="Псалом Наставления: прицеливания можно совершать посреди атаки с нескольких рук — вторая рука (тоже Cognis) получает то же Прицеливание за ${currentAiming === "full" ? 2 : 1} Когниц. при броске."><input type="radio" name="atk-aim-hand" value="both"/> Обеим (Псалом, ${currentAiming === "full" ? 2 : 1} Когн.)</label>` : ""}
     </div>` : ""}
     <div class="av-opt-note" id="atk-dual-note"></div>` : "";
 

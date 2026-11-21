@@ -125,7 +125,7 @@ export class DifficultTerrainBehaviorType extends foundry.data.regionBehaviors.R
  * просто включается программно на новой персистентной зоне вместо того,
  * чтобы ГМ рисовал её вручную и щёлкал галочку. Блокировка обзора (движка
  * видимости в проекте нет, см. память doombc-lighting-engine-graymen-camo-
- * hook) — не автоматизирована, только заметка в чат для ГМа.
+ * hook) — читает rules/perception.mjs через combat/perception-scene.mjs (wdbc-1rno.36).
  * @param {object} shape   blastCircleShape(meters, pxPerMeter()).
  * @param {string} [name]
  * @returns {Promise<RegionDocument|null>}  null — размещение отменено (ПКМ).
@@ -149,8 +149,8 @@ export async function placeSmokeZone(shape, name = "Дым") {
   await ChatMessage.create({
     speaker: { alias: "Система" },
     content: `<div class="wh-roll-result">
-      <div class="roll-outcome">🌫️ Дымовая завеса «${esc(region.name)}» размещена — блокирует зрение в этой зоне,
-      ГМ определяет затронутые линии обзора вручную (движок видимости не автоматизирован в проекте).</div>
+      <div class="roll-outcome">🌫️ Дымовая завеса «${esc(region.name)}» размещена — блокирует зрение в этой зоне:
+      окно атаки само отмечает «Дым / туман», если линия атаки идёт через зону; свидетели и соратники за дымом не видят.</div>
     </div>`
   });
 
