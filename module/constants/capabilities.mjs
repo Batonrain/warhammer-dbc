@@ -4911,23 +4911,23 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Медуза — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.meduza.alienConsciousnessAlienPowers": {
     label: "Медуза игнорирует все психосилы Телепатии, применяя свои эффекты на противников как обычно и игнорируя урон от телепатических сил.",
-    source: "Alien Consciousness, Alien Powers / Чуждое Сознание, Чуждые Силы", reader: ""
+    source: "Alien Consciousness, Alien Powers / Чуждое Сознание, Чуждые Силы", reader: "module/hooks.mjs (гейт Теста Сопротивления: Телепатия не действует на медузу, «Извне» цели не гасит её силы) + combat/medusa.mjs::useEmotionalExplosion; rules/medusa-talents.mjs::hasAlienConsciousness"
   },
   "elite.elitnyeArhetipy.meduza.emotionalExplosion": {
     label: "Получает дополнительную атаку для трейта Эмпат — Emotional Explosion (Exotic Пистолет, дальность 70 м, S/–/–, Незримая).",
-    source: "Emotional Explosion / Эмоциональный Взрыв", reader: ""
+    source: "Emotional Explosion / Эмоциональный Взрыв", reader: "module/combat/medusa.mjs::useEmotionalExplosion / processMedusaTurnStart; оружие выдаёт запись Конструктора kind:equipment"
   },
   "elite.elitnyeArhetipy.meduza.emotionalVision": {
     label: "Получает Unnatural Senses (W), реагирующее на всех живых существ, способных ощущать эмоции — даже слабые и холодные вроде прагматизма.",
-    source: "Emotional Vision / Эмоциональное Зрение", reader: ""
+    source: "Emotional Vision / Эмоциональное Зрение", reader: "запись Конструктора kind:trait (Unnatural Senses, рейтинг wpv) + module/combat/medusa.mjs::useEmotionalVision (W−30)"
   },
   "elite.elitnyeArhetipy.meduza.extremeSensations": {
     label: "Когда во время битвы вражеский псайкер впервые получает критический эффект, медуза может пройти тест W+10 и при успехе немедленно объявить с…",
-    source: "Extreme Sensations / Экстремальные Ощущения", reader: ""
+    source: "Extreme Sensations / Экстремальные Ощущения", reader: "module/combat/medusa.mjs::useExtremeSensations / processMedusaTurnStart"
   },
   "elite.elitnyeArhetipy.meduza.materialWreck": {
     label: "Получает изменённую версию Волны Эмпатии, теряющую Warp Weapon и наносящую урон вражеской технике.",
-    source: "Material Wreck / Материальное Крушение", reader: ""
+    source: "Material Wreck / Материальное Крушение", reader: "запись Конструктора kind:equipment (оружие Material Wreck) + rules/medusa-talents.mjs::empathAttackPreset (+бPR, тест W)"
   },
   // ── Элитные_архетипы\Мейстер — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.meyster.maesterPactStage1": {
@@ -6745,7 +6745,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meduza.empath": {
     label: "Медуза получает дополнительные профили атак, совершаемые через тест W: Eyeburst (Глазная Вспышка), Empathy (Эмпатия), Coma (Кома),",
-    source: "Empath / Эмпат", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Empath / Эмпат", reader: "РЕАЛИЗОВАНО (21.11.2026): записи Конструктора kind:equipment выдают пять атак медузы; rules/medusa-talents.mjs::empathAttackPreset → sheets/attack-dialog.mjs (W, бонус урона +бPR)"
   },
   "trait.elitnyeArhetipy.meduza.fromBeyond": {
     label: "Чуждое сознание: сопротивление воздействиям на разум.",
@@ -6761,7 +6761,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.meduza.medusae": {
     label: "Сознание персонажа объединяется с медузой. Медуза должна получать эмоции как пищу: без хотя бы одной сильной эмоции в месяц она дематериализ…",
-    source: "Medusae / Медуза", reader: "ПРАВИЛО СТОЛА до задачи Sahara 20-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Medusae / Медуза", reader: "ЧАСТИЧНО (21.11.2026): module/combat/medusa.mjs::useMedusae (Плод), medusaHungerClock (combat/condition-clock.mjs), пул medusaGrowth и эффект defenseMax +2 в паке Черты; обмен чувствами, бPR медузы, учёба и прочее — стол"
   },
   "trait.elitnyeArhetipy.meduza.parasite": {
     label: "Медуза существует за счёт носителя.",

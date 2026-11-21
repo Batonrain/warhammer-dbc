@@ -179,6 +179,8 @@ import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
 import { processWarlockTurnStart } from "./combat/warlock.mjs";
 import { processInsorcistTurnStart } from "./combat/insorcist.mjs";
 import { injectOccultBladeButtons, kenetaiSoulBurnGate } from "./combat/kenetai.mjs";
+import { processMedusaTurnStart } from "./combat/medusa.mjs";
+import { hasAlienConsciousness } from "./rules/medusa-talents.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -489,9 +491,19 @@ export function registerHooks() {
             { sound: false });
           return;
         }
+        // Чуждое Сознание (Медуза): психосилы Телепатии на неё не действуют вовсе.
+        if (hasAlienConsciousness(targetActor) && String(d.discipline || "").toLowerCase() === "telepathy") {
+          await postTestCard(targetActor, `<div class="wh-roll-result">
+            <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Чуждое Сознание — ${esc(targetActor.name)}</div>
+            <div class="roll-threshold">Медуза игнорирует психосилы Телепатии: эффект и урон не действуют, тест Сопротивления не нужен.</div>
+            </div>`, { sound: false });
+          return;
+        }
+        // Чуждые Силы (Медуза-заклинатель): «Извне» противника не учитывается.
+        const alienCaster = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
         // Не От Мира Сего (From Beyond): иммунитет к силам на разум (Телепатия:
         // Мезмеризм/Иллюзионизм), «если сам не пожелает» — спрашиваем, пустить ли.
-        if (mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
+        if (!hasAlienConsciousness(alienCaster) && mindImmunityBlocksPower(targetActor, d.discipline, d.subtype)) {
           const allow = await foundry.applications.api.DialogV2.confirm({
             window: { title: `Не От Мира Сего — ${targetActor.name}` },
             content: `<p>${esc(d.label || "Психосила")} влияет на разум. Иммунитет гасит её. Пожелает ли ${esc(targetActor.name)}, чтобы сила подействовала?</p>`,
@@ -5720,6 +5732,8 @@ function _attachFateContextMenu(message, html) {
       await processWarlockTurnStart(nextCombatant.actor);
       // Инзорцист: ритуал Запечатывания и Мимолётная Одержимость — счёт Ходов.
       await processInsorcistTurnStart(nextCombatant.actor);
+      // Медуза: ОД от Эмоционального Взрыва и Экстремальных Ощущений.
+      await processMedusaTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.

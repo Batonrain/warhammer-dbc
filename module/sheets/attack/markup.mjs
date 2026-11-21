@@ -37,6 +37,8 @@ export function buildAttackContent(v) {
     badgesHtml,
     bandHtml,
     charKey,
+    presetChar = "",
+    presetDmgBonus = 0,
     charSwapWhy,
     charVal,
     commonMods,
@@ -104,7 +106,7 @@ return `
           // отличит разрешённую книгой подмену от самоуправства.
           const swap = (k === "wp" && charSwapWhy.length)
             ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}` : "";
-          return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
+          return `<option value="${k}" ${k === (presetChar || charKey) ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
         }).join("")}
       </select>
       <label>Доп. мод</label>
@@ -113,7 +115,7 @@ return `
     ${dualWieldHtml}
     <div class="av-row">
       <label>Бонус урона</label>
-      <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="0"
+      <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="${Number(presetDmgBonus) || 0}"
              title="Ручной бонус к урону этой атаки — прибавляется к итоговому урону после броска, отдельно от порога теста"/>
     </div>
     ${(isMelee && hasDeathDance(actor)) ? `
