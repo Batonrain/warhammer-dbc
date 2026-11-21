@@ -52,7 +52,7 @@ export function possessionContext(actor) {
   const hostW  = (system.characteristics?.wp?.total ?? 0) + sym * 5;
   const demon  = twinDemonStats(twinDemonOf(actor));
   const ctrl   = controlTime(hostW, demon?.wp ?? null);
-  const hasT = n => [...(actor.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, n));
+  const hasTalent = n => [...(actor.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, n));
   const mv = system.movement ?? {};
   // Активные Дары на акторе (предметы-таланты «… / Дар: X») и лимит по профилю.
   const activeGiftSet = giftNamesOf(actor);
@@ -67,13 +67,13 @@ export function possessionContext(actor) {
     controlUnlimited: ctrl.unlimited,
     // Лист демона Двойного Духа (apps/twin-spirit.mjs): числа и кнопки Талантов, которым он нужен.
     demon,
-    introspection: hasT("Introspection") ? { bonus: introspectionBonus(actor) } : null,
-    mentor: activeGiftSet.has("Ментор"),
-    sharedSorcery: hasT("Shared Sorcery"),
-    sharedSlaughter: hasT("Shared Slaughter"),
-    risingTogether: hasT("Rising Together"),
-    greaterTalent: hasT("Greater Possessed"),
-    spider: activeGiftSet.has("Паук")
+    introspection: hasTalent("Introspection") ? { bonus: introspectionBonus(actor) } : null,
+    mentor: hasTalent("Mentor"),
+    sharedSorcery: hasTalent("Shared Sorcery"),
+    sharedSlaughter: hasTalent("Shared Slaughter"),
+    risingTogether: hasTalent("Rising Together"),
+    greaterTalent: hasTalent("Greater Possessed"),
+    spider: hasTalent("Дар: Паук")
       ? { half: Math.floor((Number(mv.halfMove) || 0) / 2), move: Math.floor((Number(mv.move) || 0) / 2),
           fullHalf: Number(mv.halfMove) || 0, fullMove: Number(mv.move) || 0 } : null,
     naturalArmour: corB,

@@ -13,8 +13,7 @@
 //  листы, карточки и бой — круг через collect.mjs ему не грозит.
 // ════════════════════════════════════════════════════════════════════════
 
-import { manifestedGift } from "./predicates.mjs";
-import { itemHasName } from "./predicates.mjs";
+import { canManifestPossession, itemHasName } from "./predicates.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 
@@ -35,6 +34,8 @@ const charBonus = (a, k) => {
   return Number.isFinite(Number(b)) && b !== null && b !== "" ? Number(b) : Math.floor(charTotal(a, k) / 10);
 };
 const hasTalent = (actor, name) => [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, name));
+/** Одержимый в Проявлении — Дары («… / Дар: X») действуют только так. */
+const inManifestation = host => canManifestPossession(host) && !!host?.system?.possession?.manifested;
 
 /** uuid связанного листа демона ("" — листа нет). */
 export const twinDemonUuid = host => String(host?.system?.possession?.demonUuid ?? "").trim();
@@ -106,7 +107,7 @@ export const AURA_OF_CHAOS_FLAG = "auraOfChaosShield";
 
 /** Рейтинг сквозного щита «1-W демона»; 0 — щита нет (не Проявлен, нет Дара или листа демона). */
 export function auraOfChaosRating(host, demon) {
-  if (!demon || !manifestedGift(host, "Аура Хаоса")) return 0;
+  if (!demon || !(inManifestation(host) && hasTalent(host, "Дар: Аура Хаоса"))) return 0;
   return charTotal(demon, "wp");
 }
 
@@ -251,10 +252,10 @@ export const STACKING_TRAITS = Object.freeze({
 export function manifestTraitPlan(host) {
   if (!host?.system?.possession?.manifested) return [];
   const out = [];
-  if (manifestedGift(host, "Текучий")) {
+  if (inManifestation(host) && hasTalent(host, "Дар: Текучий")) {
     out.push({ gift: "Текучий", name: "Amorphous" }, { gift: "Текучий", name: "Crawler" });
   }
-  if (manifestedGift(host, "Наслоение")) {
+  if (inManifestation(host) && hasTalent(host, "Дар: Наслоение")) {
     out.push({ gift: "Наслоение", name: "Daemonic Presence", rating: 10, rating2: 10 });
     for (const t of STACKING_TRAITS[host.system?.possession?.demon || "katart"] ?? []) out.push({ gift: "Наслоение", ...t });
   }
@@ -292,7 +293,7 @@ export const locusRadius = demon => Math.max(1, Math.floor(charTotal(demon, "wp"
 
 /** Действует ли Локус Симбиоза: Дар, Высший Одержимый, Проявление. */
 export function symbioteLocusActive(host) {
-  return !!host?.system?.possession?.greaterPossessed && manifestedGift(host, "Локус Симбиоза");
+  return !!host?.system?.possession?.greaterPossessed && inManifestation(host) && hasTalent(host, "Дар: Локус Симбиоза");
 }
 
 /** Цель Локуса Симбиоза — дружественный Одержимый в Проявлении. */
