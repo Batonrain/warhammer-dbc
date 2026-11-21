@@ -37,6 +37,7 @@ import { EATER_OF_PAIN_CAPABILITY, eaterOfPainChoiceButtonsHtml } from "../rules
 import { TORTURER_CAP } from "../rules/medic-talents.mjs";
 import { clearForesight } from "./talent-actions.mjs";
 import { testSuccesses, torturerVictimPenalty, torturerThreshold } from "../rules/torture.mjs";
+import { hasVeilOfLies } from "../rules/cognitae-talents.mjs";
 import {
   interrogateIntTotal, extraTiers, drukhariNearby, grantTortureBenefit,
   tortureBenefitAvailable, markTortureBenefitUsed
@@ -57,6 +58,19 @@ function _sideModsAndReroll(resolved) {
   // Лжи): у жертвы нет своего окна с галочкой — условие и так выполнено.
   const auto = list.find(m => m.autoSuccess) ?? null;
   return { total, parts, auto, reroll: reroll ? { mode: reroll.mode, rolls: reroll.rolls, label: reroll.label } : null };
+}
+
+/**
+ * Вуаль Лжи (Когнитэ, Sahara 581-7bb9): кнопка «подсунуть прокси-личность» —
+ * тест Deceive(I)+0 жертвы против Успехов пытающего (обработчик — hooks.mjs,
+ * бросок — combat/cognitae.mjs::useVeilOfLiesProxy). Пустая строка — Черты нет.
+ */
+export function veilProxyButtonHtml(target, torturer, torturerSuccesses) {
+  if (!hasVeilOfLies(target)) return "";
+  const n = Math.max(0, Number(torturerSuccesses) || 0);
+  return `<div class="roll-threshold"><button type="button" class="wh-veil-proxy-btn"
+    data-actor-uuid="${esc(target.uuid)}" data-successes="${n}" data-attacker-name="${esc(torturer?.name ?? "")}"
+    >🎭 Вуаль Лжи: подсунуть прокси-личность (Deceive(I)+0 против ${n} Успехов)</button></div>`;
 }
 
 /** Иммунитет к пыткам: Не Чувствует Боли (мутация) и Метка Слаанеш (defence.tortureImmune). */
@@ -124,6 +138,7 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
     ?? (targetMods.auto ? { by: "rule", label: `${targetMods.auto.label}`, short: targetMods.auto.label } : null);
   const theirs = { ...testOutcome(targetRv, targetThreshold, { autoSuccess: !!autoPass }), threshold: targetThreshold };
   const { winner, margin } = resolveOpposed(mine, theirs);
+  const veilBtn = veilProxyButtonHtml(target, torturer, mine.success ? mine.deg : 0);
   await clearForesight(torturer); // бросок пытающего — тест I: +10 Предусмотрительности потрачен
 
   const tMods = [...torturerMods.parts, torturerMod ? `мод. ${torturerMod >= 0 ? "+" : ""}${torturerMod}` : ""].filter(Boolean);
@@ -145,7 +160,7 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
     }
     // Встречный тест: Порогов два, они расписаны построчно с подписями
     // модификаторов — общей строки Порога/броска у такой карточки быть не может.
-    await postTestCard(torturer, { title, lines: [lines.filter(Boolean).join("<br/>")] }, { sound: false });
+    await postTestCard(torturer, { title, lines: [lines.filter(Boolean).join("<br/>"), veilBtn] }, { sound: false });
     return { winner, margin, torturerSuccesses };
   }
 
@@ -155,7 +170,7 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
     const eater = margin > 0 && hasRuleFlag(torturer, EATER_OF_PAIN_CAPABILITY)
       ? eaterOfPainChoiceButtonsHtml(torturer.uuid, margin) : "";
     if (eater) lines.push(`${rollIcon("heart","#ff6bd6")}Пожиратель Боли (${margin} Успехов):`);
-    await postTestCard(torturer, { title: `${title} — успех`, lines: [lines.filter(Boolean).join("<br/>"), eater] }, { sound: false });
+    await postTestCard(torturer, { title: `${title} — успех`, lines: [lines.filter(Boolean).join("<br/>"), eater, veilBtn] }, { sound: false });
     return { winner, margin, torturerSuccesses };
   }
 
@@ -188,7 +203,7 @@ export async function resolveTorture(torturer, target, { skillful = false, tortu
 
   await postTestCard(torturer, {
     title: `${title} — успех`,
-    lines: [lines.filter(Boolean).join("<br/>"), eaterOfPainButtons]
+    lines: [lines.filter(Boolean).join("<br/>"), eaterOfPainButtons, veilBtn]
   }, { sound: false });
   return { winner, margin, torturerSuccesses };
 }

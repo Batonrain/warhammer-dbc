@@ -6632,7 +6632,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.kognite.veilOfLies": {
     label: "Гипноиндоктринация превращает разум в многослойный лабиринт из сконструированных личностей, в сердце которого скрыто ядро настоящих мыслей.",
-    source: "Veil of Lies / Вуаль Лжи", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора testMod modValueMode autoSuccess — область psychicMind (галочка в окне теста Воли против психосилы, sheets/actor-sheet.mjs::autoSuccessChecked) и interrogation (apps/torture.mjs засчитывает сам). Прокси-личность (Deceive) — вручную"
+    source: "Veil of Lies / Вуаль Лжи", reader: "РЕАЛИЗОВАНО (19.11.2026, 21.11.2026): записи Конструктора testMod modValueMode autoSuccess — область psychicMind (галочка в окне теста Воли против психосилы, sheets/actor-sheet.mjs::autoSuccessChecked) и interrogation (apps/torture.mjs засчитывает сам). Прокси-личность (Sahara 581-7bb9): кнопка на карточке пытки (apps/torture.mjs::veilProxyButtonHtml → hooks.mjs .wh-veil-proxy-btn) и кнопка «▶ Запустить» Черты — combat/cognitae.mjs::useVeilOfLiesProxy, тест Deceive(I)+0 против Успехов атакующего (rules/cognitae-talents.mjs::veilProxyAccepted)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Коготь_Варпа — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kogotVarpa.veilRender": {

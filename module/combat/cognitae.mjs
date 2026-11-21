@@ -11,6 +11,7 @@ import {
   WEEK, DAY, EIGHT_SPOKES_FLAG, HYPNO_ADVANCE_FLAG, HYPNO_PROGRESS_FLAG, CORRUPTED_CALL_FLAG, PERFECT_MASK_FLAG,
   PROXY_VEIL_FLAG, CORRUPTED_CALL_COST,
   hasHypnoProgramming, hasEightSpokes, hasCorruptedCall, hasPerfectMask, hasProxyVeil, hasThousandPapercuts,
+  hasVeilOfLies, veilProxyAccepted,
   hypnoAdvance, eightSpokesPenalty, hypnoVictimMod, hypnoPersonalityNeed, hypnoProgress
 } from "../rules/cognitae-talents.mjs";
 import { NS, CANCEL, firstTarget, writeOrWarn, askNumber, askChoice, cultCard, rollCultTest } from "./cult-common.mjs";
@@ -175,5 +176,32 @@ export async function useThousandPapercuts(actor) {
   await cultCard(actor, "Тысяча Бумажных Порезов", [
     `Потрачено <b>${n}</b> Очков Бесчестия (${res.before} → ${res.after})${target ? ` против «${esc(target.name)}»` : ""}: проверки, ревизии, диспуты о собственности, вплоть до внимания Арбитров и Инквизиции — чем больше Очков, тем сильнее. Итог описывает ГМ.`
   ], { icon: "📜" });
+  return false;
+}
+
+/**
+ * Вуаль Лжи — прокси-личность (Sahara 581-7bb9): тест Deceive(I)+0 против
+ * Успехов атакующего (псайкера, читающего разум, или дознавателя). Успехи
+ * атакующего приходят с карточки пытки (кнопка) или вводятся в окне.
+ * Автоуспех самого сопротивления — записи Конструктора Черты (не здесь).
+ */
+export async function useVeilOfLiesProxy(actor, { attackerSuccesses = null, attackerName = "" } = {}) {
+  if (!hasVeilOfLies(actor)) return ui.notifications.warn("⚠️ Нет Черты Вуаль Лжи.");
+  let need = attackerSuccesses == null ? null : Math.max(0, Math.trunc(Number(attackerSuccesses) || 0));
+  if (need == null) {
+    need = await askNumber("Вуаль Лжи", "Успехов у атакующего:", { min: 0, max: 20, value: 1,
+      hint: "Прокси-личность: тест Deceive(I)+0 против Успехов псайкера или дознавателя." });
+    if (need == null) return CANCEL;
+  }
+  const test = await rollCultTest(actor, {
+    title: "Вуаль Лжи: прокси-личность", icon: "🎭",
+    tests: [{ skill: "deceive", charOverride: "int", mod: 0, label: "Deceive(I)" }]
+  });
+  const ok = veilProxyAccepted(test, need);
+  const who = attackerName ? `«${esc(attackerName)}»` : "Атакующий";
+  await cultCard(actor, "Вуаль Лжи", [ok
+    ? `${who} принимает подставную прокси-личность (${test.deg} Успехов против ${need}): подставные воспоминания и ответы он считает результатом успешного допроса.`
+    : `Прокси-личность не принята (${test.success ? `${test.deg} Успехов против ${need}` : "провал теста"}) — разум по-прежнему закрыт (автоуспех сопротивления в силе), но подмена не удалась.`
+  ], { icon: "🎭" });
   return false;
 }

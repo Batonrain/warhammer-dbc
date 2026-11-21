@@ -166,6 +166,7 @@ import { sweepExpiredControl, releaseControlOnCombatEnd } from "./rules/actor-co
 import { checkMimicWireSurgery, cutMimicWire, startMimicWireSurgery, confirmMimicWireExtraction, captureWithMimicWire } from "./apps/volunteer-actor.mjs";
 import { checkAbandonedHostDeath } from "./apps/maggot-parasite.mjs";
 import { beginParasiticContact, tearOffParasite } from "./apps/parasite-trait.mjs";
+import { useVeilOfLiesProxy } from "./combat/cognitae.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
 import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
 import { processWarpEaterMonthCheck } from "./rules/warp-eater.mjs";
@@ -3388,6 +3389,19 @@ export function registerHooks() {
         if (!actor?.isOwner) return ui.notifications.warn("Сорвать паразита может владелец жертвы (или ГМ).");
         el.disabled = true;
         await tearOffParasite(actor);
+      });
+    });
+
+    // Вуаль Лжи (Когнитэ, Sahara 581-7bb9): прокси-личность с карточки пытки —
+    // тест Deceive(I)+0 жертвы против Успехов пытающего (apps/torture.mjs).
+    html.querySelectorAll(".wh-veil-proxy-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Подсунуть прокси-личность может владелец Когнитэ (или ГМ).");
+        el.disabled = true;
+        await useVeilOfLiesProxy(actor, { attackerSuccesses: Number(el.dataset.successes) || 0, attackerName: el.dataset.attackerName || "" });
       });
     });
 

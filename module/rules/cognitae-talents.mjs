@@ -35,6 +35,16 @@ export const hasPerfectMask = a => hasItemNamed(a, "Perfect Mask", ["talent"]);
 export const hasProxyVeil = a => hasItemNamed(a, "Proxy Veil", ["talent"]);
 export const hasThousandPapercuts = a => hasItemNamed(a, "Thousand Papercuts", ["talent"]);
 export const hasCatalepseanNode = a => hasItemNamed(a, "Catalepsean Node");
+export const hasVeilOfLies = a => hasItemNamed(a, "Veil of Lies", ["trait"]);
+
+/**
+ * Вуаль Лжи, прокси-личность: тест Deceive(I)+0 «против Успехов атакующего».
+ * [догадка] подставная личность принята, если тест успешен и его Успехов не
+ * меньше, чем у атакующего (ничья — в пользу Когнитэ).
+ */
+export function veilProxyAccepted(test, attackerSuccesses) {
+  return !!test?.success && (Number(test.deg) || 0) >= Math.max(0, Number(attackerSuccesses) || 0);
+}
 
 const flagOf = (a, k) => a?.flags?.["warhammer-dbc"]?.[k] ?? a?.getFlag?.("warhammer-dbc", k);
 

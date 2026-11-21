@@ -8,7 +8,7 @@
 import { useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet } from "../plague-monk.mjs";
 import { releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty } from "../worm-king.mjs";
 import { useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite } from "../flesh-sculptor.mjs";
-import { useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts } from "../cognitae.mjs";
+import { useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts, useVeilOfLiesProxy } from "../cognitae.mjs";
 import { synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura } from "../maester.mjs";
 import { useSoulDrinker, heartOfStoneInsight } from "../pact-traits.mjs";
 import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
@@ -23,7 +23,7 @@ export const API = {
   // Скульптор Плоти
   useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite,
   // Когнитэ
-  useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts,
+  useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts, useVeilOfLiesProxy,
   // Мейстер
   synthLifeVirus, injectLifeVirus, lifeVirusRounds, harvestFrom, useProjector, maesterRevive, maesterAura,
   // Вампир, Когитор (Черты Пакта)
