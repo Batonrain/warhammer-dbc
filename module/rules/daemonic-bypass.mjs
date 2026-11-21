@@ -14,8 +14,6 @@
 //  засчитано.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { itemHasName } from "./predicates.mjs";
-
 const TB_KEY = "system.characteristics.t.bonusFx";
 // «Daemonic / Демонический (X)», «Daemonic (+4) / Демонический» — но не
 // Daemonic Dread / Uplink / Armament (другие Черты с тем же словом в начале).
@@ -58,7 +56,6 @@ export function bypassesDaemonic({ weapon = null, attacker = null, psychicPowerT
   if (props.some(p => BYPASS_PROPS.has(typeof p === "string" ? p : p?.key))) return true;
   const dw = weapon.system?.daemonWeapon;
   if (dw?.bound || dw?.runic) return true;
-  if (itemHasName(weapon, "Runic Weapon")) return true;
   // Естественное оружие другого носителя Daemonic.
   const natural = !!weapon.getFlag?.("warhammer-dbc", "integralAttack");
   return natural && hasDaemonicTrait(attacker ?? weapon.parent);
