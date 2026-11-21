@@ -6300,15 +6300,15 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимаг — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimag.magusSupreme": {
     label: "Тонкий контроль над ненадёжными силами Варпа. Феномены (но не Прорывы), вызванные им самим, не воздействуют на него,",
-    source: "Magus Supreme / Высший Магус", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Magus Supreme / Высший Магус", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/archmagus.mjs::useMagusSupreme + combat/psyker-elite-hooks.mjs::eliteManifestAfter (строка Феномена)"
   },
   "trait.elitnyeArhetipy.arhimag.masteryOfForm": {
     label: "Полезные мутации — знак благосклонности Тзинча. Потратив 9 часов на медитацию и Очко Бесчестия, может тестом For.",
-    source: "Mastery of Form / Мастерство Формы", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Mastery of Form / Мастерство Формы", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/archmagus.mjs::useMasteryOfForm"
   },
   "trait.elitnyeArhetipy.arhimag.wizardStaff": {
     label: "Посох — фокус и проводник психической силы. Вооружённый психосиловым посохом в двуручном хвате,",
-    source: "Wizard Staff / Чародейский Посох", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Wizard Staff / Чародейский Посох", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/archmagus.mjs::useWizardStaff / wizardStaffTestBonus → combat/psyker-elite-hooks.mjs::eliteManifestEpr"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Архимагос — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.arhimagos.doctrinaImperative": {
@@ -6501,11 +6501,11 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.dikiyPsayker.chainRejection": {
     label: "Порванные Цепи медленно высасывают жизнь. Каждую неделю получает 1 урона в S и T, который нельзя восстановить отдыхом и медитацией;",
-    source: "Chain Rejection / Отторжение Цепей", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Chain Rejection / Отторжение Цепей", reader: "РЕАЛИЗОВАНО (21.11.2026): module/combat/wild-psyker.mjs::chainRejectionClock (combat/condition-clock.mjs)"
   },
   "trait.elitnyeArhetipy.dikiyPsayker.shieldOfChains": {
     label: "Защищён мощным психическим щитом из Порванных Цепей. Полученное попадание наносится по Щиту (бPR×3 Ран, бPR AP, поглощает через W.",
-    source: "Shield of Chains / Щит Цепей", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Shield of Chains / Щит Цепей", reader: "РЕАЛИЗОВАНО (21.11.2026): пул chainShield (запись Конструктора) + module/combat/wild-psyker.mjs::chainShieldIntercept (combat/damage.mjs), processWildPsykerTurnStart"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Длань_Архонта — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.dlanArhonta.equalizeTheOdds": {
@@ -6979,11 +6979,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Чернокнижник — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chernoknizhnik.darkArts": {
     label: "Работает аналогично Трейту Psyker (PR2), но исключительно в части использования психосил.",
-    source: "Dark Arts / Тёмные Искусства", reader: "ЧАСТИЧНО (19.11.2026): записи Конструктора на Черте — psyker.alwaysBound; остальное пишет в чат кнопка-памятка, считает ГМ"
+    source: "Dark Arts / Тёмные Искусства", reader: "ЧАСТИЧНО (21.11.2026): psyker.alwaysBound (Конструктор) + rules/warlock-talents.mjs::darkArtsGate → combat/psyker-elite-hooks.mjs::eliteManifestGate (Пути Силы, Обычный режим, без реакций); PR ≤ Cor.b и прочее — стол"
   },
   "trait.elitnyeArhetipy.chernoknizhnik.transcription": {
     label: "Нуждается в глубоком понимании механизмов, а не инстинктивном. Не имеет врождённого фокуса ни на одну психодисциплину, кроме божественных.",
-    source: "Transcription / Транскрипция", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Transcription / Транскрипция", reader: "ЧАСТИЧНО (21.11.2026): module/combat/warlock.mjs::useTranscription (дни обучения, тест)"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Чумной_Десантник — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.chumnoyDesantnik.abominablePhysiology": {
