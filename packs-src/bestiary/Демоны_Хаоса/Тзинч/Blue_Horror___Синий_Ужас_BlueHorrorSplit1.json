@@ -459,7 +459,7 @@
           "charBonuses": [
             {
               "stat": "t",
-              "value": 3
+              "value": 2
             }
           ],
           "charValueBonuses": [],
@@ -1034,7 +1034,7 @@
       "system": {
         "description": "",
         "notes": "",
-        "benefit": "Вызывает Страх (2) — цели проходят тест Воли.",
+        "benefit": "Вызывает Страх (1) — цели проходят тест Воли.",
         "source": "",
         "hasRating": true,
         "rating": 1,
@@ -1046,7 +1046,7 @@
           "charBonuses": [],
           "charValueBonuses": [],
           "armourAll": 0,
-          "fearRating": 2,
+          "fearRating": 1,
           "sizeMod": 0,
           "initMod": 0,
           "speedMod": 0
@@ -1563,7 +1563,8 @@
           "standard": false,
           "reloads": 10
         },
-        "drukhari": false
+        "drukhari": false,
+        "meleeCategory": "Нож"
       },
       "_id": "BlueHrr000000014",
       "effects": [],

@@ -3,7 +3,7 @@
 // daemonic-46e0 + daemonic-force-sanctified-warp-weapon (п.1–2): книга (core.json,
 // Трейт Daemonic (X)) — «Он иммунен к ядам, болезням, и радиации». Три группы
 // Конструктора (радиация, яды, болезни) лежали только на базовой Черте в паке
-// traits; у 31 демона Бестиария (Демоны_Хаоса) своя копия «Daemonic (N)» без
+// traits; у 32 демонов Бестиария (Демоны_Хаоса) своя копия «Daemonic (N)» без
 // ссылки на источник и без записи, а копии на живых акторах — снимки момента
 // выдачи. Кроме них та же Черта у Кхимеры и Мандрагоры Друкхари (в Аэльдари-
 // книгах Daemonic не определён — это Черта core). Пак поправлен, миграция
@@ -90,8 +90,8 @@ describe("Пак: иммунитеты к радиации, ядам и боле
     expect(CTX.groups.disease.entries.map(e => e.capabilityKey)).toEqual(["defence.diseaseEffectsImmune"]);
   });
 
-  it("31 демон Бестиария (Демоны Хаоса), у каждого «Daemonic (N)» с тремя иммунитетами, как у базовой Черты", () => {
-    expect(DEMONS).toHaveLength(31);
+  it("32 демона Бестиария (Демоны Хаоса), у каждого «Daemonic (N)» с тремя иммунитетами, как у базовой Черты", () => {
+    expect(DEMONS).toHaveLength(32);
     for (const { file, daemonic } of DEMONS) {
       expect(daemonic, file).toHaveLength(1);
       const mech = daemonic[0].flags?.[FLAG]?.mechanics;
@@ -202,7 +202,7 @@ describe("daemonicRadiationPatch: копия до правки пака", () => 
     expect(isImmuneToCondition({ items: [item] }, "radiation")).toBe(true);
   });
 
-  it("все 31 «Daemonic (N)» демонов получают иммунитеты миграцией, каждая — ровно по одной группе", () => {
+  it("все 32 «Daemonic (N)» демонов получают иммунитеты миграцией, каждая — ровно по одной группе", () => {
     for (const { file, daemonic } of DEMONS) {
       const item = staleCopy(daemonic[0]);
       applyPatch(item, daemonicRadiationPatch(item, CTX));
