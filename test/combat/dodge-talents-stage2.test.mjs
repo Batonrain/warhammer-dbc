@@ -18,7 +18,7 @@ import {
   registerContest, resolveResistClick, resolvePirouetteClick, resolveRamPirouette, _resetPendingContests
 } from "../../module/combat/opposed-contest.mjs";
 import { _performDodge, _performParry } from "../../module/combat/defense.mjs";
-import { bodyguardsFor } from "../../module/combat/bodyguard.mjs";
+import { bodyguardsFor, anointedFor } from "../../module/combat/bodyguard.mjs";
 import { defenseSection } from "../../module/combat/attack-card.mjs";
 import { applyFlourishDance, flourishPenaltyAgainst } from "../../module/combat/flourish-dance.mjs";
 import { flipTriggered, offerFlip, rollFlip, VOLUNTARY_PRONE_OPTION } from "../../module/combat/flip.mjs";
@@ -594,6 +594,60 @@ describe("Телохранитель", () => {
     captured.dice = [10];
     await _performParry(guard, { extraMod: 0, attackerUuid: "Actor.f", forAlly: "Союзник" });
     expect(captured.chat.at(-1).content).toContain("за Союзник");
+  });
+});
+
+describe("Помазанник: парирование за союзника в 1 м, без Реакции, раз в Раунд (Sahara 586-8aaf)", () => {
+  const AN = "Anointed / Помазанник";
+  beforeEach(() => { globalThis.canvas = { grid: { size: 100 }, scene: { grid: { distance: 1 } }, tokens: { placeables: [] } }; });
+  afterEach(() => { globalThis.canvas = {}; globalThis.game.combat = undefined; });
+  const token = (id, x, y, actor, disposition = 1) => ({
+    id, name: actor?.name, actor, document: { id, x, y, width: 1, height: 1, disposition }
+  });
+
+  it("носитель в 1 м от цели на её стороне — кнопка; дальше 1 м, на чужой стороне, без Таланта — нет", () => {
+    const term = fighter("Терминатор", "Actor.term", { items: [talent(AN)] });
+    const ally = fighter("Союзник", "Actor.y");
+    const foe = fighter("Враг", "Actor.f");
+    const attackerToken = token("A", 0, 0, foe, -1);
+    const targetToken = token("T", 500, 0, ally);
+    const near = token("N", 600, 0, term);                                                        // вплотную к цели
+    const far = token("F", 900, 0, fighter("Далёкий", "Actor.far", { items: [talent(AN)] }));    // 3 м
+    const enemy = token("E", 500, 100, fighter("Чужой", "Actor.e", { items: [talent(AN)] }), -1);
+    const plain = token("P", 400, 0, fighter("Простой", "Actor.p"));
+    expect(anointedFor({ attackerToken, targetToken, tokens: [attackerToken, targetToken, near, far, enemy, plain] }))
+      .toEqual([{ uuid: "Actor.term", name: "Терминатор" }]);
+  });
+
+  it("в этом Раунде уже было — кнопки нет", () => {
+    const term = fighter("Терминатор", "Actor.term", { items: [talent(AN)] });
+    globalThis.game.combat = { id: "c1", round: 2, started: true };
+    term._flags.usageLimits = { anointedParry: { scope: "round", used: true, combatId: "c1", round: 2 } };
+    term.flags = { "warhammer-dbc": { usageLimits: term._flags.usageLimits } };
+    const attackerToken = token("A", 0, 0, fighter("Враг", "Actor.f"), -1);
+    const targetToken = token("T", 500, 0, fighter("Союзник", "Actor.y"));
+    const list = anointedFor({ attackerToken, targetToken, tokens: [attackerToken, targetToken, token("N", 600, 0, term)], roundReady: () => false });
+    expect(list).toEqual([]);
+  });
+
+  it("кнопка на карточке несёт data-anointed и «без Реакции»", () => {
+    const html = defenseSection({ anointed: [{ uuid: "Actor.term", name: "Терминатор" }], allyName: "Союзник" },
+      { wp: {}, attackerUuid: "Actor.a", isMelee: true });
+    expect(html).toContain('data-anointed="1"');
+    expect(html).toContain('data-bodyguard-uuid="Actor.term"');
+    expect(html).toContain("Помазанник: Терминатор");
+  });
+
+  it("Парирование Помазанника Реакцию не тратит", async () => {
+    globalThis.game.combat = { id: "c1", round: 1, started: true };
+    const term = fighter("Терминатор", "Actor.term", { items: [talent(AN)], chars: chars(), skills: { parry: { rank: "trained", total: 60 } } });
+    term.system.reactions = { value: 0, max: 1, defenseValue: 0 };
+    const w = weaponFor({ weaponClass: "melee", balance: 0, equipped: true, hands: 1, meleeCategory: "Меч" }, { id: "s1", name: "Меч" });
+    w.type = "weapon"; term.items.push(w);
+    captured.dice = [10];
+    await _performParry(term, { extraMod: 0, attackerUuid: "Actor.f", forAlly: "Союзник", freeReaction: "Помазанник" });
+    expect(captured.chat.at(-1).content).toContain("за Союзник");
+    expect(captured.chat.at(-1).content).toContain("Помазанник");
   });
 });
 

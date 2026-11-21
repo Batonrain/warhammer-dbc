@@ -774,6 +774,8 @@ export async function _performParry(actor, {
   extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false,
   attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "", attackId = "",
   chomper = false, forAlly = "",
+  // Парирование без траты Реакции по Таланту (Помазанник — подпись Таланта; hooks.mjs .wh-parry-btn[data-anointed]).
+  freeReaction = "",
   // Запрещённый Приём (Cheap Shot): каждое снятое попадание стоит evadeCost Успехов.
   evadeCost = 1,
   attackBaseKey = "", // База атаки (opts.baseKey карточки): Пересилить действует только против Полной Атаки
@@ -989,10 +991,11 @@ export async function _performParry(actor, {
     return;
   }
 
-  if (!reroll
+  if (!reroll && !freeReaction
       && !(await spendReaction(actor, { forDefense: true, attackId, parryAgainst: attackerActor }))
       && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Парирование");
   if (reroll) modParts.push(`Переброс: ${esc(reroll.label || "")}`);
+  if (freeReaction) modParts.push(`${esc(freeReaction)}: без Реакции`);
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём

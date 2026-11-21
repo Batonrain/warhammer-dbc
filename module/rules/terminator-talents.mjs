@@ -18,6 +18,24 @@ import { hasItemNamed } from "./req-atom.mjs";
 const NS = "warhammer-dbc";
 export const ANOINTED_SHIELD_FLAG = "anointedShield";
 export const ANOINTED_SHIELD_BONUS = 35;
+/**
+ * Помазанник: «Раз в Раунд … может без траты Реакции парировать атаку по дружественному персонажу в 1 м от
+ * него» (Sahara 586-8aaf). Ключ раз-в-Раунд (apps/game-session.mjs::isRoundCapabilityAvailable) и дальность.
+ */
+export const ANOINTED_PARRY_CAPABILITY = "anointedParry";
+export const ANOINTED_PARRY_METERS = 1;
+export const hasAnointed = actor => hasItemNamed(actor, "Anointed", ["talent"]);
+
+/**
+ * Кто из токенов может парировать за цель Помазанником: Талант, своя сторона с целью, не сама цель и не
+ * атакующий, край Базы до края Базы цели не дальше 1 м, раз в Раунд ещё не потрачен.
+ * @param {{id:string, disposition:number, hasAnointed:boolean, metersToTarget:?number, roundReady:boolean}[]} tokens
+ */
+export function anointedParryTokens(tokens, { targetId, attackerId, targetDisposition }) {
+  return (tokens ?? []).filter(t => t.hasAnointed && t.roundReady !== false
+    && t.metersToTarget != null && t.metersToTarget <= ANOINTED_PARRY_METERS
+    && t.id !== targetId && t.id !== attackerId && t.disposition === targetDisposition);
+}
 /** Древковое оружие книги: Копьё, Глефа, Посох (категории Арсенала). */
 export const POLEARM_CATEGORIES = ["Копьё", "Глефа", "Посох"];
 

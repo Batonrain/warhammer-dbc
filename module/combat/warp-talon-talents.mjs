@@ -50,7 +50,11 @@ async function payVeil(actor, label) {
   return pick.id === "vulture" ? "очко Стервятника" : "Очко Бесчестия";
 }
 
-/** Варп Вспышка: все в радиусе Cor.b м — P+0 или Ослеплены (кнопка на каждого, жмёт владелец/ГМ). */
+/**
+ * Варп Вспышка: все в радиусе Cor.b м — P+0 или Ослеплены (кнопка на каждого, жмёт владелец/ГМ). Срок — «до конца
+ * своего следующего Хода» (data-wp-until-own-turn-end → rules/until-turn-end.mjs, Sahara 586-8aaf), а не счётчик
+ * Раундов: тот снимал Ослепление в начале Хода цели.
+ */
 export async function warpFlash(actor) {
   if (!hasItemNamed(actor, "Warp Flash", ["talent"])) return;
   const r = corBonus(actor);
@@ -59,11 +63,11 @@ export async function warpFlash(actor) {
       data-wp-label="Варп Вспышка" data-wp-key="" data-wp-immunity-alias="" data-wp-kind=""
       data-wp-condition="blinded" data-wp-test-char="per" data-wp-test-mod="0"
       data-wp-level-per-dop="0" data-wp-rounds="0" data-wp-fixed-rounds="1" data-wp-damage=""
-      data-wp-rating="0" data-wp-provaly="0" data-wp-min-dop="1"
+      data-wp-rating="0" data-wp-provaly="0" data-wp-min-dop="1" data-wp-until-own-turn-end="1"
       data-wp-force-actor-uuid="${t.actor?.uuid ?? ""}">
       ${esc(t.name)}: тест P+0 или Ослеплён</button>`);
   await infoCard(actor, "🌑", "Варп Вспышка", [
-    `Не-свет пожирает освещение: все в радиусе ${r} м (Cor.b) — тест P+0, при Провале Ослеплены до конца своего следующего Хода (1 Раунд).`,
+    `Не-свет пожирает освещение: все в радиусе ${r} м (Cor.b) — тест P+0, при Провале Ослеплены до конца своего следующего Хода (снимается само в конце Хода цели).`,
     toks.length ? "Тест бросает владелец цели или ГМ — кнопкой ниже." : "В радиусе никого нет."
   ], { sections: btns.length ? [`<div class="roll-wprop-btns">${btns.join("")}</div>`] : [] });
 }

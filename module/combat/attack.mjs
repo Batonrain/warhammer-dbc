@@ -59,7 +59,7 @@ import { feintBlocksEvasion } from "./feint-press.mjs";
 import { resolveGrenadeMeleeFumble, resolveFlailMeleeFumble } from "./draw-action.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit, isBiteWeapon }             from "./grapple.mjs";
-import { bodyguardsFor }                               from "./bodyguard.mjs";
+import { bodyguardsFor, anointedFor }                  from "./bodyguard.mjs";
 import { hasDodgeTalent }                              from "../rules/dodge-talents.mjs";
 import { coveringDefendersOf, offerFreeAttack }        from "./free-attack.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
@@ -2560,6 +2560,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         chomper: isMelee && hasDodgeTalent(defenderActor, "chomper")
           && [...(defenderActor?.items ?? [])].some(i => isBiteWeapon(i)),
         bodyguards: bodyguardsFor({ attackerToken, targetToken }),
+        // Помазанник (Чемпион Терминатор): парирование за союзника в 1 м без Реакции, раз в Раунд.
+        anointed: anointedFor({ attackerToken, targetToken }),
         allyName: defenderActor?.name ?? "",
         // Бой Вслепую (wdbc-1rno.2): −20 выше уже применён — здесь только
         // подпись, откуда он взялся, чтобы не выглядеть немотивированным штрафом.

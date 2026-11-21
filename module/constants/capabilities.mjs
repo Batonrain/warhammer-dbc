@@ -4722,7 +4722,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpFlash": {
     label: "Раны в реальности, открываемые Когтями Варпа, выпускают наружу противоестественный не-свет, пожирающий обычное освещение.",
-    source: "Warp Flash / Варп Вспышка", reader: "module/combat/warp-talon-talents.mjs::warpFlash (из useVeilRender на входе и выходе)"
+    source: "Warp Flash / Варп Вспышка", reader: "module/combat/warp-talon-talents.mjs::warpFlash (из useVeilRender на входе и выходе); Ослепление до конца следующего Хода цели — module/rules/until-turn-end.mjs (снимает module/combat/condition-ticks.mjs::processConditionTurnEnd; Sahara 586-8aaf)"
   },
   "elite.elitnyeArhetipy.kogotVarpa.warpTrail": {
     label: "Может преследовать жертв по следу, что оставляют их души. Может пройти тест Awareness−30,",
@@ -5288,7 +5288,7 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чемпион_Терминатор — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chempionTerminator.anointed": {
     label: "Раз в Раунд может без траты Реакции парировать атаку по дружественному персонажу в 1м от него, или получить попадание вместо него.",
-    source: "Anointed / Помазанник", reader: "module/combat/terminator-talents.mjs::useAnointed → метка anointedShield, combat/damage.mjs::_rollActiveShield (+35)"
+    source: "Anointed / Помазанник", reader: "module/combat/terminator-talents.mjs::useAnointed → метка anointedShield, combat/damage.mjs::_rollActiveShield (+35); парирование за союзника в 1 м без Реакции, раз в Раунд — кнопка «Помазанник» на карточке атаки (module/combat/bodyguard.mjs::anointedFor, module/rules/terminator-talents.mjs::anointedParryTokens → module/combat/defense.mjs::_performParry freeReaction; Sahara 586-8aaf)"
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",

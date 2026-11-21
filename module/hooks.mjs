@@ -138,7 +138,9 @@ import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { parseArcHitIds, chainArcCount } from "./rules/arc-extra.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendReaction, isOwnTurn, isEncounterActive } from "./combat/action-economy.mjs";
+import { UNTIL_TURN_END_FLAG, untilTurnEndAdd } from "./rules/until-turn-end.mjs";
+import { ANOINTED_PARRY_CAPABILITY } from "./rules/terminator-talents.mjs";
 import { MELEE_CONTESTS } from "./constants/combat.mjs";
 import { _showContestDialog } from "./combat/techniques.mjs";
 import { resolveKnockdownSuccess, knockdownForbidden, knockdownSizePenalty, knockdownResistMods } from "./combat/knockdown.mjs";
@@ -1486,7 +1488,14 @@ export function registerHooks() {
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         if (!await confirmHordeHitEvasion(actor, ds.hordeHit === "1", "Парирование")) return;
-        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "", evadeCost: parseInt(ds.evadeCost || "1"),
+        // Помазанник (rules/terminator-talents.mjs): без Реакции, раз в Раунд — отметка до броска (попытка засчитана).
+        const anointed = ds.anointed === "1";
+        if (anointed) {
+          if (!isRoundCapabilityAvailable(actor, ANOINTED_PARRY_CAPABILITY))
+            return ui.notifications.warn(`⚠️ ${actor.name}: Помазанник — раз в Раунд, уже было.`);
+          await markRoundCapabilityUsed(actor, ANOINTED_PARRY_CAPABILITY);
+        }
+        await _performParry(actor, { freeReaction: anointed ? "Помазанник" : "", extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "", attackId: ds.attackId || "", evadeCost: parseInt(ds.evadeCost || "1"),
           chomper: ds.chomper === "1", forAlly: ds.bodyguardUuid ? (ds.forAlly || "") : "",
           // База атаки с этой карточки — для Пересилить (Берсерк): действует только против Полной Атаки.
           attackBaseKey: message.flags?.["warhammer-dbc"]?.attack?.opts?.baseKey || "" });
@@ -4407,8 +4416,16 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
         ? `${condLabel} (${useRounds ? "раундов" : "ур."}: ${lvl})`
         : (cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : condLabel));
     }
+    // «До конца своего следующего Хода» (data-wp-until-own-turn-end, Варп Вспышка): срок ведёт метка на цели,
+    // снимает конец её Хода (rules/until-turn-end.mjs; Sahara 586-8aaf).
+    if (ds.wpUntilOwnTurnEnd === "1" && Object.keys(update).length) {
+      let flag = actor.getFlag?.("warhammer-dbc", UNTIL_TURN_END_FLAG) ?? null;
+      for (const cond of conditionsToApply.filter(c => !resistedConds.includes(c)))
+        flag = untilTurnEndAdd(flag, cond, { ownTurn: isEncounterActive() && isOwnTurn(actor) });
+      if (flag) update[`flags.warhammer-dbc.${UNTIL_TURN_END_FLAG}`] = flag;
+    }
     if (Object.keys(update).length) await actor.update(update);
-    if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b>${ds.wpUntilOwnTurnEnd === "1" ? " — до конца своего следующего Хода" : ""}</div>`;
     // Связывающее: связанная цель выбирается тестом в свой Ход, союзник режет путы (combat/snare.mjs).
     if (propKey === "snare" && applied.length && actor.system?.conditions?.helpless) {
       appliedNote += snareEscapeButtonsHtml(actor.uuid, rating);
