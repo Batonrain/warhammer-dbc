@@ -17,7 +17,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { worldAndTokenActors } from "../migrations/unlinked-tokens.mjs";
 import {
   resourcePoolDef, resourceSpendGate, resourceSpendUpdates, resourceGainUpdates,
-  resourceRefillUpdates, resourceAmountLabel, roundKeyOf, KNOWN_RESOURCE_POOLS
+  resourceRefillUpdates, resourceAmountLabel, roundKeyOf, KNOWN_RESOURCE_POOLS, resourcePoolMaxLabel
 } from "../rules/resource-pools.mjs";
 
 /**
@@ -74,7 +74,7 @@ export async function spendResource(actor, key, amount = 1, { asInfamy = false, 
   await actor.update(update);
   if (!silent) {
     await poolCard(actor, label || def.label,
-      `Потрачено: <b>${esc(resourceAmountLabel(key, amount, def))}</b>${asInfamy ? " вместо Очка Бесчестия" : ""}. Осталось: <b>${after}</b> / ${def.max}.`);
+      `Потрачено: <b>${esc(resourceAmountLabel(key, amount, def))}</b>${asInfamy ? " вместо Очка Бесчестия" : ""}. Осталось: <b>${after}</b> / ${resourcePoolMaxLabel(def)}.`);
   }
   return { before, after, max: def.max, label: def.label };
 }
@@ -90,13 +90,13 @@ export async function gainResource(actor, key, amount = null, { label = "", sile
   const res = resourceGainUpdates(actor, key, n, { def });
   if (!res) return null;
   if (res.after === res.before) {
-    ui.notifications?.info(`${actor.name}: «${def.label}» уже на максимуме (${def.max}).`);
+    ui.notifications?.info(`${actor.name}: «${def.label}» уже на максимуме (${resourcePoolMaxLabel(def)}).`);
     return res;
   }
   await actor.update(res.update);
   if (!silent) {
     await poolCard(actor, label || def.gainLabel || def.label,
-      `+${res.after - res.before} — «${esc(def.label)}»: <b>${res.after}</b> / ${def.max}.`);
+      `+${res.after - res.before} — «${esc(def.label)}»: <b>${res.after}</b> / ${resourcePoolMaxLabel(def)}.`);
   }
   return res;
 }

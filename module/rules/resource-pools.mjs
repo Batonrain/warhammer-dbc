@@ -18,7 +18,8 @@
 //  Поля записи (все строки — формулы Механики, rules/mech-formula.mjs):
 //    resPoolKey        ключ пула ("thirst", "inspiration", "vengeance")
 //    resPoolLabel      подпись на листе (берётся первая непустая)
-//    resPoolMax        прибавка к максимуму
+//    resPoolMax        прибавка к максимуму; "∞" — пул без потолка
+//                      (Отец Крови: «максимума нет», решение Сергея 21.11.2026)
 //    resPoolRefill     когда пул сам наполняется до максимума:
 //                      "" | "battle" | "scene" | "battleOrScene" | "session"
 //    resPoolRoundCap   прибавка к лимиту траты за Раунд (0 у всех — без лимита)
@@ -117,6 +118,16 @@ function mechEntriesOf(item) {
   return out;
 }
 
+/** Значение resPoolMax «без потолка»: ∞ / inf / нет. */
+export function isUnboundedPoolMax(v) {
+  return /^\s*(∞|inf(inity)?|нет|без\s*потолка)\s*$/i.test(String(v ?? ""));
+}
+
+/** Подпись максимума пула для карточек и листа: число или ∞. */
+export function resourcePoolMaxLabel(def) {
+  return def?.unbounded ? "∞" : String(def?.max ?? 0);
+}
+
 const charList = s => String(s ?? "").split(/[\s,;]+/).map(x => x.trim().toLowerCase()).filter(Boolean);
 
 /**
@@ -136,12 +147,13 @@ export function resourcePoolDefs(actor, { rollData = null } = {}) {
       const known = KNOWN_RESOURCE_POOLS[key] ?? {};
       const d = defs.get(key) ?? {
         key, label: "", genitive: known.genitive ?? "", unit: known.unit ?? "",
-        max: 0, refill: "", roundCap: 0, gainLabel: "", gainAmount: 0,
+        max: 0, unbounded: false, refill: "", roundCap: 0, gainLabel: "", gainAmount: 0,
         asInfamy: false, asInfamyCap: 0, asInfamyCor: null, asInfamyNote: "",
         boostChars: new Set(), failChars: new Set(), sources: []
       };
       if (!d.label && e.resPoolLabel) d.label = String(e.resPoolLabel);
-      d.max += num(e.resPoolMax);
+      if (isUnboundedPoolMax(e.resPoolMax)) d.unbounded = true;
+      else d.max += num(e.resPoolMax);
       if (!d.refill && e.resPoolRefill) d.refill = String(e.resPoolRefill);
       d.roundCap += num(e.resPoolRoundCap);
       if (!d.gainLabel && e.resPoolGainLabel) d.gainLabel = String(e.resPoolGainLabel);
@@ -158,7 +170,7 @@ export function resourcePoolDefs(actor, { rollData = null } = {}) {
     }
   }
   for (const [key, d] of defs) {
-    d.max = Math.max(0, d.max);
+    d.max = d.unbounded ? Infinity : Math.max(0, d.max);
     if (!d.label) d.label = KNOWN_RESOURCE_POOLS[key]?.label ?? key;
     if (!d.genitive) d.genitive = d.label;
     d.boostChars = [...d.boostChars];
@@ -259,7 +271,7 @@ export function resourceRefillUpdates(actor, event) {
   for (const d of resourcePoolDefs(actor).values()) {
     if (!refillMatches(d.refill, event)) continue;
     const before = resourcePoolValue(actor, d.key, d);
-    if (before >= d.max) continue;
+    if (d.unbounded || before >= d.max) continue;
     update[`system.resourcePools.${d.key}`] = d.max;
     filled.push({ key: d.key, label: d.label, before, after: d.max });
   }
@@ -305,7 +317,8 @@ export function resourcePoolsView(actor) {
     if (d.failChars.length) notes.push(`Провал теста (${d.failChars.join(", ")}) → Успех за очко — кнопка в карточке.`);
     notes.push(`Источник: ${d.sources.join(", ")}.`);
     return {
-      key: d.key, label: d.label, value: resourcePoolValue(actor, d.key, d), max: d.max,
+      key: d.key, label: d.label, value: resourcePoolValue(actor, d.key, d),
+      max: d.unbounded ? "" : d.max, maxLabel: resourcePoolMaxLabel(d), unbounded: d.unbounded,
       gainLabel: d.gainLabel, gainAmount: d.gainAmount, note: notes.join(" ")
     };
   });
