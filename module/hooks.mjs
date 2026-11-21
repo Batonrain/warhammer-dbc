@@ -4343,9 +4343,12 @@ export async function _applyWeaponPropEffect(ds, { messageId = "", force = false
       const levelField = conditionLevelField(cond);
       const lvl = levelField ? (perDoP ? deg : (fixedRnd || 1)) : null;
       const cur = levelField ? (actor.system.conditions?.[levelField] ?? 0) : 0;
+      // Истинная Гниль: трупный яд травит и тех, у кого иммунитет к Отравлению
+      // (Daemonic/Machine/Stuff of Nightmares) — проверку иммунитета пропускаем.
+      const immunityActor = (trueRotPierce && cond === "poisoned") ? null : actor;
       const fields = levelField
-        ? conditionApplyFields(cond, Math.max(cur, lvl), actor)
-        : conditionApplyFields(cond, null, actor);
+        ? conditionApplyFields(cond, Math.max(cur, lvl), immunityActor)
+        : conditionApplyFields(cond, null, immunityActor);
       if (!Object.keys(fields).length) {
         immune.push(CONDITIONS_DEF[cond]?.label || label);
         continue;
