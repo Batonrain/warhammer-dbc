@@ -503,7 +503,7 @@ describe("общее требование к предикатам", () => {
     rankAndFile: false,
     // Пустота Парии / демон / цель-псайкер или демон (rules/null-zones.mjs,
     // сверка главы I, 26.09.2026).
-    inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true, targetSoulless: false,
+    inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true, targetSoulless: false, inDiscordantField: true,
     // Цель/источник — Космодесантник (Angel Hunters, Йигори, сверка главы I).
     targetIsAstartes: true,
     // Цель — псайкер, без демонов (Рога Кровожада, wdbc-1rno.10).

@@ -345,9 +345,9 @@ export const CAPABILITIES = {
     reader: "module/combat/damage.mjs (ветка Роя/Рубриканта после applyWoundLoss), module/rules/rubricae.mjs::crumblesOnWoundLoss"
   },
   "discordant.field": {
-    label: "В Поле Дискорданта: электрическое стрелковое не стреляет, рукопашное — выключено, электронные импланты отключены, техночудеса по цели в поле — Критический Провал",
+    label: "В Поле Дискорданта: электрическое стрелковое не стреляет, рукопашное — выключено, электронные импланты отключены, техночудеса по цели в поле — Критический Провал; механика клинит через 1d5+1 Ходов, силовая броня отключена (включается при выходе), биоорганы — T+0 каждые 10 мин с отторжением, медицина −10…−60 галочкой; Наследие и демоническое оружие поле не берёт (task-be12)",
     source: "Черта-метка «В Поле Дискорданта» (выдаёт аура Дискорданта)",
-    reader: "module/rules/null-zones.mjs (inDiscordantField) — sheets/attack-dialog.mjs, combat/attack.mjs, sheets/tabs/tech.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
+    reader: "module/rules/null-zones.mjs (inDiscordantField) — sheets/attack-dialog.mjs, combat/attack.mjs, sheets/tabs/tech.mjs, apps/mechanics.mjs::syncNullZoneSuppression, combat/discordant-field.mjs (хуки входа/выхода, начала Хода, хода времени — module/hooks.mjs), rules/library/null-zones.mjs (медицина)"
   },
   // ── Зверолюд и его субрасы (сверка главы I, 28.09.2026) ─────────────────────
   "order.rejectsBionics": {

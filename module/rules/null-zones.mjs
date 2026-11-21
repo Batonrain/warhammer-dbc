@@ -33,7 +33,13 @@
 //   • электрическое стрелковое оружие не стреляет, рукопашное — как
 //     выключенное (примитивное) — combat/attack.mjs;
 //   • электрические импланты отключены — syncNullZoneSuppression;
-//   • техночудо с целью в поле — Критический Провал — sheets/tabs/tech.mjs.
+//   • техночудо с целью в поле — Критический Провал — sheets/tabs/tech.mjs;
+//   • механика клинит через 1d5+1 Ходов в поле, силовая броня гаснет на
+//     время поля, биоорганы отторгаются — combat/discordant-field.mjs;
+//   • медицина −10…−60 — галочки, rules/library/null-zones.mjs;
+//   • Наследие, демоническое и рунное оружие поле не берёт — isFieldExemptWeapon.
+//  Не сделано (task-be12): «сжатие» ауры псайкером до 2 м, исключения для
+//  Некронов/Орков, спорные папки оружия с techClass "none".
 //
 //  Хвосты Пустоты, ещё не сделанные (task-1452): вместилища демонов
 //  (демоническое оружие/скакуны/одержимые), невидимость ауры для демонов в
@@ -99,9 +105,104 @@ export function weaponTechClass(weapon) {
   return WEAPON_TYPE_TECH[weapon?.system?.weaponType] || "none";
 }
 
+/**
+ * Оружие, на которое поле Дискорданта не действует вовсе (task-be12):
+ * «психические и демонические устройства и Оружие Наследия (если оно в руках
+ * своего хозяина)». Демоническое/рунное — daemonWeapon.bound/runic; Наследие
+ * на акторе считается в руках хозяина (поля «хозяин» у Наследия нет). Класс
+ * техники (weaponTechClass) не меняется — его читает и Саботаж.
+ */
+export function isFieldExemptWeapon(weapon) {
+  const s = weapon?.system;
+  return !!(s?.daemonWeapon?.bound || s?.daemonWeapon?.runic || s?.legacy?.active);
+}
+
+/* ── Хвосты поля Дискорданта (task-be12) ────────────────────────────────── */
+
+/**
+ * «Полностью механические устройства… заклинивая или начиная работать
+ * неправильно через 1d5+1 Ходов непрерывного пребывания в ауре (бросается при
+ * входе в ауру)». Бросок — при выдаче Черты-метки, счётчик — флаг актора,
+ * убывает в начале каждого его Хода в поле (combat/discordant-field.mjs).
+ */
+export const FIELD_JAM_FORMULA = "1d5+1";
+export const FIELD_JAM_FLAG = "discordantJamIn";
+export const FIELD_ARMOUR_OFF_FLAG = "discordantArmourOff";
+export const FIELD_BIO_FLAG = "discordantBio";
+
+/**
+ * Ход в поле: счётчик −1. На нуле — механика клинит (jamNow), дальше счётчик
+ * не нужен (null). null на входе — счёт не идёт (уже заклинило или не в поле).
+ * @returns {{remaining:number|null, jamNow:boolean}}
+ */
+export function fieldJamTick(remaining) {
+  if (remaining == null || !Number.isFinite(Number(remaining))) return { remaining: null, jamNow: false };
+  const left = Number(remaining) - 1;
+  return left <= 0 ? { remaining: null, jamNow: true } : { remaining: left, jamNow: false };
+}
+
+/** Механическое оружие актора, которое поле заклинивает (ещё не заклинившее). */
+export function fieldJammableWeapons(actor) {
+  return [...(actor?.items ?? [])].filter(i => i?.type === "weapon"
+    && !isFieldExemptWeapon(i) && weaponTechClass(i) === "mechanical" && !i.system?.jammed);
+}
+
+/**
+ * Биоорганы (органы Астартес, Геносемя): «тест Т+0 за каждые 10 минут
+ * непрерывного пребывания в ауре… за каждые Т.b×2 накопленных Провалов один
+ * из таких органов отторгается… Провалы не теряются при выходе из ауры, и
+ * теряются пассивно по 1 в час».
+ */
+export const FIELD_BIO_INTERVAL = 600;
+export const FIELD_BIO_DECAY = 3600;
+
+/** Есть ли у актора биоорганы под действие поля. */
+export function hasFieldBioOrgans(actor) {
+  return [...(actor?.items ?? [])].some(i =>
+    (i?.type === "implant" && i.system?.category === "astartes")
+    || (i?.type === "trait" && /^gene[- ]seed\b/i.test(String(i.name ?? "").trim())));
+}
+
+/**
+ * Шаг учёта биоорганов. Чистая арифметика: броски приходят снаружи.
+ * @param {{fails?:number, checkedAt?:number, decayAt?:number}|null} state флаг актора
+ * @param {{now:number, inField:boolean, tBonus:number, rollTest:(n:number)=>number}} o
+ *   rollTest(n) — сколько Провалов дали n тестов T+0
+ * @returns {{state:object|null, tests:number, newFails:number, rejected:number}}
+ */
+export function fieldBioStep(state, { now, inField, tBonus, rollTest }) {
+  const s = { fails: Number(state?.fails) || 0, checkedAt: state?.checkedAt, decayAt: state?.decayAt };
+  let tests = 0, newFails = 0, rejected = 0;
+  if (inField) {
+    if (s.checkedAt == null) s.checkedAt = now;
+    tests = Math.max(0, Math.floor((now - s.checkedAt) / FIELD_BIO_INTERVAL));
+    if (tests > 0) {
+      newFails = Math.max(0, Number(rollTest(tests)) || 0);
+      s.fails += newFails;
+      s.checkedAt += tests * FIELD_BIO_INTERVAL;
+    }
+    const per = Math.max(1, (Number(tBonus) || 0) * 2);
+    rejected = Math.floor(s.fails / per);
+    s.fails -= rejected * per;
+  } else {
+    // Вне поля непрерывность прерывается: следующий вход начнёт отсчёт заново.
+    s.checkedAt = undefined;
+  }
+  // Пассивная убыль: по 1 в час, отсчёт — с появления первого Провала.
+  if (s.fails > 0) {
+    if (s.decayAt == null) s.decayAt = now;
+    const hours = Math.floor((now - s.decayAt) / FIELD_BIO_DECAY);
+    if (hours > 0) { s.fails = Math.max(0, s.fails - hours); s.decayAt += hours * FIELD_BIO_DECAY; }
+  } else s.decayAt = undefined;
+  const empty = s.fails === 0 && s.checkedAt == null;
+  return { state: empty ? null : { fails: s.fails, ...(s.checkedAt != null ? { checkedAt: s.checkedAt } : {}), ...(s.decayAt != null ? { decayAt: s.decayAt } : {}) },
+           tests, newFails, rejected };
+}
+
+
 /** Оружие выключено полем: электрика у владельца, стоящего в поле. */
 export function fieldDisablesWeapon(actor, weapon) {
-  return inDiscordantField(actor) && weaponTechClass(weapon) === "electric";
+  return inDiscordantField(actor) && !isFieldExemptWeapon(weapon) && weaponTechClass(weapon) === "electric";
 }
 
 /**

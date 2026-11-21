@@ -658,6 +658,9 @@ export const PREDICATES = {
   // условие правила, спрашивающее флаг, зациклило бы сбор.
   inPariahVoid: (actor, ctx, value) => hasNamed(actor, PARIAH_VOID_TRAIT) === (value !== false),
 
+  // В поле Дискорданта (Черта-метка ауры; rules/null-zones.mjs, task-be12).
+  inDiscordantField: (actor, ctx, value) => hasNamed(actor, DISCORDANT_FIELD_TRAIT) === (value !== false),
+
   // Стоит в поле Haywire мощностью не ниже value (BONE-Head Огрина: 3+ —
   // автопровал тестов I). См. haywireFieldIntensity выше.
   haywireFieldMin: (actor, ctx, value) => haywireFieldIntensity(actor) >= Number(value),
