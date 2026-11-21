@@ -25,7 +25,7 @@ import {
   skillPointsLeft, talentPointsLeft, traitPointsLeft,
   minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, minionTraitRating,
   availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor, adoringCrowdsFreebies, minionMutationCount,
-  talentRequirements, waivesMinionInfamy
+  talentRequirements, waivesMinionInfamy, pickMinionTraitEntry
 } from "../rules/minion-build.mjs";
 import { hasBinaryFlock, buildCountGroup, FLOCK_MACHINE_FLAG } from "../rules/binary-dominion.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
@@ -371,21 +371,13 @@ function creatorHtml(state, master) {
 // ── Окно ────────────────────────────────────────────────────────────────────
 
 /**
- * Трейт компендиума по имени из таблицы книги. Имена там двуязычные («Bite /
- * Укус (X)»), а ключ таблицы — английская часть, поэтому ищем вхождение.
+ * Трейт компендиума по имени из таблицы книги — выбор записи в
+ * rules/minion-build.mjs::pickMinionTraitEntry (имя пака начинается с ключа).
  */
 async function findTraitInPack(name) {
   const pack = game.packs?.get("warhammer-dbc.traits");
   if (!pack) return null;
-  // Совпадения по вхождению мало: «Daemonic» находит «Daemonic Armament»
-  // первым. Поэтому имя документа разбираем той же таблицей и сверяем ключи —
-  // у «Daemonic Armament» ключ свой, и коротким именем он больше не ловится.
-  // `pack` (Трейты скакунов): ключ таблицы — профиль книги («Blades (1d10+2 R,
-  // Pen 0)»), а предмет в паке один — «Blades (X) / Лезвия (X)».
-  const want = MINION_TRAITS[name]?.pack ?? name;
-  const entry = [...pack.index].find(i => traitEntry(i.name)?.key === want)
-             ?? [...pack.index].find(i => String(i.name).startsWith(`${want} /`))
-             ?? [...pack.index].find(i => String(i.name).startsWith(`${want} (`));
+  const entry = pickMinionTraitEntry(pack.index, name);
   return entry ? pack.getDocument(entry._id).catch(() => null) : null;
 }
 
