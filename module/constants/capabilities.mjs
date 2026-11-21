@@ -3971,7 +3971,7 @@ export const CAPABILITIES = {
   },
   "elite.talantyOderzhimyh.daryZaschita.giant": {
     label: "+1 Размер, +10 S, +10 к макс. и текущим Ранам (без бонуса +1 SPD от Размера).",
-    source: "Giant / Дар: Гигант", reader: ""
+    source: "Giant / Дар: Гигант", reader: "module/rules/character.mjs (giftNamesOf «Гигант»: +1 Размер без SPD, +10 S, +10 к максимуму Ран в Проявлении) + module/sheets/tabs/possession.mjs (+10 к текущим Ранам при входе, откат при выходе); тесты test/sheets/possession-giant-exit.test.mjs, test/documents/size-reaches-movement.test.mjs"
   },
   "elite.talantyOderzhimyh.daryZaschita.regeneration": {
     label: "Regeneration (½Cor.b, окр.▲); активация на Cor+0 вместо Т+0. Не лечит урон от Sanctified.",

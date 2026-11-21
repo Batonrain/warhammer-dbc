@@ -164,6 +164,7 @@ const ALLOWED = {
   "trait.unruly": "включается по имени Черты скакуна (Unruly), combat/mount.mjs — флага нет",
   "trait.warTrained": "включается по имени Черты скакуна (War-Trained), rules/mount.mjs handsNeeded — флага нет",
   "awareness.core.lightSleeper": "включается по имени Таланта (Light Sleeper) в when.lacksTrait правила conditions.asleep, rules/library/conditions.mjs — флага нет",
+  "elite.talantyOderzhimyh.daryZaschita.giant": "включается по имени Дара (Giant / Дар: Гигант) через predicates.mjs::giftNamesOf в rules/character.mjs, только в Проявлении — флага нет",
   "occultist.core.instructor": "включается по имени Таланта (Instructor) через модульный массив имён в occultist-talents.mjs::hasInstructor — анализатор такую форму не распознаёт"
 };
 
