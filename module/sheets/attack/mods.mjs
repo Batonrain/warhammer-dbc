@@ -43,6 +43,8 @@ import { hasAbility } from "../../rules/ability-by-key.mjs";
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
 import { sightEffectsOf } from "../../rules/sight-effects.mjs";
 import { sightAiming } from "../../rules/autosense-jacks.mjs";
+import { attackVisibility } from "../../combat/perception-scene.mjs";
+import { LIGHT } from "../../rules/perception.mjs";
 import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
 import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
 import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
@@ -143,6 +145,8 @@ export function situationalMods(v) {
   const steadyFootwork  = isMelee  && hasDamageTalent(actor, "steadyFootwork");
   const doubleTeam      = isMelee  && hasDamageTalent(actor, "doubleTeam");
   const targetSelection = !isMelee && hasDamageTalent(actor, "targetSelection");
+  // Свет у цели и дым на линии атаки по живой сцене (wdbc-1rno.36).
+  const sceneVis = attackVisibility(attackerToken, targetToken);
   const commonMods = [
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
@@ -172,9 +176,15 @@ export function situationalMods(v) {
     // Слабый свет (стр. 34, wdbc-x1nz.2.46): штраф только стрелковой — у
     // рукопашной книжная таблица «Стандартные Модификаторы Атаки» даёт
     // пустую ячейку (0), в отличие от Дыма/Тьмы ниже, где штраф есть у обеих.
-    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: "light" },
-    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: "smoke" },
-    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: "light" },
+    // Освещение и дым сцены (wdbc-1rno.36, combat/perception-scene.mjs): галочка
+    // отмечается сама по свету у цели и зонам «Дым или туман» на линии огня;
+    // сцена без зрения токенов — ручные, как раньше.
+    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: "light",
+      autoCheck: sceneVis.light === LIGHT.dim, note: sceneVis.light === LIGHT.dim ? "цель в слабом свете (освещение сцены)" : undefined },
+    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: "smoke",
+      autoCheck: sceneVis.smoke, note: sceneVis.smoke ? "линия атаки идёт через зону дыма/тумана" : undefined },
+    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: "light",
+      autoCheck: sceneVis.light === LIGHT.dark, note: sceneVis.light === LIGHT.dark ? "цель во тьме (освещение сцены)" : undefined },
     // Ослеплён (wdbc-x1nz.2.89, решение владельца 4): при распознанном
     // Ослеплении (свой флаг/оба глаза/щит на голове, без Sonar Sense и
     // Unnatural Senses — rules/blindness.mjs) галочка заперта — автопровал BS

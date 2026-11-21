@@ -13,8 +13,7 @@ import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc, i
 // по умолчанию, там — сырые данные документа + explicit grid для фоновых
 // сцен), поэтому обвязка своя, но сама арифметика теперь одна.
 import { tokenDocDistance } from "../regions/auras.mjs";
-import { headlessSightAngle } from "../rules/headless.mjs";
-import { manyEyedSightAngle } from "../rules/possession-talents.mjs";
+import { effectiveSightAngle } from "../rules/perception.mjs";
 
 /**
  * Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не
@@ -182,7 +181,8 @@ export function isOutsideDefenderView(defenderToken, attackerToken) {
   const defenderActor = defenderToken?.actor ?? defenderToken?.document?.actor ?? null;
   const baseAngle = rawAngle > 0 ? rawAngle : DEFAULT_SIGHT_ANGLE_DEGREES;
   // Дар «Многоглазый» в Проявлении — круговой обзор (rules/possession-talents.mjs).
-  const angle = headlessSightAngle(defenderActor, manyEyedSightAngle(defenderActor, baseAngle));
+  // Зрящие Рога (wdbc-1rno.10): обзор назад — круговой (rules/perception.mjs).
+  const angle = effectiveSightAngle(defenderActor, baseAngle);
   if (angle >= 360) return false;
   const bearing = bearingDegrees(defenderPos, attackerPos);
   return !isWithinArc(facingBearing(tokenRotation(defenderToken)), bearing, angle);

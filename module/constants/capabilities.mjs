@@ -5308,7 +5308,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.chempionTerminator.atramentar": {
     label: "Убив противника в ближнем бою, может потратить Реакцию или ещё не использованную Атаку другой рукой,",
-    source: "Atramentar / Атраментар", reader: "module/combat/terminator-talents.mjs::useAtramentar (активация до конца сцены → Fear 3 записью «Когда включено»)"
+    source: "Atramentar / Атраментар", reader: "module/combat/terminator-talents.mjs::useAtramentar (активация до конца сцены → Fear 3 записью «Когда включено»); свидетели — atramentarWitnessDocs: враги, что воспринимают Терминатора по rules/perception.mjs (стены, свет, дым, сектор, особые чувства), плюс выцеленные (T) нажимающим"
   },
   "elite.elitnyeArhetipy.chempionTerminator.deathShroud": {
     label: "Если вооружён древковым оружием в двуручном хвате, может за полное действие совершить Стандартную Базовую атаку по всем противникам в радиус…",
@@ -6006,7 +6006,7 @@ export const CAPABILITIES = {
   "trait.sonarSense": {
     label: "Сонар (круговой обзор) на 30 м.",
     source: "Sonar Sense / Сонарное Чувство",
-    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). Читается только «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); дальность/круговой обзор — на столе"
+    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); круговое восприятие 30 м сквозь стены и тьму — module/rules/perception.mjs::perceives (свидетели Атраментара, Живой Стяг). Запертая комната — решает ГМ"
   },
   "trait.sophisticatedCombat": {
     label: "+1 успех на WS/A при числ. превосходстве врага; переброс WS/A в бою 1-на-1. Если WS противника ниже — Unnatural WS (+1).",
@@ -6133,7 +6133,7 @@ export const CAPABILITIES = {
   "trait.unnaturalSenses": {
     label: "Чувства на дистанции X м, круговой обзор.",
     source: "Unnatural Senses / Сверхъестественные Чувства (X)",
-    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). Читается только «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); дальность/круговой обзор — на столе"
+    reader: "module/rules/item-rules.mjs (CAPABILITY_OVERRIDES — вытесняет conditions.blinded, rules/library/conditions.mjs), module/rules/blindness.mjs (hasAlternativeSenses/suffersBlindness — окно атаки, Трудный Ландшафт, «атаки по Ослеплённому Незримые» в combat/attack.mjs). «все штрафы Ослепления игнорируются» (wdbc-x1nz.2.89); круговое восприятие на X м (стены держат) — module/rules/perception.mjs::perceives (свидетели Атраментара, Живой Стяг)"
   },
   "trait.unruly": {
     label: "Непоглощённый урон скакуну — тест Акробатики или выпадение из седла.",
@@ -6214,7 +6214,7 @@ export const CAPABILITIES = {
     source: "Godless / Безбожник", reader: "ПРАВИЛО СТОЛА до задачи Sahara 12-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
   },
   "trait.treytyRas.hulking": {
-    label: "Оружие Легиона как Космодесантник и −10 с оружием не под Легион — Черта выдаёт возможность weapons.legion (этот ключ сам не выдаётся). НЕ сделано: доводка брони Легиона «как от мутации» — подгонки брони под мутации в системе нет.",
+    label: "Оружие Легиона как Космодесантник и −10 с оружием не под Легион — Черта выдаёт возможность weapons.legion (этот ключ сам не выдаётся). Доводка брони Легиона «как от мутации» — Мастерская, проект Крафта брони с галочкой «Доводка под мутанта» (+10, свой Банк; constants/craft.mjs::mutantFitBaseBank, wdbc-x1nz.4); сама Черта её не запускает.",
     source: "Hulking / Громила (Легион)",
     reader: "через weapons.legion — module/rules/legion-fit.mjs"
   },
@@ -6488,7 +6488,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.gerold.livingBanner": {
     label: "Воплощение банды. В свой Ход может потратить Очко Бесчестия, чтобы пройти тест Command(F)+10 или Charm(F)+10 и восстановить одно ранее потраче…",
-    source: "Living Banner / Живой Стяг", reader: "module/combat/living-banner.mjs::useLivingBanner — кнопка Черты: Очко Бесчестия, Command/Charm (F)+10, +1 Очко видящим соратникам (ГМ-реле livingBannerBoon). Слух и геральдика — вручную"
+    source: "Living Banner / Живой Стяг", reader: "module/combat/living-banner.mjs::useLivingBanner — кнопка Черты: Очко Бесчестия, Command/Charm (F)+10, +1 Очко соратникам, что видят или слышат Герольда (rules/perception.mjs: зрение со стенами/светом/дымом, голос 30 м сквозь стены, не глушащие звук; ГМ-реле livingBannerBoon). Геральдика — вручную"
   },
   "trait.elitnyeArhetipy.gerold.noblesseOblige": {
     label: "Высокое доверие налагает большую ответственность — его провалы навлекают позор на всю банду.",
@@ -7580,6 +7580,11 @@ export const CAPABILITIES = {
     label: "Не может пользоваться авточувствами и визорами: Авточувства, Y-Визор, Фото-Визор, Охотничий Визор, Сонарный Визор, Визоры Рейнджера не действуют",
     source: "Majestic Horns / Зрящие Рога (Общие мутации, d100 65…67, субмутация 9); Eyes of Chaos / Глаза Хаоса (субмутация 1); Eye Stalks / Глаза-Стебельки",
     reader: "module/rules/vision-aids.mjs::visionAidsBlocked — module/apps/effects.mjs::isItemActive (вещь из перечня не активна, пока мутация на акторе)"
+  },
+  "mutation.majesticHorns.hornSight": {
+    label: "Видит рогами как перископами: круговой обзор (обзор назад) — атака со спины по нему не Незримая, враги позади считаются видимыми (свидетели, Живой Стяг). Выглянуть рогами за угол/над окопом — описывает игрок, ГМ решает",
+    source: "Majestic Horns / Зрящие Рога (Общие мутации, d100 65…67, субмутация 9)",
+    reader: "module/rules/vision-aids.mjs::hornSightActive — module/rules/perception.mjs::effectiveSightAngle ← combat/facing.mjs::isOutsideDefenderView, rules/perception.mjs::perceives (wdbc-1rno.10)"
   },
   "mutation.majesticHorns.reinforced": {
     label: "Удар головой меняет профиль: +3 Dmg и кубик урона d10 (если он не лучше)",

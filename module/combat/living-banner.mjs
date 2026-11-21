@@ -4,7 +4,8 @@
 //  «▶ Запустить» Черты зовёт useLivingBanner: −1 Очко Бесчестия, тест
 //  Command(F)+10 или Charm(F)+10 (берётся лучший из двух Навыков), при Успехе
 //  каждый соратник, видящий Герольда (токены той же стороны в его поле зрения),
-//  возвращает одно потраченное Очко. Слух система не моделирует — только зрение.
+//  возвращает одно потраченное Очко. Видит или слышит — rules/perception.mjs
+//  (зрение со стенами/светом/дымом; голос на 30 м, если стена не глушит звук).
 //  Чужим акторам Очко пишет ГМ (gm-relay.mjs, livingBannerBoon).
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -12,7 +13,8 @@ import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
-import { tokensThatCanSee } from "../rules/vision-target.mjs";
+import { perceives, hears } from "../rules/perception.mjs";
+import { liveCtx } from "./perception-scene.mjs";
 import { actorHasInfamyPoint, actorInfamyPath, spendFromInfamyPool, actorInfamyValue, actorInfamyMax } from "../apps/infamy-points.mjs";
 import { hasLivingBanner, livingBannerSkill, livingBannerRecipients, LIVING_BANNER_MOD } from "../rules/living-banner.mjs";
 import { writeToTarget } from "./gm-relay.mjs";
@@ -24,16 +26,22 @@ function alliesWhoSee(actor) {
   const side = token.document?.disposition ?? token.disposition;
   const candidates = canvas.tokens.placeables.filter(t => t.actor && t.actor !== actor
     && (t.document?.disposition ?? t.disposition) === side);
-  // Видимость считается по TokenDocument (sight, width/height в клетках) и scene.grid:
+  // Видимость и слышимость считаются по TokenDocument (sight, width/height в клетках) и scene.grid:
   // плейсмент Token этих полей в нужном виде не несёт, и замер молча отвечал «не видит».
+  // Стены, свет, дым и стены звука — живая сцена (combat/perception-scene.mjs::liveCtx).
   const seen = alliesSeeingDocs(token.document ?? token, candidates.map(t => t.document ?? t),
-    canvas.scene?.grid ?? canvas.grid);
+    canvas.scene?.grid ?? canvas.grid, liveCtx());
   return [...new Map(seen.filter(d => d.actor).map(d => [d.actor.uuid, d.actor])).values()];
 }
 
-/** Документы-кандидаты, которым виден документ Герольда (чистая функция для тестов). */
-export function alliesSeeingDocs(heraldDoc, candidateDocs, grid) {
-  return tokensThatCanSee(heraldDoc, candidateDocs, grid);
+/**
+ * Документы-кандидаты, которые видят ИЛИ слышат Герольда (книга: «соратникам, что
+ * могут его видеть или слышать»; rules/perception.mjs). `ctx` — функции живой сцены,
+ * без него — дальность и сектор обзора плюс голос на 30 м (чистая функция для тестов).
+ */
+export function alliesSeeingDocs(heraldDoc, candidateDocs, grid, ctx = {}) {
+  return (candidateDocs ?? []).filter(d => d && d.id !== heraldDoc?.id
+    && (perceives(d, heraldDoc, grid, ctx).seen || hears(d, heraldDoc, grid, ctx)));
 }
 
 export async function useLivingBanner(actor) {
@@ -59,7 +67,7 @@ export async function useLivingBanner(actor) {
     }
     outcome = `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. ${done.length
       ? `+1 Очко Бесчестия: ${done.map(esc).join(", ")}.`
-      : "Соратников с потраченными Очками в поле зрения нет."}</span>`;
+      : "Соратников с потраченными Очками, что видят или слышат Герольда, нет."}</span>`;
   } else {
     outcome = `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Очко Бесчестия потрачено впустую.</span>`;
   }

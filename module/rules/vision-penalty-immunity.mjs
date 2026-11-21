@@ -21,6 +21,7 @@
 
 import { itemIs } from "./item-marker.mjs";
 import { sightGrants, SIGHT_EFFECT } from "./sight-effects.mjs";
+import { visionAidBlocked } from "./vision-aids.mjs";
 
 const aimed = aiming => !!aiming && aiming !== "none";
 const shortName = item => String(item?.name ?? "").split("/").pop().trim();
@@ -30,7 +31,7 @@ export function lightPenaltyImmunityReason(actor, installedMods = [], { aiming =
   const items = [...(actor?.items ?? [])];
   const darkSight = items.find(i => itemIs(i, "trait", "trait.darkSight", "Dark Sight"));
   if (darkSight) return "Ночное Зрение";
-  const visor = items.find(i => itemIs(i, "gear", null, "Preysense Visor") && i.system?.equipped);
+  const visor = items.find(i => itemIs(i, "gear", null, "Preysense Visor") && i.system?.equipped && !visionAidBlocked(i));
   if (visor) return shortName(visor);
   if (aimed(aiming)) {
     const scope = sightGrants(installedMods, SIGHT_EFFECT.lowLight);

@@ -927,6 +927,21 @@
               }
             },
             {
+              "id": "majestichorns-9-horn-sight",
+              "kind": "capability",
+              "capabilityKey": "mutation.majesticHorns.hornSight",
+              "capabilityMode": "flag",
+              "label": "Зрящие Рога (субмутация 9): видит рогами как перископами — круговой обзор, со спины не Незримо",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "9"
+                ],
+                "negateSub": false
+              }
+            },
+            {
               "id": "majestichorns-10-crown",
               "kind": "integralAttack",
               "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.CCDdNzbbq0tmRBPM",

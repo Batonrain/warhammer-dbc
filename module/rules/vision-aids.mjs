@@ -73,6 +73,17 @@ function mutationCapActive(actor, key) {
 /** На акторе есть не подавленная мутация, запрещающая авточувства и визоры (субмутация совпадает). */
 export const visionAidsBlocked = actor => mutationCapActive(actor, VISION_AIDS_BLOCKED_CAP);
 
+/**
+ * Зрящие Рога (Majestic Horns, субмутация 9): «видит сквозь рога как через
+ * перископы» — обзор назад и за угол. Система читает это как круговой сектор
+ * обзора (rules/perception.mjs::effectiveSightAngle, combat/facing.mjs —
+ * атака со спины по нему не Незримая). Отдельная возможность, а не
+ * VISION_AIDS_BLOCKED_CAP: тот же запрет визоров несут Глаза Хаоса 1 и
+ * Глаза-Стебельки, у которых перископа нет.
+ */
+export const HORN_SIGHT_CAP = "mutation.majesticHorns.hornSight";
+export const hornSightActive = actor => mutationCapActive(actor, HORN_SIGHT_CAP);
+
 /** Ретинальный дисплей (отдельный или встроенный) пользы не даёт. */
 export const retinalDisplayBlocked = actor => mutationCapActive(actor, RETINAL_DISPLAY_BLOCKED_CAP);
 
