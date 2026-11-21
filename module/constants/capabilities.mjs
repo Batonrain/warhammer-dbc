@@ -4688,15 +4688,15 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Когнитэ — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kognite.corruptedCall": {
     label: "Позволяет программировать пленных Астропатов для подмены имперских сообщений. При Гипно-Программировании Астропата может потратить 3 Успеха,",
-    source: "Corrupted Call / Искаженный Зов", reader: ""
+    source: "Corrupted Call / Искаженный Зов", reader: "module/combat/cognitae.mjs useHypnoProgramming (галочка Астропат, 3 Успеха)"
   },
   "elite.elitnyeArhetipy.kognite.perfectMask": {
     label: "Комбинацией технологии и колдовства создаёт сложную обвязку, проецирующую ложный образ носителя в реальность.",
-    source: "Perfect Mask / Совершенная Маска", reader: ""
+    source: "Perfect Mask / Совершенная Маска", reader: "module/combat/cognitae.mjs usePerfectMask / calibratePerfectMask"
   },
   "elite.elitnyeArhetipy.kognite.proxyVeil": {
     label: "Глубоким гипнозом сооружает подставную личность в сознании союзника. Потратив Очко Бесчестия и 4 часа работы,",
-    source: "Proxy Veil / Замещающая Вуаль", reader: ""
+    source: "Proxy Veil / Замещающая Вуаль", reader: "module/combat/cognitae.mjs useProxyVeil"
   },
   "elite.elitnyeArhetipy.kognite.teacher": {
     label: "Талант в обучении, натаскивающий компетентных агентов за считанные дни. Проводит сеанс обучения за 1 час вместо 1 смены, удваивая максимум своих Успехов в обучении, и может одновременно обучать до 10×I.b учеников вместо I.b. Не получает Усталости и штрафов за монотонную работу за последовательные сессии. NPC могут проходить до 2×I.b курсов обучения у него в месяц (на игровых персонажей и Миньонов бонус не распространяется). Реализовано всё, КРОМЕ «сеанс за 1 час вместо смены» — тот же класс допущения на слово стола, что у Медленной Смены Крафта: игровое время в Мастерской нигде не тикает.",
@@ -4705,7 +4705,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.kognite.thousandPapercuts": {
     label: "Способны поставить на службу имперскую бюрократию. Успешно внедрившись в местный Администратум (может занять целую миссию),",
-    source: "Thousand Papercuts / Тысяча Бумажных Порезов", reader: ""
+    source: "Thousand Papercuts / Тысяча Бумажных Порезов", reader: "module/combat/cognitae.mjs useThousandPapercuts"
   },
   // ── Элитные_архетипы\Коготь_Варпа — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.kogotVarpa.rift": {
@@ -5950,7 +5950,7 @@ export const CAPABILITIES = {
   },
   "trait.ritualOfEightSpokes": {
     label: "Каждую неделю получает видение с требованием определённого жертвоприношения («отец 5 детей», «предавший лучшего друга» и т.п.).",
-    source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Ritual of Eight Spokes / Ритуал Восьми Спиц", reader: "module/combat/cognitae.mjs eightSpokesVision / eightSpokesSacrifice; rules/cognitae-talents.mjs eightSpokesPenalty — штраф в тестах кнопок Когнитэ"
   },
   "trait.runt": {
     label: "−4 к максимуму Ран; винтовки — как длинные; двуручное стрелковое — только двумя руками; Compact снимает штрафы.",
@@ -6611,7 +6611,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Когнитэ — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.kognite.hypnoProgramming": {
     label: "Владеют невероятно эффективными техниками гипноза. Получают уникальный Навык Гипно-Программирование(W)+0 и могут развивать его как обычный Н…",
-    source: "Hypno-Programming / Гипно-Программирование", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Hypno-Programming / Гипно-Программирование", reader: "module/combat/cognitae.mjs useHypnoProgramming (встречный тест, Каталептический Узел −30, копилка 10×W.b) / setHypnoAdvance"
   },
   "trait.elitnyeArhetipy.kognite.veilOfLies": {
     label: "Гипноиндоктринация превращает разум в многослойный лабиринт из сконструированных личностей, в сердце которого скрыто ядро настоящих мыслей.",

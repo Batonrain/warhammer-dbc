@@ -8,6 +8,7 @@
 import { useFeveredSpeed, devourCorpse, useFeverStance, useTrueRotRad, cutWormPouch, eatWormPouch, showFeverWallet } from "../plague-monk.mjs";
 import { releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty } from "../worm-king.mjs";
 import { useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite } from "../flesh-sculptor.mjs";
+import { useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts } from "../cognitae.mjs";
 import { useGrandAgitator, useHail, useLivingTide, useMobJustice, useZealousMasses } from "../hierophant.mjs";
 
 export const API = {
@@ -18,5 +19,7 @@ export const API = {
   // Король Червей
   releaseSwarm, markWithMaggot, pupateShellGuard, useWormwalker, useHandOfPlenty,
   // Скульптор Плоти
-  useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite
+  useFleshmolding, useInsanelyMalleable, malleableHour, malleableRedistribute, eidolonAbsorb, eidolonHeal, makeSculpturite, redistributeSculpturite,
+  // Когнитэ
+  useHypnoProgramming, setHypnoAdvance, eightSpokesVision, eightSpokesSacrifice, usePerfectMask, calibratePerfectMask, useProxyVeil, useThousandPapercuts
 };
