@@ -8459,9 +8459,9 @@ export const CAPABILITIES = {
     reader: "module/combat/rubric-sorcerer.mjs::useInfernalShells (кнопка вкладки БОЙ) — Sahara 1-54b9"
   },
   "ability.nexusOfSouls": {
-    label: "Узы Душ: связанный Голем действует в Инициативу колдуна и служит его Псайбером (роль Псайбера не автоматизирована)",
+    label: "Узы Душ: связанный Голем действует в Инициативу колдуна и служит его Псайбером — носителем манифестации колдуна (rules/psychic-vessel.mjs; чувства и телепатия — на столе)",
     source: "Nexus Of Souls / Узы Душ (packs-src/talents/Элитные_архетипы)",
-    reader: "module/combat/rubric-sorcerer.mjs::bindNexus, ::syncNexusInitiatives (module/hooks.mjs, createCombatant/updateCombatant) — Sahara 1-54b9"
+    reader: "module/combat/rubric-sorcerer.mjs::bindNexus (+ setPsychicVessel), ::syncNexusInitiatives (module/hooks.mjs, createCombatant/updateCombatant) — Sahara 1-54b9, psyber"
   },
   "ability.psychicEcho": {
     label: "Психическое Эхо: раз в Ход после успешной манифестации Голем автоматически проходит следующий тест Регенерации и лечит вдвое больше",

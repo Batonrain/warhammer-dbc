@@ -51,6 +51,7 @@ import { spendInfamyPoint } from "./noise-marine.mjs";
 import { actorHasInfamyPoint } from "../apps/infamy-points.mjs";
 import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { combatOfActor } from "./actor-combat.mjs";
+import { setPsychicVessel } from "../rules/psychic-vessel.mjs";
 
 const NS = "warhammer-dbc";
 const ICON = () => rollIcon("warp", "#7f5cff");
@@ -414,9 +415,12 @@ export async function bindNexus(master) {
   const golem = await actorOfUuid(uuid);
   if (!golem) return null;
   await golem.setFlag(NS, GOLEM_FLAG, { ...golem.getFlag(NS, GOLEM_FLAG), nexus: true });
+  // «…является его Псайбером»: Голем — носитель манифестации колдуна (Путь «Псайбер-Фамильяр»,
+  // тот же примитив, что у Черты Psyber — apps/psyber-link.mjs). Последний связанный Голем заменяет прежнего.
+  await setPsychicVessel(master, golem, { label: golem.name });
   await postTestCard(master, {
     icon: ICON(), title: `Узы Душ — ${esc(master.name)}`,
-    lines: [`<div class="roll-threshold">${esc(golem.name)} действует в Инициативу ${esc(master.name)} и служит его Псайбером (связь и манифестация через Псайбера ведутся вручную).</div>`]
+    lines: [`<div class="roll-threshold">${esc(golem.name)} действует в Инициативу ${esc(master.name)} и служит его Псайбером: в окне манифестации по Пути «Псайбер-Фамильяр» носителем назван ${esc(golem.name)}. Чувства и телепатия — на столе.</div>`]
   }, { sound: false });
   await syncNexusInitiatives(combatOfActor(master));
   return golem;

@@ -492,6 +492,8 @@ describe("Узы Душ", () => {
     prompt("Actor.g1");
     await bindNexus(a);
     expect(g.store.rubricGolem.nexus).toBe(true);
+    // «…является его Псайбером»: Голем становится носителем манифестации колдуна (rules/psychic-vessel.mjs).
+    expect(a.store.psychicVessel).toEqual({ uuid: "Actor.g1", name: "g1" });
     expect(await bindNexus(a)).toBeNull();
     expect(captured.warnings.join("\n")).toContain("Узы Душ");
   });
