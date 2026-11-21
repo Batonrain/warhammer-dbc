@@ -1,3 +1,4 @@
+import { hasOverheats, resolveOverheat } from "./overheats.mjs";
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { reliableSoldierChoice } from "../apps/reliable-soldier.mjs";
 import { RELIABLE_SOLDIER_CAP, reliableSoldierBonus } from "../rules/reliable-soldier.mjs";
@@ -1065,6 +1066,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // метательное оружие не Заклинивает» — исключено из общего механизма
   // Заклинивания по Надёжности целиком, не только на натуральном крите.
   const jammed   = !isMelee && !wp.spray && sys.weaponClass !== "thrown" && jamAt !== null && rv >= jamAt;
+  // Перегрев (core, «Особые Свойства»): «вместо Клина наносит урон по самому
+  // стрелку, в руку, что держит его» — оружие не клинит, патроны не портятся.
+  if (jammed && hasOverheats(wProps)) {
+    await resolveOverheat(actor, item, { damage: effDamage, penetration: effPen0, wp, rv });
+    return;
+  }
   if (jammed) {
     // wdbc-vwfk: раньше заклинивание было только строкой в чате, без
     // последствий — теперь пишет реальное состояние предмета (weaponClass
