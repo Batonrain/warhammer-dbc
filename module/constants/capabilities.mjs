@@ -6135,7 +6135,7 @@ export const CAPABILITIES = {
   },
   "trait.warpGifted": {
     label: "Врождённая психосила.",
-    source: "Warp Gifted / Одарённый Варпом", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Warp Gifted / Одарённый Варпом", reader: "module/combat/warp-gifted.mjs::useWarpGifted (кнопка Черты: психосила, Характеристика теста W или другая по решению ГМа, подтверждение без Daemonic) → module/sheets/tabs/psychic.mjs::executePsychotest (opts.castChar, opts.warpGifted); rules/warp-gifted.mjs"
   },
   "trait.warpInstability": {
     label: "Может быть изгнан в Варп при уроне.",

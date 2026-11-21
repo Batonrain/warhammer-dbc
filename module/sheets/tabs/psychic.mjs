@@ -817,7 +817,8 @@ export async function executePsychotest(actor, item, opts) {
   // psychic-vessel.mjs: Spirit Talk на время захвата, либо связанный
   // фамильяр), заметка называет его по имени вместо общей формулировки.
   const vessel   = PATH === PSY_PATHS.familiar ? getPsychicVessel(actor) : null;
-  const cast     = resolvePsyCastAttr(actor, sys);
+  // Одарённый Варпом (rules/warp-gifted.mjs): Характеристику теста назначает окно Черты (W или другая по решению ГМа).
+  const cast     = resolvePsyCastAttr(actor, opts.castChar ? { ...sys, testChar: opts.castChar } : sys);
   const charVal  = cast.val;
   const charAbbr = cast.abbr;
 
