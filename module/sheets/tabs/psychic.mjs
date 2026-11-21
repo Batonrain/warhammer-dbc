@@ -78,6 +78,7 @@ import { warpLockButtonsHtml, applyWarpLock, resetWarpLockHour, clearWarpLockMar
 // Элитные архетипы-псайкеры (Архимаг, Дикий Псайкер, Чернокнижник, Кенетаи…): точки окна манифестации.
 import { eliteManifestGate, eliteManifestEpr, eliteManifestRoll, eliteExtraPeril, eliteManifestAfter } from "../../combat/psyker-elite-hooks.mjs";
 import { innerEyeActiveNow, innerEyePsyniscience } from "../../combat/archmagus.mjs";
+import { highRitualistKey } from "../../rules/warlock-talents.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -85,7 +86,8 @@ import { innerEyeActiveNow, innerEyePsyniscience } from "../../combat/archmagus.
  * Иначе — характеристика (WP/Int/Per/Fel).
  */
 export function resolvePsyCastAttr(actor, sys) {
-  let key = sys.testChar || "wp";
+  // Высший Ритуалист (Чернокнижник): I вместо W или P, если I выше.
+  let key = highRitualistKey(actor, sys.testChar || "wp");
   if (sys.discipline === "divination" && (key === "per" || !sys.testChar)) key = "psyniscience";
   if (key === "psyniscience") {
     return { key, val: actor.system.skills?.psyniscience?.total ?? -20, abbr: "Псинаука" };
@@ -1096,7 +1098,7 @@ export async function executePsychotest(actor, item, opts) {
     deg = Math.max(1, mPR);
   }
   // Варп-Танцор (Чернокнижник): второй бросок A, берётся худший.
-  ({ success, deg } = await eliteManifestRoll(actor, item, opts, { success, deg, rv }, talentLines, allRolls));
+  ({ success, deg } = await eliteManifestRoll(actor, item, opts, { success, deg, rv, threshold, charVal }, talentLines, allRolls));
 
   // ── Будет ли Феномен — решается СРАЗУ после психотеста ────────────────────
   // Раньше определялось ниже, прямо перед броском Феномена. Вынесено сюда

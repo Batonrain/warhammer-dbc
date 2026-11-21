@@ -5321,31 +5321,31 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Чернокнижник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chernoknizhnik.cannibalMage": {
     label: "Ритуальный каннибализм позволяет поглотить остатки души жертвы для усиления манифестаций. За полное действие может съесть глаз, кусок мозга,",
-    source: "Cannibal Mage / Маг-Каннибал", reader: ""
+    source: "Cannibal Mage / Маг-Каннибал", reader: "module/combat/warlock.mjs::useCannibalMage / warlockAfterManifest; rules/warlock-talents.mjs::darkArtsGate"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.finalEcho": {
     label: "Растягивает энергию жертвоприношения, придавая колдовству гибкость истинного псайкера. После манифестации психосилы с Путём Жертва,",
-    source: "Final Echo / Последнее Эхо", reader: ""
+    source: "Final Echo / Последнее Эхо", reader: "module/combat/warlock.mjs::warlockAfterManifest (Путь «Жертва» → darkArtsFree)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.highRitualist": {
     label: "Глубокое понимание оккультных механизмов позволяет подчинять Эмпиреи силой чистого разума. Может использовать I вместо W и P в психотестах.",
-    source: "High Ritualist / Высший Ритуалист", reader: ""
+    source: "High Ritualist / Высший Ритуалист", reader: "module/rules/warlock-talents.mjs::highRitualistKey → sheets/tabs/psychic.mjs::resolvePsyCastAttr"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.interpreter": {
     label: "Способен освоить даже экзотические психосилы. Может обучаться редким дисциплинам у псайкеров и при обучении у псайкеров получает Преимущество на все тесты Транскрипции. НЕ реализовано: тестов «Транскрипции» в системе нет вовсе (grep по всему module/ — ни одного вызова, только текст здесь и в elite-archetypes.mjs) — Преимущество нечему давать, пока эта механика (вероятно, копирование психосил) не построена отдельно. См. bd «Разобрать».",
-    source: "Interpreter / Интерпретатор", reader: ""
+    source: "Interpreter / Интерпретатор", reader: "module/combat/warlock.mjs::useTranscription (Преимущество)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.listener": {
     label: "Частично трансмутирует свою душу, открывая её течениям Варпа. Может использовать Пси-Чутьё как псайкер.",
-    source: "Listener / Слушающий", reader: ""
+    source: "Listener / Слушающий", reader: "module/combat/warlock.mjs::useListener (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.silentStudent": {
     label: "Способен собрать эхо психосилы в формулу для своих инкантаций. После 8 ч изучения места, где недавно проходила манифестация психосилы,",
-    source: "Silent Student / Тихий Ученик", reader: ""
+    source: "Silent Student / Тихий Ученик", reader: "module/combat/warlock.mjs::useSilentStudent (кнопка Таланта)"
   },
   "elite.elitnyeArhetipy.chernoknizhnik.warpDancer": {
     label: "Позволяет фокусировать энергии Варпа сложными пассами и стойками, подобно боевым искусствам.",
-    source: "Warp Dancer / Варп-Танцор", reader: ""
+    source: "Warp Dancer / Варп-Танцор", reader: "module/rules/warlock-talents.mjs::darkArtsGate/warpDanceOutcome → combat/psyker-elite-hooks.mjs::eliteManifestRoll"
   },
   // ── Элитные_архетипы\Чумной_Десантник — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.chumnoyDesantnik.bileSpit": {

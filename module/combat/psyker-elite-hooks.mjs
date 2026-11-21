@@ -24,12 +24,20 @@ import { getPeril } from "../constants/psyker-tables.mjs";
 import { takePendingManifest } from "./psyker-elite-hooks-state.mjs";
 import { wizardStaffTestBonus } from "./archmagus.mjs";
 import { hasMagusSupreme } from "../rules/archmagus-talents.mjs";
+import { darkArtsGate, warpDanceOutcome } from "../rules/warlock-talents.mjs";
+import { warlockAfterManifest } from "./warlock.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
 
 const small = (html, color = "") => `<div class="roll-threshold" style="font-size:0.85em;${color ? `color:${color};` : ""}">${html}</div>`;
 
 /** Отказ манифестации (строка причины) или "". */
 export function eliteManifestGate(actor, item, opts, { mPR = 0 } = {}) {
-  void actor; void item; void opts; void mPR;
+  void mPR;
+  // Тёмные Искусства (Чернокнижник): только Пути Силы и Обычный режим; Варп-Танцор —
+  // без Пути и реакции двумя бросками (метка opts.warpDance для eliteManifestRoll).
+  const g = darkArtsGate(actor, { path: opts.path || "", mode: opts.mode || "normal", action: item?.system?.action });
+  if (!g.ok) return g.reason;
+  opts.warpDance = g.warpDance;
   return "";
 }
 
@@ -66,8 +74,16 @@ export async function eliteManifestEpr(actor, item, opts, ePR, lines) {
 
 /** После броска психотеста: возможно, другой исход. */
 export async function eliteManifestRoll(actor, item, opts, res, lines, rolls) {
-  void item; void opts; void lines; void rolls; void actor;
-  return res;
+  if (!opts.warpDance) return { success: res.success, deg: res.deg };
+  // Варп-Танцор: второй бросок — A вместо Характеристики силы, те же поправки Порога.
+  const ag = Number(actor?.system?.characteristics?.ag?.total) || 0;
+  const agThreshold = (Number(res.threshold) || 0) - (Number(res.charVal) || 0) + ag;
+  const roll = await new Roll("1d100").evaluate();
+  rolls.push(roll);
+  const agRes = testOutcome(roll.total, agThreshold);
+  const out = warpDanceOutcome({ success: res.success, deg: res.deg }, agRes);
+  lines.push(small(`Варп-Танцор: сила получает тип <b>Физическое</b>; второй бросок A — ${roll.total} против ${agThreshold}: ${agRes.success ? "успех" : "провал"} (${agRes.deg}). Берётся худший: <b>${out.success ? `успех, ${out.deg}` : `провал, ${out.deg}`}</b>. Дубли на A Феноменов не вызывают.`));
+  return out;
 }
 
 /** Прорыв сверх обычного (HTML) или "". */
@@ -84,8 +100,10 @@ export async function eliteExtraPeril(actor, opts, allRolls) {
 }
 
 /** Строки карточки после исхода (и побочные метки). */
-export async function eliteManifestAfter(actor, item, opts, { success = false, phenomena = false } = {}) {
+export async function eliteManifestAfter(actor, item, opts, { success = false, phenomena = false, perilTriggered = false } = {}) {
   const out = [];
+  // Чернокнижник: Последнее Эхо после Жертвы, Маг-Каннибал прерывается Феноменом.
+  out.push(...await warlockAfterManifest(actor, { path: opts.path || "", phenomena, perilTriggered, reroll: !!opts.reroll }));
   if (phenomena && hasMagusSupreme(actor)) {
     out.push(small("Высший Магус: этот Феномен (не Прорыв) <b>не действует на самого Архимага</b>, на остальных — как обычно. Исключить союзников (1 Очко Бесчестия) или перенести Прорыв (3 Очка) — кнопкой Черты.", "#5a4a30"));
   }

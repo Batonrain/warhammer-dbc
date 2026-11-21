@@ -176,6 +176,7 @@ import { conditionExpiryLine, postConditionCard, setBurningDamageFormula, rollCo
 import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
+import { processWarlockTurnStart } from "./combat/warlock.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
          processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
@@ -5708,6 +5709,8 @@ function _attachFateContextMenu(message, html) {
       await processSigilliteRunesTurnStart(nextCombatant.actor);
       // Щит Цепей (Дикий Псайкер): регенерация тPR/бPR и метки Талантов «до следующего Хода».
       await processWildPsykerTurnStart(nextCombatant.actor);
+      // Тёмные Искусства (Чернокнижник): счётчик «как обычный псайкер» Мага-Каннибала / Последнего Эха.
+      await processWarlockTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.
