@@ -133,6 +133,8 @@ export function situationalMods(v) {
   // rangedCore.core.bulgingBiceps) — снимает штраф «Тяжёлое оружие: без
   // Закрепления» целиком, см. ниже у этой строки.
   const bulgingBicepsActive = hasRuleFlag(actor, "rangedCore.core.bulgingBiceps");
+  // Гиро-стабилизация: свойство оружия или гироскопы Ординатора с оружием техники в руках (решение 21.11.2026).
+  const gyro = !!wp.gyroStabilized || ordinatorVehicleGun(actor, weapon);
   // Таланты глав «Рукопашные»/«Стрелок» (rules/damage-talents.mjs; Sahara
   // 3-8dc5/3-5fbf): Надёжная Стойка и Гурьбой — строки рукопашных модификаторов,
   // Выбор Целей — строка стрелковых ниже. Имя ИЛИ ключ (hasAbility): персонаж, купивший
@@ -658,19 +660,16 @@ export function situationalMods(v) {
     // тяжёлого оружия без Закрепления» — снимает именно эту строку целиком,
     // «стрельба на ходу» ниже книга с этим Талантом не связывает.
     { label: "Тяжёлое оружие: без Закрепления",
-      value: bulgingBicepsActive ? 0 : (wp.gyroStabilized ? -10 : -30),
+      value: bulgingBicepsActive ? 0 : (gyro ? -10 : -30),
       immune: bulgingBicepsActive,
       autoCheck: !bulgingBicepsActive && weapon?.system?.weaponClass === "heavy" && !isBraced(actor, weapon),
       note: bulgingBicepsActive ? "снято: Bulging Biceps/Бугрящиеся Мышцы"
-          : wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
+          : gyro ? (wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10" : "Ординатор (гироскопы): –30 снижено до –10")
           : (weapon?.system?.weaponClass === "heavy" && isBraced(actor, weapon) ? "Закреплено" : undefined) },
-    // Ординатор с оружием техники в руках «игнорирует эффекты, что нивелируют
-    // штрафы за стрельбу из тяжёлого на ходу» — Гиро-стаб. этот штраф не снимает.
-    ordinatorVehicleGun(actor, weapon)
-      ? { label: "Тяжёлое оружие: стрельба на ходу", value: -10,
-          note: wp.gyroStabilized ? "Ординатор: оружие техники — Гиро-стаб. штраф не снимает" : "Ординатор: оружие техники" }
-      : { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
-          note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
+    // Ординатор с оружием техники в руках: гироскопы работают как Гиро-
+    // стабилизация (решение Сергея 21.11.2026) — переменная gyro выше.
+    { label: "Тяжёлое оружие: стрельба на ходу", value: gyro ? 0 : -10, immune: gyro,
+      note: gyro ? (wp.gyroStabilized ? "снято: Гиро-стаб." : "снято: Ординатор (гироскопы)") : undefined }
   ];
 
   // Размашистый Танец у ЦЕЛИ (глава 3): атакующий, которого он закружил, бьёт со
