@@ -4,6 +4,7 @@
 // же стиле, что Уклонение/Парирование и Применение урона для персонажей.
 
 import { aceOperatorButtonHtml } from "./ace-operator.mjs";
+import { paybackOfferHtml } from "./payback.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { pedalActive, pedalOf } from "../rules/pedal-to-metal.mjs";
 import { defenceRerollsFor, defenceRerollSectionHtml, defenceTestFlagsFor, jinkApplies } from "../rules/defence-reroll.mjs";
@@ -581,6 +582,15 @@ export async function applyDamageToVehicle(actor, damageData) {
     </div>`;
   }
 
+  // Расплата (Талант Дредноутов, combat/payback.mjs): непоглощённый урон по самому Дредноуту от
+  // Ненавистного — кнопка ответной атаки пилоту. Ветка урона по Технике возвращается из
+  // damage.mjs раньше общего вызова, поэтому предложение собирается здесь (живая проверка pr-584-76b3).
+  let paybackHtml = "";
+  if (net > 0 && damageData.attackerUuid) {
+    const src = await fromUuid(damageData.attackerUuid).catch(() => null);
+    paybackHtml = paybackOfferHtml(actor, src?.actor ?? src, net);
+  }
+
   const dtLabel = DAMAGE_TYPES[damageType] || damageType;
   // Крит-эффект по глубине отрицательной Структуры и выбранной части машины.
   const critLine = gotCrit ? (() => {
@@ -630,7 +640,8 @@ export async function applyDamageToVehicle(actor, damageData) {
         </div>`,
       critLine,
       welderLine,
-      pilotLine
+      pilotLine,
+      paybackHtml
     ]
   }, { speaker: { alias: "Система" }, sound: false });
 }

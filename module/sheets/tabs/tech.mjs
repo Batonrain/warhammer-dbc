@@ -45,6 +45,7 @@ import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist, planCoilTransf
          CLOUD_COGNITION_TURN_FLAG, MOTIVE_EUCHARIST_TURN_FLAG, CLOUD_COGNITION_RECEIVED_FLAG }
   from "../../rules/technomystic-resources.mjs";
 import { coilsTechBonus } from "../../rules/electropriest.mjs";
+import { techPowerPenetration } from "../../rules/tech-power-pen.mjs";
 import { voltaicConfluenceReroll } from "../../combat/electropriest.mjs";
 import { corruptedNoosphereLord, corruptedNoosphereDrain, CORRUPTED_NOOSPHERE_PROCESS } from "../../combat/lord-discordant.mjs";
 
@@ -122,7 +123,8 @@ export async function activateTechMiracle(actor, item) {
   const coilsTech = coilsTechBonus(actor, item);
   // Омнимнезис добавляет к цене ⚙ переброса (ниже) — поэтому let.
   let   cogCost  = baseCogCost * (noosphereLord ? 2 : 1);
-  let   enCost   = sys.energyCost || 0;
+  // Цена активации Техночуда — Когниция И Энергия («2К+3Э»): Ноосфера удваивает обе.
+  let   enCost   = (sys.energyCost || 0) * (noosphereLord ? 2 : 1);
   const cog      = actor.system.cognition || { value: 0, max: 0 };
   const en       = actor.system.energy || { value: 0, max: 0 };
 
@@ -361,7 +363,8 @@ export async function activateTechMiracle(actor, item) {
       const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType, hitLocation: "Торс", attacker: actor });
       if (ext.exRoll) allRolls.push(ext.exRoll);
       const dt  = DAMAGE_TYPES[sys.damageType] || sys.damageType;
-      const pen = (sys.penetration || 0) + coilsTech.pen + malagra.pen;
+      // Пробитие числом и формулой («Pen ½I.b»), с той же поправкой I.b, что у урона (Железо, Совершенная Катушка).
+      const pen = techPowerPenetration(sys, chars, actor.system.corruptionBonus ?? 0) + coilsTech.pen + malagra.pen;
       const extStr = ext.hasExtreme ? `
           <div class="roll-extreme-block">
             <b>Экстремальный урон</b> · d5: ${ext.extremeLevel}

@@ -549,7 +549,7 @@ const TYPES = {
       cognitionCost: 1, energyCost: 0, sustainCost: 0, sustainAction: "free",
       testSkill: "techUse", testMod: 0, action: "full", sustained: false,
       compiled: false, range: "", damage: "", damageType: "energy", damageSubtype: "",
-      penetration: 0, weaponProps: [], effect: "", harmful: false,
+      penetration: 0, penetrationFormula: "", weaponProps: [], effect: "", harmful: false,
       effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] },
       bookSource: ""
     },

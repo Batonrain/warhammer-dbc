@@ -33,3 +33,8 @@ export function pedalSpdBonus(vehicle, combat = globalThis.game?.combat) {
   const mark = pedalOf(vehicle);
   return pedalActive(mark, combat) ? Math.max(0, Number(mark.bonus) || 0) : 0;
 }
+
+/** Метка боя истекла (или бой не тот) — её пора снять, иначе SPD держит прибавку до пересчёта листа. */
+export function pedalExpired(mark, combat) {
+  return !!mark && !!mark.combatId && !pedalActive(mark, combat);
+}
