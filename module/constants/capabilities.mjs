@@ -319,9 +319,9 @@ export const CAPABILITIES = {
   },
   // ── Пустота Парии / поле Дискорданта (сверка главы I, 26.09.2026) ───────────
   "pariah.void": {
-    label: "В Пустоте Парии: психосилы (кроме Непрямых) развеиваются, нельзя тратить Бесчестие/Судьбу и получать Порчу, сверхъестественные мутации гаснут, псайкеры −бPR×3, демоны −30",
+    label: "В Пустоте Парии: психосилы (кроме Непрямых) развеиваются, нельзя тратить Бесчестие/Судьбу и получать Порчу, сверхъестественные мутации гаснут, псайкеры −бPR×3, демоны −30; успешная Мораль перебрасывается (кроме Парий), псайкеры/демоны без автоуспехов Морали, демоны — Нестабильность каждый Ход с −W Парии, ритуалы обрываются (task-1452)",
     source: "Черта-метка «В Пустоте Парии» (выдаёт аура Парии)",
-    reader: "module/rules/null-zones.mjs (inPariahVoid) — sheets/tabs/psychic.mjs, hooks.mjs, combat/damage.mjs, apps/infamy-points.mjs, sheets/tabs/death.mjs, warhammer-dbc.mjs, apps/mechanics.mjs::syncNullZoneSuppression"
+    reader: "module/rules/null-zones.mjs (inPariahVoid) — sheets/tabs/psychic.mjs, hooks.mjs, combat/damage.mjs, apps/infamy-points.mjs, sheets/tabs/death.mjs, warhammer-dbc.mjs, apps/mechanics.mjs::syncNullZoneSuppression, rules/morale-test.mjs + combat/fear.mjs (rules/pariah-morale.mjs), rules/morale-auto.mjs, combat/warp-instability.mjs, apps/ritual-cast.mjs::castRitual"
   },
   "pariah.self": {
     label: "Сам Пария: Cor не выше 0 (и без токена на сцене)",

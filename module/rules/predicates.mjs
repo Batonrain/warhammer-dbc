@@ -123,6 +123,20 @@ export function isDaemonActor(actor) {
   return hasNamed(actor, "Daemonic");
 }
 
+/**
+ * «С другими персонажами, имеющими души»: другая Пария, машина (Черта
+ * Machine/Robot) и техника (лист машины/корабля) души не имеют — социальный
+ * штраф Парии против них не действует (предикат targetSoulless).
+ */
+const SOULLESS_TYPES = new Set(["vehicle", "ship", "starSystem", "formation"]);
+const SOULLESS_TRAITS = /^(pariah|machine|robot)\b/i;
+export function isSoullessActor(actor) {
+  if (!actor) return false;
+  if (SOULLESS_TYPES.has(actor.type)) return true;
+  return [...(actor.items ?? [])].some(i => i?.type === "trait"
+    && String(i.name ?? "").split("/").some(part => SOULLESS_TRAITS.test(part.trim())));
+}
+
 function hasNamed(actor, names) {
   const items = [...(actor?.items ?? [])];
   return list(names).every(name => items.some(
@@ -534,7 +548,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOnBerserker", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
-  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes", "targetIsPsyker"
+  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetSoulless", "targetIsAstartes", "targetIsPsyker"
 ]);
 
 /** Гравитация ниже этого значения (G) считается невесомостью/микро-гравитацией: ниже самой малой строки таблицы книги (0,2 G). */
@@ -669,6 +683,10 @@ export const PREDICATES = {
     const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
     return hit === (value !== false);
   },
+
+  // Цель — без души (другая Пария, машина, техника): социальный штраф Парии
+  // «с персонажами, имеющими души» против неё не действует (task-1452).
+  targetSoulless: (actor, ctx, value) => isSoullessActor(ctx?.targetActor) === (value !== false),
 
   // В ране актора торчит рог Чумоноса (Majestic Horns, 7, wdbc-1rno.10): метка
   // на акторе плюс неизвлечённое Проникающее в её локации — rules/lodged-horn.mjs.

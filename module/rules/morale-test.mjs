@@ -12,6 +12,8 @@ import { resolveTest } from "./resolve-test.mjs";
 import { rollD100WithReroll } from "./test-kind-widget.mjs";
 import { testOutcome } from "./roll-outcome.mjs";
 import { moraleAutoPass } from "./morale-auto.mjs";
+import { voidRerollsMorale } from "./null-zones.mjs";
+import { pariahVoidMoraleReroll } from "./pariah-morale.mjs";
 
 /**
  * @param {Actor} actor
@@ -67,7 +69,10 @@ export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null,
   const reroll = ruleReroll
     ? { mode: ruleReroll.mode, rolls: ruleReroll.rolls, label: ruleReroll.label }
     : (selfAdvantage ? { mode: "keepBest", rolls: 2, label: selfAdvantageLabel } : null);
-  const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
+  const first = await rollD100WithReroll(reroll);
+  // Пустота Парии (task-1452): успешный тест Морали перебрасывается, остаётся
+  // второй бросок — поверх любого Преимущества/Помехи выше.
+  const { roll, rv, rolls, rerollNote } = await pariahVoidMoraleReroll(first, eff, voidRerollsMorale(actor));
   const outcome = testOutcome(rv, eff);
   // Ярость (Frenzy, стр. 62), Бесстрашный и Идолопоклонник с кумиром рядом:
   // «автоматически проходит тесты Морали» — бросок остаётся на карточке, но
