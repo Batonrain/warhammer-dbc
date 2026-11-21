@@ -132,7 +132,7 @@ import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { toggleAbility } from "../apps/toggle-abilities.mjs";
-import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
+import { armorSkillModsFor } from "../combat/armor-properties.mjs";
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 import { clearHololithBriefing } from "../combat/hololith-briefing.mjs";
@@ -2364,9 +2364,11 @@ export class WarhammerCharacterSheet
   _armorSkillModsHtml(context) {
     if (context.kind !== "skill" || !context.skill) return { html: "", mods: [] };
     const groups = [];
-    for (const it of this.actor.items) {
+    const armors = [...this.actor.items];
+    for (const it of armors) {
       if (it.type !== "armor" || !it.system.equipped) continue;
-      const value = aggregateArmorSkillMods(resolveArmorProps(it))[context.skill];
+      // Stealthed молчит, если поверх надета другая броня (combat/armor-properties.mjs::armorWornOver).
+      const value = armorSkillModsFor(it, armors).mods[context.skill];
       if (value) groups.push({ item: it, value });
     }
     if (!groups.length) return { html: "", mods: [] };
