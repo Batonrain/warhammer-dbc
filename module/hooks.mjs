@@ -274,6 +274,7 @@ import { decayHaywireFields, onDiscordantFieldEntered, onDiscordantFieldLeft } f
 import { snareEscapeButtonsHtml, resolveSnareButton } from "./combat/snare.mjs";
 import { pactStageOf, pactFloorUpdates } from "./rules/pact-disorder.mjs";
 import { minionPatronUpdate } from "./rules/minion-patron.mjs";
+import { isDaemonicArmament } from "./rules/daemonic-armament.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -5965,6 +5966,16 @@ function _attachFateContextMenu(message, html) {
     if (userId === game.user?.id && changes?.system?.active === false) {
       await promptDisabledArmourForkTest(item.actor);
     }
+  });
+
+  // Демоническое Вооружение (rules/daemonic-armament.mjs): «если персонаж
+  // роняет оружие или его выбивают у него из рук, оружие растворяется» —
+  // снятая галочка «Снаряжено» (или «Хранится») и есть «покинуло руку».
+  // Удаляет только клиент, внёсший правку.
+  Hooks.on("updateItem", (item, changes, options, userId) => {
+    if (userId !== game.user?.id || !item.actor || !isDaemonicArmament(item)) return;
+    const sys = changes?.system ?? {};
+    if (sys.equipped === false || sys.stored === true) item.delete().catch(() => {});
   });
 
   // Защитное поле друкхарийской брони (wdbc-j8cn, combat/armor-field-shield.mjs):

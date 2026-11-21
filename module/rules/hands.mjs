@@ -287,13 +287,24 @@ export function maxHands(actor) {
  * прибавка, rules/pugilist-talents.mjs flyingKickAttackBonus.
  * ПРИБЛИЖЕНИЕ: книга делает доп. атаку частью ОДНОГО действия, лимит же
  * считает клики «Бросок!» — вторая атака стоит своё ОД (как у Пинка с Полёта).
- * Не реализовано: потолок «не более 2+P.b рук за Ход», независимые пары
- * (выстрел одной парой + рукопашная другой), счёт по парам для Талантов
- * группы «Два оружия».
+ * Потолок «не более 2+P.b рук за Ход» — handsUsablePerTurn ниже (55-15).
+ * Не реализовано: независимые пары (выстрел одной парой + рукопашная
+ * другой), счёт по парам для Талантов группы «Два оружия».
  */
 export function multipleArmsAttackBonus(actor) {
   if (![...(actor?.items ?? [])].some(isMultipleArmsTrait) && !brotherhoodArms(actor)) return 0;
-  return Math.max(0, Math.ceil(maxHands(actor) / 2) - 1);
+  return Math.max(0, Math.ceil(handsUsablePerTurn(actor) / 2) - 1);
+}
+
+/**
+ * «Персонаж может использовать не более 2+P.b рук за Ход» (Multiple Arms,
+ * задача Studio 55-15): доступные руки (maxHands), но не больше 2 + Бонус
+ * Восприятия. Без Характеристик (заготовка, тест) потолка нет.
+ */
+export function handsUsablePerTurn(actor) {
+  const hands = maxHands(actor);
+  const pb = Number(actor?.system?.characteristics?.per?.bonus);
+  return Number.isFinite(pb) ? Math.min(hands, 2 + Math.max(0, pb)) : hands;
 }
 
 // ── Кисть и рука (wdbc-x1nz.2.97 п.2, «Раны и Урон», стр. 43) ─────────────

@@ -112,4 +112,9 @@ describe("Многорукий: +1 Атака за каждую пару рук 
   it("лишние руки без самой Черты Атаку не добавляют", () => {
     expect(attackActionLimit(actorFor({ extraHands: 2 }))).toBe(1);
   });
+  it("не более 2+P.b рук за Ход (55-15): 6 рук при P.b 2 → 4 руки → 2 Атаки; при P.b 4 — все 6 → 3", () => {
+    expect(attackActionLimit(actorFor({ items: [arms(6)], characteristics: { per: { bonus: 2 } } }))).toBe(2);
+    expect(attackActionLimit(actorFor({ items: [arms(6)], characteristics: { per: { bonus: 4 } } }))).toBe(3);
+    expect(attackActionLimit(actorFor({ items: [arms(6)], characteristics: { per: { bonus: 0 } } }))).toBe(1);
+  });
 });

@@ -5613,8 +5613,9 @@ export const CAPABILITIES = {
     reader: "module/rules/minion-build.mjs talentRequirements({ignoreInfamy}) ← apps/minion-talent.mjs"
   },
   "trait.daemonicArmament": {
-    label: "Призываемое демоническое оружие (Warp Weapon).",
-    source: "Daemonic Armament / Демоническое Вооружение", reader: "ПРАВИЛО СТОЛА до задачи Sahara 32-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    label: "Призыв своего примитивного оружия: +X Dmg, +Y Pen, Reinforced, без Primitive, не тратит патроны; выронил (снял «Снаряжено») — растворилось. Вручную: поздний распад метательного/Piercing-снарядов, «естественное оружие» для Daemonic/Stuff of Nightmares.",
+    source: "Daemonic Armament / Демоническое Вооружение",
+    reader: "module/apps/daemonic-armament.mjs::toggleDaemonicArmament (кнопка kind:script, помощник apps/item-script.mjs); module/rules/daemonic-armament.mjs (daemonicArmamentWeaponData, isDaemonicArmament) ← rules/ammo-free.mjs, hooks.mjs (updateItem: растворение)"
   },
   "trait.daemonicPresence": {
     label: "Аура: враги в радиусе Y получают штраф −X к W (ступень Daemonic Dread 5/10/15/20 по X). Шаблон Черты несёт запись kind:aura; у существ бестиария — своя готовая запись.",
@@ -5823,8 +5824,8 @@ export const CAPABILITIES = {
     source: "Monodevotant / Монозависимый", reader: "ЧАСТИЧНО: module/rules/minion-loyalty.mjs::hasMonodevotant → module/combat/minion-loyalty-test.mjs::rollLoyaltyTest (провал теста Лояльности перебрасывается сам). Ломка без субстанции — памятка kind:script в чат"
   },
   "trait.multipleArms": {
-    label: "Рейтинг = общее число рук (бюджет рук) и +1 Атака за Ход на каждую пару рук сверх первой (нечётная лишняя рука — пара). Не автоматизировано: потолок 2+P.b рук за Ход, независимые пары (выстрел + рукопашная в один Ход), счёт по парам для Талантов «Два оружия».",
-    source: "Multiple Arms / Многорукий (X)", reader: "module/rules/hands.mjs baseHandsFromTraits()/maxHands() (бюджет рук) + multipleArmsAttackBonus() → module/combat/attack-limit.mjs attackActionLimit(); тесты test/combat/attack-limit.test.mjs"
+    label: "Рейтинг = общее число рук (бюджет рук) и +1 Атака за Ход на каждую пару рук сверх первой (нечётная лишняя рука — пара), но не больше 2+P.b рук за Ход (handsUsablePerTurn). Не автоматизировано: независимые пары (выстрел + рукопашная в один Ход), счёт по парам для Талантов «Два оружия».",
+    source: "Multiple Arms / Многорукий (X)", reader: "module/rules/hands.mjs baseHandsFromTraits()/maxHands() (бюджет рук) + multipleArmsAttackBonus()/handsUsablePerTurn() → module/combat/attack-limit.mjs attackActionLimit(); тесты test/combat/attack-limit.test.mjs"
   },
   "trait.mutant": {
     label: "Имеет X мутаций.",

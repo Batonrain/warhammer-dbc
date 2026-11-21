@@ -72,6 +72,7 @@ import { tzeentchMarkBindUpdate } from "../rules/psyker.mjs";
 import { useShapeshift } from "../combat/shapeshift.mjs";
 import { linkPsyberToMaster } from "./psyber-link.mjs";
 import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
+import { toggleDaemonicArmament } from "./daemonic-armament.mjs";
 import { shiftAmorphousSize } from "./amorphous-size.mjs";
 import { rollTraitTest } from "../combat/trait-test.mjs";
 import { useLivingBanner } from "../combat/living-banner.mjs";
@@ -285,7 +286,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
-    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
+    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "toggleDaemonicArmament", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
     "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem", "giveMonodevotantSubstance", "useLivingBanner", "useWormMaster", "fusePossessionWeapon", "usePedalToMetal", "usePutThatOut", "studyPsychicLocus", "useMortido", "useAria", "useOverture", "useBalefulDirge", "useBoonOfOmnissiah", "useTankCommander", "useFanOut", "chooseDreamingPower", "cookMixes", "giveCookMix", "makeAntivenom", "giveAntivenom", "makeDeepDetox", "giveDeepDetox", "usePlacebo", "prepareScapegoat", "useDivineMask", "useBrainwashing", "useTzaangorDisc", "useWarpGifted",
     "inspiredRest", "gainResource", "spendResource", "resourcePoolDef",
     ...extraNames,
@@ -307,7 +308,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
-    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
+    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, toggleDaemonicArmament, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
     rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, studyPsychicLocus, useMortido, useAria, useOverture, useBalefulDirge, useBoonOfOmnissiah, useTankCommander, useFanOut, chooseDreamingPower, cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo, prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc, useWarpGifted,
     inspiredRest, gainResource, spendResource, resourcePoolDef,
     ...extraNames.map(k => allExtra[k])

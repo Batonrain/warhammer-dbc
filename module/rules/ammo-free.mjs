@@ -18,6 +18,9 @@
 //     текстом в special. Отличить его от «0 патронов» можно лишь по этой
 //     паре: magazineMax 0 + знак ∞ в special.
 //
+//  4. Демоническое Вооружение (Трейт, rules/daemonic-armament.mjs): призванное
+//     оружие «не тратит стандартные боеприпасы» — метка на самом оружии.
+//
 //  Вынесено из середины расчёта атаки (combat/attack.mjs) отдельной чистой
 //  функцией: правило книжное, проверяется без Foundry и уже имеет два
 //  источника — третий появится тем же способом, а не третьим `||` в длинной
@@ -28,6 +31,7 @@ import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { gunArmAppliesTo, GUN_ARM_CLASSES } from "./gun-arm.mjs";
 import { isCellDevice } from "./warpsmith.mjs";
 import { livingArsenalAmmoFree } from "./obliterator-talents.mjs";
+import { isDaemonicArmament } from "./daemonic-armament.mjs";
 
 export { GUN_ARM_CLASSES };
 
@@ -51,6 +55,8 @@ export function ammoIsFree(item, actor) {
   if (isFusedByHandOfDeath(item)) return true;
   if (isCellDevice(item)) return true;
   if (hasInfiniteMagazine(item)) return true;
+  // Демоническое Вооружение: «Это оружие не тратит стандартные боеприпасы».
+  if (isDaemonicArmament(item)) return true;
   // Без актора спрашивать возможность не у кого: Дар — свойство стрелка, а не
   // предмета (оружие в компендиуме или в боковой панели ничьё).
   if (!actor) return false;
