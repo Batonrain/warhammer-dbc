@@ -55,7 +55,7 @@ describe("demonsInHeraldLocus (стр. 27, ½W м, тот же Бог, ранг�
         ]
       }
     };
-    herald.system.characteristics = { w: { total: 40 } };
+    herald.system.characteristics = { wp: { total: 40 } };
 
     const result = demonsInHeraldLocus(herald);
     expect(result).toEqual([near]);
@@ -64,7 +64,7 @@ describe("demonsInHeraldLocus (стр. 27, ½W м, тот же Бог, ранг�
   it("нет активного токена герольда — пустой список", () => {
     const herald = daemonActor({ name: "Герольд", allegiance: "khorne", rank: "herald" });
     herald.getActiveTokens = () => [];
-    herald.system.characteristics = { w: { total: 40 } };
+    herald.system.characteristics = { wp: { total: 40 } };
     globalThis.canvas = { scene: { grid: { size: 100, distance: 1 }, tokens: [] } };
     expect(demonsInHeraldLocus(herald)).toEqual([]);
   });
@@ -96,7 +96,7 @@ describe("applyTouchedByFates (Локус Фанатизма, стр. 28, wdbc-s
     globalThis.ui = { notifications: { warn: msg => warned.push(msg) } };
     const herald = daemonActor({ name: "Герольд", allegiance: "khorne", rank: "herald" });
     herald.getActiveTokens = () => [];
-    herald.system.characteristics = { w: { total: 40 } };
+    herald.system.characteristics = { wp: { total: 40 } };
     globalThis.canvas = { scene: { grid: { size: 100, distance: 1 }, tokens: [] } };
 
     const applied = await applyTouchedByFates(herald);
@@ -109,7 +109,7 @@ describe("applyTouchedByFates (Локус Фанатизма, стр. 28, wdbc-s
     const herald = daemonActor({ name: "Герольд", allegiance: "khorne", rank: "herald" });
     const heraldToken = token("herald-tok", herald, 0, 0);
     herald.getActiveTokens = () => [heraldToken];
-    herald.system.characteristics = { w: { total: 40 } };
+    herald.system.characteristics = { wp: { total: 40 } };
 
     const fresh = daemonActor({ name: "Свежий Ужас", allegiance: "khorne", rank: "lesser" });
     const already = daemonActor({ name: "Уже Избранный", allegiance: "khorne", rank: "lesser", hasTrait: true, fate: { value: 1, max: 3 } });
