@@ -23,7 +23,7 @@ import {
   bileSpitPenBonus, processWastelandRequest, onWastelandEnter, rotsmithClock, gloriousRustClock, infectVictims,
   infectiousMiasmaStatus, wastelandZonesOf, blessedTouch
 } from "../../module/combat/plague-marine.mjs";
-import { blessedWithPusDisadvantage, grappleTechDef } from "../../module/combat/grapple.mjs";
+import { blessedWithPusDisadvantage, grappleTechDef, blessedWithPusAttackReroll, blessedWithPusDefenceReroll } from "../../module/combat/grapple.mjs";
 import { applyItemMechanics } from "../../module/apps/mechanics.mjs";
 
 const NS = "warhammer-dbc";
@@ -525,6 +525,31 @@ describe("Помеха на Захват против Благословенно
     const def = grappleTechDef(orc, { label: "Заломить", defaultChar: "s", opponent: pm });
     expect(def.forcedRerollMode).toBe("keepWorst");
     expect(grappleTechDef(orc, { label: "Заломить", defaultChar: "s", opponent: body({ uuid: "Actor.o2" }) }).forcedRerollMode).toBe("");
+  });
+});
+
+describe("Помеха Благословенного Гноем вне окна «Борьба» (Sahara task-234f)", () => {
+  const pm = () => body({ uuid: "Actor.pm", docs: [TALENT("Blessed with Pus")] });
+  const orc = () => body({ uuid: "Actor.orc" });
+
+  it("атака приёмом «Захват» по носителю — Помеха (худший из двух); другой приём или стрельба — нет", () => {
+    expect(blessedWithPusAttackReroll(orc(), pm(), { isMelee: true, technique: "grapple" }))
+      .toMatchObject({ mode: "keepWorst", rolls: 2 });
+    expect(blessedWithPusAttackReroll(orc(), pm(), { isMelee: true, technique: "standard" })).toBeNull();
+    expect(blessedWithPusAttackReroll(orc(), pm(), { isMelee: false, technique: "grapple" })).toBeNull();
+    expect(blessedWithPusAttackReroll(pm(), orc(), { isMelee: true, technique: "grapple" })).toBeNull();
+  });
+
+  it("Захват начинает сам Десантник: Уклонение цели от него — с Помехой", () => {
+    expect(blessedWithPusDefenceReroll(orc(), pm(), { isMelee: true, technique: "grapple" })).toBe("keepWorst");
+    expect(blessedWithPusDefenceReroll(orc(), pm(), { isMelee: true, technique: "standard" })).toBe("");
+    expect(blessedWithPusDefenceReroll(pm(), orc(), { isMelee: true, technique: "grapple" })).toBe("");
+  });
+
+  it("приём Борьбы Десантника: сопротивление противника — с Помехой", () => {
+    const def = grappleTechDef(pm(), { label: "Заломить", defaultChar: "s", opponent: orc() });
+    expect(def.resistHindrance(orc(), pm())).toContain("Благословенный Гноем");
+    expect(def.resistHindrance(pm(), orc())).toBe("");
   });
 });
 

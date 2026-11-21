@@ -36,7 +36,7 @@ import { unarmedLosesPrimitive, grappleUnparryable, wrestlerDodgeReroll, haymake
 import { goadingStrikeButtonHtml } from "./pugilist-strikes.mjs";
 import { whackStrike, recordWhackSeen } from "./whack.mjs";
 import { roundhouseButtonHtml, isKickWeapon } from "./roundhouse.mjs";
-import { grappleCoverPartner } from "./grapple.mjs";
+import { grappleCoverPartner, blessedWithPusDefenceReroll } from "./grapple.mjs";
 import { fanaticInterceptCandidates, backToBackFreeUseAvailable, fanaticPayer } from "./fanatic-redirect.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
 import { unholyDevotionCandidates } from "./unholy-devotion.mjs";
@@ -2549,7 +2549,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
         // Борец (стр. 62): против его Захвата успешное Уклонение перебрасывается.
-        forcedDefenceReroll: opts.forcedDefenceReroll || (isMelee ? wrestlerDodgeReroll(actor, techOpts.technique) : ""),
+        // Благословенный Гноем: Захват начал носитель — Уклонение цели с Помехой (combat/grapple.mjs, Sahara task-234f).
+        forcedDefenceReroll: opts.forcedDefenceReroll || (isMelee ? (wrestlerDodgeReroll(actor, techOpts.technique)
+          || blessedWithPusDefenceReroll(defenderActor, actor, { isMelee, technique: techOpts.technique })) : ""),
         // Шагоход (wdbc-6wzt, п.5): у него, в отличие от прочей техники, есть
         // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
         // на карточке, потому что считает их ПИЛОТ, а не машина.

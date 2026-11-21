@@ -348,7 +348,8 @@ export async function _showContestDialog(actor, techDef) {
                 slipReroll: slipAwayReady && slipChoice === "none" && !hit,
                 rerollCtx: { label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, charKey, doubleSuccesses },
                 resistMods: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistMods?.(o, actor) ?? []])),
-                resistRolls: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistRolls?.(o, actor) ?? 1]))
+                resistRolls: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistRolls?.(o, actor) ?? 1])),
+                resistHindrance: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistHindrance?.(o, actor) ?? ""]))
               }, opponents),
               hit && immune
                 ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;color:#e08a3a;">

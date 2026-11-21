@@ -136,7 +136,7 @@ export function registerContest(actor, techDef, result, opponents) {
       data-success="${result.success ? 1 : 0}" data-deg="${result.deg}" data-threshold="${result.threshold}"
       data-resist='${esc(JSON.stringify(optsFor(o)))}'
       data-resist-mods='${esc(JSON.stringify(result.resistMods?.[o.uuid] ?? []))}'
-      data-rolls="${result.resistRolls?.[o.uuid] ?? 1}">
+      data-rolls="${result.resistRolls?.[o.uuid] ?? 1}" data-resist-hindrance="${esc(result.resistHindrance?.[o.uuid] ?? "")}">
       ${rollIcon("shield")}${esc(o.name)}: Сопротивляться (${esc(optsFor(o).map(sideLabel).join(" или "))})
     </button>${(techDef.label === "Напролом" && hasDodgeTalent(o, "pirouette")) ? `
     <button type="button" class="wh-contest-pirouette-btn"
@@ -204,10 +204,14 @@ export async function resolveResistClick(ds) {
   const ruleMods = collectTestMods(opponent, sideContext(side));
   const extraTotal = extra.reduce((n, m) => n + (Number(m.value) || 0), 0);
   const threshold = base + (Number(side.mod) || 0) + ruleMods.total + extraTotal;
-  const rollsN = Math.max(1, Number(ds.rolls) || 1);
+  // Помеха сопротивляющемуся (Благословенный Гноем у начавшего приём, combat/grapple.mjs::grappleTechDef): худший
+  // из двух. Лишние руки в Захвате (лучший из N) и Помеха гасят друг друга — один бросок.
+  const hindrance = ds.resistHindrance || "";
+  const handsN = Math.max(1, Number(ds.rolls) || 1);
+  const rollsN = hindrance ? (handsN > 1 ? 1 : 2) : handsN;
   const rolled = [];
   for (let i = 0; i < rollsN; i++) rolled.push(await new Roll("1d100").evaluate());
-  const picked = pickReroll(rolled.map(r => r.total), "keepBest");
+  const picked = pickReroll(rolled.map(r => r.total), hindrance && handsN === 1 ? "keepWorst" : "keepBest");
   const rv = picked.value;
   const theirs = testOutcome(rv, threshold);
   const mine = { success: ds.success === "1", deg: Number(ds.deg) || 0, threshold: Number(ds.threshold) || 0 };
@@ -222,7 +226,9 @@ export async function resolveResistClick(ds) {
   await postTestCard(opponent, {
     icon: rollIcon("shield"), title: `Сопротивление: ${esc(ds.label)} — ${esc(opponent.name)}`, actorUuid: opponent.uuid,
     threshold: rollStatLine({ label: sideLabel(side), base, parts, threshold, rv }),
-    rerollNote: picked.dropped.length ? `<div class="roll-defense-note">Лишние руки в Захвате: лучший из ${rollsN}, отброшено ${picked.dropped.join(", ")}</div>` : "",
+    rerollNote: hindrance
+      ? `<div class="roll-defense-note">${esc(hindrance)}${handsN > 1 ? " — гасит лишние руки в Захвате, один бросок" : `: худший из 2, отброшено ${picked.dropped.join(", ")}`}</div>`
+      : picked.dropped.length ? `<div class="roll-defense-note">Лишние руки в Захвате: лучший из ${rollsN}, отброшено ${picked.dropped.join(", ")}</div>` : "",
     outcome: initiatorWins
       ? outcomeHtml(false, `${esc(actor.name)} побеждает во встречном тесте (${theirs.success ? "Успех" : "Провал"} ${theirs.deg} ${_degWord(theirs.deg)}) — «${esc(ds.label)}» удаётся.`)
       : outcomeHtml(true, `${esc(opponent.name)} отбивается (${theirs.success ? "Успех" : "Провал"} ${theirs.deg} ${_degWord(theirs.deg)}) — «${esc(ds.label)}» не удаётся.`)

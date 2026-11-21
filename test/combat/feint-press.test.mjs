@@ -214,3 +214,32 @@ describe("Провидец Войны «не обмануть» (Виткис, S
     expect(target.getFlag("warhammer-dbc", "feintNoEvade")?.byUuid).toBe("Actor.attacker");
   });
 });
+
+describe("Помеха сопротивляющемуся (Благословенный Гноем, Sahara task-234f)", () => {
+  beforeEach(() => _resetPendingContests());
+  const ds = (actor, target, extra = {}) => ({
+    contestId: "none", userId: "user-1", actorUuid: actor.uuid, opponentUuid: target.uuid, label: "Заломить",
+    success: "1", deg: "1", threshold: "50", resist: "[]", resistMods: "[]", rolls: "1", ...extra
+  });
+
+  it("data-resist-hindrance: худший из двух, подпись в карточке", async () => {
+    const actor = actorWithFlags({}); actor.uuid = "Actor.pm"; actor.name = "Десантник";
+    const target = actorWithFlags({}); target.uuid = "Actor.orc"; target.name = "Орк";
+    globalThis.game.user = { ...globalThis.game.user, id: "user-1", isGM: true };
+    globalThis.fromUuid = async uuid => (uuid === actor.uuid ? actor : uuid === target.uuid ? target : null);
+    captured.dice = [5, 95];
+    const res = await resolveResistClick(ds(actor, target, { resistHindrance: "Помеха: Благословенный Гноем" }));
+    expect(res.initiatorWins).toBe(true);
+    expect(captured.chat.at(-1).content).toContain("Помеха: Благословенный Гноем");
+  });
+
+  it("без Помехи — один кубик", async () => {
+    const actor = actorWithFlags({}); actor.uuid = "Actor.pm";
+    const target = actorWithFlags({}); target.uuid = "Actor.orc";
+    globalThis.game.user = { ...globalThis.game.user, id: "user-1", isGM: true };
+    globalThis.fromUuid = async uuid => (uuid === actor.uuid ? actor : uuid === target.uuid ? target : null);
+    captured.dice = [5, 95];
+    const res = await resolveResistClick(ds(actor, target));
+    expect(res.initiatorWins).toBe(false);
+  });
+});

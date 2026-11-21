@@ -8539,7 +8539,7 @@ export const CAPABILITIES = {
     reader: "module/combat/plague-marine.mjs::gloriousRustClock, module/rules/plague-marine.mjs hasGloriousRust()"
   },
   "ability.blessedWithPus": {
-    label: "Благословенный Гноем: касание голой кожи — 1d10 C Toxic(0) и заражение в конце боя; иммунитет к Горению и Corrosive (записи Черты); Помеха на тесты окна «Борьба» против носителя (module/combat/grapple.mjs::blessedWithPusDisadvantage)",
+    label: "Благословенный Гноем: касание голой кожи — 1d10 C Toxic(0) и заражение в конце боя; иммунитет к Горению и Corrosive (записи Черты); Помеха на тесты окна «Борьба» против носителя (module/combat/grapple.mjs::blessedWithPusDisadvantage), на атаку приёмом «Захват» по нему (::blessedWithPusAttackReroll), на Уклонение от его атаки «Захват» (::blessedWithPusDefenceReroll) и на сопротивление его приёмам Борьбы (grappleTechDef.resistHindrance → module/combat/opposed-contest.mjs::resolveResistClick) — Sahara task-234f",
     source: "Blessed with Pus / Благословенный Гноем (packs-src/talents/Элитные_архетипы)",
     reader: "module/combat/plague-marine.mjs::blessedTouch, module/rules/plague-marine.mjs hasBlessedWithPus()"
   },

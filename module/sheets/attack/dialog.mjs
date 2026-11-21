@@ -32,7 +32,7 @@ import { BATPACK_ROF } from "../../rules/batpack-dump.mjs";
 import { POWER_MODE_FLAG } from "../../rules/power-setting.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
 import { isGrappled } from "../../rules/predicates.mjs";
-import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
+import { grappleAttackBlockReason, blessedWithPusAttackReroll } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { finalExecutionGate, finalExecutionProps, commitFinalExecution, finalExecutionAutoArm } from "../../combat/final-execution.mjs";
@@ -138,6 +138,16 @@ async function payTalentAttack(actor, pay) {
   const message = game.messages?.get(pay.cardId);
   if (!message) return refuse("карточка исходной атаки не найдена.");
   return runCardOnce(message, pay.cardKey, spend, `⚠️ ${pay.label}: с этой карточки уже использовано.`);
+}
+
+/**
+ * Помеха Благословенного Гноем поверх выбранного игроком Кубика (Sahara task-234f): Преимущество гасит её — тогда
+ * переброса нет вовсе (false — цепочка `||` идёт дальше); своя Помеха/переброс «худший» — остаётся он.
+ */
+function pusAttackReroll(chosen, pus) {
+  if (!pus) return chosen;
+  if (chosen?.mode === "keepBest") return false;
+  return chosen?.mode === "keepWorst" ? chosen : pus;
 }
 
 export function openAttackDialog(ctx) {
@@ -692,7 +702,8 @@ export function openAttackDialog(ctx) {
               // «внешнее навязывание важнее своего», что у защиты —
               // combat/defense.mjs::_performDodge, forcedReroll.
               reroll: (resolvedAttack.rerolls || []).find(r => r.who === "opponent" || r.who === "forced")
-                      || f.reroll
+                      // Благословенный Гноем у цели: Захват по нему — с Помехой; выбранное Преимущество её гасит.
+                      || pusAttackReroll(f.reroll, blessedWithPusAttackReroll(actor, targetActor, { isMelee, technique: sel.maneuverKey }))
                       || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined)
                       // Отмеченная Добыча (combat/marked-prey.mjs): Преимущество на атаки Казни по отмеченной цели.
                       || (isMelee ? markedPreyAdvantage(actor, targetActor, item, sel.gKey) : undefined),

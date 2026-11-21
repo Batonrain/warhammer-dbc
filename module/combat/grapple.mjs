@@ -662,6 +662,26 @@ export function blessedWithPusDisadvantage(actor, partner) {
   return !!partner && hasBlessedWithPus(partner) && !hasBlessedWithPus(actor);
 }
 
+/** Подпись Помехи Благословенного Гноем (одна на все пути). */
+export const BLESSED_WITH_PUS_HINDRANCE_LABEL = "Помеха: Благословенный Гноем";
+
+/**
+ * Атака приёмом «Захват» по носителю Благословенного Гноем (окно атаки, sheets/attack/dialog.mjs; Sahara task-234f):
+ * «Помеха на все тесты Захвата против него» — переброс «худший из двух». null — Помехи нет.
+ */
+export function blessedWithPusAttackReroll(actor, target, { isMelee = false, technique = "" } = {}) {
+  if (!isMelee || technique !== "grapple" || !blessedWithPusDisadvantage(actor, target)) return null;
+  return { mode: "keepWorst", rolls: 2, label: BLESSED_WITH_PUS_HINDRANCE_LABEL };
+}
+
+/**
+ * Захват начинает сам носитель (атака приёмом «Захват»): Уклонение цели от него — тест Захвата против него,
+ * с Помехой (forcedDefenceReroll карточки, combat/attack.mjs). "" — нет.
+ */
+export function blessedWithPusDefenceReroll(defender, attacker, { isMelee = false, technique = "" } = {}) {
+  return isMelee && technique === "grapple" && blessedWithPusDisadvantage(defender, attacker) ? "keepWorst" : "";
+}
+
 export function grappleTechDef(actor, def) {
   const partner = def.opponent ?? grapplePartner(actor);
   const char = def.defaultChar || "s";
@@ -681,7 +701,9 @@ export function grappleTechDef(actor, def) {
     // Успехи ×2 (только Выкрутиться); Ускользнуть — +30 или переброс раз в
     // Раунд на любом тесте A в Борьбе (combat/techniques.mjs).
     forcedRerollMode: blessedWithPusDisadvantage(actor, partner) ? "keepWorst" : "",
-    forcedRerollLabel: "Помеха: Благословенный Гноем",
+    forcedRerollLabel: BLESSED_WITH_PUS_HINDRANCE_LABEL,
+    // Приём начал носитель Благословенного Гноем — сопротивление противника с Помехой (combat/opposed-contest.mjs).
+    resistHindrance: (opp, me) => (blessedWithPusDisadvantage(opp, me) ? BLESSED_WITH_PUS_HINDRANCE_LABEL : ""),
     escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
     slipAway: char === "ag" && !def.jockey && hasDodgeTalent(actor, "slipAway"),
     resistMods: (opp, me) => [...grappleTestMods(opp, me), ...sturdyResistMods(opp, "grapple")],
