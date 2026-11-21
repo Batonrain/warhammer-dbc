@@ -4953,19 +4953,19 @@ export const CAPABILITIES = {
   // ── Элитные_архетипы\Монарх — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.monarh.awakening": {
     label: "Электростимуляцией и ослаблением рунических цепей пробуждает вассала к полному бодрствованию.",
-    source: "Awakening / Пробуждение", reader: ""
+    source: "Awakening / Пробуждение", reader: "combat/monarch.mjs::useAwakening (+3 к ОД вассала, встречный W+0 — rules/test-kind.mjs::resolveOpposed)"
   },
   "elite.elitnyeArhetipy.monarh.cerebralChanneling": {
     label: "Тонкая калибровка контрольных цепей Короны позволяет эффективнее координировать долговременные усилия вассалов.",
-    source: "Cerebral Channeling / Церебральный Поток", reader: ""
+    source: "Cerebral Channeling / Церебральный Поток", reader: "combat/monarch.mjs::useVassalAp ← rules/monarch-talents.mjs::vassalApCost (поддержание вдвое, окр.▼)"
   },
   "elite.elitnyeArhetipy.monarh.dragonMonarch": {
     label: "Может одновременно контролировать несколько подключённых мозгов. Позволяет одновременно активировать ещё одного порабощённого псайкера (кажд…",
-    source: "Dragon Monarch / Монарх Дракон", reader: ""
+    source: "Dragon Monarch / Монарх Дракон", reader: "packs-src Dragon Monarch: resourcePool vassalApDragon; combat/monarch.mjs::processMonarchTurnStart (+1 ОД)"
   },
   "elite.elitnyeArhetipy.monarh.neuronist": {
     label: "Научился обучать одного из вассалов. Может тратить свой опыт, чтобы изучать новые психосилы для одного из своих псайкеров.",
-    source: "Neuronist / Нейронист", reader: ""
+    source: "Neuronist / Нейронист", reader: "combat/monarch.mjs::useNeuronist (опыт → experience.spentOther)"
   },
   // ── Элитные_архетипы\Моритат — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.moritat.beltFeed": {
@@ -6795,11 +6795,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Монарх — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.monarh.brainHarvesting": {
     label: "Не может изучать новые психосилы или повышать PR своих вассалов — только достать новый контейнер с мозгом псайкера с нужными знаниями.",
-    source: "Brain Harvesting / Извлечение Мозга", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Brain Harvesting / Извлечение Мозга", reader: "combat/monarch.mjs::useBrainContainerPrep (20 Успехов) / useBrainExtract (Medicae−30, 4+ Провала)"
   },
   "trait.elitnyeArhetipy.monarh.coronaPolentia": {
     label: "Позволяет подсоединять к своему мозгу контейнеры с мозгами живых псайкеров, чтобы использовать их силы.",
-    source: "Corona Polentia / Корона Полентия", reader: "ПРАВИЛО СТОЛА до задачи Sahara 22-dbc-114 (Doom Crusade): кнопка-памятка kind:script пишет текст Черты в чат; механика ждёт задачу, пока считает ГМ"
+    source: "Corona Polentia / Корона Полентия", reader: "packs-src Corona Polentia: resourcePool vassalAp; combat/monarch.mjs::processMonarchTurnStart / useVassalAp / useVassalSwap"
   },
   // ── Черты: packs-src/traits/Элитные_архетипы\Моритат — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.moritat.chainShot": {

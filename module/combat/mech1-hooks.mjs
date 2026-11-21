@@ -16,9 +16,10 @@
 import { onVisioIraeItemUpdate } from "./archmagos.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { processMalagraTurnStart } from "./malagra.mjs";
+import { processMonarchTurnStart } from "./monarch.mjs";
 
 /** Обработчики начала Хода по архетипам. */
-const TURN_START = [processMalagraTurnStart];
+const TURN_START = [processMalagraTurnStart, processMonarchTurnStart];
 
 export async function processMech1TurnStart(actor) {
   if (!actor) return;
