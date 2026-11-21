@@ -467,8 +467,16 @@ function fillRating(text, p) {
  * качество и Таланты двигают Надёжность, а текст свойства о них не знает.
  * jamAt — результат jamThreshold(wp): число (клин с N) или null (не клинит).
  */
-function reliableNote(p, jamAt) {
-  if (jamAt === undefined || p.def.key !== "reliable") return null;
+function reliableNote(p, jamAt, overheats = false) {
+  if (p.def.key !== "reliable") return null;
+  // Оружие с Перегревом по порогу не клинит, а бьёт по стрелку
+  // (combat/overheats.mjs) — «заклинивает» о нём врёт (Sahara task-e6d5).
+  if (overheats) {
+    if (jamAt === null) return "Надёжное: не перегревается";
+    if (jamAt === undefined || jamAt >= 100) return "Надёжное: Перегрев только на 100";
+    return `Надёжное: Перегрев на ${jamAt}+`;
+  }
+  if (jamAt === undefined) return null;
   if (jamAt === null) return "Надёжное: не заклинивает";
   if (jamAt >= 100) return null;
   return `Надёжное: заклинивает на ${jamAt}+`;
@@ -486,8 +494,9 @@ export function visibleWeaponProps(props, wp) {
 /** Блок «Свойства оружия» для сообщения о броске. */
 export function buildPropertyChatBlock(props, { jamAt } = {}) {
   if (!props.length) return "";
+  const overheats = props.some(p => p.def.key === "overheats");
   const lines = props.map(p => {
-    const txt = reliableNote(p, jamAt) ?? fillRating(p.def.reminder || p.def.label, p);
+    const txt = reliableNote(p, jamAt, overheats) ?? fillRating(p.def.reminder || p.def.label, p);
     return `<div class="roll-wprop">${txt}</div>`;
   }).join("");
   // Свёрнуто по умолчанию: напоминалки по свойствам занимают половину карточки,
