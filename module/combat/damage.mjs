@@ -327,7 +327,16 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   const boneHeadNote = await applyHaywireToBoneHead(actor, total, rating);
   // Избавление Аркхана (Скитарии): 7+ — бионика держится ценой 1 Усталости.
   const arkhanNote = arkhanHaywireNote(actor, total);
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}${arkhanNote}`;
+  // Мёртвая Зона и выше выключает надетую силовую броню тем же тумблером, что
+  // разряд батареи (Sahara haywire-b895): бонусы S, вес, дисплей гаснут, штрафы
+  // выключенной брони включаются. Обратно — тумблером на листе, выйдя из поля.
+  const { powerArmourKilledByHaywire } = await import("../rules/armour-penalty.mjs");
+  const killed = powerArmourKilledByHaywire(actor, total);
+  if (killed.length) await actor.updateEmbeddedDocuments("Item", killed.map(i => ({ _id: i.id, "system.active": false })));
+  const armourNote = killed.length
+    ? `<div class="dmg-tb-note">🔌 Силовая броня отключена ЭМИ (${killed.map(i => esc(i.name)).join(", ")}): бонусы брони погасли, действуют штрафы выключенной брони. Включить — тумблером на листе, когда поле рассеется.</div>`
+    : "";
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}${arkhanNote}${armourNote}`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
