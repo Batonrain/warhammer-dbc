@@ -132,3 +132,12 @@ export function spanLabel(sec) {
   if (s >= DAY) return `${Math.ceil(s / DAY)} сут.`;
   return `${Math.max(1, Math.ceil(s / HOUR))} ч`;
 }
+
+/**
+ * Печати, чей срок пребывания (W.b суток) истёк к `worldTime` (Sahara 586-w-b).
+ * Чистая функция: ничего не пишет.
+ */
+export function expiredSummons(seals, worldTime) {
+  const t = Number(worldTime) || 0;
+  return (seals ?? []).filter(s => n(s?.summonedUntil) > 0 && n(s.summonedUntil) <= t);
+}

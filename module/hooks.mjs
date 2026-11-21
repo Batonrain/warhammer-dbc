@@ -183,7 +183,7 @@ import { applyRadHit, resolveCombatRadiation } from "./combat/radiation.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processWildPsykerTurnStart } from "./combat/wild-psyker.mjs";
 import { processWarlockTurnStart } from "./combat/warlock.mjs";
-import { processInsorcistTurnStart } from "./combat/insorcist.mjs";
+import { processInsorcistTurnStart, processInsorcismExpiry } from "./combat/insorcist.mjs";
 import { injectOccultBladeButtons, kenetaiSoulBurnGate } from "./combat/kenetai.mjs";
 import { processMedusaTurnStart } from "./combat/medusa.mjs";
 import { hasAlienConsciousness } from "./rules/medusa-talents.mjs";
@@ -5442,6 +5442,8 @@ function _attachFateContextMenu(message, html) {
       // живого хоста — тот же такт, что мононить/Cast Out of Death.
       await checkAbandonedHostDeath(actor, game.time.worldTime);
       await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
+      // Инзорцизм (Sahara 586-w-b): призванный демон уходит в Варп через W.b суток.
+      await processInsorcismExpiry(actor, game.time.worldTime);
       // Око Вызова/Дар Кхорна (wdbc-1rno): не брошенный за минуту вызов —
       // 2d10+8 урона в Раны чемпиону. Тот же такт, что временные выдачи Черт
       // выше — оба живут по worldTime, а не по Раунду.

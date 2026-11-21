@@ -20,7 +20,7 @@ import {
   SEALS_FLAG, SEAL_RITUAL_FLAG, BLACK_HAND_FLAG, FLEETING_FLAG, SEAL_EFFECT_FLAG, GREATER_INF,
   hasInsorcism, hasNameSeal, hasMarkOfSubjugator, hasBlackHand, hasDaemonicLevy, hasFleetingPossession,
   demonInfOf, sealsOf, sealRitualTurns, sealTPenalty, insorcismHeadDamage, levyMax, summonStaySeconds,
-  banishCooldownSeconds, sealBarredRemaining, markDetectionNeed, spanLabel
+  banishCooldownSeconds, sealBarredRemaining, markDetectionNeed, spanLabel, expiredSummons
 } from "../rules/insorcist-talents.mjs";
 import { isDaemonActor } from "../rules/predicates.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
@@ -390,3 +390,34 @@ export async function useMarkOfSubjugator(actor) {
 }
 
 export const INSORCIST_API = { useNameSeal, useInsorcism, useBlackHand, useMarkOfSubjugator };
+
+/**
+ * Срок пребывания призванного вышел (W.b суток, книга «Инзорцизм»; Sahara
+ * 586-w-b): демон возвращается в Варп — его токены (Миньон этого Инзорциста с
+ * тем же именем, system.masterUuid) снимаются со всех сцен, печать снова
+ * доступна. Сам Актор демона остаётся в мире — удалить его решает ГМ.
+ * Зовётся ГМом по updateWorldTime (hooks.mjs).
+ * @returns {Promise<string[]>} имена ушедших демонов
+ */
+export async function processInsorcismExpiry(actor, worldTime) {
+  if (!hasInsorcism(actor)) return [];
+  const seals = sealsOf(actor);
+  const gone = expiredSummons(seals, worldTime);
+  if (!gone.length) return [];
+  const ids = new Set(gone.map(s => s.id));
+  await writeSeals(actor, seals.map(s => ids.has(s.id) ? { ...s, summonedUntil: 0 } : s));
+  const names = new Set(gone.map(s => s.name));
+  let removed = 0;
+  for (const scene of game.scenes ?? []) {
+    const doomed = [...(scene.tokens ?? [])].filter(t => {
+      const a = t.actor;
+      return a && names.has(a.name) && a.system?.masterUuid === actor.uuid;
+    }).map(t => t.id);
+    if (doomed.length) { await scene.deleteEmbeddedDocuments("Token", doomed); removed += doomed.length; }
+  }
+  await infoCard(actor, "Инзорцизм", [
+    line(`Срок пребывания (W.b суток) вышел: <b>${gone.map(s => esc(s.name)).join(", ")}</b> возвращается в Варп.`),
+    line(removed ? `Токенов снято со сцен: ${removed}. Печать снова можно призвать.` : "Токена на сценах не нашлось. Печать снова можно призвать.")
+  ], { icon: "👁" });
+  return [...names];
+}

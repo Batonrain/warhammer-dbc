@@ -83,3 +83,17 @@ describe("Метка Поработителя", () => {
     expect(hatredTargetsOf(plain)).toEqual([]);
   });
 });
+
+describe("Инзорцизм: срок пребывания призванного (Sahara 586-w-b)", async () => {
+  const { expiredSummons } = await import("../../module/rules/insorcist-talents.mjs");
+  const seals = [
+    { id: "a", name: "Кровопускатель", summonedUntil: 1000 },
+    { id: "b", name: "Чумоносец", summonedUntil: 5000 },
+    { id: "c", name: "Ужас", summonedUntil: 0 }
+  ];
+  it("истёкшие — только с прошедшим сроком; не призванные не в счёт", () => {
+    expect(expiredSummons(seals, 1000).map(s => s.id)).toEqual(["a"]);
+    expect(expiredSummons(seals, 6000).map(s => s.id)).toEqual(["a", "b"]);
+    expect(expiredSummons(seals, 10)).toEqual([]);
+  });
+});
