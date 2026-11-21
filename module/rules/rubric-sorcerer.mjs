@@ -187,9 +187,50 @@ export function regenerationSource(actor) {
     const fromName = Number(/\((\d+)\)\s*$/.exec(String(i.name ?? ""))?.[1]) || 0;
     best = Math.max(best, Number(i.system?.rating) || fromName);
   }
+  // Психосила Regeneration (Биомантия, стр. 333), пока поддерживается: «Трейт Regeneration(PR)».
+  best = Math.max(best, sustainedRegenerationEpr(actor));
   const gift = manifestedGift(actor, "Регенерация")
     ? Math.ceil((Number(actor?.system?.corruptionBonus) || 0) / 2) : 0;
   return gift > best ? { rating: gift, test: "cor" } : { rating: best, test: "t" };
+}
+
+/** эPR поддерживаемой психосилы Regeneration (0 — не поддерживается). Без записанного эPR — текущий PR. */
+export function sustainedRegenerationEpr(actor) {
+  let epr = 0;
+  for (const i of actor?.items ?? []) {
+    if (i?.type !== "psychicPower" || !i.system?.isSustained || !itemHasName(i, "Regeneration")) continue;
+    epr = Math.max(epr, Number(i.system?.sustainedEpr ?? actor?.system?.psyker?.currentRating ?? actor?.system?.psyker?.rating) || 0);
+  }
+  return epr;
+}
+
+/** Метка Целительного Прожектора на пациенте: бонус к следующему тесту T Регенерации (Мейстер, таблица Стадий). */
+export const PROJECTOR_REGEN_FLAG = "projectorRegenBonus";
+
+/**
+ * Особые бонусы теста Регенерации (Sahara task-4ae5). Только для теста T —
+ * у Дара Одержимого тест Cor+0, книга бонусов к нему не даёт.
+ *  • психосила Regeneration — «тесты Т на регенерацию получают бонус +2×PR»;
+ *  • Целительный Прожектор Мейстера — «бонус на свой следующий тест T для
+ *    Трейта Regeneration»: +10/+15/+20/+30 или «Авто» (Стадия 5).
+ * @returns {{mod:number, auto:boolean, parts:string[], projector:boolean}}
+ */
+export function regenerationTestBonus(actor) {
+  const out = { mod: 0, auto: false, parts: [], projector: false };
+  const epr = sustainedRegenerationEpr(actor);
+  if (epr) { out.mod += 2 * epr; out.parts.push(`+${2 * epr} психосила Regeneration (2×PR)`); }
+  const p = actor?.flags?.["warhammer-dbc"]?.[PROJECTOR_REGEN_FLAG] ?? actor?.getFlag?.("warhammer-dbc", PROJECTOR_REGEN_FLAG);
+  if (p === "auto") { out.auto = true; out.projector = true; out.parts.push("Целительный Прожектор: автоуспех"); }
+  else if (Number(p) > 0) { out.mod += Number(p); out.projector = true; out.parts.push(`+${Number(p)} Целительный Прожектор`); }
+  return out;
+}
+
+/** Строка таблицы «Бонус регенерации» → значение метки ("auto" | число | null). */
+export function projectorRegenValue(label) {
+  const t = String(label ?? "").trim().toLowerCase();
+  if (t.startsWith("авто")) return "auto";
+  const n = Number(t.replace(/[^\d-]/g, ""));
+  return n > 0 ? n : null;
 }
 
 /** Итог Forbidden Lore (Warp); без записи Навыка — null (тест невозможен). */

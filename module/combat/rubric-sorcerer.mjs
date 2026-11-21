@@ -28,7 +28,7 @@ import {
   hasRubricOfAhriman, hasGolemMaster, hasInfernalShells, hasPsychicEcho, hasSekhmet,
   hasRebornInDust, pickMilderPeril, choiceThreshold, isGolem, golemMasterUuid, golemsOf, soulsFree, fallenGolems,
   nexusFreeGolems, nexusSlotsLeft, golemSlot, sekhmetStats, armourAblative, armourWithoutAblative,
-  regenerationRating, regenerationSource, regenerationHeal, isWounded, possessionThreshold, warpLoreTotal, isOrdinaryBolt,
+  regenerationRating, regenerationSource, regenerationHeal, regenerationTestBonus, PROJECTOR_REGEN_FLAG, isWounded, possessionThreshold, warpLoreTotal, isOrdinaryBolt,
   shellsBatch, golemDestroyed
 } from "../rules/rubric-sorcerer.mjs";
 import { getPeril } from "../constants/psyker-tables.mjs";
@@ -482,13 +482,17 @@ export async function rollRegeneration(actor, { auto = false } = {}) {
   const byCor = regenerationSource(actor).test === "cor";
   const t = byCor ? (Number(actor.system?.corruption?.value) || 0) : (Number(actor.system?.characteristics?.t?.total) || 0);
   const mods = byCor ? { total: 0, parts: [] } : collectTestMods(actor, { kind: "skill", char: "t" });
-  const threshold = t + mods.total;
+  // Особые источники (task-4ae5): +2×PR психосилы Regeneration, бонус/автоуспех Целительного Прожектора.
+  const extra = byCor ? { mod: 0, auto: false, parts: [], projector: false } : regenerationTestBonus(actor);
+  const threshold = t + mods.total + extra.mod;
   const { rv, rolls } = await rollD100WithReroll(null);
-  const { success, deg } = testOutcome(rv, threshold);
+  const { success, deg } = testOutcome(rv, threshold, { autoSuccess: extra.auto });
+  // Бонус Прожектора — «на свой СЛЕДУЮЩИЙ тест T»: тратится этим броском.
+  if (extra.projector) await actor.unsetFlag?.(NS, PROJECTOR_REGEN_FLAG);
   const applied = success ? await healByRegeneration(actor, regenerationHeal(rating)) : 0;
   await postTestCard(actor, {
     icon: ICON(), title: `Регенерация — ${esc(actor.name)}`,
-    threshold: rollStatLine({ label: byCor ? "Cor+0" : "T+0", base: t, parts: mods.parts.map(esc), threshold, rv }),
+    threshold: rollStatLine({ label: byCor ? "Cor+0" : "T+0", base: t, parts: [...mods.parts, ...extra.parts].map(esc), threshold, rv }),
     outcome: outcomeHtml(success, success ? `Успех (${deg}) — восстановлено ${applied} Ран` : "Провал — Раны не восстановились"),
     // Провал теста T Регенерации → Успех за очко пула (Культивация Мейстера,
     // Sahara 586-fe9d). Вариант Cor+0 Дара Одержимого — не «тест T», кнопки нет.
