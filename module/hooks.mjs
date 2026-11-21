@@ -216,6 +216,7 @@ import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
+import { warnSkillBlockedUntrained } from "./rules/skill-untrained.mjs";
 import { performUnarmedRiposte, UNARMED_RIPOSTE_USED_FLAG } from "./combat/unarmed-combat.mjs";
 import { resolveResistClick, resolvePirouetteClick } from "./combat/opposed-contest.mjs";
 import { flipTriggered, offerFlip, rollFlip } from "./combat/flip.mjs";
@@ -381,6 +382,7 @@ export function registerHooks() {
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
     }
+    if (warnSkillBlockedUntrained(executorActor, skillKey)) return;
     const def = SKILLS_DEF[skillKey];
     const total = executorActor.system.skills?.[skillKey]?.total ?? -20;
     return sheet._rollSkill(label, total, def?.char ?? charKey ?? "ag", { skill: skillKey }, { effectTargetActor });
@@ -410,6 +412,7 @@ export function registerHooks() {
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — встречный тест так не открыть.`);
     }
+    if (warnSkillBlockedUntrained(executorActor, skillKey)) return;
     const def = SKILLS_DEF[skillKey];
     return sheet._rollSkill(initiatorLabel, skillTotal(executorActor, skillKey), def?.char ?? charKey ?? "ag", { skill: skillKey }, opts);
   });
