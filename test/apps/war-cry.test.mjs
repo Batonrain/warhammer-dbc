@@ -9,7 +9,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { talentActionsHtml, runTalentAction, isWarCryItem } from "../../module/apps/talent-actions.mjs";
-import { timedEffectData, timedEffectStale, sweepTimedEffects, onTimedEffectExpired, TIMED_EFFECT_FLAG, WAR_CRY_EFFECT_KEY }
+import { timedEffectData, timedEffectStale, sweepTimedEffects, onTimedEffectExpired, TIMED_EFFECT_FLAG, WAR_CRY_EFFECT_KEY, OUT_OF_COMBAT_DURATION }
   from "../../module/combat/timed-effects.mjs";
 
 const warCry = () => ({
@@ -65,8 +65,10 @@ describe("Боевой клич", () => {
     // priority выше «upgrade» Черты Fear (X): Fear (2) + Клич = 3, а не 2 (ревью В2).
     expect(fx.system.changes).toEqual([{ key: "system.fearRating", type: "add", value: 1, phase: "final", priority: 100 }]);
     expect(fx.system.changes[0].priority).toBeGreaterThan(0);
-    // Срок — штатная Duration v14: { value, units, expiry }, а не выдуманная форма v13.
-    expect(fx.duration).toEqual({ value: 1, units: "rounds", expiry: "turnStart" });
+    // Срок — штатная Duration v14: { value, units, expiry }. Актор вне боя — срок
+    // бессрочный (wdbc-p95ph: раньше «1 Раунд» вне боя гас через 6 с мирового
+    // времени); снимает его sweepTimedEffects со следующим Раундом боя.
+    expect(fx.duration).toEqual(OUT_OF_COMBAT_DURATION);
     expect(fx.flags["warhammer-dbc"][TIMED_EFFECT_FLAG].key).toBe(WAR_CRY_EFFECT_KEY);
   });
 
