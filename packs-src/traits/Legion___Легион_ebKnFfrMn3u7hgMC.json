@@ -1,0 +1,52 @@
+{
+  "name": "Legion / Легион",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Байк или скакун рассчитан на размер и силу Космодесантника. Персонаж размером меньше 1 и с S.b меньше 6 не может им пользоваться. Аналогично, космодесантник не может пользоваться мелким байком или скакуном, рассчитанным на размер и вес обычного человека — тот просто сломается под Астартес.",
+    "notes": "Реализовано (21.11.2026, Sahara 578-legion): Черта скакуна: её ищет по имени верховой бой (module/rules/mount.mjs, MOUNT_TRAIT_DEFS.legion) так же, как одноимённую Черту байка. Седок Размером меньше 1 или с S.b меньше 8 получает −20 на тесты управления (legionPenalty, по Трейту машин Legion). Запрет «не может пользоваться» и обратный случай (космодесантник на мелком скакуне) решает ГМ. В генераторе Миньонов — Трейт скакуна по цене ½ (только при Steed).",
+    "benefit": "Скакун для Космодесантников; мелкий или слабый седок — −20 на управление.",
+    "source": "строение тела",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "ebKnFfrMn3u7hgMC",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1795294044124,
+    "modifiedTime": 1795294044124,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ebKnFfrMn3u7hgMC"
+}
