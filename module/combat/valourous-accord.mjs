@@ -28,6 +28,7 @@ import {
   TIMED_FLAG, BLOOD_SMITH, VALOUR_DAYS, VALOUR_OWN_FLAG, isValourOwn
 } from "../rules/archetype-suppression.mjs";
 import { enslavedList, ENSLAVED_FLAG } from "../rules/blood-smith-talents.mjs";
+import { worldAndTokenActors } from "../migrations/unlinked-tokens.mjs";
 
 const NS = "warhammer-dbc";
 /** Нарушение раньше этого срока от начала наказания — то же самое нарушение. */
@@ -83,7 +84,8 @@ export async function valourOnEquip(item, changes) {
 export async function sweepValourExpiry() {
   if (game.users?.activeGM !== game.user) return;
   const now = worldNow();
-  for (const actor of game.actors ?? []) {
+  // И несвязанные токены: срок, начатый на токене, лежит в его дельте (приёмка #597).
+  for (const actor of worldAndTokenActors()) {
     const raw = actor.getFlag?.(NS, TIMED_FLAG);
     if (!raw || !Object.keys(raw).length) continue;
     const live = timedSuppressions(actor, now);

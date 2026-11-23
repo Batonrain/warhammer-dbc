@@ -179,6 +179,8 @@ import { migratePlagueMarineRot } from "./module/migrations/plague-marine-rot.mj
 import { migrateHominisFrame } from "./module/migrations/hominis-frame.mjs";
 import { migrateTraitShields } from "./module/migrations/trait-shields.mjs";
 import { migratePactDisorderGrant } from "./module/migrations/pact-disorder-grant.mjs";
+import { migrateValourOwn } from "./module/migrations/valour-own.mjs";
+import { migrateWarpGiftedRating } from "./module/migrations/warp-gifted-rating.mjs";
 import { migrateStrangeTechniqueEffect } from "./module/migrations/strange-technique-effect.mjs";
 import { migrateDrugAddictionFlag } from "./module/migrations/drug-addiction-flag.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
@@ -529,6 +531,8 @@ Hooks.once("init", () => {
     "hominisFrameTokensVersion",
     "traitShieldsTokensVersion",
     "pactDisorderGrantTokensVersion",
+    "valourOwnTokensVersion",
+    "warpGiftedRatingTokensVersion",
     "strangeTechniqueEffectTokensVersion",
     "drugAddictionFlagTokensVersion"
   ]) {
@@ -742,6 +746,16 @@ Hooks.once("init", () => {
 
   // Версия выдачи расстройств Пактов уже взявшим Черту Пакта (одноразовая, ревью #581)
   game.settings.register("warhammer-dbc", "pactDisorderGrantVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия отметки «своё снаряжение» у уже играющих Кузнецов Крови (приёмка #597)
+  game.settings.register("warhammer-dbc", "valourOwnVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия включения Рейтинга у выданных копий «Одарённого Варпом» (приёмка #597)
+  game.settings.register("warhammer-dbc", "warpGiftedRatingVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1319,7 +1333,7 @@ Hooks.once("ready", async () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migrateHominisFrame, migrateTraitShields, migratePactDisorderGrant, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migrateHominisFrame, migrateTraitShields, migratePactDisorderGrant, migrateValourOwn, migrateWarpGiftedRating, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1706,6 +1720,20 @@ Hooks.once("ready", async () => {
   await runMigrationGate({
     key: "pactDisorderGrantVersion", tokensKey: "pactDisorderGrantTokensVersion", label: "Расстройства Пактов",
     full: () => migratePactDisorderGrant(), tokensOnly: () => migratePactDisorderGrant({ tokensOnly: true })
+  });
+  // Приёмка #597 — правят предметы, поэтому ровно один ГМ.
+  if (!game.users.activeGM?.isSelf) return;
+  // Идемпотентна: отмеченное своим не трогается (migrations/valour-own.mjs).
+  // Ручной перезапуск: game.warhammerDBC.migrateValourOwn()
+  await runMigrationGate({
+    key: "valourOwnVersion", tokensKey: "valourOwnTokensVersion", label: "Соглашение Доблести (своё снаряжение)",
+    full: () => migrateValourOwn(), tokensOnly: () => migrateValourOwn({ tokensOnly: true })
+  });
+  // Идемпотентна: копия с hasRating не трогается (migrations/warp-gifted-rating.mjs).
+  // Ручной перезапуск: game.warhammerDBC.migrateWarpGiftedRating()
+  await runMigrationGate({
+    key: "warpGiftedRatingVersion", tokensKey: "warpGiftedRatingTokensVersion", label: "Рейтинг «Одарённого Варпом»",
+    full: () => migrateWarpGiftedRating(), tokensOnly: () => migrateWarpGiftedRating({ tokensOnly: true })
   });
 });
 
