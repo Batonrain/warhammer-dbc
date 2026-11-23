@@ -1722,8 +1722,7 @@ Hooks.once("ready", async () => {
     key: "pactDisorderGrantVersion", tokensKey: "pactDisorderGrantTokensVersion", label: "Расстройства Пактов",
     full: () => migratePactDisorderGrant(), tokensOnly: () => migratePactDisorderGrant({ tokensOnly: true })
   });
-  // Приёмка #597 — правят предметы, поэтому ровно один ГМ.
-  if (!game.users.activeGM?.isSelf) return;
+  // Приёмка #597 (ровно один ГМ — проверка в начале обработчика).
   // Идемпотентна: отмеченное своим не трогается (migrations/valour-own.mjs).
   // Ручной перезапуск: game.warhammerDBC.migrateValourOwn()
   await runMigrationGate({
