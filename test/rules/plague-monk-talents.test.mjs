@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import {
   feverState, feverSpendPlan, feverRestorePlan, feverUnarmedLimit, trueRotDamage, trueRotRadCap,
-  corpsePoisonAttack, trueRotBypassesImmunity, wormPouchCap
+  corpsePoisonAttack, trueRotBypassesImmunity, wormPouchCap, feverUnarmedKey, feverUnarmedUsed
 } from "../../module/rules/plague-monk-talents.mjs";
 
 const unT = r => ({ name: `Unnatural Toughness / Сверхъестественная Стойкость (${r})`, type: "trait",
@@ -39,5 +39,16 @@ describe("Чумной Монах", () => {
     expect(corpsePoisonAttack(m, false)).toBe(false);
     expect(trueRotBypassesImmunity({ items: [{ name: "Daemonic (3) / Демонический", type: "trait" }] })).toBe(true);
     expect(trueRotBypassesImmunity({ items: [] })).toBe(false);
+  });
+});
+
+describe("Горячечная Скорость: счётчик безоружных атак", () => {
+  it("ключ «бой:Раунд» — Раунд другого боя и старая метка не считаются", () => {
+    const c = { id: "c1", round: 2 };
+    expect(feverUnarmedKey(c)).toBe("c1:2");
+    expect(feverUnarmedUsed({ key: "c1:2", n: 1 }, c)).toBe(1);
+    expect(feverUnarmedUsed({ key: "c0:2", n: 1 }, c)).toBe(0);
+    expect(feverUnarmedUsed({ round: 2, n: 1 }, c)).toBe(0);
+    expect(feverUnarmedUsed({ key: "c1:2", n: 1 }, null)).toBe(0);
   });
 });

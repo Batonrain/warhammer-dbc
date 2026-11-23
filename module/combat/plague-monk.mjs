@@ -15,7 +15,7 @@ import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { grantTimedEffect } from "./timed-effects.mjs";
 import {
-  FEVER_FLAG, FEVER_EFFECT_KEY, FEVER_OPTIONS, feverState, feverSpendPlan, feverRestorePlan, feverUnarmedLimit,
+  FEVER_FLAG, FEVER_EFFECT_KEY, FEVER_OPTIONS, feverState, feverSpendPlan, feverRestorePlan, feverUnarmedLimit, feverUnarmedKey, feverUnarmedUsed,
   trueRotRadCap, hasFeveredSpeed, hasCarrionEater, hasFeverStance, hasTrueRot, hasWormListener,
   WORM_POUCH_FLAG, wormPouchCap, wormPouches
 } from "../rules/plague-monk-talents.mjs";
@@ -76,15 +76,17 @@ export async function useFeveredSpeed(actor) {
     { hint: walletLine(st) });
   if (!choice) return CANCEL;
   const opt = FEVER_OPTIONS.find(o => o.key === choice);
+  const combat = game.combat?.started ? game.combat : null;
+  const used = combat ? feverUnarmedUsed(actor.getFlag(NS, "feverUnarmed"), combat) : 0;
   if (opt.key === "unarmed") {
     const limit = feverUnarmedLimit(actor.system?.characteristics?.ag?.bonus);
     if (limit < 1) return ui.notifications.warn("⚠️ ½ A.b (окр.▼) = 0 — безоружных атак Горячечной Скорости нет.");
-    const used = Number(actor.getFlag(NS, "feverUnarmed")?.round === game.combat?.round ? actor.getFlag(NS, "feverUnarmed").n : 0) || 0;
-    if (game.combat?.started && used >= limit) return ui.notifications.warn(`⚠️ Уже ${used} из ${limit} безоружных атак в этот Ход.`);
-    if (game.combat?.started) await actor.setFlag(NS, "feverUnarmed", { round: game.combat.round, n: used + 1 });
+    if (combat && used >= limit) return ui.notifications.warn(`⚠️ Уже ${used} из ${limit} безоружных атак в этот Ход.`);
   }
   const after = await spendFever(actor, opt.cost);
   if (!after) return CANCEL;
+  // Счётчик — после успешной траты: не хватило рейтинга — атака не состоялась и не считается.
+  if (opt.key === "unarmed" && combat) await actor.setFlag(NS, "feverUnarmed", { key: feverUnarmedKey(combat), n: used + 1 });
   const lines = [`Потрачено <b>${opt.cost}</b> Un.T: ${esc(opt.label)}.`];
   if (opt.key === "agility") {
     await grantTimedEffect(actor, { key: "feverAgility", name: "Горячечная Скорость: Unnatural A (+2)",
