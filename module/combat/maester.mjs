@@ -8,7 +8,7 @@
 import { esc } from "../helpers/utils.mjs";
 import { replaceAblativeContribution, woundLossUpdates } from "../rules/wounds.mjs";
 import { resourcePoolValue, resourcePoolDef } from "../rules/resource-pools.mjs";
-import { gainResource, spendResource } from "../apps/resource-pools.mjs";
+import { gainResource, spendResource, resourceCostGate } from "../apps/resource-pools.mjs";
 import { roundsSinceDeath } from "../rules/medic-talents.mjs";
 import { DECEASED_AT_FLAG } from "../sheets/tabs/death.mjs";
 import { setDeceased } from "../sheets/tabs/body.mjs";
@@ -157,6 +157,8 @@ export async function harvestFrom(actor) {
   if (!f || f.by !== actor.uuid) return ui.notifications.warn("⚠️ Выберите своего пациента (T на токене).");
   const have = Number(f.cultivation) || 0;
   if (!have) return ui.notifications.warn(`⚠️ У «${p.name}» Культивации нет.`);
+  // Обнулить Культивацию пациента должен тот, кто вправе в него писать, — иначе действие/Реакция ушли бы впустую.
+  if (!canWrite(p)) return ui.notifications.warn(`⚠️ «${p.name}» не ваш — Культивацию соберёт ГМ.`);
   const stage = maesterStage(actor);
   const opts = [{ value: "full", label: "Полное действие — всю" }];
   if (stage >= 2) opts.push({ value: "reaction", label: "Реакция (цель Прожектора) — всю" });
@@ -168,7 +170,8 @@ export async function harvestFrom(actor) {
   const def = resourcePoolDef(actor, CULTIVATION_POOL);
   const room = Math.max(0, (def?.max ?? 0) - resourcePoolValue(actor, CULTIVATION_POOL));
   const { take } = harvestCultivation(have, room, { capOne: how === "free" });
-  await writeOrWarn(p, { [`flags.${NS}.${LIFE_VIRUS_FLAG}.cultivation`]: 0, [`flags.${NS}.${LIFE_VIRUS_FLAG}.cultivationSince`]: 0 }, "сбор Культивации");
+  // Не обнулили у пациента — не начисляем: иначе тот же запас собирался бы бесконечно.
+  if (!await writeOrWarn(p, { [`flags.${NS}.${LIFE_VIRUS_FLAG}.cultivation`]: 0, [`flags.${NS}.${LIFE_VIRUS_FLAG}.cultivationSince`]: 0 }, "сбор Культивации")) return CANCEL;
   if (take) await gainResource(actor, CULTIVATION_POOL, take, { silent: true });
   await cultCard(actor, "Культивация", [
     `С «${esc(p.name)}» собрано <b>${take}</b> из ${have}${take < have ? " (остальное потеряно — пул полон или сбор без Реакции)" : ""}. Культивации: ${resourcePoolValue(actor, CULTIVATION_POOL)} / ${def?.max ?? "?"}.`
@@ -205,10 +208,13 @@ export async function useProjector(actor) {
     rejectClose: false
   }).catch(() => null);
   if (!pick) return CANCEL;
-  if (pick.mode !== "free" && !await payActions(actor, 1, { what: "Целительный Прожектор" })) return CANCEL;
   let kCost = pick.eff.startsWith("k") ? Number(pick.eff.slice(1)) : 0;
   const times = 1 + (stage >= 3 && !kCost ? pick.extra : 0);
   kCost += stage >= 3 && !kCost ? pick.extra : 0;
+  // Культивации не хватает — отказ до оплаты действия, а не после.
+  const gate = kCost ? resourceCostGate(actor, CULTIVATION_POOL, kCost) : null;
+  if (gate?.disabled) { ui.notifications.warn(`⚠️ ${gate.title}`); return CANCEL; }
+  if (pick.mode !== "free" && !await payActions(actor, 1, { what: "Целительный Прожектор" })) return CANCEL;
   if (kCost && !await spendResource(actor, CULTIVATION_POOL, kCost, { silent: true })) return CANCEL;
   if (pick.mode === "free") await markCapabilityUsed(actor, "maesterProjector", "round");
   if (pick.mode === "s5") await markCapabilityUsed(actor, "maesterProjectorS5", "round");
