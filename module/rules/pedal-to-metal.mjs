@@ -18,10 +18,13 @@ export function pedalOf(vehicle) {
   return vehicle?.flags?.[NS]?.[PEDAL_FLAG] ?? vehicle?.getFlag?.(NS, PEDAL_FLAG) ?? null;
 }
 
-/** Действует ли «Педаль в Пол» сейчас. Вне боя — пока метку не сняли (ход не считается). */
+/**
+ * Действует ли «Педаль в Пол» сейчас. Метка, поставленная вне боя (combatId ""), действует,
+ * пока боя нет; в начатом бою её срок истёк — иначе она вечна и Вираж отказывает навсегда.
+ */
 export function pedalActive(mark, combat) {
   if (!mark) return false;
-  if (!mark.combatId) return true;
+  if (!mark.combatId) return !combat?.started;
   if (!combat || combat.id !== mark.combatId) return false;
   const round = Number(combat.round) || 0, turn = Number(combat.turn) || 0;
   if (round === mark.round) return true;
@@ -36,5 +39,5 @@ export function pedalSpdBonus(vehicle, combat = globalThis.game?.combat) {
 
 /** Метка боя истекла (или бой не тот) — её пора снять, иначе SPD держит прибавку до пересчёта листа. */
 export function pedalExpired(mark, combat) {
-  return !!mark && !!mark.combatId && !pedalActive(mark, combat);
+  return !!mark && (!!mark.combatId || !!combat?.started) && !pedalActive(mark, combat);
 }

@@ -151,7 +151,8 @@
               "resPoolBoostChars": "",
               "resPoolFailChars": "",
               "modAuto": false,
-              "powerName": ""
+              "powerName": "",
+              "askOnly": true
             },
             {
               "id": "I2tRi6HVY6T9qFQa",
@@ -263,7 +264,8 @@
               "resPoolBoostChars": "",
               "resPoolFailChars": "",
               "modAuto": false,
-              "powerName": ""
+              "powerName": "",
+              "askOnly": true
             }
           ]
         }

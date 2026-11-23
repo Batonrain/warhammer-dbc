@@ -152,8 +152,25 @@ export function seekerThresholdOffset(idx, f = {}) {
 export const seekerIgnoresGrappleCover = idx => idx === 1;
 
 // ── Выдержанный Взрыв ───────────────────────────────────────────────────────
-/** Флаг актора: точка разряда вплетённого взрыва {x, y, sceneId} — тратит кнопка шаблона силы. */
+/**
+ * Флаг актора: точка разряда вплетённого взрыва {x, y, sceneId, itemUuid, combatId, round} — тратит
+ * кнопка шаблона той самой силы.
+ */
 export const TIMED_EXPLOSION_FLAG = "timedExplosionAt";
+
+/**
+ * Чем кончится метка Выдержанного Взрыва при нажатии кнопки шаблона (чистая функция):
+ * "use" — точка для этой силы; "skip" — шаблон чужой силы/оружия, метку не трогать;
+ * "stale" — метка из другого боя/Раунда или без силы (старая; манифестация провалилась) — снять.
+ * @param {object|null} at       метка
+ * @param {{itemUuid?:string, sceneId?:string, combat?:{id:string, round:number}|null}} ctx
+ */
+export function timedExplosionVerdict(at, { itemUuid = "", sceneId = "", combat = null } = {}) {
+  if (!at) return "skip";
+  if (!at.itemUuid || (at.combatId || "") !== (combat?.id || "") || (combat && Number(at.round) !== Number(combat.round))) return "stale";
+  if (at.itemUuid !== itemUuid || at.sceneId !== sceneId) return "skip";
+  return "use";
+}
 
 /**
  * «При промахе или успешном Избегании цели пуля разряжает вплетённый взрыв в

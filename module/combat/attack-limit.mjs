@@ -40,19 +40,22 @@ const FLAG_KEY = "attackActionsThisTurn";
  * (wdbc-6rj) — редактируется прямо на листе, для исключений без своей записи
  * Конструктора.
  */
-export function attackActionLimit(actor) {
+export function attackActionLimit(actor, { dendriteFocus = false } = {}) {
   return 1 + (determinationToFightExtraAttack(actor) ? 1 : 0)
     + (Number(actor?.system?.attackLimitBonus) || 0)
     + flyingKickAttackBonus(actor)
     // Сосредоточение на мехадендритах — «считается имеющим Multiple Arms (X)»: заменяет, а не складывается.
-    + Math.max(multipleArmsAttackBonus(actor), dendriteFocusAttackBonus(actor));
+    + Math.max(multipleArmsAttackBonus(actor), dendriteFocusAttackBonus(actor, { assumeFocus: dendriteFocus }));
 }
 
-/** Хватит ли лимита ещё на одну Атаку в этом Ходу — вне боя лимит не считается вовсе. */
-export function canTakeAttackAction(actor) {
+/**
+ * Хватит ли лимита ещё на одну Атаку в этом Ходу — вне боя лимит не считается вовсе.
+ * dendriteFocus — эта атака объявляет сосредоточение на мехадендритах (окно атаки).
+ */
+export function canTakeAttackAction(actor, { dendriteFocus = false } = {}) {
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
   const used = Number(actor.getFlag(FLAG_SCOPE, FLAG_KEY)) || 0;
-  return used < attackActionLimit(actor);
+  return used < attackActionLimit(actor, { dendriteFocus });
 }
 
 /** Засчитать Атаку в счётчик Хода — вызывать РОВНО ОДИН раз на подтверждённый клик «Бросок!». */

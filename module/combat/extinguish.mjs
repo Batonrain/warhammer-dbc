@@ -75,14 +75,16 @@ async function inContactWith(actor, patient) {
  * Перекатывайся (и без `dropAndRoll:false`) — автоуспех без теста, ложится потушенный.
  * @returns {Promise<null|{success:boolean, critFail:boolean, eff:?number, rv:?number, auto?:boolean}>}
  */
-export async function extinguishBurning(actor, patient = actor, { mod = 0, dropAndRoll, apCost = 1 } = {}) {
+export async function extinguishBurning(actor, patient = actor, { mod = 0, dropAndRoll, apCost = 1, skipContact = false } = {}) {
   if (!actor || !patient) return null;
   if (!patient.system?.conditions?.burning) {
     ui.notifications.warn(`${patient.name}: не горит.`);
     return null;
   }
   const self = sameActor(actor, patient);
-  if (!self && !await inContactWith(actor, patient)) {
+  // skipContact — сближение входит в составное действие (Фронтовой Медик: Натиск к
+  // союзнику), токен ещё не подошёл, а ОД уже оплачены.
+  if (!self && !skipContact && !await inContactWith(actor, patient)) {
     ui.notifications.warn(`${actor.name} не в контакте с ${patient.name} — дотянуться нечем.`);
     return null;
   }

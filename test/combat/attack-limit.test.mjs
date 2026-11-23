@@ -118,3 +118,28 @@ describe("Многорукий: +1 Атака за каждую пару рук 
     expect(attackActionLimit(actorFor({ items: [arms(6)], characteristics: { per: { bonus: 0 } } }))).toBe(1);
   });
 });
+
+describe("сосредоточение на мехадендритах до метки (приёмка #597)", () => {
+  const dendrite = id => ({ id, type: "weapon", name: `Боевой мехадендрит ${id}`, system: { profileLabel: "Мехадендрит" } });
+  it("объявленное в окне сосредоточение поднимает Лимит без метки на акторе", () => {
+    const items = [{ id: "t", type: "talent", name: "Mechadendrite Use (Weapon)", system: {} }, ...["a", "b", "c", "d", "e"].map(dendrite)];
+    items.get = id => items.find(i => i.id === id);
+    const actor = actorFor({ items });
+    expect(attackActionLimit(actor)).toBe(1);
+    expect(attackActionLimit(actor, { dendriteFocus: true })).toBe(3);
+  });
+
+  it("окно атаки ставит метку сосредоточения и снимает пропуск Завесы только после списания ОД", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync(new URL("../../module/sheets/attack/dialog.mjs", import.meta.url), "utf8");
+    const take = src.indexOf("await takeAttackAction(actor);");
+    const spend = src.indexOf("await spendActionPoints(actor, apCost, { physical: true, attack: true })");
+    for (const needle of ['await actor.setFlag("warhammer-dbc", DENDRITE_FOCUS_FLAG, true)', 'await actor.unsetFlag("warhammer-dbc", VEIL_PIERCE_FLAG)']) {
+      const at = src.indexOf(needle);
+      expect(src.indexOf(needle, at + 1), needle).toBe(-1);
+      expect(at, needle).toBeGreaterThan(spend);
+      expect(at - take, needle).toBeLessThan(300);
+    }
+    expect(src).toMatch(/canTakeAttackAction\(actor, \{ dendriteFocus: dendriteMode === "focus" \}\)/);
+  });
+});

@@ -41,6 +41,19 @@ export function symphonyProps(deg, { isMelee = false, thrown = false } = {}) {
   return [{ key: "felling", rating: deg - 5, rating2: 0 }, { key: "precise" }];
 }
 
+/** Ария «раз в Ход»: метка попытки — бой, Раунд и Ход (как MANTLE_SWAP_FLAG). */
+export const ARIA_TURN_FLAG = "ariaTurn";
+
+/** Метка Хода для Арии (null — вне боя, ограничения нет). */
+export const ariaTurnMark = combat => combat?.id ? { combatId: combat.id, round: combat.round ?? 0, turn: combat.turn ?? 0 } : null;
+
+/** Ария в этом Ходу уже звучала (тест брошен). */
+export function ariaUsedThisTurn(actor, combat) {
+  const key = ariaTurnMark(combat);
+  const f = actor?.flags?.[NS]?.[ARIA_TURN_FLAG];
+  return !!(key && f && f.combatId === key.combatId && f.round === key.round && f.turn === key.turn);
+}
+
 /** Ария: клинковое (isBlade — rules/melee-talents.mjs::isBladeWeapon) с Балансом не ниже 0. */
 export function ariaWeaponOk(weapon, isBlade) {
   if (weapon?.type !== "weapon" || !isBlade?.(weapon)) return false;

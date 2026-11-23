@@ -7,6 +7,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { spendInfamyPoint } from "./noise-marine.mjs";
+import { actorHasInfamyPoint } from "../apps/infamy-points.mjs";
 import { writeToTarget } from "./gm-relay.mjs";
 import { startWithdrawal } from "./drug-withdrawal.mjs";
 import { readWithdrawalEntries, isAddictedEntry, drugKey } from "../rules/drug-withdrawal.mjs";
@@ -99,8 +100,9 @@ export async function giveCookMix(actor) {
   if (!isAddictedEntry(readWithdrawalEntries(target)?.[drugKey(drug)])) {
     return ui.notifications.warn(`⚠️ ${target.name} не зависим(а) от «${drug}» — смесь не нужна.`);
   }
+  // Запас уменьшается, только если запись на цель ушла (нет ГМа — смесь остаётся).
+  if (!(await writeToTarget(target, { kind: "medicChem", action: "cook", drug }, actor))) return;
   await saveStock(actor, "cook", drug, -1);
-  await writeToTarget(target, { kind: "medicChem", action: "cook", drug }, actor);
   await postTestCard(actor, {
     icon: "🧪", title: `Смесь Повара → ${esc(target.name)}`,
     lines: [`<div class="roll-threshold">Зависимость от «${esc(drug)}» утолена как полноценной дозой: штраф снят, отсчёт частоты приёма заново.</div>`]
@@ -114,6 +116,8 @@ export async function makeAntivenom(actor) {
   const poisons = [...(actor.items ?? [])].filter(i => i.type === "drug" && i.system?.drugCategory === "poison");
   const poison = await pick("Противоядие", "Против какого яда (образец на листе)?", poisons.map(p => ({ value: p.name, label: p.name })));
   if (!poison) return ui.notifications.warn("⚠️ На листе нет образца яда. Против неизвестного яда нужен образец или обследование (Medicae(P)−20).");
+  // Очко проверяется до списания Детокса: без Очка расходники не сгорают.
+  if (!actorHasInfamyPoint(actor)) return ui.notifications.warn("Нет Очка Бесчестия — Противоядие не активирован.");
   if (!(await spendDoses(actor, [{ re: DETOX_RE, qty: 3, label: "Детокс" }]))) return;
   if (!(await spendInfamyPoint(actor, "Противоядие"))) return;
   const sk = groupSkillValue(actor, "scholasticLore", CHYMISTRY_RE);
@@ -134,8 +138,8 @@ export async function giveAntivenom(actor) {
   const poison = await pick("Противоядие", "Какое противоядие ввести?", Object.entries(stock).map(([k, v]) => ({ value: k, label: `${k} (${v})` })));
   if (!poison) return ui.notifications.warn("⚠️ Готовых доз противоядия нет.");
   const target = firstTarget(actor) ?? actor;
+  if (!(await writeToTarget(target, { kind: "medicChem", action: "antivenom", poison }, actor))) return;
   await saveStock(actor, "antivenom", poison, -1);
-  await writeToTarget(target, { kind: "medicChem", action: "antivenom", poison }, actor);
   await postTestCard(actor, {
     icon: "💉", title: `Противоядие → ${esc(target.name)}`,
     lines: [`<div class="roll-threshold">Полудействие: действие «${esc(poison)}» прекращено, иммунитет к этому яду на 24 часа игрового времени.</div>`]
@@ -173,9 +177,9 @@ export async function giveDeepDetox(actor) {
   const deg = Number(actor.getFlag(NS, "deepDetoxDeg")?.[drug]) || 0;
   const d5 = await new Roll("1d5").evaluate();
   const stun = deepDetoxStunMinutes(d5.total, deg);
+  if (!(await writeToTarget(target, { kind: "medicChem", action: "deepDetox", drug, stun: Math.min(6, stun) }, actor))) return;
   await saveStock(actor, "deepDetox", drug, -1);
   if (!medicStock(actor).deepDetox[drug]) await actor.update({ [`flags.${NS}.deepDetoxDeg.-=${drug}`]: null });
-  await writeToTarget(target, { kind: "medicChem", action: "deepDetox", drug, stun: Math.min(6, stun) }, actor);
   await postTestCard(actor, {
     icon: "💉", title: `Глубокая Детоксикация → ${esc(target.name)}`,
     lines: [`<div class="roll-threshold">Пост-эффект «${esc(drug)}» снят. Оглушение: 1d5 (${d5.total}) +1 −${deg} = <b>${stun}</b> мин.</div>`]
@@ -194,8 +198,9 @@ export async function usePlacebo(actor) {
     return ui.notifications.warn(`⚠️ Плацебо на ${target.name} уже применено в этой сцене/бою.`);
   }
   // Комбинированный тест: один бросок против обоих Порогов, Успехи — по худшему (стр. 25).
-  const dec = sideValue(actor, { skill: "deceive" });
-  const med = sideValue(actor, { skill: "medicae" });
+  // Книга: Deceive(I)+0 и Medicae(I)−10 — Обман от Интеллекта, не от Товарищества.
+  const dec = sideValue(actor, { skill: "deceive", char: "int" });
+  const med = sideValue(actor, { skill: "medicae", char: "int" });
   const rmD = collectTestMods(actor, { kind: "skill", skill: "deceive", char: "int" });
   const rmM = collectTestMods(actor, { kind: "skill", skill: "medicae", char: "int" });
   const tD = dec + rmD.total, tM = med - 10 + rmM.total;
@@ -203,13 +208,13 @@ export async function usePlacebo(actor) {
   const a = testOutcome(roll.total, tD), b = testOutcome(roll.total, tM);
   const success = a.success && b.success;
   const deg = success ? Math.min(a.deg, b.deg) : Math.max(a.success ? 0 : a.deg, b.success ? 0 : b.deg);
-  if (success) {
+  // «Раз за сцену на цель» отмечается, только если запись на цель ушла.
+  if (success && await writeToTarget(target, { kind: "medicChem", action: "placebo", rounds: Math.max(1, Math.min(30, deg)) }, actor)) {
     await actor.setFlag(NS, PLACEBO_SCENE_FLAG, { key: sceneKey, targets: [...(used.key === sceneKey ? used.targets ?? [] : []), target.uuid] });
-    await writeToTarget(target, { kind: "medicChem", action: "placebo", rounds: Math.max(1, Math.min(30, deg)) }, actor);
   }
   await postTestCard(actor, {
     icon: "💊", title: `Плацебо → ${esc(target.name)}`,
-    threshold: `<div class="roll-threshold">Комбинированный тест: Deceive ${tD} и Medicae−10 ${tM}, бросок <b>${roll.total}</b></div>`,
+    threshold: `<div class="roll-threshold">Комбинированный тест: Deceive(I) ${tD} и Medicae−10 ${tM}, бросок <b>${roll.total}</b></div>`,
     outcome: success
       ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}: ${esc(target.name)} не получает штрафа Усталости ${deg} Раунд(ов). Иммунитет к урону в Характеристики и уже полученным Критическим эффектам — за столом.`)
       : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}.`)

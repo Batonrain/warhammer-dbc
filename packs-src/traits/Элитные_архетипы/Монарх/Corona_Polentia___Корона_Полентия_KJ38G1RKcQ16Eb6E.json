@@ -357,7 +357,7 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "Смена контейнера",
-              "code": "// Корона Полентия (combat/monarch.mjs): новый вассал с 1 ОД.\nawait useVassalSwap(actor);",
+              "code": "// Корона Полентия (combat/monarch.mjs): новый вассал с 1 ОД.\nreturn await useVassalSwap(actor);",
               "scriptThrottleUnit": "round",
               "scriptThrottleMax": 1,
               "when": {

@@ -22,6 +22,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
+import { itemHasName } from "./predicates.mjs";
 
 export const NS = "warhammer-dbc";
 export const SUBSTANCE_AT_FLAG = "monodevotantSubstanceAt";
@@ -30,14 +31,11 @@ export const GRACE_FORMULA     = "1d10";
 export const BASE_PENALTY      = 10;
 export const DAILY_PENALTY     = 5;
 
-const NAME_RE = /^(Monodevotant|Монозависимый)\b/i;
-
 /** Черта «Монозависимый» актора или null. */
 export function monodevotantTrait(actor) {
   for (const i of actor?.items ?? []) {
-    if (i?.type !== "trait") continue;
-    const names = String(i.name ?? "").split(" / ").map(s => s.trim());
-    if (names.some(n => NAME_RE.test(n))) return i;
+    // itemHasName, а не регулярка с \b: без флага u \b не видит границу после кириллицы — «Монозависимый» не опознавался.
+    if (i?.type === "trait" && (itemHasName(i, "Monodevotant") || itemHasName(i, "Монозависимый"))) return i;
   }
   return null;
 }

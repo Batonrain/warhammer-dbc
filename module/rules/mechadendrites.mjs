@@ -300,9 +300,12 @@ export function dendriteFocusActive(actor) {
   return !!flagOf(actor, DENDRITE_FOCUS_FLAG);
 }
 
-/** Надбавка к Лимиту Атак от Multiple Arms (X) сосредоточения: ceil(X/2) − 1 (та же формула, что у Трейта). */
-export function dendriteFocusAttackBonus(actor) {
-  if (!dendriteFocusActive(actor) || !hasMechadendriteTraining(actor, "weapon")) return 0;
+/**
+ * Надбавка к Лимиту Атак от Multiple Arms (X) сосредоточения: ceil(X/2) − 1 (та же формула, что у Трейта).
+ * assumeFocus — сосредоточение объявлено этой атакой, но метка ставится только после списания ОД.
+ */
+export function dendriteFocusAttackBonus(actor, { assumeFocus = false } = {}) {
+  if (!(assumeFocus || dendriteFocusActive(actor)) || !hasMechadendriteTraining(actor, "weapon")) return 0;
   return Math.max(0, Math.ceil(mechadendriteCount(actor) / 2) - 1);
 }
 

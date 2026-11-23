@@ -661,3 +661,16 @@ describe("Заготовленная Руна — скидка на первую
     expect(captured.chat[0].content).toContain("Руны: −<b>6</b>");
   });
 });
+
+// Общее Колдовство: метка «раз в Раунд» ставится после броска (onCast), а не при открытии окна.
+describe("Окно манифестации — onCast вызывающего", () => {
+  it("onCast зовётся после психотеста и не уходит в его opts; без нажатия «Психотест!» — не зовётся", async () => {
+    const a = actor();
+    let called = 0;
+    showManifestDialog(a, power({ prRequired: 1 }), { onCast: () => { called++; } });
+    expect(called).toBe(0);
+    captured.nextRoll = 30;
+    await captured.dialog.buttons.cast.callback(fakeHtml(castFields({ "#psy-path": "" })));
+    expect(called).toBe(1);
+  });
+});

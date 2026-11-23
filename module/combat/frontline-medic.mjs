@@ -25,6 +25,7 @@ import { esc } from "../helpers/utils.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { FAST_STITCHES_CAP } from "../rules/medic-talents.mjs";
+import { canRestitch } from "../sheets/tabs/healing.mjs";
 import { isEncounterActive, hasActionEconomy, canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
 import { askSelect, targetedActors } from "./psyker-elite-common.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
@@ -68,7 +69,10 @@ export function frontlineMedicOptions(medic, patient) {
   if (c.crippling && narthecium) out.push({ value: "crippling", label: "Снять Калечение (Medicae+0, Нартеций)" });
   if (c.burning) out.push({ value: "burning", label: "Потушить (A+20)" });
   if (frontlineDrugs(medic).length) out.push({ value: "chem", label: "Применить Химию (препарат с листа)" });
-  if (narthecium && hasTalentCapability(medic, FAST_STITCHES_CAP)) {
+  // Первая Помощь после этого урона уже была — Стежки только как Перешивание
+  // (иначе applyHealing откажет уже после списания полного действия).
+  if (narthecium && hasTalentCapability(medic, FAST_STITCHES_CAP)
+    && (!patient?.system?.wounds?.firstAidUsed || canRestitch(medic, patient))) {
     out.push({ value: "stitches", label: "Быстрые Стежки (Первая Помощь, Нартеций)" });
   }
   if (c.stunned || c.helpless) out.push({ value: "carry", label: "Забросить на плечо" });
@@ -146,7 +150,7 @@ export async function useFrontlineMedic(actor) {
   if (mode === "crippling") return removeCrippling(actor, patient);
   if (mode === "burning") {
     const { extinguishBurning } = await import("./extinguish.mjs");
-    return extinguishBurning(actor, patient, { mod: 20, apCost: 0 });
+    return extinguishBurning(actor, patient, { mod: 20, apCost: 0, skipContact: true });
   }
   if (mode === "stitches") {
     const { applyHealing } = await import("../sheets/tabs/healing.mjs");

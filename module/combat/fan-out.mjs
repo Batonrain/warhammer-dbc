@@ -15,6 +15,10 @@ import { cohesionBonus } from "../constants/squad.mjs";
 import { FAN_OUT_FLAG } from "../rules/speed-talents.mjs";
 import { hasItemNamed } from "../rules/req-atom.mjs";
 
+/** Метка «Разбежаться! в этом бою уже был» на самом командире — id боя (книга: «в начале боя», один раз). */
+export const FAN_OUT_USED_FLAG = "fanOutUsed";
+export const fanOutUsed = (actor, combat) => !!combat?.id && actor?.flags?.["warhammer-dbc"]?.[FAN_OUT_USED_FLAG] === combat.id;
+
 /** Сколько бойцов получают Reposition: до Успехов, не больше членов отряда. */
 export function fanOutCount(deg, members) {
   return Math.max(0, Math.min(Number(deg) || 0, Number(members) || 0));
@@ -24,6 +28,7 @@ export async function useFanOut(actor) {
   if (!actor || !hasItemNamed(actor, "Fan Out!", ["talent"])) return ui.notifications.warn("⚠️ У актора нет Таланта Разбежаться!.");
   const combat = game.combat;
   if (!combat?.started || (Number(combat.round) || 0) > 1) return ui.notifications.warn("⚠️ Разбежаться! — в начале боя, сразу после Инициативы.");
+  if (fanOutUsed(actor, combat)) return ui.notifications.warn("⚠️ Разбежаться! — раз за бой: тест уже был.");
   const squad = findMemberSquad(actor.uuid);
   if (!squad) return ui.notifications.warn("⚠️ Персонаж не состоит в Отряде.");
   const role = squadRoleOf(squad, actor.uuid);
@@ -37,6 +42,7 @@ export async function useFanOut(actor) {
   const rm = collectTestMods(actor, { kind: "skill", skill: "command", char: "per" });
   const threshold = base + coh + rm.total;
   const roll = await new Roll("1d100").evaluate();
+  await actor.setFlag("warhammer-dbc", FAN_OUT_USED_FLAG, combat.id);
   const { success, deg } = testOutcome(roll.total, threshold);
   let chosen = [];
   const n = success ? fanOutCount(deg, mates.length) : 0;

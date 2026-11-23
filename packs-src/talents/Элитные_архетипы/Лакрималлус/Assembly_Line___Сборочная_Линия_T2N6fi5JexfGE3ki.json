@@ -244,7 +244,7 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "Сборочная Линия: сутки работы Орд",
-              "code": "// Сборочная Линия (combat/lacrimallus.mjs): Успехи Орд тех-траллов за сутки → пул.\nawait useAssemblyLine(actor);",
+              "code": "// Сборочная Линия (combat/lacrimallus.mjs): Успехи Орд тех-траллов за сутки → пул.\nreturn await useAssemblyLine(actor);",
               "scriptThrottleUnit": "day",
               "scriptThrottleMax": 1,
               "when": {

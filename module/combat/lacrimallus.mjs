@@ -76,7 +76,7 @@ export async function useAssemblyLine(actor) {
       res ? `В пуле: <b>${res.after}</b>. Тратятся на Крафт изделий с Банком ≤ ${ASSEMBLY_LINE_BANK_CAP}.` : ""
     ].filter(Boolean)
   });
-  return n;
+  return undefined; // пусто — использовано (runMechScriptEntry тратит «сутки»); отказ выше — truthy
 }
 
 // ── Цепи Производства ───────────────────────────────────────────────────────

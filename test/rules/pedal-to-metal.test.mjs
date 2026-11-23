@@ -28,4 +28,10 @@ describe("Педаль в Пол — снятие метки", () => {
     expect(pedalExpired(m, { id: "c", round: 3, turn: 3 })).toBe(true);
     expect(pedalExpired({ bonus: 4, combatId: "" }, null)).toBe(false);
   });
+  it("метка вне боя (combatId \"\") в начатом бою истекла: не вечна, Вираж снова доступен", () => {
+    const m = { bonus: 4, combatId: "" };
+    expect(pedalActive(m, null)).toBe(true);
+    expect(pedalActive(m, { id: "c", started: true, round: 1, turn: 0 })).toBe(false);
+    expect(pedalExpired(m, { id: "c", started: true, round: 1, turn: 0 })).toBe(true);
+  });
 });

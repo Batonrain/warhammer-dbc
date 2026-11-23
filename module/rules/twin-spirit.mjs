@@ -146,20 +146,21 @@ export const SHARED_SORCERY_FLAG = "sharedSorcery";
 /**
  * Можно ли неконтролирующей душе манифестировать сейчас: раз в Раунд, и не
  * раньше конца простоя после силы за полудействие (1 Раунд) / полное (3).
- * Вне боя (round == null) ограничений нет.
+ * Вне боя (round == null) ограничений нет; метка другого боя (или старая без combatId) не держит.
  */
-export function sharedSorceryAvailable(state, round) {
+export function sharedSorceryAvailable(state, round, combatId = "") {
   if (round == null || !state) return true;
+  if (!state.combatId || state.combatId !== combatId) return true;
   const r = num(round);
   if (num(state.round) === r) return false;
   return r > num(state.lockUntil);
 }
 
-/** Метка после манифестации: по цене силы в действиях. */
-export function sharedSorceryMark(action, round) {
+/** Метка после манифестации: по цене силы в действиях; combatId — чтобы простой не переживал бой. */
+export function sharedSorceryMark(action, round, combatId = "") {
   const r = num(round);
   const lock = action === "full" ? 3 : action === "half" ? 1 : 0;
-  return { round: r, lockUntil: r + lock };
+  return { round: r, lockUntil: r + lock, combatId };
 }
 
 /** Силы демона, доступные Общему Колдовству. */

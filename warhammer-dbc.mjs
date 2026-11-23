@@ -1698,7 +1698,8 @@ Hooks.once("ready", async () => {
 // Ручной перезапуск: game.warhammerDBC.migratePactDisorderGrant()
 // Один обработчик, строго по очереди (см. «Зависимость наркотиков» выше).
 Hooks.once("ready", async () => {
-  if (!game.user.isGM) return;
+  // Один активный ГМ: два ГМа одновременно гоняли бы миграции и задваивали щиты/Черты.
+  if (!game.users.activeGM?.isSelf) return;
   // Идемпотентна: болезнь уже на акторе — ничего не создаётся (migrations/plague-marine-rot.mjs).
   await runMigrationGate({
     key: "plagueMarineRotVersion", tokensKey: "plagueMarineRotTokensVersion", label: "Гниль Нургла у Чумных Десантников",

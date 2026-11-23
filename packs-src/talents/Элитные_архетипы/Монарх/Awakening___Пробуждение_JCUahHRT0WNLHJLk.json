@@ -130,7 +130,7 @@
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
               "label": "Пробуждение: вассал +4 ОД",
-              "code": "// Пробуждение (combat/monarch.mjs): +3 к обычному +1, встречный W.\nawait useAwakening(actor);",
+              "code": "// Пробуждение (combat/monarch.mjs): +3 к обычному +1, встречный W.\nreturn await useAwakening(actor);",
               "scriptThrottleUnit": "round",
               "scriptThrottleMax": 1,
               "when": {

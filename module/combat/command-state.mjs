@@ -330,6 +330,8 @@ const RELAYED_COMBAT_MARKS = {
   "flags.warhammer-dbc.-=warpInstabHurt": v => v === null,
   "flags.warhammer-dbc.-=warpInstabDealt": v => v === null,
   "system.inRage": v => v === true,
+  // Танец Боли (hooks.mjs, .wh-char-dmg-btn в .wh-dance-of-pain): «раз в Ход» атакующему жмёт владелец цели.
+  "flags.warhammer-dbc.danceOfPainThisTurn": v => v === true,
   // Острие Копья (combat/tip-of-spear.mjs): переброс, выданный Герольдом соратнику.
   "flags.warhammer-dbc.tipOfSpear": v => !!v && typeof v === "object" && typeof v.heraldUuid === "string"
     && typeof v.combatId === "string" && isIntIn(v.round, 0, 10000) && isIntIn(v.turn, 0, 1000)

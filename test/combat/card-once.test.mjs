@@ -215,3 +215,19 @@ describe("стыковка: переброс защиты и седло Непо
     for (let i = 0; i < 4; i++) expect(CARD_ONCE_FLAGS).toContain(`unrulySaddle${i}`);
   });
 });
+
+describe("стыковка: Вуаль Лжи и Танец Боли — раз на карточку (приёмка #597)", () => {
+  it("обработчики идут через runCardOnce и гасят кнопку по флагу при отрисовке", () => {
+    expect(HOOKS).toMatch(/runCardOnce\(message, "veilProxyUsed"/);
+    expect(HOOKS).toMatch(/cardOnceUsed\(message, "veilProxyUsed"\)\) btn\.disabled = true/);
+    expect(HOOKS).toMatch(/runCardOnce\(message, "danceOfPainUsed"/);
+    expect(HOOKS).toMatch(/cardOnceUsed\(message, "danceOfPainUsed"\)\) btn\.disabled = true/);
+  });
+
+  it("метка «раз в Ход» Танца Боли пишется атакующему через ГМа, не только своему", () => {
+    const at = HOOKS.indexOf('runCardOnce(message, "danceOfPainUsed"');
+    const block = HOOKS.slice(at, at + 600);
+    expect(block).toMatch(/updateOrRelay\(atkActor, \{ "flags\.warhammer-dbc\.danceOfPainThisTurn": true \}\)/);
+    expect(block).not.toMatch(/isOwner\) await atkActor\.setFlag/);
+  });
+});

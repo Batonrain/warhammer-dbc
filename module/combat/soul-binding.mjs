@@ -20,6 +20,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { charLossPortionsAddFields } from "../rules/char-loss.mjs";
 import { SOUL_BOUND_FLAG } from "../rules/minion-loyalty.mjs";
+import { writeToTarget } from "./gm-relay.mjs";
 import {
   SOUL_BOND_FLAG, soulBondPartners, soulBindingThresholds, withPartner, splitSoulBondDamage,
   SOUL_BINDING_DEATH_MOD, soulBondRangeKm
@@ -58,6 +59,30 @@ async function writeBond(actor, update) {
   return false;
 }
 
+/** Метка связи цели: партнёр-Ритуалист и, Миньону, галочка «Связан душой». */
+function bondUpdate(target, partnerUuid) {
+  const upd = { [`flags.${NS}.${SOUL_BOND_FLAG}`]: withPartner(soulBondPartners(target), partnerUuid) };
+  if (target.type === "minion" || target.system?.masterUuid) upd[`flags.${NS}.${SOUL_BOUND_FLAG}`] = true;
+  return upd;
+}
+
+/** Потеря W Ритуалистом при смерти цели: заплатка и сколько ушло. */
+function deathLossPatch(ritualist, amount) {
+  return charLossPortionsAddFields(ritualist.system,
+    [{ key: "wp", amount, hours: 0, source: "Связывание Души: смерть цели" }], game.time?.worldTime ?? 0);
+}
+
+/** Запись в чужого актора (gm-relay.mjs::performTargetWrite): связь, доля урона, потеря W. */
+export async function performSoulBondWrite(target, op, initiator) {
+  if (op.kind === "soulBondLink") return target.update(bondUpdate(target, initiator?.uuid));
+  if (op.kind === "soulBondShare") return applyWoundLoss(target, Number(op.amount));
+  if (op.kind === "soulBondDeathLoss") {
+    const { patch } = deathLossPatch(target, Number(op.amount));
+    return Object.keys(patch).length ? target.update(patch) : null;
+  }
+  return null;
+}
+
 /** Встречный тест кнопки «Связать души». */
 export async function bindSoulsFromCard(actor, deg) {
   const target = await pickTarget(actor);
@@ -73,9 +98,8 @@ export async function bindSoulsFromCard(actor, deg) {
   ];
   if (win) {
     const okA = await writeBond(actor, { [`flags.${NS}.${SOUL_BOND_FLAG}`]: withPartner(soulBondPartners(actor), target.uuid) });
-    const tUpd = { [`flags.${NS}.${SOUL_BOND_FLAG}`]: withPartner(soulBondPartners(target), actor.uuid) };
-    if (target.type === "minion" || target.system?.masterUuid) tUpd[`flags.${NS}.${SOUL_BOUND_FLAG}`] = true;
-    const okT = await writeBond(target, tUpd);
+    // Цель чаще чужая: метку ей ставит ГМ по сокету (сверяет, что Ритуалист уже связан с ней).
+    const okT = okA && await writeToTarget(target, { kind: "soulBondLink" }, actor);
     lines.push(`<div class="roll-threshold">Души связаны: общие чувства и сенсорные Навыки/Таланты, Врасплох — только обоих сразу; связь держится до ${soulBondRangeKm(actor, target)} км (сумма W.b). Урон Выжигания Души и Варп-Оружия делится поровну автоматически.</div>`);
     if (!okA || !okT) lines.push(`<div class="roll-threshold">Связь у ${esc(!okA ? actor.name : target.name)} отметит ГМ (нет прав на лист).</div>`);
   }
@@ -104,10 +128,9 @@ export async function shareSoulBondDamage(actor, damage) {
   for (let i = 0; i < partners.length; i++) {
     const share = split.shares[i];
     if (!share) continue;
-    if (game.user?.isGM || partners[i].isOwner) {
-      await applyWoundLoss(partners[i], share);
-      parts.push(`${esc(partners[i].name)} −${share}`);
-    } else parts.push(`${esc(partners[i].name)} −${share} (впишет ГМ)`);
+    // Чужой партнёр — долю пишет ГМ по сокету; раньше она терялась у клиента без прав.
+    const ok = await writeToTarget(partners[i], { kind: "soulBondShare", amount: share }, actor);
+    parts.push(`${esc(partners[i].name)} −${share}${ok ? "" : " (впишет ГМ)"}`);
   }
   return { net: split.self, note: `🔗 Связь Душ: урон ${damage} делится поровну — ${esc(actor.name)} −${split.self}, ${parts.join(", ")}.` };
 }
@@ -123,9 +146,9 @@ export async function soulBondDeathTest(ritualist, dead) {
   if (!success) {
     const lr = await new Roll("2d10").evaluate();
     rolls.push(lr);
-    const { patch, applied } = charLossPortionsAddFields(ritualist.system,
-      [{ key: "wp", amount: lr.total, hours: 0, source: "Связывание Души: смерть цели" }], game.time?.worldTime ?? 0);
-    if (Object.keys(patch).length && (game.user?.isGM || ritualist.isOwner)) await ritualist.update(patch);
+    const { patch, applied } = deathLossPatch(ritualist, lr.total);
+    // Смерть отметил не владелец Ритуалиста — потерю W пишет ГМ по сокету (инициатор — мёртвая цель).
+    if (Object.keys(patch).length) await writeToTarget(ritualist, { kind: "soulBondDeathLoss", amount: lr.total }, dead);
     loss = `Перманентно теряет <b>${applied.wp ?? lr.total}</b> W (2d10 = ${lr.total}).`;
   }
   await postTestCard(ritualist, {

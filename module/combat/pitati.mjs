@@ -10,7 +10,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import {
   hasRunicShot, hasPiercingShot, hasSeekerBullet, hasTimedExplosion, hasLivingBullet,
   runicWeaveAllowed, isPsychicBlast, SEEKER_EFFECTS, PIERCING_SHOT_FLAG, SEEKER_FLAG,
-  TIMED_EXPLOSION_FLAG, timedExplosionPoint
+  TIMED_EXPLOSION_FLAG, timedExplosionPoint, timedExplosionVerdict
 } from "../rules/runic-shot.mjs";
 import { resolveCharFormula } from "../helpers/utils.mjs";
 import { pxPerMeter } from "./templates.mjs";
@@ -79,7 +79,9 @@ export function injectPitatiButtons(html, message) {
   const atk = message?.flags?.[NS]?.attack;
   const paid = atk?.opts?.talentPaid;
   if (!html?.querySelector || !paid?.runic || html.querySelector(`.${SEEKER_BTN}, .${TIMED_BTN}`)) return;
-  const actor = globalThis.game?.actors?.get?.(atk.actorId);
+  // Несвязанный токен: game.actors.get(actorId) — актор-образец, а не стрелявший токен; берём по speaker.
+  const spoke = globalThis.ChatMessage?.getSpeakerActor?.(message.speaker) ?? null;
+  const actor = spoke?.id === atk.actorId ? spoke : globalThis.game?.actors?.get?.(atk.actorId);
   if (!actor?.isOwner) return;
   const host = html.querySelector(".message-content") ?? html;
   const add = (cls, text, title, fn) => {
@@ -119,15 +121,23 @@ export async function seekerReturnHit(actor, { weaponId = "", targetUuid = "", r
   }, { rolls: [roll], sound: false });
 }
 
-/** Точка разряда Выдержанного Взрыва для кнопки шаблона силы (одноразовая; null — нет). */
-export async function takeTimedExplosionPoint(attackerUuid) {
+/**
+ * Точка разряда Выдержанного Взрыва для кнопки шаблона силы (одноразовая; null — нет).
+ * Только для шаблона той силы, что вплетена (itemUuid), в том же бою и Раунде: иначе метка
+ * жила вечно и подхватывалась любым Взрывным шаблоном. Метку снимает лишь тот, кто вправе
+ * писать в Питати (владелец/ГМ); чужой клиент её не трогает и ставит шаблон мышью.
+ */
+export async function takeTimedExplosionPoint(attackerUuid, itemUuid = "") {
   if (!attackerUuid) return null;
   const doc = await fromUuid(attackerUuid).catch(() => null);
   const actor = doc?.actor ?? doc;
   const at = actor?.getFlag?.(NS, TIMED_EXPLOSION_FLAG);
-  if (!at || at.sceneId !== globalThis.canvas?.scene?.id) return null;
+  if (!at || !actor.isOwner) return null;
+  const combat = globalThis.game?.combat?.started ? globalThis.game.combat : null;
+  const verdict = timedExplosionVerdict(at, { itemUuid, sceneId: globalThis.canvas?.scene?.id ?? "", combat });
+  if (verdict === "skip") return null;
   await actor.unsetFlag(NS, TIMED_EXPLOSION_FLAG);
-  return { x: Number(at.x) || 0, y: Number(at.y) || 0 };
+  return verdict === "use" ? { x: Number(at.x) || 0, y: Number(at.y) || 0 } : null;
 }
 
 /**
@@ -161,7 +171,9 @@ export async function useTimedExplosion(actor, { targetUuid = "" } = {}) {
   const radius = (Math.min(tt.document.width, tt.document.height) / 2) * size;
   const at = timedExplosionPoint(me.center, tt.center, radius, pxPerMeter());
   await markThrottleUsed(actor, WEAVE_FLAG, "round");
-  await actor.setFlag(NS, TIMED_EXPLOSION_FLAG, { x: at.x, y: at.y, sceneId: globalThis.canvas?.scene?.id ?? "" });
+  const combat = game.combat?.started ? game.combat : null;
+  await actor.setFlag(NS, TIMED_EXPLOSION_FLAG, { x: at.x, y: at.y, sceneId: globalThis.canvas?.scene?.id ?? "",
+    itemUuid: power.uuid, combatId: combat?.id ?? "", round: Number(combat?.round) || 0 });
   await postTestCard(actor, {
     icon: "ᚱ", title: `Выдержанный Взрыв: «${esc(power.name)}» — ${esc(actor.name)}`,
     lines: [`<div class="roll-threshold">Пуля разряжает вплетённый взрыв в 1 м позади ${esc(target.name)} (по линии от Питати). Кнопка шаблона на карточке силы поставит зону туда сама и отметит накрытых.</div>`]

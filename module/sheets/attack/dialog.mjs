@@ -46,7 +46,7 @@ import { canPayFuriousReaction, payFuriousReaction } from "../../combat/khorne-b
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
 import { hateAttackDegrees } from "../../rules/focused-wrath.mjs";
-import { actorHasInfamyPoint, spendPatronAbility } from "../../apps/infamy-points.mjs";
+import { actorHasInfamyPoint, spendPatronAbility, INFAMY_ATTACK_TEST } from "../../apps/infamy-points.mjs";
 import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
 import { allGunsBlazingMod, tyranthikosSecondAttackDice, DUAL_HAND_MAIN, DUAL_HAND_OFF } from "../../rules/dual-wield-talents.mjs";
@@ -286,9 +286,11 @@ export function openAttackDialog(ctx) {
           // Ненависть сквозь Завесу (Пространственная Нестабильность, субм. 8,
           // wdbc-1rno.8): пройденный тест W−20 пускает ОДНУ рукопашную атаку
           // бесплотного по этой материальной цели — флаг гасится здесь же.
+          // Снимается рядом с takeAttackAction ниже: отказ по ОД/Реакциям/лимиту пропуск не тратит.
+          let veilPierceUsed = false;
           if (planeWhy && veilPierceAllows(actor.getFlag?.("warhammer-dbc", VEIL_PIERCE_FLAG), targetActor?.uuid, isMelee)) {
             planeWhy = "";
-            await actor.unsetFlag("warhammer-dbc", VEIL_PIERCE_FLAG);
+            veilPierceUsed = true;
           }
           if (planeWhy) {
             await ChatMessage.create({
@@ -355,9 +357,9 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn("⚠️ Не хватает Реакций (атака мехадендритом).");
             return false;
           }
-          // Сосредоточение объявляется до проверки Лимита: Multiple Arms (X) уже действует на эту атаку.
-          if (dendriteMode === "focus" && !actor.getFlag?.("warhammer-dbc", DENDRITE_FOCUS_FLAG))
-            await actor.setFlag("warhammer-dbc", DENDRITE_FOCUS_FLAG, true);
+          // Сосредоточение объявлено этой атакой: Multiple Arms (X) уже действует на проверку Лимита
+          // (canTakeAttackAction ниже), а метка ставится только после списания ОД — отказ её не оставляет.
+          const dendriteFocusNew = dendriteMode === "focus" && !actor.getFlag?.("warhammer-dbc", DENDRITE_FOCUS_FLAG);
           const uncountedAttack = freeMelee.uncounted || dendriteReaction;
           // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
           const sabrePendingHussar = !!actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG)?.hussar;
@@ -379,7 +381,7 @@ export function openAttackDialog(ctx) {
           // (в т.ч. выстрел Штыковой Атаки) — combat/free-shot.mjs.
           const runAndGunLock = runAndGunLockedNow(actor, item, { isMelee });
           if (runAndGunLock) { ui.notifications.warn(`⚠️ ${runAndGunLock}.`); return false; }
-          if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot) && !canTakeAttackAction(actor)) {
+          if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot) && !canTakeAttackAction(actor, { dendriteFocus: dendriteMode === "focus" })) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
@@ -394,7 +396,7 @@ export function openAttackDialog(ctx) {
           // Атака Ненависти (Кхорн): Очко проверяется ДО списания ОД, чтобы
           // отказ не стоил действия; само списание — перед броском ниже.
           const hateUsed = !!(hateAttackAvailable && f.hateAttack && hateAttackApplies(f.char));
-          if (hateUsed && !actorHasInfamyPoint(actor)) {
+          if (hateUsed && !actorHasInfamyPoint(actor, { test: INFAMY_ATTACK_TEST })) {
             ui.notifications.warn("⚠️ Нет Очков Бесчестия для Атаки Ненависти.");
             return false;
           }
@@ -557,6 +559,8 @@ export function openAttackDialog(ctx) {
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
           if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);
+          if (dendriteFocusNew) await actor.setFlag("warhammer-dbc", DENDRITE_FOCUS_FLAG, true);
+          if (veilPierceUsed) await actor.unsetFlag("warhammer-dbc", VEIL_PIERCE_FLAG);
           if (freeShot) await consumeFreeShot(actor, freeShot, item);
           await chargeAttackStarted(actor, chargeGate.first);
           // Прикрывающий Огонь: очередь сделана — метки Подавления на ВСЕХ бывших противников (combat/covering-fire.mjs).
@@ -654,7 +658,7 @@ export function openAttackDialog(ctx) {
           }
 
           // Атака Ненависти тратится реальным броском, как и Локус выше.
-          if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred"))) return false;
+          if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred", { test: INFAMY_ATTACK_TEST }))) return false;
 
           // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): Отряд
           // атакующего мог срезать бонус Общей Команды на бонусные кубы урона

@@ -50,6 +50,15 @@ export function feverUnarmedLimit(agilityBonus) {
   return Math.floor(Math.max(0, Number(agilityBonus) || 0) / 2);
 }
 
+/** Счётчик безоружных атак Горячечной Скорости: ключ Раунда «бой:Раунд» — Раунд другого боя не считается. */
+export const feverUnarmedKey = combat => (combat ? `${combat.id}:${combat.round}` : "");
+
+/** Сколько безоружных атак уже было в этот Раунд этого боя. */
+export function feverUnarmedUsed(flag, combat) {
+  const key = feverUnarmedKey(combat);
+  return key && flag?.key === key ? Math.max(0, Number(flag.n) || 0) : 0;
+}
+
 /** Состояние кошелька. */
 export function feverState(actor) {
   const f = actor?.flags?.["warhammer-dbc"]?.[FEVER_FLAG] ?? actor?.getFlag?.("warhammer-dbc", FEVER_FLAG) ?? {};
