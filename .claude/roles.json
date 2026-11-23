@@ -1,0 +1,17 @@
+{
+  "_comment": "Наборы скиллов и агентов по ролям-тредам (docs/session-scheme.md). Читает хук .claude/hooks/skills_reminder.py в начале каждой сессии. skills — вызвать через Skill первым действием; agents — звать по случаю; extra — прочее. Брифы ролей — docs/session-roles/.",
+  "project": "warhammer-dbc (Doom Crusade)",
+  "note": "Живую Foundry запускает только тред «Проверка» (лок wdbc-a4l, агент live-tester); остальные передают проверку ему или очередью testing / блоком в описании PR.",
+  "roles": [
+    {"name": "Задачи", "brief": "docs/session-roles/zadachi.md", "skills": ["spisok-zadach"], "agents": ["content-auditor"], "extra": ["node tools/sahara-tasks.mjs", "mcp__sahara__* (только проект «Doom Crusade»)"]},
+    {"name": "Вопросы и ответы", "brief": "docs/session-roles/voprosy.md", "skills": [], "agents": [], "extra": ["перечень вопросов в общей папке проекта"]},
+    {"name": "Механика", "brief": "docs/session-roles/mekhanika.md", "skills": ["dbc-workflow", "dbc-precedent", "dbc-rules", "dbc-mechanics", "dbc-datamodel"], "agents": ["rules-migrator", "mechanics-wirer", "pr-reviewer", "test-doctor", "foundry-api-scout"], "extra": ["dbc-capability-cycle (заглушки capability)", "/simplify"]},
+    {"name": "Контент и книги", "brief": "docs/session-roles/kontent.md", "skills": ["dbc-workflow", "dbc-content"], "agents": ["book-transcriber", "book-proofreader", "packs-editor", "content-auditor", "pr-reviewer"], "extra": ["npm run packs:build"]},
+    {"name": "Лист", "brief": "docs/session-roles/list.md", "skills": ["dbc-workflow", "dbc-precedent", "dbc-housing"], "agents": ["card-migrator", "foundry-api-scout", "pr-reviewer"], "extra": ["сначала макет и одобрение Сергея"]},
+    {"name": "Проверка", "brief": "docs/session-roles/proverka.md", "skills": ["dbc-workflow", "testirovanie"], "agents": ["live-tester", "test-doctor"], "extra": ["лок wdbc-a4l"]},
+    {"name": "Хроника", "brief": "docs/session-roles/khronika.md", "skills": ["dbc-patchnote"], "agents": [], "extra": ["артефакт «Хроника рокового похода №N»"]},
+    {"name": "Координатор", "brief": "docs/session-roles/koordinator.md", "skills": [], "agents": [], "extra": ["docs/session-scheme.md"]}
+  ],
+  "everyWriter": ["konec-sessii (только по команде «Конец сессии»)"],
+  "noRole": ["dbc-workflow"]
+}
