@@ -67,8 +67,16 @@ describe("grantTimedEffect вне боя", () => {
     const created = [];
     const a = { id: "a1", effects: [], getActiveTokens: () => [],
       createEmbeddedDocuments: async (_t, list) => { created.push(...list); return list; } };
-    await grantTimedEffect(a, { key: "warCry", name: "Клич", changes: [{ key: "system.fearRating", value: 1 }] });
+    await grantTimedEffect(a, { key: "warCry", name: "Клич", keepOutOfCombat: true, changes: [{ key: "system.fearRating", value: 1 }] });
     expect(created[0].duration).toEqual(OUT_OF_COMBAT_DURATION);
     expect("start" in created[0]).toBe(false);
+  });
+  it("без флага keepOutOfCombat (Калибровка, Горячечная Скорость) — срок 1 Раунд, не бессрочный", async () => {
+    globalThis.game = { ...(saved || {}), combat: null, combats: { get: () => null, contents: [], [Symbol.iterator]: function* () {} }, time: { worldTime: 1 } };
+    const created = [];
+    const a = { id: "a1", effects: [], getActiveTokens: () => [],
+      createEmbeddedDocuments: async (_t, list) => { created.push(...list); return list; } };
+    await grantTimedEffect(a, { key: "feverAgility", name: "Горячка", changes: [{ key: "system.characteristics.ag.bonusFx", value: 2 }] });
+    expect(created[0].duration).toEqual({ value: 1, units: "rounds", expiry: "turnStart" });
   });
 });
