@@ -7,6 +7,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
+import { CANCEL } from "./cult-common.mjs";
 import { mech1Card, rollMech1Test, skillTotalWith, skillTestLabel } from "./mech1-rolls.mjs";
 import { resourcePoolDef, resourcePoolValue, resourceGainUpdates } from "../rules/resource-pools.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -79,11 +80,14 @@ export async function useVassalSwap(actor) {
       content: `<div class="form-group"><label>Какой вассал</label><select name="pool">${poolOptions(pools, actor)}</select></div>`,
       ok: { label: "Сменить", callback: (_ev, b) => b.form.querySelector("[name=pool]")?.value }
     }).catch(() => null);
-    if (!key) return;
+    if (!key) return CANCEL;
   }
   await actor.update({ [`system.resourcePools.${key}`]: VASSAL_SWAP_START });
-  return mech1Card(actor, { icon: "🧠", title: "Смена контейнера",
+  await mech1Card(actor, { icon: "🧠", title: "Смена контейнера",
     lines: [`Свободное действие, раз в Ход. Новый вассал стартует с <b>${VASSAL_SWAP_START}</b> ОД; поддержание психосил прежнего прекращается.`] });
+  // Кнопка «▶ Запустить» тратит «раз в Ход» только на пустом возврате
+  // (apps/mechanics.mjs::runMechScriptEntry): отказ и отмена — truthy.
+  return undefined;
 }
 
 // ── Пробуждение ─────────────────────────────────────────────────────────────
@@ -100,7 +104,7 @@ export async function useAwakening(actor) {
     ok: { label: "Пробудить", callback: (_ev, b) => ({
       pool: b.form.querySelector("[name=pool]")?.value ?? pools[0].key, w: num(b.form.querySelector("[name=w]")?.value) }) }
   }).catch(() => null);
-  if (!pick) return;
+  if (!pick) return CANCEL;
   const def = resourcePoolDef(actor, pick.pool);
   const have = resourcePoolValue(actor, pick.pool, def);
   const add = awakeningExtra(have, def?.max);
@@ -114,7 +118,7 @@ export async function useAwakening(actor) {
     : res.winner === "theirs" ? "<span class=\"roll-failure\">Псайкер контролирует действия Монарха до начала его следующего Хода включительно.</span>"
     : "Полная ничья — решает Мастер.";
   const { postTestCard } = await import("../helpers/test-card.mjs");
-  return postTestCard(actor, {
+  await postTestCard(actor, {
     icon: "⚡", title: `Пробуждение — ${esc(actor.name)}`,
     lines: [
       `<div class="roll-threshold">ОД вассала: +${add} (восстанавливает 4 вместо 1) → <b>${have + add}</b>.</div>`,
@@ -123,6 +127,7 @@ export async function useAwakening(actor) {
     ],
     outcome: verdict
   }, { rolls: [r1, r2] });
+  return undefined; // пусто — использовано (runMechScriptEntry тратит «раз в Раунд»)
 }
 
 // ── Нейронист ───────────────────────────────────────────────────────────────
