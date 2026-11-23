@@ -114,18 +114,22 @@ describe("Интроспекция", () => {
 
 describe("Общее Колдовство: раз в Раунд и простой", () => {
   it("свободное — раз в Раунд", () => {
-    const m = sharedSorceryMark("free", 3);
-    expect(sharedSorceryAvailable(m, 3)).toBe(false);
-    expect(sharedSorceryAvailable(m, 4)).toBe(true);
+    const m = sharedSorceryMark("free", 3, "c");
+    expect(sharedSorceryAvailable(m, 3, "c")).toBe(false);
+    expect(sharedSorceryAvailable(m, 4, "c")).toBe(true);
   });
   it("полудействие — простой 1 Раунд, полное — 3", () => {
-    expect(sharedSorceryAvailable(sharedSorceryMark("half", 3), 4)).toBe(false);
-    expect(sharedSorceryAvailable(sharedSorceryMark("half", 3), 5)).toBe(true);
-    expect(sharedSorceryAvailable(sharedSorceryMark("full", 3), 6)).toBe(false);
-    expect(sharedSorceryAvailable(sharedSorceryMark("full", 3), 7)).toBe(true);
+    expect(sharedSorceryAvailable(sharedSorceryMark("half", 3, "c"), 4, "c")).toBe(false);
+    expect(sharedSorceryAvailable(sharedSorceryMark("half", 3, "c"), 5, "c")).toBe(true);
+    expect(sharedSorceryAvailable(sharedSorceryMark("full", 3, "c"), 6, "c")).toBe(false);
+    expect(sharedSorceryAvailable(sharedSorceryMark("full", 3, "c"), 7, "c")).toBe(true);
+  });
+  it("простой не переживает бой: другой бой или старая метка без combatId не держат", () => {
+    expect(sharedSorceryAvailable(sharedSorceryMark("full", 3, "c"), 4, "other")).toBe(true);
+    expect(sharedSorceryAvailable({ round: 3, lockUntil: 6 }, 4, "c")).toBe(true);
   });
   it("вне боя ограничений нет", () => {
-    expect(sharedSorceryAvailable(sharedSorceryMark("full", 3), null)).toBe(true);
+    expect(sharedSorceryAvailable(sharedSorceryMark("full", 3, "c"), null)).toBe(true);
   });
 });
 

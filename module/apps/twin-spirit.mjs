@@ -311,8 +311,9 @@ export async function castSharedSorcery(host) {
   if (!demon) return ui.notifications?.warn("Общее Колдовство: сначала создайте лист демона.");
   const powers = demonPowers(demon);
   if (!powers.length) return ui.notifications?.warn("Общее Колдовство: у демона на листе нет психосил.");
-  const round = game.combat?.started ? game.combat.round : null;
-  if (!sharedSorceryAvailable(host.getFlag(NS, SHARED_SORCERY_FLAG), round)) {
+  const combat = game.combat?.started ? game.combat : null;
+  const round = combat ? combat.round : null;
+  if (!sharedSorceryAvailable(host.getFlag(NS, SHARED_SORCERY_FLAG), round, combat?.id ?? "")) {
     return ui.notifications?.warn("Общее Колдовство: вторая душа ещё не готова (раз в Раунд; после полу-/полного действия — простой 1/3 Раунда).");
   }
   const id = await foundry.applications.api.DialogV2.prompt({
@@ -324,9 +325,11 @@ export async function castSharedSorcery(host) {
   }).catch(() => null);
   const power = id ? demon.items.get(id) : null;
   if (!power) return;
-  if (round != null) await host.setFlag(NS, SHARED_SORCERY_FLAG, sharedSorceryMark(power.system?.action, round));
   const { showManifestDialog } = await import("../sheets/tabs/psychic.mjs");
-  showManifestDialog(demon, power);
+  // Метка — после броска: закрытое окно манифестации не тратит раз в Раунд.
+  showManifestDialog(demon, power, round == null ? {} : {
+    onCast: () => host.setFlag(NS, SHARED_SORCERY_FLAG, sharedSorceryMark(power.system?.action, round, combat.id))
+  });
 }
 
 // ── Восходя Вместе / Высший Одержимый ─────────────────────────────────────

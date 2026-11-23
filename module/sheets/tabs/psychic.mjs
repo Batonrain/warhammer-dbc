@@ -640,8 +640,9 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
               return;
             }
           }
+          const { onCast, ...castOpts } = extraOpts;
           await executePsychotest(actor, item, {
-            ...extraOpts,
+            ...castOpts,
             ruleMod, halveRulePenalty, ruleReroll, runeStrike, improvisedRune: needsImprovise, sigilliteSubs,
             mPR:      parseInt(html.find("#psy-pr").val())     || minPR,
             prMod:    parseInt(html.find("#psy-pr-mod").val()) || 0,
@@ -663,6 +664,8 @@ export function showManifestDialog(actor, item, extraOpts = {}) {
             fastWeaving: html.find("#psy-fastweave").is(":checked"),
             woundFree: html.find("#psy-woundfree").is(":checked")
           });
+          // Метки «раз в Раунд» вызывающего (Общее Колдовство) — после броска, не при открытии окна.
+          await onCast?.();
         }
       },
       cancel: { label: "Отмена" }
