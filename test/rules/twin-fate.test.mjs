@@ -1,5 +1,6 @@
 // Двойная Судьба (Ворон): переброс WS за Очко хуже — остаётся исходный.
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
 import { twinFateApplies, twinFateWorse } from "../../module/rules/twin-fate.mjs";
 
 const raven = { items: [{ type: "talent", name: "Twin Fate / Двойная Судьба" }] };
@@ -19,5 +20,12 @@ describe("Двойная Судьба", () => {
     expect(twinFateWorse(S(2), S(2))).toBe(false);
     expect(twinFateWorse(F(1), F(3))).toBe(true);
     expect(twinFateWorse(F(3), F(1))).toBe(false);
+  });
+});
+
+describe("стыковка: исходный бросок Двойной Судьбы не переходит в контекст карточки (приёмка #597)", () => {
+  it("attack.mjs выкидывает twinFate из storedOpts, как forcedRoll и updateMessageId", () => {
+    const src = fs.readFileSync(new URL("../../module/combat/attack.mjs", import.meta.url), "utf8");
+    expect(src).toMatch(/const \{ forcedRoll, updateMessageId, \.\.\.storedOptsBase \} = opts;\s+delete storedOptsBase\.twinFate;/);
   });
 });
