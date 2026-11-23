@@ -106,6 +106,13 @@ describe("weaponHandsRequired — стрелковое (корбук стр. 171
     const a = actor([withCapability("Откатная Перчатка", "weapon.oneHandedRifle")]);
     expect(weaponHandsRequired(w, a)).toBe(1);
   });
+  it("Огневая Мощь, взятая до записи Конструктора (копия без ключа, приёмка #597), — тоже «1р»", () => {
+    const w = weapon({ id: "og", system: { weaponClass: "basic", grips: "2р" } });
+    setHeldHand(w, null);
+    w.setFlag("warhammer-dbc", "hudGrip", "1р");
+    const a = actor([{ type: "talent", name: "Outgun / Огневая Мощь", system: {}, getFlag: () => undefined, flags: {} }]);
+    expect(weaponHandsRequired(w, a)).toBe(1);
+  });
   it("Возможность не трогает Тяжёлое — книга даёт её только винтовке", () => {
     const w = weapon({ id: "hv", system: { weaponClass: "heavy", grips: "2р" } });
     const a = actor([withCapability("Откатная Перчатка", "weapon.oneHandedRifle")]);

@@ -24,6 +24,9 @@
 export const CORRUPTION_IMMUNE_CAP = "corruption.immune";
 export const NO_RUN_CAP = "movement.noRun";
 export const CRUMBLE_CAP = "death.crumbleBelowZero";
+/** Имя Черты — запасное опознание для копий, выданных до записей Конструктора
+ *  (ключа на них нет до «Обновить мир», приёмка #597): hasAbility(actor, CAP, RUBRICAE, "trait"). */
+export const RUBRICAE = "Rubricae";
 
 /**
  * Значение Порчи, которое оставить при иммунитете: прирост отменяется,

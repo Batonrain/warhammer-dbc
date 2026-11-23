@@ -53,12 +53,26 @@ export function isVisionAid(item) {
  */
 export const RETINAL_DISPLAY_BLOCKED_CAP = "mutation.noRetinalDisplay";
 
+/**
+ * Запасное опознание по имени мутации (и субмутации) — для копий, выданных до
+ * того, как возможность легла записью в пак: записи на них нет до «Обновить
+ * мир» (приёмка #597). Совпадает с записями пака — сверяет тест
+ * test/rules/vision-aids-stale-copy.test.mjs.
+ */
+const BY_NAME = {
+  [VISION_AIDS_BLOCKED_CAP]: [["eye stalks", null], ["eyes of chaos", "1"]],
+  [RETINAL_DISPLAY_BLOCKED_CAP]: [["eye stalks", null], ["eyes of chaos", "1"]],
+  "mutation.majesticHorns.hornSight": [["majestic horns", "9"]]
+};
+
 /** На акторе есть не подавленная мутация с этой возможностью (субмутация совпадает). */
 function mutationCapActive(actor, key) {
   for (const it of actor?.items ?? []) {
     if (it?.type !== "mutation" || it.getFlag?.(NS, "suppressed")) continue;
     const groups = it.getFlag?.(NS, "mechanics") ?? it.flags?.[NS]?.mechanics ?? [];
     const label = it.system?.submutation?.label || "";
+    const names = halves(it.name);
+    if ((BY_NAME[key] ?? []).some(([n, sub]) => names.includes(n) && (!sub || sub === label))) return true;
     for (const g of groups) {
       for (const e of g?.entries ?? []) {
         if (e?.kind !== "capability" || e.capabilityKey !== key) continue;

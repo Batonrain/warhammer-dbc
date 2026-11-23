@@ -8,7 +8,8 @@ import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
 import { isDaemonActor } from "../rules/predicates.mjs";
 import { daemonicTbBonus, bypassesDaemonic } from "../rules/daemonic-bypass.mjs";
 import { SWARM_CAP, swarmDamage } from "../rules/swarm.mjs";
-import { CRUMBLE_CAP, crumblesOnWoundLoss } from "../rules/rubricae.mjs";
+import { CRUMBLE_CAP, RUBRICAE, crumblesOnWoundLoss } from "../rules/rubricae.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { WARP_INSTABILITY_CAP, shouldBanish } from "../rules/warp-instability.mjs";
 import { warpInstabilityOnHurt, warpInstabilityOnDealt, banishToWarp } from "./warp-instability.mjs";
 import { mockeryOfLifeOnDamage, bloodGodOnKill } from "./demon-god-traits.mjs";
@@ -29,7 +30,7 @@ import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
 import { arkhanHaywireNote } from "./skitarii-modules.mjs";
-import { haywireImmuneDevices } from "../rules/warpsmith.mjs";
+import { haywireImmuneDevices, hasWarpforgedPlate } from "../rules/warpsmith.mjs";
 import { ablativeDamage, mountRangedApBonus, unrulyRiders } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
@@ -1036,7 +1037,9 @@ export async function applyDamageToActor(actor, damageData) {
   // Марионетка (Странная Неуязвимость, субмутация 9, wdbc-1rno.24): «Попадания
   // варп-оружия проходят сквозь него, не причиняя вреда» — warpSoak и есть
   // признак попадания свойством Warp Weapon.
-  if (warpSoak && hasRuleFlag(actor, "damageImmunity.warpWeapon")) return;
+  // Каменное Сердце (Когитор) — та же возможность; копия, выданная до записи
+  // Конструктора, опознаётся по имени (приёмка #597).
+  if (warpSoak && hasAbility(actor, "damageImmunity.warpWeapon", "Heart of Stone", "trait")) return;
   // Иммунитет по подвиду урона (wdbc-q0q8) — тот же приём, что три ветки выше,
   // но по DAMAGE_SUBTYPES вместо DAMAGE_TYPES/melee: полный игнор попадания,
   // не только побочного эффекта. Единое пространство имён на все 6 подвидов
@@ -1127,7 +1130,9 @@ export async function applyDamageToActor(actor, damageData) {
     // Стойкость не учитывает никогда, поэтому T.b вычитается, как и в обычной
     // ветке ниже: иначе «AP брони» протаскивал бы Бонус Стойкости обратно.
     const warpArmorAP = (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0);
-    armorAP = hasRuleFlag(actor, "armor.apVsWarpFull")
+    // Латы Чародея (Броненосец) и Закалённые Варпом Латы (Варп-Кузнец) несут
+    // ту же возможность; копии, выданные до записи Конструктора, — по имени (приёмка #597).
+    armorAP = (hasAbility(actor, "armor.apVsWarpFull", "Sorcerer's Plate", "talent") || hasWarpforgedPlate(actor))
       ? warpArmorAP
       : hasRuleFlag(actor, "runicWeave.aegisOfGnelle")
         ? Math.floor(warpArmorAP / 2)
@@ -1622,7 +1627,7 @@ export async function applyDamageToActor(actor, damageData) {
   let swarmDestroyedNote = "";
   // Рубрикант (rules/rubricae.mjs): Раны ниже 0 — рассыпается грудой пустых доспехов, та же ветка.
   const isSwarm = hasRuleFlag(actor, SWARM_CAP);
-  if ((isSwarm && gotCritical) || crumblesOnWoundLoss(hasRuleFlag(actor, CRUMBLE_CAP), gotCritical)) {
+  if ((isSwarm && gotCritical) || crumblesOnWoundLoss(hasAbility(actor, CRUMBLE_CAP, RUBRICAE, "trait"), gotCritical)) {
     await actor.update({ "system.wounds.critical": Number(woundLoss.currentCritical) || 0, "flags.warhammer-dbc.deceased": true });
     gotCritical = false;
     newCritical = Number(woundLoss.currentCritical) || 0;

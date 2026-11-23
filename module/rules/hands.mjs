@@ -21,6 +21,7 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 import { manifestedGift, itemHasName } from "./predicates.mjs";
 import { isPathOneHandedWeapon } from "./library/paths.mjs";
 import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
@@ -103,7 +104,8 @@ function availableRangedGrips(item, actor, auto) {
   // Откатная Перчатка / Подавители Отдачи / Рука-Пушка: винтовку (класс basic —
   // в нём и «Винтовка», и «Длинная Винтовка», стр. 171) можно держать одной
   // рукой (wdbc-f7iw, wdbc-6tzk).
-  if (item.system?.weaponClass === "basic" && hasRuleFlag(actor, "weapon.oneHandedRifle")) addExtra("1р");
+  // Огневая Мощь (Моритат) — та же возможность; старая копия Таланта — по имени (приёмка #597).
+  if (item.system?.weaponClass === "basic" && hasAbility(actor, "weapon.oneHandedRifle", "Outgun", "talent")) addExtra("1р");
   // Живой Арсенал (Облитератор): ассимилированные винтовки и тяжёлое — одной рукой без штрафа.
   if (livingArsenalOneHand(actor, item)) addExtra("1р");
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60) — тот же

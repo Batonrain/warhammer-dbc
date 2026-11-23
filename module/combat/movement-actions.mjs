@@ -58,7 +58,7 @@ import { spendRecoil, recoilRemaining, spdMeters } from "./recoil-pool.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { NO_RUN_CAP } from "../rules/rubricae.mjs";
+import { NO_RUN_CAP, RUBRICAE } from "../rules/rubricae.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { isGrappled, manifestedGift } from "../rules/predicates.mjs";
@@ -672,7 +672,7 @@ export async function declareRun(actor) {
   const heavyRunBan = heavyBodyMoveBan(actor, "run");
   if (heavyRunBan) return ui.notifications.warn(`⚠️ ${heavyRunBan}`);
   // Рубрикант (rules/rubricae.mjs): «не может совершать Бег».
-  if (hasRuleFlag(actor, NO_RUN_CAP)) return ui.notifications.warn("⚠️ Не может совершать Бег.");
+  if (hasAbility(actor, NO_RUN_CAP, RUBRICAE, "trait")) return ui.notifications.warn("⚠️ Не может совершать Бег.");
   const runStanceKey = actor.system?.meleeStance || "standard";
   if (MELEE_STANCES[runStanceKey]?.noRun) {
     return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);

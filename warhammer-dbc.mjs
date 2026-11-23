@@ -87,11 +87,12 @@ import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fo
 import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag, ruleFlags, ruleFlagLabels }     from "./module/rules/flags.mjs";
+import { hasAbility }                                  from "./module/rules/ability-by-key.mjs";
 import { lockedPatron, enforcedPatron, patronLockMessage, PATRON_LOCK_PREFIX } from "./module/rules/patron-lock.mjs";
 import { optionalIntegralEntries, integralEntrySelected, INTEGRAL_CHOSEN_FLAG } from "./module/rules/integral-rating.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
-import { CORRUPTION_IMMUNE_CAP, corruptionWithImmunity } from "./module/rules/rubricae.mjs";
+import { CORRUPTION_IMMUNE_CAP, RUBRICAE, corruptionWithImmunity } from "./module/rules/rubricae.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
   from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
@@ -3064,7 +3065,7 @@ Hooks.on("preUpdateActor", (doc, changes) => {
     return;
   }
   // Рубрикант (rules/rubricae.mjs): «не получает Порчу» — прирост отменяется, снижение проходит.
-  if (!hasRuleFlag(doc, CORRUPTION_IMMUNE_CAP)) return;
+  if (!hasAbility(doc, CORRUPTION_IMMUNE_CAP, RUBRICAE, "trait")) return;
   const immune = corruptionWithImmunity(doc.system?.corruption?.value, newCor);
   if (immune !== newCor) {
     foundry.utils.setProperty(changes, "system.corruption.value", immune);

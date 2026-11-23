@@ -19,7 +19,7 @@ import { applyDamageToActor, refillSarcophagusWarpWounds } from "../../module/co
 function characterActor({
   armorAP = 0, toughnessBonus = 0, wpBonus = 0, wounds = 20,
   shield = null, aegisOfGnelle = false, apVsWarpFull = false,
-  sarcophagusWarpWounds = null
+  sarcophagusWarpWounds = null, extra = []
 } = {}) {
   const updates = [];
   const items = shield ? [{
@@ -46,6 +46,7 @@ function characterActor({
       { id: "e", kind: "capability", capabilityKey: "armor.apVsWarpFull", label: "" }
     ] }] } }
   });
+  items.push(...extra);
   return {
     id: "char1", name: "Псайкер", type: "character", updates,
     system: {
@@ -164,6 +165,40 @@ describe("Модификация брони «armor.apVsWarpFull» (wdbc-sg57): 
     });
     await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
     expect(actor.system.wounds.value).toBe(18); // целиком (13), не половина (8) — та же защита, что и без Вязи
+  });
+});
+
+// Приёмка #597: Каменное Сердце, Латы Чародея и Закалённые Варпом Латы получили
+// возможность записью Конструктора в уже существовавшие файлы пака. Копия у
+// персонажа, взявшего их раньше, этой записи не несёт до «Обновить мир» —
+// опознаётся по имени.
+describe("копии без записи Конструктора (выданы до приёмки #597) — по имени", () => {
+  const stale = (type, name) => ({ id: `s-${type}`, type, name, system: {}, flags: {} });
+
+  it("Каменное Сердце (Черта) — иммунитет к варп-оружию", async () => {
+    const actor = characterActor({ wpBonus: 3, wounds: 20, extra: [stale("trait", "Heart of Stone / Каменное Сердце")] });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(20);
+  });
+
+  it("Латы Чародея (Талант) — AP брони целиком против варп-оружия", async () => {
+    const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20,
+      extra: [stale("talent", "Sorcerer's Plate / Латы Чародея")] });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(18);
+  });
+
+  it("Закалённые Варпом Латы (Черта) — AP брони целиком против варп-оружия", async () => {
+    const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20,
+      extra: [stale("trait", "Warpforged Plate / Закалённые Варпом Латы")] });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(18);
+  });
+
+  it("Рубрикант (Черта) — Раны ниже 0: рассыпается (метка «погиб»), а не Критические", async () => {
+    const actor = characterActor({ wounds: 2, extra: [stale("trait", "Rubricae / Рубрикант")] });
+    await applyDamageToActor(actor, damage({ rawDamage: 15 }));
+    expect(actor.updates.some(u => u["flags.warhammer-dbc.deceased"] === true)).toBe(true);
   });
 });
 

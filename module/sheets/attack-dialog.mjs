@@ -41,6 +41,7 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
+import { hasAbility }                         from "../rules/ability-by-key.mjs";
 import { volleyThrowApplies, VOLLEY_ROF_MIN, VOLLEY_ROF_MAX, balearicSbBonus, thrownRange } from "../rules/throwing-talents.mjs";
 import { sightEffectsOf }                     from "../rules/sight-effects.mjs";
 import { sightAiming }                        from "../rules/autosense-jacks.mjs";
@@ -323,7 +324,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // одной рукой. Тот же список собирает rules/hands.mjs::availableRangedGrips —
   // иначе окно атаки разрешило бы хват, которого бюджет рук не знает.
   const oneHandRifleGrip = ((!isMelee && sys.weaponClass === "basic"
-                         && hasRuleFlag(actor, "weapon.oneHandedRifle"))
+                         // Огневая Мощь — старая копия Таланта по имени (приёмка #597).
+                         && hasAbility(actor, "weapon.oneHandedRifle", "Outgun", "talent"))
                          // Живой Арсенал (Облитератор): ассимилированные винтовки и тяжёлое (rules/hands.mjs — то же).
                          || (!isMelee && livingArsenalOneHand(actor, item))) ? "1р" : null;
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60): книга
