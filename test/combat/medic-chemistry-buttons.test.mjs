@@ -3,9 +3,16 @@
 // запас — только если запись на цель ушла, Плацебо — Deceive(I).
 
 import "../support/foundry-stub.mjs";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { makeAntivenom, giveAntivenom, usePlacebo } from "../../module/combat/medic-chemistry.mjs";
+import { spendInfamyPoint } from "../../module/combat/noise-marine.mjs";
+
+// Оплата Очка — настоящая, но в одном тесте её можно «закрыть», как окно «Чем заплатить?».
+vi.mock("../../module/combat/noise-marine.mjs", async orig => {
+  const m = await orig();
+  return { ...m, spendInfamyPoint: vi.fn(m.spendInfamyPoint) };
+});
 
 const NS = "warhammer-dbc";
 
@@ -47,6 +54,15 @@ describe("Противоядие", () => {
     await makeAntivenom(medic);
     expect(detox.system.quantity).toBe(3);
     expect(captured.warnings.join("\n")).toContain("Бесчестия");
+  });
+
+  it("окно оплаты Очка закрыто — Детокс не списывается", async () => {
+    const detox = item("Detox / Детокс");
+    const poison = { name: "Чёрная Смерть", type: "drug", system: { drugCategory: "poison" } };
+    const medic = makeActor("Медик", { items: [{ type: "talent", name: "Antivenom / Противоядие" }, poison, detox], fate: 1 });
+    spendInfamyPoint.mockResolvedValueOnce(false);
+    await makeAntivenom(medic);
+    expect(detox.system.quantity).toBe(3);
   });
 
   it("ввести чужому без ГМа — доза остаётся в запасе", async () => {

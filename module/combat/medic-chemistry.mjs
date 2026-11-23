@@ -118,8 +118,10 @@ export async function makeAntivenom(actor) {
   if (!poison) return ui.notifications.warn("⚠️ На листе нет образца яда. Против неизвестного яда нужен образец или обследование (Medicae(P)−20).");
   // Очко проверяется до списания Детокса: без Очка расходники не сгорают.
   if (!actorHasInfamyPoint(actor)) return ui.notifications.warn("Нет Очка Бесчестия — Противоядие не активирован.");
-  if (!(await spendDoses(actor, [{ re: DETOX_RE, qty: 3, label: "Детокс" }]))) return;
+  // Детокс сверяется до траты Очка, списывается после: закрытое окно оплаты его не сжигает.
+  if ((Number(findItem(actor, DETOX_RE)?.system?.quantity) || 0) < 3) return ui.notifications.warn("⚠️ Не хватает: Детокс ×3.");
   if (!(await spendInfamyPoint(actor, "Противоядие"))) return;
+  if (!(await spendDoses(actor, [{ re: DETOX_RE, qty: 3, label: "Детокс" }]))) return;
   const sk = groupSkillValue(actor, "scholasticLore", CHYMISTRY_RE);
   const r = await rollChem(actor, "Противоядие", { label: "Scholastic Lore (Chymistry)", base: sk.value });
   if (r.success) await saveStock(actor, "antivenom", poison, r.deg);
