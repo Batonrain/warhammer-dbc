@@ -106,6 +106,8 @@ export async function useDeliveranceOfArkhan(message, { actorUuid, pay = "fatigu
       icon: "⚙", title: `Избавление Аркхана — ${esc(actor.name)}`,
       lines: [`<div class="roll-threshold">${paid}: аварийные цепи Лат держат бионику в мёртвой зоне ЭМИ — ноги не подкашиваются, руки не выпускают оружие. ${esc(actor.name)} Оглушён, но не Беспомощен.</div>`]
     }, { sound: false });
+    // runCardOnce отмечает карточку только по true — без него вторая кнопка заплатила бы ещё раз.
+    return true;
   }, "Избавление Аркхана с этой карточки уже применено.");
 }
 
