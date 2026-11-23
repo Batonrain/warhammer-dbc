@@ -109,6 +109,10 @@ export const CARD_ONCE_FLAGS = [
   "oneWillGoDownSettled",
   // Тяжёлый Хук, Направляющий Удар, Удар с Коленом (Таланты Пугилиста, combat/pugilist-strikes.mjs): раз на атаку / карточку.
   "haymakerUsed", "goadingPressUsed", "kneeStrikeUsed",
+  // Вуаль Лжи (hooks.mjs, .wh-veil-proxy-btn): одна прокси-личность с карточки пытки.
+  "veilProxyUsed",
+  // Танец Боли (hooks.mjs, .wh-char-dmg-btn в блоке .wh-dance-of-pain): один урон в A с карточки.
+  "danceOfPainUsed",
   // Ложный Натиск (hooks.mjs, .wh-false-advance-btn): один Финт или Давление с карточки Движения.
   "falseAdvanceUsed",
   // Гренадер (Талант Метания, combat/grenadier.mjs): «уменьшить смещение» и «перебросить направление» — по разу на карточку.

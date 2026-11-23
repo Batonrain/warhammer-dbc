@@ -158,7 +158,8 @@ describe("ГМ-релей правки командования", () => {
     [{ "flags.warhammer-dbc.warpInstabDealt": true }],
     [{ "flags.warhammer-dbc.warpInstabHurt": true }],
     [{ "flags.warhammer-dbc.-=warpInstabHurt": null, "flags.warhammer-dbc.-=warpInstabDealt": null }],
-    [{ "system.inRage": true }]
+    [{ "system.inRage": true }],
+    [{ "flags.warhammer-dbc.danceOfPainThisTurn": true }]
   ])("боевые отметки ГМ принимает: %o", async (update) => {
     soldier.updates.length = 0;
     await applyRelayedCommandUpdate({ uuid: "Actor.s", update });
@@ -171,6 +172,7 @@ describe("ГМ-релей правки командования", () => {
     [{ "flags.warhammer-dbc.warpInstabDealt": "x" }],
     [{ "flags.warhammer-dbc.momentumSeen": { a: 1 } }],
     [{ "system.inRage": false }],
+    [{ "flags.warhammer-dbc.danceOfPainThisTurn": 5 }],
     [{ "system.inRage": true, "system.wounds.value": 0 }]
   ])("боевые отметки с чужим значением ГМ отклоняет: %o", async (update) => {
     soldier.updates.length = 0;

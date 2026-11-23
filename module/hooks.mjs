@@ -272,7 +272,7 @@ import { collectTestMods } from "./rules/roll-mods.mjs";
 import { rollD100WithReroll } from "./rules/test-kind-widget.mjs";
 import { poisonResistReroll } from "./rules/squat-traits.mjs";
 import { psychicResistReroll } from "./rules/psychic-resist-reroll.mjs";
-import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn, actorIdentityUuids } from "./combat/command-state.mjs";
+import { expireCommandsAtTurnStart, clearCommandsOnCombatEnd, commandMoraleOn, actorIdentityUuids, updateOrRelay } from "./combat/command-state.mjs";
 import { duelistsTurnStart, duelistsTurnEnd, duelistsCombatEnd } from "./combat/duelists-hooks.mjs";
 import { syncArmorFieldShields } from "./combat/armor-field-shield.mjs";
 import { sparksSwap, igniterFollowUp } from "./rules/gunsmith-talents.mjs";
@@ -3088,6 +3088,7 @@ export function registerHooks() {
     // Урон в Характеристики (крит-строка — у цели карточки, психосила — у
     // выделенного токена): combat/char-damage-button.mjs, task-174e/task-5820.
     html.querySelectorAll(".wh-char-dmg-btn").forEach(btn => {
+      if (btn.closest(".wh-dance-of-pain") && cardOnceUsed(message, "danceOfPainUsed")) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
@@ -3098,16 +3099,21 @@ export function registerHooks() {
         const actor = ds.actorUuid ? (doc?.actor ?? doc) : requireControlledActor("⚠️ Выберите токен цели на сцене!");
         if (!actor) return;
         if (!actor.isOwner) return ui.notifications.warn("Нанести урон может владелец цели (или ГМ).");
-        el.disabled = true;
-        await applyCharDamageButton(actor, {
+        const apply = () => applyCharDamageButton(actor, {
           keys: String(ds.keys || "").split(",").filter(Boolean), formula: ds.formula || "",
           amount: ds.amount === "" ? null : Number(ds.amount), permanent: ds.permanent === "1", source: ds.source || ""
         });
-        if (danceAttackerUuid) {
+        if (!danceAttackerUuid) { el.disabled = true; return apply(); }
+        // Танец Боли: один урон с карточки (флаг сообщения), метка «раз в Ход» — атакующему,
+        // даже если жмёт владелец цели, а не атакующего (запись через ГМа).
+        const done = await runCardOnce(message, "danceOfPainUsed", async () => {
+          await apply();
           const atk = await fromUuid(danceAttackerUuid).catch(() => null);
           const atkActor = atk?.actor ?? atk;
-          if (atkActor?.isOwner) await atkActor.setFlag("warhammer-dbc", "danceOfPainThisTurn", true);
-        }
+          if (atkActor) await updateOrRelay(atkActor, { "flags.warhammer-dbc.danceOfPainThisTurn": true });
+          return true;
+        }, "Танец Боли с этой карточки уже применён.");
+        if (done) el.disabled = true;
       });
     });
 
@@ -3449,14 +3455,20 @@ export function registerHooks() {
 
     // Вуаль Лжи (Когнитэ, Sahara 581-7bb9): прокси-личность с карточки пытки —
     // тест Deceive(I)+0 жертвы против Успехов пытающего (apps/torture.mjs).
+    // Одна попытка на карточку пытки — флаг сообщения, не только DOM.
     html.querySelectorAll(".wh-veil-proxy-btn").forEach(btn => {
+      if (cardOnceUsed(message, "veilProxyUsed")) btn.disabled = true;
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const el = ev.currentTarget;
         const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
         if (!actor?.isOwner) return ui.notifications.warn("Подсунуть прокси-личность может владелец Когнитэ (или ГМ).");
-        el.disabled = true;
-        await useVeilOfLiesProxy(actor, { attackerSuccesses: Number(el.dataset.successes) || 0, attackerName: el.dataset.attackerName || "" });
+        // Успехи атакующего — из кнопки, окна числа нет: отмены не бывает, тест брошен → true.
+        const done = await runCardOnce(message, "veilProxyUsed", async () => {
+          await useVeilOfLiesProxy(actor, { attackerSuccesses: Number(el.dataset.successes) || 0, attackerName: el.dataset.attackerName || "" });
+          return true;
+        }, "Прокси-личность с этой карточки уже подсовывали.");
+        if (done) el.disabled = true;
       });
     });
 
