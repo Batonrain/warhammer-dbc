@@ -5664,7 +5664,8 @@ function _attachFateContextMenu(message, html) {
     await processWastelandRequest(actor);
   });
   Hooks.on("updateWorldTime", async (worldTime, dt) => {
-    if (!game.user.isGM) return;
+    // Один активный ГМ: при двух ГМах в игре сроки снимались/карточки шли дважды.
+    if (!game.users.activeGM?.isSelf) return;
     // Срочные активации «на N минут» (Боевая форма Вампира: Cor.b×10 минут,
     // rules/item-activation.mjs::activationExpired) — срок вышел, форма снята.
     // Свой обход: несвязанные токены сцен тоже (worldAndTokenActors).
@@ -5851,7 +5852,7 @@ function _attachFateContextMenu(message, html) {
     if (game.user.isGM) await processSigilliteRunesCombatStart(combat);
     // Пулы ресурсов архетипов (Очки Мести Ревенанта — «восстанавливаются в начале
     // каждого боя или сцены», rules/resource-pools.mjs): до максимума у бойцов.
-    if (game.user.isGM) await refillResourcePoolsOnCombatStart(combat);
+    if (game.users.activeGM?.isSelf) await refillResourcePoolsOnCombatStart(combat);
     // Заготовленная Руна (wdbc-p2it): «в начале боя персонаж может выбрать
     // одну руну» — диалог выбора, тем же тактом и тем же GM-гейтом, что и
     // соседи по этому хуку (Колдовское Лезвие/Руны Сигиллитов выше).
