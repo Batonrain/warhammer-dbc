@@ -40,6 +40,8 @@ describe("Черта в паке", () => {
   it("опознаётся и несёт кнопку «Получил субстанцию» на панели", () => {
     const d = packDocuments("traits", "trait").map(x => x.doc).find(x => x.name.startsWith("Monodevotant"));
     expect(monodevotantTrait({ items: [d] })).toBe(d);
+    const ru = { type: "trait", name: "Монозависимый", system: {} };
+    expect(monodevotantTrait({ items: [ru] })).toBe(ru);
     const e = d.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries).find(x => x.scriptOnPanel);
     expect(e.code).toMatch(/giveMonodevotantSubstance\(actor, item\)/);
   });
