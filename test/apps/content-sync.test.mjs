@@ -4,8 +4,7 @@
 // трёхсторонний диффинг (опора/актёр/пак) без жёсткого списка полей по типу.
 
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
+import { packDocById } from "../support/pack-doc.mjs";
 import {
   nameKeys, sameValue, buildPackIndex, matchPackSource,
   diffItemAgainstPack, buildSyncReport, applySyncReport,
@@ -455,8 +454,7 @@ describe("сверка не отыгрывает новые разовые за�
 // записи выдачи атак Медузы. Отменять их, как прочие новые выдачи, нельзя: у
 // Медузы, взятой раньше, атак не было вовсе. Атака уже на листе — отменяется.
 describe("атаки Медузы «Обновить мир» выдаёт, а не отменяет", () => {
-  const empath = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname,
-    "../../packs-src/traits/Элитные_архетипы/Медуза/Empath___Эмпат_Dns2RucO8Rfe0J2o.json"), "utf8"));
+  const empath = packDocById("packs-src/traits/Элитные_архетипы/Медуза", "Dns2RucO8Rfe0J2o");
   const packMech = empath.flags["warhammer-dbc"].mechanics;
   const run = async (actorItems) => {
     const pack = mechDoc("u8", empath.name, "trait", packMech);
