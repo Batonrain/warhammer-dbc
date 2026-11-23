@@ -199,6 +199,13 @@ export async function spendFromInfamyPool(actor, amount, poolFullPath, { forced 
       }
     }
   }
+  // Пулы ресурса не подошли (порог Порчи выше asInfamyCor, потолок asInfamyCap,
+  // Месть не на атаку) — платить обычным пулом, а его не хватает: отказ,
+  // а не бесплатная трата с poolValue = max(0, …).
+  if (!forced && cur < rest) {
+    ui.notifications?.warn("Не хватает Очков Бесчестия.");
+    return null;
+  }
   // Источник временного Очка — ДО списания: последнее списанное снимает флаг
   // целиком, а возврату Очка (Знания Веков, apps/knowledge-of-ages.mjs) нужно
   // вернуть его с тем же источником — по нему запас и сгорает.
@@ -235,6 +242,13 @@ const PATRON_CONTEXT_HINTS = {
   slaaneshCrit: "Сладкое Страдание: кнопка появляется на карточке Критического Эффекта — Очко потратится при нажатии."
 };
 
+/**
+ * Контекст траты «на атаку» без карточки теста (Таланты атаки: Смертельный Удар,
+ * Верный Выстрел, Око Мщения, Атака Ненависти…): только с ним пул «только на атаку»
+ * (Месть, rules/resource-pools.mjs::infamyResourceOptions) предлагается к оплате.
+ */
+export const INFAMY_ATTACK_TEST = Object.freeze({ skill: "", group: "", attack: true });
+
 /** Есть ли у актора пул ресурса, который тратится как Очки Бесчестия (без Foundry-вызовов). */
 export function infamyResourcePossible(actor) {
   for (const d of resourcePoolDefs(actor).values()) if (d.asInfamy) return true;
@@ -252,8 +266,8 @@ export function infamyResourceAvailable(actor, { corThreshold = 0, test = null }
 }
 
 /** Есть ли чем платить за способность: обычный пул, временный запас или пул ресурса «как Бесчестие». */
-export function actorHasInfamyPoint(actor) {
-  return actorInfamyValue(actor) >= 1 || tempInfamyAmount(actor) >= 1 || infamyResourceAvailable(actor);
+export function actorHasInfamyPoint(actor, { test = null } = {}) {
+  return actorInfamyValue(actor) >= 1 || tempInfamyAmount(actor) >= 1 || infamyResourceAvailable(actor, { test });
 }
 
 /**
@@ -276,12 +290,12 @@ export async function spendInfamyAbility(actor, key, out = null, { test = null }
   })) === true;
 }
 
-export async function spendPatronAbility(actor, key) {
+export async function spendPatronAbility(actor, key, { test = null } = {}) {
   const godKey = actor?.system?.patronGod || "undivided";
   const p = chaosPatronMeta(godKey);
   return (await spendInfamy(actor, key, {
     godKey, ipFullPath: actorInfamyPath(actor), ipMax: actorInfamyMax(actor),
-    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true
+    meta: { gc: p.color, gc2: p.gc2, sigil: p.sigil }, contextual: true, test
   })) === true;
 }
 
@@ -318,8 +332,6 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
   const patron = DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided;
   const ip = Math.max(0, Math.min(ipMax, Number(foundry.utils.getProperty(actor, ipFullPath)) || 0));
   if (free && inPariahVoid(actor)) return ui.notifications.warn("В Пустоте Парии нельзя тратить Очки Бесчестия/Судьбы.");
-  if (!free && ip < 1 && tempInfamyAmount(actor) < 1 && !infamyResourceAvailable(actor, { test }))
-    return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
 
   let ability = DP_INFAMY_ABILITIES.find(a => a.key === key);
   if (!ability && DP_PATRON_ABILITIES[godKey]?.key === key) ability = DP_PATRON_ABILITIES[godKey];
@@ -327,6 +339,10 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta,
   if (ability.disGod === godKey) return ui.notifications.warn(`«${ability.label}» недоступно при этом Покровительстве.`);
   const threshold = (ability.key === "success" && Number.isFinite(patron.successCorThreshold)) ? patron.successCorThreshold : (ability.cor ?? 0);
   if (cor < threshold) return ui.notifications.warn(`«${ability.label}»: нужно Порчи ≥ ${threshold} (сейчас ${cor}).`);
+  // Порог Порчи — и в проверке «есть чем платить»: пул с asInfamyCor ниже
+  // порога этой способностью не оплачивается (spendFromInfamyPool отсечёт).
+  if (!free && ip < 1 && tempInfamyAmount(actor) < 1 && !infamyResourceAvailable(actor, { corThreshold: threshold, test }))
+    return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
 
   const spend = free
     ? { tempSpent: 0, poolSpent: 0, poolValue: ip, tempSource: "", tempRestriction: "" }

@@ -82,7 +82,7 @@ describe("spendFromInfamyPool: Очко Трофеев вместо Очка Б�
     const { spendFromInfamyPool, infamyResourceAvailable } = await import("../../module/apps/infamy-points.mjs");
     const a = hunter(2);
     const r = await spendFromInfamyPool(a, 1, "system.fate.value", { test: { skill: "charm" } });
-    expect(r.resourceSpent).toBeUndefined();
+    expect(r).toBeNull();
     expect(a.system.trophyPoints.value).toBe(2);
     expect(infamyResourceAvailable(a)).toBe(false);
     expect(infamyResourceAvailable(a, { test: { attack: true } })).toBe(true);
@@ -90,8 +90,8 @@ describe("spendFromInfamyPool: Очко Трофеев вместо Очка Б�
 });
 
 // Очки Мести Ревенанта (Sahara 583-d28a): «как трата Очка Бесчестия на атаку».
-// Трата из карточки НЕ-атакующего теста Местью не оплачивается; трата с полосы
-// (теста нет — активация Таланта вроде Killing Strike) — по-прежнему можно.
+// Месть платит только явную трату на атаку (test.attack: карточка атаки или Талант атаки —
+// INFAMY_ATTACK_TEST); трата без теста (Мастерство, хирургия, мастерская) — нет.
 describe("Месть как Бесчестие — только на атаку", () => {
   const revenant = () => {
     const doc = hunter(0);
@@ -100,16 +100,20 @@ describe("Месть как Бесчестие — только на атаку"
     doc.system.resourcePools = { vengeance: 2 };
     return doc;
   };
-  it("тест Навыка — Месть не предлагается; атака и полоса — да", async () => {
-    const { infamyResourceAvailable, spendFromInfamyPool } = await import("../../module/apps/infamy-points.mjs");
+  it("тест Навыка и трата без теста — Месть не предлагается; атака — да", async () => {
+    const { infamyResourceAvailable, actorHasInfamyPoint, spendFromInfamyPool, INFAMY_ATTACK_TEST } = await import("../../module/apps/infamy-points.mjs");
     const a = revenant();
     expect(infamyResourceAvailable(a, { test: { skill: "survival" } })).toBe(false);
     expect(infamyResourceAvailable(a, { test: { attack: true } })).toBe(true);
-    expect(infamyResourceAvailable(a)).toBe(true);
+    expect(infamyResourceAvailable(a)).toBe(false);
+    expect(actorHasInfamyPoint(a)).toBe(false);
+    expect(actorHasInfamyPoint(a, { test: INFAMY_ATTACK_TEST })).toBe(true);
     const r = await spendFromInfamyPool(a, 1, "system.fate.value", { test: { skill: "charm" } });
-    expect(r.resourceSpent).toBeUndefined();
+    expect(r).toBeNull();
+    // Трата вне карточки теста (combat/mastery.mjs и т.п.) — Месть не тратится.
+    expect(await spendFromInfamyPool(a, 1, "system.fate.value")).toBeNull();
     expect(a.system.resourcePools.vengeance).toBe(2);
-    const r2 = await spendFromInfamyPool(a, 1, "system.fate.value", { test: { attack: true } });
+    const r2 = await spendFromInfamyPool(a, 1, "system.fate.value", { test: INFAMY_ATTACK_TEST });
     expect(r2.resourceSpent).toMatchObject({ key: "vengeance" });
   });
 });

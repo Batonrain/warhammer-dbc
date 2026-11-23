@@ -106,7 +106,7 @@ import { adroitDegreeBonus } from "../rules/adroit.mjs";
 import { isActorsOwnTurn } from "./delay-action.mjs";
 import { meleeContactCount } from "./tactical-map.mjs";
 import { betrayalRandomAllyToken } from "./legacy-weapon-betrayal.mjs";
-import { actorInfamyValue, actorInfamyPath, spendFromInfamyPool } from "../apps/infamy-points.mjs";
+import { actorInfamyValue, actorInfamyPath, spendFromInfamyPool, INFAMY_ATTACK_TEST } from "../apps/infamy-points.mjs";
 import { handOfKhorneStrengthMultiplier, handOfKhorneBlocksRangedAttack } from "../rules/hand-of-khorne.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
@@ -230,7 +230,7 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
       wp.legacyCleavingRollSpent = true;
       if (attacker && actorInfamyValue(attacker) >= 1) {
         const path = actorInfamyPath(attacker);
-        const spend = await spendFromInfamyPool(attacker, 1, path);
+        const spend = await spendFromInfamyPool(attacker, 1, path, { test: INFAMY_ATTACK_TEST });
         if (spend) {
           await attacker.update({ [path]: spend.poolValue });
           wp.legacyCleavingRollActive = true;
@@ -1318,7 +1318,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (sureShotOn && !opts.talentPaid?.sureShot) {
     if (actorInfamyValue(actor) >= 1) {
       const path = actorInfamyPath(actor);
-      const spend = await spendFromInfamyPool(actor, 1, path);
+      const spend = await spendFromInfamyPool(actor, 1, path, { test: INFAMY_ATTACK_TEST });
       if (spend) await actor.update({ [path]: spend.poolValue });
       else sureShotOn = false;
     } else {
@@ -1339,7 +1339,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (killingStrikeOn && !killingStrikeReplay) {
     if (actorInfamyValue(actor) >= 1) {
       const path = actorInfamyPath(actor);
-      const spend = await spendFromInfamyPool(actor, 1, path);
+      const spend = await spendFromInfamyPool(actor, 1, path, { test: INFAMY_ATTACK_TEST });
       if (spend) {
         await actor.update({ [path]: spend.poolValue });
         await actor.setFlag?.("warhammer-dbc", KILLING_STRIKE_FLAG, true);
@@ -1537,7 +1537,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (toggles.eyeOfVengeance && eyeActiveId !== item.id && !opts.skipAmmo && eyeOfVengeanceAvailable(actor, { isMelee })) {
     if (actorInfamyValue(actor) >= 1) {
       const path = actorInfamyPath(actor);
-      const spend = await spendFromInfamyPool(actor, 1, path);
+      const spend = await spendFromInfamyPool(actor, 1, path, { test: INFAMY_ATTACK_TEST });
       if (spend) {
         await actor.update({ [path]: spend.poolValue });
         await actor.setFlag?.("warhammer-dbc", EYE_OF_VENGEANCE_FLAG, item.id);

@@ -130,6 +130,9 @@ describe("восполнение по событию", () => {
     expect(refillMatches("battleOrScene", "battle")).toBe(true);
     expect(refillMatches("battleOrScene", "scene")).toBe(true);
     expect(refillMatches("scene", "session")).toBe(true);
+    // Конец сессии — и конец сцены: Месть Ревенанта (battleOrScene) тоже наполняется.
+    expect(refillMatches("battleOrScene", "session")).toBe(true);
+    expect(refillMatches("battle", "session")).toBe(false);
     expect(refillMatches("battle", "scene")).toBe(false);
     expect(refillMatches("", "battle")).toBe(false);
   });
@@ -265,8 +268,29 @@ describe("spendFromInfamyPool: пул ресурса вместо Очка Бе�
     const { spendFromInfamyPool } = await import("../../module/apps/infamy-points.mjs");
     const a = actorWith([thirstTrait], { pools: { thirst: 2 } });
     const r = await spendFromInfamyPool(a, 1, "system.fate.value", { corThreshold: 40 });
-    expect(r.resourceSpent).toBeUndefined();
+    // Обычных Очков нет — отказ, а не бесплатная трата.
+    expect(r).toBeNull();
     expect(a.system.resourcePools.thirst).toBe(2);
+  });
+
+  it("трата 2 Очков сверх потолка «как Бесчестие» без обычных Очков — отказ", async () => {
+    const { spendFromInfamyPool } = await import("../../module/apps/infamy-points.mjs");
+    const a = actorWith([itemWith("T", [entry({ resPoolKey: "thirst", resPoolMax: "10", resPoolAsInfamy: true, resPoolAsInfamyCap: "1" })])],
+      { pools: { thirst: 5 } });
+    const r = await spendFromInfamyPool(a, 2, "system.fate.value");
+    expect(r).toBeNull();
+    expect(a.system.resourcePools.thirst).toBe(5);
+  });
+
+  it("Вампир: Порча 25, Очков 0, Жажда 3 — «Усмирение Варпа» не бесплатно (spendInfamy)", async () => {
+    const { spendInfamyAbility } = await import("../../module/apps/infamy-points.mjs");
+    const a = actorWith([thirstTrait], { pools: { thirst: 3 } });
+    a.system.corruption = { value: 25 };
+    a.system.fate = { value: 0, max: 3 };
+    expect(await spendInfamyAbility(a, "calmWarp")).toBe(false);
+    expect(a.system.resourcePools.thirst).toBe(3);
+    expect(a.system.fate.value).toBe(0);
+    expect(captured.chat).toHaveLength(0);
   });
 
   it("принудительная потеря (штраф) пул ресурса не трогает", async () => {

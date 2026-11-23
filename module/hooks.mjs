@@ -5331,7 +5331,7 @@ function _attachFateContextMenu(message, html) {
 
       // Знания Веков (wdbc-1rno.23): «Усиление» теста добытого Навыка за своё
       // Очко — кнопка «бросить 1d10» (apps/knowledge-of-ages.mjs).
-      const koaBtn = champion ? "" : knowledgeOfAgesButtonHtml(actor, {
+      const koaBtn = champion || resDef ? "" : knowledgeOfAgesButtonHtml(actor, {
         ability: "boost", spend: bonus1, skillTest });
 
       // Карточка — общим сборщиком (wdbc-kuun). Строка Порога здесь своя

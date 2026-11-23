@@ -46,7 +46,7 @@ import { canPayFuriousReaction, payFuriousReaction } from "../../combat/khorne-b
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
 import { hateAttackDegrees } from "../../rules/focused-wrath.mjs";
-import { actorHasInfamyPoint, spendPatronAbility } from "../../apps/infamy-points.mjs";
+import { actorHasInfamyPoint, spendPatronAbility, INFAMY_ATTACK_TEST } from "../../apps/infamy-points.mjs";
 import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
 import { allGunsBlazingMod, tyranthikosSecondAttackDice, DUAL_HAND_MAIN, DUAL_HAND_OFF } from "../../rules/dual-wield-talents.mjs";
@@ -394,7 +394,7 @@ export function openAttackDialog(ctx) {
           // Атака Ненависти (Кхорн): Очко проверяется ДО списания ОД, чтобы
           // отказ не стоил действия; само списание — перед броском ниже.
           const hateUsed = !!(hateAttackAvailable && f.hateAttack && hateAttackApplies(f.char));
-          if (hateUsed && !actorHasInfamyPoint(actor)) {
+          if (hateUsed && !actorHasInfamyPoint(actor, { test: INFAMY_ATTACK_TEST })) {
             ui.notifications.warn("⚠️ Нет Очков Бесчестия для Атаки Ненависти.");
             return false;
           }
@@ -654,7 +654,7 @@ export function openAttackDialog(ctx) {
           }
 
           // Атака Ненависти тратится реальным броском, как и Локус выше.
-          if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred"))) return false;
+          if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred", { test: INFAMY_ATTACK_TEST }))) return false;
 
           // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): Отряд
           // атакующего мог срезать бонус Общей Команды на бонусные кубы урона

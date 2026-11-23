@@ -133,6 +133,13 @@ describe("Знания Веков: кнопка в карточке траты",
     expect(html).toContain('data-temp-restriction="только Команда"');
   });
 
+  it("заплачено пулом ресурса (Жажда, Месть, Трофеи) — кнопки нет: Очко Бесчестия не тратилось", () => {
+    expect(knowledgeOfAgesButtonHtml(fakeActor(), { ability: "boost", skillTest: { skill: "dodge" },
+      spend: { tempSpent: 0, poolSpent: 0, resourceSpent: { key: "thirst", amount: 1 } } })).toBe("");
+    expect(knowledgeOfAgesButtonHtml(fakeActor(), { ability: "success",
+      spend: { tempSpent: 0, poolSpent: 0, resourceSpent: { key: "thirst", amount: 1 } } })).toBe("");
+  });
+
   it("не Хаосит (Очко Судьбы) — кнопки нет: книга говорит о способностях Бесчестия", () => {
     const actor = fakeActor();
     actor.system.alignment = "renegade";
@@ -221,6 +228,10 @@ describe("Знания Веков: стыковка", () => {
     for (const m of hooks.matchAll(/(.{0,40})knowledgeOfAgesButtonHtml\(actor/g)) {
       expect(m[1]).toMatch(/champion/);
     }
+  });
+
+  it("«+10» за очко пула ресурса (resDef) — кнопки нет", () => {
+    expect(hooks).toMatch(/champion \|\| resDef \? "" : knowledgeOfAgesButtonHtml\(actor, \{\s*ability: "boost"/);
   });
 
   it("карточка переброса несёт флаг skillTest исходной — «+10» на ней тоже узнаёт Навык", () => {

@@ -80,8 +80,8 @@ export const RESOURCE_REFILL_UNITS = {
 export function refillMatches(unit, event) {
   if (!unit) return false;
   if (unit === event) return true;
-  if (unit === "battleOrScene") return event === "battle" || event === "scene";
   // Конец сессии — и конец сцены (apps/game-session.mjs::triggerSessionEnd).
+  if (unit === "battleOrScene") return event === "battle" || event === "scene" || event === "session";
   if (event === "session") return unit === "scene";
   return false;
 }
@@ -317,9 +317,10 @@ export function infamyResourceOptions(actor, { roundKey = "", corThreshold = 0, 
   const out = [];
   for (const d of resourcePoolDefs(actor).values()) {
     if (!d.asInfamy) continue;
-    // Пул «только на атаку» (Месть): тест карточки известен и он не атака — мимо.
-    // Без теста (трата с полосы: активация Killing Strike и т.п.) — разрешено.
-    if (d.asInfamyAttackOnly && test && !test.attack) continue;
+    // Пул «только на атаку» (Месть): только при явной трате на атаку (test.attack —
+    // карточка атаки или трата Таланта атаки: Смертельный Удар, Верный Выстрел…).
+    // Без теста трата не атака: Мастерство, хирургия, мастерская Месть не берут.
+    if (d.asInfamyAttackOnly && !test?.attack) continue;
     // «Считает при этом свою Cor 0-19»: способность с порогом Порчи выше —
     // этим пулом не оплачивается.
     if (d.asInfamyCor != null && Number(corThreshold) > d.asInfamyCor) continue;
