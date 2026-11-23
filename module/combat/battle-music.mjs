@@ -7,7 +7,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { hasItemNamed } from "../rules/req-atom.mjs";
 import { isBladeWeapon } from "../rules/melee-talents.mjs";
-import { MUSIC_FLAG, SYMPHONY_MIN, musicMark, ariaWeaponOk } from "../rules/battle-music.mjs";
+import { MUSIC_FLAG, SYMPHONY_MIN, musicMark, ariaWeaponOk, ARIA_TURN_FLAG, ariaTurnMark, ariaUsedThisTurn } from "../rules/battle-music.mjs";
 import { actorHasInfamyPoint, actorInfamyPath, spendFromInfamyPool } from "../apps/infamy-points.mjs";
 
 const NS = "warhammer-dbc";
@@ -26,12 +26,17 @@ export async function useAria(actor) {
   if (!actor || !hasItemNamed(actor, "Aria", ["talent"])) return ui.notifications.warn("⚠️ У актора нет Таланта Ария.");
   const blade = [...actor.items].find(i => i.system?.equipped && ariaWeaponOk(i, isBladeWeapon));
   if (!blade) return ui.notifications.warn("⚠️ Нужно клинковое оружие с Балансом не ниже 0 в руках.");
+  // Книга: «раз в Ход … может пройти тест» — считается попытка, не только Успех.
+  const combat = activeCombat();
+  if (ariaUsedThisTurn(actor, combat)) return ui.notifications.warn("⚠️ Ария — раз в Ход: в этом Ходу тест уже был.");
+  const turnMark = ariaTurnMark(combat);
+  if (turnMark) await actor.setFlag(NS, ARIA_TURN_FLAG, turnMark);
   const base = dancerValue(actor);
   const rm = collectTestMods(actor, { kind: "skill", skill: "trade", char: "ag" });
   const threshold = base - 10 + rm.total;
   const roll = await new Roll("1d100").evaluate();
   const { success, deg } = testOutcome(roll.total, threshold);
-  if (success) await actor.setFlag(NS, MUSIC_FLAG, musicMark(deg, activeCombat(), { rounds: 1, now: game.time?.worldTime ?? 0 }));
+  if (success) await actor.setFlag(NS, MUSIC_FLAG, musicMark(deg, combat, { rounds: 1, now: game.time?.worldTime ?? 0 }));
   await postTestCard(actor, {
     icon: "🎼", title: `Ария — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Trade (Dancer)", base, parts: ["Ария −10", ...rm.parts], threshold, rv: roll.total }),
