@@ -4,6 +4,8 @@
 // трёхсторонний диффинг (опора/актёр/пак) без жёсткого списка полей по типу.
 
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import {
   nameKeys, sameValue, buildPackIndex, matchPackSource,
   diffItemAgainstPack, buildSyncReport, applySyncReport,
@@ -446,6 +448,43 @@ describe("сверка не отыгрывает новые разовые за�
       updateEmbeddedDocuments: async (t, u) => calls.push(...u) }) } };
     await applySyncReport(report, new Set([report.rows[0].entries[0].entryKey]));
     expect(Object.keys(calls[0])).not.toContain("flags.warhammer-dbc.mechanicsApplied");
+  });
+});
+
+// Приёмка #597: Эмпат, Эмоциональный Взрыв и Материальное Крушение получили
+// записи выдачи атак Медузы. Отменять их, как прочие новые выдачи, нельзя: у
+// Медузы, взятой раньше, атак не было вовсе. Атака уже на листе — отменяется.
+describe("атаки Медузы «Обновить мир» выдаёт, а не отменяет", () => {
+  const empath = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname,
+    "../../packs-src/traits/Элитные_архетипы/Медуза/Empath___Эмпат_Dns2RucO8Rfe0J2o.json"), "utf8"));
+  const packMech = empath.flags["warhammer-dbc"].mechanics;
+  const run = async (actorItems) => {
+    const pack = mechDoc("u8", empath.name, "trait", packMech);
+    const it0 = mechItem({ id: "em", name: empath.name, type: "trait", src: "u8", mechanics: [], mechBaseline: [] });
+    it0.getFlag = (scope, key) => it0.flags[scope]?.[key];
+    it0.parent = { items: [it0, ...actorItems] };
+    const report = buildSyncReport([{ id: "a8", name: "Медуза", items: [it0] }], buildPackIndex([pack]));
+    const row = report.rows.find(r => r.path === MECH_PATH);
+    const calls = [];
+    globalThis.game = { actors: { get: id => ({ id, items: { get: () => it0 },
+      updateEmbeddedDocuments: async (t, u) => calls.push(...u) }) } };
+    await applySyncReport(report, new Set([row.entries[0].entryKey]));
+    return calls[0];
+  };
+
+  it("в паке Эмпат выдаёт атаки записями equipment", () => {
+    expect(packMech.flatMap(g => g.entries).filter(e => e.kind === "equipment")).toHaveLength(5);
+  });
+
+  it("атак на листе нет — ни одна не отменена", async () => {
+    const upd = await run([]);
+    expect(upd["flags.warhammer-dbc.equipWaived"]).toBeUndefined();
+    expect(upd["flags.warhammer-dbc.mechanicsApplied"]).toBeUndefined();
+  });
+
+  it("Глазная Вспышка уже на листе (ГМ перетащил) — отменена только она", async () => {
+    const upd = await run([{ id: "w1", type: "weapon", name: "Eyeburst / Глазная Вспышка" }]);
+    expect(upd["flags.warhammer-dbc.equipWaived"]).toEqual(["Ls4Km6wHuHZxMj7y"]);
   });
 });
 

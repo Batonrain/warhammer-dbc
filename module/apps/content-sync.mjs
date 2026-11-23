@@ -455,6 +455,19 @@ function ownedOrBranches(groups, known, actorItems) {
 }
 
 /**
+ * Выдачи, которые «Обновить мир» НЕ отменяет: атаки Медузы (Черта Эмпат,
+ * Таланты Эмоциональный Взрыв и Материальное Крушение, приёмка #597). Это не
+ * снаряжение, которое ГМ мог внести руками или продать, а сама способность —
+ * без выдачи у Медузы, взятой до записей, атак нет вовсе. Атака с тем же
+ * именем уже на листе (ГМ перетащил) — отменяется, как прочие.
+ */
+const GRANT_ON_SYNC = new Set([
+  "Ls4Km6wHuHZxMj7y", "aJcqy9xLgUuSH5Lu", "uIm9hBaXlD6ZfkTq", "qFtyF6dpYVhSMHx9", "JqXOBi9OfTh110r5", // Эмпат
+  "5jsWGZmxWsUJf8WZ",                                                                                 // Эмоциональный Взрыв
+  "W90bAwjpOOuU8nPd"                                                                                  // Материальное Крушение
+]);
+
+/**
  * PR #568: перенос Механики на УЖЕ купленную копию будит updateItem →
  * applyItemMechanics, и разовая запись, которой в копии не было (Порча
  * архетипа, Раны, выдача брони/импланта/Гнили), отыгралась бы поверх того,
@@ -465,7 +478,9 @@ function ownedOrBranches(groups, known, actorItems) {
  */
 function waiveNewOneShots(upd, item, entry, packVal) {
   const known = new Set([...mechLeaves(entry.actorVal), ...mechLeaves(entry.baseVal)].map(e => e.id));
-  const fresh = mechLeaves(packVal).filter(e => ONE_SHOT_MECH_KINDS.has(e.kind) && !known.has(e.id));
+  const held = new Set([...(item?.parent?.items ?? [])].flatMap(i => nameHalves(i?.name)));
+  const fresh = mechLeaves(packVal).filter(e => ONE_SHOT_MECH_KINDS.has(e.kind) && !known.has(e.id)
+    && !(GRANT_ON_SYNC.has(e.id) && !nameHalves(e.equipSourceName).some(h => held.has(h))));
   const picked = item ? ownedOrBranches(packVal, known, item.parent?.items) : [];
   if ((!fresh.length && !picked.length) || !item) return;
   const flag = item.getFlag?.(FLAG, "mechanicsApplied");
