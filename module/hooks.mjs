@@ -2915,7 +2915,7 @@ export function registerHooks() {
 
         // Выдержанный Взрыв (Питати, combat/pitati.mjs): точка разряда уже вычислена — «в 1 м позади цели»,
         // зона ставится туда сама, без мыши.
-        const timedAt = isCone ? null : await takeTimedExplosionPoint(ds.attackerUuid);
+        const timedAt = isCone ? null : await takeTimedExplosionPoint(ds.attackerUuid, ds.itemUuid || "");
         if (timedAt) {
           const tokens = tokensInCircle(timedAt, shape.radius);
           if (!tokens.length) return ui.notifications.info("Выдержанный Взрыв: в зоне позади цели никого нет.");
