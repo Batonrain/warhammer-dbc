@@ -16,7 +16,7 @@ import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 import {
   rollPeril, rollChoiceTest, rubricShieldPlan, rubricShieldData, syncRubricShield, buildGolemData, spawnGolem,
   startGolemCreation, bindNexus, syncNexusInitiatives, regenerationTurnStart, rollRegeneration, psychicEchoButtonHtml,
-  usePsychicEcho, clearRebornStupor, useRebornInDust, useInfernalShells, golemStatus
+  usePsychicEcho, clearRebornStupor, useRebornInDust, useInfernalShells, golemStatus, regenerationReplacedSuccess
 } from "../../module/combat/rubric-sorcerer.mjs";
 import { handleCalmWarpClick } from "../../module/combat/calm-warp.mjs";
 import { executePsychotest } from "../../module/sheets/tabs/psychic.mjs";
@@ -36,6 +36,7 @@ const SEKHMET = packDocById(TALENTS, "5td6Wrh8tp6cYZtc");
 const REBORN = packDocById(TALENTS, "BOIQCCgpura5tzWf");
 const AEGIS = packDocById("packs-src/armor/Астартес/Броня/Терминаторская", "zWrnp0yUuNetd2cf");
 const REGEN = packDocById("packs-src/traits", "6cf11ucGdzYt6ndt");
+const CULTIVATION = packDocById("packs-src/traits/Элитные_архетипы/Мейстер", "kwWDudWg7pG9lOkV");
 const STANDARD_BOLTS = packDocById("packs-src/ammunition/Стандартные", "5K23F0Trz1yBJXF2");
 const INFERNO = packDocById("packs-src/ammunition/Специальные___Болты", "DXDYD6nYsLS1KnHm");
 const GOLEM_DIR = path.join(ROOT, "packs-src/bestiary/Существа_Элитных_архетипов");
@@ -314,6 +315,25 @@ describe("Повелитель Големов: создание", () => {
     expect(lastCard()).toContain("Голем не создан");
   });
 
+  it("обряд вселения — 9 часов в Календарь (у игрока — просьба к ГМу)", async () => {
+    const a = hero({ items: [itemOf(GOLEM_MASTER)] });
+    globalThis.game.actors = [a];
+    const advanced = [];
+    globalThis.game.time.advance = async sec => { advanced.push(sec); };
+    captured.nextRoll = 99;
+    prompt({ armourId: "", terminator: false, weaponIds: [] });
+    await startGolemCreation(a);
+    expect(advanced).toEqual([9 * 3600]);
+    expect(lastCard()).toContain("Календарь сдвинут на 9 ч.");
+    globalThis.game.user.isGM = false;
+    prompt({ armourId: "", terminator: false, weaponIds: [] });
+    await startGolemCreation(a);
+    globalThis.game.user.isGM = true;
+    delete globalThis.game.time.advance;
+    expect(advanced).toHaveLength(1);
+    expect(lastCard()).toContain("сдвиньте Календарь на 9 ч.");
+  });
+
   it("провал теста: душа и снаряжение целы, Голема нет", async () => {
     const armour = armourItem();
     const a = hero({ items: [itemOf(GOLEM_MASTER), armour] });
@@ -491,6 +511,8 @@ describe("Узы Душ", () => {
     prompt("Actor.g1");
     await bindNexus(a);
     expect(g.store.rubricGolem.nexus).toBe(true);
+    // «…является его Псайбером»: Голем становится носителем манифестации колдуна (rules/psychic-vessel.mjs).
+    expect(a.store.psychicVessel).toEqual({ uuid: "Actor.g1", name: "g1" });
     expect(await bindNexus(a)).toBeNull();
     expect(captured.warnings.join("\n")).toContain("Узы Душ");
   });
@@ -523,6 +545,25 @@ describe("Регенерация и Психическое Эхо", () => {
     captured.nextRoll = 99;
     expect(await rollRegeneration(g)).toBe(false);
     expect(g.system.wounds.value).toBe(14);
+  });
+
+  // Sahara 586-fe9d: Культивация Мейстера — «при Провале теста T для
+  // Regeneration заменить его 1 Успехом»; замена ещё и лечит.
+  it("провал T Регенерации у носителя Культивации — кнопка пула; замена лечит", async () => {
+    const g = hero({ items: [itemOf(REGEN, { rating: 4 }), itemOf(CULTIVATION)], wounds: 10, uuid: "Actor.g1", name: "Мейстер" });
+    g.system.resourcePools = { cultivation: 2 };
+    captured.nextRoll = 99;
+    expect(await rollRegeneration(g)).toBe(false);
+    expect(lastCard()).toContain("wh-resource-fail-success-btn");
+    expect(lastCard()).toContain('data-regeneration="1"');
+    expect(await regenerationReplacedSuccess(g)).toBe(4);
+    expect(g.system.wounds.value).toBe(14);
+  });
+
+  it("провал T Регенерации без Культивации — кнопки пула нет", async () => {
+    captured.nextRoll = 99;
+    await rollRegeneration(regenGolem(10));
+    expect(lastCard()).not.toContain("wh-resource-fail-success-btn");
   });
 
   it("пропуск действий — автоуспех и ОД в ноль", async () => {
@@ -683,6 +724,17 @@ describe("Инфернальные Снаряды", () => {
     expect(a.created[0].system.quantity).toBe(1);
     expect(a.created[0].name).toBe(INFERNO.name);
     expect(lastCard()).toContain("Инферно-болтами Тзинча");
+  });
+
+  it("час резьбы двигает Календарь у ГМа (остаток PR #596)", async () => {
+    stubPack();
+    const advanced = [];
+    globalThis.game.time.advance = async sec => { advanced.push(sec); };
+    const a = hero({ items: [itemOf(SHELLS), itemOf(STANDARD_BOLTS, { quantity: 1 })] });
+    await useInfernalShells(a);
+    delete globalThis.game.time.advance;
+    expect(advanced).toEqual([3600]);
+    expect(lastCard()).toContain("Календарь сдвинут на 1 ч.");
   });
 
   it("при повторе количество Инферно-болтов растёт, а не дублируется", async () => {

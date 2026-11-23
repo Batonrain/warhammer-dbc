@@ -3,7 +3,11 @@
 // урона по Структуре (броня по стороне). Интеграция с чат-карточками — в том
 // же стиле, что Уклонение/Парирование и Применение урона для персонажей.
 
+import { aceOperatorButtonHtml } from "./ace-operator.mjs";
+import { paybackOfferHtml } from "./payback.mjs";
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
+import { pedalActive, pedalOf } from "../rules/pedal-to-metal.mjs";
+import { defenceRerollsFor, defenceRerollSectionHtml, defenceTestFlagsFor, jinkApplies } from "../rules/defence-reroll.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
@@ -34,7 +38,7 @@ const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 const SWERVE_CREW_ROLES = ["driver", "pilot", "commander"];
 
 /** Водитель машины (актор со станции), или null — экипаж не назначен. */
-async function swerveDriver(vehicle) {
+export async function swerveDriver(vehicle) {
   const stations = Array.isArray(vehicle?.system?.stations) ? vehicle.system.stations : [];
   for (const role of SWERVE_CREW_ROLES) {
     const st = stations.find(s => String(s?.role ?? "").trim().toLowerCase() === role && s?.uuid);
@@ -46,7 +50,7 @@ async function swerveDriver(vehicle) {
   return null;
 }
 
-export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", ramContest = false } = {}) {
+export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "", attackId = "", ramContest = false, reroll = null } = {}) {
   if (actor.type !== "vehicle") {
     return ui.notifications.warn("⚠️ Вираж может совершать только Техника — выберите токен машины.");
   }
@@ -58,10 +62,14 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   // решение владельца 23.09.2026: Реакция водителя у всей техники). Раньше не
   // тратилась вовсе. Экипаж не назначен (стол ведёт машину без станций) —
   // Вираж по Operate машины, как было, с честной пометкой в карточке.
+  // Педаль в Пол (rules/pedal-to-metal.mjs): до начала следующего Хода водителя — без Виражей.
+  if (pedalActive(pedalOf(actor), game.combat)) {
+    return ui.notifications.warn("⚠️ Педаль в Пол: до начала следующего Хода водителя машина не может совершать Вираж.");
+  }
   const driver = await swerveDriver(actor);
   // Ярость водителя: «не может совершать Избегания» — Вираж тоже Избегание (Реакция не тратится).
-  if (driver && await rageAvoidanceRefusal(driver, "evade", "Вираж")) return;
-  if (driver && !(await spendReaction(driver, { forDefense: true, attackId }))) {
+  if (!reroll && driver && await rageAvoidanceRefusal(driver, "evade", "Вираж")) return;
+  if (!reroll && driver && !(await spendReaction(driver, { forDefense: true, attackId }))) {
     return postTestCard(actor, {
       icon: rollIcon("warp", "#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
       outcome: outcomeHtml(false, `У водителя «${esc(driver.name)}» не осталось Реакций — Вираж невозможен.`)
@@ -71,10 +79,14 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
     ? `<div class="roll-defense-note">Реакцию тратит водитель — ${esc(driver.name)}.</div>`
     : `<div class="roll-defense-note">Экипаж не назначен — Реакция не списана (посадите водителя на вкладке «Экипаж»).</div>`;
   const operate   = Number(actor.system.operate) || 0;
-  const swerveMod = Number(der.swerveMod) || 0;
+  // Манёвр Уклонения (Jink): переброс за Очко — без штрафа за Размер.
+  const jink = jinkApplies(driver, reroll);
+  const sizePenalty = -(Number(actor.system.size) || 0) * 10;
+  const swerveMod = (Number(der.swerveMod) || 0) - (jink ? sizePenalty : 0);
   const threshold = operate + swerveMod + extraMod;
 
-  const roll   = await new Roll("1d100").evaluate();
+  // Переброс (Разобрать f6bti, combat/defence-reroll.mjs): «обращение» подставляет то же число с переставленными цифрами.
+  const roll   = await new Roll(reroll?.forcedRv ? String(reroll.forcedRv) : "1d100").evaluate();
   const rv     = roll.total;
   const swervePassed = rv <= threshold;
   const deg    = swervePassed
@@ -115,9 +127,10 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   const modParts = [];
-  modParts.push(`Размер ${sgn(-(Number(actor.system.size) || 0) * 10)}`);
+  modParts.push(jink ? "Размер не учитывается (Манёвр Уклонения)" : `Размер ${sgn(sizePenalty)}`);
   if (der.chassisType === "tracked") modParts.push("гусеничная −10");
   if (extraMod !== 0)                modParts.push(`мод ${sgn(extraMod)}`);
+  if (reroll)                        modParts.push(`Переброс: ${reroll.label || ""}`);
 
   let outcome;
   if (swervePassed && !passed) {
@@ -136,11 +149,20 @@ export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attac
     ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
     : "";
 
+  // Перебросы Черт/Талантов водителя на провале Виража (Разобрать f6bti). Встречный против Тарана не
+  // перебрасывается кнопкой: второй бросок Тарана повторился бы вместе с ним.
+  const roller = driver ?? actor;
+  const attackerDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const rerollSection = rammer ? "" : defenceRerollSectionHtml(defenceRerollsFor(roller, "swerve", {
+    attackerActor: attackerDoc?.actor ?? attackerDoc, isMelee: false, passed, rerolled: !!reroll }), "swerve");
+  const rerollFlags = rammer ? undefined : defenceTestFlagsFor(actor, "swerve",
+    { extraMod, hitsCount, attackerUuid, attackId }, null, { passed, rerolled: !!reroll, rerollActor: roller });
   await postTestCard(actor, {
     icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
     threshold: rollStatLine({ label: "Operate", base: operate, parts: modParts, threshold, rv }),
-    outcome, sections: [reactionNote, ramNote, leftoverNote]
-  }, { rolls: [roll, ...ramRolls] });
+    outcome, sections: [reactionNote, ramNote, leftoverNote, rerollSection,
+      (!passed && !rammer) ? aceOperatorButtonHtml(driver, actor, { kind: "swerve", failures: deg, hits: hitsCount }) : ""]
+  }, { rolls: [roll, ...ramRolls], flags: rerollFlags });
 }
 
 // ─── Тест Трудного Ландшафта ──────────────────────────────────────────────────
@@ -274,6 +296,8 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
       ${stopped ? `<div class="roll-allout-note">Машина останавливается, зайдя наполовину в область Трудного Ландшафта.</div>` : ""}`;
   }
 
+  // Ас Оператор водителя (combat/ace-operator.mjs): Провалов меньше на A.b за Очко Бесчестия.
+  const aceBtn = passed ? "" : aceOperatorButtonHtml(await swerveDriver(actor), actor, { kind: "terrain", failures: dop, walker: isWalker });
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
     threshold: rollStatLine({
@@ -281,7 +305,7 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
       parts: [`${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""})`],
       threshold, rv
     }),
-    sections: [body]
+    sections: [body, aceBtn]
   }, { rolls: [roll] });
 }
 
@@ -355,6 +379,7 @@ export async function _resolveRam(actor, fast, targetBigger) {
         <button class="wh-dodge-btn" type="button" data-extra-mod="30">Уклонение (+30)</button>
         <button class="wh-swerve-btn" type="button" data-extra-mod="0" data-ram="1" data-attacker-uuid="${actor.uuid ?? ""}">Вираж (встречный)</button>
         <button class="wh-ram-pirouette-btn" type="button" data-attacker-uuid="${actor.uuid ?? ""}" title="Пируэт (Талант Избегания): цель Тарана проходит Acrobatics+0 и пропускает машину, не тратя Реакцию. Нужен выбранный токен цели с Талантом.">Пируэт (Acrobatics+0)</button>
+        <button class="wh-ram-bastion-btn" type="button" data-attacker-uuid="${actor.uuid ?? ""}" title="Бастион (Талант Дредноутов): Шагоход проходит Parry+0 −10 за каждый Размер тарана выше своего; Успех — без урона и отброса, 3+ Успеха — ответная рукопашная атака. Нужен выбранный токен Дредноута.">Бастион (Parry)</button>
       </div>
       <div class="roll-defense-note">Уклонение от Тарана +30; Вираж — встречной проверкой против Operate+0 таранящего.</div>
     </div>`;
@@ -557,6 +582,15 @@ export async function applyDamageToVehicle(actor, damageData) {
     </div>`;
   }
 
+  // Расплата (Талант Дредноутов, combat/payback.mjs): непоглощённый урон по самому Дредноуту от
+  // Ненавистного — кнопка ответной атаки пилоту. Ветка урона по Технике возвращается из
+  // damage.mjs раньше общего вызова, поэтому предложение собирается здесь (живая проверка pr-584-76b3).
+  let paybackHtml = "";
+  if (net > 0 && damageData.attackerUuid) {
+    const src = await fromUuid(damageData.attackerUuid).catch(() => null);
+    paybackHtml = paybackOfferHtml(actor, src?.actor ?? src, net);
+  }
+
   const dtLabel = DAMAGE_TYPES[damageType] || damageType;
   // Крит-эффект по глубине отрицательной Структуры и выбранной части машины.
   const critLine = gotCrit ? (() => {
@@ -606,7 +640,8 @@ export async function applyDamageToVehicle(actor, damageData) {
         </div>`,
       critLine,
       welderLine,
-      pilotLine
+      pilotLine,
+      paybackHtml
     ]
   }, { speaker: { alias: "Система" }, sound: false });
 }

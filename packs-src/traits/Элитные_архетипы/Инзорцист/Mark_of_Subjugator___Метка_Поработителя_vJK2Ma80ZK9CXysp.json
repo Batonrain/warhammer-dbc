@@ -5,7 +5,7 @@
   "folder": "rUgiU03lXBN9Vpuv",
   "system": {
     "description": "",
-    "notes": "Авто-распознавание демонами + грант Талант Hatred ИМ (не носителю) — эффект применяется к чужим акторам (демонам), не к самому носителю. Правило стола, механики нет (dbc-114, 14.11.2026, решение владельца): кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026): любой демон считает носителя Метки целью своей Ненависти — +10 в рукопашной по нему, перебросы социальных тестов и Морали против него (через общий механизм Hatred). Кнопка пишет, сколько Успехов Пси-Чутья нужно псайкеру, чтобы засечь Метку: 3, 2/1 при печати Inf 31–50/51–70, автоматически при 71+. Вручную: сам тест Пси-Чутья бросает тот псайкер.",
     "benefit": "Душа отмечена связью с демонами. Демоны автоматически распознают его как поработителя своего рода при первом взгляде и получают Талант Hatred против него. Псайкеры могут засечь это, набрав 3 Успеха на Пси-Чутье в его присутствии; 2 Успеха если держит печать демона с Inf 31-50, 1 Успех для демона с Inf 51-70, автоматически для демона с Inf 71+.",
     "source": "Элитный архетип: Инзорцист",
     "hasRating": false,
@@ -37,11 +37,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "BaHskr6FRZxPuRbQ",
+          "id": "efyukyCgZdTDcyVA",
           "operator": "AND",
           "entries": [
             {
-              "id": "fIA1FzsxQVRQxUM8",
+              "id": "IkGMpzGMTG1Fg8fa",
               "kind": "script",
               "group": null,
               "corruptionValue": "1",
@@ -128,8 +128,8 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механики нет): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Метка Поработителя: порог Пси-Чутья",
+              "code": "// Метка Поработителя: карточка с порогом Пси-Чутья (combat/insorcist.mjs).\nawait useMarkOfSubjugator(actor);",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {

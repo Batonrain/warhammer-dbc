@@ -12,10 +12,11 @@
 // остаётся зелёным как доказательство, что вынос не сдвинул числа.
 
 import { testOutcome, criticalOutcome } from "./roll-outcome.mjs";
-import { resolveTest } from "./resolve-test.mjs";
+import { resolveTest, critSuccessOnlyFromRules } from "./resolve-test.mjs";
 import { combinedThreshold, resolveOpposed } from "./test-kind.mjs";
-import { extendedTestKey, applyGain } from "./extended-test.mjs";
+import { extendedTestKey, applyGain, EXTENDED_CRIT_LOSS } from "./extended-test.mjs";
 import { unnaturalRating, unnaturalDegreeBonus, hasUnnaturalCharacteristic } from "./unnatural-characteristic.mjs";
+import { sorcerersPlateDeg } from "./bronenosets-talents.mjs";
 import { critLineHtml } from "./test-kind-widget.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
@@ -47,6 +48,55 @@ const FAIL_DEGREE_HANDLERS = {
   infernalWillShock: async (actor, info) =>
     (await import("../combat/fear.mjs")).rollInfernalWillShockDetailed(actor, info)
 };
+
+/**
+ * «Провалил тест на N+ Провала» (rules/fail-degree-triggers.mjs): запустить сработавшие последствия, их
+ * откаты — в `failUndo` (мутирует) под именем обработчика. Возвращает html для карточки. Ошибка последствия
+ * не роняет сам бросок.
+ */
+async function runFailDegreeTriggers(actor, outcome, ctx, failUndo) {
+  let html = "";
+  for (const t of matchFailDegreeTriggers(outcome, ctx ?? {}, flag => hasRuleFlag(actor, flag))) {
+    const run = FAIL_DEGREE_HANDLERS[t.handler];
+    if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
+    try {
+      const res = await run(actor, { deg: outcome.deg, ctx: ctx ?? {}, trigger: t });
+      // Последствие возвращает строку карточки либо { html, undo } (откат — в failUndo под именем обработчика).
+      if (typeof res === "string") html += res;
+      else if (res) {
+        html += res.html ?? "";
+        if (res.undo) failUndo[t.handler] = res.undo;
+      }
+    } catch (e) {
+      console.error(`Warhammer DBC | Ошибка последствия «${t.id}»:`, e);
+    }
+  }
+  return html;
+}
+
+/**
+ * Последствия провала для «Переброс за Очко» (hooks.mjs, doReroll; Sahara failundo п.1). Переброс заменяет
+ * исходный бросок, поэтому и последствия считаются заново — по НОВОМУ броску: Ступор Гипно-Шрамов при Крит.
+ * Провале теста I и триггеры «N+ Провала» (Шок Инфернальной Воли). Исход — тот же testOutcome/criticalOutcome,
+ * что у общего исхода; доп. Провалы правил (failDegMod) сюда не входят — переброс их не знает и раньше.
+ * @param {object} actor
+ * @param {{rv:number, threshold:number, ctx:object}} p  ctx — как у resolveKindOutcome (kind/skill/char/actor)
+ * @returns {Promise<{html:string, failUndo:?object, success:boolean, deg:number}>}
+ */
+export async function rerollFailConsequences(actor, { rv, threshold, ctx }) {
+  const { success, deg } = testOutcome(rv, threshold);
+  const crit = criticalOutcome(rv, resolveTest(ctx).crit);
+  const failUndo = {};
+  let html = "";
+  if (hypnoScarsStun(crit, ctx, hasRuleFlag(actor, HYPNO_SCARS))) {
+    const { applyHypnoScarsStun } = await import("../combat/replicant.mjs");
+    const stun = await applyHypnoScarsStun(actor);
+    html += stun.html;
+    if (stun.undo) failUndo.hypno = stun.undo;
+  }
+  if (!success) html += await runFailDegreeTriggers(actor, { success, deg, crit }, ctx, failUndo);
+  return { html, failUndo: Object.keys(failUndo).length ? failUndo : null, success, deg };
+}
 
 /**
  * Виды теста — независимые: любое подмножество combined/extended/opposed
@@ -153,7 +203,7 @@ export async function applyAssistedMasteryCrit(actor, outcome, skillCtx, deg) {
 }
 
 export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, extended, opposed,
-    opposedSelected = false, opposedSafeSelected = false, autoSuccess = false }) {
+    opposedSelected = false, opposedSafeSelected = false, autoSuccess = false, successMul = 1 }) {
   // opposedSelected/opposedSafeSelected — сама галочка «Встречный», отдельно
   // от opposed (данные соперника): полтеста без Порога/Броска соперника
   // (сравнивается вручную позже) — всё равно Встречный тест по RAW, шапка
@@ -233,7 +283,12 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // Сильнее autoSuccess: тот — про цель/обстоятельство, а этот — про то, что
   // бросающий физически не может выполнить тест. Степень провала — обычная,
   // если бросок и так выше Порога, иначе 1.
-  const autoFail = (resolved.autoFail ?? []).length > 0;
+  // «Засчитывается только Критическим Успехом» (эффект critSuccessOnly —
+  // Скрытые Узоры Ворона против Пси-Чутья): обычный Успех — Провал с 1 Провалом.
+  const critGate = critSuccessOnlyFromRules(resolved.rules ?? [], resolved.ctx ?? ctx);
+  const critOnlyMiss = critGate.length > 0 && !criticalOutcome(rv, resolved.crit).success;
+  const autoFail = (resolved.autoFail ?? []).length > 0 || critOnlyMiss;
+  if (critOnlyMiss && !(resolved.autoFail ?? []).length) resolved.autoFail = critGate;
   const outcome0 = testOutcome(rv, eff, { autoSuccess: autoSuccess && !autoFail });
   const success = autoFail ? false : outcome0.success;
   // Минимум Провалов от правила (эффект autoFail.degrees, по умолчанию 1): если
@@ -280,15 +335,26 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // Искусный (Adroit, Ренегат — rules/adroit.mjs): +1 Успех к успешному
   // тесту на выбранную Характеристику (usedCharKey — ей реально бросали).
   const adroitBonus = adroitDegreeBonus(ctx?.actor ?? actor, usedCharKey, success);
+  // Латы Чародея (Броненосец): +½ AP торса к Успехам встречного W против психосилы.
+  const sorcPlateDeg = sorcerersPlateDeg(ctx?.actor ?? actor, { success, ctx, charKey: usedCharKey });
   const unnaturalLine = (unnaturalBonus > 0
     ? `<div class="roll-threshold">🧬 Сверхъестественная Характеристика (${unnaturalRatingHere}): +${unnaturalBonus} ${_degWord(unnaturalBonus)}</div>`
     : "") + (singleCombatDeg ? SINGLE_COMBAT_LINE : "") + (adroitBonus > 0
     ? `<div class="roll-threshold">🎯 Искусный (${esc(CHARACTERISTICS[usedCharKey]?.abbr ?? usedCharKey)}): +${adroitBonus} ${_degWord(adroitBonus)}</div>`
-    : "");
+    : "") + (sorcPlateDeg > 0
+    ? `<div class="roll-threshold">🛡️ Латы Чародея: +${sorcPlateDeg} ${_degWord(sorcPlateDeg)} (½ AP торса)</div>` : "");
   // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
-  const uncappedDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  // Множитель Успехов (successMul, 20.11.2026 — Кортекс Малагры «утраивает
+  // Успехи на встречных тестах…»): только на Успехе, по всем Успехам теста
+  // (с надбавками выше) и ДО сравнения встречного теста ниже — иначе
+  // умножение ничего не решало бы. Ассистентов лист прибавляет позже.
+  const mul = success ? Math.max(1, Math.floor(Number(successMul) || 1)) : 1;
+  const preMulDeg = success ? rawDeg + unnaturalBonus + singleCombatDeg + adroitBonus + sorcPlateDeg : 0;
+  const uncappedDeg = success ? preMulDeg * mul : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  const successMulLine = mul > 1
+    ? `<div class="roll-threshold">✖ Успехи ×${mul}: ${preMulDeg} → <b>${uncappedDeg}</b></div>` : "";
   // Потолок Успехов (successDegMax, BONE-Head Огрина — тесты I): только на
   // Успехе, после надбавки Сверхъестественной Характеристики. Ассистентов
   // лист прибавляет позже и режет тем же degCap (sheets/actor-sheet.mjs).
@@ -312,29 +378,17 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   // ИТОГОВОЙ степени провала (baseDeg, с failDegMod внутри), после крита: часть
   // правил исключает Крит. Провал. Ошибка последствия не роняет сам бросок —
   // тот же принцип, что у авто-скриптов выше.
-  for (const t of matchFailDegreeTriggers({ success, deg: baseDeg, crit: critEff }, ctx ?? {},
-    flag => hasRuleFlag(actor, flag))) {
-    const run = FAIL_DEGREE_HANDLERS[t.handler];
-    if (!run) { console.error(`Warhammer DBC | триггер «${t.id}»: нет последствия «${t.handler}»`); continue; }
-    try {
-      const res = await run(actor, { deg: baseDeg, ctx: ctx ?? {}, trigger: t });
-      // Последствие возвращает строку карточки либо { html, undo } (откат — в failUndo под именем обработчика).
-      if (typeof res === "string") critLine += res;
-      else if (res) {
-        critLine += res.html ?? "";
-        if (res.undo) failUndo[t.handler] = res.undo;
-      }
-    } catch (e) {
-      console.error(`Warhammer DBC | Ошибка последствия «${t.id}»:`, e);
-    }
-  }
+  critLine += await runFailDegreeTriggers(actor, { success, deg: baseDeg, crit: critEff }, ctx, failUndo);
 
   let extendedLine = "";
   if (extended) {
     const key = extendedTestKey(extended.label);
     const flagPath = `extendedTests.${key}`;
     const prev = actor.getFlag("warhammer-dbc", flagPath) || { accumulated: 0 };
-    const gain = success ? baseDeg : 0;
+    // Критический Провал отнимает 5–15 Успехов «по решению ГМа» (стр. 25; Разобрать h4nbw): по умолчанию
+    // EXTENDED_CRIT_LOSS снимается сам, ГМ правит ±-полем панели «Расширенные тесты».
+    const critLoss = !success && crit?.failure ? EXTENDED_CRIT_LOSS : 0;
+    const gain = success ? baseDeg : -critLoss;
     const { accumulated, done } = applyGain(prev.accumulated, gain, extended.goal);
     // testKey (wdbc-nysl: панель «Расширенные тесты» на листе) — чем именно
     // бросали, чтобы «Переоткрыть» знал, какой Навык/Характеристику
@@ -343,7 +397,8 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
     // характеристика тогда читается из ctx.char.
     const testKey = ctx?.skill ? `skill:${ctx.skill}` : (ctx?.char ? `char:${ctx.char}` : prev.testKey ?? null);
     await actor.setFlag("warhammer-dbc", flagPath, { accumulated, target: extended.goal, label: extended.label, testKey });
-    extendedLine = `<div class="roll-threshold">📈 Расширенный «${esc(extended.label)}»: +${gain} → Банк <b>${accumulated}</b>/${extended.goal}${done ? " — <b>ГОТОВО</b>" : ""}</div>`;
+    extendedLine = `<div class="roll-threshold">📈 Расширенный «${esc(extended.label)}»: ${gain >= 0 ? "+" : "−"}${Math.abs(gain)} → Банк <b>${accumulated}</b>/${extended.goal}${done ? " — <b>ГОТОВО</b>" : ""}${
+      critLoss ? ` · Критический Провал: −${critLoss} из Банка (ГМ может поправить до 5–15 полем «±» на панели)` : ""}</div>`;
   }
 
   let opposedLine = "";
@@ -389,6 +444,6 @@ export async function resolveKindOutcome(actor, { baseEff, rv, ctx, combined, ex
   return { eff, success, deg: baseDeg, crit: critEff, masteryCrit: masteryHit, scriptTriggers: resolved.scriptTriggers ?? [],
            critLine, kindLabel, combinedLine, combinedAssistCount,
            failUndo: Object.keys(failUndo).length ? failUndo : null,
-           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + degCapLine,
+           personalAdaptationLine, extendedLine, opposedLine, unnaturalLine: unnaturalLine + successMulLine + degCapLine,
            degCap, degCapLine };
 }

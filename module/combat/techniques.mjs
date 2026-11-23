@@ -19,6 +19,9 @@ import { commitRerollUse } from "./angel-hunters.mjs";
 import { extraSuccessDegrees } from "./extra-successes.mjs";
 import { escapeArtistRelief, hasDodgeTalent } from "../rules/dodge-talents.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
+import { ravenContestOptions } from "../rules/raven-talents.mjs";
+import { waltzContestOptions, WALTZ_KEY } from "../rules/note-warrior-talents.mjs";
+import { resolveWaltzSuccess } from "./bulldoze.mjs";
 
 const SLIP_AWAY_FLAG = "dodge.core.slipAway";
 
@@ -90,6 +93,9 @@ export async function _showContestDialog(actor, techDef) {
   // не положить — гейт по имени, тот же приём, что isKnock выше.
   const danceOfDeceptionActive = techDef.label === "Финт" && hasRuleFlag(actor, DANCE_OF_DECEPTION_CAPABILITY);
   const danceOptions = danceOfDeceptionActive ? danceOfDeceptionFeintOptions(actor) : [];
+  // Ложный Клинок и Рычаг (Ворон), Вальс (Воин Ноты) — тот же приём: Навык вместо
+  // голой Характеристики; вариант может нести свой «чем сопротивляются» (resist).
+  danceOptions.push(...ravenContestOptions(actor, techDef), ...waltzContestOptions(actor, techDef));
   const danceOptionsHtml = danceOptions.map(o =>
     `<option value="${esc(o.key)}">${esc(o.label)} (${o.value})</option>`).join("");
   const danceFreeActionHtml = danceOfDeceptionActive
@@ -210,7 +216,11 @@ export async function _showContestDialog(actor, techDef) {
           // шёл мимо реестра правил — «Цель» в окне игрок правил руками.
           // Навыком (danceOpt) — ctx несёт и char (Ловкость), и сам Навык,
           // как у обычного броска Навыка (actor-sheet.mjs::_rollSkill).
-          const side = danceOpt ? { skill: danceOpt.skillKey } : sideFor(charKey);
+          const side = danceOpt ? { skill: danceOpt.skillKey, ...(danceOpt.charKey ? { char: danceOpt.charKey } : {}) } : sideFor(charKey);
+          // Вариант со своим сопротивлением/эффектом (Ложный Клинок, Рычаг, Вальс).
+          const regDef = danceOpt?.resist
+            ? { ...techDef, resist: danceOpt.resist, ...(danceOpt.techNote ? { note: danceOpt.techNote, onSuccess: danceOpt.key === WALTZ_KEY ? resolveWaltzSuccess : undefined } : {}) }
+            : techDef;
           const ruleMods = collectTestMods(actor, danceOpt
             ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey, targetActor: target, contest: true }
             : { ...sideContext(side), targetActor: target, contest: true });
@@ -246,7 +256,7 @@ export async function _showContestDialog(actor, techDef) {
             ui.notifications?.warn(`⚠️ ${techDef.label}: Атака в этом Ходу уже была (стр. 12).`);
             return;
           }
-          if (techDef.apCost && !(await spendActionPoints(actor, techDef.apCost, { physical: true }))) {
+          if (techDef.apCost && !(await spendActionPoints(actor, techDef.apCost, { physical: true, attack: !!techDef.isAttack }))) {
             ui.notifications?.warn(`⚠️ ${techDef.label}: не хватает ОД (${techDef.apCost}).`);
             return;
           }
@@ -332,13 +342,14 @@ export async function _showContestDialog(actor, techDef) {
               `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
                  ${rollIcon("spark","#8fd0ff")}При победе: ${techDef.note}
                </div>`,
-              registerContest(actor, techDef, {
+              registerContest(actor, regDef, {
                 success: hit, deg, threshold: eff, rv, side,
                 // Переброс Ускользнуть после провала: всё, что нужно, чтобы повторить тот же бросок (slipAwayContestReroll).
                 slipReroll: slipAwayReady && slipChoice === "none" && !hit,
                 rerollCtx: { label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, charKey, doubleSuccesses },
                 resistMods: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistMods?.(o, actor) ?? []])),
-                resistRolls: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistRolls?.(o, actor) ?? 1]))
+                resistRolls: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistRolls?.(o, actor) ?? 1])),
+                resistHindrance: Object.fromEntries(opponents.map(o => [o.uuid, techDef.resistHindrance?.(o, actor) ?? ""]))
               }, opponents),
               hit && immune
                 ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;color:#e08a3a;">

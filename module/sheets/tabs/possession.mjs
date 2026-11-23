@@ -10,8 +10,14 @@
 
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../../constants/possession.mjs";
-import { giftNamesOf } from "../../rules/predicates.mjs";
+import { giftNamesOf, itemHasName } from "../../rules/predicates.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { twinDemonOf, twinDemonStats, controlTime, introspectionBonus, introspectionExtraGift } from "../../rules/twin-spirit.mjs";
+import { requestTwinDemonSheet, openTwinDemonSheet, rollIntrospection, chooseMentor, castSharedSorcery, ascendTwinDemon } from "../../apps/twin-spirit.mjs";
+import { hasActionEconomy, isEncounterActive, canSpendActionPoints, spendActionPoints } from "../../combat/action-economy.mjs";
+
+/** Талант «Reality Ripple / Рябь Реальности» (корбук стр. 114). */
+const hasRealityRipple = actor => [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Reality Ripple"));
 
 // Группировка каталога Даров Одержимого по группам (для вкладки «Одержимость»).
 // activeSet — имена Даров, реально надетых на актора (подсветка «активен»).
@@ -41,10 +47,13 @@ export function possessionContext(actor) {
   // Максимум времени контроля демона (книга, Twin Spirit): «10 − W.b ХОСТА
   // часов (минимум 1)». Симбиоз даёт хосту +5 к W за пункт именно «в расчёте
   // попыток демона перехватить контроль и макс. времени контроля». Раны демона
-  // на срок не влияют. «Неограниченно, если W демона выше» не считается —
-  // у демона в системе нет своей Характеристики W (только пул Ран).
+  // на срок не влияют. «Неограниченно, если W демона выше» — по листу демона
+  // (rules/twin-spirit.mjs), пока листа нет — только часы.
   const hostW  = (system.characteristics?.wp?.total ?? 0) + sym * 5;
-  const wbHost = Math.floor(hostW / 10);
+  const demon  = twinDemonStats(twinDemonOf(actor));
+  const ctrl   = controlTime(hostW, demon?.wp ?? null);
+  const hasTalent = n => [...(actor.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, n));
+  const mv = system.movement ?? {};
   // Активные Дары на акторе (предметы-таланты «… / Дар: X») и лимит по профилю.
   const activeGiftSet = giftNamesOf(actor);
   return {
@@ -54,10 +63,22 @@ export function possessionContext(actor) {
     symPips: [1,2,3,4,5].map(n => ({ on: n <= sym, over: n > symLimit })),
     socialBonus: sym * 10,
     hostWBonus:  sym * 5,
-    controlHours: Math.max(1, 10 - wbHost),
+    controlHours: ctrl.hours,
+    controlUnlimited: ctrl.unlimited,
+    // Лист демона Двойного Духа (apps/twin-spirit.mjs): числа и кнопки Талантов, которым он нужен.
+    demon,
+    introspection: hasTalent("Introspection") ? { bonus: introspectionBonus(actor) } : null,
+    mentor: hasTalent("Mentor"),
+    sharedSorcery: hasTalent("Shared Sorcery"),
+    sharedSlaughter: hasTalent("Shared Slaughter"),
+    risingTogether: hasTalent("Rising Together"),
+    greaterTalent: hasTalent("Greater Possessed"),
+    spider: hasTalent("Дар: Паук")
+      ? { half: Math.floor((Number(mv.halfMove) || 0) / 2), move: Math.floor((Number(mv.move) || 0) / 2),
+          fullHalf: Number(mv.halfMove) || 0, fullMove: Number(mv.move) || 0 } : null,
     naturalArmour: corB,
     regen: Math.ceil(corB / 2),
-    demonWShield: `1-${p.demonWounds?.max ?? 0}`,
+    demonWShield: demon ? `1-${demon.wp}` : "",
     giftGroups: _groupGifts(activeGiftSet),
     // Таланты архетипа: только Неделимого + бога вселённого демона.
     talents: POSSESSION_TALENTS.filter(t => t.god === "Неделимый" || t.god === meta.godLabel),
@@ -66,8 +87,8 @@ export function possessionContext(actor) {
     manifested: !!p.manifested,
     applied: (system.possessionActive?.applied) || [],
     activeGiftCount: activeGiftSet.size,
-    giftLimit: prof.gifts,
-    giftsOver: activeGiftSet.size > prof.gifts,
+    giftLimit: prof.gifts + introspectionExtraGift(actor),
+    giftsOver: activeGiftSet.size > prof.gifts + introspectionExtraGift(actor),
     // Руны True Tongue (генерируются в шаблоне; сюда — сид анимации по богу)
     runeSeed: (p.demon || "katart").length * 7 % 12
   };
@@ -77,6 +98,10 @@ export function possessionContext(actor) {
  * Проявление демона и обратное заключение (полудействие). Вход в Проявление —
  * тест Cor+20; при Провале Порча растёт на единицу, но форма всё равно
  * включается: демон уже наружу.
+ *
+ * Цена (Sahara 584-4d33): в бою и вход, и выход — полудействие (1 ОД); вне боя
+ * экономики действий нет. Рябь Реальности даёт вход свободным действием за
+ * 1 Порчу — игрок выбирает в окне («может»); выход Талант не удешевляет.
  */
 export async function toggleManifest(actor) {
   const sys  = actor.system;
@@ -84,6 +109,25 @@ export async function toggleManifest(actor) {
   const now  = !p.manifested;
   const meta = twinSpiritMeta(p.demon || "katart");
   const updates = { "system.possession.manifested": now };
+
+  const inCombat = isEncounterActive() && hasActionEconomy(actor);
+  let rippleCor = 0;
+  if (inCombat) {
+    const useRipple = now && hasRealityRipple(actor) && !!(await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Рябь Реальности" },
+      content: "<p>Провести Проявление свободным действием, получив 1 Порчи?</p><p>«Нет» — обычное Проявление за полудействие.</p>",
+      rejectClose: false
+    }));
+    if (useRipple) rippleCor = 1;
+    else {
+      const what = now ? "Проявление" : "Заключить демона";
+      if (!canSpendActionPoints(actor, 1, { physical: false })) {
+        ui.notifications?.warn(`⚠️ ${actor.name}: ${what} — нужно полудействие (1 ОД).`);
+        return;
+      }
+      if (!await spendActionPoints(actor, 1, { physical: false })) return;
+    }
+  }
 
   if (now) {
     const cor    = sys.corruption?.value ?? 0;
@@ -95,7 +139,8 @@ export async function toggleManifest(actor) {
     const target = Math.min(100, cor + 20) + ruleMods.total;
     const roll   = await (new Roll("1d100")).evaluate();
     const success = roll.total <= target;
-    if (!success) updates["system.corruption.value"] = Math.min(100, cor + 1);
+    const corGain = (success ? 0 : 1) + rippleCor;
+    if (corGain) updates["system.corruption.value"] = Math.min(100, cor + corGain);
     // Дар «Гигант»: «+10 к максимуму И ТЕКУЩЕМУ количеству Ран». Максимум
     // добавляет сам пересчёт листа (rules/character.mjs), текущие Раны — здесь,
     // один раз при входе в Проявление; при выходе их срезает ветка выхода ниже.
@@ -109,6 +154,7 @@ export async function toggleManifest(actor) {
         <div class="wh-poss-card-h">⛧ ПРОЯВЛЕНИЕ — ${meta.label} (${meta.godLabel})</div>
         <div class="wh-poss-card-r">Тест Cor+20${ruleMods.parts.map(p => ` ${p}`).join("")}: <b>${roll.total}</b> против <b>${target}</b> —
           <span class="${success ? "ok" : "bad"}">${success ? "Успех" : "Провал: +1 Порчи"}</span></div>
+        ${rippleCor ? `<div class="wh-poss-card-r">Рябь Реальности: Проявление свободным действием, +1 Порчи.</div>` : ""}
         <div class="wh-poss-card-n">Демон перестраивает тело в боевую форму. Броня/одежда сплавляются с формой.</div>
       </div>`;
     await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: body });
@@ -139,4 +185,12 @@ export function activatePossessionListeners(html, actor) {
     ev.preventDefault();
     await toggleManifest(actor);
   });
+  const on = (sel, fn) => html.find(sel).on("click", async ev => { ev.preventDefault(); await fn(); });
+  on(".poss-demon-create", () => requestTwinDemonSheet(actor));
+  on(".poss-demon-open", () => openTwinDemonSheet(actor));
+  on(".poss-introspection", () => rollIntrospection(actor));
+  on(".poss-mentor", () => chooseMentor(actor));
+  on(".poss-shared-sorcery", () => castSharedSorcery(actor));
+  on(".poss-rising", () => ascendTwinDemon(actor, "rising"));
+  on(".poss-greater", () => ascendTwinDemon(actor, "greater"));
 }

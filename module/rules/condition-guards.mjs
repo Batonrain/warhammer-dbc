@@ -30,6 +30,7 @@
 import { entryWhenOk } from "./mech-when.mjs";
 import { flattenMechEntries } from "./fatigue-grace.mjs";
 import { isInRage } from "./rage.mjs";
+import { hasOrdinator } from "./secutor-talents.mjs";
 
 const FLAG_SCOPE = "warhammer-dbc";
 
@@ -100,6 +101,9 @@ export function isImmuneToCondition(actor, key, isActive = () => true) {
   // а не от предмета, поэтому здесь, а не записью Конструктора: Ярость бывает и
   // без Таланта Frenzy (rules/rage.mjs).
   if (key === "stunned" && isInRage(actor)) return true;
+  // Ординатор (Секутор): «не может быть сбит с ног» — исключение (рукопашный приём
+  // того, кто больше Размером) знает только combat/status-resist.mjs::statusApplyFields.
+  if (key === "prone" && hasOrdinator(actor)) return true;
   return conditionImmunities(actor, isActive).has(key);
 }
 

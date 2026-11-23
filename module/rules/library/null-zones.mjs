@@ -32,11 +32,12 @@ export const NULL_ZONE_RULES = [
   {
     // «Пария получает штраф –30 на все социальные взаимодействия, кроме
     // запугивания, с другими персонажами, имеющими души, –60, если эти
-    // персонажи – псайкеры или демоны». Оговорка «имеющими души» (другие
-    // Парии, машины) не различается — решает ГМ.
+    // персонажи – псайкеры или демоны». Оговорка «имеющими души»: против
+    // другой Парии, машины (Черта Machine/Robot) и техники штрафа нет —
+    // предикат targetSoulless (task-1452); без цели штраф стоит, как раньше.
     id: "pariah.self.social",
     label: "Пария: −30 к социальным (кроме Запугивания)",
-    when: { hasTrait: "Pariah" },
+    when: { hasTrait: "Pariah", targetSoulless: false },
     effects: [{ kind: "rollBonus", target: SOCIAL_NO_INTIMIDATE, value: -30,
                 label: "Пария: отвращение (−30)", auto: true }]
   },
@@ -46,5 +47,16 @@ export const NULL_ZONE_RULES = [
     when: { hasTrait: "Pariah", targetPsykerOrDaemon: true },
     effects: [{ kind: "rollBonus", target: SOCIAL_NO_INTIMIDATE, value: -30,
                 label: "Пария: цель — псайкер/демон (ещё −30)", auto: true }]
-  }
+  },
+  // Поле Дискорданта (task-be12): «усложняя любую работу медика в ауре (со
+  // штрафом от –10 до –60 по усмотрению ГМа), если только тот не полагается
+  // целиком на примитивную «народную» медицину… или психические/колдовские
+  // методы». Степень и исключение знает только стол — галочки в окне Медицины.
+  ...[-10, -20, -30, -60].map(v => ({
+    id: `discordant.field.medicae${v}`,
+    label: `⚡ Поле Дискорданта: медицина ${v}`,
+    when: { inDiscordantField: true },
+    effects: [{ kind: "rollBonus", target: "skill:medicae", value: v, askOnly: true,
+                label: `⚡ Поле Дискорданта: медицина ${v} (не для «народной»/психической)` }]
+  }))
 ];

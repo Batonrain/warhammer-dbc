@@ -253,3 +253,27 @@ describe("Раса Сквата против книги", () => {
     expect(SQUAT.system.gear).toBe("5 элементов Снаряжения и Инструментов до R1 из них 3 Good.Q и 2 Best.Q, Vox-Bead, +2 очка Стартового Снаряжения");
   });
 });
+
+// 2-0f13: «Трудный Ландшафт вовсе не замедляет» — метка Хода, по которой зона
+// снимает удвоение цены пути.
+import { sureTreadTurnStamp, sureTreadUnslowedActive } from "../../module/rules/squat-traits.mjs";
+
+describe("Надёжная Поступь: метка «не замедляет в этот Ход»", () => {
+  const combat = { id: "C1", started: true, round: 2, turn: 1 };
+  it("в бою живёт ровно этот Ход этого боя", () => {
+    const stamp = sureTreadTurnStamp(combat, 0);
+    expect(sureTreadUnslowedActive(stamp, combat, 0)).toBe(true);
+    expect(sureTreadUnslowedActive(stamp, { ...combat, turn: 2 }, 0)).toBe(false);
+    expect(sureTreadUnslowedActive(stamp, { ...combat, round: 3 }, 0)).toBe(false);
+    expect(sureTreadUnslowedActive(stamp, { ...combat, id: "C2" }, 0)).toBe(false);
+  });
+  it("вне боя — 6 секунд игрового времени", () => {
+    const stamp = sureTreadTurnStamp(null, 100);
+    expect(sureTreadUnslowedActive(stamp, null, 100)).toBe(true);
+    expect(sureTreadUnslowedActive(stamp, null, 105)).toBe(true);
+    expect(sureTreadUnslowedActive(stamp, null, 106)).toBe(false);
+  });
+  it("без метки — зона замедляет как обычно", () => {
+    expect(sureTreadUnslowedActive(undefined, combat, 0)).toBe(false);
+  });
+});

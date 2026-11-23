@@ -7,6 +7,7 @@ import { profileHasOwnFire, sysWithProfileFire, profileFireUpdate } from "./weap
 import { chamberInAvailable, chamberInBlockReason, CHAMBER_IN_FLAG } from "../rules/gunner-talents.mjs";
 import { ammoFitsWeapon } from "../rules/ammo-override.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
+import { ordinatorLoader, ordinatorLoaderCost } from "../rules/secutor-talents.mjs";
 
 /**
  * Стоимость Перезарядки в ОД по книжному полю system.reload (стр. 35,
@@ -225,11 +226,16 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
   // Во Всеоружии (−1 ОД вплоть до ½) и Быстрая Перезарядка (вдвое) НЕ
   // складываются — берётся лучшая из двух (решение владельца 24.10.2026, 62-0252 Q3).
   const baseCost = reloadApCost(sys.reload);
-  const rapidCost = baseCost > 0 && hasSpeedTalent(actor, "rapidReload") ? rapidReloadApCost(baseCost) : baseCost;
-  const armedCost = fullyArmedReloadApCost(actor, weapon, baseCost);
-  const apCost = Math.min(rapidCost, armedCost);
-  const rapid = rapidCost < baseCost && rapidCost === apCost;
-  const armed = armedCost < baseCost && armedCost === apCost && !rapid;
+  // Ординатор: технический + манипулирующий мехадендриты работают Заряжающим (Rld −1).
+  // Складывается с прочими ускорениями (решение Сергея 21.11.2026): сперва Rld −1,
+  // потом лучшее из Быстрой Перезарядки и Во Всеоружии (те двое между собой не складываются).
+  const loaderCost = baseCost > 0 && ordinatorLoader(actor) ? ordinatorLoaderCost(baseCost) : baseCost;
+  const loader = loaderCost < baseCost;
+  const rapidCost = loaderCost > 0 && hasSpeedTalent(actor, "rapidReload") ? rapidReloadApCost(loaderCost) : loaderCost;
+  const armedCost = fullyArmedReloadApCost(actor, weapon, loaderCost);
+  const apCost = Math.min(rapidCost, armedCost, loaderCost);
+  const rapid = rapidCost < loaderCost && rapidCost === apCost;
+  const armed = armedCost < loaderCost && armedCost === apCost && !rapid;
   if (apCost > 0 && !await spendActionPoints(actor, apCost, { physical: true })) {
     return ui.notifications.warn(`⚠️ ${barrel}: не хватает ОД на перезарядку (нужно ${apCost}).`);
   }
@@ -249,8 +255,9 @@ export async function _reloadWeapon(actor, weapon, { profileIdx = null } = {}) {
     lines: [`<div class="roll-damage-meta">
           Боеприпасы: <b>${esc(preferredAmmo.name)}</b>
         </div>`,
-        ...(rapid ? [`<div class="roll-damage-meta">Быстрая Перезарядка: ${baseCost} → ${apCost} ОД. Пустой магазин выброшен под ноги.</div>`] : []),
-        ...(armed ? [`<div class="roll-damage-meta">Во Всеоружии (Custom Grip): ${baseCost} → ${apCost} ОД.</div>`] : [])],
+        ...(loader ? [`<div class="roll-damage-meta">Ординатор: мехадендриты-Заряжающий, Rld −1: ${baseCost} → ${loaderCost} ОД.</div>`] : []),
+        ...(rapid ? [`<div class="roll-damage-meta">Быстрая Перезарядка: ${loaderCost} → ${apCost} ОД. Пустой магазин выброшен под ноги.</div>`] : []),
+        ...(armed ? [`<div class="roll-damage-meta">Во Всеоружии (Custom Grip): ${loaderCost} → ${apCost} ОД.</div>`] : [])],
     outcome: outcomeHtml(true, `
             Вставлен магазин · Заряд <b>${newMag}/${maxMag}</b> · В запасе: <b>${newQty}</b> маг.
           `),

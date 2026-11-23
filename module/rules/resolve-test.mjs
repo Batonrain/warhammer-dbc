@@ -505,6 +505,14 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
         mods.push({ ruleId: rule.id, label, value: 0, halvePenalty: false, autoSuccess: true });
         continue;
       }
+      // Множитель Успехов (20.11.2026, Кортекс Малагры): тоже галочка без
+      // числа к Порогу; отмеченные множители лист передаёт исходу теста
+      // (rules/kind-outcome.mjs, successMul) — тот умножает Успехи до
+      // сравнения встречного теста.
+      if (effect.kind === "successMul") {
+        mods.push({ ruleId: rule.id, label, value: 0, halvePenalty: false, successMul: Math.max(1, Number(effect.value) || 1) });
+        continue;
+      }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.
       // Правило с иным factor не применяем молча, а жалуемся: тихо потерянный
       // множитель ищется днями.
@@ -527,7 +535,9 @@ export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
 /** Режимы переброса, которые понимает бросок. Умолчание — «лучший из двух». */
 // "reverse" — «обратить бросок» (поменять местами десятки и единицы d100,
 // Ветеран Долгой Войны): один бросок, второго кубика нет.
-const REROLL_MODES = new Set(["keepBest", "keepWorst", "reverse"]);
+// "rerollSuccess"/"rerollFail" — обязательный переброс успешного/проваленного
+// броска, остаётся новый (Расчленитель): rules/reroll-pick.mjs.
+const REROLL_MODES = new Set(["keepBest", "keepWorst", "reverse", "rerollSuccess", "rerollFail"]);
 
 /**
  * Перебросы, доступные на ЭТОМ броске. Книга даёт их россыпью — «раз в Раунд
@@ -569,7 +579,10 @@ export function rerollsFromRules(rules, ctx = {}) {
       //                применяется без спроса в sheets/attack/dialog.mjs.
       // Схлопывать "opponent" в "self" нельзя: тогда наказание попадает в
       // список добровольных перебросов наказуемого, снятым по умолчанию.
-      const who = effect.who === "target" || effect.who === "opponent" ? effect.who : "self";
+      //   "forced"   — обязан перебросить сам носитель («должен перебрасывать»,
+      //                Расчленитель): применяется без спроса, как "opponent",
+      //                но без условия встречного теста.
+      const who = ["target", "opponent", "forced"].includes(effect.who) ? effect.who : "self";
       // target — область, как записана: бросок без диалога (Трудный Ландшафт,
       // combat/movement-terrain.mjs) берёт переброс сам и обязан брать только
       // СВОЙ, а не любой, чья область подошла по Ловкости или «all».
@@ -722,6 +735,27 @@ export function autoFailFromRules(rules, ctx = {}) {
       // проваливает тесты T с 3 Провалами»); без поля — один, как у Ослеплённого.
       out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id,
                  degrees: Math.max(1, Math.trunc(Number(effect.degrees)) || 1) });
+    }
+  }
+  return out;
+}
+
+/**
+ * «Только Критический Успех» (эффект critSuccessOnly, 21.11.2026 — Скрытые
+ * Узоры Ворона: «тесты на засекание работы Стоек Обмана пси-чутьём … что-то
+ * обнаруживают только Критическим Успехом»). Обычный Успех такого теста
+ * засчитывается Провалом; применяет rules/kind-outcome.mjs тем же путём, что
+ * автопровал (строка «⛔» на карточке), после того как известен Крит.
+ *
+ * @returns {{ruleId:string, label:string, degrees:number}[]} пустой — ограничения нет
+ */
+export function critSuccessOnlyFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "critSuccessOnly") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, degrees: 1 });
     }
   }
   return out;

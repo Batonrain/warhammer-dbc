@@ -48,9 +48,11 @@ describe("Мотивирующая Стимуляция", () => {
 });
 
 describe("Пожиратель Мертвечины", () => {
-  it("кнопка исполнима как тело async-функции и лечит через healActor", () => {
+  // 21.11.2026 (пачка cults): кнопка зовёт помощника devourCorpse (combat/plague-monk.mjs) —
+  // лечение 1d5+T.b плюс рейтинг Unnatural T Горячечной Скорости.
+  it("кнопка исполнима как тело async-функции и зовёт devourCorpse", () => {
     const s = entries("Carrion Eater / ").find(x => x.kind === "script");
-    expect(s.code).toContain("healActor(actor, amount");
-    expect(() => new Function("healActor", "game", "ui", "Roll", "ChatMessage", "actor", `return (async function(){${s.code}})`)).not.toThrow();
+    expect(s.code).toContain("devourCorpse(actor)");
+    expect(() => new Function("devourCorpse", "actor", `return (async function(){${s.code}})`)).not.toThrow();
   });
 });

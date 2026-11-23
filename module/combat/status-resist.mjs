@@ -38,6 +38,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { statusResistFor, stonewallKnockBack } from "../rules/resilience-talents.mjs";
 import { rollResilienceTest } from "./resilience-test.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { hasOrdinator, ordinatorStands } from "../rules/secutor-talents.mjs";
 
 /** Уже идущие предложения («актор:Состояние»): повторный вход — не спрашивать второй раз (защита от рекурсии). */
 const inFlight = new Set();
@@ -122,6 +123,11 @@ export async function offerStatusResist(actor, condKey, { attacker = null, melee
  *   fields пуст при иммунитете или если носитель устоял
  */
 export async function statusApplyFields(actor, condKey, level = null, opts = {}) {
+  // Ординатор: иммунитет к «Сбит с ног» снимает только рукопашный приём того, кто больше Размером.
+  if (condKey === "prone" && hasOrdinator(actor) && !ordinatorStands(actor, opts)) {
+    const r = await offerStatusResist(actor, condKey, opts);
+    return { fields: r.resisted ? {} : { "system.conditions.prone": true }, resisted: r.resisted, note: r.note };
+  }
   const fields = conditionApplyFields(condKey, level, actor);
   if (!Object.keys(fields).length) return { fields, resisted: false, note: "" };
   const r = await offerStatusResist(actor, condKey, opts);

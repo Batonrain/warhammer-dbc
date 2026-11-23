@@ -6,7 +6,7 @@ import { packDocById } from "../support/pack-doc.mjs";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 import {
-  syncMechanicumImplants, warpforgedRegenClock, useIronCage, ironCageClock, releaseCagesOnMove, forgeSigil, useCellOfShame,
+  syncMechanicumImplants, warpforgedRegenClock, useIronCage, ironCageClock, releaseCagesOnMove, forgeSigil, useCellOfShame, rollCellPhenomenon,
   releaseCellDemon, useEmpyreanWhip, clearWhipOnCombatEnd, useForgeOfOne, useRunDown, runDownTurnStart, performWarpsmithWrite,
   confirmDominionOver, findBrokenDominionDemon, warpsmithStatus, whipCandidates, clearRunDownOnCombatEnd
 } from "../../module/combat/warpsmith.mjs";
@@ -119,6 +119,10 @@ const fate = a => a.system.fate.value;
 
 const brokenFlag = (over = {}) => ({ smithUuid: "Actor.smith", smithUuids: ["Actor.smith"], smithName: "Кузнец", state: "broken", since: 0, until: 0, freeWill: false, ...over });
 const demonOf = (flag = null, over = {}) => hero({ uuid: "Actor.demon", name: "Bloodletter / Кровопуск", type: "daemon", infamy: 0, wp: 60, flags: flag ? { [BROKEN_FLAG]: flag } : {}, ...over });
+
+// Демоническая машина (Загнать, Плеть): существо с Трейтом Machine (rules/warpsmith.mjs::isDaemonEngine).
+const MACHINE_TRAIT = () => itemOf({ type: "trait", name: "Machine / Машина (X)", system: { rating: 2 }, flags: {} });
+const engineOf = (flag = null, over = {}) => demonOf(flag, { items: [MACHINE_TRAIT()], ...over });
 
 const realGetProperty = globalThis.foundry.utils.getProperty;
 beforeEach(() => {
@@ -467,11 +471,12 @@ describe("Эмпирейная Плеть", () => {
   it("кандидаты — Сломленные этим Кузнецом машины в радиусе I м (полное Int, не I.b)", () => {
     const smith = hero({ items: [itemOf(WHIP)], int: 50 });
     smith.system.characteristics.int.bonus = 5;
-    const near = demonOf(brokenFlag());
-    const mid = hero({ uuid: "Actor.mid", name: "За I.b, но в I", type: "daemon", infamy: 0, flags: { [BROKEN_FLAG]: brokenFlag() } });
-    const far = hero({ uuid: "Actor.far", name: "Далёкая", type: "daemon", infamy: 0, flags: { [BROKEN_FLAG]: brokenFlag() } });
+    const near = engineOf(brokenFlag());
+    const mid = hero({ uuid: "Actor.mid", name: "За I.b, но в I", type: "daemon", infamy: 0, items: [MACHINE_TRAIT()], flags: { [BROKEN_FLAG]: brokenFlag() } });
+    const far = hero({ uuid: "Actor.far", name: "Далёкая", type: "daemon", infamy: 0, items: [MACHINE_TRAIT()], flags: { [BROKEN_FLAG]: brokenFlag() } });
     const free = hero({ uuid: "Actor.free", name: "Свободная", type: "daemon", infamy: 0 });
-    sceneWith(smith, [near, free], { far: [far] });
+    const flesh = hero({ uuid: "Actor.flesh", name: "Сломленный демон из плоти", type: "daemon", infamy: 0, flags: { [BROKEN_FLAG]: brokenFlag() } });
+    sceneWith(smith, [near, free, flesh], { far: [far] });
     const mk = (actor, x) => ({ id: actor.id, x, y: 0, width: 1, height: 1, elevation: 0, hidden: false, actor, parent: globalThis.canvas.scene });
     globalThis.canvas.scene.tokens.push(mk(mid, 3000));
     globalThis.canvas.scene.tokens.find(t => t.actor === far).x = 9000;
@@ -481,7 +486,7 @@ describe("Эмпирейная Плеть", () => {
   it("успех: машины становятся Миньонами, конец боя возвращает прежнего хозяина", async () => {
     const smith = hero({ items: [itemOf(WHIP)] });
     smith.system.characteristics.int.bonus = 5;
-    const machine = demonOf(brokenFlag());
+    const machine = engineOf(brokenFlag());
     machine.system.masterUuid = "Actor.old";
     sceneWith(smith, [machine]);
     inCombat(smith);
@@ -499,7 +504,7 @@ describe("Эмпирейная Плеть", () => {
   it("провал — машины не твои; вне боя и без машин — не работает", async () => {
     const smith = hero({ items: [itemOf(WHIP)] });
     smith.system.characteristics.int.bonus = 5;
-    const machine = demonOf(brokenFlag());
+    const machine = engineOf(brokenFlag());
     sceneWith(smith, [machine]);
     expect(await useEmpyreanWhip(smith)).toBe(false);
     expect(captured.chat).toHaveLength(0);
@@ -539,7 +544,7 @@ describe("Кузница Одного", () => {
 describe("Загнать", () => {
   it("тратит Очко, даёт машине +30 ко всем Характеристикам и временное Очко Бесчестия", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
-    const machine = demonOf(brokenFlag());
+    const machine = engineOf(brokenFlag());
     inCombat(smith);
     expect(await useRunDown(smith, machine)).toBe(true);
     expect(fate(smith)).toBe(2);
@@ -554,24 +559,26 @@ describe("Загнать", () => {
   it("раз в Ход: второй раз в том же Раунде нельзя", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
     inCombat(smith);
-    expect(await useRunDown(smith, demonOf(brokenFlag()))).toBe(true);
-    const second = hero({ uuid: "Actor.m2", name: "Вторая", type: "daemon", infamy: 0, flags: { [BROKEN_FLAG]: brokenFlag() } });
+    expect(await useRunDown(smith, engineOf(brokenFlag()))).toBe(true);
+    const second = hero({ uuid: "Actor.m2", name: "Вторая", type: "daemon", infamy: 0, items: [MACHINE_TRAIT()], flags: { [BROKEN_FLAG]: brokenFlag() } });
     expect(await useRunDown(smith, second)).toBe(false);
     expect(fate(smith)).toBe(2);
   });
 
   it("вне боя, не Сломленная, уже загнанная — ничего", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
-    expect(await useRunDown(smith, demonOf(brokenFlag()))).toBe(false);
+    expect(await useRunDown(smith, engineOf(brokenFlag()))).toBe(false);
     inCombat(smith);
     expect(await useRunDown(smith, demonOf())).toBe(false);
-    expect(await useRunDown(smith, demonOf(brokenFlag(), { flags: { [BROKEN_FLAG]: brokenFlag(), [RUN_DOWN_FLAG]: { smithUuid: "Actor.smith" } } }))).toBe(false);
+    // Сломленный демон из плоти — не машина (замечание live-tester, Sahara haywire).
+    expect(await useRunDown(smith, demonOf(brokenFlag()))).toBe(false);
+    expect(await useRunDown(smith, engineOf(brokenFlag(), { flags: { [BROKEN_FLAG]: brokenFlag(), [RUN_DOWN_FLAG]: { smithUuid: "Actor.smith" } } }))).toBe(false);
     expect(fate(smith)).toBe(3);
   });
 
   it("начало следующего Хода Кузнеца: Структура, Беспомощность, потеря W; эффект и бонусное Очко сняты", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
-    const machine = demonOf(brokenFlag());
+    const machine = engineOf(brokenFlag());
     inCombat(smith);
     await useRunDown(smith, machine);
     globalThis.game.actors = [machine];
@@ -590,7 +597,7 @@ describe("Загнать", () => {
 
   it("у техники (vehicle) расплата — Структура", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
-    const vehicle = demonOf(brokenFlag());
+    const vehicle = engineOf(brokenFlag());
     vehicle.type = "vehicle";
     delete vehicle.system.characteristics;
     vehicle.system.structure = { value: 55, max: 55 };
@@ -604,7 +611,7 @@ describe("Загнать", () => {
 
   it("демоническая машина (vehicle): +30 к Силе шасси; Беспомощность и W — честно вручную, не «само»", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
-    const vehicle = demonOf(brokenFlag());
+    const vehicle = engineOf(brokenFlag());
     vehicle.type = "vehicle";
     delete vehicle.system.characteristics;
     vehicle.system.structure = { value: 55, max: 55 };
@@ -626,7 +633,7 @@ describe("Загнать", () => {
 
   it("конец боя снимает метку, +30 и временное Очко; расплата не бросается", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
-    const machine = demonOf(brokenFlag());
+    const machine = engineOf(brokenFlag());
     inCombat(smith);
     await useRunDown(smith, machine);
     globalThis.game.actors = [machine];
@@ -643,7 +650,7 @@ describe("Загнать", () => {
 
   it("метка из другого боя в начале Хода не оплачивается", async () => {
     const smith = hero({ items: [itemOf(RUN)], infamy: 3 });
-    const machine = demonOf(brokenFlag());
+    const machine = engineOf(brokenFlag());
     inCombat(smith, "old");
     await useRunDown(smith, machine);
     inCombat(smith, "new");
@@ -665,21 +672,21 @@ describe("ГМ-релей: запись warpsmith", () => {
 
   it("принимает узкие записи с верной меткой", () => {
     const me = smith();
-    const broken = demonOf(brokenFlag());
+    const broken = engineOf(brokenFlag());
     expect(checkTargetWrite({ kind: "warpsmith", action: "cage" }, ctx(me, demonOf())).ok).toBe(true);
     expect(checkTargetWrite({ kind: "warpsmith", action: "cageRelease" }, ctx(me, demonOf(brokenFlag({ state: "caged" })))).ok).toBe(true);
     expect(checkTargetWrite({ kind: "warpsmith", action: "cell", deviceName: "Реактор" }, ctx(me, broken)).ok).toBe(true);
     expect(checkTargetWrite({ kind: "warpsmith", action: "whip" }, ctx(me, broken)).ok).toBe(true);
     expect(checkTargetWrite({ kind: "warpsmith", action: "runDown" }, ctx(me, broken)).ok).toBe(true);
-    const marked = demonOf(brokenFlag(), { flags: { [BROKEN_FLAG]: brokenFlag(), [RUN_DOWN_FLAG]: { smithUuid: "Actor.smith", smithUuids: ["Actor.smith"] } } });
+    const marked = engineOf(brokenFlag(), { flags: { [BROKEN_FLAG]: brokenFlag(), [RUN_DOWN_FLAG]: { smithUuid: "Actor.smith", smithUuids: ["Actor.smith"] } } });
     expect(checkTargetWrite({ kind: "warpsmith", action: "runDownPay", structure: 30, helpless: 5, wp: 5 }, ctx(me, marked)).ok).toBe(true);
   });
 
   it("отклоняет чужое: нет Таланта, чужая метка, лишние поля, числа вне потолка — и каждый раз по своей причине", () => {
     const me = smith();
     const plain = hero({ uuid: "Actor.plain" });
-    const broken = demonOf(brokenFlag());
-    const marked = demonOf(brokenFlag(), { flags: { [BROKEN_FLAG]: brokenFlag(), [RUN_DOWN_FLAG]: { smithUuid: "Actor.smith", smithUuids: ["Actor.smith"] } } });
+    const broken = engineOf(brokenFlag());
+    const marked = engineOf(brokenFlag(), { flags: { [BROKEN_FLAG]: brokenFlag(), [RUN_DOWN_FLAG]: { smithUuid: "Actor.smith", smithUuids: ["Actor.smith"] } } });
     const why = (op, initiator, target) => checkTargetWrite({ kind: "warpsmith", ...op }, ctx(initiator, target));
     expect(why({ action: "cage" }, plain, demonOf())).toEqual({ ok: false, reason: "у инициатора нет Iron Cage" });
     expect(why({ action: "runDown" }, me, demonOf(brokenFlag({ smithUuid: "Actor.other", smithUuids: ["Actor.other"] })))).toEqual({ ok: false, reason: "цель не Сломлена инициатором" });
@@ -717,5 +724,21 @@ describe("сводка для листа", () => {
     const c = hero({ uuid: "Actor.c", name: "В", type: "daemon", flags: { [BROKEN_FLAG]: brokenFlag({ smithUuid: "Actor.other", smithUuids: ["Actor.other"] }) } });
     globalThis.game.actors = [a, b, c];
     expect(warpsmithStatus(smith)).toMatchObject({ caged: 1, broken: 1, inCombat: false });
+  });
+});
+
+describe("Ячейка Позора: Феномен устройства", () => {
+  it("d100 по таблице Феноменов; 75+ — ещё бросок Варп-Прорыва", async () => {
+    const smith = hero();
+    const gun = itemOf({ type: "weapon", name: "Пушка-Ячейка", system: {}, flags: {} }, {}, { cellOfShame: { demonName: "Кровопуск" } });
+    captured.nextRoll = 10;
+    await rollCellPhenomenon(smith, gun, { instead: "вместо Клина" });
+    expect(lastCard()).toContain("Пушка-Ячейка");
+    expect(lastCard()).toContain("Кровопуск");
+    expect(lastCard()).toContain("d100 = <b>10</b>");
+    expect(lastCard()).not.toContain("Варп-Прорыв:");
+    captured.nextRoll = 80;
+    await rollCellPhenomenon(smith, gun);
+    expect(lastCard()).toContain("Варп-Прорыв:");
   });
 });

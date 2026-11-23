@@ -40,6 +40,7 @@ import { runReanimate } from "../../combat/reanimate.mjs";
 const surgeryLabel = pen => `Медицина−${-pen}${pen !== -30 ? " (Новые Люди: штраф вдвое)" : ""}`;
 import { legionSurgeryPass, offerSusAnWake } from "../../combat/legion-surgery.mjs";
 import { healActor } from "../../combat/heal-target.mjs";
+import { triageCap } from "../../rules/medic-chemistry.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -260,6 +261,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
       <div class="atk-dlg-row" data-mode="disease"><label>Болезнь:</label><select id="heal-disease-item"><option value="">— не указано —</option></select></div>
       <div class="atk-dlg-row"><label>Мод. теста:</label><input type="number" id="heal-mod" value="0" style="width:60px;"/></div>
       <div class="atk-dlg-row" data-mode="firstAid,rest,bedRest,passive"><label title="Напр. Мастер-Хирургеон +2">Доп. Раны:</label><input type="number" id="heal-bonus" value="0" style="width:60px;"/></div>
+      <div class="atk-dlg-row" data-mode="rest,bedRest,passive"><label title="Лечащая психосила, Дар, техночудо: вылечил ДРУГОЙ своей силой — для Недоверия к Лечению (Затронутый Варпом) это лечение «от другого»"><input type="checkbox" id="heal-by-power"/> Лечил своей силой (психосила, Дар)</label></div>
       <div id="heal-note" class="atk-range-info" style="font-size:0.84em;"></div>
       ${refHtml}
     </div>`;
@@ -368,6 +370,7 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
             theatre:    !!form.querySelector("#heal-theatre")?.checked,
             mod:        num("#heal-mod"),
             bonus:      num("#heal-bonus"),
+            byPower:    !!form.querySelector("#heal-by-power")?.checked,
             limb:       form.querySelector("#heal-limb")?.value,
             bodySide:   form.querySelector("#heal-body-side")?.value || "",
             diseaseCare: form.querySelector("#heal-disease-care")?.value,
@@ -744,13 +747,15 @@ export function stopBleedingMod({ selfTreat = false, patientActive = false, tour
  * полудействие, Medicae−10/−30; жгут — полное действие, +40. Успех снимает
  * Кровотечение (Обескровливание остаётся — оно сходит по часу).
  */
-async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActive }) {
+async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActive, apCost = null, autoPass = "" }) {
   if (!patient.system.conditions?.bleeding) {
     ui.notifications.warn(`${patient.name}: Кровотечения нет.`);
     return;
   }
-  const cost = tourniquet ? 2 : 1;
-  if (!await spendActionPoints(medic, cost, { physical: true })) {
+  // apCost — ОД уже оплачены составным действием (Фронтовой Медик, combat/frontline-medic.mjs);
+  // autoPass — причина остановки без теста («Нартеций» / «Аптечка Good.Q»).
+  const cost = apCost ?? (tourniquet ? 2 : 1);
+  if (cost > 0 && !await spendActionPoints(medic, cost, { physical: true })) {
     ui.notifications.warn(`Не хватает ОД: нужно ${cost} (${tourniquet ? "полное действие" : "полудействие"}).`);
     return;
   }
@@ -758,6 +763,17 @@ async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActiv
   const bookMod = stopBleedingMod({ selfTreat, patientActive, tourniquet });
   const pMod = patientHealingMod(patient);
   const eff = medicaeEff(medic, patient, mod + bookMod);
+  if (autoPass) {
+    try {
+      await patient.update(conditionRemoveFields("bleeding"));
+      await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Остановить Кровотечение",
+        [...pMod.lines, `${rollIcon("blood","#ff6b6b")}<b>Остановить Кровотечение</b> без теста (${esc(autoPass)}).`, "Кровотечение остановлено."], []);
+    } catch {
+      await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Остановить Кровотечение",
+        [`${rollIcon("warn","#ffb84d")}Без теста (${esc(autoPass)}), но нет прав на изменение листа цели — снимите Кровотечение вручную.`], []);
+    }
+    return { success: true, auto: true };
+  }
   const roll = await new Roll("1d100").evaluate();
   const rolled = roll.total <= eff;
   const ls = await legionSurgeryPass(medic, rolled, "Остановить Кровотечение");
@@ -783,6 +799,7 @@ async function applyStopBleeding(medic, patient, { mod, tourniquet, patientActiv
     lines.push("Кровь не остановлена — можно попробовать снова.");
   }
   await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Остановить Кровотечение", lines, [roll]);
+  return { success, auto: false };
 }
 
 /** Кисть/стопа «теряется полностью» — вместе со всей рукой/ногой. */
@@ -1070,6 +1087,13 @@ export async function resolveBionicTest(medic, patient, { mod, limb, bodySide = 
 export async function assignCare(medic, patient) {
   if (!patient.system?.healing) { ui.notifications.warn(`${patient.name}: лечение по Календарю не ведётся для этого типа.`); return; }
   const same = patient.system.healing.caregiver === medic.uuid;
+  // Триаж (rules/medic-chemistry.mjs): уход до 10×I.b пациентов в смену — счёт по листам мира.
+  const cap = triageCap(medic);
+  const onCare = [...(game.actors ?? [])].filter(a => a.system?.healing?.caregiver === medic.uuid).length;
+  if (!same && cap != null && onCare >= cap) {
+    ui.notifications.warn(`Триаж: у ${medic.name} уже ${onCare} пациентов на уходе из ${cap} (10×I.b).`);
+    return;
+  }
   try {
     await patient.update({ "system.healing.caregiver": same ? "" : medic.uuid });
   } catch {
@@ -1078,7 +1102,7 @@ export async function assignCare(medic, patient) {
   }
   await sendHealChatMsg(medic, patient, rollIcon("heart","#ff8a8a"), "Мед. уход", [same
     ? `${esc(medic.name)} больше не ухаживает за пациентом.`
-    : `${esc(medic.name)} берёт пациента на уход: тест Medicae (+0, критическому −10) в начале каждого периода лечения — успех сокращает его до 8 ч или лечит критического как тяжёлого.`]);
+    : `${esc(medic.name)} берёт пациента на уход: тест Medicae (+0, критическому −10) в начале каждого периода лечения — успех сокращает его до 8 ч или лечит критического как тяжёлого.${cap != null ? ` Триаж: на уходе ${onCare + 1} из ${cap}.` : ""}`]);
 }
 
 /** Расчёт и применение лечения к пациенту + сообщение в чат. */
@@ -1234,7 +1258,9 @@ export async function applyHealing(medic, patient, rawOpts) {
       // Мед. уход. Отдых/Постельный режим/Пассивное без ухода — тело лечится само,
       // кто бы ни нажал кнопку (лечащий не передаётся). Отказ в правах на метку
       // не выдаёт себя за невылеченные Раны (mistrustFailed).
-      const res = await healActor(patient, applied, { healer: (mode === "firstAid" || care) ? medic : null });
+      // «Лечил своей силой» (task-2577): Раны от лечащей психосилы/Дара вносят
+      // через Отдых + «Доп. Раны» — это тоже лечение от другого.
+      const res = await healActor(patient, applied, { healer: healingHealer(mode, { care, byPower: opts.byPower }, medic) });
       lines.push(`${rollIcon("heart","#ff8a8a")}Восстановлено Ран: <b>${applied}</b>${applied < heal ? " (ограничено нехваткой)" : ""}.`);
       if (res.mistrust) lines.push(res.mistrust);
       if (res.mistrustFailed) lines.push(`${rollIcon("warn","#ffb84d")}Недоверие к Лечению: нет прав на лист цели — штраф −10 (кроме T) на 1 час отметить вручную (нужен ГМ).`);
@@ -1250,4 +1276,13 @@ export async function applyHealing(medic, patient, rawOpts) {
   }
 
   await sendHealChatMsg(medic, patient, rollIcon("heart","#ff8a8a"), "Лечение", lines, rolls);
+}
+
+/**
+ * Кто лечил «от другого» для Недоверия к Лечению: медик своим тестом (Первая
+ * Помощь, Мед. уход) или своей силой (галочка «Лечил своей силой» — психосила,
+ * Дар, техночудо, task-2577). Отдых без того и другого — тело лечится само.
+ */
+export function healingHealer(mode, { care = false, byPower = false } = {}, medic = null) {
+  return (mode === "firstAid" || care || byPower) ? medic : null;
 }

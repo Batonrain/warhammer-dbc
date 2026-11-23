@@ -1396,3 +1396,8 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 .warhammer-dbc .wrp-slot-name { flex: 1 1 auto; min-width: 0; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .warhammer-dbc .wrp-slot-name:hover { color: var(--wh-accent); }
 .warhammer-dbc .wrp-slot-empty { flex: 1 1 auto; font-size: 0.85em; color: var(--wh-text-mid); }
+
+/* Чёрная Мантия у легиона XIX: тумблер недоступен — серым, чтобы не выглядел
+   включаемым (Sahara xix). */
+.warhammer-dbc .black-mantle-unavailable .black-mantle-toggle { opacity: .45; cursor: not-allowed; filter: grayscale(1); }
+.warhammer-dbc .black-mantle-unavailable .black-mantle-cb { cursor: not-allowed; }

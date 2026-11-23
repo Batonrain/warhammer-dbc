@@ -121,6 +121,28 @@ export function bankFromTable(category, rarity) {
   return (v === null || v === undefined) ? null : v;
 }
 
+// ── Доводка брони под мутанта (core, «Броня и Мутации», wdbc-x1nz.4) ─────────
+// «Доводка обычной брони под тело мутанта потребует тестов как на её крафт, но с
+// бонусом +10 и в 10 раз меньшим банком Успехов (с обычными для крафта
+// модификаторами Качества): R1 и меньше — 5; R2 — 10; R3 — 25; R4 — 90; R5 — 250».
+// Числа книги — своя таблица, а не «Броня»/10 (та дала бы 4/8/15/50/150);
+// Качество множит Банк как обычно (bankFor). Категории — вся броня Мастерской.
+export const MUTANT_FIT_MOD = 10;
+export const MUTANT_FIT_CATEGORIES = Object.freeze(["armor", "powerArmor", "exoSuit"]);
+const MUTANT_FIT_BANKS = Object.freeze({ 2: 10, 3: 25, 4: 90, 5: 250 });
+
+/** Базовый Банк доводки брони под мутанта по Редкости брони (до множителя Качества). */
+export function mutantFitBaseBank(rarity) {
+  const r = Math.round(Number(rarity) || 0);
+  if (r <= 1) return 5;
+  return MUTANT_FIT_BANKS[Math.min(5, r)];
+}
+
+/** Доводка под мутанта применима к этому проекту (Крафт брони, не ремонт, галочка стоит). */
+export function mutantFitApplies(proj, categoryKey = proj?.categoryKey) {
+  return !!proj?.mutantFit && proj.mode === "craft" && !proj.repair && MUTANT_FIT_CATEGORIES.includes(categoryKey);
+}
+
 export const RESEARCH_KINDS = [
   { key: "blueprint", label: "Чертёж / рецепт для крафта" },
   { key: "psychic",   label: "Психосила / ритуал / вязь" },
@@ -221,11 +243,12 @@ export function suggestOption(available, req) {
 //   Trade в тесте → прочим навыкам +10, Знаниям +20; иначе Tech-Use/Medicae → Знаниям +10.
 // Пример (Магос): Int 88, Tech-Use +30 (ведущий=118), Знание Mechanicum ранг +0 но синергия
 // +10 → 118 + 0 + 10 = 128 (а не min(118, 98)=98). Редкость/Качество к броску не влияют.
-// mods: { toolMod, gmMod, improveMod }
+// mods: { toolMod, gmMod, improveMod, hookUpMod, mutantFitMod }
 export function computeCombined(selectedOpts, mods) {
   const opts = selectedOpts.filter(Boolean);
   // hookUpMod — «Крючок» (Талант Медика): −30 за право приготовить сильнее вызывающий зависимость наркотик.
-  const external = (mods.toolMod || 0) + (mods.gmMod || 0) + (mods.improveMod || 0) + (mods.hookUpMod || 0);
+  const external = (mods.toolMod || 0) + (mods.gmMod || 0) + (mods.improveMod || 0) + (mods.hookUpMod || 0)
+    + (mods.mutantFitMod || 0);
   if (!opts.length) return { limit: null, external, rows: [] };
 
   const primary = opts.reduce((a, b) => (b.total > a.total ? b : a), opts[0]);

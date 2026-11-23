@@ -18,6 +18,7 @@ import { hasLivingLegend, livingLegendCommandBonus } from "./leadership-talents.
 import { hasInfernalMaster, infernalMasterCommandBonus } from "./occultist-talents.mjs";
 import { isDaemonActor } from "./predicates.mjs";
 import { binaryDominionCommandBonus } from "./binary-dominion.mjs";
+import { masterOfMassesCommandBonus } from "./hierophant-talents.mjs";
 
 /**
  * Правило реестра (rules/sources.mjs) — максимум одно rollBonus-правило на
@@ -41,13 +42,22 @@ export function commandSubstitutionRules(actor, ctx = {}) {
   // «не хуже обычного»: ниже нуля она не опускается (binary-dominion.mjs), поэтому
   // в соревновании с Легендой/Владыкой нулевая не выигрывает у отрицательной.
   const bdBonus = binaryDominionCommandBonus(actor, ctx);
+  // Владыка Масс (Иерофант): Charm вместо Command, когда командует Ордой —
+  // четвёртая подмена, тоже «лучшая, а не сумма».
+  const mmBonus = masterOfMassesCommandBonus(actor, ctx);
 
   const useIM = hasLL && imApplicable ? imBonus >= llBonus : imApplicable;
   const best = useIM ? imBonus : llBonus;
-  if (bdBonus > 0 && bdBonus > best) {
+  if (bdBonus > 0 && bdBonus > best && bdBonus >= mmBonus) {
     return [{
       id: "binaryDominion.command", label: `Бинарное Владычество: Tech-Use вместо Command (+${bdBonus})`, when: {},
       effects: [{ kind: "rollBonus", target: "skill:command", value: bdBonus, label: "Бинарное Владычество" }]
+    }];
+  }
+  if (mmBonus > 0 && mmBonus > best && mmBonus >= bdBonus) {
+    return [{
+      id: "masterOfMasses.command", label: `Владыка Масс: Charm вместо Command (+${mmBonus})`, when: {},
+      effects: [{ kind: "rollBonus", target: "skill:command", value: mmBonus, label: "Владыка Масс" }]
     }];
   }
   const bonus = best;

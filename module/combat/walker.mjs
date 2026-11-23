@@ -24,6 +24,7 @@ import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "..
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { parryProfile, dodgeProfile, _noReactionCard } from "./defense.mjs";
+import { defenceRerollsFor, defenceRerollSectionHtml, defenceTestFlagsFor, jinkApplies } from "../rules/defence-reroll.mjs";
 import { spendReaction, apCostForActionType, canSpendActionPoints, spendActionPoints }
   from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
@@ -98,6 +99,21 @@ function requireWalker(vehicle, title) {
 // ── Пункт 5: Парирование Шагоходом ──────────────────────────────────────────
 
 /**
+ * Переброс защиты шагохода (Разобрать f6bti): кнопки Черт/Талантов ПИЛОТА на
+ * провале и флаги карточки для повтора (combat/defence-reroll.mjs).
+ */
+async function walkerRerollBits(vehicle, pilot, kind, opts, { passed, reroll }) {
+  const attackerDoc = opts.attackerUuid ? await fromUuid(opts.attackerUuid).catch(() => null) : null;
+  const section = defenceRerollSectionHtml(defenceRerollsFor(pilot, kind, {
+    attackerActor: attackerDoc?.actor ?? attackerDoc, isMelee: true, passed, rerolled: !!reroll }), kind);
+  const flags = defenceTestFlagsFor(vehicle, kind, opts, null, { passed, rerolled: !!reroll, rerollActor: pilot });
+  return { section, flags };
+}
+
+/** d100 защиты: при «обращении» броска — заданное число вместо нового кубика. */
+const defenceRoll = reroll => new Roll(reroll?.forcedRv ? String(reroll.forcedRv) : "1d100").evaluate();
+
+/**
  * Парирование Шагоходом (п.5): тест ПИЛОТА (WS + Навык Парирования + свойства
  * орудия), штраф −Размер×10 за габариты машины.
  *
@@ -106,13 +122,13 @@ function requireWalker(vehicle, title) {
  * Крестовой Блок выключен намеренно: он про два клинка в руках персонажа, а
  * не про манипуляторы корпуса.
  */
-export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "" } = {}) {
+export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "", reroll = null } = {}) {
   if (!requireWalker(vehicle, "Парирование")) return;
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Парирование",
     "В машине нет пилота/мехвода — Парировать некому (посадите экипаж на вкладке «Экипаж»).");
   // Ярость пилота: Парирование — только с Боевым Гневом (rules/rage-behavior.mjs); Реакция не тратится.
-  if (await rageAvoidanceRefusal(crew.actor, "parry", "Парирование (Шагоход)")) return;
+  if (!reroll && await rageAvoidanceRefusal(crew.actor, "parry", "Парирование (Шагоход)")) return;
   const weapon = walkerMeleeWeapon(vehicle);
   if (!weapon) return refusal(vehicle, "Парирование",
     "У машины нет рукопашного орудия — Парировать нечем (добавьте орудие класса «Рукопашное»).");
@@ -123,7 +139,7 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
   if (balanceMod === null) return refusal(vehicle, "Парирование",
     `Орудием «${esc(weapon.name)}» нельзя парировать (Баланс ${sgn(balance)}).`);
 
-  if (!(await spendReaction(crew.actor, { forDefense: true, attackId })))
+  if (!reroll && !(await spendReaction(crew.actor, { forDefense: true, attackId })))
     return _noReactionCard(crew.actor, "Парирование (Шагоход)");
 
   // Подпись −Размер×10 ставится своей строкой: parryProfile сложил его в общий
@@ -131,14 +147,17 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
   const parts = modParts.filter(p => !String(p).startsWith("приём "));
   if (extraMod !== 0) parts.push(`приём ${sgn(extraMod)}`);
   parts.push(`Размер ${sgn(sizeMod)}`);
+  if (reroll) parts.push(`Переброс: ${reroll.label || ""}`);
 
-  const roll = await new Roll("1d100").evaluate();
+  const roll = await defenceRoll(reroll);
   const rv = roll.total;
   const { success: passed, deg } = testOutcome(rv, threshold);
   const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
   const leftover = passed ? deg - negated : 0;
   const banked = leftover > 0 && await addEvasionSurplus(vehicle, attackerUuid, leftover, extraMod);
 
+  const rr = await walkerRerollBits(vehicle, crew.actor, "walkerParry",
+    { extraMod, attackerUuid, hitsCount, attackId }, { passed, reroll });
   await postTestCard(vehicle, {
     icon: rollIcon("sword"), title: `Парирование (Шагоход) — ${esc(vehicle.name)}`,
     actorUuid: vehicle.uuid,
@@ -146,8 +165,8 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
     threshold: rollStatLine({ label: `WS ${crew.actor.name}`, base: wsTotal, parts, threshold, rv }),
     lines: [`<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Орудие: ${esc(weapon.name)} (Баланс ${sgn(balance)}) · Реакцию тратит пилот</div>`],
     outcome: defenceOutcome("Парирование", passed, deg, totalHits, negated, remaining, "Атака отражена."),
-    sections: [leftoverNote(banked, leftover)]
-  }, { rolls: [roll] });
+    sections: [leftoverNote(banked, leftover), rr.section]
+  }, { rolls: [roll], flags: rr.flags });
 }
 
 // ── Пункт 5: Уклонение Шагоходом ────────────────────────────────────────────
@@ -161,13 +180,13 @@ export async function performWalkerParry(vehicle, { extraMod = 0, attackerUuid =
  * у самой машины (system.operate — то же поле, которым считается Вираж), а
  * половина Уклонения — у пилота, со всем его стеком модификаторов.
  */
-export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "" } = {}) {
+export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid = "", hitsCount = 1, attackId = "", reroll = null } = {}) {
   if (!requireWalker(vehicle, "Уклонение")) return;
   const crew = await walkerCrew(vehicle);
   if (!crew) return refusal(vehicle, "Уклонение",
     "В машине нет пилота/мехвода — Уклоняться некому (посадите экипаж на вкладке «Экипаж»).");
   // Ярость пилота: «не может совершать Избегания» (Модуль Агрессии — без запрета); Реакция не тратится.
-  if (await rageAvoidanceRefusal(crew.actor, "dodge", "Уклонение (Шагоход)")) return;
+  if (!reroll && await rageAvoidanceRefusal(crew.actor, "dodge", "Уклонение (Шагоход)")) return;
 
   // Опрокинутый Шагоход «сбит с ног» (Книга Машин, Опрокидывание) — как
   // Повален у персонажа: −20 к Уклонению (rules/library/conditions.mjs,
@@ -178,13 +197,16 @@ export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid =
   if (tippedMod) profile.modParts.push("Опрокинут −20");
   const operate = Number(vehicle.system?.operate) || 0;
   const size    = Number(vehicle.system?.size) || 0;
+  // Манёвр Уклонения (Jink): переброс за Очко — без штрафа за Размер машины.
+  const jink = jinkApplies(crew.actor, reroll);
   const { dodgePart, operatePart, threshold } =
-    walkerDodgeThresholds({ dodgeBase: profile.threshold, size, operate });
+    walkerDodgeThresholds({ dodgeBase: profile.threshold, size: jink ? 0 : size, operate });
+  if (jink) profile.modParts.push("Размер не учитывается (Манёвр Уклонения)");
 
-  if (!(await spendReaction(crew.actor, { forDefense: true, attackId })))
+  if (!reroll && !(await spendReaction(crew.actor, { forDefense: true, attackId })))
     return _noReactionCard(crew.actor, "Уклонение (Шагоход)");
 
-  const roll = await new Roll("1d100").evaluate();
+  const roll = await defenceRoll(reroll);
   const rv = roll.total;
   const { success: passed, deg } = testOutcome(rv, threshold);
   const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
@@ -192,23 +214,26 @@ export async function performWalkerDodge(vehicle, { extraMod = 0, attackerUuid =
   const banked = leftover > 0 && await addEvasionSurplus(vehicle, attackerUuid, leftover, extraMod);
 
   const lower = threshold === operatePart && operatePart < dodgePart ? "Operate" : "Уклонение";
+  if (reroll) profile.modParts.push(`Переброс: ${reroll.label || ""}`);
 
   // Плашка Бросок/Режим/Порог (wdbc-fyvv) несёт ИТОГОВЫЙ Порог — комбинированный
   // тест сравнивает ДВА разных Предела (Уклонение пилота и Operate машины) и
   // берёт меньший, поэтому в rollStatLine (один base на тест) эта пара не
   // ложится; сравнение обоих Пределов остаётся читаемой строкой ниже плашки.
+  const rr = await walkerRerollBits(vehicle, crew.actor, "walkerDodge",
+    { extraMod, attackerUuid, hitsCount, attackId }, { passed, reroll });
   await postTestCard(vehicle, {
     icon: rollIcon("run"), title: `Уклонение (Шагоход) — ${esc(vehicle.name)}`,
     actorUuid: vehicle.uuid,
     threshold: rollStatLine({ label: lower, threshold, rv }),
     lines: [
       `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Комбинированный тест (наименьший Предел): Уклонение ${esc(crew.actor.name)} <b>${dodgePart}</b>${
-        profile.modParts.length ? ` (${profile.modParts.map(esc).join(", ")}, Размер ${sgn(walkerDefenceMod(size))})` : ` (Размер ${sgn(walkerDefenceMod(size))})`
+        profile.modParts.length ? ` (${profile.modParts.map(esc).join(", ")}, Размер ${sgn(walkerDefenceMod(jink ? 0 : size))})` : ` (Размер ${sgn(walkerDefenceMod(jink ? 0 : size))})`
       } · Operate машины <b>${operatePart}</b> (${operate} −10). Ниже оказался ${lower} — по нему и бросок. Реакцию тратит пилот.</div>`
     ],
     outcome: defenceOutcome("Уклонение", passed, deg, totalHits, negated, remaining, "Атака промахивается."),
-    sections: [leftoverNote(banked, leftover)]
-  }, { rolls: [roll] });
+    sections: [leftoverNote(banked, leftover), rr.section]
+  }, { rolls: [roll], flags: rr.flags });
 }
 
 /** Общая строка исхода Избегания — тот же вид, что у персонажа (defense.mjs). */

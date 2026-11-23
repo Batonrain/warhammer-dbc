@@ -71,7 +71,7 @@ import { useGangrenePeriodicTest } from "../../combat/gangrene.mjs";
 import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { rollClearJam, rollRestoreJammedAmmo } from "../../combat/clear-jam.mjs";
-import { repairDestroyedWeapon } from "../../combat/weapon-repair.mjs";
+import { repairDestroyedWeapon, juryRigWeapon, fullRepairJuryRigged } from "../../combat/weapon-repair.mjs";
 import { declareBrace } from "../../combat/brace-weapon.mjs";
 import { showDamageOnlyDialog } from "../../combat/damage-only-roll.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
@@ -525,6 +525,15 @@ export function activateCombatListeners(root, actor) {
   on(root, ".wh-sheet-repair-destroyed-btn", "click", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) repairDestroyedWeapon(actor, item);
+  });
+  // На Честном Слове (rules/jury-rigging.mjs): быстрая починка и полный ремонт после неё.
+  on(root, ".wh-sheet-jury-rig-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) juryRigWeapon(actor, item);
+  });
+  on(root, ".wh-sheet-full-repair-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) fullRepairJuryRigged(actor, item);
   });
   on(root, ".wh-sheet-restore-ammo-btn", "click", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);

@@ -52,8 +52,8 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange, syncGrantedEquipment, onItemQualityChanged,
-         syncNullZoneSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
-         getItemMechanics, findMechEntryById } from "./module/apps/mechanics.mjs";
+         syncNullZoneSuppression, syncArchetypeSuppression, syncGrantedAbilities, hasWhenGatedAbilityGrant,
+         getItemMechanics, findMechEntryById, hasPendingWhenEntries } from "./module/apps/mechanics.mjs";
 import { entryWhenOk } from "./module/rules/mech-when.mjs";
 import { isItemActive, syncOrphanedModEffects, syncWhenGatedEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
@@ -87,10 +87,12 @@ import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fo
 import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag, ruleFlags, ruleFlagLabels }     from "./module/rules/flags.mjs";
+import { hasAbility }                                  from "./module/rules/ability-by-key.mjs";
 import { lockedPatron, enforcedPatron, patronLockMessage, PATRON_LOCK_PREFIX } from "./module/rules/patron-lock.mjs";
 import { optionalIntegralEntries, integralEntrySelected, INTEGRAL_CHOSEN_FLAG } from "./module/rules/integral-rating.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { corruptionInVoid }          from "./module/rules/null-zones.mjs";
+import { CORRUPTION_IMMUNE_CAP, RUBRICAE, corruptionWithImmunity } from "./module/rules/rubricae.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
   from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
@@ -123,6 +125,9 @@ import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { initMovementActionsHud, initMovedFlagTracking } from "./module/combat/movement-actions.mjs";
 import { initRigStealHud } from "./module/combat/rig-steal.mjs";
 import { initForceMoveHud } from "./module/combat/force-move-menu.mjs";
+import { registerDevourerMovementAction } from "./module/combat/devourer.mjs";
+import { valourOnEquip } from "./module/combat/valourous-accord.mjs";
+import { suppressibleArchetypeOf } from "./module/rules/archetype-suppression.mjs";
 import { initTearOpenHud } from "./module/combat/tear-open.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { initPathLimitHooks } from "./module/combat/path-limit.mjs";
@@ -134,6 +139,7 @@ import { initOverwatchHooks } from "./module/combat/overwatch.mjs";
 import { initFirePointHooks } from "./module/combat/fire-point.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { onWoundRelevantItemChange, onWoundRelevantActorChange } from "./module/combat/wound-in-reality.mjs";
+import { onPsyPowerPreUpdate } from "./module/combat/wild-psyker.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { GravitonZoneBehaviorType, GRAVITON_ZONE_TYPE } from "./module/regions/graviton-zone.mjs";
@@ -170,7 +176,11 @@ import { migrateDrugAddictionFields } from "./module/migrations/drug-addiction-f
 import { migrateDiseaseActive } from "./module/migrations/disease-active.mjs";
 import { migrateDiseaseActiveAll } from "./module/migrations/disease-active-all.mjs";
 import { migratePlagueMarineRot } from "./module/migrations/plague-marine-rot.mjs";
+import { migrateHominisFrame } from "./module/migrations/hominis-frame.mjs";
+import { migrateTraitShields } from "./module/migrations/trait-shields.mjs";
 import { migratePactDisorderGrant } from "./module/migrations/pact-disorder-grant.mjs";
+import { migrateValourOwn } from "./module/migrations/valour-own.mjs";
+import { migrateWarpGiftedRating } from "./module/migrations/warp-gifted-rating.mjs";
 import { migrateStrangeTechniqueEffect } from "./module/migrations/strange-technique-effect.mjs";
 import { migrateDrugAddictionFlag } from "./module/migrations/drug-addiction-flag.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
@@ -518,7 +528,11 @@ Hooks.once("init", () => {
     "diseaseActiveTokensVersion",
     "diseaseActiveAllTokensVersion",
     "plagueMarineRotTokensVersion",
+    "hominisFrameTokensVersion",
+    "traitShieldsTokensVersion",
     "pactDisorderGrantTokensVersion",
+    "valourOwnTokensVersion",
+    "warpGiftedRatingTokensVersion",
     "strangeTechniqueEffectTokensVersion",
     "drugAddictionFlagTokensVersion"
   ]) {
@@ -720,8 +734,28 @@ Hooks.once("init", () => {
     scope: "world", config: false, type: Number, default: 0
   });
 
+  // Версия сверки встроенных щитов Черт (щит-купол Облитератора, Sahara 576-51a6)
+  game.settings.register("warhammer-dbc", "traitShieldsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия выдачи «Фрейма Хоминис» уже созданным Электрожрецам (Sahara 588-551f)
+  game.settings.register("warhammer-dbc", "hominisFrameVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
   // Версия выдачи расстройств Пактов уже взявшим Черту Пакта (одноразовая, ревью #581)
   game.settings.register("warhammer-dbc", "pactDisorderGrantVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия отметки «своё снаряжение» у уже играющих Кузнецов Крови (приёмка #597)
+  game.settings.register("warhammer-dbc", "valourOwnVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия включения Рейтинга у выданных копий «Одарённого Варпом» (приёмка #597)
+  game.settings.register("warhammer-dbc", "warpGiftedRatingVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -1074,6 +1108,25 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
         return;
       }
+      if (data.action === "horrorSplit") {
+        // Разделение Ужасов (module/combat/horror-split.mjs): Бестиарий скрыт от
+        // игрока — меньших Ужасов создаёт ГМ.
+        const { spawnHorrorSplit } = await import("./module/combat/horror-split.mjs");
+        const res = await spawnHorrorSplit(String(data.actorUuid ?? ""), Math.min(3, Math.max(1, Number(data.count) || 2)), String(data.into ?? "").slice(0, 100));
+        if (!res.ok) console.warn("Warhammer DBC | Разделение Ужасов:", res.reason);
+        return;
+      }
+      if (data.action === "createTwinDemon") {
+        // Лист демона Двойного Духа (module/apps/twin-spirit.mjs) — тот же приём,
+        // что summonDemon: копию из скрытого Бестиария создаёт ГМ. Просящий
+        // обязан владеть хостом.
+        const { createTwinDemonSheet } = await import("./module/apps/twin-spirit.mjs");
+        const host = await fromUuid(String(data.hostUuid ?? "")).catch(() => null);
+        if (!host || !(requester?.isGM || host.testUserPermission?.(requester, "OWNER"))) return;
+        const res = await createTwinDemonSheet(host);
+        if (!res.ok) console.warn("Warhammer DBC | Лист демона:", res.reason);
+        return;
+      }
       if (data.action === "createGolem") {
         // Голем Рубрики (Повелитель Големов, module/combat/rubric-sorcerer.mjs) — тот же приём, что summonDemon:
         // Бестиарий скрыт от игрока, актора-Миньона и токен создаёт активный ГМ по плану из диалога игрока.
@@ -1087,6 +1140,24 @@ Hooks.once("ready", () => {
         // инициативы делает активный ГМ (module/combat/the-hunter.mjs).
         const res = await spawnHunterHound(String(data.championUuid ?? ""), String(data.itemId ?? ""));
         if (!res.ok) console.warn("Warhammer DBC | Загонщик:", res.reason);
+        return;
+      }
+      if (data.action === "summonWormSwarm") {
+        // Повелитель Червей (combat/worm-master.mjs): Рой из Бестиария ставит ГМ. Просящий
+        // обязан владеть Повелителем; предел Роёв и Раны ГМ сверяет сам.
+        const { spawnWormSwarm } = await import("./module/combat/worm-master.mjs");
+        const master = await fromUuid(String(data.masterUuid ?? "")).catch(() => null);
+        if (!master || !(requester?.isGM || master.testUserPermission?.(requester, "OWNER"))) return;
+        const res = await spawnWormSwarm(master.uuid, data.bonusWounds);
+        if (!res.ok) console.warn("Warhammer DBC | Повелитель Червей:", res.reason);
+        return;
+      }
+      if (data.action === "dismissWormSwarms") {
+        // Повелитель Червей: рассеять Рои (удалить их токены и акторов) может только ГМ.
+        const { dismissWormSwarms } = await import("./module/combat/worm-master.mjs");
+        const master = await fromUuid(String(data.masterUuid ?? "")).catch(() => null);
+        if (!master || !(requester?.isGM || master.testUserPermission?.(requester, "OWNER"))) return;
+        await dismissWormSwarms(master);
         return;
       }
       if (data.action === "spawnSundering") {
@@ -1262,7 +1333,7 @@ Hooks.once("ready", async () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migratePactDisorderGrant, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateDuplicateOrigins, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, migrateNimbleRating, migrateSightAngle, migrateStringListRestore, migrateLimbLossSides, migrateRadRating, migrateDaemonicRadiation, migrateRetinalDisplayMark, migrateDrugAddictionFields, migrateDrugAddictionFlag, migrateDiseaseActive, migrateDiseaseActiveAll, migratePlagueMarineRot, migrateHominisFrame, migrateTraitShields, migratePactDisorderGrant, migrateValourOwn, migrateWarpGiftedRating, migrateStrangeTechniqueEffect, migrateAdvancePricing, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1627,16 +1698,42 @@ Hooks.once("ready", async () => {
 // Ручной перезапуск: game.warhammerDBC.migratePactDisorderGrant()
 // Один обработчик, строго по очереди (см. «Зависимость наркотиков» выше).
 Hooks.once("ready", async () => {
-  if (!game.user.isGM) return;
+  // Один активный ГМ: два ГМа одновременно гоняли бы миграции и задваивали щиты/Черты.
+  if (!game.users.activeGM?.isSelf) return;
   // Идемпотентна: болезнь уже на акторе — ничего не создаётся (migrations/plague-marine-rot.mjs).
   await runMigrationGate({
     key: "plagueMarineRotVersion", tokensKey: "plagueMarineRotTokensVersion", label: "Гниль Нургла у Чумных Десантников",
     full: () => migratePlagueMarineRot(), tokensOnly: () => migratePlagueMarineRot({ tokensOnly: true })
   });
+  // Идемпотентна: Черта уже на листе — ничего (migrations/hominis-frame.mjs, Sahara 588-551f).
+  // Ручной перезапуск: game.warhammerDBC.migrateHominisFrame()
+  await runMigrationGate({
+    key: "hominisFrameVersion", tokensKey: "hominisFrameTokensVersion", label: "Фрейм Хоминис у Электрожрецов",
+    full: () => migrateHominisFrame(), tokensOnly: () => migrateHominisFrame({ tokensOnly: true })
+  });
+  // Идемпотентна: щит уже на листе — ничего (migrations/trait-shields.mjs, Sahara 576-51a6).
+  // Ручной перезапуск: game.warhammerDBC.migrateTraitShields()
+  await runMigrationGate({
+    key: "traitShieldsVersion", tokensKey: "traitShieldsTokensVersion", label: "Встроенные щиты Черт",
+    full: () => migrateTraitShields(), tokensOnly: () => migrateTraitShields({ tokensOnly: true })
+  });
   // Идемпотентна: расстройство уже на листе — ничего (migrations/pact-disorder-grant.mjs).
   await runMigrationGate({
     key: "pactDisorderGrantVersion", tokensKey: "pactDisorderGrantTokensVersion", label: "Расстройства Пактов",
     full: () => migratePactDisorderGrant(), tokensOnly: () => migratePactDisorderGrant({ tokensOnly: true })
+  });
+  // Приёмка #597 (ровно один ГМ — проверка в начале обработчика).
+  // Идемпотентна: отмеченное своим не трогается (migrations/valour-own.mjs).
+  // Ручной перезапуск: game.warhammerDBC.migrateValourOwn()
+  await runMigrationGate({
+    key: "valourOwnVersion", tokensKey: "valourOwnTokensVersion", label: "Соглашение Доблести (своё снаряжение)",
+    full: () => migrateValourOwn(), tokensOnly: () => migrateValourOwn({ tokensOnly: true })
+  });
+  // Идемпотентна: копия с hasRating не трогается (migrations/warp-gifted-rating.mjs).
+  // Ручной перезапуск: game.warhammerDBC.migrateWarpGiftedRating()
+  await runMigrationGate({
+    key: "warpGiftedRatingVersion", tokensKey: "warpGiftedRatingTokensVersion", label: "Рейтинг «Одарённого Варпом»",
+    full: () => migrateWarpGiftedRating(), tokensOnly: () => migrateWarpGiftedRating({ tokensOnly: true })
   });
 });
 
@@ -1713,6 +1810,7 @@ Hooks.once("init", () => initDifficultTerrainHud());
 Hooks.once("init", () => initMovementActionsHud());
 Hooks.once("init", () => initRigStealHud());
 Hooks.once("init", () => initForceMoveHud());
+Hooks.once("init", () => registerDevourerMovementAction());
 Hooks.once("init", () => initTearOpenHud());
 Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
@@ -1761,6 +1859,9 @@ Hooks.on("updateWorldTime", (worldTime, dt) => {
   // правил Состояний (combat/condition-clock.mjs, CONDITION_CLOCK_HANDLERS).
   // dt — сколько секунд прошло этим сдвигом (Foundry: helpers/time.mjs).
   sweepAllConditionClocks(worldTime, dt);
+  // Соглашение Доблести: истёкший срок покаяния возвращает Архетип (у ГМа).
+  import("./module/combat/valourous-accord.mjs").then(m => m.sweepValourExpiry())
+    .catch(e => console.error("Warhammer DBC | Соглашение Доблести:", e));
 });
 
 // ── Нексус Сцен: держать открытое окно в актуальном состоянии ─────────────────
@@ -1831,6 +1932,9 @@ Hooks.once("ready", async () => {
 Hooks.on("updateItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("createItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
 Hooks.on("deleteItem", (item) => { if (item?.type === "celestialBody") refreshSystemsOverview(); });
+// Остаточное Поглощение (Дикий Псайкер): снимается поддержание — эPR силы в Щит Цепей рядом.
+// preUpdate, а не update: снятие стирает sustainedEpr тем же патчем.
+Hooks.on("preUpdateItem", (item, changes) => { onPsyPowerPreUpdate(item, changes); });
 // Рана в Реальности (пачка I2): удалили поддерживаемую силу — радиус ауры пересчитать.
 Hooks.on("deleteItem", async (item, options, userId) => {
   if (game.user.id === userId) await onWoundRelevantItemChange(item, null);
@@ -2329,12 +2433,23 @@ Hooks.on("updateItem", async (item, changes, options, userId) => {
   if (game.user.id !== userId || item.type !== "armor" || !(item.parent instanceof Actor)) return;
   if (changes.system?.equipped === undefined) return;
   await syncWhenGatedEffects(item.parent);
+  await applyPendingWhenEntries(item.parent);
 });
 for (const hook of ["createItem", "deleteItem"]) {
   Hooks.on(hook, async (item, options, userId) => {
     if (game.user.id !== userId || item.type !== "armor" || !(item.parent instanceof Actor)) return;
     await syncWhenGatedEffects(item.parent);
+    await applyPendingWhenEntries(item.parent);
   });
+}
+
+// Разовые записи с «Когда» от брони (Черты, ИЛИ-выбор +5 к Характеристике
+// Чемпиона-Терминатора), пропущенные при выдаче, пока броня лежала в рюкзаке:
+// надели броню — доигрываем (5-c24e).
+async function applyPendingWhenEntries(actor) {
+  for (const it of actor.items.contents ?? [...actor.items]) {
+    if (it.type !== "armor" && hasPendingWhenEntries(it)) await applyItemMechanics(it);
+  }
 }
 
 // Best.Q-биоимплант Друкхари (wdbc-ukpu, шаг 3): выбор бонусного эффекта при
@@ -2853,6 +2968,43 @@ registerSceneLiveRecalc({
   },
 });
 
+// ── Двойной Дух (module/apps/twin-spirit.mjs): Проявление, лист демона,
+// Высший Одержимый меняют то, что хосту положено (щит Ауры Хаоса, Черты
+// Текучего/Наслоения, Локус Симбиоза). Сверяет клиент, внёсший правку; ГМ
+// заодно пересчитывает ауры — Локус Симбиоза задевает только Проявленных.
+// Правка Характеристик листа демона — пересверка его хоста (рейтинг щита 1-W).
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  const poss = changes.system?.possession;
+  const touchesPoss = poss && ("manifested" in poss || "demonUuid" in poss || "greaterPossessed" in poss || "demon" in poss);
+  const hostUuid = doc.getFlag?.("warhammer-dbc", "twinSpiritHost");
+  const touchesDemon = hostUuid && (changes.system?.characteristics || changes.items);
+  if (!touchesPoss && !touchesDemon) return;
+  if (game.user.isGM && touchesPoss) checkAuras();
+  if (game.user.id !== userId) return;
+  const { syncTwinSpirit } = await import("./module/apps/twin-spirit.mjs");
+  const host = touchesPoss ? doc : await fromUuid(hostUuid).catch(() => null);
+  if (host) await syncTwinSpirit(host);
+});
+// Ритуал Связывания Души (module/combat/soul-binding.mjs): умерла связанная
+// цель — её Ритуалисту тест W−30, провал — −2d10 W навсегда. Только на
+// переходе «жив → мёртв» и только у клиента, отметившего смерть.
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  if (game.user.id !== userId || changes.flags?.["warhammer-dbc"]?.deceased !== true) return;
+  if (!doc.getFlag?.("warhammer-dbc", "soulBondPartners")?.length) return;
+  const { onSoulBondDeath } = await import("./module/combat/soul-binding.mjs");
+  await onSoulBondDeath(doc);
+});
+// Дар взяли или сняли посреди Проявления — та же сверка.
+for (const hook of ["createItem", "deleteItem"]) {
+  Hooks.on(hook, async (item, options, userId) => {
+    const host = item.parent;
+    if (game.user.id !== userId || !host?.system?.possession?.manifested) return;
+    if (item.type !== "talent" || !String(item.name ?? "").includes("Дар:")) return;
+    const { syncTwinSpirit } = await import("./module/apps/twin-spirit.mjs");
+    await syncTwinSpirit(host);
+  });
+}
+
 // ── Круги ауры на канвасе (wdbc-7t0z, хвост wdbc-995w) — тот же живой
 // пересчёт, что у выдачи эффектов выше, но БЕЗ isGM-гейта: чисто визуальный
 // оверлей (module/regions/aura-rings.mjs), каждый клиент рисует его сам из
@@ -2938,6 +3090,14 @@ Hooks.on("preUpdateActor", (doc, changes) => {
   if (keep !== newCor) {
     foundry.utils.setProperty(changes, "system.corruption.value", keep);
     ui.notifications?.info(`${doc.name}: в Пустоте Парии Порча не прибавляется.`);
+    return;
+  }
+  // Рубрикант (rules/rubricae.mjs): «не получает Порчу» — прирост отменяется, снижение проходит.
+  if (!hasAbility(doc, CORRUPTION_IMMUNE_CAP, RUBRICAE, "trait")) return;
+  const immune = corruptionWithImmunity(doc.system?.corruption?.value, newCor);
+  if (immune !== newCor) {
+    foundry.utils.setProperty(changes, "system.corruption.value", immune);
+    ui.notifications?.info(`${doc.name}: не получает Порчу.`);
   }
 });
 
@@ -3118,6 +3278,39 @@ Hooks.on("preUpdateItem", (item, changed) => {
   if (!_integralProtected(item)) return true;
   ui.notifications?.warn(`«${item.name}» — интегральная атака: снять её нельзя.`);
   return false;
+});
+
+// ── Подавление Элитного Архетипа (rules/archetype-suppression.mjs) ────────────
+// Сила Из Плоти: Черта Machine, Талант Fleshmetal, мутация Механоид, чужой Фрейм
+// и сами Таланты/Черты Архетипа — появление или снятие любого из них пересчитывает,
+// погашен ли Электрожрец. Соглашение Доблести: надетая чужая броня — нарушение.
+const ARCH_SUPPRESS_TRIGGERS = /^(machine|fleshmetal|mechanoid|механоид|hominis frame|assassin frame|paladin frame|masterpiece frame|power from flesh)\b/i;
+function _archSuppressRelevant(item) {
+  if (item?.type === "eliteArchetype") return true;
+  if (!["trait", "talent", "mutation"].includes(item?.type)) return false;
+  return ARCH_SUPPRESS_TRIGGERS.test(String(item.name || "").trim()) || !!suppressibleArchetypeOf(item);
+}
+for (const hook of ["createItem", "deleteItem"]) {
+  Hooks.on(hook, item => {
+    if (game.users.activeGM !== game.user) return;
+    if (!(item?.parent instanceof Actor) || !_archSuppressRelevant(item)) return;
+    syncArchetypeSuppression(item.parent).catch(e => console.error("Warhammer DBC | подавление Архетипа:", e));
+  });
+}
+Hooks.on("updateItem", (item, changes, _o, userId) => {
+  if (userId !== game.user.id || !(item?.parent instanceof Actor)) return;
+  valourOnEquip(item, changes).catch(e => console.error("Warhammer DBC | Соглашение Доблести:", e));
+});
+// Загрузка мира: условия подавления могли смениться без события предмета —
+// новая версия системы (Фрейм Хоминис стал обязательным, PR #588), истёкший
+// срок Соглашения Доблести. Пересчёт идемпотентен: без смены — ни одной записи.
+Hooks.once("ready", async () => {
+  if (game.users.activeGM !== game.user) return;
+  const { worldAndTokenActors } = await import("./module/migrations/unlinked-tokens.mjs");
+  for (const actor of worldAndTokenActors()) {
+    if (!actor?.items?.some?.(i => i.type === "eliteArchetype" || _archSuppressRelevant(i))) continue;
+    await syncArchetypeSuppression(actor).catch(e => console.error("Warhammer DBC | подавление Архетипа:", e));
+  }
 });
 
 // ── Пустота Парии / поле Дискорданта (rules/null-zones.mjs) ───────────────────

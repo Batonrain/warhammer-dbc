@@ -20,6 +20,29 @@ export const INFERNAL_FAMILIARITY_CAP = "psyResist.core.infernalFamiliarity";
 /** «Уменьшает штраф к W от Трейта Daemonic Presence на 5». */
 export const INFERNAL_FAMILIARITY_DREAD_REDUCTION = 5;
 
+// ── Рунические Вязи-щиты (core стр. 433–434, Sahara runic-weaves-29) ────────
+// «Щит Отвращения» −5, «Щит Безмятежности» −10 к штрафу W от демонического
+// присутствия, «Щит Неизбежности» нивелирует его полностью. Вязь выдаёт ключ
+// Возможности, пока установлена (rules/runic-weave.mjs → Конструктор).
+export const RUNIC_DREAD_SHIELDS = {
+  "runicWeave.shieldOfRevulsion": 5,
+  "runicWeave.shieldOfSerenity": 10,
+  "runicWeave.shieldOfInevitability": Infinity
+};
+
+/**
+ * Суммарное смягчение штрафа Daemonic Dread: Инфернальное Знакомство (5) плюс
+ * вязи-щиты. Источники складываются (книга не запрещает носить несколько вязей);
+ * Щит Неизбежности — штраф снят целиком (возвращается большое конечное число,
+ * чтобы метку смягчения можно было записать флагом).
+ * @param {(key:string)=>boolean} has  есть ли у цели ключ Возможности
+ */
+export function dreadReductionTotal(has) {
+  let cut = has(INFERNAL_FAMILIARITY_CAP) ? INFERNAL_FAMILIARITY_DREAD_REDUCTION : 0;
+  for (const [key, v] of Object.entries(RUNIC_DREAD_SHIELDS)) if (has(key)) cut += v;
+  return Number.isFinite(cut) ? cut : 999;
+}
+
 /** Ключ характеристики, на которую действует выданный аурой штраф Daemonic Dread. */
 const DREAD_CHANGE_KEY = "system.characteristics.wp.totalFx";
 

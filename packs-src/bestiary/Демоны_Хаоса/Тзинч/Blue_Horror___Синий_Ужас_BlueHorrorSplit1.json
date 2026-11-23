@@ -1,0 +1,2390 @@
+{
+  "name": "Blue Horror / Синий Ужас",
+  "type": "daemon",
+  "img": "systems/warhammer-dbc/assets/art/chaos/rozovyy-uzhas.webp",
+  "folder": "8e2XiwdLMgfsdiWS",
+  "system": {
+    "race": "",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "heretic",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 9,
+      "max": 9,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 0
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 100,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 21,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 21,
+        "bonus": 2,
+        "cost": 0
+      },
+      "bs": {
+        "base": 40,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 40,
+        "bonus": 4,
+        "cost": 0
+      },
+      "s": {
+        "base": 20,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 20,
+        "bonus": 2,
+        "cost": 0
+      },
+      "t": {
+        "base": 33,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 33,
+        "bonus": 3,
+        "cost": 0
+      },
+      "ag": {
+        "base": 30,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 30,
+        "bonus": 3,
+        "cost": 0
+      },
+      "int": {
+        "base": 25,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 25,
+        "bonus": 2,
+        "cost": 0
+      },
+      "per": {
+        "base": 35,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 35,
+        "bonus": 3,
+        "cost": 0
+      },
+      "wp": {
+        "base": 34,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 34,
+        "bonus": 3,
+        "cost": 0
+      },
+      "fel": {
+        "base": 22,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 22,
+        "bonus": 2,
+        "cost": 0
+      },
+      "inf": {
+        "base": 9,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 9,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "athletics": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "awareness": {
+        "rank": "veteran",
+        "cost": 0,
+        "total": 0
+      },
+      "charm": {
+        "rank": "knows",
+        "cost": 0,
+        "total": 0
+      },
+      "command": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "veteran",
+        "cost": 0,
+        "total": 0
+      },
+      "dodge": {
+        "rank": "knows",
+        "cost": 0,
+        "total": 0
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "logic": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "trained",
+        "cost": 0,
+        "total": 0
+      },
+      "security": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [
+        {
+          "specialty": "Daemons",
+          "rank": "veteran",
+          "char": "int",
+          "total": 50,
+          "cost": 0
+        },
+        {
+          "specialty": "Psykers",
+          "rank": "trained",
+          "char": "int",
+          "total": 40,
+          "cost": 0
+        },
+        {
+          "specialty": "Warp",
+          "rank": "trained",
+          "char": "int",
+          "total": 40,
+          "cost": 0
+        }
+      ],
+      "scholasticLore": [
+        {
+          "specialty": "Occult",
+          "rank": "trained",
+          "char": "int",
+          "total": 40,
+          "cost": 0
+        }
+      ],
+      "linguistics": [
+        {
+          "specialty": "Low Gothic",
+          "rank": "knows",
+          "char": "int",
+          "total": 30,
+          "cost": 0
+        },
+        {
+          "specialty": "True Tongue",
+          "rank": "knows",
+          "char": "int",
+          "total": 30,
+          "cost": 0
+        }
+      ],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": -1,
+    "encumbrance": {
+      "current": 0,
+      "max": 0
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "Синий Ужас (Книга Хаоса, «Розовый Ужас»): Щит 1-35 (Ч/К), SPD 3/6/9/18. Появляется из Розового Ужаса Разделением (combat/horror-split.mjs); при смерти разваливается на 2 Серных Ужаса.",
+    "craftAvailable": false,
+    "possessed": false,
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "allegiance": "tzeentch",
+    "rank": "lesser",
+    "form": "trueForm",
+    "instabilityRating": 3,
+    "trueName": "",
+    "trueNameKnown": false,
+    "portfolio": "перемены и колдовство",
+    "isDaemon": true
+  },
+  "items": [
+    {
+      "name": "Daemonic (2)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "×3 к T.b в Поглощении.",
+        "source": "демон",
+        "hasRating": true,
+        "rating": 2,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [
+            {
+              "stat": "t",
+              "value": 2
+            }
+          ],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000001",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "mechanics": [
+            {
+              "id": "dmnMechGrp4Kp9Wz",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "dmnRadImmune7Qx2",
+                  "kind": "condition",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 0,
+                  "capabilityMode": "flag",
+                  "capabilityAptScope": "skill",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipPrRequiredDelta": 0,
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "1",
+                  "auraAffects": "allies",
+                  "auraIncludesSelf": false,
+                  "auraImmuneTraits": "",
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "Иммунитет к радиации: Rad и Состояние «Радиация» не действуют",
+                  "code": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 0,
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  },
+                  "condKey": "radiation",
+                  "condMode": "immunity",
+                  "condLevel": "1",
+                  "condMitigate": "ignore",
+                  "condDurationValue": "1",
+                  "condDurationUnit": ""
+                }
+              ]
+            },
+            {
+              "id": "dmnGrpPoison3Rv8",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "dmnPoisonImm5Tk8",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "poison.immune",
+                  "label": "Иммунитет к ядам: Toxic и яды не действуют",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                },
+                {
+                  "id": "dmnPoisonedIm2Wq",
+                  "kind": "condition",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 0,
+                  "capabilityMode": "flag",
+                  "capabilityAptScope": "skill",
+                  "capabilityAptMatch": "",
+                  "capabilityAptAlign": "ally",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipPrRequiredDelta": 0,
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "1",
+                  "auraAffects": "allies",
+                  "auraIncludesSelf": false,
+                  "auraImmuneTraits": "",
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "Иммунитет к ядам: Отравление не накладывается никаким путём",
+                  "code": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 0,
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  },
+                  "condKey": "poisoned",
+                  "condMode": "immunity",
+                  "condLevel": "1",
+                  "condMitigate": "ignore",
+                  "condDurationValue": "1",
+                  "condDurationUnit": ""
+                }
+              ]
+            },
+            {
+              "id": "dmnGrpDisease8Nx",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "dmnDiseaseIm6Hp3",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "defence.diseaseEffectsImmune",
+                  "label": "Иммунитет к болезням: болезни не действуют и не заражают"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000001"
+    },
+    {
+      "name": "Daemonic Armament (Атам)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Грант призываемого демонического оружия — новый предмет-оружие + механика призыва/отзыва, аналогично Дарам Одержимости; создание контента вне текущего прохода.",
+        "benefit": "Формирует оружие из Варпа.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000002",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000002"
+    },
+    {
+      "name": "Daemonic Presence / Демоническое Присутствие (5/10)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Штраф врагам через движок Ауры (module/regions/auras.mjs, wdbc-995w): радиус 10м, штраф −10 к тестам W через грант-предмет «Daemonic Dread (−10 W)». Иммунитет по трейту (Daemonic/From Beyond/Machine/Stuff of Nightmares) учтён движком (auraImmuneTraits). X/Y теперь также хранятся структурно (rating/rating2), не только в имени.",
+        "benefit": "Все недружественные персонажи в радиусе 10 м получают штраф −10 на тесты W; иммунны персонажи с Трейтами Daemonic, From Beyond, Machine, Stuff of Nightmares.",
+        "source": "демон",
+        "hasRating": true,
+        "rating": 5,
+        "hasRating2": true,
+        "rating2": 10,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000003",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "mechanics": [
+            {
+              "id": "KhMPDrVqihXXcd0x",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "daemonic-presence-aura-DmQhCyH0BIHL1hVm",
+                  "kind": "aura",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "Compendium.warhammer-dbc.traits.Item.Pf64LnfXpbWfQ8Xb",
+                  "sourceName": "Daemonic Dread (−10 W) / Демонический Ужас (−10 к W)",
+                  "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "",
+                  "capabilityCostPool": "",
+                  "capabilityCostAmount": 1,
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipPrRequiredDelta": 0,
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "auraRadius": "10",
+                  "auraAffects": "enemies",
+                  "auraIncludesSelf": false,
+                  "auraImmuneTraits": "Daemonic, From Beyond, Machine, Stuff of Nightmares",
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": "",
+                  "scriptThrottleUnit": "",
+                  "scriptThrottleMax": 1,
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000003"
+    },
+    {
+      "name": "Dark Sight",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
+        "benefit": "Видит в темноте.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000004",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000004"
+    },
+    {
+      "name": "From Beyond",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
+        "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000005",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000005"
+    },
+    {
+      "name": "Fear (1) / Страх (1)",
+      "type": "trait",
+      "img": "icons/svg/terror.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Вызывает Страх (1) — цели проходят тест Воли.",
+        "source": "",
+        "hasRating": true,
+        "rating": 1,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 1,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000006",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000006"
+    },
+    {
+      "name": "Sorcerous Barrier",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Активируемый щит-купол с рейтингом поглощения и ручным вкл/выкл — новая механика активного щита (отдельная от брони/Shield-предметов), нет готового канала.",
+        "benefit": "Колдовской щит-купол 1-35, вкл/выкл свободным действием.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000007",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000007"
+    },
+    {
+      "name": "Stuff of Nightmares / Существо из Кошмаров",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
+        "benefit": "Иммунитет к Усталости (кроме от своих действий), ядам/болезням/радиации/экстремальным температурам/вакууму, Кровотечению и Обескровливанию; не может быть Оглушён; не стареет; игнорирует Критэффекты кроме смерти.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000008",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000008"
+    },
+    {
+      "name": "Warp Instability",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "«Может быть изгнан в Варп при уроне» — условный триггер на входящий урон с исходом «изгнание» (удаление токена/актора из боя), нет такого hook в общей Механике предметов.",
+        "benefit": "Тесты Нестабильности при уроне.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000009",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000009"
+    },
+    {
+      "name": "Warp Sight",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Автоматическое засекание Незримых психических атак — реализовано (module/rules/unseen-attack.mjs::hasWarpSight, wdbc-1rno.2). Остальное (полный обзор течений Варпа, иммунитет к безумию от взгляда в Эмпиреи, тест Awareness на дальние потоки) — не смоделировано, флейвор-описание восприятия.",
+        "benefit": "Персонаж способен видеть течения Варпа с той же лёгкостью, как другие видят свет, и его разум защищён от безумия, обычно вызываемого незащищённым взглядом в Эмпиреи. Он видит потоки Варпа вокруг него по обе стороны Барьера и автоматически засекает все психосилы и прочие эффекты, вызванные энергиями Варпа, видя их как потоки света и тьмы. Это, кроме прочего, позволяет ему автоматически засекать Незримые психические атаки. Это отдельное чувство, независимое от обычного зрения, и только психические барьеры мешают ему, хотя чтобы разобрать потоки Варпа вдали (если только они не огромные) ГМ может затребовать тест Awareness со штрафом от расстояния. Варп-зрение направленное, как обычное зрение, но шлемы и доспехи не ограничивают его обзор. Персонаж всё ещё должен иметь нужные Навыки группы Forbidden Lore, чтобы понимать значение потоков Варпа, которые он видит.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000010",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000010"
+    },
+    {
+      "name": "Natural Weapons (1, Когти, Укус)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
+        "benefit": "Смертельное естественное оружие (Когти, Укус).",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000011",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000011"
+    },
+    {
+      "name": "Claws / Когти",
+      "type": "weapon",
+      "img": "icons/svg/sword.svg",
+      "system": {
+        "description": "",
+        "notes": "Урон без S.b (2): его атака прибавляет его сама; книга Хаоса, Синий Ужас даёт итог с S.b.",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "Естественное",
+        "range": "2",
+        "rangeMin": "0",
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": false,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+1",
+        "damageType": "rending",
+        "penetration": 1,
+        "quality": "common",
+        "availability": "",
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Считается ладонью.",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "primitive"
+          },
+          {
+            "key": "reinforced"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false,
+        "meleeCategory": "Когти"
+      },
+      "_id": "BlueHrr000000012",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000012"
+    },
+    {
+      "name": "Bite / Укус",
+      "type": "weapon",
+      "img": "icons/svg/sword.svg",
+      "system": {
+        "description": "",
+        "notes": "Урон без S.b (2): его атака прибавляет его сама; книга Хаоса, Синий Ужас даёт итог с S.b.",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "Естественное",
+        "range": "0",
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": false,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+1",
+        "damageType": "rending",
+        "penetration": 1,
+        "quality": "common",
+        "availability": "",
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Атака головой.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "primitive"
+          },
+          {
+            "key": "tearing"
+          },
+          {
+            "key": "reinforced"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false,
+        "meleeCategory": "Укус"
+      },
+      "_id": "BlueHrr000000013",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000013"
+    },
+    {
+      "name": "Athame / Атам",
+      "type": "weapon",
+      "img": "icons/svg/sword.svg",
+      "system": {
+        "description": "",
+        "notes": "Урон без S.b (2): его атака прибавляет его сама; книга Хаоса, Синий Ужас даёт итог с S.b.",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "Естественное",
+        "range": "2",
+        "rangeMin": "1",
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": false,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d5+1",
+        "damageType": "rending",
+        "penetration": 1,
+        "quality": "common",
+        "availability": "",
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Нож (1-2).",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "precise"
+          },
+          {
+            "key": "warp"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false,
+        "meleeCategory": "Нож"
+      },
+      "_id": "BlueHrr000000014",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000014"
+    },
+    {
+      "name": "Covering Fire",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Стрельба во время выхода из рукопашной.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000015",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000015"
+    },
+    {
+      "name": "Crack Shot",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "+2 Отрицательных Ран в стрельбе.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000016",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000016"
+    },
+    {
+      "name": "Hip Shooting",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Стрельба на полном ходу.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000017",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000017"
+    },
+    {
+      "name": "Mimic",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Имитирует чужой голос.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000018",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000018"
+    },
+    {
+      "name": "Paranoia",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "+2 к Инициативе; всегда настороже.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000019",
+      "effects": [
+        {
+          "name": "Paranoia / Паранойя (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.initiative",
+                "type": "add",
+                "value": 2,
+                "phase": "final",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "BlueHrrEff000001",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!BlueHorrorSplit1.BlueHrr000000019.BlueHrrEff000001"
+        }
+      ],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000019"
+    },
+    {
+      "name": "Target Selection",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Нет штрафа за стрельбу в рукопашную.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000020",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000020"
+    },
+    {
+      "name": "Trick Shooter",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "+30 на трюкаческие выстрелы.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000021",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000021"
+    },
+    {
+      "name": "Непостоянство",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Текст-ссылка на другого монстра («как у Ужасов»).",
+        "benefit": "2–5 рук в любой момент (атакует одной); руки всегда «свободны» в Борьбе.",
+        "tier": 3,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000022",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000022"
+    },
+    {
+      "name": "Разделение",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Кнопка «Разделение» на карточке урона (combat/horror-split.mjs): 2 Серных Ужаса, под Локусом Трансмогрификации — 3.",
+        "benefit": "Ниже 0 Ран (кроме свящ./варп/выжигания/нестабильности) → разваливается на 2 Серных Ужаса.",
+        "tier": 3,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000023",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000023"
+    },
+    {
+      "name": "Blue Fire / Синее Пламя",
+      "type": "weapon",
+      "img": "icons/svg/sword.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "ranged",
+        "weaponType": "Пистолет",
+        "range": "40м",
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": true,
+        "rof_semi": 3,
+        "rof_full": 0,
+        "damage": "1d10+6",
+        "damageType": "energy",
+        "penetration": 4,
+        "quality": "common",
+        "availability": "",
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Попадания считаются как психосила; ∞ заряд.",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "change",
+            "rating": 5
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "_id": "BlueHrr000000024",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000024"
+    },
+    {
+      "name": "Unnatural A (1)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Сверхъестественная Ловкость: +1 к A.b.",
+        "source": "демон",
+        "hasRating": true,
+        "rating": 1,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [
+            {
+              "stat": "ag",
+              "value": 1
+            }
+          ],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "BlueHrr000000025",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!BlueHorrorSplit1.BlueHrr000000025"
+    }
+  ],
+  "prototypeToken": {
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/art/chaos/rozovyy-uzhas.webp",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "actorLink": true,
+    "name": "Blue Horror / Синий Ужас",
+    "displayName": 30,
+    "width": 1,
+    "height": 1,
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "_id": "BlueHorrorSplit1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Розовый Ужас (стр. 14)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Рядовой Розовый Ужас из статблока."
+              },
+              {
+                "key": "iridescent",
+                "label": "Радужный Ужас",
+                "hint": "BS до 55, I до 42, W до 50, F до 34, Раны до 22, Command+10; Трейт Warp Gifted (5) — рейтинг проставьте вручную — и две психосилы на выбор.",
+                "system": {
+                  "characteristics.bs.base": 55,
+                  "characteristics.int.base": 42,
+                  "characteristics.wp.base": 50,
+                  "characteristics.fel.base": 34,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "skills.command.rank": "trained"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.traits.SDkAbCYsgbM1sa3B"
+                ],
+                "pick": [
+                  {
+                    "label": "Психосила 1",
+                    "from": [
+                      "Compendium.warhammer-dbc.psychic-powers.FuFS5qpozUZ496Wo",
+                      "Compendium.warhammer-dbc.psychic-powers.BnGl4yuKLfjKP7yu",
+                      "Compendium.warhammer-dbc.psychic-powers.aXjpPUVWUOR4GTh2",
+                      "Compendium.warhammer-dbc.psychic-powers.yUs75Z0TrL3yTrqQ",
+                      "Compendium.warhammer-dbc.psychic-powers.7lGcX1Svtpuy3Yp9",
+                      "Compendium.warhammer-dbc.psychic-powers.nuPwm3bMiV11z7Al",
+                      "Compendium.warhammer-dbc.psychic-powers.F0kxIsEHE6SfLdJx",
+                      "Compendium.warhammer-dbc.psychic-powers.k0zeTMWrZlIxfOmo",
+                      "Compendium.warhammer-dbc.psychic-powers.bd5p7GHtIOpTkvOT",
+                      "Compendium.warhammer-dbc.psychic-powers.ZDPb18M2NtaksqpU",
+                      "Compendium.warhammer-dbc.psychic-powers.k1dIp1uCt8Mhu7rC"
+                    ]
+                  },
+                  {
+                    "label": "Психосила 2",
+                    "from": [
+                      "Compendium.warhammer-dbc.psychic-powers.FuFS5qpozUZ496Wo",
+                      "Compendium.warhammer-dbc.psychic-powers.BnGl4yuKLfjKP7yu",
+                      "Compendium.warhammer-dbc.psychic-powers.aXjpPUVWUOR4GTh2",
+                      "Compendium.warhammer-dbc.psychic-powers.yUs75Z0TrL3yTrqQ",
+                      "Compendium.warhammer-dbc.psychic-powers.7lGcX1Svtpuy3Yp9",
+                      "Compendium.warhammer-dbc.psychic-powers.nuPwm3bMiV11z7Al",
+                      "Compendium.warhammer-dbc.psychic-powers.F0kxIsEHE6SfLdJx",
+                      "Compendium.warhammer-dbc.psychic-powers.k0zeTMWrZlIxfOmo",
+                      "Compendium.warhammer-dbc.psychic-powers.bd5p7GHtIOpTkvOT",
+                      "Compendium.warhammer-dbc.psychic-powers.ZDPb18M2NtaksqpU",
+                      "Compendium.warhammer-dbc.psychic-powers.k1dIp1uCt8Mhu7rC"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783427242304,
+    "modifiedTime": 1783427242304,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!BlueHorrorSplit1"
+}

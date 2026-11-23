@@ -816,7 +816,7 @@
       "folder": null,
       "system": {
         "description": "",
-        "notes": "Не смоделировано: запреты (не говорит, не Бегает, не получает Порчу) и распад доспеха при Ранах ниже 0 — оговорки без числового канала; ведутся вручную.",
+        "notes": "Реализовано (21.11.2026, Sahara 12-dbc-114-0075): возможности corruption.immune — прирост Порчи отменяется сам (снижение проходит); movement.noRun — Бег не объявляется; death.crumbleBelowZero — Раны ниже 0: вместо Критических Эффектов Голем рассыпается (метка «погиб», module/rules/rubricae.mjs). Вручную: «не может говорить» — механики речи в системе нет.",
         "benefit": "Не может говорить, совершать Бег и не получает Порчу. Когда его Раны опускаются ниже 0, он рассыпается грудой пустых доспехов.",
         "source": "Элитный архетип: Колдун Рубрики (Голем Рубрики)",
         "hasRating": false,
@@ -842,7 +842,54 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "mechanics": [
+            {
+              "id": "RubrGolemMech001",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "RubrCorrImmune01",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "corruption.immune",
+                  "label": "Рубрикант: не получает Порчу",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                },
+                {
+                  "id": "RubrNoRunCapab01",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "movement.noRun",
+                  "label": "Рубрикант: не может совершать Бег",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                },
+                {
+                  "id": "RubrCrumbleCap01",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "death.crumbleBelowZero",
+                  "label": "Рубрикант: при Ранах ниже 0 рассыпается",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,

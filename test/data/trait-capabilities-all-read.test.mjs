@@ -14,7 +14,9 @@ describe("реестр способностей: Черты", () => {
   });
   it("честные пометки названы одним из трёх способов и называют, что ждёт", () => {
     const marks = traits.filter(([, v]) => /^(ПРАВИЛО СТОЛА|ЖДЁТ ПОДСИСТЕМУ)/.test(v.reader));
-    expect(marks.length).toBeGreaterThan(100);
+    // 21.11.2026: пачки элитных архетипов дали механику ~20 Чертам с пометками — порог 100 → 60.
+    // 21.11.2026 (сверка 11/12/22/32-dbc-114): 15 устаревших пометок у сделанных Черт сняты — порог 60 → 50.
+    expect(marks.length).toBeGreaterThan(50);
     for (const [k, v] of marks) {
       if (/^ЖДЁТ ПОДСИСТЕМУ/.test(v.reader)) expect(v.reader, k).toMatch(/task-[0-9a-f]{4}/);
       else expect(v.reader, k).toMatch(/кнопка-памятка/);

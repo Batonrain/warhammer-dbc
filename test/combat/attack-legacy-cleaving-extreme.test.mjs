@@ -7,7 +7,7 @@
 // проверяется только проводка: attack.mjs действительно подмешивает +1 для
 // оружия с этой Мутацией.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, setTargets } from "../support/combat-fixtures.mjs";
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
@@ -38,6 +38,10 @@ describe("Кромсающее: +1 к extremeLevel (1d5+1 вместо 1d5)", ()
 });
 
 describe("Кромсающее 1d10−2: Очко Бесчестия — только при Экстремальном Уроне (приёмка #516)", () => {
+  // spendFromInfamyPool сверяет пул (нет Очков — отказ): заглушке стенда нужен настоящий getProperty.
+  const stubGet = globalThis.foundry.utils.getProperty;
+  beforeEach(() => { globalThis.foundry.utils.getProperty = (o, p) => String(p).split(".").reduce((x, k) => x?.[k], o); });
+  afterEach(() => { globalThis.foundry.utils.getProperty = stubGet; });
   function infamyActor(weapon) {
     const actor = actorFor({ items: [weapon], fate: { value: 2, max: 3 } });
     const updates = [];
@@ -58,8 +62,7 @@ describe("Кромсающее 1d10−2: Очко Бесчестия — тол�
     const { actor, updates } = infamyActor(weapon);
     captured.dice = [10, 10, 7];
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, { legacyCleavingRoll: true });
-    // Само число пула не сверяем: foundry.utils.getProperty в стенде — заглушка.
-    expect(updates.some(u => "system.fate.value" in u)).toBe(true);
+    expect(updates.find(u => "system.fate.value" in u)?.["system.fate.value"]).toBe(1);
     expect(card()).toContain("Экстремальный урон");
   });
 });

@@ -28,6 +28,8 @@ import { writeToTarget } from "./gm-relay.mjs";
 import { sameTarget, targetLabel } from "../rules/talent-targets.mjs";
 import { unlinkedTokens } from "../migrations/unlinked-tokens.mjs";
 import { rageSocialRefusal } from "./rage-behavior.mjs";
+import { hunterHindranceReroll } from "../rules/master-of-executions.mjs";
+import { rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import {
   hasInspireWrath, inspireWrathAudience, isInspiredHatred, inspireWrathOutcome,
   hasDemagogue, INSPIRED_WRATH_FLAG
@@ -132,12 +134,16 @@ export async function startInspireWrath(actor, inject = {}) {
   const ruleMods = collectTestMods(actor, { kind: "skill", skill: "charm", char: "fel" });
   const base = Number(actor.system?.skills?.charm?.total ?? -20);
   const threshold = base + CHARM_MOD + ruleMods.total;
-  const roll = inject.rv == null ? await new Roll("1d100").evaluate() : null;
-  const rv = inject.rv ?? roll.total;
+  // Целеустремлённый Охотник: Charm — с Помехой (Sahara task-fef6), худший из двух.
+  const hindrance = hunterHindranceReroll(actor, "charm");
+  const rolled = inject.rv == null ? await rollD100WithReroll(hindrance) : null;
+  const roll = rolled?.roll ?? null;
+  const rv = inject.rv ?? rolled.rv;
+  const rerollNote = rolled?.rerollNote ?? "";
   const { success, deg } = testOutcome(rv, threshold);
   const outcome = inspireWrathOutcome({ success });
 
-  const statLine = rollStatLine({ label: "Charm+0", base, parts: ruleMods.parts, threshold, rv });
+  const statLine = rollStatLine({ label: "Charm+0", base, parts: ruleMods.parts, threshold, rv, rerollNote });
   const title = `Вдохновить Гнев — ${esc(actor.name)}`;
   const icon = rollIcon("skull", "#ff8a8a");
   const group = esc(targetLabel(target));
@@ -145,7 +151,7 @@ export async function startInspireWrath(actor, inject = {}) {
   if (!success) {
     await postTestCard(actor, { icon, title, threshold: statLine,
       outcome: outcomeHtml(false, `Провал (${deg} ${_degWord(deg)}) — толпа не подхватила речь`) },
-    { rolls: roll ? [roll] : [] });
+    { rolls: rolled ? rolled.rolls : [] });
     return outcome;
   }
 
@@ -158,7 +164,7 @@ export async function startInspireWrath(actor, inject = {}) {
   lines.push(`<div class="roll-threshold" style="font-size:0.85em;">Книга: наполненная ненавистью толпа не всегда поддаётся контролю — её поведение ведёт стол. Срок «до конца сцены» — решение стола при обрыве книжного текста.</div>`);
   await postTestCard(actor, { icon, title, threshold: statLine,
     outcome: outcomeHtml(true, `Успех (${deg} ${_degWord(deg)}) — гнев разожжён против «${group}»`),
-    sections: lines }, { rolls: roll ? [roll] : [] });
+    sections: lines }, { rolls: rolled ? rolled.rolls : [] });
   return outcome;
 }
 

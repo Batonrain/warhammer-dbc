@@ -1,0 +1,61 @@
+{
+  "name": "Heroic Presence / Героическое Присутствие",
+  "type": "vehicleTrait",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Присутствие героя на поле боя даёт его воинам Храбрость, Сплочение и Прикрытие на 3 успеха. Командир, которого признаёт герой, даёт в расчёте командования подчинёнными степень риска героя. Выход героя из боя считается как Героический Конец на 7 успехов для его командира.",
+    "notes": "Не автоматизировано (21.11.2026, Sahara 585-venerable): Трейт заведён ради текста и чтобы его можно было повесить на машину; Храбрость/Сплочение/Прикрытие от присутствия героя, степень риска героя в расчёте командования и Героический Конец при его выходе из боя система не считает — ГМ за столом (возможность aura.heroicPresence.vehicleMorale без читателя). Талант Дредноута «Venerable / Почтенный» даёт этот Трейт — ГМ кладёт его на актор Дредноута руками.",
+    "benefit": "Воодушевление всем, кто видит машину: Храбрость, Сплочение и Прикрытие на 3 успеха.",
+    "availability": 0,
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "hasRating3": false,
+    "rating3": 0,
+    "effects": {
+      "openTopped": false,
+      "manoeuvreMod": 0,
+      "spdMod": 0,
+      "spdDamageReduce": false,
+      "noMove": false,
+      "swerveDisabled": false,
+      "fullMoveSpdMult": 0,
+      "smallMoveOnly": false,
+      "ignoreDifficultTerrain": false,
+      "critHalved": false,
+      "trackHitsToHull": false,
+      "siege": false,
+      "reloadRapid": false,
+      "commandBonus": 0,
+      "repairBonus": 0,
+      "deflectorShield": false,
+      "deflectorDaemonic": false,
+      "ignoreCrewCrits": false,
+      "autonomous": false,
+      "flickerfield": false
+    },
+    "bookSource": "DoomBC — Машины, «ТРЕЙТЫ МАШИН» (стр. 9)"
+  },
+  "_id": "YxuavBAcaqji11sJ",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1795294167284,
+    "modifiedTime": 1795294167284,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!YxuavBAcaqji11sJ"
+}

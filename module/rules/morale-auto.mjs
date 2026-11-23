@@ -24,6 +24,7 @@
 import { isInRage } from "./rage.mjs";
 import { hasTalentCapability } from "./ability-by-key.mjs";
 import { FEARLESS_CAP, IDOLATER_CAP, isIdolNearby } from "./courage-talents.mjs";
+import { voidStripsMoraleAuto } from "./null-zones.mjs";
 
 /**
  * Проходит ли актор тесты Морали автоматически, и почему.
@@ -32,6 +33,9 @@ import { FEARLESS_CAP, IDOLATER_CAP, isIdolNearby } from "./courage-talents.mjs"
  */
 export function moraleAutoPass(actor) {
   if (!actor) return null;
+  // Пустота Парии: псайкеры и демоны «игнорируют любые эффекты, что позволяли
+  // бы им проходить эти тесты автоматически» (rules/null-zones.mjs, task-1452).
+  if (voidStripsMoraleAuto(actor)) return null;
   if (isInRage(actor)) return { by: "rage", label: "😡 Ярость: автоуспех", short: "Ярость" };
   if (hasTalentCapability(actor, FEARLESS_CAP)) {
     return { by: "fearless", label: "Бесстрашный: автоуспех", short: "Бесстрашный" };

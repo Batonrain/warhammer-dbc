@@ -5,7 +5,7 @@
   "folder": "gJxZKumWRrfAbMVM",
   "system": {
     "description": "",
-    "notes": "Раз в Ход условная концентрация на цели + тест Common Lore(War)(I)+10 с эффектом при успехе — составной триггерный тест с целью, не пассивный модификатор. Механика ждёт задачу Sahara 20-dbc-114 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Частично (21.11.2026): кнопка раз в Ход бросает Common Lore(War)(I)+10 по цели в прицеле; при Успехе окно эффекта. Само считается до начала следующего Хода: +3×Успехи рукопашным атакам по цели, +Успехи к урону, −3×Успехи Избеганиям цели от атак Виткиса, +5×Успехи во встречных приёмах WS/S/A; Приказы — галочка в окне Командования. Вручную: «побеждает во всех тестах цели обмануть его», досрочный конец при выходе цели из боя.",
     "benefit": "Раз в Ход за свободное действие может сконцентрировать своё боевое всеведение на одном персонаже в том же бою и пройти тест Common Lore(War)(I)+10. При Успехе автоматически знает точное местоположение цели и получает 1 эффект против неё на выбор до начала своего следующего Хода: побеждает во всех тестах цели обмануть его (в т.ч. Финтом); +Успехи Dmg рукопашных атак по цели; +3×Успехи на рукопашные атаки по цели; −3×Успехи на Избегания от его атак; +5×Успехи на приказы атаковать цель или защищаться от неё; +5×Успехи на все встречные тесты WS, S и A против цели в атаке и защите. Если цель выходит из боя, эффект прекращается досрочно.",
     "source": "Элитный архетип: Виткис",
     "hasRating": false,
@@ -37,11 +37,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "P0BkMuGN58JwAPCN",
+          "id": "EG7cXQTY8oTDTSlh",
           "operator": "AND",
           "entries": [
             {
-              "id": "oD9Y7YuQzq64eGMU",
+              "id": "6IhucKd8wldNpFYZ",
               "kind": "script",
               "group": null,
               "corruptionValue": "1",
@@ -128,14 +128,28 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механика ждёт задачу): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Провидец Войны: тест и эффект",
+              "code": "// Провидец Войны (combat/vitkis.mjs): раз в Ход Common Lore(War)(I)+10 по цели, выбор эффекта.\nawait useWarSeer(actor);",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "resPoolKey": "",
+              "resPoolLabel": "",
+              "resPoolMax": "",
+              "resPoolRefill": "",
+              "resPoolRoundCap": "",
+              "resPoolGainLabel": "",
+              "resPoolGainAmount": "",
+              "resPoolAsInfamy": false,
+              "resPoolAsInfamyCap": "",
+              "resPoolAsInfamyCor": "",
+              "resPoolAsInfamyNote": "",
+              "resPoolBoostChars": "",
+              "resPoolFailChars": "",
+              "scriptOnGrant": false
             }
           ]
         }

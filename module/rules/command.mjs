@@ -14,6 +14,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "./flags.mjs";
+import { itemHasName } from "./predicates.mjs";
+import { cyberShepherdReach } from "./lacrimallus-talents.mjs";
 
 /**
  * Ключи преимуществ Командного Присутствия в порядке книги.
@@ -52,11 +54,29 @@ export function presenceBenefitsFor(actorType) {
  *
  * @returns {string} подпись причины («Оглох»/«Без сознания») или "" — доходит
  */
-export function commandBlockReason(actor) {
+export function commandBlockReason(actor, allActors = globalThis.game?.actors) {
   const c = actor?.system?.conditions;
   if (c?.unconscious) return "Без сознания";
-  if (c?.deafened && !hasRuleFlag(actor, "communication.deafExempt")) return "Оглох";
+  if (c?.deafened && !hasRuleFlag(actor, "communication.deafExempt")
+      && !battleSignsReach(actor, allActors)) return "Оглох";
   return "";
+}
+
+/**
+ * Боевые Жесты (Talant Лидерства): «отряд персонажа может общаться его языком жестов» — Оглохший
+ * член Отряда, чей Лидер/Командир/Координатор знает Жесты, Команды получает (книга: «кроме
+ * жестов/телепатии/Ноосферы»). Поле зрения и «только Короткие, раз в Раунд» — за столом.
+ */
+export function battleSignsReach(actor, allActors = globalThis.game?.actors) {
+  const uuid = actor?.uuid;
+  if (!uuid || !allActors) return false;
+  const list = [...allActors];
+  const squad = list.find(a => a?.type === "squad" && (a.system?.members ?? []).some(m => m?.uuid === uuid));
+  if (!squad) return false;
+  const posts = squad.system?.posts ?? {};
+  const heads = ["leader", "commander", "coordinator"].map(k => posts[k]?.uuid).filter(u => u && u !== uuid);
+  return list.some(a => heads.includes(a?.uuid)
+    && [...(a.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Battle Signs")));
 }
 
 /**
@@ -138,6 +158,14 @@ export function suppressionBonus(actor) {
  *   всё же доходят, это отдельно проверяет вызывающая сводка.
  */
 export function commandReachFor(actorType, benefitKey = "", actor = null, { moraleLost = false } = {}) {
+  // Кибер-Пастырь (Лакрималлус): Орда тех-траллов получает Команды «как если бы
+  // была одиночным персонажем» — тест Командования по ней Tech-Use(I) (за столом).
+  const shepherd = actorType === "horde" && cyberShepherdReach(actor);
+  if (shepherd) {
+    const r = commandReachFor("character", benefitKey, actor, { moraleLost });
+    r.notes.unshift("Кибер-Пастырь: Орда тех-траллов получает Команды как одиночный персонаж (тест — Tech-Use(I)).");
+    return r;
+  }
   // Оглох/Без сознания (wdbc-x1nz.2.90): не доходит ВСЁ — и Команды, и
   // Присутствие. Раньше Присутствие глухоту не проверяло вовсе.
   const blockedBy = commandBlockReason(actor);

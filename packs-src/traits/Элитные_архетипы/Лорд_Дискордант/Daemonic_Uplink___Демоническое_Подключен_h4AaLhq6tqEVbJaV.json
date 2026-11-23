@@ -5,7 +5,7 @@
   "folder": "xj37X47ejVZ3sZoT",
   "system": {
     "description": "",
-    "notes": "Условный триггер на действие ДРУЖЕСТВЕННОЙ демонической машины в радиусе — эффект зависит от чужого действия в момент, не пассивный модификатор носителя. Механика ждёт задачу Sahara 12-dbc-114-0075 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026): кнопка «Демоническое Подключение» — выделенная машина в радиусе I.b м, выбор теста WS/BS/I/P; списывает 2 Когниции и пишет Характеристику Лорда, которую машина берёт в этот тест. Вручную: «одержимая/демоническая и дружественная» и уровень Навыка — за столом.",
     "benefit": "Тесная связь души и разума с демоническими машинами позволяет оптимизировать их рутины. Когда в пределах I.b м дружественная одержимая/демоническая машина совершает тест WS, BS, I или P, Лорд может потратить 2 Когниции, чтобы машина использовала его Характеристику и/или уровень продвижения соответствующего Навыка (если это тест Навыка) вместо своих.",
     "source": "Элитный архетип: Лорд-Дискордант",
     "hasRating": false,
@@ -37,11 +37,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "0A3iGVDIdAm4aEex",
+          "id": "iMvFGTdpFbYmpbUt",
           "operator": "AND",
           "entries": [
             {
-              "id": "DmNQL4ExzFCUp6IX",
+              "id": "2FxFYhYsjm9ViKVL",
               "kind": "script",
               "group": null,
               "corruptionValue": "1",
@@ -128,8 +128,8 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механика ждёт задачу): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Демоническое Подключение (2 Когниции)",
+              "code": "// Демоническое Подключение (combat/lord-discordant.mjs).\nreturn await useDaemonicUplink(actor);",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {

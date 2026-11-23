@@ -585,6 +585,17 @@ describe("applyHealing: stopBleeding (Остановить Кровотечен�
     expect(captured.rolls).toHaveLength(0);
   });
 
+  it("autoPass (Фронтовой Медик с Нартецием/Аптечкой Good.Q) — без броска, Кровотечение снято", async () => {
+    const medic = person({ medicae: 5 });
+    const patient = person();
+    patient.system.conditions = { bleeding: true };
+    const res = await applyHealing(medic, patient, { mode: "stopBleeding", mod: 0, apCost: 0, autoPass: "Нартеций" });
+    expect(res).toEqual({ success: true, auto: true });
+    expect(patient.system.conditions.bleeding).toBe(false);
+    expect(captured.rolls).toHaveLength(0);
+    expect(captured.chat[0].content).toContain("без теста (Нартеций)");
+  });
+
   it("«активно действовал в прошлый Ход» — по меткам прошлого Хода пациента", async () => {
     const p = person();
     expect(patientActedLastTurn(p)).toBe(false);
@@ -810,5 +821,22 @@ describe("Первая Помощь и отдых по книге (wdbc-x1nz.2.1
       expect(captured.chat[0].content).toContain("Провал");
       expect(patient.system.wounds.value).toBe(1);
     });
+  });
+});
+
+// task-2577: лечащая психосила/Дар вносится через Отдых + «Доп. Раны» — галочка
+// «Лечил своей силой» делает лечение «от другого» (Недоверие к Лечению).
+import { healingHealer } from "../../module/sheets/tabs/healing.mjs";
+describe("healingHealer: кто лечил «от другого»", () => {
+  const medic = { name: "Псайкер" };
+  it("Отдых без ухода и без силы — тело лечится само", () => {
+    expect(healingHealer("rest", {}, medic)).toBeNull();
+  });
+  it("Отдых + «Лечил своей силой» — лечащий передаётся", () => {
+    expect(healingHealer("rest", { byPower: true }, medic)).toBe(medic);
+  });
+  it("Первая Помощь и Мед. уход — как раньше", () => {
+    expect(healingHealer("firstAid", {}, medic)).toBe(medic);
+    expect(healingHealer("bedRest", { care: true }, medic)).toBe(medic);
   });
 });

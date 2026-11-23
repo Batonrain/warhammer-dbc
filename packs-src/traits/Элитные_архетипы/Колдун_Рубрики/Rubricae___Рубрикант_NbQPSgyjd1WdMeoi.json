@@ -5,7 +5,7 @@
   "folder": "WlglvQbAaTqsgArT",
   "system": {
     "description": "",
-    "notes": "Не автоматизировано: запреты (не говорит, не Бегает, не получает Порчу) и распад доспеха при Ранах ниже 0 — оговорки без числового канала; ведутся вручную. Механика ждёт задачу Sahara 12-dbc-114-0075 (dbc-114, 14.11.2026): пока кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026, Sahara 12-dbc-114-0075): возможности corruption.immune — прирост Порчи отменяется сам (снижение проходит); movement.noRun — Бег не объявляется; death.crumbleBelowZero — Раны ниже 0: вместо Критических Эффектов Голем рассыпается (метка «погиб», module/rules/rubricae.mjs). Вручную: «не может говорить» — механики речи в системе нет. Кнопка «▶ Запустить» пишет текст Черты в чат.",
     "benefit": "Не может говорить, совершать Бег и не получает Порчу. Когда его Раны опускаются ниже 0, он рассыпается грудой пустых доспехов.",
     "source": "Элитный архетип: Колдун Рубрики (Голем Рубрики)",
     "hasRating": false,
@@ -130,6 +130,42 @@
               "code": "// Памятка (правило стола, механика ждёт задачу): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "RubrCorrImmune01",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "corruption.immune",
+              "label": "Рубрикант: не получает Порчу",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "RubrNoRunCapab01",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "movement.noRun",
+              "label": "Рубрикант: не может совершать Бег",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "RubrCrumbleCap01",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "death.crumbleBelowZero",
+              "label": "Рубрикант: при Ранах ниже 0 рассыпается",
+              "code": "",
               "when": {
                 "negate": false,
                 "conditions": []

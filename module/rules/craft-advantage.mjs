@@ -36,6 +36,7 @@
 
 import { itemHasName } from "./predicates.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { inVoidMark } from "./void-split.mjs";
 import { isHaemonculus } from "../constants/haemonculus.mjs";
 import { POLYMATH_CHAIN_MAX } from "../constants/craft.mjs";
 import { craftedItemsOf, prototypingFor } from "./craft-memory.mjs";
@@ -53,7 +54,8 @@ export const hasDarkMuse = actor => hasItem(actor, "mutation", "Dark Muse");
 
 /** +30 от Тёмной Музы, когда именованный ассистент владеет Даром (в Мастерской — всегда тест Крафта/Исследования). */
 export function darkMuseAssistBonus(assistantActor) {
-  return hasDarkMuse(assistantActor) ? 30 : 0;
+  // Пустота Парии (task-f568): вдохновение Тёмного Принца не доходит — обычный ассистент.
+  return hasDarkMuse(assistantActor) && !inVoidMark(assistantActor) ? 30 : 0;
 }
 
 /**
@@ -197,6 +199,21 @@ export const RESEARCH_BONUS_CAPABILITY = "craft.researchBonus";
  */
 export function researchBonus(crafter, mode) {
   return mode === "research" && hasRuleFlag(crafter, RESEARCH_BONUS_CAPABILITY) ? 10 : 0;
+}
+
+/**
+ * Когитор, Черта «Инфернальное Вдохновение» (Sahara 583-29da): «Уменьшает время
+ * смены для любых исследований вдвое (обычно до 4 ч) и удваивает Успехи на
+ * исследования». Только режим Исследования; узнаётся по имени Черты, а не
+ * записью Конструктора — снимки Черты на акторах живых миров её не несут.
+ * @returns {{hours:number, successMult:number, source:string}}
+ */
+export function cogitorResearchShift(crafter, mode, baseHours) {
+  const on = mode === "research" && (crafter?.items ?? []).some(i => i?.type === "trait"
+    && (itemHasName(i, "Infernal Inspiration") || itemHasName(i, "Инфернальное Вдохновение")));
+  return on
+    ? { hours: baseHours / 2, successMult: 2, source: "Инфернальное Вдохновение" }
+    : { hours: baseHours, successMult: 1, source: "" };
 }
 
 /** Киберпроповедник применяется к ЭТОМУ проекту (категория «Бионика и Мехадендриты»)? */

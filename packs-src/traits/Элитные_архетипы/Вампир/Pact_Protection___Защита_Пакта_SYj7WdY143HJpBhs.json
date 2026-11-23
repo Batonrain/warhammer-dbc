@@ -5,7 +5,7 @@
   "folder": "FgdGoSekSCHU21Ha",
   "system": {
     "description": "",
-    "notes": "Обоснование From Beyond через демонического патрона + условная телепатия — нарративное объяснение существующей Черты плюс отдельная условная способность, без нового числа. Правило стола, механики нет (dbc-114, 14.11.2026, решение владельца): кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026): когда по носителю применяют любую психосилу Телепатии, в гейте Теста Сопротивления система сама пишет карточку «Защита Пакта» — телепат считывает ложь демона-покровителя. Сам иммунитет к силам на разум — Черта From Beyond (свой гейт). Вручную: что именно «видит» телепат — отвечает ГМ.",
     "benefit": "Трейт From Beyond вызван связью его души с демоническим патроном, и (по крайней мере изначально) его разум не сильно отличается от человеческого. Телепатия может «читать» мысли и эмоции персонажа, но на деле считывает ложную информацию, которую создаёт демон-покровитель.",
     "source": "Элитный архетип: Вампир",
     "hasRating": false,
@@ -37,12 +37,12 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "QM5xG82BbUF50cBk",
+          "id": "URsct8d7F6110Du1",
           "operator": "AND",
           "entries": [
             {
-              "id": "XkqACwUsoRXTxRul",
-              "kind": "script",
+              "id": "9j74eFRUYeKW9hWB",
+              "kind": "capability",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -82,7 +82,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "",
+              "capabilityKey": "trait.elitnyeArhetipy.vampir.pactProtection",
               "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "capabilityMode": "flag",
@@ -128,14 +128,29 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механики нет): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Защита Пакта: телепатия читает ложь демона",
+              "code": "",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "resPoolKey": "",
+              "resPoolLabel": "",
+              "resPoolMax": "",
+              "resPoolRefill": "",
+              "resPoolRoundCap": "",
+              "resPoolGainLabel": "",
+              "resPoolGainAmount": "",
+              "resPoolAsInfamy": false,
+              "resPoolAsInfamyCap": "",
+              "resPoolAsInfamyCor": "",
+              "resPoolAsInfamyNote": "",
+              "resPoolBoostChars": "",
+              "resPoolFailChars": "",
+              "modAuto": false,
+              "powerName": ""
             }
           ]
         }

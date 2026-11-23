@@ -1,6 +1,8 @@
 // module/sheets/sheet-helpers.mjs
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
+import { isDendriteShield, hasTestudo } from "../rules/testudo.mjs";
+import { hasJuryRigging, juryRiggedOriginal } from "../rules/jury-rigging.mjs";
 import { severityTestMod, severityNote } from "../rules/disorder-severity.mjs";
 import { LIMB_LOSS_KEYS, lostSidesLabel } from "../rules/limb-loss.mjs";
 import { getHeldHand } from "../rules/hands.mjs";
@@ -41,6 +43,7 @@ import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey, aspirationPickState } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
 import { gearRequiresWearing } from "../apps/effects.mjs";
+import { skitariiModuleSummary } from "../rules/skitarii-modules.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
 import { extendedTestRows } from "../rules/extended-test.mjs";
 import { testTargetList } from "../rules/test-kind.mjs";
@@ -672,6 +675,9 @@ function buildGetDataUncached(actor) {
       // подсветка по ним не видела новых назначений (wdbc-x1nz.2.100).
       shieldHand:      getHeldHand(i) || "left",
       shieldRaised:    !!i.getFlag?.("warhammer-dbc", "shieldRaised"),
+      // Тестудо (rules/testudo.mjs): щит на мехадендрите; кнопка видна при Таланте или уже поставленном щите.
+      shieldDendrite:  isDendriteShield(i),
+      canDendriteShield: s.shieldAP != null && (isDendriteShield(i) || hasTestudo(actor)),
       shieldCoverage:  s.shieldAP != null ? shieldCoverageLabel(i) : "",
       // В какой руке оружие (module/apps/hud.mjs, карточки правая/левая) — без
       // дефолта, в отличие от shieldHand: одиночное оружие руку не форсирует.
@@ -698,6 +704,9 @@ function buildGetDataUncached(actor) {
       // починено»): тот же гейт кнопки «Атака», книга не делает исключения
       // по классу оружия, в отличие от jammed (только дальнобойное).
       destroyed:    !!s.destroyed,
+      // На Честном Слове (rules/jury-rigging.mjs): кнопки быстрой починки и полного ремонта.
+      canJuryRig:   !!s.destroyed && hasJuryRigging(actor),
+      juryRigged:   juryRiggedOriginal(i) != null,
       // Закрепление (стр. 35, wdbc-x1nz.2.56) — только тяжёлое; canBrace не
       // проверяет isBraced (кнопка «Закрепить» доступна и повторно —
       // перезакрепление на новом развороте/позиции разрешено книгой без
@@ -742,6 +751,9 @@ function buildGetDataUncached(actor) {
       groupLabel:  WEAPON_MOD_GROUPS[cat]?.[i.system.modGroup] ?? "",
       weight:      i.system.weight ?? 0,
       quality:     i.system.quality || "common",
+      // Включаемый мод (Порты Авточувств, rules/autosense-jacks.mjs) — тумблер в строке.
+      activatable: !!i.system.activatable,
+      active:      !!i.system.active,
       stored:      !!i.system.stored,
       benefit:     i.system.description || "",
       installedOn: i.system.installedOn || ""
@@ -953,13 +965,24 @@ function buildGetDataUncached(actor) {
   // Органы Астартес (category "astartes") показаны отдельным блоком ГЕНОСЕМЯ
   // на вкладке ТЕЛО (context.geneSeedOrgans ниже) — здесь исключены, чтобы не
   // дублироваться в общей таблице Имплантов.
+  // Модули Скитарии: лимит ½ T.b (окр.▲) и переключатель Смещающейся Мантии.
+  const skMods = skitariiModuleSummary(actor);
+  context.skitariiModules = skMods;
   context.gearImplants = allItems.filter(i => i.type === "implant" && i.system.category !== "astartes").map(i => ({
     id: i.id, name: i.name,
     category:  IMPL_CAT[i.system.category] ?? i.system.category ?? "",
     quality:   QUAL[i.system.quality] ?? i.system.quality ?? "",
     installed: i.system.installed || "",
-    effect:    i.system.effect || ""
+    effect:    i.system.effect || "",
+    // Лежит на листе без операции Хирургеона (wdbc-pqrh1): такой имплант не
+    // даёт эффектов, не стоит на фигуре и не занимает порты — подсветка и
+    // кнопка ГМа «Установлен» (персонажи, собранные до Хирургеона).
+    notInstalled: !i.getFlag?.("warhammer-dbc", "installed"),
+    // Модуль Скитарии: отключён ли (флаг disabled) и можно ли щёлкать Мантией.
+    moduleOff: !!skMods?.ids.has(i.id) && !!i.getFlag?.("warhammer-dbc", "disabled"),
+    moduleToggle: !!skMods?.mantle && skMods.ids.has(i.id)
   }));
+  context.canMarkImplants = !!globalThis.game?.user?.isGM;
 
   // ── ТЕЛО (медицинский когитатор) ────────────────────────────────────────────
   {

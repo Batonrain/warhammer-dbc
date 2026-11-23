@@ -108,6 +108,42 @@ export function aggregateArmorSkillMods(props) {
   return out;
 }
 
+// ── Stealthed: «если поверх этой брони не носить больше ничего» ────────────
+// Книга (свойство Stealthed): «+10 на тесты Stealth и скрывает персонажа с
+// теплового зрения… если поверх этой брони не носить больше ничего, кроме
+// разве что легкой разгрузки или пояса» (Sahara wdbc-x1nz-4-stealthed).
+// Разгрузка и пояс — снаряжение (gear), не броня; «поверх» — другая НАДЕТАЯ
+// броня, закрывающая хотя бы одну из тех же локаций (AP > 0), кроме Подкладки
+// (undersuit: «носится под другой бронёй» — она всегда снизу).
+const ARMOR_LOCS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
+const coveredLocs = item => ARMOR_LOCS.filter(l => (Number(item?.system?.[l]) || 0) > 0);
+const hasArmorProp = (item, key) => (item?.system?.properties ?? []).includes(key);
+
+/**
+ * Броня, надетая поверх `item`, либо null.
+ * @param {object} item     предмет брони
+ * @param {object[]} armors предметы актора (берутся только надетые armor)
+ */
+export function armorWornOver(item, armors) {
+  const mine = new Set(coveredLocs(item));
+  return (armors ?? []).find(o => o !== item && o?.id !== item?.id
+    && o?.type === "armor" && o.system?.equipped
+    && !hasArmorProp(o, "undersuit")
+    && coveredLocs(o).some(l => mine.has(l))) ?? null;
+}
+
+/**
+ * Модификаторы Навыков ОДНОГО предмета брони с учётом условия Stealthed:
+ * поверх что-то надето — вклад свойства Stealthed снимается.
+ * @returns {{mods: Record<string, number>, stealthedCoveredBy: object|null}}
+ */
+export function armorSkillModsFor(item, armors) {
+  let props = resolveArmorProps(item);
+  const over = props.some(p => p.key === "stealthed") ? armorWornOver(item, armors) : null;
+  if (over) props = props.filter(p => p.key !== "stealthed");
+  return { mods: aggregateArmorSkillMods(props), stealthedCoveredBy: over };
+}
+
 /** OR множества подвидов (noApVsSubtype/doubleApVsSubtype) двух предметов. */
 function orSubtypeSet(a = {}, b = {}) {
   const out = { ...a };

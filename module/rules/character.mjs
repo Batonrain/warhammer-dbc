@@ -63,6 +63,9 @@ import { sharedFormationInitBonus } from "./combat-formation.mjs";
 import { isBeyondHuman, beyondHumanCharKey, BEYOND_HUMAN_UNNATURAL } from "./beyond-human.mjs";
 import { LIMITED_LIFT_CAPABILITY, flightStrengthBonus, limitedLiftStatus } from "./limited-lift.mjs";
 import { woundSustainSplit } from "./wound-in-reality.mjs";
+import { applyAlacritySkills } from "./wild-psyker-talents.mjs";
+import { mirrorSoulCost } from "./archmagus-talents.mjs";
+import { brotherhoodSustainCost } from "./kenetai-talents.mjs";
 import { quadrupedMultiplier } from "./quadruped.mjs";
 
 /**
@@ -1024,6 +1027,8 @@ export function prepareCharacterDerived(actor, system) {
       // вроде «Внимательный к деталям»), а не прибавка от снаряжения.
       sk.total = charVal + rankBonus + (Number(sk.mod) || 0);
     }
+    // Цепи Стремительности (Дикий Псайкер): W вместо A в Acrobatics и Dodge.
+    applyAlacritySkills(actor, skills, chars);
 
     // ── Групповые навыки ──────────────────────────────────────────────────
     const groupSkills = system.groupSkills || {};
@@ -1214,6 +1219,10 @@ export function prepareCharacterDerived(actor, system) {
     // Рана в Реальности (Талант Псайканы, пачка I2): психосилы, помеченные «бесплатными», не снижают
     // тPR — платится только то, что осталось (rules/wound-in-reality.mjs). Без Таланта — не меняет ничего.
     if (sustainedCost > 0) sustainedCost = woundSustainSplit(actor).paid;
+    // Зеркальная Душа (Архимаг): силы на копии души тPR не снижают.
+    if (sustainedCost > 0) sustainedCost = Math.max(0, sustainedCost - mirrorSoulCost(actor));
+    // Клинки Братства (Кенетаи): сила, разделённая с клинками союзников, держится как ещё одна сила.
+    sustainedCost += brotherhoodSustainCost(actor);
     system.experience.spentTalents = autoTalentCost;
     system.experience.spentPsy = autoPsyCost;
     system.experience.spentTech = autoTechCost;

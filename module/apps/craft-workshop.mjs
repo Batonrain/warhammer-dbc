@@ -19,7 +19,8 @@
 import { CRAFT_CATEGORIES, CRAFT_QUALITY, CRAFT_TOOLS, RARITY_LABELS, RARITY_ORDER,
          RESEARCH_KINDS, CRAFT_MATERIALS, bankFromTable,
          buildAvailableSkills, findSkillOption, suggestOption,
-         computeCombined, bankFor, degreesOfSuccess, reqSkillLabel, POLYMATH_CHAIN_MAX } from "../constants/craft.mjs";
+         computeCombined, bankFor, degreesOfSuccess, reqSkillLabel, POLYMATH_CHAIN_MAX,
+         MUTANT_FIT_MOD, MUTANT_FIT_CATEGORIES, mutantFitBaseBank, mutantFitApplies } from "../constants/craft.mjs";
 import { craftIcon } from "../constants/craft-icons.mjs";
 import { VAT_QUALITY, BIO_TARGET_QUALITY, BIO_TEST_SKILLS, BIO_OUTCOMES,
          VAT_ENTRY_REQ, TEMPLATE_RESEARCH, vatPlan, failQuality,
@@ -33,13 +34,17 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
-import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
+import { mechatendrilCraftBonus, craftShiftHours, CRAFT_SHIFT_HOURS } from "../rules/mechadendrites.mjs";
+import { maxHands } from "../rules/hands.mjs";
+import { hasSlowShiftTalent, cyberpreacherApplies, cogitorResearchShift, effectiveDiceMode, slowShiftBonus, polymathBonus, polymathCrit, researchBonus, darkMuseAssistBonus, haemonculusLabBonus,
          monotonyPenalty, fabricatorToolMod, masterEngineseerBonus, masterEngineseerAutoEligible,
          masterEngineseerAutoSuccesses, masterEngineseerNoParts, hasMasterEngineseer, destroyedWeaponsOf,
          craftShiftTitle, hasPrototyping, prototypingEffects, craftCritLoss, craftCritLossBase,
          CRAFT_CRIT_LOSS_MIN, CRAFT_CRIT_LOSS_MAX } from "../rules/craft-advantage.mjs";
 import { CRAFTED_ITEMS_FLAG, craftedItemsOf, recordCreation, recordAssist, normalizeItemName } from "../rules/craft-memory.mjs";
 import { repairDestroyedWeapon } from "../combat/weapon-repair.mjs";
+// Фрейм Шедевра (Архимагос), Цепи Производства (Лакрималлус).
+import { mechanicusCraftShift, masterpieceEligible, masterpieceBank } from "../rules/mechanicus-craft.mjs";
 import { spendFromInfamyPool, actorInfamyPath } from "./infamy-points.mjs";
 import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 import { researchFindingItemData, researchJournalEntry, appendResearchJournal,
@@ -225,25 +230,30 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // Прототипирование (Талант, 3-3a64): по журналу уже созданного (rules/craft-memory.mjs)
     // снимает -20 Улучшения у предмета, что создал/ассистировал, и вдвое режет множитель Банка.
     const proto = prototypingEffects(crafter, proj);
-    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: proj.improve && !proto.noImprovePenalty ? -20 : 0,
-      hookUpMod: hookUpCraftMod(crafter, proj) };
+    // Доводка брони под мутанта (wdbc-x1nz.4): +10 к тесту, свой Банк; Улучшение с ней не складывается.
+    const mutantFit = mutantFitApplies(proj, category?.key);
+    const improve = proj.improve && !mutantFit;
+    const mods = { toolMod, gmMod: Number(proj.gmMod || 0), improveMod: improve && !proto.noImprovePenalty ? -20 : 0,
+      hookUpMod: hookUpCraftMod(crafter, proj), mutantFitMod: mutantFit ? MUTANT_FIT_MOD : 0 };
     const combined = computeCombined(selectedOpts, mods);
 
     // Ремонт (wdbc-53of9): книга Банка ремонта не называет, таблица создания к нему не относится —
     // Банк вписывает игрок, пока он пуст, цели нет (bank = null) и ГОТОВО не наступает.
     const isRepair = proj.mode === "craft" && !!proj.repair;
     const repairNeedsBank = isRepair && proj.baseBank == null;
-    const tableBank = isResearch || isRepair ? null : bankFromTable(category, proj.rarity);
+    const tableBank = isResearch || isRepair ? null
+      : mutantFit ? mutantFitBaseBank(proj.rarity) : bankFromTable(category, proj.rarity);
     const notCraftable = !isResearch && !isRepair && tableBank === null && proj.baseBank == null;
     const baseBank = proj.baseBank ?? (isResearch ? 20 : repairNeedsBank ? null : (tableBank ?? 10));
     const isMachine = !!category?.machine && !isResearch;
     // Машины: итоговый Банк ×(Размер+1) — раньше подсказка просила учесть это
     // руками (wdbc-5il7), теперь размер вводится тут же и множится сразу.
     const machineSize = isMachine ? Math.max(0, Number(proj.machineSize) || 0) : 0;
-    const bank = repairNeedsBank ? null
-      : bankFor(baseBank, proj.quality, proj.improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
+    const bankRaw = repairNeedsBank ? null
+      : bankFor(baseBank, proj.quality, improve, { halveMult: proto.halveBank }) * (isMachine ? machineSize + 1 : 1);
+    const bank = masterpieceBank(bankRaw, crafter, proj);
 
-    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable, repairNeedsBank,
+    return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable, repairNeedsBank, mutantFit,
       machineNote: isMachine, machineSize, crafter, isResearch, isStudy, proto };
   }
 
@@ -427,6 +437,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
       critLoss: craftCritLossBase(proj.critLoss), critLossMin: CRAFT_CRIT_LOSS_MIN, critLossMax: CRAFT_CRIT_LOSS_MAX,
       gmMod: proj.gmMod, assistants: proj.assistants, improve: proj.improve, monotony: proj.monotony,
+      // Доводка брони под мутанта: галочка видна у Крафта брони (не ремонт).
+      mutantFitAvail: proj.mode === "craft" && !proj.repair && MUTANT_FIT_CATEGORIES.includes(R.category?.key),
+      mutantFit: !!R.mutantFit, mutantFitModVal: R.mods.mutantFitMod,
       hookUp: !!proj.hookUp, hookUpAvail: hookUpAvailable(R.crafter, proj),
       diceMode: proj.diceMode || "normal",
       // Медленная Смена/Киберпроповедник (wdbc-u0by) — галочка видна только
@@ -508,6 +521,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=critloss]", "change", e => upd(e.currentTarget, p => p.critLoss = craftCritLossBase(e.target.value)));
     on("[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
     on("[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
+    on("[name=mutantfit]", "change", e => upd(e.currentTarget, p => { p.mutantFit = e.target.checked; p.baseBank = null; }));
     on("[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
     on("[name=hookup]", "change", e => upd(e.currentTarget, p => p.hookUp = e.target.checked));
     on("[name=dicemode]", "change", e => upd(e.currentTarget, p => p.diceMode = e.target.value));
@@ -642,7 +656,28 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     // Мастер-Технопровидец (Талант, 3-cc96 п.11): +10 к Tech-Use на Крафт — когда
     // Tech-Use ведущий Навык теста (см. masterEngineseerBonus).
     const engineseerBonus = masterEngineseerBonus(crafter, proj.mode, R.combined.primary?.value);
-    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus + engineseerBonus;
+    // Мехатендрил (wdbc-qbyvc): +5 к Крафту за каждый установленный, нужен Mechadendrite Use (Utility).
+    const tendrilBonus = mechatendrilCraftBonus(crafter, proj.mode);
+    // Гекатонхейр (Разобрать tfgq9): смена короче 8 ч на 30 мин за утилитарный дендрит/лишнюю руку, не меньше 2 ч.
+    // Инфернальное Вдохновение Когитора (Sahara 583-29da): смена Исследования вдвое короче, Успехи ×2.
+    const cogitor = cogitorResearchShift(crafter, proj.mode, CRAFT_SHIFT_HOURS);
+    const shiftHours = proj.mode === "research" ? cogitor.hours
+      : craftShiftHours(crafter, { extraArms: Math.max(0, maxHands(crafter) - 2) }) + (slowBonus ? 4 : 0);
+    const shiftHoursNote = cogitor.source
+      ? `${cogitor.source}: смена Исследования длится ${String(shiftHours).replace(".", ",")} ч вместо ${CRAFT_SHIFT_HOURS}, Успехи смены удваиваются`
+      : shiftHours !== CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)
+      ? `Гекатонхейр: смена длится ${String(shiftHours).replace(".", ",")} ч вместо ${CRAFT_SHIFT_HOURS + (slowBonus ? 4 : 0)}` : "";
+    // Фрейм Шедевра: выбор на проект спрашивается один раз (rules/mechanicus-craft.mjs).
+    if (masterpieceEligible(crafter, proj) && proj.masterpieceFrame == null) {
+      proj.masterpieceFrame = !!(await foundry.applications.api.DialogV2.confirm({
+        window: { title: "Фрейм Шедевра" },
+        content: "<p>Взять +30 к тесту и Банк вдвое? Тогда изделие будет совместимо только с фреймом мастера.</p>",
+        rejectClose: false
+      }));
+      if (proj.masterpieceFrame) return this._rollShift(pid, chain);
+    }
+    const mech = mechanicusCraftShift(crafter, proj);
+    const limit = mech.bonus + R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus + innovationBonus + engineseerBonus + tendrilBonus;
 
     // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
     // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
@@ -666,7 +701,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
       else if (!held) proj.engineseerAutoAt = null;
     }
 
-    const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor, R.proto.reroll);
+    const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor, R.proto.reroll || mech.reroll);
     let rolls = [], roll = null, rv = null, dos, diceNote = "", crit;
     if (autoSuccess) {
       // Броска нет: смена идёт на I.b Успехов, критов нет.
@@ -687,7 +722,8 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const critLine = critLineHtml(crit);
     const poly = polymathCrit(crafter, crit.success, chain);
 
-    const gain = Math.max(0, dos) + assist;
+    // Удвоение — своих Успехов смены (Когитор), не Успехов ассистентов.
+    const gain = Math.max(0, dos) * cogitor.successMult + assist;
     const wasDone = R.bank != null && proj.project.accumulated >= R.bank;
     // Критический Провал отнимает Успехи из банка (5–15 по решению ГМа — поле
     // проекта critLoss); Техника Безопасности крафтера/ассистента — исключение.
@@ -802,12 +838,15 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${labBonus ? `<div class="wh-craft-roll-line ok">Лаборатория Гемункула: +${labBonus} к тесту</div>` : ""}
           ${innovationBonus ? `<div class="wh-craft-roll-line ok">Инновация: +${innovationBonus} к тесту</div>` : ""}
           ${R.mods?.hookUpMod ? `<div class="wh-craft-roll-line">Крючок: ${R.mods.hookUpMod} к тесту — готовый наркотик отметьте «Крючок» на его листе (лимит доз ÷2 ▼, принимающие перебрасывают успешный тест Зависимости).</div>` : ""}
+          ${tendrilBonus ? `<div class="wh-craft-roll-line ok">Мехатендрилы: +${tendrilBonus} к тесту</div>` : ""}
+          ${shiftHoursNote ? `<div class="wh-craft-roll-line ok">${shiftHoursNote}</div>` : ""}
           ${engineseerBonus ?`<div class="wh-craft-roll-line ok">Мастер-Технопровидец: +${engineseerBonus} к тесту (Tech-Use)</div>` : ""}
           ${workaholicNote ? `<div class="wh-craft-roll-line ok">Трудоголик: штраф за монотонность не применяется</div>` : ""}
           ${noPartsNote ? `<div class="wh-craft-roll-line ok">${noPartsNote}</div>` : ""}
           ${R.proto.reroll ? `<div class="wh-craft-roll-line ok">Прототипирование: предмет уже создавался в этом Качестве — переброс (лучший из двух кубиков).</div>` : ""}
           ${R.proto.halveBank ? `<div class="wh-craft-roll-line ok">Прототипирование: раньше создавался в Качестве ниже — множитель Банка от Качества вдвое.</div>` : ""}
           ${memoryNote ? `<div class="wh-craft-roll-line ok">${memoryNote}</div>` : ""}
+          ${mech.lines.map(l => `<div class="wh-craft-roll-line ok">${l}</div>`).join("")}
           ${repairNote ? `<div class="wh-craft-roll-line ok">${repairNote}</div>` : ""}
           ${findingNote ? `<div class="wh-craft-roll-line ok">${findingNote}</div>` : ""}
           ${torrentNote ? `<div class="wh-craft-roll-line ok">${torrentNote}</div>` : ""}

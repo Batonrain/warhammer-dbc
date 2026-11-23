@@ -472,8 +472,11 @@ function fanaticRedirectButtons(fanaticIntercepts, hitNo) {
  */
 function fanaticInterceptSection(fanaticIntercepts) {
   if (!fanaticIntercepts.length) return "";
-  const rows = fanaticIntercepts.map(f => `
-    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(f.name)}</b>: «Перехват» у попадания выше переносит урон на него (или выделите его токен и примените урон вручную).
+  // Те же подписи, что у кнопок «Перехват» (fanaticButtonNames): одноимённые
+  // носители различаются именем токена или номером (Sahara fanatic-back-to-back п.2).
+  const names = fanaticButtonNames(fanaticIntercepts);
+  const rows = fanaticIntercepts.map((f, idx) => `
+    <div class="sq-chat-note">${rollIcon("shield", "#ffb347")}Рядом (в базовом контакте) носитель Fanatic — <b>${esc(names[idx])}</b>: «Перехват» у попадания выше переносит урон на него (или выделите его токен и примените урон вручную).
       ${f.freeUse
         ? `Раз в Раунд это не стоит ему Реакции (Спиной к Спине) — <button type="button" class="wh-back-to-back-mark-used" data-fanatic-uuid="${f.uuid}">Отметить бесплатный перехват</button>`
         : `Бесплатный перехват этим Раундом уже отмечен использованным — обычный перехват Fanatic (за Реакцию) всё ещё доступен.`}
@@ -566,7 +569,7 @@ function reactionKnockdownSection(reason, { actorUuid }) {
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null,
-                          grapple = false, chomper = false, bodyguards = [], allyName = "" }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
+                          grapple = false, chomper = false, bodyguards = [], anointed = [], allyName = "" }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
                           swarm = null, unseen = false, unseenDetected = false, unseenPenalty = 0,
                           sixthSenseBypassAvailable = false, musicOfBattleBypassAvailable = false,
                           isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "", razorEdge = false }) {
@@ -694,6 +697,12 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? (bodyguards ?? []).map(b => `<button class="wh-parry-btn wh-bodyguard-btn" type="button" data-bodyguard-uuid="${b.uuid}" data-for-ally="${esc(allyName)}" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
                title="Телохранитель: ${esc(b.name)} парирует эту атаку за союзника (его Реакция, его оружие)">
                Телохранитель: ${esc(b.name)}
+             </button>`).join("")
+          : ""}
+        ${!cannotParry && !unseenLocked
+          ? (anointed ?? []).map(b => `<button class="wh-parry-btn wh-bodyguard-btn" type="button" data-anointed="1" data-bodyguard-uuid="${b.uuid}" data-for-ally="${esc(allyName)}" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-attacker-weapon-uuid="${itemUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}" data-attack-id="${attackId}"
+               title="Помазанник: ${esc(b.name)} парирует эту атаку за союзника в 1 м — без траты Реакции, раз в Раунд (его оружие)">
+               Помазанник: ${esc(b.name)} (без Реакции)
              </button>`).join("")
           : ""}
         ${targetIsVehicle
@@ -903,6 +912,8 @@ export function attackCard({
   furiousAssaultHtml = "",
   // Упорство (combat/tenacity.mjs): готовая разметка кнопки повтора.
   tenacityHtml = "",
+  tipOfSpearHtml = "",
+  danceOfPainHtml = "",
   // Казнь (combat/execution.mjs): готовая разметка кнопки доп. атаки.
   executionHtml = "",
   // Снайпер Ужаса (combat/terror-sniper.mjs): {targetTokenUuid} или null.
@@ -1170,6 +1181,8 @@ export function attackCard({
       independentShotHtml || "",
       isMelee && furiousAssaultHtml ? furiousAssaultHtml : "",
       isMelee && tenacityHtml ? tenacityHtml : "",
+      isMelee && tipOfSpearHtml ? tipOfSpearHtml : "",
+      danceOfPainHtml || "",
       isMelee && executionHtml ? executionHtml : "",
       !isMelee && terrorSniperOffer ? `
     <button class="wh-terror-sniper-btn" type="button" data-attacker-uuid="${attackerUuid}" data-target-token-uuid="${esc(terrorSniperOffer.targetTokenUuid)}"

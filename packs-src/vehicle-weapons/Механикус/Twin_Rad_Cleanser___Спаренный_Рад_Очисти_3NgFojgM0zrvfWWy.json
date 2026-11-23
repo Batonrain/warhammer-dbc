@@ -40,6 +40,12 @@
       },
       {
         "key": "twinLinked"
+      },
+      {
+        "key": "unseen"
+      },
+      {
+        "key": "radiationSourced"
       }
     ],
     "needsRecharge": false,

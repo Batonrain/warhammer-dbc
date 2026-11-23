@@ -24,6 +24,8 @@ import { findTechImperative } from "../../constants/tech-imperatives.mjs";
 import { applyImperative } from "../../rules/imperative.mjs";
 import { isPsalmUnseenFortressItem, psalmUnseenFortressGrant } from "../../rules/psalm-unseen-fortress.mjs";
 import { hasElectrovigour } from "../../rules/electrovigour.mjs";
+// Малагра: Совершенная Катушка, Йовекс (rules/malagra-talents.mjs).
+import { malagraMiracleMods } from "../../rules/malagra-talents.mjs";
 import { pickReroll } from "../../rules/reroll-pick.mjs";
 import { markUnseenDetectedUntilNextTurn } from "../../rules/unseen-attack.mjs";
 import { testOutcome } from "../../rules/roll-outcome.mjs";
@@ -42,6 +44,10 @@ import { hasApocryphaCoil, hasCloudCognition, hasMotiveEucharist, planCoilTransf
          planMotiveEucharist, cloudCognitionCap, receivedNow, CLOUD_COGNITION_MAX, MOTIVE_EUCHARIST_MAX,
          CLOUD_COGNITION_TURN_FLAG, MOTIVE_EUCHARIST_TURN_FLAG, CLOUD_COGNITION_RECEIVED_FLAG }
   from "../../rules/technomystic-resources.mjs";
+import { coilsTechBonus } from "../../rules/electropriest.mjs";
+import { techPowerPenetration } from "../../rules/tech-power-pen.mjs";
+import { voltaicConfluenceReroll } from "../../combat/electropriest.mjs";
+import { corruptedNoosphereLord, corruptedNoosphereDrain, CORRUPTED_NOOSPHERE_PROCESS } from "../../combat/lord-discordant.mjs";
 
 /** Карточка-уведомление Техножреца (компиляция, Разгон, Процессы, Декомпиляция) — ни броска, ни Порога. */
 async function techNote(actor, title, line) {
@@ -111,9 +117,14 @@ export async function activateTechMiracle(actor, item) {
   // Цели — Foundry-таргет, тот же источник, что у Императива ниже.
   const hatredTargets = [...(game.user?.targets ?? [])].map(t => t.actor ?? null);
   const { cost: baseCogCost, discount: hatredDiscount } = techActivationCost(actor, item, hatredTargets);
+  // Порченная Ноосфера (Лорд Дискордант): во вражеской ауре цена активации ×2 (combat/lord-discordant.mjs).
+  const noosphereLord = corruptedNoosphereLord(actor);
+  // Катушки Электрожреца без одежды: Компенсатор и Люминен (rules/electropriest.mjs).
+  const coilsTech = coilsTechBonus(actor, item);
   // Омнимнезис добавляет к цене ⚙ переброса (ниже) — поэтому let.
-  let   cogCost  = baseCogCost;
-  let   enCost   = sys.energyCost || 0;
+  let   cogCost  = baseCogCost * (noosphereLord ? 2 : 1);
+  // Цена активации Техночуда — Когниция И Энергия («2К+3Э»): Ноосфера удваивает обе.
+  let   enCost   = (sys.energyCost || 0) * (noosphereLord ? 2 : 1);
   const cog      = actor.system.cognition || { value: 0, max: 0 };
   const en       = actor.system.energy || { value: 0, max: 0 };
 
@@ -206,8 +217,21 @@ export async function activateTechMiracle(actor, item) {
   let compX = sys.miracleType === "compensator" ? (sys.rating || 0) : 0;
   const compExtra = (sys.extraTypes || []).find(e => e.type === "compensator");
   if (compExtra) compX = Math.max(compX, compExtra.x || 0);
-  if (compX > 0 && enCost > 0) {
-    const compBonus = actor.system.techCompBonus || 0;
+  // Малагра: снимок до траты зарядов — Катушка активна, пока заряды есть.
+  let malagra = malagraMiracleMods(actor, item);
+  // Йовекс — «может»: при Компенсаторе спрашиваем, стоит ли +1d10 потери снижения цены.
+  if (malagra.autoFailComp && compX > 0 && enCost > 0) {
+    const take = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `Йовекс — ${actor.name}` },
+      content: `<p>Усилить «${esc(item.name)}»: урон +1d10, Pen +${malagra.pen}? Тогда тест Компенсатора проваливается сам (цена ${enCost} ⚡).</p>`,
+      rejectClose: false
+    });
+    if (!take) malagra = malagraMiracleMods(actor, item, { iovex: false });
+  }
+  if (compX > 0 && enCost > 0 && malagra.autoFailComp) {
+    compLine = `<div class="roll-threshold" style="font-size:0.85em;">Компенсатор (X${compX}): Йовекс — провал без броска, цена ${enCost} ⚡</div>`;
+  } else if (compX > 0 && enCost > 0) {
+    const compBonus = (actor.system.techCompBonus || 0) + coilsTech.test;
     const tTot   = actor.system.characteristics?.t?.total ?? 0;
     const compTh = tTot - 10 * compX + compBonus;
     // Electrovigour (wdbc-u0by): «Преимущество на тесты Т на Техночудеса с
@@ -272,6 +296,16 @@ export async function activateTechMiracle(actor, item) {
       deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
     }
   }
+  // Вольтаическое Слияние (Электрожрец): переброс активации Люминен за 1 аблативную Рану щита.
+  let confluenceLine = "";
+  if (!success && !fieldFail && await voltaicConfluenceReroll(actor, item, `Активация «${item.name}» провалена (бросок ${rv} при Пороге ${eff}).`)) {
+    const roll3 = await new Roll("1d100").evaluate();
+    allRolls.push(roll3);
+    confluenceLine = `Вольтаическое Слияние: −1 аблативная Рана, переброс ${rv} → ${roll3.total}`;
+    rv = roll3.total;
+    success = rv <= eff;
+    deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
+  }
 
   // Трата ресурсов: Когниция ⚙ — всегда (до теста), Энергия ⚡ — только при Успехе.
   const resUpd = {};
@@ -293,6 +327,8 @@ export async function activateTechMiracle(actor, item) {
   }
 
   if (Object.keys(resUpd).length) await actor.update(resUpd);
+  // Порченная Ноосфера: опустил Когницию до 0 во вражеской ауре — Лорд получает 1 Когницию.
+  if (noosphereLord && cogCost > 0) await corruptedNoosphereDrain(actor, noosphereLord, cog.value || 0, resUpd["system.cognition.value"]);
 
   // Славословие: при успехе компиляция расходуется (одноразово)
   if (isSlavo && success) await item.update({ "system.compiled": false });
@@ -308,22 +344,27 @@ export async function activateTechMiracle(actor, item) {
   if (success && sys.damage) {
     // Качество Железа модифицирует I.b в формулах эффектов/дальности (best +1, poor −1).
     let chars = actor.system.characteristics;
-    if (ironIbDelta && chars?.int) {
+    if ((ironIbDelta || malagra.ib || malagra.i) && chars?.int) {
       chars = foundry.utils.deepClone(chars);
-      chars.int.bonus = (chars.int.bonus || 0) + ironIbDelta;
+      chars.int.bonus = (chars.int.bonus || 0) + ironIbDelta + malagra.ib;
+      chars.int.total = (chars.int.total || 0) + malagra.i;
     }
-    const f = applyDamageDiceMods(
-      resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0),
-      wp
-    );
+    const baseF = resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0) + (coilsTech.dmg ? ` + ${coilsTech.dmg}` : "");
+    const f = applyDamageDiceMods(malagra.extraDice ? `${baseF} + ${malagra.extraDice}` : baseF, wp);
     try {
-      const dmgRoll = await new Roll(f).evaluate();
+      let dmgRoll = await new Roll(f).evaluate();
       allRolls.push(dmgRoll);
+      // Вольтаическое Слияние: переброс урона Люминен за 1 аблативную Рану щита.
+      if (await voltaicConfluenceReroll(actor, item, `Урон «${item.name}»: ${dmgRoll.total}.`)) {
+        dmgRoll = await new Roll(f).evaluate();
+        allRolls.push(dmgRoll);
+      }
       // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия/психосил.
       const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType, hitLocation: "Торс", attacker: actor });
       if (ext.exRoll) allRolls.push(ext.exRoll);
       const dt  = DAMAGE_TYPES[sys.damageType] || sys.damageType;
-      const pen = sys.penetration || 0;
+      // Пробитие числом и формулой («Pen ½I.b»), с той же поправкой I.b, что у урона (Железо, Совершенная Катушка).
+      const pen = techPowerPenetration(sys, chars, actor.system.corruptionBonus ?? 0) + coilsTech.pen + malagra.pen;
       const extStr = ext.hasExtreme ? `
           <div class="roll-extreme-block">
             <b>Экстремальный урон</b> · d5: ${ext.extremeLevel}
@@ -432,7 +473,11 @@ export async function activateTechMiracle(actor, item) {
     lines: [
       ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : "",
       compLine,
+      ...malagra.lines.map(l => `<div class="roll-threshold" style="font-size:0.85em;">${l}</div>`),
       omnimnesisLine ? `<div class="roll-threshold" style="font-size:0.85em;">${omnimnesisLine}</div>` : "",
+      confluenceLine ? `<div class="roll-threshold" style="font-size:0.85em;">${confluenceLine}</div>` : "",
+      coilsTech.note ? `<div class="roll-threshold" style="font-size:0.85em;">⚡ ${coilsTech.note}</div>` : "",
+      noosphereLord ? `<div class="roll-threshold" style="font-size:0.85em;">☠️ Порченная Ноосфера (${esc(noosphereLord.name)}): цена активации ×2.</div>` : "",
       costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],
@@ -844,12 +889,16 @@ export async function overclock(actor) {
 async function cognitionRest(actor) {
   const cog = actor.system.cognition || { value: 0, max: 0, regen: 0 };
   const pc = processCostTotal(actor);
+  // Порченная Ноосфера (Лорд Дискордант): во вражеской ауре суммарная цена Процессов +2 ⚙.
+  const noosphereLord = pc.base > 0 ? corruptedNoosphereLord(actor) : null;
+  if (noosphereLord) pc.total += CORRUPTED_NOOSPHERE_PROCESS;
   const inCombat = isEncounterActive();
   const alreadyPaid = inCombat && !!actor.getFlag?.("warhammer-dbc", PROCESS_PAID_FLAG);
   // Повторное «↻» в том же Ходу ничего не восстанавливает: начало Хода уже было (ревью 25.10.2026).
   const nv  = alreadyPaid ? (cog.value || 0) : Math.min(cog.max || 0, (cog.value || 0) + (cog.regen || 0));
   const settle = alreadyPaid ? { pay: 0, after: nv, shortfall: 0 } : settleProcessCost(nv, pc.total);
   await actor.update({ "system.cognition.value": settle.after });
+  if (noosphereLord && !alreadyPaid) await corruptedNoosphereDrain(actor, noosphereLord, nv, settle.after);
   // Метка «↻ уже был в этом Ходу» — и без Процессов: иначе «↻» восстанавливал бы Когницию сколько угодно раз за Ход.
   if (!alreadyPaid && inCombat) await actor.setFlag("warhammer-dbc", PROCESS_PAID_FLAG, true);
   if (alreadyPaid && !(pc.base > 0 || pc.revelation || pc.piety)) {
@@ -859,6 +908,7 @@ async function cognitionRest(actor) {
     const parts = [`Цена Процессов в этот Ход: ${techIcon("cognition")} <b>${pc.total}</b>`];
     if (pc.revelation) parts.push(`Цифровое Откровение −${pc.revelation}`);
     if (pc.piety) parts.push(`Ноосферная Набожность −${pc.piety}`);
+    if (noosphereLord) parts.push(`Порченная Ноосфера (${esc(noosphereLord.name)}) +${CORRUPTED_NOOSPHERE_PROCESS}`);
     const tail = alreadyPaid
       ? `Цена в этом Ходу уже списана ранее — Когниция сейчас ${settle.after}.`
       : `Списано: ${techIcon("cognition")} <b>${settle.pay}</b> (было ${nv}, стало ${settle.after}).`

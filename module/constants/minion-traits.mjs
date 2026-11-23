@@ -136,10 +136,11 @@ export const MINION_TRAITS = {
   // (`requires`), — ни в списке генератора, ни по цене без него их нет. Цены
   // книги: Unruly −1, ½ за ходовые, 1 за Ablative Plating и тяжёлые Лезвия.
   // `pack` — имя предмета в компендиуме, когда ключ таблицы с ним не совпадает
-  // (у книги два профиля Лезвий, предмет один — Blades (X)). Legion в таблицу
-  // не внесён: Черты «Legion / Легион» в компендиуме нет.
+  // (у книги два профиля Лезвий, предмет один — Blades (X)). Legion — Черта
+  // существа «Legion / Легион» (Sahara 578-legion), её читает mount.mjs.
   "Unruly":           { cost: -1,  groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
   "All-Terrain":      { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
+  "Legion":           { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
   "Maneuverable":     { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
   "Stand":            { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },
   "War-Trained":      { cost: 0.5, groups: only("beast", "machine", "daemon"), tiers: tiers(true, true, true), requires: "Steed" },

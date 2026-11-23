@@ -40,14 +40,25 @@ export function applyReverse(picked) {
 
 /**
  * @param {number[]} values броски в порядке выпадения
- * @param {"keepBest"|"keepWorst"|"reverse"} mode — "reverse" берёт ПЕРВЫЙ
+ * @param {"keepBest"|"keepWorst"|"reverse"|"rerollSuccess"|"rerollFail"} mode — "reverse" берёт ПЕРВЫЙ
  *   бросок и обращает его, если так лучше (остальные броски, если вызывающий
  *   по привычке бросил два, просто отброшены)
  * @returns {?{value:number, index:number, dropped:number[]}} null на пустом списке
  */
-export function pickReroll(values, mode = "keepBest") {
+export function pickReroll(values, mode = "keepBest", { isSuccess = null } = {}) {
   const list = Array.isArray(values) ? values.map(Number).filter(Number.isFinite) : [];
   if (!list.length) return null;
+  // «Должен перебросить успешный/проваленный тест» (Расчленитель, решение
+  // Сергея 21.11.2026): первый бросок — исходный; если он Успех (rerollSuccess)
+  // или Провал (rerollFail), остаётся НОВЫЙ бросок, какой бы ни выпал. Без
+  // isSuccess исход не узнать — остаётся исходный бросок.
+  if (mode === "rerollSuccess" || mode === "rerollFail") {
+    const first = list[0];
+    const ok = typeof isSuccess === "function" ? !!isSuccess(first) : null;
+    const redo = ok != null && list.length > 1 && (mode === "rerollSuccess" ? ok : !ok);
+    // Не перебрасывали — второй кубик не в счёт, «отброшено» не пишем.
+    return redo ? { value: list[1], index: 1, dropped: [list[0]] } : { value: list[0], index: 0, dropped: [] };
+  }
   if (mode === "reverse") {
     return applyReverse({ value: list[0], index: 0, dropped: list.slice(1) });
   }

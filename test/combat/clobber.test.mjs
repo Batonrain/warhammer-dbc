@@ -54,10 +54,12 @@ describe("clobberOfferFor", () => {
     expect(clobberOfferFor(thrower([CLOBBER]), { projectileKg: 60, target: victim({ kg: 80, carried: 40 }) }))
       .toMatchObject({ status: "ok", mod: -10, targetKg: 120 });
   });
-  it("вес тела не заполнен (NPC бестиария), а снаряжение есть — сравнивать нечего, а не «снаряд против рюкзака»", () => {
-    const o = clobberOfferFor(thrower([CLOBBER]), { projectileKg: 2, target: victim({ kg: 0, carried: 4 }) });
-    expect(o).toMatchObject({ status: "noTargetWeight", targetKg: 0 });
-    expect(clobberOfferHtml(o, "Actor.thrower")).not.toContain("wh-clobber-btn");
+  it("вес тела не заполнен (NPC бестиария) — оценка по Размеру плюс снаряжение (Sahara 67-npc)", () => {
+    const vic = victim({ kg: 0, carried: 4 });
+    vic.system.size = 0;   // человек: оценка 80 кг
+    const o = clobberOfferFor(thrower([CLOBBER]), { projectileKg: 42, target: vic });
+    expect(o).toMatchObject({ status: "ok", targetKg: 84, targetEstimated: true });
+    expect(clobberOfferHtml(o, "Actor.thrower")).toContain("оценка по Размеру");
   });
   it("технику, Орду и т.п. не сбивают — предложения нет", () => {
     for (const type of ["vehicle", "horde", "squad"])
@@ -78,10 +80,12 @@ describe("clobberOfferHtml", () => {
     expect(html).not.toContain("wh-clobber-btn");
     expect(html).toContain("легче ¼");
   });
-  it("вес цели не заполнен — пояснение про Записи → Вес", () => {
-    const html = clobberOfferHtml(offer({ projectileKg: 20, target: victim({ kg: 0 }) }), "Actor.thrower");
+  it("вес цели не заполнен — сравнение по оценке Размера, с пометкой", () => {
+    const vic = victim({ kg: 0 });
+    vic.system.size = 0;
+    const html = clobberOfferHtml(offer({ projectileKg: 1, target: vic }), "Actor.thrower");
     expect(html).not.toContain("wh-clobber-btn");
-    expect(html).toContain("Вес");
+    expect(html).toContain("оценка по Размеру");
   });
   it("null — пустая строка", () => expect(clobberOfferHtml(null, "x")).toBe(""));
 });
@@ -217,5 +221,29 @@ describe("«Метнуть» обычным предметом (improvised-item.
     const { a, item } = thrown([CLOBBER], 60, 80);
     await useThrowItem(a, item);
     expect(card()).not.toContain("wh-clobber-btn");
+  });
+});
+
+describe("граната без режима огня (RoF «–»): подпись режима и сдвиг места (Sahara task-8925, 4-cdc6)", () => {
+  beforeEach(() => { resetCaptured(); });
+  const SHIFTER = { id: "sh", name: "Военная зона", type: "trait", system: {},
+    getFlag: (s, k) => s === "warhammer-dbc" && k === "hitLocationShift" ? true : undefined };
+  const grenade = weaponFor({ weaponClass: "thrown", damage: "2d10", rof_single: 0, rof_semi: 0, rof_full: 0, weight: 0.5 }, { name: "Фраг-граната" });
+
+  it("в поле «Режим» — «Бросок», не «Рукопашная»", async () => {
+    const a = thrower([grenade]);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([target(victim())]) };
+    captured.dice = [10, 5, 5, 5];
+    await _executeAttackRoll(a, grenade, "bs", 60, undefined, null, {});
+    expect(card()).toContain("Бросок");
+    expect(card()).not.toContain("Рукопашная");
+  });
+
+  it("с Талантом сдвига и A.b > 0 — кнопки сдвига места есть", async () => {
+    const a = thrower([SHIFTER, grenade]);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([target(victim())]) };
+    captured.dice = [10, 5, 5, 5];
+    await _executeAttackRoll(a, grenade, "bs", 60, undefined, null, {});
+    expect(card()).toContain("wh-locshift-btn");
   });
 });

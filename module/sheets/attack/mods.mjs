@@ -29,7 +29,7 @@ import { longerWeaponBonus, closeQuartersPenalty, closeQuartersRange } from "../
 import { sysWithMeleeProfileReach } from "../../combat/weapon-profiles.mjs";
 import { getHeldHand, weaponHandsRequired } from "../../rules/hands.mjs";
 import { BODY_SIDES, fingersLostOn } from "../../rules/limb-loss.mjs";
-import { longRangeImmunityReason } from "../../rules/range-penalty-immunity.mjs";
+import { longRangeImmunityReason, runicArtilleryMarks } from "../../rules/range-penalty-immunity.mjs";
 import { lightPenaltyImmunityReason, smokePenaltyImmunityReason } from "../../rules/vision-penalty-immunity.mjs";
 import { hasBlindFighting } from "../../rules/unseen-talents.mjs";
 import { hasDodgeTalent } from "../../rules/dodge-talents.mjs";
@@ -42,9 +42,13 @@ import { hasAbility } from "../../rules/ability-by-key.mjs";
 // невыбранных прицелов — тот же список, что у getModEffects и окна атаки.
 import { getActiveMods } from "../../combat/weapon-mods.mjs";
 import { sightEffectsOf } from "../../rules/sight-effects.mjs";
+import { sightAiming } from "../../rules/autosense-jacks.mjs";
+import { attackVisibility } from "../../combat/perception-scene.mjs";
+import { LIGHT } from "../../rules/perception.mjs";
 import { jockeyMountedBonus, JOCKEY_ATTACK_BONUS } from "../../combat/jockey.mjs";
 import { closeQuartersMod } from "../../rules/rogue-talents.mjs";
 import { pinDownHoldOf } from "../../rules/pugilist-talents.mjs";
+import { meleeShotClass, ordinatorVehicleGun } from "../../rules/secutor-talents.mjs";
 
 /** Подписи диспозиции токена — для примечания «Связан в Рукопашной». */
 const DISPOSITION_LABELS = { "-2": "Тайный", "-1": "Враждебный", 0: "Нейтральный", 1: "Дружественный" };
@@ -89,6 +93,8 @@ export function situationalMods(v) {
     // Профиль атаки (Тандем: моды встроенного оружия действуют и на гасители штрафов — combat/weapon-mods.mjs).
     weaponProfile = null,
   } = v;
+  // Мирмидон (Секутор): винтовка — как пистолет, тяжёлое/длинная винтовка — как винтовка в стрельбе в рукопашной.
+  const meleeShot = meleeShotClass(actor, weapon, { noMeleeFire: !!wp?.noMeleeFire });
 
   // Без Предупреждения, Оружие Наследия (wdbc-1rno.35, versatile 9-9, стр.
   // 428), второе предложение: «В первый Раунд боя оружие может атаковать
@@ -130,6 +136,8 @@ export function situationalMods(v) {
   // rangedCore.core.bulgingBiceps) — снимает штраф «Тяжёлое оружие: без
   // Закрепления» целиком, см. ниже у этой строки.
   const bulgingBicepsActive = hasRuleFlag(actor, "rangedCore.core.bulgingBiceps");
+  // Гиро-стабилизация: свойство оружия или гироскопы Ординатора с оружием техники в руках (решение 21.11.2026).
+  const gyro = !!wp.gyroStabilized || ordinatorVehicleGun(actor, weapon);
   // Таланты глав «Рукопашные»/«Стрелок» (rules/damage-talents.mjs; Sahara
   // 3-8dc5/3-5fbf): Надёжная Стойка и Гурьбой — строки рукопашных модификаторов,
   // Выбор Целей — строка стрелковых ниже. Имя ИЛИ ключ (hasAbility): персонаж, купивший
@@ -137,6 +145,8 @@ export function situationalMods(v) {
   const steadyFootwork  = isMelee  && hasDamageTalent(actor, "steadyFootwork");
   const doubleTeam      = isMelee  && hasDamageTalent(actor, "doubleTeam");
   const targetSelection = !isMelee && hasDamageTalent(actor, "targetSelection");
+  // Свет у цели и дым на линии атаки по живой сцене (wdbc-1rno.36).
+  const sceneVis = attackVisibility(attackerToken, targetToken);
   const commonMods = [
     ...(tgtAntiAim ? [{ label: "Антиприцел цели", value: 0, autofail: true, autoCheck: aimingOn,
       note: aimingOn ? "вы прицелились — атака автоматически промахивается (Странная Неуязвимость)"
@@ -166,9 +176,15 @@ export function situationalMods(v) {
     // Слабый свет (стр. 34, wdbc-x1nz.2.46): штраф только стрелковой — у
     // рукопашной книжная таблица «Стандартные Модификаторы Атаки» даёт
     // пустую ячейку (0), в отличие от Дыма/Тьмы ниже, где штраф есть у обеих.
-    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: "light" },
-    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: "smoke" },
-    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: "light" },
+    // Освещение и дым сцены (wdbc-1rno.36, combat/perception-scene.mjs): галочка
+    // отмечается сама по свету у цели и зонам «Дым или туман» на линии огня;
+    // сцена без зрения токенов — ручные, как раньше.
+    { label: "Слабый свет",   value: isMelee ? 0 : -10, visionPenalty: "light",
+      autoCheck: sceneVis.light === LIGHT.dim, note: sceneVis.light === LIGHT.dim ? "цель в слабом свете (освещение сцены)" : undefined },
+    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: "smoke",
+      autoCheck: sceneVis.smoke, note: sceneVis.smoke ? "линия атаки идёт через зону дыма/тумана" : undefined },
+    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: "light",
+      autoCheck: sceneVis.light === LIGHT.dark, note: sceneVis.light === LIGHT.dark ? "цель во тьме (освещение сцены)" : undefined },
     // Ослеплён (wdbc-x1nz.2.89, решение владельца 4): при распознанном
     // Ослеплении (свой флаг/оба глаза/щит на голове, без Sonar Sense и
     // Unnatural Senses — rules/blindness.mjs) галочка заперта — автопровал BS
@@ -353,7 +369,8 @@ export function situationalMods(v) {
   // Слабый свет/Тьма и Дым гасятся раздельно.
   {
     const mods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
-    const aiming = actor?.system?.aiming;
+    // Порты Авточувств (rules/autosense-jacks.mjs): прицелы и без Прицеливания.
+    const aiming = sightAiming(mods, actor?.system?.aiming);
     const why = {
       light: lightPenaltyImmunityReason(actor, mods, { aiming }),
       smoke: smokePenaltyImmunityReason(actor, mods, { aiming })
@@ -551,9 +568,9 @@ export function situationalMods(v) {
     // Штыковая Атака (pointBlankForced): выстрел «как если бы это был выстрел в упор… невзирая на то что персонаж
     // связан в ближнем бою» — штрафа за стрельбу в рукопашной нет (Sahara pyromaniac-20 п.3); бонус Уклонения
     // цели (meleeShotDodgeBonus, attack.mjs) не тронут.
-    { id: "atk-melee-shot", label: "Стрельба в рукопашную",
-      value: (weapon?.system?.weaponClass === "pistol" || pointBlankForced) ? 0 : -20,
-      note: weapon?.system?.weaponClass === "pistol" ? "Пистолет: без штрафов в рукопашную"
+    { id: "atk-melee-shot", label: "Стрельба в рукопашную", seeker: "melee",
+      value: (meleeShot.cls === "pistol" || pointBlankForced) ? 0 : -20,
+      note: meleeShot.cls === "pistol" ? (meleeShot.myrmidon ? "Мирмидон: винтовка как пистолет — без штрафов в рукопашную" : "Пистолет: без штрафов в рукопашную")
         : pointBlankForced ? "Штыковая Атака: выстрел как в упор, без штрафа за стрельбу в рукопашной" : undefined },
     // Связан в Рукопашной (стр. 30, wdbc-x1nz.2.64): полный запрет стрелять в
     // цели ВНЕ рукопашной, если стрелок сам заперт врагом с рукопашным
@@ -577,7 +594,7 @@ export function situationalMods(v) {
     // союзников») не сделана: рикошет промаха (attack.mjs, misfireHits) не
     // умеет исключать союзников. «Стрельба в рукопашную» выше (стрелок САМ в
     // этой рукопашной) Талантом не тронута — ручная галочка, см. отчёт сессии.
-    { label: "Цель связана в рукопашной (с другим персонажем)", value: targetSelection ? 0 : -20,
+    { label: "Цель связана в рукопашной (с другим персонажем)", value: targetSelection ? 0 : -20, seeker: "melee",
       immune: targetSelection, autoCheck: !targetSelection && targetLocked,
       note: targetSelection ? "снято: Target Selection/Выбор Целей"
           : targetLocked ? "стр. 30 — штраф без исключений, даже Пистолету" : undefined },
@@ -591,11 +608,12 @@ export function situationalMods(v) {
     // weaponClass "heavy" гейтится напрямую, без отдельного флага в паке.
     { label: "Тяжёлое/Длинная Винтовка: нельзя стрелять в рукопашную",
       value: 0,
-      autofail: weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire,
-      immune: !(weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire),
+      autofail: meleeShot.noMeleeFire,
+      immune: !meleeShot.noMeleeFire,
       autoCheck: !!measured?.contact && measured.contact !== "none",
-      note: (weapon?.system?.weaponClass === "heavy" || !!wp.noMeleeFire)
-        ? "класс оружия не допускает стрельбу в ближнем бою (стр. 40)" : undefined },
+      note: meleeShot.noMeleeFire
+        ? "класс оружия не допускает стрельбу в ближнем бою (стр. 40)"
+        : meleeShot.myrmidon ? "Мирмидон: считается винтовкой — стрелять в рукопашной можно" : undefined },
     // Стр. 40: «Стрельба в ближнем бою считается дистанцией в упор, но имеет
     // модификатор на попадание +0, как будто это боевая дистанция» — контакт
     // Баз (measured.contact, tactical-map.mjs::measureTokens) уже даёт
@@ -654,14 +672,16 @@ export function situationalMods(v) {
     // тяжёлого оружия без Закрепления» — снимает именно эту строку целиком,
     // «стрельба на ходу» ниже книга с этим Талантом не связывает.
     { label: "Тяжёлое оружие: без Закрепления",
-      value: bulgingBicepsActive ? 0 : (wp.gyroStabilized ? -10 : -30),
+      value: bulgingBicepsActive ? 0 : (gyro ? -10 : -30),
       immune: bulgingBicepsActive,
       autoCheck: !bulgingBicepsActive && weapon?.system?.weaponClass === "heavy" && !isBraced(actor, weapon),
       note: bulgingBicepsActive ? "снято: Bulging Biceps/Бугрящиеся Мышцы"
-          : wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10"
+          : gyro ? (wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10" : "Ординатор (гироскопы): –30 снижено до –10")
           : (weapon?.system?.weaponClass === "heavy" && isBraced(actor, weapon) ? "Закреплено" : undefined) },
-    { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
-      note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
+    // Ординатор с оружием техники в руках: гироскопы работают как Гиро-
+    // стабилизация (решение Сергея 21.11.2026) — переменная gyro выше.
+    { label: "Тяжёлое оружие: стрельба на ходу", value: gyro ? 0 : -10, immune: gyro,
+      note: gyro ? (wp.gyroStabilized ? "снято: Гиро-стаб." : "снято: Ординатор (гироскопы)") : undefined }
   ];
 
   // Размашистый Танец у ЦЕЛИ (глава 3): атакующий, которого он закружил, бьёт со
@@ -707,12 +727,14 @@ export function situationalMods(v) {
   // половины одной фразой) снимают −10. Запрет «Высокая высота» они НЕ
   // снимают — это не штраф (вопрос владельцу в тикете).
   if (!isMelee) {
-    const aiming = actor?.system?.aiming;
+    const activeMods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
+    // Порты Авточувств (rules/autosense-jacks.mjs): прицелы и без Прицеливания.
+    const aiming = sightAiming(activeMods, actor?.system?.aiming);
     const tracking = !!(actor?.getFlag?.("warhammer-dbc", "trackingAimActive")
       ?? actor?.flags?.["warhammer-dbc"]?.trackingAimActive);
     // Предсказатель Движения или Омни-Прицел (rules/sight-effects.mjs): подпись — имя самого прицела.
     const predictor = (!!aiming && aiming !== "none" && weapon)
-      ? getActiveMods(actor, weapon, { profile: weaponProfile }).find(m => !!sightEffectsOf(m).aimIgnoresRunning)
+      ? activeMods.find(m => !!sightEffectsOf(m).aimIgnoresRunning)
       : null;
     const why = tracking ? "Прицел на Упреждение"
       : predictor ? (String(predictor.name ?? "").split("/").pop().trim() || "Предсказатель Движения") : null;
@@ -723,14 +745,24 @@ export function situationalMods(v) {
   // и оптические прицелы при Прицеливании снимают оба штрафа — тем же
   // приёмом, что Зенитное гасит «Цель бежит» (выше).
   if (!isMelee) {
-    const why = longRangeImmunityReason(actor, weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [],
-                                        { aiming: actor?.system?.aiming });
+    const rangeMods = weapon ? getActiveMods(actor, weapon, { profile: weaponProfile }) : [];
+    const why = longRangeImmunityReason(actor, rangeMods,
+                                        { aiming: sightAiming(rangeMods, actor?.system?.aiming) });
     if (why) {
       for (const m of specificMods) {
         if ((m.label === "Дальняя дистанция" || m.label === "Экстремальная дистанция") && !m.immune) {
           m.value = 0;
           m.immune = true;
           m.note = `${why}: нет штрафа дальней/экстремальной дистанции`;
+        }
+      }
+    }
+    // Рунная Артиллерия: штраф снимается только рунной пулей — строка остаётся, форма гасит её по галочке.
+    else if (runicArtilleryMarks(actor, { aiming: actor?.system?.aiming })) {
+      for (const m of specificMods) {
+        if ((m.label === "Дальняя дистанция" || m.label === "Экстремальная дистанция") && !m.immune) {
+          m.runicArtillery = true;
+          m.note = "Рунная Артиллерия: не действует на одиночный выстрел рунной пулей";
         }
       }
     }

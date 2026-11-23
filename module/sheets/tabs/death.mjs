@@ -228,7 +228,9 @@ async function _resolveFateSave(actor, kind, cfg, { eternalWarrior = null, confi
     if (loss > 0) costUpd[src.path] = newBase;
     newValue = current - (src.base - newBase);
   } else {
-    const spend = await spendFromInfamyPool(actor, loss, src.path);
+    // Провал (цена больше пула) — потеря до 0, а не трата: без окна «Чем заплатить?»
+    // и без отказа «не хватает Очков» (forced; Пустоту Парии проверили выше).
+    const spend = await spendFromInfamyPool(actor, loss, src.path, { forced: failed });
     if (!spend) return;
     costUpd[src.path] = spend.poolValue;
     newValue = spend.poolValue;

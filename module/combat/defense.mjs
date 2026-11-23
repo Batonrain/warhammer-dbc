@@ -1,5 +1,7 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
 import { momentumOnEvade } from "./momentum.mjs";
+import { duelistEvasionMod, duelistEvasionNotes } from "../rules/duelist-evasion.mjs";
+import { secutorPinRefusal } from "./gladiator.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD, gripEffects, parseGrips } from "../constants/combat.mjs";
 import { currentMeleeGrip } from "../rules/hands.mjs";
 import { offHandParryPenalty } from "../rules/off-hand.mjs";
@@ -17,6 +19,7 @@ import { tokenRelationship } from "../regions/auras.mjs";
 import { uselessCount }   from "../rules/useless-limbs.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { riposteWeapon, RIPOSTE_ROUND_FLAG } from "../rules/melee-talents.mjs";
+import { potenceBalance } from "../rules/bronenosets-talents.mjs";
 import { overpowerOffered } from "../rules/berserker-talents.mjs";
 import { overpowerButtonHtml } from "./overpower.mjs";
 import { bladeBindingOffered } from "../rules/blade-binding.mjs";
@@ -312,7 +315,10 @@ export async function _performDodge(actor, {
   const wicDodgePenalty = phantomCopiesDodgePenalty(attackerActor, isMelee);
   // Чарующее Присутствие (Слаанеш): −10 на Избегания против атак демона.
   const alluringPenalty = alluringPresencePenalty(attackerActor);
-  const preGazeThreshold = baseThreshold + wicDodgePenalty + alluringPenalty;
+  // Бестиарий, Провидец Войны (rules/duelist-evasion.mjs) — по атакующему.
+  const duelDodge = duelistEvasionMod(actor, attackerActor, { kind: "dodge", isMelee, combatId: game.combat?.started ? game.combat.id : "" });
+  modParts.push(...duelDodge.parts);
+  const preGazeThreshold = baseThreshold + wicDodgePenalty + alluringPenalty + duelDodge.mod;
   if (wicDodgePenalty !== 0) modParts.push(`Фантомные Копии атакующего ${wicDodgePenalty}`);
   if (alluringPenalty !== 0) modParts.push(`Чарующее Присутствие атакующего ${alluringPenalty}`);
   // Взор Неизбежности (стр. …, wdbc-1rno.3): защищающийся видит глаза
@@ -429,6 +435,7 @@ export async function _performDodge(actor, {
     threshold: rollStatLine({ label: "Ag", base: agTotal, parts: modParts, threshold, rv }),
     outcome: outcomeHtml,
     sections: [leftoverNote, recoilSection, overpenSection, stunningSection,
+      ...duelistEvasionNotes(actor, { kind: "dodge", passed, deg, isMelee }).map(t => `<div class="roll-defense-note">${t}</div>`),
       // Ускользнуть: провал Уклонения от Захвата можно перебросить кнопкой (раз в Раунд, без второй Реакции).
       (!passed && slipRerollAvailable)
         ? slipRerollSectionHtml(actor, { extraMod, forcedReroll, hitsCount, attackerUuid, isMelee, burst, attackerIsHorde, attackId, itemUuid, evadeCost })
@@ -583,7 +590,9 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
   // Безоружный Мастер (стр. 62): кулаки с Балансом ниже 0 получают +1.
   const baseBalance = parseInt(meleeWeapon?.system.balance ?? 0) + (gripFx?.balMod || 0)
     + fistBalanceBonus(actor, meleeWeapon);
-  const balance    = (gripFx?.balSet ?? baseBalance) + (modFx.balanceMod || 0);
+  // Могущество (Броненосец): двуручное в одной руке — Баланс −2.
+  const potenceBal = meleeWeapon ? potenceBalance(actor, meleeWeapon, gripKeyNow) : null;
+  const balance    = (gripFx?.balSet ?? potenceBal ?? baseBalance) + (modFx.balanceMod || 0);
   const balanceMod = BALANCE_PARRY_MOD[String(balance)];
 
   const stance    = actor.system.meleeStance || "standard";
@@ -640,7 +649,7 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
 
   return { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp,
            crossblock: crossblock ? { weapon: crossWeapon, bonus: crossBonus,
-                                      sizeSteps: CROSSBLOCK_SIZE_STEPS } : null };
+                                      sizeSteps: CROSSBLOCK_SIZE_STEPS, solo: !!crossblock.solo } : null };
 }
 
 /**
@@ -682,7 +691,9 @@ function _bladeShieldRefusal(actor, why, what = "Парирование") {
  * @returns {Promise<boolean>} парировать ли обоими
  */
 export async function askCrossblock(actor) {
-  if (!crossblockPair(actor)) return true;
+  const pair = crossblockPair(actor);
+  // Димахер с одним клинком: «обоими» не парирует — Контратаку терять не за что.
+  if (!pair || pair.solo) return true;
   const canCounter = hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
                   && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY);
   if (!canCounter) return true;
@@ -763,6 +774,8 @@ export async function _performParry(actor, {
   extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false,
   attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "", attackId = "",
   chomper = false, forAlly = "",
+  // Парирование без траты Реакции по Таланту (Помазанник — подпись Таланта; hooks.mjs .wh-parry-btn[data-anointed]).
+  freeReaction = "",
   // Запрещённый Приём (Cheap Shot): каждое снятое попадание стоит evadeCost Успехов.
   evadeCost = 1,
   attackBaseKey = "", // База атаки (opts.baseKey карточки): Пересилить действует только против Полной Атаки
@@ -865,7 +878,10 @@ export async function _performParry(actor, {
     parryProfile(actor, extraMod + speedAw.value,
       chomperBite ? biteAsBalanceZero(chomperBite) : (parryWith?.improvisedFrom ? parryWith : null), { useCrossblock });
   if (speedAw.part) modParts.push(speedAw.part);
-  // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием парировать нельзя до начала Хода цепляющего.
+  // Секуторий (Гладиатор): прижатым щитом оружием и самим занятым щитом не парируют.
+  const pinWhy = meleeWeapon ? secutorPinRefusal(actor, meleeWeapon) : "";
+  if (pinWhy) return _bladeShieldRefusal(actor, esc(pinWhy));
+    // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием парировать нельзя до начала Хода цепляющего.
   if (meleeWeapon && weaponIsBound(actor, meleeWeapon.id)) {
     return _bladeShieldRefusal(actor, `«${esc(meleeWeapon.name)}» сцеплено клинком противника (Сцепление Клинков) — парировать им нельзя до начала Хода цепляющего или пока не разойдутся.`);
   }
@@ -903,7 +919,10 @@ export async function _performParry(actor, {
   // Чарующее Присутствие (Слаанеш): −10 на Избегания против атак демона (Парирование — тоже Избегание).
   const alluringParryPenalty = alluringPresencePenalty(attackerActor);
   if (alluringParryPenalty) modParts.push(`Чарующее Присутствие атакующего ${alluringParryPenalty}`);
-  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty + armedVsUnarmedBonus + alluringParryPenalty;
+  // Бестиарий, Секуторий, Провидец Войны (rules/duelist-evasion.mjs).
+  const duelParry = duelistEvasionMod(actor, attackerActor, { kind: "parry", isMelee, attackerWeapon, parryWeapon: meleeWeapon, combatId: game.combat?.started ? game.combat.id : "" });
+  modParts.push(...duelParry.parts);
+  const baseParryThreshold = parryProfileThreshold + unarmedParryPenalty + armedVsUnarmedBonus + alluringParryPenalty + duelParry.mod;
 
   // Взор Неизбежности (стр. …, wdbc-1rno.3) — тот же приём, что у Уклонения
   // (_performDodge): защищающийся видит глаза атакующего-носителя Дара —
@@ -972,10 +991,11 @@ export async function _performParry(actor, {
     return;
   }
 
-  if (!reroll
-      && !(await spendReaction(actor, { forDefense: true, attackId }))
+  if (!reroll && !freeReaction
+      && !(await spendReaction(actor, { forDefense: true, attackId, parryAgainst: attackerActor }))
       && !(await borrowCoverReaction(actor))) return _noReactionCard(actor, "Парирование");
   if (reroll) modParts.push(`Переброс: ${esc(reroll.label || "")}`);
+  if (freeReaction) modParts.push(`${esc(freeReaction)}: без Реакции`);
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём
@@ -1164,7 +1184,8 @@ export async function _performParry(actor, {
   // идёт строка с причиной — иначе игрок решит, что Талант «пропал».
   // Цена — за само парирование обоими, а не за величину бонуса: пара без
   // Защитного даёт 0 к порогу, но предел Размера поднимает так же.
-  const crossblockUsed = !!crossblock;
+  // Одним клинком (Димахер) — не «обоими»: Контратака и Ответный Удар остаются.
+  const crossblockUsed = !!crossblock && !crossblock.solo;
   const counterAttackHtml = (parried && meleeWeapon && !crossblockUsed
       && hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
       && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY))
@@ -1232,7 +1253,10 @@ export async function _performParry(actor, {
   // (module/rules/parry-size.mjs, crossblockActive выше), не напоминание
   // столу. Строка печатается только при парировании ОБОИМИ: и выгода (сумма
   // бонусов, предел Размера), и цена (Контратака) — одно и то же решение.
-  const crossblockNote = crossblock
+  const crossblockNote = crossblock?.solo
+    ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок (Димахер, одним клинком): `
+      + `предел «Парирование невозможно» по Размеру поднят на ${CROSSBLOCK_SIZE_STEPS} ступень; Контратака и Ответный Удар доступны.</div>`
+    : crossblock
     ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок: парируете обоими`
       + `${crossblock.bonus ? ` (+${crossblock.bonus} от «${esc(crossblock.weapon.name)}»)` : " (бонусов второго оружия нет)"}`
       + `, Контратака и Ответный Удар в этом Парировании недоступны.`
@@ -1262,6 +1286,7 @@ export async function _performParry(actor, {
       : ""],
     outcome: outcomeHtml,
     sections: [leftoverNote, powerFieldNote, unarmedPowerFieldNote, attackerPowerFieldNote, crossblockNote, chomperNote, deflectNote, counterAttackHtml, talentRiposteHtml, overpowerHtml, bladeBindingHtml, riposteHtml,
+      ...duelistEvasionNotes(actor, { kind: "parry", passed, deg, isMelee, attackerWeapon }).map(t => `<div class="roll-defense-note">${t}</div>`),
       // Перебросы Черт и Талантов (rules/defence-reroll.mjs) — кнопкой после провала, окна у защиты нет.
       defenceRerollSectionHtml(defenceRerollsFor(actor, "parry", { attackerActor, isMelee, passed, rerolled: !!reroll }), "parry")]
   }, { rolls: allRolls, flags: defenceTestFlags(actor, "parry", {

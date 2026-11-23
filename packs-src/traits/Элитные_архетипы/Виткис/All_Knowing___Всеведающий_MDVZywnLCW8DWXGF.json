@@ -5,7 +5,7 @@
   "folder": "gJxZKumWRrfAbMVM",
   "system": {
     "description": "",
-    "notes": "Авто-успех распознавания незнакомого оружия/техники при первом виде — одноразовое условие «впервые видит», не повторяемый модификатор теста. Правило стола, механики нет (dbc-114, 14.11.2026, решение владельца): кнопка «▶ Запустить» пишет текст Черты в чат.",
+    "notes": "Реализовано (21.11.2026): кнопка раз в Ход — игрок пишет вопрос о цели в прицеле, ГМу шёпотом уходят вопрос, оружие в руках, Таланты и Черты цели; ответ даёт ГМ (так в книге). За столом: что Виткис узнаёт роль незнакомого оружия с первого взгляда.",
     "benefit": "Духовная связь с Владыкой Войны даёт несравнимые знания о всех инструментах и техниках войны. Впервые увидев незнакомое оружие или боевую машину, автоматически знает её роль на поле боя и что она делает в бою (но не «как»). Раз в Ход может сконцентрироваться на конкретном персонаже и задать ГМу один вопрос о нём — ГМ отвечает честно, но только в аспектах, раскрывающих боевые способности этого персонажа, без объяснений, как они работают. Не раскрывает божественные Дары другого чемпиона, если только это не Дары Кхорна.",
     "source": "Элитный архетип: Виткис",
     "hasRating": false,
@@ -37,11 +37,11 @@
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "AsV9GYRcWDkRBvOh",
+          "id": "egILgdNU92MelM51",
           "operator": "AND",
           "entries": [
             {
-              "id": "Q6ftRJX2qeR5AW3P",
+              "id": "5PUbL1eo3zXHxeEv",
               "kind": "script",
               "group": null,
               "corruptionValue": "1",
@@ -128,14 +128,28 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Памятка: правило Черты в чат",
-              "code": "// Памятка (правило стола, механики нет): выводит текст Черты в чат.\nconst text = item.system?.benefit || item.system?.description || \"\";\nawait ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class=\"wh-roll-result\"><div class=\"roll-header\">${item.name}</div><div class=\"roll-threshold\">${text}</div></div>` });",
+              "label": "Всеведающий: вопрос ГМу о цели",
+              "code": "// Всеведающий (combat/vitkis.mjs): раз в Ход вопрос ГМу — ему шёпотом уходит боевой профиль цели.\nawait useAllKnowing(actor);",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "resPoolKey": "",
+              "resPoolLabel": "",
+              "resPoolMax": "",
+              "resPoolRefill": "",
+              "resPoolRoundCap": "",
+              "resPoolGainLabel": "",
+              "resPoolGainAmount": "",
+              "resPoolAsInfamy": false,
+              "resPoolAsInfamyCap": "",
+              "resPoolAsInfamyCor": "",
+              "resPoolAsInfamyNote": "",
+              "resPoolBoostChars": "",
+              "resPoolFailChars": "",
+              "scriptOnGrant": false
             }
           ]
         }

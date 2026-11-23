@@ -17,6 +17,8 @@ import { anyTargetMatches, isPossessedActor } from "./talent-targets.mjs";
 import { isSerpentine } from "./naga-traits.mjs";
 import { readEnvForScene } from "../constants/scene-nexus.mjs";
 import { baseAspects } from "./melee-base.mjs";
+import { modulesOverLimit } from "./skitarii-modules.mjs";
+import { underBalefulDirge } from "./baleful-dirge.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -119,6 +121,20 @@ export function isDaemonActor(actor) {
   if (!actor) return false;
   if (actor.type === "daemon" || actor.type === "demonPrince") return true;
   return hasNamed(actor, "Daemonic");
+}
+
+/**
+ * «С другими персонажами, имеющими души»: другая Пария, машина (Черта
+ * Machine/Robot) и техника (лист машины/корабля) души не имеют — социальный
+ * штраф Парии против них не действует (предикат targetSoulless).
+ */
+const SOULLESS_TYPES = new Set(["vehicle", "ship", "starSystem", "formation"]);
+const SOULLESS_TRAITS = /^(pariah|machine|robot)\b/i;
+export function isSoullessActor(actor) {
+  if (!actor) return false;
+  if (SOULLESS_TYPES.has(actor.type)) return true;
+  return [...(actor.items ?? [])].some(i => i?.type === "trait"
+    && String(i.name ?? "").split("/").some(part => SOULLESS_TRAITS.test(part.trim())));
 }
 
 function hasNamed(actor, names) {
@@ -455,6 +471,9 @@ export function hatredTargetsOf(actor) {
   if (actor?.system?.inRage && (hasNamed(actor, "Butcher's Nails") || holdsCapabilityKey(actor, "ability.butchersNails"))) {
     out.push({ kind: "all", ref: "", value: "", name: "Все!", img: "" });
   }
+  // Метка Поработителя (Инзорцист): «Демоны … получают Талант Hatred против него» —
+  // любой демон ненавидит носителя Метки (признак subjugator, rules/talent-targets.mjs).
+  if (isDaemonActor(actor)) out.push({ kind: "feature", ref: "", value: "subjugator", name: "Поработитель (Метка)", img: "" });
   return out;
 }
 
@@ -529,11 +548,26 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "targetHasSize", "targetSizeMax", "targetKeepsNimbleInArmour", "targetHasFaction",
   "targetHasFieldPsyMod", "targetLacksSealedArmour", "avatarOfSlaughterOnBerserker", "hexMarkedPreyAllyBonus", "hasHatredTarget",
   "targetSerpentine",
-  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetIsAstartes", "targetIsPsyker"
+  "legacyGuardianMarked", "targetPsykerOrDaemon", "targetSoulless", "targetIsAstartes", "targetIsPsyker"
 ]);
 
 /** Гравитация ниже этого значения (G) считается невесомостью/микро-гравитацией: ниже самой малой строки таблицы книги (0,2 G). */
 export const WEIGHTLESS_BELOW_G = 0.2;
+
+// Своя копия чтения Mechadendrite Use (rules/mechadendrites.mjs::mechadendriteTraining
+// импортирует этот файл — обратный импорт замкнул бы круг).
+function mechTrainingOf(actor) {
+  const out = new Set();
+  for (const i of actor?.items ?? []) {
+    if (i?.type !== "talent" || !/mechadendrite use|использование мехадендритов/i.test(String(i.name ?? ""))) continue;
+    const text = `${i.system?.specialization ?? ""},${/\(([^)]*)\)\s*$/.exec(String(i.name ?? ""))?.[1] ?? ""}`;
+    for (const s of text.split(",").map(x => x.trim().toLowerCase())) {
+      if (/^(weapon|оруж|боев)/.test(s)) out.add("weapon");
+      if (/^(utility|утилит|служеб)/.test(s)) out.add("utility");
+    }
+  }
+  return out;
+}
 
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
@@ -566,6 +600,10 @@ export const PREDICATES = {
   // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
   // Ярости (wdbc-wyr3).
   inRage: (actor) => !!actor?.system?.inRage,
+
+  // Обучен мехадендритам типа value ("utility"/"weapon") — Mechadendrite Use
+  // (X). Бонусы утилитарных дендритов (wdbc-qbyvc) без обучения не действуют.
+  mechadendriteTraining: (actor, ctx, value) => list(value).every(t => mechTrainingOf(actor).has(String(t))),
 
   // Носит ли надетую броню со свойством «Sealed / Закрытая» — шестой гейт
   // Механики (when.requireSealedArmour/negateSealedArmour, mech-when.mjs,
@@ -620,9 +658,24 @@ export const PREDICATES = {
   // условие правила, спрашивающее флаг, зациклило бы сбор.
   inPariahVoid: (actor, ctx, value) => hasNamed(actor, PARIAH_VOID_TRAIT) === (value !== false),
 
+  // В поле Дискорданта (Черта-метка ауры; rules/null-zones.mjs, task-be12).
+  inDiscordantField: (actor, ctx, value) => hasNamed(actor, DISCORDANT_FIELD_TRAIT) === (value !== false),
+
   // Стоит в поле Haywire мощностью не ниже value (BONE-Head Огрина: 3+ —
   // автопровал тестов I). См. haywireFieldIntensity выше.
   haywireFieldMin: (actor, ctx, value) => haywireFieldIntensity(actor) >= Number(value),
+
+  // Модулей Скитарии больше лимита ½ T.b (окр.▲) — «штраф –30 на все действия».
+  // Таланты Skitarii Alpha (+1), Shifting Mantle (+2 про запас), Cyberdeacon
+  // (кибернетика Механикум считается Модулем) — rules/skitarii-modules.mjs.
+  // Под Мрачным Плачем поющего (rules/baleful-dirge.mjs).
+  underBalefulDirge: (actor, ctx, value) => underBalefulDirge(actor) === (value !== false),
+
+  skitariiModulesOverLimit: (actor, ctx, value) => modulesOverLimit(actor, {
+    alpha: hasNamed(actor, "Skitarii Alpha"),
+    mantle: hasNamed(actor, "Shifting Mantle"),
+    cyberdeacon: hasNamed(actor, "Cyberdeacon")
+  }) === (value !== false),
 
   // Демон — тип актора или Черта Daemonic («Демоны получают штраф −30…»).
   isDaemon: (actor, ctx, value) => isDaemonActor(actor) === (value !== false),
@@ -633,6 +686,10 @@ export const PREDICATES = {
     const hit = !!t && ((Number(t.system?.psyker?.rating) || 0) >= 1 || isDaemonActor(t));
     return hit === (value !== false);
   },
+
+  // Цель — без души (другая Пария, машина, техника): социальный штраф Парии
+  // «с персонажами, имеющими души» против неё не действует (task-1452).
+  targetSoulless: (actor, ctx, value) => isSoullessActor(ctx?.targetActor) === (value !== false),
 
   // В ране актора торчит рог Чумоноса (Majestic Horns, 7, wdbc-1rno.10): метка
   // на акторе плюс неизвлечённое Проникающее в её локации — rules/lodged-horn.mjs.
@@ -735,6 +792,10 @@ export const PREDICATES = {
   // Слепое Зрение без шлема — альтернативные чувства (Talent Blindsight):
   // входит в anyOf правила conditions.blinded.altSenses.
   blindsightActive: (actor, ctx, value) => blindsightActive(actor) === (value !== false),
+
+  // Дар Одержимого в Проявлении (manifestedGift ниже): `{ manifestedGift: "Варп-Зрение" }`.
+  // Входит в anyOf conditions.blinded.altSenses — Варп-Зрение снимает штрафы Ослепления (живая проверка pr-584-ws-30).
+  manifestedGift: (actor, ctx, value) => manifestedGift(actor, String(value ?? "")),
 
   // «Рядовой» (корбук стр. 4, system.rankAndFile): `true` — Рядовой, `false` —
   // чемпион. Гейт записей, которых у Рядовых по книге нет (Черты Человека).
@@ -948,4 +1009,19 @@ export function giftNamesOf(actor) {
 export function manifestedGift(actor, giftName) {
   if (!canManifestPossession(actor) || !actor?.system?.possession?.manifested) return false;
   return giftNamesOf(actor).has(giftName);
+}
+
+/** Предмет — Дар Одержимого (имя «… / Дар: X»): действует только в Проявлении. */
+export function isPossessionGiftItem(item) {
+  return item?.type === "talent" && String(item?.name ?? "").includes(GIFT_NAME_PREFIX);
+}
+
+/**
+ * Варп-Зрение сейчас (Разобрать 6plo6): Черта или Талант Warp Sight; Дар «Варп-Зрение» —
+ * только пока демон проявлен (раньше код видел одни Черты, а Дар считал всегда).
+ */
+export function hasWarpSightNow(actor) {
+  const named = [...(actor?.items ?? [])].some(i => (i?.type === "trait" || i?.type === "talent")
+    && !isPossessionGiftItem(i) && (itemHasName(i, "Warp Sight") || itemHasName(i, "Варп-Зрение")));
+  return named || manifestedGift(actor, "Варп-Зрение");
 }

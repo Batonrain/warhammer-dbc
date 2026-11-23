@@ -5,7 +5,7 @@
   "folder": "bP25WekV9tFZqEWc",
   "system": {
     "description": "",
-    "notes": "Не смоделировано (19.11.2026): Felling и Toxic (½Cor.b) оружию — Дар не знает, какое оружие усиливает. Вручную.",
+    "notes": "Реализовано (20.11.2026): пока демон проявлен, атака оружием, выбранным Даром «Слияние», получает Felling и Toxic (½Cor.b, окр.▲).",
     "benefit": "Оружие получает Felling (½Cor.b, окр.▲) и Toxic (½Cor.b, окр.▲).",
     "tier": 2,
     "requirement": "200 xp",

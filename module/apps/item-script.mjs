@@ -55,6 +55,7 @@ import { buildCountenanceFearFlag } from "../rules/countenance-of-gods.mjs";
 import { devouredSkillRank, nextDevourerStreak, pruneDevourerStreaks } from "../rules/devourer-of-knowledge.mjs";
 import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
 import { activateItemUntil, deactivateItem } from "./item-activation.mjs";
+import { giveMonodevotantSubstance } from "../combat/monodevotant.mjs";
 import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
 import { useSoulSeer } from "./soul-seer.mjs";
 import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
@@ -71,9 +72,31 @@ import { tzeentchMarkBindUpdate } from "../rules/psyker.mjs";
 import { useShapeshift } from "../combat/shapeshift.mjs";
 import { linkPsyberToMaster } from "./psyber-link.mjs";
 import { toggleQuadrupedMode } from "./quadruped-mode.mjs";
+import { toggleDaemonicArmament } from "./daemonic-armament.mjs";
 import { shiftAmorphousSize } from "./amorphous-size.mjs";
 import { rollTraitTest } from "../combat/trait-test.mjs";
+import { useLivingBanner } from "../combat/living-banner.mjs";
+import { useWormMaster } from "../combat/worm-master.mjs";
+import { fusePossessionWeapon } from "../combat/possession-fusion.mjs";
+import { usePedalToMetal } from "../combat/pedal-to-metal.mjs";
+import { usePutThatOut } from "../combat/put-that-out.mjs";
+import { useFrontlineMedic } from "../combat/frontline-medic.mjs";
+import { studyPsychicLocus } from "../combat/psychic-locus.mjs";
+import { useWarpGifted } from "../combat/warp-gifted.mjs";
+import { prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc } from "../combat/ritual-talents.mjs";
+import { cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo } from "../combat/medic-chemistry.mjs";
+import { chooseDreamingPower } from "../combat/psychic-sustain.mjs";
+import { useFanOut } from "../combat/fan-out.mjs";
+import { useTankCommander } from "../combat/ace-operator.mjs";
+import { useBoonOfOmnissiah } from "../combat/skitarii-modules.mjs";
+import { useBalefulDirge } from "../combat/baleful-dirge.mjs";
+import { useAria, useOverture } from "../combat/battle-music.mjs";
+import { useMortido } from "../combat/elite-buttons.mjs";
 import { chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL } from "./unnatural-choice.mjs";
+import { ELITE_SCRIPT_API } from "../combat/elite-api/index.mjs";
+import { inspiredRest } from "./infernal-inspiration.mjs";
+import { gainResource, spendResource } from "./resource-pools.mjs";
+import { resourcePoolDef } from "../rules/resource-pools.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -164,6 +187,15 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    применение к конкретному тесту Страха остаётся отметкой вручную.
  *  - `activateItemUntil`/`deactivateItem` (apps/item-activation.mjs) — включить
  *    предмет «до конца боя или сцены» (записи с условием when.requireActivated)
+ *  - `giveMonodevotantSubstance` (combat/monodevotant.mjs) — Монозависимый
+ *    получил субстанцию: отметка дозы и бросок срока до ломки 1d10+W.b дней
+ *  - `gainResource`/`spendResource` (apps/resource-pools.mjs), `resourcePoolDef`
+ *    (rules/resource-pools.mjs: максимум, пополнение, лимиты пула) — пулы ресурсов
+ *    элитных архетипов (Жажда, Очки Вдохновения, Очки Мести): начислить /
+ *    списать с карточкой и лимитом за Раунд. Обычная цена кнопки — не это, а
+ *    capabilityCostPool "res:<ключ>"; эти — для второго пула в той же кнопке.
+ *  - `inspiredRest` (apps/infernal-inspiration.mjs) — «аналог полноценного
+ *    сна» Когитора: снять Усталость и 2d10 урона в I и W одним броском.
  *  - `purityOfBattleWave` (combat/purity-of-battle.mjs) — Чистота Битвы
  *    (Дар Кхорна, wdbc-1rno): реально снимает боевые наркотики и психосилы
  *    (свои и чужие, нацеленные на жертву) со всех токенов сцены в радиусе.
@@ -235,7 +267,10 @@ export async function executeItemCode(item, code, event, extra = {}) {
   const actor = item.actor ?? null;
   const token = actor?.getActiveTokens?.(false)[0] ?? null;
   const speaker = ChatMessage.getSpeaker({ actor, token });
-  const extraNames = Object.keys(extra);
+  // Помощники элитных архетипов (combat/elite-api/*) идут тем же путём, что и
+  // extra: ключ объекта — имя переменной в коде скрипта. Явный extra сильнее.
+  const allExtra = { ...ELITE_SCRIPT_API, ...extra };
+  const extraNames = Object.keys(allExtra);
   const fn = new AsyncFunction(
     "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event",
     "woundLossUpdates", "isTokenInSight", "tokensThatCanSee",
@@ -252,8 +287,9 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "attemptPossessionAttack", "leavePossessionHost", "useAdaptiveVenom", "useExplosiveAction",
     "activateBattleForm", "endBattleForm",
     "emergencyMaintenance", "scroungeSupplies", "grantCursedHeirloom",
-    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
-    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem",
+    "grantStartingDisorder", "shareCombatFormation", "tzeentchMarkBindUpdate", "useShapeshift", "linkPsyberToMaster", "toggleQuadrupedMode", "toggleDaemonicArmament", "shiftAmorphousSize", "togglePhase", "absorbPain", "spendMomentum", "useBloodOfHeroes", "usePerformance", "chooseReliableTypes",
+    "rollTraitTest", "chooseUnnaturalCharacteristic", "UNNATURAL_ANY", "UNNATURAL_PHYSICAL", "activateItemUntil", "deactivateItem", "giveMonodevotantSubstance", "useLivingBanner", "useWormMaster", "fusePossessionWeapon", "usePedalToMetal", "usePutThatOut", "useFrontlineMedic", "studyPsychicLocus", "useMortido", "useAria", "useOverture", "useBalefulDirge", "useBoonOfOmnissiah", "useTankCommander", "useFanOut", "chooseDreamingPower", "cookMixes", "giveCookMix", "makeAntivenom", "giveAntivenom", "makeDeepDetox", "giveDeepDetox", "usePlacebo", "prepareScapegoat", "useDivineMask", "useBrainwashing", "useTzaangorDisc", "useWarpGifted",
+    "inspiredRest", "gainResource", "spendResource", "resourcePoolDef",
     ...extraNames,
     code
   );
@@ -273,9 +309,10 @@ export async function executeItemCode(item, code, event, extra = {}) {
     attemptPossessionAttack, leavePossessionHost, useAdaptiveVenom, useExplosiveAction,
     activateBattleForm, endBattleForm,
     emergencyMaintenance, scroungeSupplies, grantCursedHeirloom,
-    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
-    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem,
-    ...extraNames.map(k => extra[k])
+    grantStartingDisorder, shareCombatFormation, tzeentchMarkBindUpdate, useShapeshift, linkPsyberToMaster, toggleQuadrupedMode, toggleDaemonicArmament, shiftAmorphousSize, togglePhase, absorbPain, spendMomentum, useBloodOfHeroes, usePerformance, chooseReliableTypes,
+    rollTraitTest, chooseUnnaturalCharacteristic, UNNATURAL_ANY, UNNATURAL_PHYSICAL, activateItemUntil, deactivateItem, giveMonodevotantSubstance, useLivingBanner, useWormMaster, fusePossessionWeapon, usePedalToMetal, usePutThatOut, useFrontlineMedic, studyPsychicLocus, useMortido, useAria, useOverture, useBalefulDirge, useBoonOfOmnissiah, useTankCommander, useFanOut, chooseDreamingPower, cookMixes, giveCookMix, makeAntivenom, giveAntivenom, makeDeepDetox, giveDeepDetox, usePlacebo, prepareScapegoat, useDivineMask, useBrainwashing, useTzaangorDisc, useWarpGifted,
+    inspiredRest, gainResource, spendResource, resourcePoolDef,
+    ...extraNames.map(k => allExtra[k])
   );
 }
 

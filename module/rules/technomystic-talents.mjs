@@ -12,6 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { avatarProcessCost } from "./archmagos-talents.mjs";
 
 const talentsWhere = (actor, pred) =>
   [...(actor?.items ?? [])].filter(i => i?.type === "talent" && pred(i));
@@ -149,6 +150,8 @@ export function processCostTotal(actor) {
     const cost = processCostOf(p);
     if (p.system?.sustained) sustainedBase += cost; else compiledBase += cost;
   }
+  // Аватар Металла (Архимагос): «Техночудо … с ценой и Процессом 2 Когниции» — держится, пока стоит метка.
+  sustainedBase += avatarProcessCost(actor);
   const base = sustainedBase + compiledBase;
   const want = processDiscounts(actor);
   // Набожность — только из цены скомпилированных Славословий и не глубже неё.

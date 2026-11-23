@@ -60,6 +60,8 @@ export const TURN_SCOPED_FLAGS = {
   reactedAttackIds:  "Одна Реакция на одно Действие (стр. 12, wdbc-x1nz.2.28): attackId атак, на которые уже отвечали Реакцией",
   attackActionsThisTurn: "Лимит Атак за Ход (стр. 12, wdbc-x1nz.2.30): сколько Атак уже совершено в этом Ходу",
   concentrationActionsThisTurn: "Лимит Концентрации за Ход (стр. 12, wdbc-x1nz.2.33): сколько Концентраций уже совершено в этом Ходу",
+  parryOnlyReaction: "Книга Битвы (Виткис, Sahara 586-961c): +1 Реакция только на Парирование атак цели Провидца Войны — до начала следующего Хода (combat/action-economy.mjs::PARRY_ONLY_REACTION_FLAG)",
+  fullMoveHalfAction: "Полное Движение (Sahara task-5003): ещё не потраченное полудействие (не атака) после перемещения — combat/action-economy.mjs::FULL_MOVE_HALF_FLAG",
   fullMoveDisadvantage: "Полное Движение (стр. 28, wdbc-x1nz.2.34): следующий тест Карабканья/Прыжка/Плавания в этом Ходу — с Помехой",
   duckAndCoverActive: "Перебежка (стр. 30, wdbc-x1nz.2.38): переброс Избегания/Подавления «до конца Раунда» (приближение — до начала своего следующего Хода)",
   delayNoAttack: "Задержка (стр. 12, wdbc-x1nz.2.42): банкованное ОД нельзя тратить на Атаку — уже атаковал в тот Ход, когда объявил Задержку",
@@ -109,6 +111,9 @@ export const TURN_SCOPED_FLAGS = {
   rageExitTried: "Ярость (Frenzy, Sahara focused-wrath-20-bs п.2): «не более одной попытки выйти из Ярости в Ход» — метка попытки гаснет с началом СВОЕГО Хода; вне боя «Ход» — 6 с игрового времени (rules/rage-behavior.mjs::rageExitAttemptAllowed, combat/rage-behavior.mjs::attemptRageExit)",
   haymakerHandForfeit: "Тяжёлый Хук (Талант Пугилиста, стр. 62, 3-eddb): «отказаться от атаки еще одной рукой в этот Ход» — «Обе руки» окна атаки закрыты до начала следующего Хода (rules/pugilist-talents.mjs::HAYMAKER_FORFEIT_FLAG)",
   legAttacksThisTurn: "Удар с Колена (Талант Пугилиста, стр. 62, 3-eddb): сколько ударов ногой уже было в этом Ходу — «ногой, которой он еще не атаковал» (rules/pugilist-talents.mjs::LEG_ATTACKS_FLAG, combat/attack.mjs)",
+  danceOfPainThisTurn: "Танец Боли (Черта Воина Ноты, Разобрать u6c9x): урон 1d10+A.b в A уже нанесён в этом Ходу — «раз в Ход» (rules/dance-of-pain.mjs)",
+  dendriteFocus: "Мехадендриты в бою (книга, «Мехадендриты»; Разобрать 2qtgp): персонаж сосредоточен на дендритах — Multiple Arms (X) по их числу, оружием в этот Ход служат только они (rules/mechadendrites.mjs::DENDRITE_FOCUS_FLAG)",
+  dendriteReactionAttacks: "Мехадендриты в бою (Разобрать 2qtgp): id дендритов, которыми уже атаковали за Реакцию — «не несколько раз одним и тем же» (rules/mechadendrites.mjs::DENDRITE_REACTION_FLAG)",
   pinDownHold: "Прижать (Талант Пугилиста, стр. 62, 3-eddb): штраф цели на физические действия и отмена +20 за Борьбу по прижимающему — до начала СЛЕДУЮЩЕГО Хода прижимающего; заодно метка «раз в Ход» (combat/grapple-talents.mjs, rules/situational.mjs)"
 };
 

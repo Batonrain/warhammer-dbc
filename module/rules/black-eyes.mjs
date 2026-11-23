@@ -22,6 +22,7 @@
 // не здесь, потому что зависит от Прицеливания, а не от видимости.
 
 import { itemIs } from "./item-marker.mjs";
+import { inVoidMark } from "./void-split.mjs";
 
 const NAME = "Black Eyes";
 export const BLACK_EYES_CAPABILITY = "gift.slaanesh.blackEyes";
@@ -35,5 +36,7 @@ export function isBlackEyesItem(item) {
 export function hasBlackEyesDarknessImmunity(actor) {
   const cor = Number(actor?.system?.corruption?.value) || 0;
   if (cor < 60) return false;
+  // Пустота Парии (task-f568): «колдовской морок» Cor 60+ — дар Варпа, гаснет.
+  if (inVoidMark(actor)) return false;
   return !!actor?.items?.some(i => isBlackEyesItem(i));
 }

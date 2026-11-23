@@ -65,6 +65,9 @@ function isItemActiveBase(item) {
   // Черта или Талант, а они в switch попадают в default «активен всегда» —
   // выключатель там бы утонул.
   if (toggleParentId(item)) return isToggleOn(item);
+  // Талант/Черта погашенного Архетипа (Сила Из Плоти, Соглашение Доблести —
+  // rules/archetype-suppression.mjs, флаг ставит apps/mechanics.mjs::syncArchetypeSuppression).
+  if ((item.type === "talent" || item.type === "trait") && item.flags?.["warhammer-dbc"]?.archetypeSuppressed) return false;
   switch (item.type) {
     case "weapon": case "armor": return !!sys.equipped;
     // Снаряжение (wdbc-9h7g): носимое — по своему тумблеру «надето», прочее —
@@ -121,6 +124,8 @@ function isItemActiveBase(item) {
       // Правило одно, в листе rules/item-gates.mjs (общее с остальными читателями).
       return isImplantActive(item);
     case "runicWeave": {
+      // Выгоревшая вязь (Жнец после 3 применений, rules/runic-weave.mjs) свойств больше не даёт.
+      if (item.flags?.["warhammer-dbc"]?.runeBurnedOut) return false;
       // "region" (помещение/стены) — не читается отсюда вовсе: живой пересчёт
       // там клонирует предмет-источник тем, чей токен стоит в Region (см.
       // module/regions/runic-weave-zone.mjs), а сам клон сюда попадает уже
@@ -168,6 +173,9 @@ function isItemActiveBase(item) {
       // Сверхъестественная мутация/Дар в Пустоте Парии (rules/null-zones.mjs) —
       // свой флаг, чтобы выход из ауры не снял подавление Чистой Формы.
       if (item.getFlag?.("warhammer-dbc", "nullSuppressed")) return false;
+      // Подавлена самим носителем на срок (Пылающее Тело: тест W+0 гасит пламя
+      // и все его эффекты на 1 час — combat/burning-body.mjs, wdbc-1rno.16).
+      if (item.getFlag?.("warhammer-dbc", "selfSuppressed")) return false;
       if (sys.activatable) return !!sys.active;
       return true;
     // Талант с ручным тумблером (Солипсизм: «проиграв социальное
@@ -276,7 +284,10 @@ export async function syncWhenGatedEffects(actor) {
 }
 
 export async function syncItemEffectsDisabled(item, activeOverride) {
-  const active = activeOverride !== undefined ? activeOverride : isItemActive(item);
+  // Бонусы к Характеристикам предмета Архетипа гаснут отдельно от выданных им
+  // Черт (иначе syncGrantedAbilities удалил бы сами Черты): флаг archetypeCharsOff.
+  const active = activeOverride !== undefined ? activeOverride
+    : (isItemActive(item) && !item.flags?.["warhammer-dbc"]?.archetypeCharsOff);
   // item.effects.contents ?? item.effects ?? [] (wdbc-s9dj): настоящая
   // Foundry-коллекция и часть тестовых фикстур дают .contents, другая часть
   // (module/apps/mechanics.mjs::syncMechanicsEffects и его тесты) читает

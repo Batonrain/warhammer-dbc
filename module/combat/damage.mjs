@@ -1,9 +1,15 @@
 // module/combat/damage.mjs
 
+import { chainShieldIntercept } from "./wild-psyker.mjs";
+import { AURA_OF_CHAOS_FLAG, auraOfChaosPhenomenon } from "../rules/twin-spirit.mjs";
+import { anointedShieldBonus, ANOINTED_SHIELD_FLAG } from "../rules/terminator-talents.mjs";
 import { momentumOnDamage } from "./momentum.mjs";
 import { MORITURI_CAP, morituriDamage } from "../rules/morituri.mjs";
 import { isDaemonActor } from "../rules/predicates.mjs";
+import { daemonicTbBonus, bypassesDaemonic } from "../rules/daemonic-bypass.mjs";
 import { SWARM_CAP, swarmDamage } from "../rules/swarm.mjs";
+import { CRUMBLE_CAP, RUBRICAE, crumblesOnWoundLoss } from "../rules/rubricae.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { WARP_INSTABILITY_CAP, shouldBanish } from "../rules/warp-instability.mjs";
 import { warpInstabilityOnHurt, warpInstabilityOnDealt, banishToWarp } from "./warp-instability.mjs";
 import { mockeryOfLifeOnDamage, bloodGodOnKill } from "./demon-god-traits.mjs";
@@ -23,6 +29,8 @@ import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml, rollStatLine } from "../helpers/test-card.mjs";
+import { arkhanHaywireNote } from "./skitarii-modules.mjs";
+import { haywireImmuneDevices, hasWarpforgedPlate } from "../rules/warpsmith.mjs";
 import { ablativeDamage, mountRangedApBonus, unrulyRiders } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
@@ -39,13 +47,20 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { conditionLevelField } from "../constants/conditions.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { BONELESS_CAP, bonelessDamage, isFractureCrit } from "../rules/boneless.mjs";
 import { hasPugilistTalent, rollingWithPunchesBonus } from "../rules/pugilist-talents.mjs";
 import { hardenedSoulSoakBonus, hasResilienceTalent, trueGritDamage, HUNKER_DOWN_FLAG } from "../rules/resilience-talents.mjs";
 import { headGuardOffer } from "./head-guard.mjs";
 import { hellishResilienceOffer } from "./hellish-resilience.mjs";
+import { thirstWarpIntercept } from "./thirst-warp.mjs";
 import { painIsPleasureOnDamage } from "./noise-marine.mjs";
 import { mortalShieldOnDamage } from "./dark-apostle.mjs";
 import { abominableOnHit, plagueMarineOnDamage } from "./plague-marine.mjs";
+import { putrescenceOffer } from "./putrescence.mjs";
+import { sharedPainOffer } from "./shared-pain.mjs";
+import { shareSoulBondDamage } from "./soul-binding.mjs";
+import { hasHorrorSplit } from "../rules/horror-split.mjs";
+import { paybackOfferHtml } from "./payback.mjs";
 import { butchersNailsOnDamage, temperedOnDamage, paintItRedBleeds } from "./khorne-berserker.mjs";
 import { paintItRedNeedsBleedPill } from "../rules/khorne-berserker.mjs";
 import { applyEyeOfTheGods } from "./eye-of-the-gods.mjs";
@@ -73,6 +88,7 @@ import { scourgeOfChampionsCap, recordScourgeOfChampions, applyPredestined } fro
 import { khorngorRageTest, mournerOffer, mournerTb } from "./beastman-subrace.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { isMercuryElectrified, maybeMarkMercuryLocation } from "./mercury-reaction.mjs";
+import { maybePostBloodWound } from "./blood-replacement.mjs";
 import { ADAPTATION_CAPABILITY, maybeGrantAdaptationBonus, adaptationBonusFor } from "./adaptation.mjs";
 import { entropyArmourLoss } from "./touch-of-entropy.mjs";
 import { processNurglingInfestation } from "./nurgling-infestation.mjs";
@@ -318,7 +334,23 @@ async function _applyHaywire(actor, rating, damage2 = "") {
   // мозговой имплант — 3+ автопровал тестов I, 7+ Ступор (combat/bone-head.mjs).
   // rating — радиус поля: вышедший за него Огрин освобождается сам.
   const boneHeadNote = await applyHaywireToBoneHead(actor, total, rating);
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}`;
+  // Избавление Аркхана (Скитарии): 7+ — бионика держится ценой 1 Усталости.
+  const arkhanNote = arkhanHaywireNote(actor, total);
+  // Мёртвая Зона и выше выключает надетую силовую броню тем же тумблером, что
+  // разряд батареи (Sahara haywire-b895): бонусы S, вес, дисплей гаснут, штрафы
+  // выключенной брони включаются. Обратно — тумблером на листе, выйдя из поля.
+  const { powerArmourKilledByHaywire } = await import("../rules/armour-penalty.mjs");
+  const killed = powerArmourKilledByHaywire(actor, total);
+  if (killed.length) await actor.updateEmbeddedDocuments("Item", killed.map(i => ({ _id: i.id, "system.active": false })));
+  const armourNote = killed.length
+    ? `<div class="dmg-tb-note">🔌 Силовая броня отключена ЭМИ (${killed.map(i => esc(i.name)).join(", ")}): бонусы брони погасли, действуют штрафы выключенной брони. Включить — тумблером на листе, когда поле рассеется.</div>`
+    : "";
+  // Ячейка Позора (Варп-кузнец): устройство с демоном иммунно к Haywire.
+  const immune = haywireImmuneDevices(actor, total);
+  const cellNote = immune.length
+    ? `<div class="dmg-tb-note">⛓ Ячейка Позора: ${immune.map(i => esc(i.name)).join(", ")} — иммунно к ЭМИ, работает как обычно.</div>`
+    : "";
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>${boneHeadNote}${arkhanNote}${armourNote}${cellNote}`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -571,7 +603,10 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   const subtypeOverride = damageSubtype
     ? _shieldSubtypeEntries(shieldItem).find(e => e.shieldSubtypeMode === "override" && e.shieldSubtypeKey === damageSubtype && Number(e.shieldSubtypeRatingMax) > 0)
     : null;
-  const rating = subtypeOverride ? Number(subtypeOverride.shieldSubtypeRatingMax) : (s.currentRating ?? 0);
+  // Помазанник (Чемпион Терминатор, rules/terminator-talents.mjs): разовые +35 к рейтингу против этого попадания.
+  const anointedBonus = anointedShieldBonus(actor);
+  const rating = (subtypeOverride ? Number(subtypeOverride.shieldSubtypeRatingMax) : (s.currentRating ?? 0)) + anointedBonus;
+  if (anointedBonus) await actor.unsetFlag("warhammer-dbc", ANOINTED_SHIELD_FLAG);
 
   // Бросок d100
   const roll = await new Roll("1d100").evaluate();
@@ -589,6 +624,23 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   let overloadRolls = [];
   let overloadExtraHtml = "";
   if (overloaded) ({ overloadRolls, overloadExtraHtml } = await _applyShieldOverload(shieldItem, actor, s, { attackerUuid, isRetaliation }));
+
+  // Аура Хаоса (Дар Одержимого, apps/twin-spirit.mjs): «на любом дубле при
+  // успешном броске на щит он вызывает Феномен» — бросок по таблице сразу.
+  if (shieldItem.getFlag?.("warhammer-dbc", AURA_OF_CHAOS_FLAG) && auraOfChaosPhenomenon(rv, blocked)) {
+    const { getPhenomenon, getPeril } = await import("../constants/psyker-tables.mjs");
+    const pr = await new Roll("1d100").evaluate();
+    const phen = getPhenomenon(pr.total);
+    overloadRolls.push(pr);
+    let peril = "";
+    if (phen.peril) {
+      const pp = await new Roll("1d100").evaluate();
+      overloadRolls.push(pp);
+      const p = getPeril(pp.total);
+      peril = ` Варп-Прорыв: d100 = <b>${pp.total}</b> — <b>${esc(p.label)}</b>. ${esc(p.text)}`;
+    }
+    overloadExtraHtml += `<div class="roll-threshold" style="color:#a050c0;">Аура Хаоса: дубль ${rv} — Психический Феномен. d100 = <b>${pr.total}</b> — <b>${esc(phen.label)}</b>. ${esc(phen.text)}${peril}</div>`;
+  }
 
   // ── Тип щита для отображения ──────────────────────────────────────────────
   const typeLabels = { dome: "Купол", deflector: "Дефлект.", penetrating: "Сквозной" };
@@ -620,7 +672,7 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
     outcome: `<span class="${resultClass}">${resultLabel}</span>`,
     sections: [
       `<div class="roll-threshold" style="font-size:0.85em; opacity:0.8;">
-          Рейтинг: <b>${rating}</b>
+          Рейтинг: <b>${rating}</b>${anointedBonus ? ` (Помазанник +${anointedBonus})` : ""}
           ${threshold > 0 ? `| Порог перегрузки: <b>${threshold}</b>` : ""}
           | Тип: <b>${typeLabel}</b>
           | Природа: <b>${natureLabel}</b>
@@ -881,6 +933,12 @@ export async function applyDamageToActor(actor, damageData) {
   // Отвратная Физиология Чумного Десантника: Реакция + T+30 — урон от этого противника уменьшается на Успехи.
   damageData = await abominableOnHit(actor, damageData);
 
+  // Бескостный (rules/boneless.mjs, wdbc-1rno.9): ½ I(Cr) Dmg (окр.▲) до Поглощения.
+  if (hasRuleFlag(actor, BONELESS_CAP)) {
+    const bl = bonelessDamage(damageData.rawDamage, damageData.damageType, damageData.damageSubtype);
+    if (bl.halved) damageData = { ...damageData, rawDamage: bl.raw, bonelessHalved: true };
+  }
+
   // Рой (rules/swarm.mjs): обычные атаки (без Blast/Flame/Spray/Scatter) наносят половину урона до Поглощения.
   if (hasRuleFlag(actor, SWARM_CAP)) {
     damageData = { ...damageData, rawDamage: swarmDamage(damageData.rawDamage, {
@@ -979,7 +1037,9 @@ export async function applyDamageToActor(actor, damageData) {
   // Марионетка (Странная Неуязвимость, субмутация 9, wdbc-1rno.24): «Попадания
   // варп-оружия проходят сквозь него, не причиняя вреда» — warpSoak и есть
   // признак попадания свойством Warp Weapon.
-  if (warpSoak && hasRuleFlag(actor, "damageImmunity.warpWeapon")) return;
+  // Каменное Сердце (Когитор) — та же возможность; копия, выданная до записи
+  // Конструктора, опознаётся по имени (приёмка #597).
+  if (warpSoak && hasAbility(actor, "damageImmunity.warpWeapon", "Heart of Stone", "trait")) return;
   // Иммунитет по подвиду урона (wdbc-q0q8) — тот же приём, что три ветки выше,
   // но по DAMAGE_SUBTYPES вместо DAMAGE_TYPES/melee: полный игнор попадания,
   // не только побочного эффекта. Единое пространство имён на все 6 подвидов
@@ -987,6 +1047,12 @@ export async function applyDamageToActor(actor, damageData) {
   // называет подвид, а не жёстко на нём завязан код.
   if (damageSubtype && !ignoreSubtypeImmunity
       && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
+
+  // Щит Цепей (Дикий Псайкер, combat/wild-psyker.mjs): попадание бьёт по Ранам Щита
+  // (AP бPR, поглощение W.b); игнорируют его те, кто игнорирует чародейский щит-купол.
+  const chainShield = await chainShieldIntercept(actor, { rawDamage, penetration, weaponName,
+    ignored: ignoreShield || ignoreDomeShields || sanctified });
+  if (chainShield.handled) return;
 
   // Прикрытие Головы (Талант Стойкости): раз в Раунд попадание в голову можно
   // перенести на руку. Здесь, а не раньше: попадание, которое щит аннулировал или
@@ -1021,6 +1087,7 @@ export async function applyDamageToActor(actor, damageData) {
 
   let tb, armorAP, effArmorAP, totalAbsorption;
   let hollowBonesHalved = false;
+  let daemonicTbIgnored = 0;   // Daemonic (X): сколько T.b срезал обход (подпись в карточке)
   let hardenedSoulBonus = 0;
   // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями этого
   // же вида урона — читается напрямую (см. adaptation.mjs, почему не через
@@ -1063,7 +1130,9 @@ export async function applyDamageToActor(actor, damageData) {
     // Стойкость не учитывает никогда, поэтому T.b вычитается, как и в обычной
     // ветке ниже: иначе «AP брони» протаскивал бы Бонус Стойкости обратно.
     const warpArmorAP = (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0);
-    armorAP = hasRuleFlag(actor, "armor.apVsWarpFull")
+    // Латы Чародея (Броненосец) и Закалённые Варпом Латы (Варп-Кузнец) несут
+    // ту же возможность; копии, выданные до записи Конструктора, — по имени (приёмка #597).
+    armorAP = (hasAbility(actor, "armor.apVsWarpFull", "Sorcerer's Plate", "talent") || hasWarpforgedPlate(actor))
       ? warpArmorAP
       : hasRuleFlag(actor, "runicWeave.aegisOfGnelle")
         ? Math.floor(warpArmorAP / 2)
@@ -1087,6 +1156,19 @@ export async function applyDamageToActor(actor, damageData) {
     }
     // Пестигор Плакальщик: T.b ×2 в течение 1 Раунда после применения (wdbc-gao07).
     tb = mournerTb(actor, tb);
+    // Daemonic (X): психосилы, Force/Sanctified/Warp Weapon, Демоническое и
+    // Руническое оружие, естественное оружие другого демона игнорируют +X к
+    // T.b от Трейта (rules/daemonic-bypass.mjs, Sahara daemonic-force-sanctified).
+    const daemonicTb = daemonicTbBonus(actor);
+    if (daemonicTb > 0) {
+      const atkWeapon = weaponUuid ? await fromUuid(weaponUuid).catch(() => null) : null;
+      const atkDoc = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+      const attacker = atkDoc?.actor ?? atkDoc ?? null;
+      if (bypassesDaemonic({ weapon: atkWeapon, attacker, psychicPowerType: damageData?.psychicPowerType ?? null, sanctified })) {
+        daemonicTbIgnored = Math.min(tb, daemonicTb);
+        tb = Math.max(0, tb - daemonicTb);
+      }
+    }
     // Hollow Bones / Пустые Кости (Гарпия): T.b вдвое (окр.▲) против I(Cr).
     ({ tb, halved: hollowBonesHalved } = hollowBonesTb(actor, tb, damageSubtype));
     if (ignoreArmour) {
@@ -1363,6 +1445,15 @@ export async function applyDamageToActor(actor, damageData) {
   }
   // Флаш накопленных выше правок актора — один запрос вместо до трёх.
   if (Object.keys(actorUpdate).length) await actor.update(actorUpdate);
+  // Жажда Вампира (combat/thirst-warp.mjs, Sahara 583-5-t-10): урон
+  // варп-оружия уходит в Жажду, пункт за 5 Ран, и тест T+10 на Оглушение.
+  // После Саркофага и флаша (своё update), до Аблативного бронирования.
+  let thirstWarpNote = "";
+  if (warpSoak && rawNet > 0) {
+    const tw = await thirstWarpIntercept(actor, rawNet);
+    rawNet = tw.net;
+    thirstWarpNote = tw.note;
+  }
 
   let netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
@@ -1425,6 +1516,33 @@ export async function applyDamageToActor(actor, damageData) {
     const h = await hellishResilienceOffer(actor, netDamage);
     netDamage = h.net;
     hellishNote = h.note;
+  }
+
+  // Гниль Внутри (Черта Чумного Монаха, combat/putrescence.mjs): Очко Бесчестия — урон рукопашного −Cor.b, оружие портится.
+  let putrescenceNote = "";
+  if (netDamage > 0 && !stunManeuver) {
+    const p = await putrescenceOffer(actor, netDamage, { melee, weaponUuid });
+    netDamage = p.net;
+    putrescenceNote = p.note;
+  }
+  // Общая Боль (Талант Одержимых, combat/shared-pain.mjs): в Проявлении Очко Бесчестия — урон до 1, остальное духу демона.
+  if (netDamage > 1 && !stunManeuver) {
+    const sp = await sharedPainOffer(actor, netDamage);
+    netDamage = sp.net;
+    if (sp.note) putrescenceNote = putrescenceNote ? `${putrescenceNote} ${sp.note}` : sp.note;
+  }
+  // Ритуал Связывания Души (combat/soul-binding.mjs): урон Варп-Оружия после поглощения — поровну со связанными душами.
+  if (warpSoak && netDamage > 1 && !stunManeuver) {
+    const bond = await shareSoulBondDamage(actor, netDamage);
+    netDamage = bond.net;
+    if (bond.note) putrescenceNote = putrescenceNote ? `${putrescenceNote} ${bond.note}` : bond.note;
+  }
+
+  // Расплата (Талант Дредноутов, combat/payback.mjs): непоглощённый урон от Ненавистного — пилоту кнопка ответной атаки.
+  let paybackHtml = "";
+  if (netDamage > 0 && !stunManeuver && attackerUuid) {
+    const src = await fromUuid(attackerUuid).catch(() => null);
+    paybackHtml = paybackOfferHtml(actor, src?.actor ?? src, netDamage);
   }
 
   // Приём Оглушить (стр. 14, wdbc-x1nz.2.66.3): «непоглощённый урон
@@ -1498,13 +1616,24 @@ export async function applyDamageToActor(actor, damageData) {
 
   const woundLoss = await applyWoundLoss(actor, netDamage);
   let { currentWounds, newWounds, newCritical, gotCritical } = woundLoss;
+  // Разделение Ужасов (combat/horror-split.mjs, Sahara 578-1f7a): ниже 0 Ран не от
+  // священного/варп-оружия — кнопка «Разделиться» (2, под Локусом Трансмогрификации — 3).
+  let horrorSplitHtml = "";
+  if (woundLoss.gotCritical && hasHorrorSplit(actor)) {
+    const { horrorSplitButtonHtml } = await import("./horror-split.mjs");
+    horrorSplitHtml = horrorSplitButtonHtml(actor, { crossedZero: true, sanctified, warpWeapon: warpSoak });
+  }
   // Рой: Критических Эффектов нет — при Ранах ниже 0 уничтожен (метка «погиб», Критические не копятся).
   let swarmDestroyedNote = "";
-  if (hasRuleFlag(actor, SWARM_CAP) && gotCritical) {
+  // Рубрикант (rules/rubricae.mjs): Раны ниже 0 — рассыпается грудой пустых доспехов, та же ветка.
+  const isSwarm = hasRuleFlag(actor, SWARM_CAP);
+  if ((isSwarm && gotCritical) || crumblesOnWoundLoss(hasAbility(actor, CRUMBLE_CAP, RUBRICAE, "trait"), gotCritical)) {
     await actor.update({ "system.wounds.critical": Number(woundLoss.currentCritical) || 0, "flags.warhammer-dbc.deceased": true });
     gotCritical = false;
     newCritical = Number(woundLoss.currentCritical) || 0;
-    swarmDestroyedNote = `<div class="dmg-tb-note">Рой уничтожен: Раны ниже 0 — Критических Эффектов нет.</div>`;
+    swarmDestroyedNote = isSwarm
+      ? `<div class="dmg-tb-note">Рой уничтожен: Раны ниже 0 — Критических Эффектов нет.</div>`
+      : `<div class="dmg-tb-note">Раны ниже 0 — ${esc(actor.name)} рассыпается грудой пустых доспехов (Рубрикант).</div>`;
   }
   // Варп-Нестабильность: цель получила урон / атакующий нанёс урон; Раны ниже 0 — изгнание в Варп.
   await warpInstabilityOnHurt(actor, netDamage);
@@ -1599,7 +1728,15 @@ export async function applyDamageToActor(actor, damageData) {
     const attackerDoc = await fromUuid(attackerUuid).catch(() => null);
     critFlat = criticalEffectFlatBonus(attackerDoc, reaperWeaponItem ?? braveHeartWeaponItem);
   }
-  const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical + critFlat) : null;
+  let critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical + critFlat) : null;
+  // Бескостный (wdbc-1rno.9): «игнорирует все Критические Эффекты от
+  // переломов» — строка таблицы про сломанные кости не действует целиком
+  // (Критические Раны остаются), в карточке — строка-причина.
+  let bonelessCritNote = "";
+  if (critEffect && isFractureCrit(critEffect) && hasRuleFlag(actor, BONELESS_CAP)) {
+    bonelessCritNote = `<div class="dmg-tb-note">🦴 Бескостный: Критический Эффект — перелом, костей нет — не действует («${esc(critEffect.replace(/<[^>]+>/g, "").slice(0, 80))}…»).</div>`;
+    critEffect = null;
+  }
 
   // Cast Out of Death/Изгнанный из Смерти (Нургл, wdbc-1rno): «после ЛЮБОГО
   // Критического Эффекта... регенерирует к −7 в течение 7ч» — не действует
@@ -1696,6 +1833,10 @@ export async function applyDamageToActor(actor, damageData) {
     );
   }
 
+  // Замена Крови (wdbc-1rno.15): Ранение остальных субмутаций — карточка с задетыми в 2 м
+  // (combat/blood-replacement.mjs); Ртуть отмечена выше своим модулем.
+  if (netDamage > 0) await maybePostBloodWound(actor, { netDamage, damageType });
+
   // Адаптация (wdbc-q0q8, Панцирь): непоглощённый урон — тот же триггер, что
   // Ртуть выше (см. adaptation.mjs про то, почему не буквальное «до
   // Избеганий»). Тип/подвид уже известны здесь как раз для этого попадания.
@@ -1712,10 +1853,12 @@ export async function applyDamageToActor(actor, damageData) {
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
   if (headGuard.note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(headGuard.note)}</div>`);
-  for (const note of [...hardeningNotes, hellishNote, mortalShieldNote, eye.note, ...statusNotes]) {
+  for (const note of [...hardeningNotes, thirstWarpNote, hellishNote, putrescenceNote, mortalShieldNote, eye.note, ...statusNotes]) {
     if (note) propEffectNotes.push(`<div class="dmg-tb-note">${esc(note)}</div>`);
   }
   if (butcherBleedNote) propEffectNotes.push(butcherBleedNote);
+  if (paybackHtml) propEffectNotes.push(paybackHtml);
+  if (horrorSplitHtml) propEffectNotes.push(horrorSplitHtml);
   // Касание Энтропии сработала ВЫШЕ, до расчёта поглощения (см. там) — здесь
   // только подпись, чтобы игрок видел, почему броня вдруг не удержала.
   if (entropyLost > 0) {
@@ -1765,6 +1908,8 @@ export async function applyDamageToActor(actor, damageData) {
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
   if (hollowBonesHalved) propNotes.push("Пустые Кости: T.b вдвое (окр.▲) против I(Cr)");
+  if (damageData.bonelessHalved) propNotes.push("Бескостный: I(Cr) Dmg вдвое (окр.▲) до Поглощения");
+  if (daemonicTbIgnored > 0) propNotes.push(`Daemonic: оружие игнорирует +${daemonicTbIgnored} к T.b от Трейта`);
   if (mournerNote) propNotes.push(mournerNote);
   if (adaptOnlyBonus > 0) propNotes.push(`Адаптация: +${adaptOnlyBonus} Поглощения`);
   if (rollingBonus > 0) propNotes.push(`Скользить за Ударами: +${rollingBonus} Поглощения (½A.b против безоружной атаки)`);
@@ -1863,6 +2008,7 @@ export async function applyDamageToActor(actor, damageData) {
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
+      ${bonelessCritNote}
       ${critPillsHtml(critPills, actor.uuid, netDamage, { side: LOCATION_TO_SIDE[hitLocation] || "" })}
       ${critEffect ? critCharDamageHtml(critEffect, actor.uuid) : ""}
       ${critEffect ? dropButtonHtml(critEffect, actor.uuid, LOCATION_TO_SIDE[hitLocation] || "") : ""}

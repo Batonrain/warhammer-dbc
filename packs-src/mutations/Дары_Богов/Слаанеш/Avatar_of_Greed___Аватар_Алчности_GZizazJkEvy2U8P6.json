@@ -5,7 +5,7 @@
   "folder": "MV2Y8wtkSBP3CqJw",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Пустота Парии (task-f568, docs/pariah-mutations-table.md, утверждено 21.11.2026): переброс атак гаснет.",
     "benefit": "Безумная тяга заполучить то, что принадлежит другому, направляет руку чемпиона в бою. Когда он совершает атаку по персонажу, чьё снаряжение лучше его собственного (по решению ГМа), он может перебрасывать все тесты этой атаки.",
     "source": "Дары Слаанеш, d100 74…77",
     "roll": "74…77",
@@ -122,7 +122,10 @@
               "code": "",
               "when": {
                 "negate": false,
-                "conditions": []
+                "conditions": [],
+                "predicates": {
+                  "inPariahVoid": false
+                }
               }
             }
           ]
@@ -215,7 +218,10 @@
               "code": "",
               "when": {
                 "negate": false,
-                "conditions": []
+                "conditions": [],
+                "predicates": {
+                  "inPariahVoid": false
+                }
               }
             }
           ]

@@ -142,11 +142,13 @@ describe("Эксперт Плазмы: +1 Надёжность плазме со
   const plasma = (props, type = "plasma") => weaponFor({ weaponType: type, damage: "1d10", weaponProps: props });
   const OVERHEATS = [{ key: "overheats", rating: 0, rating2: 0 }];
   // Надёжность 0 клинит с 96+, у Перегрева −1 — с 91+, с Талантом снова с 96+.
+  // Перегрев вместо Клина бьёт по стрелку (combat/overheats.mjs) — «сбой»
+  // засчитывается и по Клину, и по карточке Перегрева.
   async function fire(items, weapon, rv) {
     const actor = fighter([weapon, ...items]);
-    captured.dice = [rv];
+    captured.dice = [rv, 5];
     await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
-    return weapon.system.jammed;
+    return Boolean(weapon.system.jammed) || card().includes("бьёт по стрелку!");
   }
 
   it("без Таланта Перегрев клинит с 91", async () => {

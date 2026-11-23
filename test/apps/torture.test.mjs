@@ -178,3 +178,24 @@ describe("resolveTorture: Ярость жертвы (пытка — тест М�
     expect(captured.chat.at(-1).content).not.toContain("автоуспех");
   });
 });
+
+// Sahara 581-7bb9: Вуаль Лжи — кнопка прокси-личности на карточке пытки с Успехами пытающего.
+describe("Пытка: Вуаль Лжи", () => {
+  afterEach(() => { captured.dice = null; });
+  it("у жертвы с Вуалью Лжи — кнопка с Успехами пытающего", async () => {
+    resetCaptured();
+    const victim = actor("V");
+    victim.items = [{ name: "Veil of Lies / Вуаль Лжи", type: "trait" }];
+    captured.dice = [5, 90]; // пытающий: Предел 20, бросок 5 → 2 Успеха
+    await resolveTorture(actor("T"), victim);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("wh-veil-proxy-btn");
+    expect(html).toContain('data-successes="2"');
+  });
+  it("без Черты кнопки нет", async () => {
+    resetCaptured();
+    captured.dice = [5, 90];
+    await resolveTorture(actor("T"), actor("V"));
+    expect(captured.chat.at(-1).content).not.toContain("wh-veil-proxy-btn");
+  });
+});

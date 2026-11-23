@@ -42,7 +42,7 @@ import { rancorRiskCapBonus, eloquenceRiskCapBonus, bravadoRiskLevel,
          BRING_IT_DOWN_PENALTY_PER_STACK, warChantSingAlongBonus,
          commandCapacity } from "../rules/leadership-talents.mjs";
 import { backToBackGrantSectionHtml } from "../combat/fanatic-redirect.mjs";
-import { hunterHindranceApplies } from "../rules/master-of-executions.mjs";
+import { hunterHindranceApplies, hunterHindranceReroll } from "../rules/master-of-executions.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
          rollD100WithReroll } from "../rules/test-kind-widget.mjs";
@@ -654,7 +654,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const base = Number(leaderDoc.system?.characteristics?.wp?.total) || 0;
     const ruleMods = collectTestMods(leaderDoc, { kind: "skill", skill: "command", char: "wp" });
     const threshold = base + ruleMods.total;
-    const { rv, rerollNote } = await rollD100WithReroll(null);
+    // Целеустремлённый Охотник: Command — с Помехой (Sahara task-fef6).
+    const { rv, rerollNote } = await rollD100WithReroll(hunterHindranceReroll(leaderDoc, "command"));
     const success = rv <= Math.max(0, threshold);
     await postTestCard(leaderDoc, {
       icon: rollIcon("crown", success ? "#4dffa6" : "#ff8a8a"),
@@ -1300,6 +1301,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const logRank  = (cmd.logic ?? -20) - (cmd.int ?? 0);          // ранговый бонус Logic (уже на I)
     const cmdTarget = intTotal + cmdRank - 10;
     const logTarget = intTotal + logRank - 10;
+    // Целеустремлённый Охотник: Брифинг — тест Command, Помеха стоит заранее (Sahara task-fef6).
+    const hunter = hunterHindranceApplies(this._resolve(cmd.uuid), "command");
 
     const content = `<div class="wh-attack-form sq-cmd-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Брифинг</span><span class="atk-weapon-class">${esc(cmd.name)}</span></div>
@@ -1308,7 +1311,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row"><label>Logic(I)−10:</label><input id="sq-b2" type="number" value="${logTarget}"/></div>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
       ${difficultyHtml()}
-      ${diceModeHtml()}
+      ${hunter ? `<div class="sq-cmd-hint">Целеустремлённый Охотник: на Command — Помеха (выбрана ниже).</div>` : ""}
+      ${diceModeHtml({ preset: hunter ? "disadvantage" : "normal" })}
     </div>`;
 
     return foundry.applications.api.DialogV2.wait({
@@ -1675,3 +1679,25 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     await this.actor.update({ "system.members": members });
   }
 }
+
+/**
+ * Актор, занимающий пост или стоящий в составе Отряда (по uuid актора или его
+ * токена). Нужен, чтобы перерисовать открытый лист Отряда, когда меняется не
+ * сам Отряд, а его командир — например, тот запел Боевую Песнь (task-371e).
+ */
+export function squadReferencesActor(squadSystem, actor) {
+  if (!squadSystem || !actor) return false;
+  const uuids = new Set([actor.uuid, ...(actor.getActiveTokens?.(false, true) ?? []).map(t => t?.uuid)].filter(Boolean));
+  if (!uuids.size) return false;
+  const posts = Object.values(squadSystem.posts || {});
+  return [...posts, ...(squadSystem.members || [])].some(p => p?.uuid && uuids.has(p.uuid));
+}
+
+// Флаги команд (Боевая Песнь и т.п.) живут на командире, а не на Отряде —
+// открытый лист Отряда сам об этом не узнаёт и держит устаревший чип «Песня».
+globalThis.Hooks?.on?.("updateActor", (actor) => {
+  for (const app of globalThis.foundry?.applications?.instances?.values?.() ?? []) {
+    if (!(app instanceof WarhammerSquadSheet) || !app.rendered || app.actor === actor) continue;
+    if (squadReferencesActor(app.actor?.system, actor)) app.render();
+  }
+});

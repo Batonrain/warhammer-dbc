@@ -23,12 +23,12 @@
 import { hasRuleFlag } from "../rules/flags.mjs";
 import {
   REBORN_TEST_MOD, GOLEM_FLAG, GOLEM_LOYALTY, GOLEM_PROFILE_NAME, GOLEM_POSSESSION_HOURS, GOLEM_SOULS,
-  SHIELD_FLAG, SHIELD_RATING, ECHO_USAGE_FLAG, ECHO_PENDING_FLAG, STUPOR_FLAG,
+  SHIELD_FLAG, ECHO_USAGE_FLAG, ECHO_PENDING_FLAG, STUPOR_FLAG,
   INFERNAL_AMMO_NAME, INFERNAL_SHELLS_COUNT, INFERNAL_SHELLS_HOURS, SEKHMET_REGENERATION,
-  hasRubricOfAhriman, hasGolemMaster, hasShieldOfRubric, hasInfernalShells, hasPsychicEcho, hasSekhmet,
+  hasRubricOfAhriman, hasGolemMaster, hasInfernalShells, hasPsychicEcho, hasSekhmet,
   hasRebornInDust, pickMilderPeril, choiceThreshold, isGolem, golemMasterUuid, golemsOf, soulsFree, fallenGolems,
   nexusFreeGolems, nexusSlotsLeft, golemSlot, sekhmetStats, armourAblative, armourWithoutAblative,
-  regenerationRating, regenerationHeal, isWounded, possessionThreshold, warpLoreTotal, isOrdinaryBolt,
+  regenerationRating, regenerationSource, regenerationHeal, regenerationTestBonus, PROJECTOR_REGEN_FLAG, isWounded, possessionThreshold, warpLoreTotal, isOrdinaryBolt,
   shellsBatch, golemDestroyed
 } from "../rules/rubric-sorcerer.mjs";
 import { getPeril } from "../constants/psyker-tables.mjs";
@@ -49,11 +49,13 @@ import { addCondition, removeCondition } from "../sheets/tabs/conditions.mjs";
 import { setDeceased } from "../sheets/tabs/body.mjs";
 import { spendInfamyPoint } from "./noise-marine.mjs";
 import { actorHasInfamyPoint } from "../apps/infamy-points.mjs";
+import { infamyFailSuccessButtonsHtml } from "../apps/infamy-fail-success.mjs";
 import { combatOfActor } from "./actor-combat.mjs";
+import { setPsychicVessel } from "../rules/psychic-vessel.mjs";
+import { traitShieldSpec, traitShieldData, traitShieldPlan, syncTraitShields } from "./trait-shield.mjs";
 
 const NS = "warhammer-dbc";
 const ICON = () => rollIcon("warp", "#7f5cff");
-const FORCEFIELD_IMG = "systems/warhammer-dbc/assets/item-icons/forcefield.svg";
 
 const worldActors = () => [...(globalThis.game?.actors ?? [])];
 const isDeceased = actor => !!actor?.getFlag?.(NS, "deceased");
@@ -65,6 +67,21 @@ const actorOfUuid = async uuid => {
 const confirm = (title, text, yes, no) => foundry.applications.api.DialogV2.confirm({
   window: { title }, content: `<p>${text}</p>`, yes: { label: yes }, no: { label: no }, rejectClose: false
 }).then(r => !!r).catch(() => false);
+
+/**
+ * Обряды Колдуна Рубрики двигают Календарь сами (остаток PR #596; тот же приём, что Отдых —
+ * sheets/tabs/conditions.mjs::advanceRestClock): game.time.advance доступен только ГМу, у игрока
+ * карточка просит ГМа сдвинуть время.
+ * @returns {Promise<string>} строка карточки
+ */
+async function advanceRiteClock(hours) {
+  const time = globalThis.game?.time;
+  if (globalThis.game?.user?.isGM && typeof time?.advance === "function") {
+    await time.advance(hours * 3600);
+    return `Календарь сдвинут на ${hours} ч.`;
+  }
+  return `Время двигает ГМ — сдвиньте Календарь на ${hours} ч.`;
+}
 
 // ── Рубрика Аримана ───────────────────────────────────────────────────────
 
@@ -110,49 +127,19 @@ export async function rollChoiceTest(actor) {
 }
 
 // ── Щит Рубрики ───────────────────────────────────────────────────────────
+// Общий механизм встроенных щитов Черт — combat/trait-shield.mjs; здесь
+// прежние имена для Колдуна Рубрики.
+
+const RUBRIC_SPEC = traitShieldSpec(SHIELD_FLAG);
 
 /** Данные встроенного щита-купола 1-50: чародейский, не перегружается, активен. */
-export function rubricShieldData() {
-  return {
-    name: "Shield of Rubric / Щит Рубрики",
-    type: "forcefield",
-    img: FORCEFIELD_IMG,
-    system: {
-      shieldNature: "warp", shieldType: "dome",
-      ratingMin: 1, ratingMax: SHIELD_RATING, overloadThreshold: 0,
-      currentRating: SHIELD_RATING, isSpecialRating: false,
-      equipped: true, status: "active", quality: "common", availability: 0, weight: 0
-    },
-    flags: { [NS]: { [SHIELD_FLAG]: true } }
-  };
-}
+export const rubricShieldData = () => traitShieldData(RUBRIC_SPEC);
 
 /** Что сделать со щитами Рубрики: создать, если Черта есть, а щита нет; снять лишнее. */
-export function rubricShieldPlan(actor) {
-  const have = [...(actor?.items ?? [])].filter(i => i?.type === "forcefield" && i.getFlag?.(NS, SHIELD_FLAG));
-  if (hasShieldOfRubric(actor)) return { create: have.length ? 0 : 1, remove: have.slice(1).map(i => i.id) };
-  return { create: 0, remove: have.map(i => i.id) };
-}
+export const rubricShieldPlan = actor => traitShieldPlan(actor, RUBRIC_SPEC);
 
-const shieldQueue = new Map();
-
-/**
- * Приводит встроенный щит в соответствие с Чертой «Щит Рубрики». Вызовы по одному актору идут строго по очереди:
- * архетип выдаёт три Черты одним createEmbeddedDocuments, хуки createItem стреляют подряд, и без очереди каждый
- * из них видел бы «щитов нет» и создавал свой.
- */
-export function syncRubricShield(actor) {
-  if (!actor?.isOwner) return Promise.resolve();
-  const key = actor.id ?? actor.uuid;
-  const run = async () => {
-    const { create, remove } = rubricShieldPlan(actor);
-    if (remove.length) await actor.deleteEmbeddedDocuments("Item", remove);
-    if (create) await actor.createEmbeddedDocuments("Item", [rubricShieldData()]);
-  };
-  const next = (shieldQueue.get(key) ?? Promise.resolve()).then(run, run);
-  shieldQueue.set(key, next);
-  return next.finally(() => { if (shieldQueue.get(key) === next) shieldQueue.delete(key); });
-}
+/** Приводит встроенный щит в соответствие с Чертой «Щит Рубрики» (очередь по актору — в trait-shield.mjs). */
+export const syncRubricShield = actor => syncTraitShields(actor, [RUBRIC_SPEC]);
 
 // ── Повелитель Големов ────────────────────────────────────────────────────
 
@@ -351,7 +338,7 @@ export async function startGolemCreation(master) {
   if (!success) {
     await postTestCard(master, {
       icon: ICON(), title: `Повелитель Големов — ${esc(master.name)}`, threshold: statLine,
-      lines: [`<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов. Душа осталась свободной, снаряжение не потрачено.</div>`],
+      lines: [`<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов (${await advanceRiteClock(GOLEM_POSSESSION_HOURS)}). Душа осталась свободной, снаряжение не потрачено.</div>`],
       outcome: outcomeHtml(false, "Вселение не удалось")
     }, { rolls });
     return null;
@@ -376,7 +363,7 @@ export async function startGolemCreation(master) {
   }
 
   const lines = [
-    `<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов. Потрачено: ${armour ? esc(armour.name) : "комплект брони не отмечен"}${chosenWeapons.length ? `; оружие Голема: ${chosenWeapons.map(w => esc(w.name)).join(", ")}` : ""}.</div>`,
+    `<div class="roll-threshold">Обряд занял ${GOLEM_POSSESSION_HOURS} часов (${await advanceRiteClock(GOLEM_POSSESSION_HOURS)}). Потрачено: ${armour ? esc(armour.name) : "комплект брони не отмечен"}${chosenWeapons.length ? `; оружие Голема: ${chosenWeapons.map(w => esc(w.name)).join(", ")}` : ""}.</div>`,
     `<div class="roll-threshold">Свободных душ осталось: <b>${Math.max(0, st.free - 1)}</b> из ${st.max}. Лояльность Голема ${GOLEM_LOYALTY}${plan.terminatorArmour ? "; Терминаторский Голем: +10 WS и S, Regeneration 6" : ""}.</div>`,
     res?.relayed ? `<div class="roll-threshold">Голема и токен создаёт Мастер; снаряжение спишется с листа, только когда Голем будет создан.</div>` : ""
   ];
@@ -413,9 +400,12 @@ export async function bindNexus(master) {
   const golem = await actorOfUuid(uuid);
   if (!golem) return null;
   await golem.setFlag(NS, GOLEM_FLAG, { ...golem.getFlag(NS, GOLEM_FLAG), nexus: true });
+  // «…является его Псайбером»: Голем — носитель манифестации колдуна (Путь «Псайбер-Фамильяр»,
+  // тот же примитив, что у Черты Psyber — apps/psyber-link.mjs). Последний связанный Голем заменяет прежнего.
+  await setPsychicVessel(master, golem, { label: golem.name });
   await postTestCard(master, {
     icon: ICON(), title: `Узы Душ — ${esc(master.name)}`,
-    lines: [`<div class="roll-threshold">${esc(golem.name)} действует в Инициативу ${esc(master.name)} и служит его Псайбером (связь и манифестация через Псайбера ведутся вручную).</div>`]
+    lines: [`<div class="roll-threshold">${esc(golem.name)} действует в Инициативу ${esc(master.name)} и служит его Псайбером: в окне манифестации по Пути «Псайбер-Фамильяр» носителем назван ${esc(golem.name)}. Чувства и телепатия — на столе.</div>`]
   }, { sound: false });
   await syncNexusInitiatives(combatOfActor(master));
   return golem;
@@ -476,13 +466,15 @@ export async function regenerationTurnStart(actor) {
   }
   await postTestCard(actor, {
     icon: ICON(), title: `Регенерация (${rating}) — ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">В начале Хода: тест T+0 — восстановить ${rating} Ран; либо пропустить все действия этого Хода и пройти тест автоматически.</div>`],
+    lines: [`<div class="roll-threshold">В начале Хода: тест ${regenTestLabel(actor)} — восстановить ${rating} Ран; либо пропустить все действия этого Хода и пройти тест автоматически.</div>`],
     sections: [`<div class="roll-defense-btns">
-      <button type="button" class="wh-regen-btn" data-actor-uuid="${esc(actor.uuid)}" data-auto="0">Тест T+0</button>
+      <button type="button" class="wh-regen-btn" data-actor-uuid="${esc(actor.uuid)}" data-auto="0">Тест ${regenTestLabel(actor)}</button>
       <button type="button" class="wh-regen-btn" data-actor-uuid="${esc(actor.uuid)}" data-auto="1">Пропустить действия — автоматически</button></div>`]
   }, { sound: false });
   return { echo: false };
 }
+
+const regenTestLabel = actor => (regenerationSource(actor).test === "cor" ? "Cor+0" : "T+0");
 
 /** Кнопка карточки Регенерации: тест T+0 или автоуспех ценой всех действий Хода. */
 export async function rollRegeneration(actor, { auto = false } = {}) {
@@ -501,18 +493,45 @@ export async function rollRegeneration(actor, { auto = false } = {}) {
     }, { sound: false });
     return true;
   }
-  const t = Number(actor.system?.characteristics?.t?.total) || 0;
-  const mods = collectTestMods(actor, { kind: "skill", char: "t" });
-  const threshold = t + mods.total;
+  // Дар Одержимого «Регенерация»: тест Cor+0 (значение Порчи) вместо T+0 (rules/rubric-sorcerer.mjs::regenerationSource).
+  const byCor = regenerationSource(actor).test === "cor";
+  const t = byCor ? (Number(actor.system?.corruption?.value) || 0) : (Number(actor.system?.characteristics?.t?.total) || 0);
+  const mods = byCor ? { total: 0, parts: [] } : collectTestMods(actor, { kind: "skill", char: "t" });
+  // Особые источники (task-4ae5): +2×PR психосилы Regeneration, бонус/автоуспех Целительного Прожектора.
+  const extra = byCor ? { mod: 0, auto: false, parts: [], projector: false } : regenerationTestBonus(actor);
+  const threshold = t + mods.total + extra.mod;
   const { rv, rolls } = await rollD100WithReroll(null);
-  const { success, deg } = testOutcome(rv, threshold);
+  const { success, deg } = testOutcome(rv, threshold, { autoSuccess: extra.auto });
+  // Бонус Прожектора — «на свой СЛЕДУЮЩИЙ тест T»: тратится этим броском.
+  if (extra.projector) await actor.unsetFlag?.(NS, PROJECTOR_REGEN_FLAG);
   const applied = success ? await healByRegeneration(actor, regenerationHeal(rating)) : 0;
   await postTestCard(actor, {
     icon: ICON(), title: `Регенерация — ${esc(actor.name)}`,
-    threshold: rollStatLine({ label: "T+0", base: t, parts: mods.parts.map(esc), threshold, rv }),
-    outcome: outcomeHtml(success, success ? `Успех (${deg}) — восстановлено ${applied} Ран` : "Провал — Раны не восстановились")
+    threshold: rollStatLine({ label: byCor ? "Cor+0" : "T+0", base: t, parts: [...mods.parts, ...extra.parts].map(esc), threshold, rv }),
+    outcome: outcomeHtml(success, success ? `Успех (${deg}) — восстановлено ${applied} Ран` : "Провал — Раны не восстановились"),
+    // Провал теста T Регенерации → Успех за очко пула (Культивация Мейстера,
+    // Sahara 586-fe9d). Вариант Cor+0 Дара Одержимого — не «тест T», кнопки нет.
+    sections: (success || byCor) ? [] : [infamyFailSuccessButtonsHtml(actor,
+      { char: "t", success, testLabel: "Регенерация", regeneration: true })]
   }, { rolls });
   return success;
+}
+
+/**
+ * Провал теста Регенерации заменён Успехом (кнопка пула на карточке,
+ * hooks.mjs → apps/infamy-fail-success.mjs): Раны восстанавливаются, как при
+ * успехе. Возвращает число восстановленных Ран.
+ */
+export async function regenerationReplacedSuccess(actor) {
+  const rating = regenerationRating(actor);
+  if (!rating || !isWounded(actor)) return 0;
+  const applied = await healByRegeneration(actor, regenerationHeal(rating));
+  await postTestCard(actor, {
+    icon: ICON(), title: `Регенерация — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Провал заменён Успехом: восстановлено <b>${applied}</b> Ран.</div>`],
+    outcome: outcomeHtml(true, "Регенерация")
+  }, { sound: false });
+  return applied;
 }
 
 /** Кнопка «Психическое Эхо» для карточки успешной манифестации ("" — не положена). */
@@ -665,7 +684,7 @@ export async function useInfernalShells(actor) {
   }
   await postTestCard(actor, {
     icon: ICON(), title: `Инфернальные Снаряды — ${esc(actor.name)}`,
-    lines: [`<div class="roll-threshold">${INFERNAL_SHELLS_HOURS} час резьбы: ${INFERNAL_SHELLS_COUNT} болтов («${esc(source.name)}») стали Инферно-болтами Тзинча.</div>`],
+    lines: [`<div class="roll-threshold">${INFERNAL_SHELLS_HOURS} час резьбы (${await advanceRiteClock(INFERNAL_SHELLS_HOURS)}): ${INFERNAL_SHELLS_COUNT} болтов («${esc(source.name)}») стали Инферно-болтами Тзинча.</div>`],
     outcome: outcomeHtml(true, "Инферно-болты готовы")
   }, { sound: false });
   return true;

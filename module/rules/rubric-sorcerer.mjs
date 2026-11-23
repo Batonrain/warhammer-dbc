@@ -21,7 +21,7 @@
 //  Конструктора (rules/item-marker.mjs), как в rules/khorne-berserker.mjs.
 // ════════════════════════════════════════════════════════════════════════
 
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, manifestedGift } from "./predicates.mjs";
 import { itemHasKey } from "./item-marker.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
 
@@ -71,6 +71,20 @@ export function nexusCopies(actor) {
 export function pickMilderPeril(a, b) {
   const [first, second] = [Number(a) || 0, Number(b) || 0];
   return second < first ? { keep: second, drop: first } : { keep: first, drop: second };
+}
+
+/**
+ * Прорыв при провале ритуала (apps/ritual-cast.mjs::ritualFailure). Там Прорыв — это бросок цены
+ * ошибки, ушедший за 75 (Феномен перерастает в Прорыв). Рубрика Аримана: второй бросок, берётся
+ * меньший, но не ниже порога Прорыва — бросок уже Прорыв, выбор кубика его не отменяет (догадка:
+ * книга говорит «выбирает один из двух бросков на Прорыв», а не «избегает Прорыва»).
+ * @param {number} first   итог первого броска (с надбавками)
+ * @param {number} second  итог второго броска (с теми же надбавками)
+ * @param {number} [floor] порог таблицы Прорывов (75)
+ */
+export function ritualPerilPick(first, second, floor = 75) {
+  const { keep, drop } = pickMilderPeril(first, second);
+  return { keep: Math.max(Number(floor) || 0, keep), drop };
 }
 
 /** Порог теста W−30 (выбор мутации): W + суммарные модификаторы − 30. */
@@ -171,13 +185,66 @@ export function armourWithoutAblative(armourData) {
 
 /** Рейтинг Трейта Regeneration (X) на акторе; 0 — трейта нет. Нет числа в поле — берётся из имени «… (5)». */
 export function regenerationRating(actor) {
+  return regenerationSource(actor).rating;
+}
+
+/**
+ * Откуда Регенерация и чем её проверять: Черта Regeneration (X) — тест T+0; Дар Одержимого
+ * «Регенерация» в Проявлении — Regeneration (½Cor.b, окр.▲) с тестом Cor+0 (Разобрать 6plo6).
+ * Если есть оба — берётся больший рейтинг.
+ * @returns {{rating:number, test:"t"|"cor"}}
+ */
+export function regenerationSource(actor) {
   let best = 0;
   for (const i of actor?.items ?? []) {
     if (i?.type !== "trait" || !itemHasName(i, "Regeneration")) continue;
     const fromName = Number(/\((\d+)\)\s*$/.exec(String(i.name ?? ""))?.[1]) || 0;
     best = Math.max(best, Number(i.system?.rating) || fromName);
   }
-  return best;
+  // Психосила Regeneration (Биомантия, стр. 333), пока поддерживается: «Трейт Regeneration(PR)».
+  best = Math.max(best, sustainedRegenerationEpr(actor));
+  const gift = manifestedGift(actor, "Регенерация")
+    ? Math.ceil((Number(actor?.system?.corruptionBonus) || 0) / 2) : 0;
+  return gift > best ? { rating: gift, test: "cor" } : { rating: best, test: "t" };
+}
+
+/** эPR поддерживаемой психосилы Regeneration (0 — не поддерживается). Без записанного эPR — текущий PR. */
+export function sustainedRegenerationEpr(actor) {
+  let epr = 0;
+  for (const i of actor?.items ?? []) {
+    if (i?.type !== "psychicPower" || !i.system?.isSustained || !itemHasName(i, "Regeneration")) continue;
+    epr = Math.max(epr, Number(i.system?.sustainedEpr ?? actor?.system?.psyker?.currentRating ?? actor?.system?.psyker?.rating) || 0);
+  }
+  return epr;
+}
+
+/** Метка Целительного Прожектора на пациенте: бонус к следующему тесту T Регенерации (Мейстер, таблица Стадий). */
+export const PROJECTOR_REGEN_FLAG = "projectorRegenBonus";
+
+/**
+ * Особые бонусы теста Регенерации (Sahara task-4ae5). Только для теста T —
+ * у Дара Одержимого тест Cor+0, книга бонусов к нему не даёт.
+ *  • психосила Regeneration — «тесты Т на регенерацию получают бонус +2×PR»;
+ *  • Целительный Прожектор Мейстера — «бонус на свой следующий тест T для
+ *    Трейта Regeneration»: +10/+15/+20/+30 или «Авто» (Стадия 5).
+ * @returns {{mod:number, auto:boolean, parts:string[], projector:boolean}}
+ */
+export function regenerationTestBonus(actor) {
+  const out = { mod: 0, auto: false, parts: [], projector: false };
+  const epr = sustainedRegenerationEpr(actor);
+  if (epr) { out.mod += 2 * epr; out.parts.push(`+${2 * epr} психосила Regeneration (2×PR)`); }
+  const p = actor?.flags?.["warhammer-dbc"]?.[PROJECTOR_REGEN_FLAG] ?? actor?.getFlag?.("warhammer-dbc", PROJECTOR_REGEN_FLAG);
+  if (p === "auto") { out.auto = true; out.projector = true; out.parts.push("Целительный Прожектор: автоуспех"); }
+  else if (Number(p) > 0) { out.mod += Number(p); out.projector = true; out.parts.push(`+${Number(p)} Целительный Прожектор`); }
+  return out;
+}
+
+/** Строка таблицы «Бонус регенерации» → значение метки ("auto" | число | null). */
+export function projectorRegenValue(label) {
+  const t = String(label ?? "").trim().toLowerCase();
+  if (t.startsWith("авто")) return "auto";
+  const n = Number(t.replace(/[^\d-]/g, ""));
+  return n > 0 ? n : null;
 }
 
 /** Итог Forbidden Lore (Warp); без записи Навыка — null (тест невозможен). */

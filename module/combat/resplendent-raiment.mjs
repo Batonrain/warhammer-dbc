@@ -26,6 +26,7 @@
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
+import { inVoidMark } from "../rules/void-split.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -47,7 +48,8 @@ export function resplendentUnit() {
 
 /** Доступно ли прямо сейчас. */
 export function resplendentRaimentAvailable(actor) {
-  return hasResplendentRaiment(actor) && isThrottleReady(actor, FLAG, resplendentUnit());
+  // Пустота Парии (task-f568): «приковать всех» — колдовство, гаснет; вид Best.Q остаётся.
+  return hasResplendentRaiment(actor) && !inVoidMark(actor) && isThrottleReady(actor, FLAG, resplendentUnit());
 }
 
 /**

@@ -17,7 +17,7 @@
  * @param {object[]} items  предметы актора (this.items)
  * @param {object}   system system актора (мутируется)
  */
-export function prepareVehicleDerived(items, system) {
+export function prepareVehicleDerived(items, system, { spdBonus = 0 } = {}) {
   const ch      = system.chassis || (system.chassis = {});
   const type    = ch.type || "tracked";
 
@@ -126,7 +126,8 @@ export function prepareVehicleDerived(items, system) {
   const baseSpd = Number(ch.spd) || 0;
   // Многоногая (X) снижает урон Ходовой к SPD.
   const spdDmg  = Math.max(0, (Number(ch.spdDamage) || 0) - tf.spdDamageReduce);
-  let effSpd    = Math.max(0, baseSpd + tf.spdMod - spdDmg);
+  // spdBonus — «Педаль в Пол» водителя (rules/pedal-to-metal.mjs), передаёт documents/actor.mjs.
+  let effSpd    = Math.max(0, baseSpd + tf.spdMod - spdDmg + (Number(spdBonus) || 0));
   if (tf.noMove) effSpd = 0;   // Неподвижная
 
   const CHASSIS_BONUS = { wheeled: 10, tracked: 0, walker: 0, skimmer: 10, plane: 0 };

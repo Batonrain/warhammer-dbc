@@ -20,7 +20,7 @@
 //  Чистая логика без Foundry: вызывает sheets/tabs/psychic.mjs.
 // ════════════════════════════════════════════════════════════════════════
 
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, hasWarpSightNow } from "./predicates.mjs";
 
 /** Рейтинг X Затупленного у актора, либо null — Черты нет и поле не активно. */
 export function bluntedRating(actor) {
@@ -59,7 +59,7 @@ export function bluntedAppliesToPower(power, propKeys = []) {
 export function bluntedCasterTest(caster, target, power, propKeys = []) {
   const x = bluntedRating(target);
   if (x == null || !bluntedAppliesToPower(power, propKeys)) return null;
-  const warpSight = [...(caster?.items ?? [])].some(i => i?.type === "trait" && itemHasName(i, "Warp Sight"));
+  const warpSight = hasWarpSightNow(caster);
   return warpSight
     ? { skill: "awareness",    label: "Awareness",   mod: 20 - 10 * x, rating: x }
     : { skill: "psyniscience", label: "Psyniscience", mod: -10 * x,   rating: x };

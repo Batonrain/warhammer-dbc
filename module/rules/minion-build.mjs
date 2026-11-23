@@ -32,6 +32,51 @@ const num = v => Number(v) || 0;
 const bonusOf = total => Math.floor(num(total) / 10);
 
 /**
+ * Adoring Crowds / Обожание Толпы (Черта Воина Ноты): «Может использовать A
+ * вместо F и Trade(Dancer) вместо Command для своих Миньонов-Людей». Выбор
+ * игрока — берётся лучшее из двух (как «Inf вместо F» у Тирана).
+ */
+export function hasAdoringCrowds(master) {
+  return hasAbility(master, "", "Adoring Crowds", "trait");
+}
+
+/**
+ * Характеристика Хозяина, от которой считаются Миньоны группы (стр. 111–113):
+ * { key, total }. Обожание Толпы у людей — A, если она выше F.
+ */
+export function masterGroupChar(master, group) {
+  const key = MINION_GROUPS[group]?.masterChar;
+  if (!key) return { key: "", total: 0 };
+  const chars = master?.system?.characteristics ?? {};
+  const base = { key, total: num(chars[key]?.total) };
+  if (group === "human" && hasAdoringCrowds(master)) {
+    const ag = num(chars.ag?.total);
+    if (ag > base.total) return { key: "ag", total: ag };
+  }
+  return base;
+}
+
+/** Подхалим (Sycophant) в компендиуме Черт — бесплатный Трейт слуг Обожания Толпы. */
+export const SYCOPHANT_TRAIT_UUID = "Compendium.warhammer-dbc.traits.Item.z0ktCYeNDSOBiyeL";
+
+/**
+ * Обожание Толпы: «все они [Миньоны-Люди] получают Трейт Sycophant и Навык
+ * Trade (Musician) бесплатно» (wdbc-ra2oc). Генератор Миньона кладёт их сам,
+ * вне очков; уже выбранное игроком не задваивается.
+ * @returns {{traitUuid:string, skill:{scope:"group", key:"trade", spec:string}}|null}
+ */
+export function adoringCrowdsFreebies(master, group) {
+  if (group !== "human" || !hasAdoringCrowds(master)) return null;
+  return { traitUuid: SYCOPHANT_TRAIT_UUID, skill: { scope: "group", key: "trade", spec: "Музыкант" } };
+}
+
+/** Навык в требовании Таланта группы: у Обожания Толпы для людей — Trade(Dancer) или Command. */
+export function groupReqSkill(master, group) {
+  const skill = MINION_GROUPS[group]?.reqSkill ?? "";
+  return group === "human" && hasAdoringCrowds(master) ? `${skill} или Trade (Dancer)` : skill;
+}
+
+/**
  * Бесчестие. В системе это Характеристика `inf`, а не отдельное поле: и
  * требования Таланта, и доля Миньона, и Магнитуда Орды считаются от неё.
  */
@@ -111,8 +156,7 @@ export function slotUsage(items = [], minions = [], master = null) {
 export function minionCapacity(master, groups = []) {
   const used = [...new Set(groups.filter(g => MINION_GROUPS[g]))];
   if (!used.length) return 0;
-  const chars = master?.system?.characteristics ?? {};
-  const cap = Math.min(...used.map(g => bonusOf(chars[MINION_GROUPS[g].masterChar]?.total)));
+  const cap = Math.min(...used.map(g => bonusOf(masterGroupChar(master, g).total)));
   return hasTalentCapability(master, "minion.core.lordOfChaos") ? Math.floor(cap * 1.5) : cap;
 }
 
@@ -146,12 +190,12 @@ export function talentRequirements(master, group, tier, { ignoreInfamy = false }
   if (!groupDef || !tierDef) return { ok: false, missing: ["Не выбраны группа и сила Миньона."] };
 
   const sys = master?.system ?? {};
-  const charTotal = num(sys.characteristics?.[groupDef.masterChar]?.total);
+  const { key: charKey, total: charTotal } = masterGroupChar(master, group);
   const infamy    = infamyOf(master);
   const missing = [];
 
   if (charTotal < tierDef.req.char) {
-    missing.push(`${groupDef.masterChar.toUpperCase()} ${charTotal} — нужно ${tierDef.req.char}`);
+    missing.push(`${charKey.toUpperCase()} ${charTotal} — нужно ${tierDef.req.char}`);
   }
   // ignoreInfamy — Черта Архетипа «игнорирует требования по Inf для
   // Миньонов-<группы>» (Змеиный Язык — люди, Ведун Тьмы — демоны): решает
@@ -162,7 +206,7 @@ export function talentRequirements(master, group, tier, { ignoreInfamy = false }
   // Навык проверяем подсказкой: степень владения хранится по-разному у разных
   // Навыков (обычный, групповой, специализация), и загонять сюда её разбор
   // значило бы дублировать skills.mjs. Требование показываем всегда.
-  const skillNote = `${groupDef.reqSkill} +${tierDef.req.skill}`;
+  const skillNote = `${groupReqSkill(master, group)} +${tierDef.req.skill}`;
 
   return { ok: !missing.length, missing, skillNote };
 }
@@ -302,6 +346,41 @@ export function traitEntry(name) {
 }
 
 /**
+ * Какой предмет компендиума Трейтов брать за строку таблицы книги. Имена в паке
+ * двуязычные («Bite / Укус (X)»), а таблица знает только английский ключ.
+ * Раньше брался первый документ, чьё имя ВКЛЮЧАЛО ключ: индекс пака идёт в
+ * порядке _id, и Миньон-зверь вместо «Bite / Укус (X)» получал Черту Медузы
+ * «Deadly Natural Weapon (2, Tentacles; 7, Bite)» с её Щупальцами и Укусом
+ * Медузы (живая проверка 21.11.2026). Так же «Psyker» ловил «Chaos Psyker»,
+ * «Machine» — «Machine Spirit Thief», «Fanatic» — «Locus of Fanaticism».
+ *
+ * Теперь имя должно НАЧИНАТЬСЯ с ключа, а из подходящих выигрывает:
+ * «Ключ / … (X)» → «Ключ / …» → «Ключ (X…)» → «Ключ (…)»; при равенстве —
+ * Трейт из корня пака, а не из папки архетипа/расы.
+ * @param {Iterable<{name:string, folder?:string|null}>} index  индекс пака
+ * @param {string} name  ключ таблицы MINION_TRAITS
+ * @returns {object|null} запись индекса
+ */
+export function pickMinionTraitEntry(index, name) {
+  const want = String(MINION_TRAITS[name]?.pack ?? name ?? "");
+  if (!want) return null;
+  const rank = n => {
+    if (n.startsWith(`${want} /`)) return /\(X/.test(n) ? 0 : 1;
+    if (n.startsWith(`${want} (X`)) return 2;
+    if (n.startsWith(`${want} (`)) return 3;
+    return -1;
+  };
+  let best = null, bestScore = Infinity;
+  for (const entry of index ?? []) {
+    const r = rank(String(entry?.name ?? ""));
+    if (r < 0) continue;
+    const score = r * 2 + (entry.folder ? 1 : 0);
+    if (score < bestScore) { best = entry; bestScore = score; }
+  }
+  return best;
+}
+
+/**
  * Что говорит таблица о Трейте для этой пары «группа + сила»: можно ли его
  * взять, сколько стоит, каков базовый Рейтинг и на сколько его поднимает
  * лишнее очко. `reason` — почему нельзя, если нельзя.
@@ -409,6 +488,19 @@ export function minionCorruption(group, traits = []) {
 }
 
 /**
+ * «Mutant (X) — имеет X мутаций» (wdbc-q5zrm): сколько мутаций бросить
+ * генератору по таблице 1–100. Без рейтинга — 1; Мутанта нет — 0.
+ */
+export function minionMutationCount(traits = []) {
+  let n = 0;
+  for (const t of traits ?? []) {
+    if (traitEntry(t?.name)?.key !== "Mutant") continue;
+    n = Math.max(n, minionTraitRating(t) ?? 1);
+  }
+  return n;
+}
+
+/**
  * Базовая Лояльность — ЗНАЧЕНИЕ характеристики Хозяина, не бонус (стр. 113).
  * Tyrant / Тиран (minion.core.tyrant): «Стартовая Лояльность может
  * использовать Inf» — берётся большее из обычной характеристики и Inf.
@@ -424,9 +516,9 @@ export function minionCorruption(group, traits = []) {
 export function minionLoyalty(master, group, minion = null) {
   // Голем Рубрики (Повелитель Големов): «фиксированная Лояльность 30, которая не изменяется никакими Талантами».
   if (minion?.golem) return GOLEM_LOYALTY;
-  const charKey = MINION_GROUPS[group]?.masterChar;
-  if (!charKey) return 0;
-  let value = num(master?.system?.characteristics?.[charKey]?.total);
+  if (!MINION_GROUPS[group]?.masterChar) return 0;
+  // Обожание Толпы: у Миньонов-Людей — A вместо F, если выше (masterGroupChar).
+  let value = masterGroupChar(master, group).total;
   if (hasRuleFlag(master, "minion.core.tyrant")) {
     value = Math.max(value, num(master?.system?.characteristics?.inf?.total));
   }

@@ -188,7 +188,7 @@ export async function runTalentAction(action, item, actor) {
     // «Рейтинг 1» при нуле и «+1 к текущему» при ненулевом — одна и та же прибавка.
     const { grantTimedEffect, WAR_CRY_EFFECT_KEY, WAR_CRY_PRIORITY } = await import("../combat/timed-effects.mjs");
     await grantTimedEffect(actor, {
-      key: WAR_CRY_EFFECT_KEY, name: "Боевой клич — рейтинг Страха +1", img: "icons/svg/terror.svg",
+      key: WAR_CRY_EFFECT_KEY, name: "Боевой клич — рейтинг Страха +1", img: "icons/svg/terror.svg", keepOutOfCombat: true,
       // priority выше, чем у «upgrade» Черты Fear (X) (priority 0): прибавка ложится ПОСЛЕ неё,
       // иначе Fear (2) + Клич дало бы upgrade до 2 поверх add 1 и итог остался бы 2 вместо 3.
       changes: [{ key: "system.fearRating", type: "add", value: 1, priority: WAR_CRY_PRIORITY }]

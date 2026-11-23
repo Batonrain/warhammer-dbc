@@ -17,6 +17,7 @@
 import { NO_ENERGY_WEAPON_CAP, isEnergyWeapon } from "../../rules/mechanicus-monk-traits.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { planeAttackBlockReason } from "../../rules/incorporeal.mjs";
+import { veilPierceAllows, VEIL_PIERCE_FLAG } from "../../rules/spatial-instability.mjs";
 import { FAST_MOVE_FLAG } from "../../rules/hard-target.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -25,15 +26,17 @@ import { spendActionPoints, apCostForActionType, spendReaction, canSpendReaction
 import { movementApCost } from "../../combat/psychic-sprint.mjs";
 import { fullFireOptionByValue, fullFireSecondThreshold, fullFireSecondBlockReason, secondRofBonus } from "../../rules/full-fire.mjs";
 import { weaponTrainingPenalty } from "../../rules/weapon-training.mjs";
-import { isMechadendriteWeapon } from "../../rules/mechadendrites.mjs";
+import { isMechadendriteWeapon, dendriteAttackBlock, DENDRITE_FOCUS_FLAG, DENDRITE_REACTION_FLAG } from "../../rules/mechadendrites.mjs";
+import { attackedThisTurn } from "../../rules/turn-flags.mjs";
+import { isDendriteShield } from "../../rules/testudo.mjs";
 import { BATPACK_ROF } from "../../rules/batpack-dump.mjs";
 import { POWER_MODE_FLAG } from "../../rules/power-setting.mjs";
 import { canTakeAttackAction, takeAttackAction } from "../../combat/attack-limit.mjs";
 import { isGrappled } from "../../rules/predicates.mjs";
-import { grappleAttackBlockReason } from "../../combat/grapple.mjs";
+import { grappleAttackBlockReason, blessedWithPusAttackReroll } from "../../combat/grapple.mjs";
 import { delayBlocksAttack } from "../../combat/delay-action.mjs";
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
-import { finalExecutionGate, finalExecutionProps, commitFinalExecution } from "../../combat/final-execution.mjs";
+import { finalExecutionGate, finalExecutionProps, commitFinalExecution, finalExecutionAutoArm } from "../../combat/final-execution.mjs";
 import { executionPayProblem, commitExecutionStep } from "../../combat/execution.mjs";
 import { isExecutionWeapon } from "../../rules/execution.mjs";
 import { markedPreyAdvantage } from "../../combat/marked-prey.mjs";
@@ -43,7 +46,7 @@ import { canPayFuriousReaction, payFuriousReaction } from "../../combat/khorne-b
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { hateAttackApplies } from "../../rules/patron-abilities.mjs";
 import { hateAttackDegrees } from "../../rules/focused-wrath.mjs";
-import { actorHasInfamyPoint, spendPatronAbility } from "../../apps/infamy-points.mjs";
+import { actorHasInfamyPoint, spendPatronAbility, INFAMY_ATTACK_TEST } from "../../apps/infamy-points.mjs";
 import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
 import { allGunsBlazingMod, tyranthikosSecondAttackDice, DUAL_HAND_MAIN, DUAL_HAND_OFF } from "../../rules/dual-wield-talents.mjs";
@@ -66,8 +69,10 @@ import { ACTIVE_SIGHT_FLAG } from "../../combat/weapon-mods.mjs";
 import { bringItDownStacksFor } from "../../rules/leadership-talents.mjs";
 import { stunForcedAim } from "../../rules/takedown.mjs";
 import { reverseStrikeSecondProfileIdx, freeMeleeFlags, freeAttackLockProblem } from "../../rules/melee-talents.mjs";
+import { phoenicianMainProfile } from "../../rules/terminator-talents.mjs";
 import { haymakerBlocksSecondHand } from "../../rules/pugilist-talents.mjs";
 import { baseIsCharge } from "../../rules/melee-base.mjs";
+import { psalmSecondHandAim, canSpendCognition, spendCognition } from "../../rules/psalm-of-guidance.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -137,6 +142,16 @@ async function payTalentAttack(actor, pay) {
   return runCardOnce(message, pay.cardKey, spend, `⚠️ ${pay.label}: с этой карточки уже использовано.`);
 }
 
+/**
+ * Помеха Благословенного Гноем поверх выбранного игроком Кубика (Sahara task-234f): Преимущество гасит её — тогда
+ * переброса нет вовсе (false — цепочка `||` идёт дальше); своя Помеха/переброс «худший» — остаётся он.
+ */
+function pusAttackReroll(chosen, pus) {
+  if (!pus) return chosen;
+  if (chosen?.mode === "keepBest") return false;
+  return chosen?.mode === "keepWorst" ? chosen : pus;
+}
+
 export function openAttackDialog(ctx) {
   const {
     actor,
@@ -194,7 +209,8 @@ export function openAttackDialog(ctx) {
   let deathDancePending = null; // { cost, agBonus } — выставлено кликом, читается в колбэке "roll"
   // Окончательная Казнь (Мастер Казней, combat/final-execution.mjs): тот же приём — кнопка вооружает, Очко Трофеев
   // списывается только при подтверждении атаки. { n, cost } — номер атаки серии и цена.
-  let finalExecutionPending = null;
+  // Продолжение Казни в оплаченной серии — взведено сразу (finalExecutionAutoArm, Sahara 2-3d54).
+  let finalExecutionPending = finalExecutionAutoArm(actor, techniqueOpts);
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
     classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
@@ -266,7 +282,16 @@ export function openAttackDialog(ctx) {
             });
             return false;
           }
-          const planeWhy = planeAttackBlockReason(actor, targetActor);
+          let planeWhy = planeAttackBlockReason(actor, targetActor);
+          // Ненависть сквозь Завесу (Пространственная Нестабильность, субм. 8,
+          // wdbc-1rno.8): пройденный тест W−20 пускает ОДНУ рукопашную атаку
+          // бесплотного по этой материальной цели — флаг гасится здесь же.
+          // Снимается рядом с takeAttackAction ниже: отказ по ОД/Реакциям/лимиту пропуск не тратит.
+          let veilPierceUsed = false;
+          if (planeWhy && veilPierceAllows(actor.getFlag?.("warhammer-dbc", VEIL_PIERCE_FLAG), targetActor?.uuid, isMelee)) {
+            planeWhy = "";
+            veilPierceUsed = true;
+          }
           if (planeWhy) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
@@ -320,7 +345,22 @@ export function openAttackDialog(ctx) {
           // Рисовка (свободная атака «не считается атакой») — то же; Жнец — продолжение Натиска, Яростный Штурм —
           // «еще одна атака за свободное действие»: ни ОД, ни лимита; Разрубить — то же (rules/melee-talents.mjs::freeMeleeFlags).
           const freeMelee = freeMeleeFlags(techniqueOpts);
-          const uncountedAttack = freeMelee.uncounted;
+          // Мехадендриты в бою (rules/mechadendrites.mjs, Разобрать 2qtgp): атака одним дендритом за
+          // Реакцию идёт сверх обычных — ни ОД, ни Лимита Атак; сосредоточение даёт Multiple Arms (X).
+          const dendriteMode = (!sabreSecond && !techniqueOpts?.freeShot) ? (f.dendriteMode || "") : "";
+          const dendriteBlock = (sabreSecond || techniqueOpts?.freeShot) ? ""
+            : dendriteAttackBlock(actor, item, dendriteMode, attackedThisTurn(actor));
+          if (dendriteBlock) { ui.notifications.warn(`⚠️ Мехадендриты: ${dendriteBlock}.`); return false; }
+          if (isDendriteShield(item)) { ui.notifications.warn("⚠️ Тестудо: щитом на мехадендрите нельзя атаковать."); return false; }
+          const dendriteReaction = dendriteMode === "reaction";
+          if (dendriteReaction && !canSpendReaction(actor, { physical: true })) {
+            ui.notifications.warn("⚠️ Не хватает Реакций (атака мехадендритом).");
+            return false;
+          }
+          // Сосредоточение объявлено этой атакой: Multiple Arms (X) уже действует на проверку Лимита
+          // (canTakeAttackAction ниже), а метка ставится только после списания ОД — отказ её не оставляет.
+          const dendriteFocusNew = dendriteMode === "focus" && !actor.getFlag?.("warhammer-dbc", DENDRITE_FOCUS_FLAG);
+          const uncountedAttack = freeMelee.uncounted || dendriteReaction;
           // Метка до списания: вторая атака Гусара (не Сабли) — карточка называет её «Гусар».
           const sabrePendingHussar = !!actor.getFlag?.(SABRE_NS, SABRE_PENDING_FLAG)?.hussar;
           if (sabreSecond) {
@@ -341,7 +381,7 @@ export function openAttackDialog(ctx) {
           // (в т.ч. выстрел Штыковой Атаки) — combat/free-shot.mjs.
           const runAndGunLock = runAndGunLockedNow(actor, item, { isMelee });
           if (runAndGunLock) { ui.notifications.warn(`⚠️ ${runAndGunLock}.`); return false; }
-          if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot) && !canTakeAttackAction(actor)) {
+          if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot) && !canTakeAttackAction(actor, { dendriteFocus: dendriteMode === "focus" })) {
             await ChatMessage.create({
               speaker: ChatMessage.getSpeaker({ actor: actor }),
               content: `<div class="wh-roll-result">
@@ -356,7 +396,7 @@ export function openAttackDialog(ctx) {
           // Атака Ненависти (Кхорн): Очко проверяется ДО списания ОД, чтобы
           // отказ не стоил действия; само списание — перед броском ниже.
           const hateUsed = !!(hateAttackAvailable && f.hateAttack && hateAttackApplies(f.char));
-          if (hateUsed && !actorHasInfamyPoint(actor)) {
+          if (hateUsed && !actorHasInfamyPoint(actor, { test: INFAMY_ATTACK_TEST })) {
             ui.notifications.warn("⚠️ Нет Очков Бесчестия для Атаки Ненависти.");
             return false;
           }
@@ -405,7 +445,21 @@ export function openAttackDialog(ctx) {
           // руке по построению (thresholdParts включает aimingBonus), вторая
           // рука иначе наследовала бы его бесплатно из той же суммы. Гасим
           // его там, куда игрок НЕ выбрал положить бонус.
-          const aimAdjust = (dualOff && currentAiming !== "none" && !wp.noAim) ? aimingBonus : 0;
+          // Псалом Наставления (wdbc-1rno.32): «Обеим» — вторая рука (тоже Cognis) получает
+          // то же Прицеливание за Когницию; гасить бонус ни у одной руки не нужно.
+          const psalmBothCost = (dualOff && f.aimHand === "both" && !wp.noAim)
+            ? psalmSecondHandAim(actor, item, dualOff, currentAiming) : null;
+          if (dualOff && f.aimHand === "both" && !wp.noAim) {
+            if (psalmBothCost == null) {
+              ui.notifications.warn("⚠️ Прицеливание обеим рукам: Псалом Наставления действует, только если оба оружия — Cognis.");
+              return false;
+            }
+            if (!canSpendCognition(actor, psalmBothCost)) {
+              ui.notifications.warn(`⚠️ Прицеливание обеим рукам: не хватает Когниции (нужно ${psalmBothCost}).`);
+              return false;
+            }
+          }
+          const aimAdjust = (dualOff && currentAiming !== "none" && !wp.noAim && psalmBothCost == null) ? aimingBonus : 0;
           // Вторая рука бьёт Стандартной Атакой / одиночным выстрелом, то есть
           // Полудействием: приём, база и режим огня из окна относятся к
           // основному оружию и на неё не переносятся.
@@ -455,7 +509,14 @@ export function openAttackDialog(ctx) {
               return false;
             }
           }
-          if (sabreSecond || freeShot || freeMelee.noAp) {
+          if (dendriteReaction) {
+            if (!await spendReaction(actor, { physical: true })) {
+              ui.notifications.warn("⚠️ Не хватает Реакций (атака мехадендритом).");
+              return false;
+            }
+            const usedDendrites = actor.getFlag?.("warhammer-dbc", DENDRITE_REACTION_FLAG) ?? [];
+            await actor.setFlag("warhammer-dbc", DENDRITE_REACTION_FLAG, [...usedDendrites, item.id]);
+          } else if (sabreSecond || freeShot || freeMelee.noAp) {
             // ничего не списывается — см. выше (Сабля) и combat/free-shot.mjs (бесплатные выстрелы)
           } else if (isMelee && sel.cheapShotActive) {
             // strange: Запрещённый Приём (хвост, Cheap Shot) — «странная» атака Странной Техники.
@@ -483,7 +544,7 @@ export function openAttackDialog(ctx) {
               ? dualWieldActionType(ownActionType, offActionType(dualOff))
               : ownActionType);
             const apCost = (isMelee && baseIsCharge(sel.baseKey)) ? movementApCost(actor, baseApCost) : baseApCost;
-            if (!await spendActionPoints(actor, apCost, { physical: true })) {
+            if (!await spendActionPoints(actor, apCost, { physical: true, attack: true })) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
             }
@@ -493,9 +554,13 @@ export function openAttackDialog(ctx) {
             ui.notifications.warn("⚠️ Не хватает Реакций (Полный Огонь).");
             return false;
           }
+          // Псалом Наставления: Прицеливание второй руки — Когниция, когда ОД уже списаны.
+          if (psalmBothCost != null) await spendCognition(actor, psalmBothCost);
           // Ресурс (ОД или Реакция Запрещённого Приёма) списан — атака состоялась,
           // засчитываем её в лимит Хода (стр. 12, wdbc-x1nz.2.30).
           if (!sabreSecond && !uncountedAttack && freeShotCountsAsAttack(freeShot)) await takeAttackAction(actor);
+          if (dendriteFocusNew) await actor.setFlag("warhammer-dbc", DENDRITE_FOCUS_FLAG, true);
+          if (veilPierceUsed) await actor.unsetFlag("warhammer-dbc", VEIL_PIERCE_FLAG);
           if (freeShot) await consumeFreeShot(actor, freeShot, item);
           await chargeAttackStarted(actor, chargeGate.first);
           // Прикрывающий Огонь: очередь сделана — метки Подавления на ВСЕХ бывших противников (combat/covering-fire.mjs).
@@ -593,7 +658,7 @@ export function openAttackDialog(ctx) {
           }
 
           // Атака Ненависти тратится реальным броском, как и Локус выше.
-          if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred"))) return false;
+          if (hateUsed && !(await spendPatronAbility(actor, "khorneHatred", { test: INFAMY_ATTACK_TEST }))) return false;
 
           // Bring It Down!/Валите Это! (rules/leadership-talents.mjs): Отряд
           // атакующего мог срезать бонус Общей Команды на бонусные кубы урона
@@ -665,8 +730,9 @@ export function openAttackDialog(ctx) {
               // Кубика: он не предлагается, а применяется. Тот же приоритет
               // «внешнее навязывание важнее своего», что у защиты —
               // combat/defense.mjs::_performDodge, forcedReroll.
-              reroll: (resolvedAttack.rerolls || []).find(r => r.who === "opponent")
-                      || f.reroll
+              reroll: (resolvedAttack.rerolls || []).find(r => r.who === "opponent" || r.who === "forced")
+                      // Благословенный Гноем у цели: Захват по нему — с Помехой; выбранное Преимущество её гасит.
+                      || pusAttackReroll(f.reroll, blessedWithPusAttackReroll(actor, targetActor, { isMelee, technique: sel.maneuverKey }))
                       || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined)
                       // Отмеченная Добыча (combat/marked-prey.mjs): Преимущество на атаки Казни по отмеченной цели.
                       || (isMelee ? markedPreyAdvantage(actor, targetActor, item, sel.gKey) : undefined),
@@ -774,7 +840,9 @@ export function openAttackDialog(ctx) {
           // ОД уже списаны первой; Concussive(0) вторая получает в combat/attack.mjs (opts.reverseStrikeSecond).
           if (isMelee && sel.maneuverKey === "reverseStrike") {
             // -1 — Посох без профилей: вторая атака базовым профилем оружия (решение владельца 26.10.2026).
-            const staffIdx = reverseStrikeSecondProfileIdx(item, atkProfilesOf(item));
+            // Фениксиец (Чемпион Терминатор, rules/terminator-talents.mjs): древковым — вторая атака основным профилем.
+            const phoenician = phoenicianMainProfile(actor, item);
+            const staffIdx = phoenician ? -1 : reverseStrikeSecondProfileIdx(item, atkProfilesOf(item));
             if (staffIdx != null) {
               await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
                 actor, item, f.char, thresholdOf(f) - (f.aimHand === "off" ? aimAdjust : 0),
@@ -786,7 +854,9 @@ export function openAttackDialog(ctx) {
                   profile: staffIdx >= 0 ? atkProfilesOf(item)[staffIdx] : null, profileIdx: staffIdx,
                   reverseStrikeSecond: true,
                   dualPairId: undefined, dualHand: undefined,   // вторая атака посохом — не рука пары Тирантикоса
-                  attackNote: `Обратный Удар: вторая атака профилем посоха — те же модификаторы, отдельный бросок; ОД уже списаны первой карточкой (Concussive 0)`,
+                  attackNote: phoenician
+                    ? "Обратный Удар (Фениксиец): вторая атака основным профилем оружия — те же модификаторы, отдельный бросок; ОД уже списаны первой карточкой (Concussive 0)"
+                    : `Обратный Удар: вторая атака профилем посоха — те же модификаторы, отдельный бросок; ОД уже списаны первой карточкой (Concussive 0)`,
                   aimingLabel: ""
                 }
               ));
@@ -862,7 +932,7 @@ export function openAttackDialog(ctx) {
                 dualPairId, dualHand: DUAL_HAND_OFF,
                 bringItDownDice,
                 // Прицеливание положено на вторую руку (wdbc-x1nz.2.41) — метка едет сюда, не основной.
-                aimingLabel: (currentAiming !== "none" && !wp.noAim && f.aimHand === "off")
+                aimingLabel: (currentAiming !== "none" && !wp.noAim && (f.aimHand === "off" || psalmBothCost != null))
                   ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                   : ""
               }

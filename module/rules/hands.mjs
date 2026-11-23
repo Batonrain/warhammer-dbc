@@ -21,11 +21,15 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
+import { manifestedGift, itemHasName } from "./predicates.mjs";
 import { isPathOneHandedWeapon } from "./library/paths.mjs";
 import { uselessCount, isSideUseless } from "./useless-limbs.mjs";
 import { BODY_SIDES, isLostOn } from "./limb-loss.mjs";
 import { runtForbidsOneHand } from "./runt.mjs";
 import { ironGardenHandsDiscount, ironGardenSharesHand } from "./iron-garden.mjs";
+import { livingArsenalOneHand, isShoulderWeapon } from "./obliterator-talents.mjs";
+import { precisionTelekinesisArms } from "./telekinetic-blades.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -100,7 +104,10 @@ function availableRangedGrips(item, actor, auto) {
   // Откатная Перчатка / Подавители Отдачи / Рука-Пушка: винтовку (класс basic —
   // в нём и «Винтовка», и «Длинная Винтовка», стр. 171) можно держать одной
   // рукой (wdbc-f7iw, wdbc-6tzk).
-  if (item.system?.weaponClass === "basic" && hasRuleFlag(actor, "weapon.oneHandedRifle")) addExtra("1р");
+  // Огневая Мощь (Моритат) — та же возможность; старая копия Таланта — по имени (приёмка #597).
+  if (item.system?.weaponClass === "basic" && hasAbility(actor, "weapon.oneHandedRifle", "Outgun", "talent")) addExtra("1р");
+  // Живой Арсенал (Облитератор): ассимилированные винтовки и тяжёлое — одной рукой без штрафа.
+  if (livingArsenalOneHand(actor, item)) addExtra("1р");
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60) — тот же
   // список читает окно атаки; расходиться этим двум местам нельзя.
   if (isPathOneHandedWeapon(item) && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) addExtra("1р");
@@ -161,7 +168,10 @@ function effectiveRangedGripHands(item, actor, auto) {
 export function weaponHandsRequired(item, actor = item?.parent) {
   if (!item || item.type !== "weapon") return 0;
   const sys = item.system || {};
-  if (isHandShield(item)) return 1;
+  // Тестудо (rules/testudo.mjs): щит на мехадендрите руку не занимает. Флаг читается
+  // строкой — импорт testudo.mjs сюда не нужен.
+  if (isHandShield(item)) return (item.flags?.["warhammer-dbc"]?.dendriteMounted
+    ?? item.getFlag?.("warhammer-dbc", "dendriteMounted")) ? 0 : 1;
   // Рука Смерти: сросшееся оружие работает одной рукой, даже если профиль
   // требовал двух (стр. 46) — гейт до ветвления мелейное/дальнобойное, оба
   // случая читают sys.grips/RANGED_CLASS_HANDS ниже, которых это правило не
@@ -171,6 +181,8 @@ export function weaponHandsRequired(item, actor = item?.parent) {
   // стоит ДО ветвления melee/ranged (wdbc-9dg8). Пальцевое (перстень на палец)
   // здесь же — по книге его можно надеть на каждый палец и стрелять
   // одновременно с оружием в той же руке.
+  // До Зубов (Облитератор, rules/obliterator-talents.mjs): наплечное оружие рук не занимает.
+  if (isShoulderWeapon(item)) return 0;
   const auto = effectiveAuto(item, actor);
   if (auto.independent || auto.wrist || auto.digital) return 0;
   if (sys.weaponClass === "melee") return MELEE_GRIP_HANDS[currentMeleeGrip(item)] ?? 1;
@@ -218,7 +230,16 @@ export function baseHandsFromTraits(actor) {
     .map(t => Number(t.system?.rating) || 0)
     .filter(n => n > 0);
   const base = ratings.length ? Math.max(...ratings) : BASE_HANDS;
-  return base + Math.max(0, Number(actor?.system?.extraHands) || 0);
+  return base + Math.max(0, Number(actor?.system?.extraHands) || 0) + brotherhoodArms(actor)
+    + precisionTelekinesisArms(actor);
+}
+
+/** Дар Одержимого «Братство»: доп. пара рук (Multiple Arms +2), пока демон проявлен (Разобрать eyupr). */
+export const BROTHERHOOD_ARMS = 2;
+export function brotherhoodArms(actor) {
+  if (!actor?.system?.possession?.manifested) return 0;
+  const has = [...(actor?.items ?? [])].some(i => i?.type === "talent" && itemHasName(i, "Brotherhood"));
+  return has && manifestedGift(actor, "Братство") ? BROTHERHOOD_ARMS : 0;
 }
 
 /**
@@ -270,13 +291,24 @@ export function maxHands(actor) {
  * прибавка, rules/pugilist-talents.mjs flyingKickAttackBonus.
  * ПРИБЛИЖЕНИЕ: книга делает доп. атаку частью ОДНОГО действия, лимит же
  * считает клики «Бросок!» — вторая атака стоит своё ОД (как у Пинка с Полёта).
- * Не реализовано: потолок «не более 2+P.b рук за Ход», независимые пары
- * (выстрел одной парой + рукопашная другой), счёт по парам для Талантов
- * группы «Два оружия».
+ * Потолок «не более 2+P.b рук за Ход» — handsUsablePerTurn ниже (55-15).
+ * Не реализовано: независимые пары (выстрел одной парой + рукопашная
+ * другой), счёт по парам для Талантов группы «Два оружия».
  */
 export function multipleArmsAttackBonus(actor) {
-  if (![...(actor?.items ?? [])].some(isMultipleArmsTrait)) return 0;
-  return Math.max(0, Math.ceil(maxHands(actor) / 2) - 1);
+  if (![...(actor?.items ?? [])].some(isMultipleArmsTrait) && !brotherhoodArms(actor)) return 0;
+  return Math.max(0, Math.ceil(handsUsablePerTurn(actor) / 2) - 1);
+}
+
+/**
+ * «Персонаж может использовать не более 2+P.b рук за Ход» (Multiple Arms,
+ * задача Studio 55-15): доступные руки (maxHands), но не больше 2 + Бонус
+ * Восприятия. Без Характеристик (заготовка, тест) потолка нет.
+ */
+export function handsUsablePerTurn(actor) {
+  const hands = maxHands(actor);
+  const pb = Number(actor?.system?.characteristics?.per?.bonus);
+  return Number.isFinite(pb) ? Math.min(hands, 2 + Math.max(0, pb)) : hands;
 }
 
 // ── Кисть и рука (wdbc-x1nz.2.97 п.2, «Раны и Урон», стр. 43) ─────────────

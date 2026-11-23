@@ -272,3 +272,32 @@ describe("Мод без requiresWorn — гейт не вмешивается", 
     expect(getModEffects(actorWith([mod]), rifle()).attackMod).toBe(3);
   });
 });
+
+describe("Глаза Хаоса / Глаза-Стебельки гасят пользу ретинального дисплея (Sahara task-b65d)", () => {
+  const mutation = (enName, sub = "") => {
+    const item = owned(packDoc("mutations", enName), `mut-${enName}`);
+    item.type = "mutation";
+    item.system = { ...item.system, submutation: { label: sub } };
+    return item;
+  };
+
+  it("Глаза-Стебельки: Целеуказатель с надетым дисплеем не работает", () => {
+    const fx = getModEffects(actorWith([modOn("Target Designator"), retinal(true), mutation("Eye Stalks")]), rifle());
+    expect(fx.rofFullAttackMod).toBe(0);
+  });
+
+  it("Глаза Хаоса, Пламенные Глазницы (1): дисплей бесполезен", () => {
+    const fx = getModEffects(actorWith([modOn("Target Designator"), retinal(true), mutation("Eyes of Chaos", "1")]), rifle());
+    expect(fx.rofFullAttackMod).toBe(0);
+  });
+
+  it("Глаза Хаоса с другой субмутацией — дисплей работает", () => {
+    const fx = getModEffects(actorWith([modOn("Target Designator"), retinal(true), mutation("Eyes of Chaos", "6")]), rifle());
+    expect(fx.rofFullAttackMod).toBe(10);
+  });
+
+  it("Бионический Глаз мутация не гасит — Целеуказатель работает через него", () => {
+    const fx = getModEffects(actorWith([modOn("Target Designator"), implant("Bionic Eye"), mutation("Eye Stalks")]), rifle());
+    expect(fx.rofFullAttackMod).toBe(10);
+  });
+});

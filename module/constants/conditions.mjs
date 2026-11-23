@@ -98,6 +98,15 @@ export const CONDITIONS = {
     body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 12.5H13M3 12.5V9.5H13V12.5M4.5 9.5V8A1.5 1.5 0 0 1 7.5 8V9.5"/>
      <path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" d="M9 2.5H11.5L9 5.5H11.5"/>`
   },
+  // Спит (остаток Талантов, 20.11.2026). Книга: «если псайкер … теряет сознание, или засыпает,
+  // все поддерживаемые психосилы прекращаются» (обрыв — combat/psychic-sustain.mjs::dropSustainOnSleep,
+  // кроме силы Сна Разума); Чуткий Сон: «при тестах на P или Awareness всегда считается
+  // бодрствующим» — штраф спящему к ним (rules/library/conditions.mjs, conditions.asleep).
+  asleep: {
+    label: "Спит", icon: "🌙", color: "#9a7fe0",
+    desc: "Спит: поддерживаемые психосилы прекращаются (кроме силы Таланта «Сон Разума»), тесты P и Awareness −30 (Чуткий Сон снимает штраф). Снимается, когда персонажа будят.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M10.5 3.2A5 5 0 1 0 12.8 10.5A4 4 0 0 1 10.5 3.2Z"/>`
+  },
   // Нулевая Ловкость/Общительность от урона в Характеристики (wdbc-x1nz.2.83,
   // таблица книги): метки, стоят, пока Итог 0 (rules/condition-mirrors.mjs).
   paralyzed: {

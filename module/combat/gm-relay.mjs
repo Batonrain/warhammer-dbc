@@ -43,6 +43,10 @@
 //      союзника и что цель переноса не дальше предела (P.b или Полудвижение инициатора).
 //    • resonance / snareCut — Резонанс от Резонирующего оружия (только уровень, вверх, до Размер+2 цели) и
 //      «Перерезать путы» Связывающего (только снятие Беспомощности); поля Состояния собирает ГМ.
+//    • livingBannerBoon — Живой Стяг (Герольд): +1 Очко Бесчестия соратнику; нужна Черта Living Banner у инициатора.
+//    • soulBondLink / soulBondShare / soulBondDeathLoss — Связывание Души (combat/soul-binding.mjs): метка связи
+//      цели (инициатор уже записал её у себя), доля урона Выжигания/Варп-Оружия партнёру (1…200), потеря 2d10 W
+//      Ритуалистом при смерти цели (инициатор — мёртвая цель). Цель и инициатор обязаны быть связаны.
 //  Просящий обязан владеть актором-инициатором (ГМ сверяет сам).
 //
 //  Порядок у вызывающего: сперва запись в цель (writeToTarget вернул false —
@@ -59,6 +63,8 @@ import {
 } from "../rules/dark-apostle.mjs";
 import { isThrottleReady } from "../rules/cooldown.mjs";
 import { hasMistSavior } from "../rules/master-of-executions.mjs";
+import { hasLivingBanner } from "../rules/living-banner.mjs";
+import { hasCook, hasAntivenom, hasDeepDetox, hasPlacebo } from "../rules/medic-chemistry.mjs";
 import {
   hasIronCage, hasCellOfShame, hasEmpyreanWhip, hasRunDown, brokenOf, flagSmithIs, isBrokenBySmith, runDownMarkOf, clampRoll,
   RUN_DOWN_STRUCTURE_MAX, RUN_DOWN_HELPLESS_MAX, RUN_DOWN_WP_MAX
@@ -66,6 +72,8 @@ import {
 import { mutationCatalog } from "../constants/mutations.mjs";
 import { resonanceCap } from "../rules/resonance.mjs";
 import { sizeOf } from "../rules/predicates.mjs";
+import { isPariah, pariahTouchOutcome } from "../rules/null-zones.mjs";
+import { soulBondPartners } from "../rules/soul-binding.mjs";
 import { hasMeleeTalent } from "../rules/melee-talents.mjs";
 import { DEVOURER_OF_TIME_AP_DEBT_FLAG } from "./devourer-of-time.mjs";
 import { hasCloudCognition, hasMotiveEucharist, hasApocryphaCoil, planCloudCognition, planMotiveEucharist,
@@ -95,7 +103,11 @@ export const TARGET_WRITE_ACTION = "targetActorWrite";
 export const RELAY_TARGET_FLAGS = Object.freeze([
   "grapplePartnerUuid", "grappleRole", "grappleHands", "grappleHeldHands", "grappleTail",
   "grappleSqueezePending", "grappleSqueezeActive", "pinDownHold", "vastGrappleSize",
-  "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner"
+  "jockeyMountedBy", "jockeyRiding", "leapUpDenied", "bladeBindingBy", "bladeBindingWeapon", "bladeBindingOwner",
+  // Разбежаться! (combat/fan-out.mjs): id боя, в котором у члена отряда есть Reposition.
+  "fanOutReposition",
+  // Дары соратникам пачки «astartes» (rules/astartes-elite-common.mjs): строка «бой|сцена|число|подпись».
+  "astartesBoon.morale", "astartesBoon.herald"
 ]);
 /** Состояния, которые можно наложить/снять на цель из этих приёмов. */
 export const RELAY_TARGET_CONDITIONS = Object.freeze(["grappling", "prone"]);
@@ -174,6 +186,29 @@ export function checkTargetWrite(op, ctx = {}) {
 
   // Спой Мне! (Шумовой Десантник): урон — одно целое 2…20 (2d10), награда — без полезной нагрузки и только палачу
   // или поклоннику Слаанеш; Стена Диссонанса: токен и точка, дальность сверяет ГМ при исполнении.
+  // Касание Парии (task-1452): непоглощаемые Раны псайкеру (бPR) или демону
+  // (3d10) — одно целое 1…30; инициатор обязан быть Парией, цель — псайкером
+  // или демоном (rules/null-zones.mjs::pariahTouchOutcome сверяет ГМ).
+  if (op.kind === "pariahTouch") {
+    if (Object.keys(op).some(k => k !== "kind" && k !== "amount")) return { ok: false, reason: "pariahTouch: лишние поля" };
+    if (!Number.isInteger(op.amount) || op.amount < 1 || op.amount > 30) return { ok: false, reason: "pariahTouch: урон вне 1…30" };
+    if (!isPariah(ctx.initiator)) return { ok: false, reason: "инициатор не Пария" };
+    if (ctx.target && !["daemon", "psyker"].includes(pariahTouchOutcome(ctx.target).kind)) return { ok: false, reason: "цель не псайкер и не демон" };
+    return { ok: true };
+  }
+  // Связывание Души (combat/soul-binding.mjs): только между связанными; поля записи собирает ГМ.
+  if (op.kind === "soulBondLink" || op.kind === "soulBondShare" || op.kind === "soulBondDeathLoss") {
+    const fields = { soulBondLink: [], soulBondShare: ["amount"], soulBondDeathLoss: ["amount"] }[op.kind];
+    if (Object.keys(op).some(k => k !== "kind" && !fields.includes(k))) return { ok: false, reason: `${op.kind}: лишние поля` };
+    const [lo, hi] = op.kind === "soulBondDeathLoss" ? [2, 20] : [1, 200];
+    if (fields.length && (!Number.isInteger(op.amount) || op.amount < lo || op.amount > hi)) return { ok: false, reason: `${op.kind}: число вне ${lo}…${hi}` };
+    const iu = ctx.initiator?.uuid, tu = ctx.target?.uuid;
+    const linked = !!iu && !!tu && (soulBondPartners(ctx.initiator).includes(tu)
+      || (op.kind !== "soulBondLink" && soulBondPartners(ctx.target).includes(iu)));
+    if (!linked) return { ok: false, reason: "цель не связана душой с инициатором" };
+    if (op.kind === "soulBondDeathLoss" && !ctx.initiator?.getFlag?.(NS, "deceased")) return { ok: false, reason: "связанная цель не мертва" };
+    return { ok: true };
+  }
   if (op.kind === "singForMeDamage") {
     if (Object.keys(op).some(k => k !== "kind" && k !== "amount")) return { ok: false, reason: "singForMeDamage: лишние поля" };
     if (!Number.isInteger(op.amount) || op.amount < 2 || op.amount > 20) return { ok: false, reason: "singForMeDamage: урон вне 2…20" };
@@ -185,6 +220,27 @@ export function checkTargetWrite(op, ctx = {}) {
     if (!hasAbility(ctx.initiator, "ability.singForMe", "Sing For Me!", "talent")) return { ok: false, reason: "у инициатора нет Sing For Me" };
     const self = ctx.target && ctx.initiator && ctx.target.uuid === ctx.initiator.uuid;
     if (!self && !hasRuleFlag(ctx.target, "dreadWail.immune")) return { ok: false, reason: "получатель не поклонник Слаанеш" };
+    return { ok: true };
+  }
+  // Таланты Медика поверх химии (combat/medic-chemistry.mjs): имя препарата и число Раундов/минут;
+  // зависимость, пост-эффект и яд ГМ находит на листе цели сам.
+  if (op.kind === "medicChem") {
+    const fields = { cook: ["drug"], antivenom: ["poison"], deepDetox: ["drug", "stun"], placebo: ["rounds"] }[op.action];
+    if (!fields) return { ok: false, reason: `medicChem: действие вне списка: ${op.action}` };
+    if (Object.keys(op).some(k => k !== "kind" && k !== "action" && !fields.includes(k))) return { ok: false, reason: "medicChem: лишние поля" };
+    const has = { cook: hasCook, antivenom: hasAntivenom, deepDetox: hasDeepDetox, placebo: hasPlacebo }[op.action];
+    if (!has(ctx.initiator)) return { ok: false, reason: `у инициатора нет Таланта (${op.action})` };
+    for (const f of ["drug", "poison"]) {
+      if (fields.includes(f) && (typeof op[f] !== "string" || !op[f].trim() || op[f].length > 200)) return { ok: false, reason: `medicChem: нет ${f}` };
+    }
+    if (fields.includes("rounds") && (!Number.isInteger(op.rounds) || op.rounds < 1 || op.rounds > 30)) return { ok: false, reason: "medicChem: Раунды вне 1…30" };
+    if (fields.includes("stun") && (!Number.isInteger(op.stun) || op.stun < 0 || op.stun > 6)) return { ok: false, reason: "medicChem: Оглушение вне 0…6" };
+    return { ok: true };
+  }
+  if (op.kind === "livingBannerBoon") {
+    // Живой Стяг (Герольд, combat/living-banner.mjs): +1 Очко Бесчестия соратнику; число не присылается.
+    if (Object.keys(op).some(k => k !== "kind")) return { ok: false, reason: "livingBannerBoon: лишние поля" };
+    if (!hasLivingBanner(ctx.initiator)) return { ok: false, reason: "у инициатора нет Живого Стяга" };
     return { ok: true };
   }
   if (op.kind === "wallPush") {
@@ -429,6 +485,18 @@ async function _performTargetWrite(target, op, initiator) {
       ...(plan.toApoc ? { "system.apocryphaEnergy.value": (Number(ap.value) || 0) + plan.toApoc } : {})
     });
   }
+  if (op.kind === "medicChem") {
+    const { performMedicChemWrite } = await import("./medic-chemistry.mjs");
+    return performMedicChemWrite(target, op, initiator);
+  }
+  if (op.kind === "livingBannerBoon") {
+    const { changeActorInfamy } = await import("../apps/infamy-points.mjs");
+    return changeActorInfamy(target, 1);
+  }
+  if (op.kind === "pariahTouch") {
+    const { applyWoundLoss } = await import("../rules/wounds.mjs");
+    return applyWoundLoss(target, Number(op.amount));
+  }
   if (op.kind === "singForMeDamage" || op.kind === "singForMeBoon" || op.kind === "wallPush") {
     const { performNoiseMarineWrite } = await import("./noise-marine.mjs");
     return performNoiseMarineWrite(target, op, initiator);
@@ -444,6 +512,10 @@ async function _performTargetWrite(target, op, initiator) {
   if (op.kind === "saviorSwap") {
     const { performSaviorSwapWrite } = await import("./master-of-executions.mjs");
     return performSaviorSwapWrite(target, op, initiator);
+  }
+  if (op.kind === "soulBondLink" || op.kind === "soulBondShare" || op.kind === "soulBondDeathLoss") {
+    const { performSoulBondWrite } = await import("./soul-binding.mjs");
+    return performSoulBondWrite(target, op, initiator);
   }
   if (op.kind === "dreadWailFear") {
     const { grantDreadWailFear } = await import("./timed-effects.mjs");

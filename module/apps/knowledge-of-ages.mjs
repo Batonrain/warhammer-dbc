@@ -49,6 +49,9 @@ const LABEL = "Знания Веков";
 export function knowledgeOfAgesButtonHtml(actor, { ability, spend = null, skillTest } = {}) {
   if (!actor || !KNOWLEDGE_OF_AGES_ABILITIES.has(ability)) return "";
   if (!spendsInfamyPoints(actor)) return "";
+  // Заплачено пулом ресурса (Жажда, Месть, Трофеи) — Очко Бесчестия не тратилось,
+  // возвращать нечего.
+  if (spend?.resourceSpent) return "";
   if (!hasRuleFlag(actor, KNOWLEDGE_OF_AGES_CAPABILITY)) return "";
   const keys = knowledgeOfAgesSkillKeys(actor.items);
   if (skillTest !== undefined) {

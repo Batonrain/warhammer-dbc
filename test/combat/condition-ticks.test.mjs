@@ -866,3 +866,33 @@ describe("processConditionTurnStart: Состояния со сроком Durati
     expect(actor.system.conditions.blindedRounds).toBe(2);
   });
 });
+
+describe("Ослеплён «до конца своего следующего Хода» (Варп Вспышка, Sahara 586-8aaf)", () => {
+  const held = () => {
+    const a = makeActor({ conditions: { blinded: true, blindedRounds: 1 } });
+    a.setFlag("warhammer-dbc", "conditionUntilTurnEnd", { blinded: 1 });
+    return a;
+  };
+
+  it("начало Хода цели Ослепление не снимает — Ход она проводит слепой", async () => {
+    const a = held();
+    await processConditionTurnStart(a);
+    expect(a.system.conditions.blinded).toBe(true);
+  });
+
+  it("конец её Хода — Ослепление снято, метка снята", async () => {
+    const a = held();
+    await processConditionTurnEnd(a);
+    expect(a.system.conditions.blinded).toBe(false);
+    expect(a.getFlag("warhammer-dbc", "conditionUntilTurnEnd")).toBeUndefined();
+    expect(captured.chat.at(-1).content).toContain("снято");
+  });
+
+  it("наложено в её же Ход (2 конца) — первый конец Хода оставляет", async () => {
+    const a = held();
+    await a.setFlag("warhammer-dbc", "conditionUntilTurnEnd", { blinded: 2 });
+    await processConditionTurnEnd(a);
+    expect(a.system.conditions.blinded).toBe(true);
+    expect(a.getFlag("warhammer-dbc", "conditionUntilTurnEnd")).toEqual({ blinded: 1 });
+  });
+});

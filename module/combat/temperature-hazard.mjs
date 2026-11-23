@@ -18,6 +18,7 @@ import { isWorldTimeCooldownReady, worldTimeRemaining } from "../rules/cooldown.
 import { tempEffect } from "../constants/environment.mjs";
 import { readEnvForScene, currentScene } from "../constants/scene-nexus.mjs";
 import { tempHazardIntervalSeconds, BREEZE_CAPABILITY, BURNING_BODY_CAPABILITY } from "../rules/temperature-hazard.mjs";
+import { bloodReplacementSub } from "../rules/blood-replacement.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
@@ -47,10 +48,15 @@ export async function rollTempHazardTest(actor) {
     return ui.notifications?.info(`${actor.name}: Бриз держит вокруг комфортную температуру — тест не нужен.`);
   }
   // Пылающее Тело: «иммунитет к экстремальным температурам» — и жара, и холод.
-  // Подавление пламени тестом W+0 на 1 час (вместе с иммунитетами) не смоделировано:
-  // пока Мутация на персонаже, иммунитет действует всегда.
+  // Подавленное тестом W+0 пламя (combat/burning-body.mjs) гасит мутацию через
+  // isItemActive — иммунитет тогда сам пропадает из hasRuleFlag.
   if (hasRuleFlag(actor, BURNING_BODY_CAPABILITY)) {
     return ui.notifications?.info(`${actor.name}: Пылающее Тело — иммунитет к экстремальным температурам, тест не нужен.`);
+  }
+
+  // Замена Крови «Магма» (wdbc-1rno.15): «иммунен к эффектам экстремального холода или жары».
+  if (bloodReplacementSub(actor) === 8) {
+    return ui.notifications?.info(`${actor.name}: Замена Крови (Магма) — иммунитет к экстремальным температурам, тест не нужен.`);
   }
 
   const env = readEnvForScene(currentScene());

@@ -76,6 +76,33 @@ export function ritualVeilGate(item, actor, opts) {
   return { required, scene: s.scene, aura: s.aura, steps: s.total, ok: s.total >= required };
 }
 
+/**
+ * Условие психосилы «манифестируется только при Истончении Реальности N или выше» (Sahara
+ * 0-toad-psykers): то же «Завеса сцены + аура», что у ритуала, но порог может быть 0 и ниже —
+ * у психосилы условия нет только при system.veilMin === null.
+ * @param {?object} item  психосила
+ * @param {?object} actor псайкер
+ * @param {{stepsFn?: function, scene?: ?object, resolve?: function}} [opts] stepsFn — подмена
+ *   veilStepsFor (тестам); прочее — как у veilStepsFor
+ * @returns {{required:?number, scene:number, aura:number, steps:number, ok:boolean}}
+ */
+export function powerVeilGate(item, actor, { stepsFn = veilStepsFor, ...opts } = {}) {
+  const raw = item?.system?.veilMin;
+  if (raw === null || raw === undefined || raw === "" || !Number.isFinite(Number(raw))) {
+    return { required: null, scene: 0, aura: 0, steps: 0, ok: true };
+  }
+  const required = Math.trunc(Number(raw));
+  const s = stepsFn(actor, opts);
+  return { required, scene: s.scene, aura: s.aura, steps: s.total, ok: s.total >= required };
+}
+
+/** Текст: Завеса слишком плотна для этой психосилы. */
+export function powerVeilMessage(gate, powerName = "") {
+  const named = powerName ? ` «${powerName}»` : "";
+  const parts = gate.aura ? ` Завеса сцены ${veilStepText(gate.scene)}, аура Раны в Реальности ${veilStepText(gate.aura)}.` : "";
+  return `Завеса слишком плотна (${veilStepText(gate.steps)}): психосила${named} манифестируется только при Истончении Реальности ${veilStepText(gate.required)} или выше.${parts}`;
+}
+
 /** Текст для ГМа/игрока: Завеса слишком плотна, чего требует ритуал и из чего сложилась Завеса. */
 export function ritualVeilMessage(gate, ritualName = "") {
   const named = ritualName ? ` «${ritualName}»` : "";

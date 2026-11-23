@@ -4,6 +4,7 @@
 
 import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { warnSkillBlockedUntrained } from "../rules/skill-untrained.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
 import { HIT_LOCATIONS } from "../constants/combat.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -466,6 +467,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
 
   /** Тест Навыка Орды — тот же d100 против значения навыка. */
   async _rollSkill(key) {
+    if (warnSkillBlockedUntrained(this.actor, key)) return;
     const def = SKILLS_DEF[key];
     return this._rollTest({
       label:     def?.label || key,
@@ -664,7 +666,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       ui.notifications.warn(`⚠️ ${actor.name}: Атака в этот Ход уже была.`);
       return false;
     }
-    if (!await spendActionPoints(actor, 1, { physical: true })) {
+    if (!await spendActionPoints(actor, 1, { physical: true, attack: true })) {
       ui.notifications.warn("⚠️ Не хватает ОД.");
       return false;
     }

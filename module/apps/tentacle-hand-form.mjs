@@ -12,6 +12,7 @@ import { isTentacleShiftItem, tentacleIsHandForm, TENTACLE_HAND_FORM_FLAG }
 import { capabilityCostLabel, capabilityCostGate, spendCapabilityCost }
   from "../combat/capability-cost.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { pariahVoidBlocks } from "../rules/void-split.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -27,6 +28,8 @@ export async function toggleTentacleHandForm(actor, item) {
   if (!isTentacleShiftItem(item) || !actor) return;
   const toHand = !tentacleIsHandForm(item);
   if (toHand) {
+    // Пустота Парии (task-f568): трата Бесчестия там невозможна — превращения нет.
+    if (pariahVoidBlocks(actor, "Щупальце → Рука")) return;
     const ok = await spendCapabilityCost(actor, TO_HAND_COST, "Щупальце → Рука (Изменчивое)");
     if (!ok) return;
   }

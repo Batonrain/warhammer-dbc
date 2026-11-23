@@ -18,6 +18,7 @@ import { weaponProfiles, canStrikeWithGun, attackIsMelee } from "../combat/weapo
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
 import { stockGripActive } from "../rules/melee-talents.mjs";
+import { potenceGripActive } from "../rules/bronenosets-talents.mjs";
 import { movementMenuItems } from "../combat/movement-actions.mjs";
 import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimToggleState, toggleTrackingAimPending } from "../combat/aiming-action.mjs";
 import { overwatchMenuItems, overwatchManualFireItem, isOverwatchActive, overwatchState } from "../combat/overwatch.mjs";
@@ -225,6 +226,8 @@ export function hudData(actor) {
     const gripKeys = melee ? parseGrips(g.grips) : [];
     // Прикладный Хват: штык в «1р» выдаёт Талант (как окно атаки, attack-dialog.mjs).
     if (melee && !gripKeys.includes("1р") && stockGripActive(actor, w)) gripKeys.push("1р");
+    // Могущество (Броненосец): двуручное рукопашное — одной рукой.
+    if (melee && !gripKeys.includes("1р") && potenceGripActive(actor, w)) gripKeys.push("1р");
     let curGrip = w.getFlag(SYSTEM, "hudGrip");
     if (!GRIPS[curGrip] || !gripKeys.includes(curGrip)) curGrip = gripKeys[0] || "";
     const gripOpts = gripKeys.length > 1
@@ -714,6 +717,33 @@ function wire(el, actor) {
     b.addEventListener("click", () => openSheet(actor, b.dataset.openSheet || "main")));
 }
 
+/* ── Отступ под правую колонку (чат) ───────────────────────────────────── */
+// Sahara hud-1024-px: HUD стоял с right: 0, и на узком окне раскрытый чат
+// (#sidebar) накрывал кнопку «Ход». Отступ меряется по живому прямоугольнику
+// колонки, а не берётся константой: ширина чата у Foundry меняется анимацией
+// раскрытия, масштабом интерфейса и модулями.
+
+/**
+ * Сколько пикселей справа занимает правая колонка.
+ * @param {number} viewportWidth ширина окна
+ * @param {{left:number,width:number}|null} rect прямоугольник #sidebar
+ * @returns {number}
+ */
+export function sidebarRightInset(viewportWidth, rect) {
+  if (!rect || !(Number(rect.width) > 0)) return 0;
+  return Math.max(0, Math.round(Number(viewportWidth) - Number(rect.left)));
+}
+
+/** Ставит панели переменную --wh-hud-right (styles/ui/hud.css → #wh-hud). */
+export function syncSidebarInset(el = document.getElementById(EL_ID), {
+  sidebar = document.getElementById("sidebar"),
+  viewportWidth = globalThis.window?.innerWidth ?? 0
+} = {}) {
+  if (!el?.style) return;
+  const inset = sidebarRightInset(viewportWidth, sidebar?.getBoundingClientRect?.() ?? null);
+  el.style.setProperty("--wh-hud-right", `${inset}px`);
+}
+
 /* ── Запуск ────────────────────────────────────────────────────────────── */
 
 export function initHUD() {
@@ -724,6 +754,15 @@ export function initHUD() {
     .appendChild(el);
   document.body.classList.add("wh-hud-on");
   refreshHUD();
+
+  // Отступ под чат: раскрытие/сворачивание (ширина анимируется — ловит
+  // ResizeObserver), смена размера окна и хук сворачивания на всякий случай.
+  const syncInset = () => syncSidebarInset(el);
+  syncInset();
+  const sidebar = document.getElementById("sidebar");
+  if (sidebar && typeof ResizeObserver === "function") new ResizeObserver(syncInset).observe(sidebar);
+  globalThis.window?.addEventListener?.("resize", syncInset);
+  Hooks.on("collapseSidebar", () => { syncInset(); setTimeout(syncInset, 400); });
 
   const mine = (a) => a?.id && a.id === hudActor()?.id;
   Hooks.on("updateActor", (a) => { if (mine(a)) refreshHUD(); });

@@ -17,6 +17,24 @@ export function bodyWeightOf(actor) {
   return Number(actor?.system?.bio?.weight) || 0;
 }
 
+/**
+ * Оценка веса тела по Размеру, кг (Sahara 67-npc-bio-weight-npc): у NPC
+ * бестиария вес тела не заполнен, а книга его не даёт. Размер 0 — человек
+ * (80 кг), каждый шаг вверх/вниз — заметно тяжелее/легче. Это оценка, не
+ * книжное число: где вес заполнен (Записи → Вес), берётся он.
+ */
+const SIZE_WEIGHT_KG = { "-3": 5, "-2": 20, "-1": 45, "0": 80, "1": 300, "2": 800, "3": 2500, "4": 8000 };
+export function sizeWeightEstimate(actor) {
+  const size = Math.max(-3, Math.min(5, Math.round(sizeOf(actor))));
+  return size >= 5 ? 25000 : SIZE_WEIGHT_KG[String(size)];
+}
+
+/** Вес тела: заполненный, иначе оценка по Размеру. { kg, estimated } */
+export function bodyWeightOrEstimate(actor) {
+  const own = bodyWeightOf(actor);
+  return own > 0 ? { kg: own, estimated: false } : { kg: sizeWeightEstimate(actor), estimated: true };
+}
+
 /** Полный вес актора как снаряда/дубины: тело + всё надетое/носимое (Ношение), кг. */
 export function totalWeightOf(actor) {
   return bodyWeightOf(actor) + (Number(actor?.system?.encumbrance?.current) || 0);

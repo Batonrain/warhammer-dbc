@@ -44,15 +44,38 @@ export function isVisionAid(item) {
   return halves(item.name).some(h => VISION_AID_NAMES.has(h));
 }
 
-/** На акторе есть не подавленная мутация, запрещающая авточувства и визоры (субмутация совпадает). */
-export function visionAidsBlocked(actor) {
+/**
+ * Глаза Хаоса (субмутация 1, «Пламенные Глазницы») и Глаза-Стебельки
+ * (Sahara task-b65d): «не получает преимуществ … ретинального дисплея».
+ * Возможность мутации; читает гейт прицелов «бесполезен без ретинального
+ * дисплея» (combat/weapon-mods.mjs::modWornRequirementMet) — и отдельный
+ * Ретинальный Дисплей, и встроенный в шлем/броню.
+ */
+export const RETINAL_DISPLAY_BLOCKED_CAP = "mutation.noRetinalDisplay";
+
+/**
+ * Запасное опознание по имени мутации (и субмутации) — для копий, выданных до
+ * того, как возможность легла записью в пак: записи на них нет до «Обновить
+ * мир» (приёмка #597). Совпадает с записями пака — сверяет тест
+ * test/rules/vision-aids-stale-copy.test.mjs.
+ */
+const BY_NAME = {
+  [VISION_AIDS_BLOCKED_CAP]: [["eye stalks", null], ["eyes of chaos", "1"]],
+  [RETINAL_DISPLAY_BLOCKED_CAP]: [["eye stalks", null], ["eyes of chaos", "1"]],
+  "mutation.majesticHorns.hornSight": [["majestic horns", "9"]]
+};
+
+/** На акторе есть не подавленная мутация с этой возможностью (субмутация совпадает). */
+function mutationCapActive(actor, key) {
   for (const it of actor?.items ?? []) {
     if (it?.type !== "mutation" || it.getFlag?.(NS, "suppressed")) continue;
     const groups = it.getFlag?.(NS, "mechanics") ?? it.flags?.[NS]?.mechanics ?? [];
     const label = it.system?.submutation?.label || "";
+    const names = halves(it.name);
+    if ((BY_NAME[key] ?? []).some(([n, sub]) => names.includes(n) && (!sub || sub === label))) return true;
     for (const g of groups) {
       for (const e of g?.entries ?? []) {
-        if (e?.kind !== "capability" || e.capabilityKey !== VISION_AIDS_BLOCKED_CAP) continue;
+        if (e?.kind !== "capability" || e.capabilityKey !== key) continue;
         const subs = e.when?.submutations ?? [];
         if (!subs.length || subs.includes(label)) return true;
       }
@@ -60,6 +83,23 @@ export function visionAidsBlocked(actor) {
   }
   return false;
 }
+
+/** На акторе есть не подавленная мутация, запрещающая авточувства и визоры (субмутация совпадает). */
+export const visionAidsBlocked = actor => mutationCapActive(actor, VISION_AIDS_BLOCKED_CAP);
+
+/**
+ * Зрящие Рога (Majestic Horns, субмутация 9): «видит сквозь рога как через
+ * перископы» — обзор назад и за угол. Система читает это как круговой сектор
+ * обзора (rules/perception.mjs::effectiveSightAngle, combat/facing.mjs —
+ * атака со спины по нему не Незримая). Отдельная возможность, а не
+ * VISION_AIDS_BLOCKED_CAP: тот же запрет визоров несут Глаза Хаоса 1 и
+ * Глаза-Стебельки, у которых перископа нет.
+ */
+export const HORN_SIGHT_CAP = "mutation.majesticHorns.hornSight";
+export const hornSightActive = actor => mutationCapActive(actor, HORN_SIGHT_CAP);
+
+/** Ретинальный дисплей (отдельный или встроенный) пользы не даёт. */
+export const retinalDisplayBlocked = actor => mutationCapActive(actor, RETINAL_DISPLAY_BLOCKED_CAP);
 
 /** Предмет актора, который запрет сейчас гасит. */
 export function visionAidBlocked(item) {

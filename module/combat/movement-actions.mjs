@@ -42,7 +42,7 @@ import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { rollStatLine } from "../helpers/test-card.mjs";
-import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
+import { spendActionPoints, isEncounterActive, FULL_MOVE_HALF_FLAG } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { fallDamageSectionHtml } from "./fall-damage.mjs";
 import { digitigradeGroupingBonus } from "../rules/digitigrade.mjs";
@@ -58,6 +58,7 @@ import { spendRecoil, recoilRemaining, spdMeters } from "./recoil-pool.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { NO_RUN_CAP, RUBRICAE } from "../rules/rubricae.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { isGrappled, manifestedGift } from "../rules/predicates.mjs";
@@ -71,6 +72,8 @@ import { twoHandedTestPenalty, TWO_HANDED_PENALTY_LABEL } from "../rules/hands.m
 import { uselessCount } from "../rules/useless-limbs.mjs";
 import { divineProtectionActive } from "../rules/death-save.mjs";
 import { hasDodgeTalent, catfallHeight, catfallLeg, CATFALL_TUCK_BONUS } from "../rules/dodge-talents.mjs";
+import { equippedTerminatorArmour } from "../rules/terminator-armour.mjs";
+import { heavyBodyMoveBan, heavyBodyLimitsRun } from "../rules/heavy-body.mjs";
 import { hasSpeedTalent, standUpApCost, jumpApCost, repositionAvailable, sprintFatigueDue, breacherReady } from "../rules/speed-talents.mjs";
 import { leapUpDenied, standUpExtraApCost } from "../rules/takedown.mjs";
 import { isHandShield } from "./hand-shield.mjs";
@@ -434,6 +437,10 @@ export async function declareFullMove(actor, { hipShooting = false } = {}) {
   // Флаг гасится первым же использованием _d100 с actor, а на случай, если
   // не потратится вовсе, есть и turn-scoped safety-net (TURN_SCOPED_FLAGS).
   await actor.setFlag("warhammer-dbc", "fullMoveDisadvantage", true);
+  // Полудействие после перемещения (Sahara task-5003) — оплачивает его метка, а не ОД:
+  // атаке она не годится (combat/action-economy.mjs::FULL_MOVE_HALF_FLAG). У Стрельбы от
+  // Бедра выстрел уже входит в то же Полное действие — второго полудействия она не даёт.
+  if (!hipShooting && isEncounterActive()) await actor.setFlag("warhammer-dbc", FULL_MOVE_HALF_FLAG, true);
   // Стрельба от Бедра (rules/gunner-talents.mjs, Sahara 3-5fbf): то же Полное Движение за 2 ОД, но одиночный
   // выстрел этого Хода входит в то же действие — без ОД; метка взводит кнопку выстрела (combat/free-shot.mjs).
   if (hipShooting) await actor.setFlag("warhammer-dbc", HIP_SHOOTING_FLAG, true);
@@ -443,7 +450,7 @@ export async function declareFullMove(actor, { hipShooting = false } = {}) {
     <div class="roll-threshold">Стрельба от Бедра: один Одиночный Выстрел (не Избирательный, без Прицеливания, не длинная винтовка и не тяжёлое) в этом Ходу — без дополнительных ОД.</div>
     <button class="wh-free-shot-btn" type="button" data-kind="hipShooting" data-actor-uuid="${actor.uuid}">🎯 Выстрел от бедра</button>` : ""}
     <div class="roll-threshold">Полное действие (${fullMoveAp} ОД). Перемещение до ${hasSpeedTalent(actor, "sprint") ? "SPD×3 (Спринт — на дистанцию Натиска)" : "SPD×2"}.</div>${movementApNote(actor)}
-    <div class="roll-threshold" style="font-size:0.85em;">Можно ещё полудействие (не атаку) — но его тесты, если есть, получают Помеху (стр. 32). Для следующего Карабканья/Прыжка/Плавания в этом Ходу — уже автоматически.</div>
+    <div class="roll-threshold" style="font-size:0.85em;">${hipShooting ? "" : "Осталось полудействие (не атака) — оплатится само, без ОД. "}Тесты этого Хода получают Помеху (стр. 32): Карабканье/Прыжок/Плавание — сами, окно теста Навыка/Характеристики — выбрана заранее.</div>
     ${falseAdvanceHtml(actor)}
   </div>`);
 }
@@ -494,7 +501,7 @@ export async function declareCharge(actor) {
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>${runAndGunOfferHtml(actor)}
-    <div class="roll-threshold">Перемещение до ${hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
+    <div class="roll-threshold">Перемещение до ${heavyBodyLimitsRun(actor) ? `${actor.system.movement?.charge ?? 0} м (тяжёлое тело — не дальше Полного Движения)` : hasSpeedTalent(actor, "preternaturalSpeed") ? "SPD×6 (Запредельная Скорость — на дистанцию Бега)" : "SPD×3"} (не менее 4м), заканчивая в контакте с противником.</div>
     <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, ${movementApCost(actor, 2)} ОД спишутся на броске атаки.</div>${movementApNote(actor)}
   </div>`);
 }
@@ -661,6 +668,11 @@ export async function declareRun(actor) {
     return ui.notifications.warn("⚠️ Нет обеих ног (или они бесполезны) — Движение недоступно.");
   // Частокол (стр. 15, wdbc-x1nz.2.66.9): «нельзя Натиск и Бег» — noRun несёт
   // только эта Стойка (Защитная запрещает лишь Натиск, см. noCharge выше).
+  // Тяжёлое тело (rules/heavy-body.mjs): Тело Из Плотеметалла, Громыхающий Гигант.
+  const heavyRunBan = heavyBodyMoveBan(actor, "run");
+  if (heavyRunBan) return ui.notifications.warn(`⚠️ ${heavyRunBan}`);
+  // Рубрикант (rules/rubricae.mjs): «не может совершать Бег».
+  if (hasAbility(actor, NO_RUN_CAP, RUBRICAE, "trait")) return ui.notifications.warn("⚠️ Не может совершать Бег.");
   const runStanceKey = actor.system?.meleeStance || "standard";
   if (MELEE_STANCES[runStanceKey]?.noRun) {
     return ui.notifications.warn(`⚠️ Недоступно в Стойке «${MELEE_STANCES[runStanceKey].label}».`);
@@ -964,7 +976,7 @@ export async function declareStandUp(actor) {
       </div>`,
       buttons: {
         plain: { label: `Обычным способом (${1 + extra} ОД)`, callback: () => resolve(_standUpPlain(actor)) },
-        jump:  { label: "Прыжком (тест Acrobatics)", callback: () => resolve(_standUpJump(actor)) },
+        ...(equippedTerminatorArmour(actor) ? {} : { jump: { label: "Прыжком (тест Acrobatics)", callback: () => resolve(_standUpJump(actor)) } }),
         cancel: { label: "Отмена", callback: () => resolve(null) }
       },
       default: "plain"
@@ -1383,6 +1395,16 @@ const JUMP_FORMULAS = {
 
 export function showJumpDialog(actor) {
   if (!actor) return;
+  // Терминаторская броня (стр. 235): «Не позволяет Прыгать» — Изящный Гигант этого не снимает.
+  if (equippedTerminatorArmour(actor)) {
+    ui.notifications.warn(`⚠️ ${actor.name}: Терминаторская броня не позволяет Прыгать.`);
+    return;
+  }
+  const heavyJumpBan = heavyBodyMoveBan(actor, "jump");
+  if (heavyJumpBan) {
+    ui.notifications.warn(`⚠️ ${actor.name}: ${heavyJumpBan}`);
+    return;
+  }
   const acro = skillTotal(actor, "acrobatics");
   const sb   = Number(actor.system.characteristics?.s?.bonus) || 0;
 

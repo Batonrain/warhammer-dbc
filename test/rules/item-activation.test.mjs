@@ -6,7 +6,8 @@
 // активацию не снимает.
 
 import { describe, it, expect } from "vitest";
-import { activationState, isItemActivated, activationData, endsWithCombat, hasActivationGatedEntries }
+import { activationState, isItemActivated, activationData, endsWithCombat, hasActivationGatedEntries,
+  activationExpired, endsWithScene }
   from "../../module/rules/item-activation.mjs";
 import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 
@@ -42,5 +43,27 @@ describe("hasActivationGatedEntries", () => {
   it("находит гейт и во вложенной группе", () => {
     expect(hasActivationGatedEntries([{ entries: [{ kind: "group", group: { entries: [{ when: { requireActivated: true } }] } }] }])).toBe(true);
     expect(hasActivationGatedEntries([{ entries: [{ kind: "testMod" }] }])).toBe(false);
+  });
+});
+
+// Срок в минутах (Боевая форма Вампира: Cor.b×10 минут, Sahara
+// 583-deadly-natural-weapons-fear-flyer): until — момент worldTime. Такую
+// активацию снимает ход «Летоисчисления», а не конец боя и не «Новая сцена».
+describe("срок по worldTime (until)", () => {
+  it("activationData пишет until только при сроке", () => {
+    expect(activationData({ combatId: "c1", at: 100, until: 700 })).toEqual({ combatId: "c1", at: 100, until: 700 });
+    expect(activationData({ at: 100, until: 0 })).toEqual({ combatId: "", at: 100 });
+  });
+  it("истекает, когда worldTime дошёл до until", () => {
+    const st = { combatId: "", at: 100, until: 700 };
+    expect(activationExpired(st, 699)).toBe(false);
+    expect(activationExpired(st, 700)).toBe(true);
+    expect(activationExpired({ combatId: "c1", at: 0 }, 1e9)).toBe(false);
+    expect(activationExpired(null, 1e9)).toBe(false);
+  });
+  it("срочную активацию не снимают ни конец боя, ни новая сцена", () => {
+    expect(endsWithCombat({ combatId: "c1", until: 700 }, "c1")).toBe(false);
+    expect(endsWithScene({ combatId: "", until: 700 })).toBe(false);
+    expect(endsWithScene({ combatId: "c1", at: 0 })).toBe(true);
   });
 });

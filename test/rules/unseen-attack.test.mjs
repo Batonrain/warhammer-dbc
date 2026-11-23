@@ -38,9 +38,11 @@ describe("hasWarpSight", () => {
     const actor = fakeActor([{ type: "trait", name: "Warp Sight / Варп-Зрение" }]);
     expect(hasWarpSight(actor)).toBe(true);
   });
-  it("talent «Дар: Варп-Зрение» (одержимые) — true, itemHasName по русской половине", () => {
-    const actor = fakeActor([{ type: "talent", name: "Warp Sight / Дар: Варп-Зрение" }]);
-    expect(hasWarpSight(actor)).toBe(true);
+  it("talent «Дар: Варп-Зрение» (одержимые) — только пока демон проявлен (Разобрать 6plo6)", () => {
+    const items = [{ type: "talent", name: "Warp Sight / Дар: Варп-Зрение" }];
+    expect(hasWarpSight(fakeActor(items))).toBe(false);
+    const manifested = { ...fakeActor(items), type: "character", system: { possessed: true, possession: { manifested: true } } };
+    expect(hasWarpSight(manifested)).toBe(true);
   });
   it("предмет другого типа с тем же именем (напр. психосила) — не считается", () => {
     const actor = fakeActor([{ type: "psychicPower", name: "Warp Sight / Варп-Зрение" }]);

@@ -5,6 +5,7 @@
 //  и предоставляет помощники для диалога атаки, броска, урона и защиты.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { FIRE_DANCE_BURN_MOD } from "../rules/fire-dance.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasAbility } from "../rules/ability-by-key.mjs";
@@ -33,7 +34,7 @@ import { mechFormulaTotalSafe } from "../rules/mech-formula.mjs";
  * combat/damage.mjs::applyDamageToActor, где проверяются остальные ключи
  * этого пространства имён.
  */
-const LEGACY_IMMUNITY_TRAITS = { haywire: ["Warp Talon Suit", "Fleshmetal Body"] };
+const LEGACY_IMMUNITY_TRAITS = { haywire: ["Warp Talon Suit", "Fleshmetal Body", "Broken Chains"] };
 
 export function hasWeaponPropertyImmunity(actor, propKey) {
   if (hasRuleFlag(actor, `weaponPropertyImmunity.${propKey}`)) return true;
@@ -204,6 +205,8 @@ export function aggregateAuto(props) {
     // Радиационная разновидность (wdbc-1rno.2) — вместе с unseen выше,
     // отдельный альт-канал засечения (rules/unseen-attack.mjs::isUnseenDetected).
     radiationSourced: false,
+    // Частичное Незримое (Телекинетический Клинок): −20 к Избеганиям незасекшего.
+    unseenPartial: false,
     // Свойства, автоматизированные позже (стр. 166-170): раньше были только
     // текстовыми напоминаниями и на расчёты не влияли.
     resonant: false,
@@ -285,6 +288,7 @@ export function aggregateAuto(props) {
     if (au.spray)         a.spray = true;
     if (au.unseen)        a.unseen = true;
     if (au.radiationSourced) a.radiationSourced = true;
+    if (au.unseenPartial) a.unseenPartial = true;
     if (au.blast)         a.blastRating = Math.max(a.blastRating, r);
     if (au.flame)         a.flame = true;
     if (au.corrosive)     a.corrosiveRating = Math.max(a.corrosiveRating, r);
@@ -466,8 +470,16 @@ function fillRating(text, p) {
  * качество и Таланты двигают Надёжность, а текст свойства о них не знает.
  * jamAt — результат jamThreshold(wp): число (клин с N) или null (не клинит).
  */
-function reliableNote(p, jamAt) {
-  if (jamAt === undefined || p.def.key !== "reliable") return null;
+function reliableNote(p, jamAt, overheats = false) {
+  if (p.def.key !== "reliable") return null;
+  // Оружие с Перегревом по порогу не клинит, а бьёт по стрелку
+  // (combat/overheats.mjs) — «заклинивает» о нём врёт (Sahara task-e6d5).
+  if (overheats) {
+    if (jamAt === null) return "Надёжное: не перегревается";
+    if (jamAt === undefined || jamAt >= 100) return "Надёжное: Перегрев только на 100";
+    return `Надёжное: Перегрев на ${jamAt}+`;
+  }
+  if (jamAt === undefined) return null;
   if (jamAt === null) return "Надёжное: не заклинивает";
   if (jamAt >= 100) return null;
   return `Надёжное: заклинивает на ${jamAt}+`;
@@ -485,8 +497,9 @@ export function visibleWeaponProps(props, wp) {
 /** Блок «Свойства оружия» для сообщения о броске. */
 export function buildPropertyChatBlock(props, { jamAt } = {}) {
   if (!props.length) return "";
+  const overheats = props.some(p => p.def.key === "overheats");
   const lines = props.map(p => {
-    const txt = reliableNote(p, jamAt) ?? fillRating(p.def.reminder || p.def.label, p);
+    const txt = reliableNote(p, jamAt, overheats) ?? fillRating(p.def.reminder || p.def.label, p);
     return `<div class="roll-wprop">${txt}</div>`;
   }).join("");
   // Свёрнуто по умолчанию: напоминалки по свойствам занимают половину карточки,
@@ -524,7 +537,7 @@ export function buildPropertyChatBlock(props, { jamAt } = {}) {
  * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
  * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "", poisoner = false, pyromaniac = false, pyromaniacAttackerUuid = "", igniter = "" } = {}) {
+export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor = null, deg = null, damageType = "", hitLocation = "", poisoner = false, poisonBestOfTwo = false, trueRot = false, pyromaniac = false, pyromaniacAttackerUuid = "", igniter = "", fireDance = false } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -585,6 +598,10 @@ export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor
         // ядом — цель перебрасывает успешные тесты против яда, урон яда бросается
         // дважды (лучший). Флаг ставит attack.mjs; касается только яда.
         `data-wp-poisoner="${poisoner && te.condition === "poisoned" ? 1 : 0}"`,
+        // Гнилостное Просвещение / Истинная Гниль (Чумной Монах, rules/plague-monk-talents.mjs):
+        // урон трупного яда дважды (лучший); 2d10 вместо 1d10 и мимо иммунитета демонов/машин.
+        `data-wp-best-of-two="${poisonBestOfTwo && te.condition === "poisoned" ? 1 : 0}"`,
+        `data-wp-true-rot="${trueRot && te.condition === "poisoned" ? 1 : 0}"`,
         // Пироман (Талант Огнемётчика, rules/flamer-talents.mjs): цель перебрасывает УСПЕШНЫЙ тест против
         // загорания от Spray+Flame, а в укрытии ещё и получает −20 (hooks.mjs::_applyWeaponPropEffect).
         `data-wp-pyromaniac="${pyromaniac && te.condition === "burning" ? 1 : 0}"`,
@@ -619,6 +636,19 @@ export function buildTargetEffectButtons(props, { hit, ammoName = "", forceActor
           ${label}${testStr}
         </button>`
       );
+      // Танец Пламени (rules/fire-dance.mjs): одна выбранная цель — тест против
+      // загорания с −20, а первый тест Паники от Горения с −40. Вторая кнопка
+      // Горения, нажимается один раз на карточку (hooks.mjs::_applyWeaponPropEffect).
+      if (fireDance && te.condition === "burning" && te.testChar) {
+        const fdMod = testMod + FIRE_DANCE_BURN_MOD;
+        const fdData = data.replace(`data-wp-test-mod="${testMod}"`, `data-wp-test-mod="${fdMod}"`)
+          + ` data-wp-fire-dance="1"`;
+        btns.push(
+          `<button class="wh-wprop-apply-btn" type="button" ${fdData}>
+          🔥 Танец Пламени: ${label} (тест ${te.testChar.toUpperCase()}${fdMod >= 0 ? "+" : ""}${fdMod}, одна цель)
+        </button>`
+        );
+      }
     }
   }
 

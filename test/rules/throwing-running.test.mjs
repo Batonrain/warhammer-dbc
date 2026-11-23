@@ -37,3 +37,16 @@ describe("дальность и тест", () => {
     expect(hasRunningThrow({ items: [] })).toBe(false);
   });
 });
+
+// dbc-162: Rng метательного — S.b×3 (на бегу ×2); Балеарец прибавляет ½A.b к S.b и здесь.
+import { thrownRange, balearicSbBonus as _bsb } from "../../module/rules/throwing-talents.mjs";
+describe("thrownRange", () => {
+  it("S.b×3, на бегу S.b×2", () => {
+    expect(thrownRange(4)).toBe(12);
+    expect(thrownRange(4, true)).toBe(8);
+  });
+  it("с прибавкой Балеарца (½A.b вверх) — дальность растёт", () => {
+    expect(thrownRange(4 + 2)).toBe(18);
+    expect(typeof _bsb).toBe("function");
+  });
+});

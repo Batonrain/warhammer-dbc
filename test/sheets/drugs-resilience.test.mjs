@@ -95,12 +95,11 @@ describe("Пожиратель Змей: сроки", () => {
   it("срок яда вдвое меньше (окр.▲): 7 → 4", async () => {
     const a = actor({ items: snake });
     const item = drug(base());
-    captured.nextRoll = 7;
+    // Спасброс против яда идёт первым (Sahara wdbc-x1nz-4-56cd): 99 — провал, яд действует; затем срок 1d10 = 7.
+    captured.dice = [99, 7];
     await applyDrug(a, item);
     expect(item.system.activeEffect.roundsRemaining).toBe(4);
-    // chat[0] — карточка применения (срок); яд категории "poison" добавляет
-    // следом ОТДЕЛЬНУЮ карточку спасброска цели (wdbc-x1nz.4) — она не в счёт.
-    expect(captured.chat[0].content).toContain("Пожиратель Змей");
+    expect(captured.chat.map(m => m.content).join("\n")).toContain("Пожиратель Змей");
   });
 
   it("срок наркотика (не яда) не меняется", async () => {
@@ -114,7 +113,7 @@ describe("Пожиратель Змей: сроки", () => {
   it("срок яда без Таланта не меняется", async () => {
     const a = actor();
     const item = drug(base());
-    captured.nextRoll = 7;
+    captured.dice = [99, 7];
     await applyDrug(a, item);
     expect(item.system.activeEffect.roundsRemaining).toBe(7);
   });

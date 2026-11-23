@@ -32,9 +32,12 @@
 import { isItemActive } from "../apps/effects.mjs";
 import { rescaleTraitByRating } from "../apps/mechanics.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+// Чистый предикат без импортов правил — круга через sources.mjs не даёт.
+const isManifestedPossessed = actor => !!actor?.system?.possessed && !!actor?.system?.possession?.manifested;
 import { hasTalentCapability } from "../rules/ability-by-key.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import {
-  INFERNAL_FAMILIARITY_CAP, INFERNAL_FAMILIARITY_DREAD_REDUCTION, isDaemonicDread, reduceDaemonicDread
+  INFERNAL_FAMILIARITY_CAP, dreadReductionTotal, isDaemonicDread, reduceDaemonicDread
 } from "../rules/defiance-talents.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -72,6 +75,7 @@ export function auraDescriptorsOf(actor) {
     const aura = item.getFlag(FLAG, "aura");
     if (!aura || !(Number(aura.radius) > 0)) continue;
     if (!isItemActive(item)) continue;
+    if (aura.requireManifested && !isManifestedPossessed(actor)) continue;
     out.push({
       sourceItemUuid: item.uuid,
       radius: Number(aura.radius),
@@ -84,7 +88,9 @@ export function auraDescriptorsOf(actor) {
       // Имена Черт/Талантов, дающие иммунитет к ЭТОЙ ауре (Daemonic Presence,
       // wdbc-995w: «Персонажи с Daemonic/From Beyond/Machine/Stuff of
       // Nightmares иммунны») — проверяется на ЦЕЛИ, не на источнике.
-      immuneTraitNames: (Array.isArray(aura.immuneTraitNames) ? aura.immuneTraitNames : []).filter(Boolean)
+      immuneTraitNames: (Array.isArray(aura.immuneTraitNames) ? aura.immuneTraitNames : []).filter(Boolean),
+      // Только Одержимые в Проявлении (Дар «Локус Симбиоза», apps/twin-spirit.mjs) — и источник, и цели.
+      requireManifested: !!aura.requireManifested
     });
   }
   return out;
@@ -96,8 +102,9 @@ export function auraDescriptorsOf(actor) {
  * @param {{radius:number, affects:string, includesSelf:boolean}} descriptor
  * @param {{isSelf:boolean, relationship:"ally"|"enemy"|"neutral", distance:number, immune?:boolean}} ctx
  */
-export function auraAffects(descriptor, { isSelf, relationship, distance, immune = false }) {
+export function auraAffects(descriptor, { isSelf, relationship, distance, immune = false, targetActor = null }) {
   if (immune) return false;
+  if (descriptor.requireManifested && !isManifestedPossessed(targetActor)) return false;
   if (isSelf) return !!descriptor.includesSelf;
   if (distance > descriptor.radius) return false;
   if (descriptor.affects === "all") return true; // независимо от отношения, включая нейтральных
@@ -124,7 +131,9 @@ export function targetIsAuraImmune(targetActor, immuneTraitNames) {
  * прогон мог заметить, что Талант взяли или потеряли, и выдать штраф заново.
  */
 export function dreadReductionFor(targetActor) {
-  return hasTalentCapability(targetActor, INFERNAL_FAMILIARITY_CAP) ? INFERNAL_FAMILIARITY_DREAD_REDUCTION : 0;
+  // Вязи-щиты (Отвращения/Безмятежности/Неизбежности) — ключом Возможности установленной вязи.
+  const familiarity = hasTalentCapability(targetActor, INFERNAL_FAMILIARITY_CAP);
+  return dreadReductionTotal(key => key === INFERNAL_FAMILIARITY_CAP ? familiarity : hasRuleFlag(targetActor, key));
 }
 
 /** Плоская (2D) дистанция центров токенов-документов, в метрах сцены. */
@@ -211,7 +220,7 @@ export async function sweepAurasOnScene(scene) {
       for (const d of descriptors) {
         const immune = !isSelf && d.immuneTraitNames.length > 0
           && targetIsAuraImmune(target.actor, d.immuneTraitNames);
-        if (auraAffects(d, { isSelf, relationship, distance, immune })) {
+        if (auraAffects(d, { isSelf, relationship, distance, immune, targetActor: target.actor })) {
           desired.get(target.actor.uuid).add(d.sourceItemUuid);
         }
       }

@@ -86,9 +86,18 @@ function isPersonalScale(tokenDoc) {
   return isBaseTrackedActor(actorOf(tokenDoc));
 }
 
-/** Враждебные токены сцены личного масштаба в Базовом/Глубоком контакте с данным документом. */
-export function enemyContactTokenDocs(tokenDoc) {
-  const rect = tokenRect(tokenDoc);
+// tokenDocAfterUpdate переехал в helpers/token-after-update.mjs (им пользуются
+// и другие хуки updateToken, Sahara 589-updatetoken); реэкспорт — для старых импортов.
+export { tokenDocAfterUpdate } from "../helpers/token-after-update.mjs";
+import { tokenDocAfterUpdate } from "../helpers/token-after-update.mjs";
+
+/**
+ * Враждебные токены сцены личного масштаба в Базовом/Глубоком контакте с данным документом.
+ * @param {TokenDocument} tokenDoc
+ * @param {object} [at]  где считать токен (tokenDocAfterUpdate) — по умолчанию сам документ
+ */
+export function enemyContactTokenDocs(tokenDoc, at = null) {
+  const rect = tokenRect(at ?? tokenDoc);
   if (!rect) return [];
   const out = [];
   for (const other of canvas?.tokens?.placeables ?? []) {
@@ -272,12 +281,14 @@ export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc, reasonHtml
  * не поднимая настоящие Foundry-хуки (см. test/combat/free-attack.test.mjs).
  * @param {TokenDocument} tokenDoc
  * @param {Set<string>} beforeContactIds  id вражеских токенов в контакте ДО перемещения
- * @param {{forced?:boolean}} [o]  forced — принудительный сдвиг (толчок, перевозка; options.whDBC.forcedMove,
+ * @param {{forced?:boolean, at?:object}} [o]  forced — принудительный сдвиг (толчок, перевозка; options.whDBC.forcedMove,
  *   rules/movement-path.mjs): токен не уходил по своей воле — Свободную Атаку не провоцирует, а разовый флаг
  *   «Выход из Боя» не тратится; Подавление при новом контакте снимается как обычно (Sahara task-bbe1)
+ * @param {object} [o.at]  где токен оказался (tokenDocAfterUpdate по changes апдейта): при
+ *   анимированном перемещении документ в updateToken ещё стоит на старом месте
  * @returns {Promise<TokenDocument[]>} враги, чей контакт с tokenDoc пропал
  */
-export async function processTokenMove(tokenDoc, beforeContactIds, { forced = false } = {}) {
+export async function processTokenMove(tokenDoc, beforeContactIds, { forced = false, at = null } = {}) {
   const moverActor = actorOf(tokenDoc);
   if (!forced) {
     if (moverActor?.getFlag("warhammer-dbc", "disengageActive")) {
@@ -287,7 +298,7 @@ export async function processTokenMove(tokenDoc, beforeContactIds, { forced = fa
     if (moverActor?.getFlag("warhammer-dbc", "deepContactCarry")) return [];
   }
 
-  const afterDocs = enemyContactTokenDocs(tokenDoc);
+  const afterDocs = enemyContactTokenDocs(tokenDoc, at);
   const after = new Set(afterDocs.map(d => d.id));
   const broken = [];
   for (const enemyId of beforeContactIds) {
@@ -326,9 +337,16 @@ export function initFreeAttackHooks() {
     // Только клиент, вызвавший перемещение, считает разрыв контакта — иначе
     // карточка в чат ушла бы с каждого подключённого клиента разом.
     if (userId !== game.user.id) return;
+    // Поглотитель: «Таран» Напролома — на один свой сдвиг.
+    if (movesPosition(changes) && !(pre?.forced || isForcedMove(options))) {
+      const { endDevourerRam } = await import("./devourer.mjs");
+      await endDevourerRam(tokenDoc);
+    }
     if (!before || before.size === 0) return;
     if (!game.combat?.started || !movesPosition(changes)) return;
-    await processTokenMove(tokenDoc, before, { forced: !!pre?.forced || isForcedMove(options) });
+    await processTokenMove(tokenDoc, before, {
+      forced: !!pre?.forced || isForcedMove(options), at: tokenDocAfterUpdate(tokenDoc, changes)
+    });
   });
 
   // Токен удалён до того, как пришёл updateToken (отменённый/незавершённый

@@ -16,7 +16,20 @@
 const NS = "warhammer-dbc";
 
 /** Ключи флагов, которые ГМ ставит по просьбе игрока (белый список сокета). */
-export const CARD_ONCE_FLAGS = ["mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
+export const CARD_ONCE_FLAGS = [
+  // Танец Пламени: цель с этой карточки уже выбрана (rules/fire-dance.mjs).
+  "fireDanceUsed",
+  // Ритуал Связывания Души: встречный тест с карточки ритуала брошен (combat/soul-binding.mjs).
+  "soulBindingRolled",
+  // Разделение Ужасов: меньшие Ужасы с этой карточки урона уже созданы (combat/horror-split.mjs).
+  "horrorSplitDone",
+  // Бастион против Тарана, Ас Оператор, Избавление Аркхана (остаток Талантов, 20.11.2026).
+  "ramBastionUsed", "aceOperatorUsed", "arkhanUsed",
+  "tipOfSpearUsed", "mistSaviorSwapped", "infamyFailSuccessUsed", "attackRerolled", "legionSurgeryUsed",
+  // Повелитель Червей: поддержание Роя за Ход решено (combat/worm-master.mjs, Sahara 584-1d5-r).
+  "wormUpkeepDone",
+  // Монозависимый: исход ломки решён ГМом (combat/monodevotant.mjs, Sahara 582).
+  "monodevotantDone",
   // Трата Очка «Успех» из меню карточки теста (apps/infamy-success.mjs): +Успех дописан в эту карточку.
   "infamySuccessAdded",
   // 1d10 Знаний Веков после траты Очка (apps/knowledge-of-ages.mjs, wdbc-1rno.23).
@@ -96,6 +109,10 @@ export const CARD_ONCE_FLAGS = ["mistSaviorSwapped", "infamyFailSuccessUsed", "a
   "oneWillGoDownSettled",
   // Тяжёлый Хук, Направляющий Удар, Удар с Коленом (Таланты Пугилиста, combat/pugilist-strikes.mjs): раз на атаку / карточку.
   "haymakerUsed", "goadingPressUsed", "kneeStrikeUsed",
+  // Вуаль Лжи (hooks.mjs, .wh-veil-proxy-btn): одна прокси-личность с карточки пытки.
+  "veilProxyUsed",
+  // Танец Боли (hooks.mjs, .wh-char-dmg-btn в блоке .wh-dance-of-pain): один урон в A с карточки.
+  "danceOfPainUsed",
   // Ложный Натиск (hooks.mjs, .wh-false-advance-btn): один Финт или Давление с карточки Движения.
   "falseAdvanceUsed",
   // Гренадер (Талант Метания, combat/grenadier.mjs): «уменьшить смещение» и «перебросить направление» — по разу на карточку.

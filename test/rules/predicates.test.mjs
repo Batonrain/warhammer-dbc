@@ -503,7 +503,7 @@ describe("общее требование к предикатам", () => {
     rankAndFile: false,
     // Пустота Парии / демон / цель-псайкер или демон (rules/null-zones.mjs,
     // сверка главы I, 26.09.2026).
-    inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true,
+    inPariahVoid: true, isDaemon: true, targetPsykerOrDaemon: true, targetSoulless: false, inDiscordantField: true,
     // Цель/источник — Космодесантник (Angel Hunters, Йигори, сверка главы I).
     targetIsAstartes: true,
     // Цель — псайкер, без демонов (Рога Кровожада, wdbc-1rno.10).
@@ -558,7 +558,14 @@ describe("общее требование к предикатам", () => {
     // База рукопашной атаки, держащаяся на акторе (system.meleeBase).
     meleeBaseIs: ["charge"],
     // Чувство, выбранное в окне теста Внимательности (ctx.sense).
-    testSense: ["hearing"]
+    testSense: ["hearing"],
+    // Обучение мехадендритам (Mechadendrite Use), утилитарные дендриты — wdbc-qbyvc.
+    mechadendriteTraining: "utility",
+    // Перегрузка Модулями Скитарии (rules/skitarii-modules.mjs).
+    skitariiModulesOverLimit: true,
+    underBalefulDirge: true,
+    // Дар Одержимого в Проявлении (Варп-Зрение вытесняет Ослепление, живая проверка pr-584).
+    manifestedGift: "Варп-Зрение"
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

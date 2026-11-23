@@ -283,6 +283,11 @@ export function entryWhenOk(actor, entry, item = null) {
   const condKeys = whenCondition(entry?.when);
   const quals = whenQuality(entry?.when);
   const preds = whenPredicates(entry?.when);
+  // when.predicatesAll — условия реестра, которые идут через «И» ВСЕГДА, даже
+  // при anyOf (Пустота Парии гасит запись «тяжело ранен ИЛИ потерял часть
+  // тела» целиком — rules/void-split.mjs, task-f568).
+  const mustPreds = Object.entries(entry?.when?.predicatesAll && typeof entry.when.predicatesAll === "object" ? entry.when.predicatesAll : {});
+  if (mustPreds.length && actor && !mustPreds.every(([key, value]) => predicateOk(key, actor, value))) return false;
   const chosenEffects = whenChosenEffect(entry?.when);
   if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
       && !patronGods.length && !requireSealedArmour && !condKeys.length && !quals.length

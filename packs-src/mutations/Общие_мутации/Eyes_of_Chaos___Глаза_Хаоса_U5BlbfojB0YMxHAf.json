@@ -220,6 +220,36 @@
                 ],
                 "negateSub": false
               }
+            },
+            {
+              "id": "eyesChaos1NoRtDp",
+              "kind": "capability",
+              "capabilityKey": "mutation.noRetinalDisplay",
+              "capabilityMode": "flag",
+              "label": "Пламенные Глазницы (субмутация 1): ретинальный дисплей пользы не даёт (прицелы «только с дисплеем» не работают)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "1"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "eyesChaos1NoVisA",
+              "kind": "capability",
+              "capabilityKey": "mutation.majesticHorns.noVisionAids",
+              "capabilityMode": "flag",
+              "label": "Пламенные Глазницы (субмутация 1): авточувства и визоры не действуют — пламя выжигает линзы",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "1"
+                ],
+                "negateSub": false
+              }
             }
           ]
         }

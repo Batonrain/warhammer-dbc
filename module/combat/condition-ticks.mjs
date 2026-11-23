@@ -18,6 +18,7 @@
 //  число для тика) — отменено по прямому запросу пользователя, wdbc-zepq.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { fireDancePanicMod, FIRE_DANCE_PANIC_FLAG } from "../rules/fire-dance.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { hasWarpforgedPlate } from "../rules/warpsmith.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -43,6 +44,7 @@ import { rollShieldAgainstConditionTick, burningGraceSourceItem } from "./damage
 // "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
 import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { stunTaintStep, STUN_TAINT_ACTOR_FLAG } from "../rules/stun-taint.mjs";
+import { UNTIL_TURN_END_FLAG, untilTurnEndStep, untilTurnEndHeld } from "../rules/until-turn-end.mjs";
 import { BLESSED_FITS_PENDING_FLAG, blessedFitsRefundDue } from "../rules/blessed-fits.mjs";
 import { changeActorInfamy } from "../apps/infamy-points.mjs";
 // Parasite/Паразит (Трейт — общий, wdbc-ux8a): parasiticContact — тот же
@@ -74,6 +76,8 @@ import { secondaryCritHtml } from "./secondary-crit.mjs";
 // Хода, чтобы его затянуть.
 import { bleedingDieFormula, canSelfStaunch } from "../rules/new-men.mjs";
 import { bleedingRollCount, bestBleedingRoll } from "../rules/resilience-talents.mjs";
+import { bloodReplacementItem } from "../rules/blood-replacement.mjs";
+import { inVoidMark } from "../rules/void-split.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -558,7 +562,13 @@ export async function rollBurningPanicTest(actor) {
     });
     return { success: true, rv: null, eff: wp };
   }
-  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  // Танец Пламени (rules/fire-dance.mjs): первый тест после такого загорания — с −40, метка снимается.
+  const fireDanceMod = fireDancePanicMod(actor);
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp + fireDanceMod);
+  if (fireDanceMod) {
+    parts.unshift(`Танец Пламени ${fireDanceMod}`);
+    await actor.unsetFlag("warhammer-dbc", FIRE_DANCE_PANIC_FLAG);
+  }
   if (!success) await actor.update({ "system.actionPoints.value": 0 });
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
@@ -661,6 +671,8 @@ export async function processConditionTurnStart(actor) {
     // Срок ведёт Duration — свой декремент этому Состоянию не нужен и был бы
     // двойным: остаток уже пересчитан подметанием выше.
     if (hasConditionDuration(actor, key)) continue;
+    // Срок «до конца своего Хода» снимает конец Хода, не начало (rules/until-turn-end.mjs).
+    if (untilTurnEndHeld(actor, key)) continue;
     const cur = Number(conds[field]) || 0;
     if (cur <= 0) continue;
     const next = cur - 1;
@@ -759,9 +771,13 @@ export async function processConditionTurnEnd(actor) {
     }
     const level = Number(conds.haemorrhagingLevel) || 0;
     const eff = roll.total - level;
-    if (eff <= 0 && hasRuleFlag(actor, "brutePhysiology.bleedingNoDeath")) {
+    const noBleedDeath = hasRuleFlag(actor, "brutePhysiology.bleedingNoDeath") ? "Физиология Громилы"
+      // Замена Крови (wdbc-1rno.15): «иммунитет к смерти от Кровотечения и Обескровливания».
+      // В Пустоте Парии «чудесное восполнение» гаснет (task-f568, таблица утверждена 21.11.2026).
+      : (bloodReplacementItem(actor) && !inVoidMark(actor)) ? "Замена Крови" : null;
+    if (eff <= 0 && noBleedDeath) {
       // Физиология Громилы (Огрин): «не может умереть от Кровотечения».
-      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>Физиология Громилы</b>: от Кровотечения не умирает</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: ${die} <b>${roll.total}</b>${dieHardNote} − Обескровливание ${level} = <b>${eff}</b> → смерть, но <b>${noBleedDeath}</b>: от Кровотечения не умирает</div>`);
     } else if (eff <= 0) {
       // Пусть Льётся (Геносемя): вместо смерти — 1 Усталости (killByCondition
       // начисляет её сама), карточка не должна кричать «СМЕРТЬ» над живым.
@@ -909,6 +925,19 @@ export async function processConditionTurnEnd(actor) {
         : `<span class="roll-success">успех</span>`}`;
     }
     lines.push(`<div class="roll-threshold">${rollIcon("warp", "#ffe14d")}Радиация: урон в T <b>1</b> (T ${before}→${after})${sicknessNote}</div>`);
+  }
+
+  // «До конца своего следующего Хода» (rules/until-turn-end.mjs, Варп Вспышка; Sahara 586-8aaf).
+  const untilFlag = actor.getFlag?.(NS, UNTIL_TURN_END_FLAG);
+  if (untilFlag) {
+    const { next, expired } = untilTurnEndStep(untilFlag);
+    const upd = next ? { [`flags.${NS}.${UNTIL_TURN_END_FLAG}`]: next } : { [`flags.${NS}.-=${UNTIL_TURN_END_FLAG}`]: null };
+    for (const key of expired) {
+      if (!actor.system?.conditions?.[key]) continue;
+      Object.assign(upd, conditionRemoveFields(key));
+      lines.push(`<div class="roll-threshold">${esc(CONDITIONS_DEF[key]?.label ?? key)}: конец Хода → снято</div>`);
+    }
+    await actor.update(upd);
   }
 
   if (lines.length) await postConditionCard(actor, lines);

@@ -13,6 +13,8 @@ import { tokenRect } from "./horde-tokens.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
 import { pxPerMeter } from "./templates.mjs";
 import { isWalkerVehicle } from "../rules/walker.mjs";
+import { outnumberWeight } from "../rules/possession-talents.mjs";
+import { doppelOutnumberWeight } from "../rules/raven-talents.mjs";
 
 const SYSTEM_ID = "warhammer-dbc";
 
@@ -135,7 +137,9 @@ export function meleeContactCount(attackerToken) {
     if (tokenRelationship(attackerDoc.disposition, otherDoc.disposition) !== "enemy") continue;
     const rectB = tokenRect(other);
     if (!rectB) continue;
-    if (contactType(rectA, rectB) !== "none") count++;
+    // Общая Бойня (Таланты одержимых): проявленный Одержимый — за двоих.
+    // Стойка Двойника (Ворон): ⅓(WS.b+1) персонажей.
+    if (contactType(rectA, rectB) !== "none") count += Math.max(outnumberWeight(other.actor), doppelOutnumberWeight(other.actor));
   }
   return count;
 }

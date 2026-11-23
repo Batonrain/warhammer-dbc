@@ -6,6 +6,8 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { insorcistAnchorsDemon, insorcistOnBanished } from "./insorcist-warp.mjs";
+import { inPariahVoid, voidInstabilityPenalty, PARIAH_VOID } from "../rules/null-zones.mjs";
 import {
   WARP_INSTABILITY_CAP, WARP_INSTAB_HURT_FLAG, WARP_INSTAB_DEALT_FLAG, WARP_BANISHED_FLAG,
   instabilityTestNeeded, instabilityDamageFormula, shouldBanish
@@ -39,6 +41,25 @@ export async function banishToWarp(actor, loss) {
     icon: rollIcon("skull", "#c070ff"), title: `Изгнан в Варп — ${esc(actor.name)}`,
     outcome: `<span class="roll-failure">Раны ниже 0: ${esc(actor.name)} изгнан в Варп вместо Отрицательных Ран.</span>`
   });
+  await insorcistOnBanished(actor);
+}
+
+/**
+ * W Парий, чья Пустота накрыла актора: Черта-метка ауры несёт auraSource —
+ * uuid Черты Парии на его акторе (regions/auras.mjs).
+ */
+export function pariahWpsAround(actor) {
+  const out = [];
+  for (const item of actor?.items ?? []) {
+    const src = item?.flags?.[NS]?.auraSource;
+    if (!src) continue;
+    const caps = (item.flags?.[NS]?.mechanics ?? []).flatMap(g => g.entries ?? []).map(e => e.capabilityKey);
+    if (!caps.includes(PARIAH_VOID)) continue;
+    const pariah = globalThis.fromUuidSync?.(src)?.parent;
+    const w = Number(pariah?.system?.characteristics?.wp?.total);
+    if (Number.isFinite(w)) out.push(w);
+  }
+  return out;
 }
 
 /** Конец Хода демона: тест W+0, провал — Energy-урон без поглощения; затем сброс отметок. */
@@ -47,13 +68,27 @@ export async function warpInstabilityTurnEnd(actor) {
   const hurt = !!flagOf(actor, WARP_INSTAB_HURT_FLAG);
   const dealt = !!flagOf(actor, WARP_INSTAB_DEALT_FLAG);
   const reset = { [`flags.${NS}.-=${WARP_INSTAB_HURT_FLAG}`]: null, [`flags.${NS}.-=${WARP_INSTAB_DEALT_FLAG}`]: null };
-  if (!instabilityTestNeeded({ hurt, dealt })) {
+  const inVoid = inPariahVoid(actor);
+  if (!instabilityTestNeeded({ hurt, dealt, inVoid })) {
     if (hurt || dealt) await updateOrRelay(actor, reset);
     return;
   }
+  // Инзорцизм: рядом с Инзорцистом (не дальше W м) призванный проходит тест сам.
+  const anchor = insorcistAnchorsDemon(actor);
+  if (anchor) {
+    await postTestCard(actor, {
+      icon: rollIcon("skull", "#c070ff"), title: `Варп-Нестабильность — ${esc(actor.name)}`,
+      outcome: `<span class="roll-success">Пройдена автоматически — якорь-душа Инзорциста ${esc(anchor.name)} рядом (Инзорцизм).</span>`
+    });
+    await updateOrRelay(actor, reset);
+    return;
+  }
   const wp = Number(actor.system?.characteristics?.wp?.total) || 0;
+  // Пустота Парии: штраф в W Парии (сильнейшей, если их несколько).
+  const voidPenalty = inVoid ? voidInstabilityPenalty(pariahWpsAround(actor)) : 0;
+  const eff = wp + voidPenalty;
   const roll = await new Roll("1d100").evaluate();
-  const { success, deg } = testOutcome(roll.total, wp);
+  const { success, deg } = testOutcome(roll.total, eff);
   let detail = `<span class="roll-success">Успех — Варп держит</span>`;
   let loss = null;
   if (!success) {
@@ -63,7 +98,9 @@ export async function warpInstabilityTurnEnd(actor) {
   }
   await postTestCard(actor, {
     icon: rollIcon("skull", "#c070ff"), title: `Варп-Нестабильность — ${esc(actor.name)}`,
-    threshold: `W+0 (<b>${wp}</b>): <b>${roll.total}</b>`,
+    threshold: voidPenalty
+      ? `W${voidPenalty} — 🕳 Пустота Парии (<b>${eff}</b>): <b>${roll.total}</b>`
+      : `W+0 (<b>${wp}</b>): <b>${roll.total}</b>`,
     outcome: detail
   }, { rolls: [roll] });
   await updateOrRelay(actor, reset);

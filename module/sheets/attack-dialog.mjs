@@ -15,6 +15,7 @@
 // любой другой (Приём зависит от Базы, Стойка/Приём/Хват — от Профиля через
 // категорию оружия, categoryFor/trainingFor ниже).
 
+import { hateAttackDegrees } from "../rules/focused-wrath.mjs";
 import { isPlagueHorn, hornRegrowLeft, regrowLabel } from "../rules/lodged-horn.mjs";
 import { hardTargetPenalty } from "../rules/hard-target.mjs";
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
@@ -40,11 +41,14 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getActiveMods, getInstalledMods, isSightMod,
          activeSightId, modWornRequirementMet } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag }                        from "../rules/flags.mjs";
-import { volleyThrowApplies, VOLLEY_ROF_MIN, VOLLEY_ROF_MAX } from "../rules/throwing-talents.mjs";
+import { hasAbility }                         from "../rules/ability-by-key.mjs";
+import { volleyThrowApplies, VOLLEY_ROF_MIN, VOLLEY_ROF_MAX, balearicSbBonus, thrownRange } from "../rules/throwing-talents.mjs";
 import { sightEffectsOf }                     from "../rules/sight-effects.mjs";
+import { sightAiming }                        from "../rules/autosense-jacks.mjs";
 import { unstablePlatformPenalty, plasmaMasteryBlastChoice } from "../rules/damage-talents.mjs";
 import { MAXIMAL_RNG_BONUS }                  from "../rules/maximal-mode.mjs";
 import { RIPOSTE_EVASION_PENALTY, stockGripActive } from "../rules/melee-talents.mjs";
+import { potenceGripActive } from "../rules/bronenosets-talents.mjs";
 import { weaponIsBound } from "../combat/blade-binding.mjs";
 import { khornePatron }                       from "../rules/patron-abilities.mjs";
 import { isStunnedOrDazed }    from "../rules/predicates.mjs";
@@ -63,7 +67,7 @@ import { hasHiddenJoints } from "../combat/armor-properties.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG, GIANTS_ARMS_FLAG, wearsPowerArmour } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
-import { isMechadendriteWeapon } from "../rules/mechadendrites.mjs";
+import { isMechadendriteWeapon, dendriteAttackModes, dendriteFocusActive, mechadendriteCount } from "../rules/mechadendrites.mjs";
 import { extendedReachCells, meleeContactDisplay } from "../rules/weapon-length.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
@@ -105,6 +109,20 @@ import { fullFireOptions, FULL_FIRE_PENALTY } from "../rules/full-fire.mjs";
 import { hasPowerSetting, powerModeOf, POWER_MODES } from "../rules/power-setting.mjs";
 import { batpackAvailable, batpackRangePenalty } from "../rules/batpack-dump.mjs";
 import { sabotageAimEntries } from "../rules/rogue-talents.mjs";
+import { empathAttackPreset } from "../rules/medusa-talents.mjs";
+import { hasRetiarius } from "../rules/gladiator-arena.mjs";
+import { livingArsenalOneHand } from "../rules/obliterator-talents.mjs";
+import { seekerReady, seekerThresholdOffset, SEEKER_EFFECTS } from "../rules/runic-shot.mjs";
+import { secutorPinRefusal } from "../combat/gladiator.mjs";
+import { ordinatorGunRefusal } from "../rules/secutor-talents.mjs";
+import { hasPsalmOfGuidance, isCognisWeapon } from "../rules/psalm-of-guidance.mjs";
+
+/** Префиксы id правил элитных архетипов, чей auto-бонус идёт в Порог атаки (см. ruleAutoMods). */
+export const ELITE_ATTACK_AUTO_MODS = [
+  "vitkis.warSeer.hit", "vitkis.bookOfBattle", "gladiator.bestiarius",
+  "kenetai.sharedConsciousness", "secutor.sustainedAssault", "secutor.gunzerker",
+  "archmagos.concordax", "astartes.boon."
+];
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -138,6 +156,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Натиск/Бег (movement-actions.mjs).
   if (isHallucinatingCannotAttack(actor))
     return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
+  // Секуторий (Гладиатор, combat/gladiator.mjs): оружие, прижатое щитом, и сам занятый щит не бьют.
+  const pinWhy = secutorPinRefusal(actor, item);
+  if (pinWhy) return ui.notifications.warn(`⚠️ ${pinWhy}`);
+  // Ординатор: главные орудия техники — не из корпуса и только с Серво-Рукой.
+  const ordinatorWhy = ordinatorGunRefusal(actor, item);
+  if (ordinatorWhy) return ui.notifications.warn(`⚠️ ${ordinatorWhy}`);
   // Поле Дискорданта (rules/null-zones.mjs, как Haywire (7)): электрическое
   // стрелковое оружие не стреляет; рукопашное бьёт выключенным (ниже).
   if (fieldForbidsShot(actor, item, item.system?.weaponClass === "melee"))
@@ -195,7 +219,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // теста уже после того, как окно посчитало порог, и бросок расходился бы с
   // окном — там же разобрано, чем именно.
   const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
-  const charKey = isMelee ? "ws" : "bs";
+  // Ретиарий (Гладиатор): метательное на цепи — WS вместо BS (rules/gladiator-arena.mjs).
+  const charKey = (isMelee || (sys.weaponClass === "thrown" && hasRetiarius(actor))) ? "ws" : "bs";
   // Сцепление Клинков (Талант «Рукопашных»): сцепленным оружием атаковать нельзя (combat/blade-binding.mjs).
   if (weaponIsBound(actor, item.id))
     return ui.notifications.warn(`⚠️ «${item.name}» сцеплено клинком противника (Сцепление Клинков) — атаковать им нельзя до начала Хода цепляющего или пока не разойдутся.`);
@@ -298,8 +323,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // винтовку и длинную винтовку (обе в классе basic, стр. 171) можно держать
   // одной рукой. Тот же список собирает rules/hands.mjs::availableRangedGrips —
   // иначе окно атаки разрешило бы хват, которого бюджет рук не знает.
-  const oneHandRifleGrip = (!isMelee && sys.weaponClass === "basic"
-                         && hasRuleFlag(actor, "weapon.oneHandedRifle")) ? "1р" : null;
+  const oneHandRifleGrip = ((!isMelee && sys.weaponClass === "basic"
+                         // Огневая Мощь — старая копия Таланта по имени (приёмка #597).
+                         && hasAbility(actor, "weapon.oneHandedRifle", "Outgun", "talent"))
+                         // Живой Арсенал (Облитератор): ассимилированные винтовки и тяжёлое (rules/hands.mjs — то же).
+                         || (!isMelee && livingArsenalOneHand(actor, item))) ? "1р" : null;
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60): книга
   // разрешает одну руку и отдельно оговаривает, что дальность при этом НЕ
   // режется — в отличие от модификации Pistol Grip. Список оружия именной, а
@@ -308,8 +336,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                         && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) ? "1р" : null;
   // Прикладный Хват (Sahara 3-8dc5): штык одной рукой — «1р» выдаёт Талант, WS −10 (selection.mjs).
   const stockGripGrip = (isMelee && stockGripActive(actor, item)) ? "1р" : null;
+  // Могущество (Броненосец): двуручное рукопашное — одной рукой.
+  const potenceGrip = (isMelee && potenceGripActive(actor, item)) ? "1р" : null;
   const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []),
                       ...(stockGripGrip ? [stockGripGrip] : []),
+                      ...(potenceGrip ? [potenceGrip] : []),
                       ...(doubleGripGrip ? [doubleGripGrip] : []),
                       ...(oneHandRifleGrip ? [oneHandRifleGrip] : []),
                       ...(pathOneHandGrip ? [pathOneHandGrip] : [])];
@@ -488,7 +519,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Пассажир верхом: «−10 на все физические действия» — атака тоже (rules/mount.mjs::passengerTestMod)
       || m.ruleId === "situational.passenger"
       // Скакун под меткой Драконьего Рыцаря: +3×Успехи на все Атаки (rules/dragon-knight.mjs)
-      || m.ruleId === "situational.dragonKnight")
+      || m.ruleId === "situational.dragonKnight"
+      // Элитные архетипы (#586): бонусы, у которых своего пути в Порог атаки нет —
+      // Провидец Войны и Книга Битвы (Виткис), Бестиарий, Общее Сознание,
+      // Непрерывный Натиск и Берсерк-Стрелок, Конкордакс, дары Герольда.
+      || ELITE_ATTACK_AUTO_MODS.some(id => String(m.ruleId ?? "").startsWith(id)))
   });
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -720,6 +755,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашной, и в стрелковой атаке; подходит ли выбранная Характеристика,
   // проверяет бросок — её можно сменить в самом окне.
   const hateAttackAvailable = khornePatron(actor);
+  // С Сфокусированным Гневом по Ненавистной цели в рукопашной — Inf.b Успехов,
+  // а не 1: подпись галочки говорит то же, что потом засчитает бросок (dbc-74).
+  const hateAttackSuccesses = hateAttackAvailable
+    ? hateAttackDegrees(actor, { isMelee, targetActor: attackCtx.targetActor }) : 1;
   // forceBase — нейтральная стартовая База вместо персистентной (Контратака,
   // стр. 12: это атака со штрафом −10, персистентная «Полная Атака» +30 сюда
   // протекать не должна). Игрок волен сменить её в окне, как обычно.
@@ -1097,12 +1136,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // подобные моды дальности метательному не полагаются (gripRangeMult не
   // умножает эту ветку).
   // Бросок на Бегу (Талант Метания, techniqueOpts.freeShot === "runningThrow"): Rng уменьшается до S.b×2.
+  // Балеарец (dbc-162): «добавляет ½A.b к S.b в расчёте дальности и урона».
   const gripRange = sys.weaponClass === "thrown"
-    ? sBonus * (techniqueOpts.freeShot === "runningThrow" ? 2 : 3)
+    ? thrownRange(sBonus + balearicSbBonus(actor), techniqueOpts.freeShot === "runningThrow")
     : Math.round((Number(sys.range) || 0) * gripRangeMult);
 
   let rangeInfoHtml = "";
-  if (!isMelee && sys.range > 0) {
+  // У метательного в паке range: 0 — сетка дистанций всё равно нужна: Rng живой, S.b×3 (dbc-162).
+  if (!isMelee && gripRange > 0) {
     const rng     = gripRange;
     // Снаряд техники с rangeOverride заменяет дальность орудия (rules/ammo-override.mjs).
     const rngOver = ammoOverrides(ammoSys).range;
@@ -1212,6 +1253,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <input type="checkbox" class="atk-mod-cb"
              ${m.id ? `id="${m.id}"` : ""}
              ${m.band ? `data-band="${m.band}"` : ""}
+             ${m.runicArtillery ? 'data-runic-artillery="1"' : ""}
+             ${(m.seeker || m.visionPenalty) ? `data-seeker="${m.seeker || "los"}"` : ""}
              data-value="${(isAF || isAS) ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
              ${isAS    ? 'data-autosuccess="true"' : ""}
@@ -1587,6 +1630,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <span class="av-sec-lbl">Прицеливание — какой руке</span>
       <label class="attack-mod-check"><input type="radio" name="atk-aim-hand" value="main" checked/> Основной</label>
       <label class="attack-mod-check"><input type="radio" name="atk-aim-hand" value="off"/> Второй</label>
+      ${hasPsalmOfGuidance(actor) && isCognisWeapon(item) ? `<label class="attack-mod-check" title="Псалом Наставления: прицеливания можно совершать посреди атаки с нескольких рук — вторая рука (тоже Cognis) получает то же Прицеливание за ${currentAiming === "full" ? 2 : 1} Когниц. при броске."><input type="radio" name="atk-aim-hand" value="both"/> Обеим (Псалом, ${currentAiming === "full" ? 2 : 1} Когн.)</label>` : ""}
     </div>` : ""}
     <div class="av-opt-note" id="atk-dual-note"></div>` : "";
 
@@ -1627,13 +1671,27 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       </select>
     </div>` : "";
 
+  // Мехадендриты в бою (rules/mechadendrites.mjs, Разобрать 2qtgp): сосредоточиться на дендритах
+  // (Multiple Arms по их числу, весь Ход только они) или ударить одним за Реакцию сверх обычных атак.
+  const dendriteModes = (techniqueOpts.freeShot || techniqueOpts.sabreSecondAttack) ? [] : dendriteAttackModes(actor, item);
+  const focusOn = dendriteFocusActive(actor);
+  const dendriteHtml = dendriteModes.length ? `
+    <div class="av-row" title="Мехадендриты в бою: 1) сосредоточение — персонаж считается имеющим Multiple Arms (X), X = число мехадендритов (${mechadendriteCount(actor)}), и в этот Ход атакует только ими; 2) атака одним мехадендритом за Реакцию сверх обычных атак — не тратит ОД и Лимит Атак, одним дендритом не чаще раза в Ход.">
+      <label>Мехадендрит</label>
+      <select id="atk-dendrite-mode" class="av-input av-wide">
+        <option value="" ${focusOn ? "" : "selected"}>обычная атака</option>
+        <option value="focus" ${focusOn ? "selected" : ""}>сосредоточение (Multiple Arms ${mechadendriteCount(actor)})${focusOn ? " — уже в этот Ход" : ""}</option>
+        <option value="reaction">за Реакцию, сверх обычных атак</option>
+      </select>
+    </div>` : "";
+
   // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы, а
   // вложенная форма недопустима — браузер её выбросит вместе с оформлением.
   // Сборка разметки вынесена в sheets/attack/markup.mjs (wdbc-uh56): второй
   // односторонний шов — значения только входят, наружу идёт одна строка.
   const content = buildAttackContent({
     actor,
-    dualWieldHtml: dualWieldHtml + fullFireHtml,
+    dualWieldHtml: dualWieldHtml + fullFireHtml + dendriteHtml,
     aimHtml,
     aimLocked,
     aimingBadgeHtml,
@@ -1644,11 +1702,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     autoCoverMod,
     autoHitAvailable,
     hateAttackAvailable,
+    hateAttackSuccesses,
     autoMountRangedMod,
     mountRangedNote,
     badgesHtml,
     bandHtml,
     charKey,
+    // Эмпат (Медуза): атаки медузы — тестом W, урон +бPR (rules/medusa-talents.mjs).
+    ...empathAttackPreset(actor, item),
     charSwapWhy,
     charVal,
     commonMods,
@@ -1702,6 +1763,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
    *
    * @returns {{parts: {label:string, value:number}[], total: number}}
    */
+  const seekerIdx = isMelee ? null : seekerReady(actor);
   const thresholdParts = f => {
     const sel = resolveSelectionSafe(f);
     const baseParts = [
@@ -1800,7 +1862,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Полу-/Полного Прицеливания» — только Коллиматорный Прицел реально
       // подключён (aimAttackMod), остальные упираются в отдельные пробелы
       // (wdbc-1rno.29/.31/.36/.37/.38).
-      { label: "Прицел (пока Прицеливаюсь)", value: (currentAiming === "none" || f.onThisMark) ? 0
+      // Порты Авточувств (rules/autosense-jacks.mjs): прицел работает и без Прицеливания.
+      { label: "Прицел (пока Прицеливаюсь)", value: (sightAiming(installedMods, currentAiming) === "none" || f.onThisMark) ? 0
         : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) },
       // Команды и Шок (ruleAutoMods выше) — в базе, а не в modParts: как и в
       // диалоге броска навыка (actor-sheet.mjs), автоматические модификаторы
@@ -1838,7 +1901,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Парное оружие",        value: f.dualWield
         ? dualWieldMods(actor, item, actor.items.get(f.offHandId)).pair : 0 },
       // Полный Огонь (rules/full-fire.mjs): −10 каждому из двух выстрелов.
-      { label: "Полный Огонь",         value: (f.fullFire && fullFireOpts.length) ? FULL_FIRE_PENALTY : 0 }
+      { label: "Полный Огонь",         value: (f.fullFire && fullFireOpts.length) ? FULL_FIRE_PENALTY : 0 },
+      // Пуля Искатель (Питати, rules/runic-shot.mjs): вплетённый Mind Over Matter гасит выбранные штрафы
+      // одиночного выстрела рунной пулей.
+      { label: `Пуля Искатель${seekerIdx != null ? `: ${SEEKER_EFFECTS[seekerIdx]}` : ""}`,
+        value: (!isMelee && f.runicSingle && seekerIdx != null) ? seekerThresholdOffset(seekerIdx, f) : 0 }
     ];
     const base         = baseParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
     const rawModsSum    = modParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
@@ -1903,6 +1970,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     fanningActive,
     autoHitAvailable,
     hateAttackAvailable,
+    hateAttackSuccesses,
     fullAttackForced,
     forcedDefenceReroll,
     helplessAutoMelee,
@@ -1973,9 +2041,10 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // даёт атаке: «+10 к любому удару» с Черты просто не доезжал (wdbc-t8dt,
   // найдено живой проверкой — синтетическое правило area:attack не попадало
   // ни в сумму, ни в карточку).
-  const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
-  const fatigue  = bodyMods.total;
+  // Цель — в контекст: правила «по цели» (Провидец Войны, Книга Битвы, Бестиарий) без неё молчат.
   const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws", targetActor });
+  const fatigue  = bodyMods.total;
   // Повалена/Оглушена цель — +20, тем же кодом, что окно атаки
   // (wdbc-x1nz.2.97 п.6); Ослеплённый бьёт с −30 WS, как строка «Ослеплён»
   // окна (wdbc-x1nz.2.89) — здесь галочек нет, поэтому сразу в Порог.

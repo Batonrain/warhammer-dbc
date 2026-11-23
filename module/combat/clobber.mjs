@@ -18,7 +18,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { clobberPlan, hasClobber } from "../rules/throwing-talents.mjs";
-import { totalWeightOf, bodyWeightOf } from "../rules/improvised-weapon.mjs";
+import { bodyWeightOrEstimate } from "../rules/improvised-weapon.mjs";
 import { rollResilienceTest } from "./resilience-test.mjs";
 import { statusApplyFields } from "./status-resist.mjs";
 import { writeToTarget } from "./gm-relay.mjs";
@@ -40,11 +40,14 @@ const NOT_KNOCKABLE = new Set(["vehicle", "horde", "ship", "starSystem", "squad"
 export function clobberOfferFor(attacker, { projectileKg, target } = {}) {
   if (!attacker || !target || !hasClobber(attacker)) return null;
   if (NOT_KNOCKABLE.has(target.type)) return null;
-  // Вес тела у большинства NPC (бестиарий) не заполнен — тогда сравнивать нечего: одно снаряжение вместо веса цели дало бы ложный штраф.
-  const targetKg = bodyWeightOf(target) > 0 ? totalWeightOf(target) : 0;
+  // Вес тела у большинства NPC (бестиарий) не заполнен — тогда берётся оценка
+  // по Размеру (rules/improvised-weapon.mjs::sizeWeightEstimate, Sahara 67-npc),
+  // в подсказке кнопки помечена «оценка».
+  const body = bodyWeightOrEstimate(target);
+  const targetKg = body.kg + (Number(target.system?.encumbrance?.current) || 0);
   return {
     ...clobberPlan(projectileKg, targetKg),
-    projectileKg: Number(projectileKg) || 0, targetKg,
+    projectileKg: Number(projectileKg) || 0, targetKg, targetEstimated: body.estimated,
     targetUuid: target.uuid ?? "", targetName: target.name ?? ""
   };
 }
@@ -58,12 +61,12 @@ export function clobberOfferHtml(offer, attackerUuid) {
   if (offer.status === "ok") {
     return `
     <button class="wh-clobber-btn" type="button" data-attacker-uuid="${esc(attackerUuid)}" data-target-uuid="${esc(offer.targetUuid)}" data-mod="${offer.mod}"
-      title="Поколотить: снаряд ${esc(fmtKg(offer.projectileKg))} кг при весе цели ${esc(fmtKg(offer.targetKg))} кг (${Math.round(offer.ratio * 100)}%). Цель проходит S${fmtMod(offer.mod)} — при Провале её сбивает с ног. Если цель Уклонилась от попадания — не нажимайте.">
+      title="Поколотить: снаряд ${esc(fmtKg(offer.projectileKg))} кг при весе цели ${esc(fmtKg(offer.targetKg))} кг${offer.targetEstimated ? " — вес тела не заполнен, оценка по Размеру" : ""} (${Math.round(offer.ratio * 100)}%). Цель проходит S${fmtMod(offer.mod)} — при Провале её сбивает с ног. Если цель Уклонилась от попадания — не нажимайте.">
       🪨 Поколотить: ${esc(offer.targetName)} — S${fmtMod(offer.mod)}
     </button>`;
   }
   const why = {
-    tooLight: `снаряд (${fmtKg(offer.projectileKg)} кг) легче ¼ цели (${fmtKg(offer.targetKg)} кг) — не действует`,
+    tooLight: `снаряд (${fmtKg(offer.projectileKg)} кг) легче ¼ цели (${fmtKg(offer.targetKg)} кг${offer.targetEstimated ? ", оценка по Размеру" : ""}) — не действует`,
     noProjectileWeight: "вес снаряда не заполнен — сравните с весом цели вручную",
     noTargetWeight: `вес цели ${esc(offer.targetName)} не заполнен (Записи → Вес) — сравните вручную`
   }[offer.status];

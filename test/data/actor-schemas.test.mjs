@@ -194,6 +194,8 @@ const DEVIATIONS = {
     // Хаосита от субрасы (Наследник +1, Затупленный −уровень) — сверка главы
     // I, 26.09.2026, гораздо позже template.json.
     subraceTier: 1, infamyMaxMod: 0,
+    // Лист демона Двойного Духа (rules/twin-spirit.mjs, Sahara 577-02de) — uuid Актора-демона.
+    "possession.demonUuid": "",
     // Ручная ГМ-надбавка к Лимиту Атак за Ход (combat/attack-limit.mjs,
     // wdbc-6rj) — заведена гораздо позже template.json.
     attackLimitBonus: 0,
@@ -210,6 +212,9 @@ const DEVIATIONS = {
     sigilliteRunes: { value: 0, max: 0 },
     // Очки Трофеев Мастера Казней (Sahara task-bbe1) — пул, максимум P.b считает rules/character.mjs.
     trophyPoints: { value: 0, max: 0 },
+    // Пулы ресурсов элитных архетипов (Жажда, Вдохновение, Месть — rules/resource-pools.mjs):
+    // { ключ: значение }, какие пулы есть — решают записи Конструктора на Чертах.
+    resourcePools: {},
     // Командование вне Отряда: командовать можно и теми, кто в Отряд не сведён.
     // Поля повторяют лист Отряда, но без Слаженности и Риска — их у случайной
     // группы взять неоткуда. В template.json блока не было вовсе: Команды
@@ -266,6 +271,8 @@ const DEVIATIONS = {
     // позже template.json (module/constants/conditions.mjs).
     "conditions.resonance": false,
     "conditions.resonanceLevel": 0,
+    // Спит (остаток Талантов, 20.11.2026) — заведено гораздо позже template.json.
+    "conditions.asleep": false,
     // Стазис (wdbc-1rno) — заведено гораздо позже template.json, на основе
     // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
     "conditions.stasis": false,

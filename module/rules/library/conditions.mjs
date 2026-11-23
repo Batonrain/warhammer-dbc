@@ -66,6 +66,15 @@ export const CONDITION_RULES = [
     ]
   },
   {
+    // Спит (остаток Талантов, 20.11.2026): книга числа не даёт — только «с Чутким Сном при тестах
+    // на P или Awareness всегда считается бодрствующим». −30 (Очень Трудный) — решение владельца 20.11.2026,
+    // одна цифра здесь. Чуткий Сон гасит запись целиком (lacksTrait смотрит и Таланты).
+    id: "conditions.asleep",
+    label: "Спит",
+    when: { hasCondition: "asleep", lacksTrait: ["Light Sleeper", "Чуткий Сон"] },
+    effects: [{ kind: "rollBonus", target: "basedon:per", value: -30, label: "🌙 Спит", auto: true }]
+  },
+  {
     // Стр. 30-31: «Снижает Предел Критического Провала на 10 для всех
     // тестов, кроме тестов T, Inf, и Cor. Это не снижает Пределы Клина и
     // Перегрева для стрелкового оружия.» Механизм уже готов целиком
@@ -218,8 +227,8 @@ export const CONDITION_RULES = [
     // та вытесняет это же правило сама (rules/item-rules.mjs,
     // CAPABILITY_OVERRIDES).
     id: "conditions.blinded.altSenses",
-    label: "Альтернативные чувства (Sonar Sense / Unnatural Senses)",
-    when: { anyOf: [...ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })), { blindsightActive: true }] },
+    label: "Альтернативные чувства (Sonar Sense / Unnatural Senses / Дар Варп-Зрение)",
+    when: { anyOf: [...ALT_SENSES_TRAITS.map(name => ({ hasTrait: name })), { blindsightActive: true }, { manifestedGift: "Варп-Зрение" }] },
     effects: [],
     overrides: ["conditions.blinded", "conditions.blinded.blindFighting"]
   },

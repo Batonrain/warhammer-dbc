@@ -143,3 +143,14 @@ export function tokensInRegion(region) {
 export function targetTokens(tokens) {
   canvas.tokens.setTargets(tokens.map(t => t.id));
 }
+
+/**
+ * Токены, чья База хотя бы частично в круге (центр и радиус в пикселях сцены) —
+ * для зоны, поставленной не мышью, а в вычисленную точку (Выдержанный Взрыв
+ * Питати: «в 1 м позади цели»). Та же выборка точек Базы, что у tokensInRegion.
+ */
+export function tokensInCircle(center, radiusPx) {
+  const r2 = radiusPx * radiusPx;
+  return canvas.tokens.placeables.filter(t => t.actor
+    && baseSamplePoints(t).some(p => (p.x - center.x) ** 2 + (p.y - center.y) ** 2 <= r2));
+}

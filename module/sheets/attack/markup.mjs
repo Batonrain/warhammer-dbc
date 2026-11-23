@@ -31,12 +31,15 @@ export function buildAttackContent(v) {
     autoCoverMod,
     autoHitAvailable,
     hateAttackAvailable,
+    hateAttackSuccesses = 1,
     autoMountRangedMod,
     mountRangedNote = "",
     dualWieldHtml,
     badgesHtml,
     bandHtml,
     charKey,
+    presetChar = "",
+    presetDmgBonus = 0,
     charSwapWhy,
     charVal,
     commonMods,
@@ -104,7 +107,7 @@ return `
           // отличит разрешённую книгой подмену от самоуправства.
           const swap = (k === "wp" && charSwapWhy.length)
             ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}` : "";
-          return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
+          return `<option value="${k}" ${k === (presetChar || charKey) ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
         }).join("")}
       </select>
       <label>Доп. мод</label>
@@ -113,7 +116,7 @@ return `
     ${dualWieldHtml}
     <div class="av-row">
       <label>Бонус урона</label>
-      <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="0"
+      <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="${Number(presetDmgBonus) || 0}"
              title="Ручной бонус к урону этой атаки — прибавляется к итоговому урону после броска, отдельно от порога теста"/>
     </div>
     ${(isMelee && hasDeathDance(actor)) ? `
@@ -199,7 +202,7 @@ return `
                соответствующий Талант) — см. MELEE_MANEUVERS.swift/lightning. -->
           <label class="attack-mod-check"><input type="checkbox" id="atk-allout"/><span>Атака всем телом (+20, теряет Уклонение)</span></label>
           ${autoHitAvailable ? `<label class="attack-mod-check"><input type="checkbox" id="atk-autohit"/><span>Локус Неизбежности: авто-попадание (1 Успех, −10 до след. Хода)</span></label>` : ""}
-          ${hateAttackAvailable ? `<label class="attack-mod-check" title="Покровительство Кхорна: за Очко Бесчестия тест WS/BS засчитывается успешным с 1 Успехом. Только до броска."><input type="checkbox" id="atk-hate"/><span>Атака Ненависти: −1 Очко Бесчестия, авто-попадание (1 Успех)</span></label>` : ""}
+          ${hateAttackAvailable ? `<label class="attack-mod-check" title="Покровительство Кхорна: за Очко Бесчестия тест WS/BS засчитывается успешным с 1 Успехом${hateAttackSuccesses > 1 ? ` (Сфокусированный Гнев: по Ненавистной цели в рукопашной — Inf.b = ${hateAttackSuccesses})` : ""}. Только до броска."><input type="checkbox" id="atk-hate"/><span>Атака Ненависти: −1 Очко Бесчестия, авто-попадание (${hateAttackSuccesses} ${hateAttackSuccesses === 1 ? "Успех" : hateAttackSuccesses < 5 ? "Успеха" : "Успехов"})</span></label>` : ""}
         </div>
       </div>
     </details>

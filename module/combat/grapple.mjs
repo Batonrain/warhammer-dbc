@@ -33,6 +33,9 @@ import { _showContestDialog } from "./techniques.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { itemHasName, sizeOf } from "../rules/predicates.mjs";
+import { devourerGrappleSize } from "../rules/terminator-talents.mjs";
+/** Размер в расчёте Борьбы: Поглотитель (Чемпион Терминатор) считается на 1 больше. */
+const grappleSize = a => sizeOf(a) + devourerGrappleSize(a);
 import { invocationNaturalAdd } from "../rules/invocation-natural.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { damageFormulaFor, meleeStrengthBonus } from "./attack-outcome.mjs";
@@ -163,7 +166,7 @@ export function grappleFreeHands(actor) {
  */
 export function grappleSizePenalty(actor, partner) {
   if (!partner) return 0;
-  const diff = sizeOf(actor) - sizeOf(partner);
+  const diff = grappleSize(actor) - grappleSize(partner);
   return diff < 0 ? diff * 10 : 0;
 }
 
@@ -215,7 +218,7 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
   // Жокей (Талант Пугилиста, стр. 62, combat/jockey.mjs): против цели КРУПНЕЕ
   // Захват идёт через Acrobatics(A) без штрафа Размера, потолок — на 2 Размера
   // крупнее; победа — «взобрался» на цель вместо обычного Захвата.
-  const sizeDiff = sizeOf(target) - sizeOf(actor);
+  const sizeDiff = grappleSize(target) - grappleSize(actor);
   const jockey = hasPugilistTalent(actor, "jockey");
   if (jockeySizeBlocked(sizeDiff, jockey)) {
     await postTestCard(actor, {
@@ -659,6 +662,26 @@ export function blessedWithPusDisadvantage(actor, partner) {
   return !!partner && hasBlessedWithPus(partner) && !hasBlessedWithPus(actor);
 }
 
+/** Подпись Помехи Благословенного Гноем (одна на все пути). */
+export const BLESSED_WITH_PUS_HINDRANCE_LABEL = "Помеха: Благословенный Гноем";
+
+/**
+ * Атака приёмом «Захват» по носителю Благословенного Гноем (окно атаки, sheets/attack/dialog.mjs; Sahara task-234f):
+ * «Помеха на все тесты Захвата против него» — переброс «худший из двух». null — Помехи нет.
+ */
+export function blessedWithPusAttackReroll(actor, target, { isMelee = false, technique = "" } = {}) {
+  if (!isMelee || technique !== "grapple" || !blessedWithPusDisadvantage(actor, target)) return null;
+  return { mode: "keepWorst", rolls: 2, label: BLESSED_WITH_PUS_HINDRANCE_LABEL };
+}
+
+/**
+ * Захват начинает сам носитель (атака приёмом «Захват»): Уклонение цели от него — тест Захвата против него,
+ * с Помехой (forcedDefenceReroll карточки, combat/attack.mjs). "" — нет.
+ */
+export function blessedWithPusDefenceReroll(defender, attacker, { isMelee = false, technique = "" } = {}) {
+  return isMelee && technique === "grapple" && blessedWithPusDisadvantage(defender, attacker) ? "keepWorst" : "";
+}
+
 export function grappleTechDef(actor, def) {
   const partner = def.opponent ?? grapplePartner(actor);
   const char = def.defaultChar || "s";
@@ -678,7 +701,9 @@ export function grappleTechDef(actor, def) {
     // Успехи ×2 (только Выкрутиться); Ускользнуть — +30 или переброс раз в
     // Раунд на любом тесте A в Борьбе (combat/techniques.mjs).
     forcedRerollMode: blessedWithPusDisadvantage(actor, partner) ? "keepWorst" : "",
-    forcedRerollLabel: "Помеха: Благословенный Гноем",
+    forcedRerollLabel: BLESSED_WITH_PUS_HINDRANCE_LABEL,
+    // Приём начал носитель Благословенного Гноем — сопротивление противника с Помехой (combat/opposed-contest.mjs).
+    resistHindrance: (opp, me) => (blessedWithPusDisadvantage(opp, me) ? BLESSED_WITH_PUS_HINDRANCE_LABEL : ""),
     escapeArtist: def.label === "Выкрутиться" && hasDodgeTalent(actor, "escapeArtist"),
     slipAway: char === "ag" && !def.jockey && hasDodgeTalent(actor, "slipAway"),
     resistMods: (opp, me) => [...grappleTestMods(opp, me), ...sturdyResistMods(opp, "grapple")],
@@ -1176,7 +1201,7 @@ async function _payThrowOrSwing(actor, label, free = false) {
     return false;
   }
   const cost = grappleHands(actor) >= 2 ? 1 : 2;
-  if (!(await spendActionPoints(actor, cost, { physical: true }))) {
+  if (!(await spendActionPoints(actor, cost, { physical: true, attack: true }))) {
     ui.notifications.warn(`⚠️ ${label}: не хватает ОД (${cost === 1 ? "Полудействие — держит двумя руками" : "Полное действие"}).`);
     return false;
   }
@@ -1493,7 +1518,7 @@ export function grappleCoverPartner({ attackerToken, targetToken, targetActor, a
 export function grappleMoveAllowed(actor) {
   if (!isGrappleAttacker(actor)) return false;
   const partner = grapplePartner(actor);
-  return !!partner && sizeOf(actor) > sizeOf(partner);
+  return !!partner && grappleSize(actor) > grappleSize(partner);
 }
 
 /**
@@ -1509,7 +1534,7 @@ export function grappleDodgeBlockReason(actor) {
   if (!partner) return "";
   const carry = Number(actor.system?.encumbrance?.carry) || 0;
   const heavier = carry > totalWeightOf(partner);
-  const notSmaller = sizeOf(actor) >= sizeOf(partner);
+  const notSmaller = grappleSize(actor) >= grappleSize(partner);
   if (heavier && notSmaller) return "";
   return `Держащий в Борьбе Уклоняется, только если его Вес Ношения выше веса цели и Размер не ниже (${!heavier ? `Ношение ${carry} кг ≤ ${totalWeightOf(partner)} кг` : "цель крупнее"}, стр. 12).`;
 }

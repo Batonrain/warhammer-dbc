@@ -93,3 +93,16 @@ export function firstResultOutcome({ rv, threshold }) {
   if (threshold == null || !Number.isFinite(Number(threshold))) return { success: null, deg: null };
   return testOutcome(rv, Number(threshold));
 }
+
+/**
+ * Флаг карточки теста БЕЗ листа (Страх, кнопки элитных архетипов) —
+ * Характеристика теста (Sahara 62-6d8b п.3). Тест с листа несёт её в
+ * skillTest.char; по этой Характеристике переброс за Очко решает, давать ли
+ * «оставить первый результат».
+ */
+export const TEST_CHAR_FLAG = "testChar";
+
+/** Характеристика переброшенной карточки по её флагам warhammer-dbc; null — неизвестна. */
+export function rerolledTestChar(flags) {
+  return flags?.skillTest?.char || flags?.[TEST_CHAR_FLAG] || null;
+}

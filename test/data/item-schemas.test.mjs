@@ -162,6 +162,8 @@ const TYPES = {
       stored: false,
       // «Бесполезен без ретинального дисплея…» (wdbc-1rno.38) — пусто, условия нет.
       requiresWorn: [],
+      // Включаемый мод (Порты Авточувств, Sahara 10 п.2) — по умолчанию не включаемый.
+      activatable: false, active: false,
       // «Книга-источник» (wdbc-eu1d): у модификаций поля не было вовсе, и на
       // вопрос «из какой она книги» ответить было нечем — источник писали в
       // заметки текстом.
@@ -513,6 +515,8 @@ const TYPES = {
       // Дисциплин оно из трёх частей («Метка Слаанеш, PR 4+, T 40+»), а
       // prRequired несёт только PR.
       requirement: "",
+      // «Только при Истончении Реальности N или выше» (Sahara 0-toad-psykers) — null, условия нет.
+      veilMin: null,
       testChar: "wp", testMod: 0, action: "half", range: "",
       // wdbc-efyl: (П)-дальность поддержания — своя, отдельная от range,
       // не производная от неё (Concentration/Концентрация: PR×1м/PR×5м).
@@ -549,7 +553,7 @@ const TYPES = {
       cognitionCost: 1, energyCost: 0, sustainCost: 0, sustainAction: "free",
       testSkill: "techUse", testMod: 0, action: "full", sustained: false,
       compiled: false, range: "", damage: "", damageType: "energy", damageSubtype: "",
-      penetration: 0, weaponProps: [], effect: "", harmful: false,
+      penetration: 0, penetrationFormula: "", weaponProps: [], effect: "", harmful: false,
       effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] },
       bookSource: ""
     },

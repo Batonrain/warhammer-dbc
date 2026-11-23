@@ -18,6 +18,7 @@ import { hatredTargetsOf } from "../../module/rules/predicates.mjs";
 import { hatredRules } from "../../module/rules/hatred.mjs";
 import { talentActionsHtml, runTalentAction } from "../../module/apps/talent-actions.mjs";
 import { factionTarget, raceTarget } from "../../module/rules/talent-targets.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
 const NS = "warhammer-dbc";
 const talentWithKey = (name, key) => ({
@@ -182,5 +183,26 @@ describe("кнопка на листе Таланта", () => {
 
   it("чужой предмет кнопку не запускает", async () => {
     expect(await runTalentAction("inspireWrath", DEMAGOGUE, speaker())).toBe(false);
+  });
+});
+
+describe("Целеустремлённый Охотник: Помеха на Charm Вдохновить Гнев (Sahara task-fef6)", () => {
+  const HUNTER = packDocById("packs-src/traits/Элитные_архетипы/Мастер_Казней", "SMFzhi92ZMmAx2pB");
+  const hunterItem = { id: "h1", name: HUNTER.name, type: "trait", system: HUNTER.system, flags: HUNTER.flags,
+    getFlag: (s, k) => HUNTER.flags?.[s]?.[k] };
+
+  it("носитель Черты бросает Charm с Помехой: худший из двух, подпись в карточке", async () => {
+    const s = speaker({ charm: 40, items: [INSPIRE, hunterItem] }), a = listener("А", "Actor.a");
+    globalThis.game.user.targets = new Set([token(a)]);
+    captured.dice = [10, 90];
+    expect(await startInspireWrath(s, { target: XENOS })).toBe("failed");
+    expect(captured.chat.at(-1).content).toContain("Помеха (Целеустремлённый Охотник)");
+  });
+
+  it("без Черты — один кубик", async () => {
+    const s = speaker({ charm: 40 }), a = listener("А", "Actor.a");
+    globalThis.game.user.targets = new Set([token(a)]);
+    captured.dice = [10, 90];
+    expect(await startInspireWrath(s, { target: XENOS })).toBe("granted");
   });
 });

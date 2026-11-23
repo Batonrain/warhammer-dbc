@@ -78,7 +78,7 @@ export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillK
       ?? resolveSkillCat(group || skillKey, specialty, itemApts, charApts, actor, entryApts);
 }
 
-const ALIGN_WORD = { ally: "Дружественный", enemy: "Враждебный" };
+const ALIGN_WORD = { ally: "Дружественный", enemy: "Враждебный", neutral: "Нейтральный" };
 
 /**
  * Откуда взялась категория, если она пришла НЕ из совпадения Склонностей

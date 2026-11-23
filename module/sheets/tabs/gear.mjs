@@ -5,10 +5,13 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { syncItemEffectsDisabled, syncOrphanedModEffects } from "../../apps/effects.mjs";
+import { isDendriteShield, testudoMountBlock, DENDRITE_SHIELD_FLAG } from "../../rules/testudo.mjs";
 import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
 import { on, esc } from "../../helpers/utils.mjs";
 import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand, isWristMounted } from "../../rules/hands.mjs";
+import { heavyBodyArmourBan } from "../../rules/heavy-body.mjs";
+import { brokenChainsArmourBan } from "../../rules/wild-psyker-talents.mjs";
 import { rollInfoguard as _rollInfoguard } from "../../apps/infoguard.mjs";
 import { showDelegateTestPicker as _showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { useDetonateGrenadeInRig } from "../../combat/draw-action.mjs";
@@ -73,6 +76,11 @@ export async function equipItem(item, equipped) {
     ui.notifications?.warn(`${item.name}: не хватает рук (свободно ${free} из ${max}) — сначала снимите что-то с рук.`);
     return;
   }
+  // Тяжёлое тело (rules/heavy-body.mjs): Облитератор брони не носит — только НОВОЕ надевание.
+  // Порванные Цепи (Дикий Псайкер, rules/wild-psyker-talents.mjs): без жёсткой и силовой брони.
+  const armourBan = equipped && item.parent
+    ? (heavyBodyArmourBan(item.parent, item) || brokenChainsArmourBan(item.parent, item)) : "";
+  if (armourBan) { ui.notifications?.warn(`${item.name}: ${armourBan}`); return; }
   // Hard (wdbc-8b5): блокируем только НОВОЕ надевание — существующие
   // «нелегальные» связки на старых листах не трогаем (тот же принцип, что
   // и у занятости рук выше).
@@ -142,6 +150,18 @@ export async function toggleShieldRaised(item) {
   ui.notifications.info(on
     ? `${item.name}: щит поднят — прикрыты дополнительные зоны.`
     : `${item.name}: щит опущен.`);
+}
+
+/** Тестудо (rules/testudo.mjs): поставить щит на мехадендрит или снять обратно в руку. */
+export async function toggleDendriteShield(actor, item) {
+  if (!item) return;
+  const on = !isDendriteShield(item);
+  const block = on ? testudoMountBlock(actor, item) : "";
+  if (block) { ui.notifications.warn(`⚠️ ${item.name}: ${block}.`); return; }
+  await item.setFlag("warhammer-dbc", DENDRITE_SHIELD_FLAG, on);
+  ui.notifications.info(on
+    ? `${item.name}: щит на мехадендрите — прикрывает, руку не занимает, атаковать и Парировать им нельзя.`
+    : `${item.name}: щит снова в руке.`);
 }
 
 export async function setWeaponLoadedAmmo(item, ammoId) {
@@ -252,6 +272,10 @@ export function activateGearListeners(root, actor, {
   on(root, ".shield-raise-btn", "click", async ev => {
     ev.preventDefault();
     await toggleShieldRaised(actor.items.get(ev.currentTarget.dataset.itemId));
+  });
+  on(root, ".shield-dendrite-btn", "click", async ev => {
+    ev.preventDefault();
+    await toggleDendriteShield(actor, actor.items.get(ev.currentTarget.dataset.itemId));
   });
 
   on(root, ".weapon-reload-btn", "click", async ev => {

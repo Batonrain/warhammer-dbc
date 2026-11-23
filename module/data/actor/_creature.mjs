@@ -310,6 +310,11 @@ export function creatureSchema({ granted = false } = {}) {
     // Очки Трофеев Мастера Казней (Sahara task-bbe1): максимум P.b считает rules/character.mjs
     // (rules/trophy-points.mjs); начисление — вручную на листе, трата — Туманный Прыжок.
     trophyPoints: pool("Очки Трофеев"),
+    // Пулы ресурсов элитных архетипов (Жажда, Очки Вдохновения, Очки Мести…):
+    // { <ключ>: текущее значение }. Какие пулы есть и их максимумы — не здесь,
+    // а записи Конструктора kind:"resourcePool" на Чертах/Талантах актора
+    // (rules/resource-pools.mjs): максимум растёт от Стадий Пакта живьём.
+    resourcePools: new ObjectField({ initial: {}, label: "Пулы ресурсов архетипов" }),
     fatigue:   pool("Усталость"),
     // Отношения (вкладка СОЦИУМ): к кому этот персонаж как относится. Запись —
     // ссылка на актора и четыре модификатора, по одному на Навык таблицы
@@ -593,6 +598,8 @@ export function creatureSchema({ granted = false } = {}) {
     possession: new SchemaField({
       demon:            str("katart", "Демон"),
       demonName:        str("", "Имя демона"),
+      // Лист демона Двойного Духа — uuid Актора «daemon» (rules/twin-spirit.mjs).
+      demonUuid:        str("", "Лист демона"),
       symbiosis:        num(0, "Симбиоз"),
       manifested:       bool(false, "Проявлен"),
       greaterPossessed: bool(false, "Великая одержимость"),

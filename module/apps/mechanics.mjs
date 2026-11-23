@@ -468,12 +468,14 @@ import { AVAILABILITY, DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
+import { suppressedArchetypes, suppressibleArchetypeOf, itemShouldBeSuppressed, ITEM_FLAG as ARCH_ITEM_FLAG, CHARS_FLAG as ARCH_CHARS_FLAG } from "../rules/archetype-suppression.mjs";
 import { expectedPhase, AP_LOCATIONS, EYE_ARMOUR_KEY } from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCapabilityCost } from "../combat/capability-cost.mjs";
+import { KNOWN_RESOURCE_POOLS, RESOURCE_REFILL_UNITS } from "../rules/resource-pools.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { CONDITIONS, CONDITIONS_DEF, conditionLevelField, isConditionMark } from "../constants/conditions.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
@@ -481,6 +483,7 @@ import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
 import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInput }
   from "../rules/condition-duration.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
+import { hasVoidGatedEntries } from "../rules/void-split.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { grantedTraitFlags } from "../rules/trait-grant.mjs";
@@ -582,6 +585,7 @@ const COHESION_ROLE_OPTIONS = [
 // напрямую), т.к. тут нужны русские лейблы для <select>, а не сами значения.
 const SCRIPT_THROTTLE_OPTIONS = [
   { value: "",        label: "Без ограничения" },
+  { value: "turn",    label: "Раз в Ход" },
   { value: "round",   label: "Раз в Раунд" },
   { value: "battle",  label: "Раз за бой" },
   { value: "scene",   label: "Раз за сцену" },
@@ -700,6 +704,7 @@ const KIND_LABELS = {
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
   aura: "Аура (эффект на окружающих)",
+  resourcePool: "Пул ресурса архетипа (Жажда, Вдохновение, Месть…)",
   group: "Вложенная группа",
   script: "Код"
 };
@@ -1158,6 +1163,13 @@ export function blankMechEntry(kind = "characteristic") {
     // запись — только кнопка «▶ Запустить»; иначе кнопки с ценой и откатом
     // срабатывали бы при выдаче Черты в Мастере создания.
     scriptOnGrant: false,
+    // resourcePool — пул ресурса элитного архетипа (rules/resource-pools.mjs):
+    // записи с одним ключом складываются (Черта задаёт пул, Стадии Пакта —
+    // прибавки). Живой запрос, при выдаче ничего не пишет.
+    resPoolKey: "", resPoolLabel: "", resPoolMax: "", resPoolRefill: "",
+    resPoolRoundCap: "", resPoolGainLabel: "", resPoolGainAmount: "",
+    resPoolAsInfamy: false, resPoolAsInfamyCap: "", resPoolAsInfamyCor: "", resPoolAsInfamyNote: "",
+    resPoolBoostChars: "", resPoolFailChars: "", resPoolFailSkills: "",
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -1281,6 +1293,21 @@ export function describeMechEntry(entry) {
       return "Щит: не срабатывает по локациям без надетой брони (и требует надетой Жёсткой брони на торсе)";
     case "burningGrace":
       return "Горение: пока активен — при поджигании ≤10 урона даёт 1d5 Ходов без эффектов Горения (автоматически)";
+    case "resourcePool": {
+      if (!entry.resPoolKey) return "Пул ресурса: (не задан ключ)";
+      const name = entry.resPoolLabel || KNOWN_RESOURCE_POOLS[entry.resPoolKey]?.label || entry.resPoolKey;
+      const parts = [];
+      if (String(entry.resPoolMax ?? "").trim()) parts.push(`максимум ${/^-/.test(String(entry.resPoolMax)) ? "" : "+"}${entry.resPoolMax}`);
+      if (String(entry.resPoolRoundCap ?? "").trim()) parts.push(`за Раунд +${entry.resPoolRoundCap}`);
+      if (entry.resPoolRefill) parts.push(`восполняется ${RESOURCE_REFILL_UNITS[entry.resPoolRefill] ?? entry.resPoolRefill}`);
+      if (String(entry.resPoolGainAmount ?? "").trim()) parts.push(`${entry.resPoolGainLabel || "пополнение"} +${entry.resPoolGainAmount}`);
+      if (entry.resPoolAsInfamy) parts.push("как Очки Бесчестия");
+      if (String(entry.resPoolAsInfamyCap ?? "").trim()) parts.push(`как Бесчестие за Раунд +${entry.resPoolAsInfamyCap}`);
+      if (entry.resPoolBoostChars) parts.push(`+10 к тестам ${entry.resPoolBoostChars}`);
+      if (entry.resPoolFailChars) parts.push(`провал ${entry.resPoolFailChars} → Успех`);
+      if (entry.resPoolFailSkills) parts.push(`провал теста ${entry.resPoolFailSkills} → Успех`);
+      return `Пул «${name}»${parts.length ? `: ${parts.join(", ")}` : ""}`;
+    }
     case "terrainIgnore": {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
@@ -1348,6 +1375,8 @@ export function describeMechEntry(entry) {
         ? "½ штрафа (вкл. необученность)"
         : entry.modValueMode === "autoSuccess"
         ? "автоуспех (галочка)"
+        : entry.modValueMode === "successMul"
+        ? `Успехи ×${Number(entry.value) || 2} (галочка)`
         : entry.modValueMode === "formula"
         ? `формула: ${entry.value}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
@@ -1554,6 +1583,8 @@ function isEntryComplete(e) {
       return true; // без полей — сама запись и есть флаг, нечему быть незаполненным
     case "burningGrace":
       return true; // без полей — сама запись и есть флаг, нечему быть незаполненным
+    case "resourcePool":
+      return !!String(e.resPoolKey ?? "").trim();
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "counterAttack":
@@ -2068,6 +2099,11 @@ async function resolveTalentSpecChoice(entry) {
  * полученный ЗАРАНЕЕ через resolveDirectAsk (Promise.all соседей в
  * applyGroupEntries) — если задан, повторно диалог/коллектор не зовём.
  */
+/** Талант с целями «на выбор» (targetChoiceCount): цели спрашивает окно целей, а не выбор специализации. */
+function asksTalentTargets(entry) {
+  return entry?.kind === "talent" && Number(entry.targetChoiceCount) > 0 && !entry.targets?.length;
+}
+
 export async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set(), preAsked = null) {
   // Подгруппа — не запись, а узел И/ИЛИ: отыгрываются её листья, отметку
   // получают тоже они.
@@ -2107,7 +2143,8 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   // Талант с целями «на выбор» (Peer/Hatred/Good Reputation: Придворный, Отступник,
   // Предсказание — dbc-152): игрок выбирает targetChoiceCount целей до выдачи,
   // они ложатся в system.targets (читатели rules/hatred.mjs, social-talents.mjs).
-  if (entry.kind === "talent" && Number(entry.targetChoiceCount) > 0 && !entry.targets?.length) {
+  const askedTargets = asksTalentTargets(entry);
+  if (askedTargets) {
     const { promptTargetChoices, targetChoiceLabel } = await import("./target-choice.mjs");
     const src = await resolveMechSource(entry);
     const title = String(src?.name || entry.sourceName || "Талант").split("/").pop().trim();
@@ -2118,7 +2155,9 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
 
   // Талант «любые N» (rules/talent-spec-choice.mjs) — выбор специализаций до
   // выдачи, тем же диалогом/коллектором Мастера, что у Навыков.
-  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null) {
+  // Цели уже выбраны окном выше — «любая» в специализации была лишь подписью
+  // к ним, второй вопрос («Выбор специализации») не задаём (task-eb2d).
+  if (entry.kind === "talent" && !askedTargets && anySpecCount(entry.specialization) != null) {
     const resolved = preAsked ?? await resolveTalentSpecChoice(entry);
     if (!resolved.length) return;
     entry = resolved[0];
@@ -2191,6 +2230,11 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   if (entry.kind === "script") {
     // Кнопки «▶ Запустить» при выдаче не срабатывают — только записи с «При выдаче».
     if (entry.scriptOnGrant) await executeItemCode(sourceItem, entry.code, null);
+    return;
+  }
+
+  if (entry.kind === "resourcePool") {
+    // Живой запрос (rules/resource-pools.mjs::resourcePoolDefs) — при выдаче ничего не пишем.
     return;
   }
 
@@ -3223,6 +3267,36 @@ export async function syncRankAndFileGrants(actor) {
  * Pure Form/Чистая Форма).
  */
 /**
+ * Элитный Архетип целиком гаснет и возвращается (rules/archetype-suppression.mjs):
+ * Сила Из Плоти — живое условие (Machine, чужой Фрейм), Соглашение Доблести —
+ * срок в мировом времени. Флаг на каждом Таланте/Черте Архетипа (их читают
+ * isItemActive и itemsNamed) и archetypeCharsOff на предмете Архетипа (бонусы
+ * к Характеристикам) — та же цепочка пересинхронизации, что у Пустоты Парии.
+ * @returns {Promise<string[]>} имена предметов, сменивших состояние
+ */
+export async function syncArchetypeSuppression(actor, now = Number(game?.time?.worldTime) || 0) {
+  const names = [];
+  if (!actor?.items) return names;
+  const set = suppressedArchetypes(actor, now);
+  for (const item of [...actor.items]) {
+    const isArch = item.type === "eliteArchetype";
+    if (!isArch && !suppressibleArchetypeOf(item)) continue;
+    const want = itemShouldBeSuppressed(actor, item, now, set);
+    const key = isArch ? ARCH_CHARS_FLAG : ARCH_ITEM_FLAG;
+    if (!!item.getFlag(FLAG, key) === want) continue;
+    await item.setFlag(FLAG, key, want);
+    await syncItemEffectsDisabled(item);
+    if (!isArch) {
+      await syncWeaponPropItemEffects(item);
+      await syncGrantedAbilities(item);
+      await syncGrantedEquipment(item);
+    }
+    names.push(item.name);
+  }
+  return names;
+}
+
+/**
  * Пустота Парии / поле Дискорданта (rules/null-zones.mjs): гасит на акторе
  * сверхъестественные мутации/Дары (в Пустоте) и электронные импланты (в поле)
  * флагом nullSuppressed и возвращает их при выходе — та же цепочка
@@ -3237,7 +3311,18 @@ export async function syncNullZoneSuppression(actor) {
     if (item.type === "mutation") want = voidSuppressesMutation(actor, item);
     else if (item.type === "implant") want = fieldDisablesImplant(actor, item);
     else continue;
-    if (!!item.getFlag(FLAG, "nullSuppressed") === want) continue;
+    if (!!item.getFlag(FLAG, "nullSuppressed") === want) {
+      // Спорная мутация гаснет не целиком, а записями с when.predicates
+      // { inPariahVoid: false } (rules/void-split.mjs, task-f568): живые
+      // правила следят сами, а эффекты, выданные Черты/Таланты и интегральные
+      // атаки пересобираются здесь же, при входе/выходе из Пустоты.
+      if (item.type === "mutation" && !want && hasVoidGatedEntries(getItemMechanics(item))) {
+        await syncMechanicsEffects(item);
+        await syncGrantedAbilities(item);
+        await syncGrantedEquipment(item);
+      }
+      continue;
+    }
     await item.setFlag(FLAG, "nullSuppressed", want);
     await syncItemEffectsDisabled(item);
     await syncWeaponPropItemEffects(item);
@@ -3552,7 +3637,7 @@ async function resolveDirectAsk(entry, applied, sourceItem, actor) {
     return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
   }
   // Талант «любые N» — тем же пакетом, что Навыки «на выбор».
-  if (entry.kind === "talent" && anySpecCount(entry.specialization) != null
+  if (entry.kind === "talent" && !asksTalentTargets(entry) && anySpecCount(entry.specialization) != null
       && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
     return { type: "spec", resolved: await resolveTalentSpecChoice(entry) };
   }
@@ -3578,6 +3663,28 @@ function appliedEntryIds(item) {
   // запись, дописанную до первого прогона.
   if (flag === true) return allMechEntryIds(item);
   return new Set();
+}
+
+/**
+ * Есть ли у предмета запись (или ИЛИ-группа) с условием «Когда», которая при
+ * выдаче была пропущена, а теперь условие выполнено. Чемпион-Терминатор (5-c24e):
+ * архетип выдаёт броню в рюкзак, «+5 к WS/BS» и Черты брони при выдаче
+ * пропускаются — надели броню позже, и их надо доиграть (applyItemMechanics
+ * идемпотентен: уже применённое не повторит).
+ */
+export function hasPendingWhenEntries(item) {
+  const actor = item?.parent;
+  if (!actor) return false;
+  const applied = appliedEntryIds(item);
+  const hasWhen = e => e?.when && Object.keys(e.when).length > 0;
+  // ИЛИ-группа: выбор ещё не сделан, а хоть одна ветка «с Когда» теперь проходит.
+  // И-группа: любая её запись (или вложенная группа) недоиграна.
+  const pending = group => (group?.operator === "OR"
+    ? !orChoiceMade(group, applied) && (group.entries || []).some(b => hasWhen(b) && entryWhenOk(actor, b, item))
+    : (group?.entries || []).some(e => (e.kind === "group" && e.group)
+      ? pending(e.group)
+      : hasWhen(e) && !applied.has(e.id) && entryWhenOk(actor, e, item)));
+  return getItemMechanics(item).some(pending);
 }
 
 /** id всех записей механики предмета, включая вложенные подгруппы. */
@@ -3942,7 +4049,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     if (mode === "aptOverride") {
       const scopeOpts = Object.entries(CAPABILITY_APT_SCOPE_LABELS)
         .map(([v, l]) => optHtml(v, l, (ent.capabilityAptScope || "skill") === v)).join("");
-      const alignOpts = [["ally", "Дружественный"], ["enemy", "Враждебный"]]
+      const alignOpts = [["ally", "Дружественный"], ["enemy", "Враждебный"], ["neutral", "Нейтральный"]]
         .map(([v, l]) => optHtml(v, l, (ent.capabilityAptAlign || "ally") === v)).join("");
       const matchHint = ent.capabilityAptScope === "characteristic"
         ? "ключ характеристики, точно: ws, bs, s, t, ag, int, per, wp, fel"
@@ -3982,7 +4089,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const modeOpts = [["flat", "число"], ["formula", "формула (½Cor и т.п.)"], ["charBonus", "бонус характеристики"],
       ["masterCharBonus", "бонус характеристики ХОЗЯИНА (system.masterUuid)"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"],
-      ["autoSuccess", "автоуспех теста (галочка в окне броска)"]]
+      ["autoSuccess", "автоуспех теста (галочка в окне броска)"],
+      ["successMul", "умножить Успехи (галочка в окне броска; число — множитель)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const charSel = (cls, val, extra = []) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
       [...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k]), ...extra].map(([k, l]) =>
@@ -4249,6 +4357,27 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     out += `<input type="text" class="mech-rollmod-label" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.label || "")}" placeholder="Имя модификатора" ${dis}/>
       <input type="number" class="mech-rollmod-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="±значение" ${dis}/>`;
     return out;
+  }
+
+  if (ent.kind === "resourcePool") {
+    const f = (field, ph, title = "", w = "") => `<input type="text" class="mech-respool-field" data-field="${field}" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent[field] ?? "")}" placeholder="${esc(ph)}" title="${esc(title || MECH_FORMULA_HINT)}" ${w ? `style="width:${w}"` : ""} ${dis}/>`;
+    const known = Object.entries(KNOWN_RESOURCE_POOLS).map(([k, m]) => `<option value="${esc(k)}">${esc(m.label)}</option>`).join("");
+    const refillOpts = Object.entries(RESOURCE_REFILL_UNITS).map(([v, l]) => optHtml(v, `Восполнение: ${l}`, (ent.resPoolRefill || "") === v)).join("");
+    return `<input type="text" class="mech-respool-field" data-field="resPoolKey" list="mech-respool-keys-${ent.id}" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.resPoolKey ?? "")}" placeholder="ключ: thirst / inspiration / vengeance" title="Записи с одним ключом складываются: Черта задаёт пул, Стадии Пакта — прибавки" ${dis}/>
+      <datalist id="mech-respool-keys-${ent.id}">${known}</datalist>
+      ${f("resPoolLabel", "подпись на листе", "Подпись пула на листе (берётся первая непустая)")}
+      ${f("resPoolMax", "+ к максимуму")}
+      <select class="mech-respool-field" data-field="resPoolRefill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${refillOpts}</select>
+      ${f("resPoolRoundCap", "+ к лимиту за Раунд", "Сколько можно потратить за Раунд боя (пусто/0 у всех записей — без лимита)")}
+      ${f("resPoolGainLabel", "кнопка пополнения", "Подпись кнопки «+» у пула на листе (Испить кровь, Медитация…)")}
+      ${f("resPoolGainAmount", "+ к пополнению", "Сколько даёт кнопка «+» (складывается по записям)")}
+      <label class="grant-when-negate-label" title="Пул можно тратить вместо Очка Бесчестия (Переброс, +10, Успех, способности полосы)"><input type="checkbox" class="mech-respool-field" data-field="resPoolAsInfamy" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.resPoolAsInfamy ? "checked" : ""} ${dis}/> как Бесчестие</label>
+      ${f("resPoolAsInfamyCap", "+ к лимиту «как Бесчестие» за Раунд")}
+      ${f("resPoolAsInfamyCor", "Порча не выше (при такой трате)", "«Считает при этом свою Cor 0-19» — пиши 19")}
+      ${f("resPoolAsInfamyNote", "ограничение траты (текстом)", "Напоминание игроку в окне выбора, код не проверяет")}
+      ${f("resPoolBoostChars", "+10 к тестам: int, wp", "Ключи Характеристик через запятую: +10 к тесту за 1 очко из меню карточки")}
+      ${f("resPoolFailChars", "провал → Успех: int, wp", "Ключи Характеристик через запятую: кнопка в карточке проваленного теста")}
+      ${f("resPoolFailSkills", "провал → Успех: medicae, regeneration", "Ключи Навыков через запятую (regeneration — тест T Регенерации): кнопка в карточке проваленного теста")}`;
   }
 
   if (ent.kind === "poolMax") {

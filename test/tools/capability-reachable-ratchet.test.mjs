@@ -85,7 +85,8 @@ const ALLOWED = {
   // Скорость полёта (Гарпия, глава I): как Sonar Sense — включатель ИМЯ Черты
   // Flyer/Hoverer (rules/flight-speed.mjs, combat/movement-actions.mjs держат
   // имена массивом, литерала в вызове itemHasName анализатор не видит).
-  "trait.flyer": "включается по имени Черты (Flyer / Летун, Hoverer / Парящий) — сотни носителей в паках, ключ Конструктора не нужен",
+  // С 21.11.2026 литерал есть: hasItemNamed(actor, "Flyer") в Пролётом
+  // (combat/moritat-talents.mjs) — исключение снято.
 
   // Чистый Разум (module/rules/training-advantage.mjs::hasClearMind, курс
   // Обучения): включатель — имя Черты через itemHasName внутри hasItem(actor,
@@ -148,26 +149,8 @@ const ALLOWED = {
   // указателя `reader` на настоящий код. Скакуны (mount) читают имена Черт
   // из rules/mount.mjs / combat/mount.mjs, остальные — по именам в своих модулях.
   "trait.elitnyeArhetipy.sukkub.brutalChargeWsB": "включается по имени Черты (Brutal Charge (WS.b) / Жестокий Натиск), combat/attack.mjs brutalChargeDamageBonus — ключа Конструктора нет",
-  "trait.elitnyeArhetipy.arhimagos.doctrinaImperative": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.arhimagos.masterpieceFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
-  "trait.elitnyeArhetipy.gerold.delegate": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.gerold.livingBanner": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.gerold.noblesseOblige": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.dlanArhonta.equalizeTheOdds": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
   "trait.elitnyeArhetipy.dlanArhonta.establishedRole": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.ierofant.grandAgitator": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.ierofant.masterOfMasses": "ждёт подсистему — задача Sahara task-c2d9 (приказы подчинённым); включателя пока нет",
-  "trait.elitnyeArhetipy.korolChervey.wormMaster": "ждёт подсистему — задача Sahara task-4bfd (роевые призывы); включателя пока нет",
-  "trait.elitnyeArhetipy.lordDiskordant.corruptedNoosphere": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.astralConverter": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.digitalGhost": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.malagraCortex": "ждёт подсистему — задача Sahara task-8fc7 (Ноосфера); включателя пока нет",
-  "trait.elitnyeArhetipy.malagra.paragonCoil": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
-  "trait.elitnyeArhetipy.pitati.runicBullet": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",
-  "trait.elitnyeArhetipy.pitati.runicShot": "ждёт подсистему — задача Sahara task-c8c2 (рунные пули); включателя пока нет",
-  "trait.elitnyeArhetipy.sekutor.paladinFrame": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
-  "trait.elitnyeArhetipy.elektrozhrets.electropriestCoils": "ждёт подсистему — задача Sahara task-f5c8 (Катушка Потенции); включателя пока нет",
-  "trait.elitnyeArhetipy.elektrozhrets.powerFromFlesh": "ждёт подсистему — задача Sahara task-66c1 (фреймы Механикум); включателя пока нет",
   "trait.multipleArms":"включается по имени Черты (Multiple Arms / Многорукий), rules/hands.mjs isMultipleArmsTrait — флага нет",
   "trait.brutalCharge":"включается по имени Черты (Brutal Charge / Жестокий Натиск), combat/attack.mjs brutalChargeDamageBonus — флага нет",
   "trait.maneuverable": "включается по имени Черты скакуна (Maneuverable), rules/mount.mjs maneuverMods — флага нет",
@@ -180,6 +163,8 @@ const ALLOWED = {
   "trait.stand": "включается по имени Черты скакуна (Stand), rules/mount.mjs — флага нет",
   "trait.unruly": "включается по имени Черты скакуна (Unruly), combat/mount.mjs — флага нет",
   "trait.warTrained": "включается по имени Черты скакуна (War-Trained), rules/mount.mjs handsNeeded — флага нет",
+  "awareness.core.lightSleeper": "включается по имени Таланта (Light Sleeper) в when.lacksTrait правила conditions.asleep, rules/library/conditions.mjs — флага нет",
+  "elite.talantyOderzhimyh.daryZaschita.giant": "включается по имени Дара (Giant / Дар: Гигант) через predicates.mjs::giftNamesOf в rules/character.mjs, только в Проявлении — флага нет",
   "occultist.core.instructor": "включается по имени Таланта (Instructor) через модульный массив имён в occultist-talents.mjs::hasInstructor — анализатор такую форму не распознаёт"
 };
 
