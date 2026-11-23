@@ -375,7 +375,8 @@
               "resPoolBoostChars": "",
               "resPoolFailChars": "",
               "modAuto": false,
-              "powerName": ""
+              "powerName": "",
+              "askOnly": true
             }
           ]
         }

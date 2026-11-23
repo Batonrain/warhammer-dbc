@@ -251,7 +251,8 @@
                 "predicates": {
                   "mechadendriteTraining": "utility"
                 }
-              }
+              },
+              "askOnly": true
             }
           ]
         }
