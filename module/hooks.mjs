@@ -5498,6 +5498,8 @@ function _attachFateContextMenu(message, html) {
     await clearBlessingOfSteel(combat);
     // Грозный Вопль (Sahara dread-wail-2): эффект «рейтинг Страха 2 до конца боя» на целях.
     await clearDreadWailFear(combat);
+    // Метки «до следующего Хода/броска» без привязки к бою: Танец Пламени, «до конца Хода», Секуторий, Таран.
+    await (await import("./combat/combat-end-marks.mjs")).clearCombatEndMarks(combat);
     // Таланты, включённые за Очко Бесчестия «до конца боя или сцены» (apps/item-activation.mjs).
     const { clearActivationsOnCombatEnd } = await import("./apps/item-activation.mjs");
     await clearActivationsOnCombatEnd(combat);
