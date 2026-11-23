@@ -3,11 +3,14 @@
 // по состоянию пациента и снаряжению медика, дальше готовые кнопки с ОД = 0.
 
 import "../support/foundry-stub.mjs";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   frontlineMedicOptions, frontlineBleedAuto, useFrontlineMedic, hasFrontlineMedic
 } from "../../module/combat/frontline-medic.mjs";
+
+// Токены «не в контакте»: соседей у токена медика нет.
+vi.mock("../../module/combat/free-attack.mjs", () => ({ allContactTokenDocs: () => [] }));
 
 const TALENT = { type: "talent", name: "Frontline Medic / Фронтовой Медик" };
 const NARTHECIUM = { type: "gear", name: "Narthecium / Нартеций", system: {} };
@@ -58,6 +61,18 @@ describe("frontlineMedicOptions", () => {
     expect(values(frontlineMedicOptions(medic, p))).toEqual(["crippling"]);
   });
 
+  it("Быстрые Стежки — нет, если Первая Помощь после этого урона уже была (без Перешивания)", async () => {
+    const stitchTalent = { type: "talent", name: "Fast Stitches", system: { key: "fastStitches" } };
+    const medic = makeActor("Медик", { items: [TALENT, NARTHECIUM, stitchTalent] });
+    const p = makeActor("Раненый");
+    const { hasTalentCapability } = await import("../../module/rules/ability-by-key.mjs");
+    const { FAST_STITCHES_CAP } = await import("../../module/rules/medic-talents.mjs");
+    if (!hasTalentCapability(medic, FAST_STITCHES_CAP)) throw new Error("заглушка Таланта не опознана");
+    expect(values(frontlineMedicOptions(medic, p))).toContain("stitches");
+    p.system.wounds = { firstAidUsed: true };
+    expect(values(frontlineMedicOptions(medic, p))).not.toContain("stitches");
+  });
+
   it("Кровотечение без теста: Нартеций или Аптечка Good.Q/Best.Q, обычная — тест", () => {
     expect(frontlineBleedAuto(makeActor("a", { items: [NARTHECIUM] }))).toBe("Нартеций");
     expect(frontlineBleedAuto(makeActor("b", { items: [{ name: "Medkit / Аптечка", system: { quality: "good" } }] }))).toContain("Good.Q");
@@ -80,6 +95,22 @@ describe("useFrontlineMedic", () => {
     const res = await useFrontlineMedic(medic);
     expect(res.eff).toBe(60);
     expect(p.system.conditions.burning).toBe(false);
+  });
+
+  it("токены не в контакте — всё равно тушит: сближение входит в действие", async () => {
+    const medic = makeActor("Медик", { items: [TALENT] });
+    const p = makeActor("Горящий", { conditions: { burning: true } });
+    medic.getActiveTokens = () => [{ id: "tm" }];
+    p.getActiveTokens = () => [{ id: "tp" }];
+    const prevCanvas = globalThis.canvas;
+    globalThis.canvas = { tokens: {} };
+    globalThis.game.user = { targets: new Set([{ actor: p }]) };
+    captured.nextRoll = 55;
+    try {
+      const res = await useFrontlineMedic(medic);
+      expect(res?.eff).toBe(60);
+      expect(p.system.conditions.burning).toBe(false);
+    } finally { globalThis.canvas = prevCanvas; }
   });
 
   it("нет цели — предупреждение", async () => {
